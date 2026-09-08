@@ -3,7 +3,7 @@ import pandas as pd
 
 from dashboard.data.database import should_use_preaggregate
 from dashboard.domain.labels import build_product_meta, product_label, product_legend_label, admission_mode_label
-from dashboard.ui.components import compact_stats_html, metric_display_value
+from dashboard.ui.components import compact_stats_html, metric_display_value, metric_retained_share
 from dashboard.ui.charts import make_scatter, make_admission_comparison_chart
 from dashboard.ui.axis_options import X_AXIS_PER_100K
 
@@ -30,6 +30,11 @@ def test_product_labels_are_pure_domain_helpers():
 
 def test_metric_value_and_compact_stats_are_pure_render_helpers():
     assert metric_display_value("372", "493") == "372 / 493"
+    assert metric_display_value("493") == "493"
+    assert metric_display_value("0.63%", "0.66%") == "0.63% / 0.66%"
+    assert metric_retained_share(372, 493) == "75% wartości bazowej"
+    assert metric_retained_share(0.63, 0.66) == "95% wartości bazowej"
+    assert metric_retained_share(100, 0) is None
     html = compact_stats_html("Mazowieckie", [{"label":"Łącznie","hospitalizacje":100,"hospitalizacje_na_placowke":10,"smiertelnosc":2.5,"placowki":10}])
     assert "Mazowieckie" in html and "2.50%" in html
 
@@ -389,3 +394,128 @@ def test_admission_shared_range_gives_zero_values_visual_margin():
     x = pd.Series([0, 10])
     y = pd.Series([2, 8])
     assert _shared_axis_range_with_padding(x, y) == (-0.5, 10.5)
+
+
+def test_sidebar_sections_follow_requested_order_and_duration_is_standalone():
+    sidebar = (ROOT / "dashboard" / "ui" / "sidebar.py").read_text(encoding="utf-8")
+    labels = [
+        "## Ustawienia analizy",
+        "Zakres świadczeń",
+        "Wyróżnienie geograficzne",
+        "Próg wolumenu",
+        "Długość hospitalizacji",
+        "Estymacja wartości ukrytych",
+        "Filtry dodatkowe",
+    ]
+    positions = [sidebar.index(label) for label in labels]
+    assert positions == sorted(positions)
+    # Długość hospitalizacji jest renderowana przed expanderem filtrów dodatkowych.
+    assert sidebar.index('"Przedział długości hospitalizacji"') < sidebar.index(
+        'with st.expander("Rozwiń filtry dodatkowe")'
+    )
+
+
+def test_duration_remains_a_substantive_filter_before_volume_threshold():
+    filters_module = (ROOT / "dashboard" / "domain" / "filters.py").read_text(encoding="utf-8")
+    filters_method = filters_module.split("def filters_tuple", 1)[1]
+    assert '"duration": tuple(self.duration)' in filters_method
+    assert '"min_hosp"' not in filters_method
+
+    app = (ROOT / "app.py").read_text(encoding="utf-8")
+    assert app.index("result_before_threshold=aggregated") < app.index("result=filter_by_min_facility_hospitalizations")
+
+
+def _sidebar_state(*, duration=(), min_hosp=0):
+    from dashboard.domain.filters import SidebarState
+    return SidebarState(
+        method="Konserwatywna: każde <5 = 1",
+        selected_products=["p1"],
+        admission=[],
+        selected_ow=[],
+        selected_cities=[],
+        view_mode="Województwa",
+        contracts=["c1"],
+        discharge=[9],
+        months=[1],
+        sex=["K"],
+        age=["18-64"],
+        duration=list(duration),
+        min_hosp=min_hosp,
+    )
+
+
+def test_baseline_filters_are_invariant_to_duration_but_keep_other_filters():
+    short_stay = _sidebar_state(duration=["0-1"])
+    long_stay = _sidebar_state(duration=["8+"])
+
+    short_baseline = short_stay.filters_tuple(exclude={"duration"})
+    long_baseline = long_stay.filters_tuple(exclude={"duration"})
+
+    assert short_baseline == long_baseline
+    baseline = dict(short_baseline)
+    assert "duration" not in baseline
+    assert baseline["products"] == ("p1",)
+    assert baseline["contracts"] == ("c1",)
+    assert baseline["months"] == (1,)
+
+
+def test_current_filters_still_include_duration_for_numerator_dataset():
+    state = _sidebar_state(duration=["0-1"])
+    assert dict(state.filters_tuple())["duration"] == ("0-1",)
+
+
+def test_unknown_filter_exclusion_is_rejected():
+    state = _sidebar_state()
+    try:
+        state.filters_tuple(exclude={"not_a_filter"})
+    except ValueError as exc:
+        assert "not_a_filter" in str(exc)
+    else:
+        raise AssertionError("Unknown exclusions must not be silently ignored")
+
+
+def test_app_builds_fixed_baseline_before_duration_and_volume_threshold():
+    app = (ROOT / "app.py").read_text(encoding="utf-8")
+    assert 'baseline_filters=state.filters_tuple(exclude={"duration"})' in app
+    assert app.index("baseline_result=") < app.index("result=filter_by_min_facility_hospitalizations")
+    assert "baseline_admission_data=" in app
+
+
+def test_kpi_comparison_is_shown_for_duration_or_volume_threshold():
+    views = (ROOT / "dashboard" / "ui" / "views.py").read_text(encoding="utf-8")
+    assert views.count("has_comparison = min_hosp > 0 or bool(state.duration)") == 2
+    assert "dataset_summary(baseline_result)" in views
+    assert "admission_facility_stats(baseline_admission_data)" in views
+
+
+def test_kpi_retained_share_is_secondary_text_and_not_inline():
+    views = (ROOT / "dashboard" / "ui" / "views.py").read_text(encoding="utf-8")
+    assert 'metric_display_value(card["value"], card.get("baseline"))' in views
+    assert 'share = metric_retained_share(' in views
+    assert 'delta=share' in views
+    assert 'delta_color="off"' in views
+    assert 'show_share_secondary' in views
+    assert 'show_share_in_tooltip' not in views
+    assert 'Procent w nawiasie' not in views
+
+
+def test_mortality_kpi_does_not_report_retained_share_but_count_kpis_do():
+    views = (ROOT / "dashboard" / "ui" / "views.py").read_text(encoding="utf-8")
+    mortality_start = views.index('\"label\": \"Śmiertelność ogółem\"')
+    mortality_block = views[mortality_start:views.index('chart_col, stats_col', mortality_start)]
+    assert '"show_share_secondary": False' in mortality_block
+    assert views.count('"show_share_secondary": True') >= 7
+
+
+def test_kpi_percentage_is_hidden_without_comparison_baseline():
+    assert metric_display_value("100") == "100"
+    assert metric_retained_share(100, None) is None
+
+
+def test_kpi_cards_reserve_fixed_space_for_secondary_share_and_fill_column():
+    content = (ROOT / "dashboard" / "ui" / "content.py").read_text(encoding="utf-8")
+    metric_css = content[content.index('[data-testid="stMetric"]'):content.index('[data-testid="stMetricLabel"]')]
+    assert "height:7.35rem" in metric_css
+    assert "min-height:7.35rem" in metric_css
+    assert "width:100%" in metric_css
+    assert "box-sizing:border-box" in metric_css

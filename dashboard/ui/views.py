@@ -14,7 +14,7 @@ from .axis_options import (
     x_axis_label,
     admission_scale_label,
 )
-from .components import compact_stats_html, metric_display_value
+from .components import compact_stats_html, metric_display_value, metric_retained_share
 from .state import (
     MORTALITY_X_AXIS_STATE_KEY,
     MORTALITY_X_AXIS_WIDGET_KEY,
@@ -31,9 +31,17 @@ def render_kpis(cards):
     cols = st.columns(len(cards), gap="small")
     for col, card in zip(cols, cards):
         with col:
+            share = None
+            if card.get("show_share_secondary") and card.get("baseline") is not None:
+                share = metric_retained_share(
+                    card.get("value_numeric"),
+                    card.get("baseline_numeric"),
+                )
             st.metric(
                 card["label"],
                 metric_display_value(card["value"], card.get("baseline")),
+                delta=share,
+                delta_color="off",
                 help=card.get("tooltip"),
                 border=True,
             )
@@ -42,7 +50,7 @@ def render_kpis(cards):
 def render_mortality(
     *,
     result: pd.DataFrame,
-    result_all: pd.DataFrame,
+    baseline_result: pd.DataFrame,
     min_hosp: int,
     state,
     refs,
@@ -61,36 +69,56 @@ def render_mortality(
         return
 
     cur = dataset_summary(result)
-    base = dataset_summary(result_all)
+    base = dataset_summary(baseline_result)
+    has_comparison = min_hosp > 0 or bool(state.duration)
+    active_limits = []
+    if state.duration:
+        active_limits.append("długość hospitalizacji")
+    if min_hosp > 0:
+        active_limits.append(f"próg ≥ {min_hosp}")
     ctx = (
-        f"Aktywny próg: ≥ {min_hosp}. Format: po progu / bez progu. "
-        if min_hosp > 0
-        else "Próg wolumenu jest wyłączony. "
+        "Wartość pierwsza uwzględnia: " + ", ".join(active_limits) + ". "
+        "Wartość po ukośniku jest stałą wartością bazową bez progu wolumenu "
+        "i bez filtra długości hospitalizacji. "
+        if has_comparison
+        else "Próg wolumenu i filtr długości hospitalizacji są wyłączone. "
     )
     render_kpis(
         [
             {
                 "label": "Placówki",
+                "show_share_secondary": True,
                 "value": f"{cur['placowki']:,}".replace(",", " "),
-                "baseline": f"{base['placowki']:,}".replace(",", " ") if min_hosp > 0 else None,
+                "baseline": f"{base['placowki']:,}".replace(",", " ") if has_comparison else None,
+                "value_numeric": cur["placowki"],
+                "baseline_numeric": base["placowki"] if has_comparison else None,
                 "tooltip": ctx + "Placówka = OW NFZ + NIP.",
             },
             {
                 "label": "Hospitalizacje",
+                "show_share_secondary": True,
                 "value": f"{cur['hospitalizacje']:,.0f}".replace(",", " "),
-                "baseline": f"{base['hospitalizacje']:,.0f}".replace(",", " ") if min_hosp > 0 else None,
+                "baseline": f"{base['hospitalizacje']:,.0f}".replace(",", " ") if has_comparison else None,
+                "value_numeric": cur["hospitalizacje"],
+                "baseline_numeric": base["hospitalizacje"] if has_comparison else None,
                 "tooltip": ctx + "Suma hospitalizacji.",
             },
             {
                 "label": "Zgony",
+                "show_share_secondary": True,
                 "value": f"{cur['zgony']:,.0f}".replace(",", " "),
-                "baseline": f"{base['zgony']:,.0f}".replace(",", " ") if min_hosp > 0 else None,
+                "baseline": f"{base['zgony']:,.0f}".replace(",", " ") if has_comparison else None,
+                "value_numeric": cur["zgony"],
+                "baseline_numeric": base["zgony"] if has_comparison else None,
                 "tooltip": ctx + "Suma zgonów.",
             },
             {
                 "label": "Śmiertelność ogółem",
+                "show_share_secondary": False,
                 "value": f"{cur['smiertelnosc']:.2f}%",
-                "baseline": f"{base['smiertelnosc']:.2f}%" if min_hosp > 0 else None,
+                "baseline": f"{base['smiertelnosc']:.2f}%" if has_comparison else None,
+                "value_numeric": cur["smiertelnosc"],
+                "baseline_numeric": base["smiertelnosc"] if has_comparison else None,
                 "tooltip": ctx + "Suma zgonów / suma hospitalizacji × 100.",
             },
         ]
@@ -186,13 +214,13 @@ def render_mortality(
             )
             baseline = (
                 area_product_stats(
-                    result_all,
+                    baseline_result,
                     area_col,
                     selected,
                     product_labels=labels,
                     area_names=names,
                 )
-                if min_hosp > 0
+                if has_comparison
                 else {}
             )
             for name, rows in stats.items():
@@ -242,6 +270,7 @@ def render_mortality(
 def render_admissions(
     *,
     admission_data: pd.DataFrame,
+    baseline_admission_data: pd.DataFrame,
     min_hosp: int,
     state,
     refs,
@@ -261,6 +290,8 @@ def render_admissions(
 
     all_stats = admission_facility_stats(admission_data)
     all_stats = add_admission_population_rates(all_stats, population_by_ow)
+    baseline_stats = admission_facility_stats(baseline_admission_data)
+    baseline_stats = add_admission_population_rates(baseline_stats, population_by_ow)
     stats = (
         all_stats[all_stats["razem_planowane_nagle"] >= min_hosp].copy()
         if min_hosp > 0 and not all_stats.empty
@@ -272,21 +303,29 @@ def render_admissions(
 
     p = stats["planowane"].sum()
     u = stats["nagle"].sum()
-    ap = all_stats["planowane"].sum()
-    au = all_stats["nagle"].sum()
+    ap = baseline_stats["planowane"].sum()
+    au = baseline_stats["nagle"].sum()
     n = stats[["OW_NFZ", "NIP_PODMIOTU"]].drop_duplicates().shape[0]
-    an = all_stats[["OW_NFZ", "NIP_PODMIOTU"]].drop_duplicates().shape[0]
+    an = baseline_stats[["OW_NFZ", "NIP_PODMIOTU"]].drop_duplicates().shape[0]
+    has_comparison = min_hosp > 0 or bool(state.duration)
+    active_limits = []
+    if state.duration:
+        active_limits.append("długość hospitalizacji")
+    if min_hosp > 0:
+        active_limits.append(f"próg ≥ {min_hosp}")
     ctx = (
-        f"Aktywny próg: ≥ {min_hosp}. Format: po progu / bez progu. "
-        if min_hosp > 0
-        else "Próg wyłączony. "
+        "Wartość pierwsza uwzględnia: " + ", ".join(active_limits) + ". "
+        "Wartość po ukośniku jest stałą wartością bazową bez progu wolumenu "
+        "i bez filtra długości hospitalizacji. "
+        if has_comparison
+        else "Próg wolumenu i filtr długości hospitalizacji są wyłączone. "
     )
     render_kpis(
         [
-            {"label": "Placówki", "value": f"{n:,}".replace(",", " "), "baseline": f"{an:,}".replace(",", " ") if min_hosp > 0 else None, "tooltip": ctx},
-            {"label": "Planowane (6)", "value": f"{p:,.0f}".replace(",", " "), "baseline": f"{ap:,.0f}".replace(",", " ") if min_hosp > 0 else None, "tooltip": ctx},
-            {"label": "Nagłe (2+3)", "value": f"{u:,.0f}".replace(",", " "), "baseline": f"{au:,.0f}".replace(",", " ") if min_hosp > 0 else None, "tooltip": ctx},
-            {"label": "Planowane + nagłe", "value": f"{p + u:,.0f}".replace(",", " "), "baseline": f"{ap + au:,.0f}".replace(",", " ") if min_hosp > 0 else None, "tooltip": ctx},
+            {"label": "Placówki", "show_share_secondary": True, "value": f"{n:,}".replace(",", " "), "baseline": f"{an:,}".replace(",", " ") if has_comparison else None, "value_numeric": n, "baseline_numeric": an if has_comparison else None, "tooltip": ctx},
+            {"label": "Planowane (6)", "show_share_secondary": True, "value": f"{p:,.0f}".replace(",", " "), "baseline": f"{ap:,.0f}".replace(",", " ") if has_comparison else None, "value_numeric": p, "baseline_numeric": ap if has_comparison else None, "tooltip": ctx},
+            {"label": "Nagłe (2+3)", "show_share_secondary": True, "value": f"{u:,.0f}".replace(",", " "), "baseline": f"{au:,.0f}".replace(",", " ") if has_comparison else None, "value_numeric": u, "baseline_numeric": au if has_comparison else None, "tooltip": ctx},
+            {"label": "Planowane + nagłe", "show_share_secondary": True, "value": f"{p + u:,.0f}".replace(",", " "), "baseline": f"{ap + au:,.0f}".replace(",", " ") if has_comparison else None, "value_numeric": p + u, "baseline_numeric": ap + au if has_comparison else None, "tooltip": ctx},
         ]
     )
 

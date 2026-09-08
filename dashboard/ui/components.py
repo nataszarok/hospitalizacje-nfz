@@ -47,5 +47,23 @@ def compact_stats_html(
     lines.append('</div>')
     return ''.join(lines)
 
-def metric_display_value(value, baseline=None):
-    return f"{value} / {baseline}" if baseline is not None else str(value)
+def metric_display_value(value, baseline=None) -> str:
+    """Format the compact value displayed inside a KPI card.
+
+    Comparisons stay intentionally terse: current / baseline. Percentage
+    context is rendered as secondary text below the main value.
+    """
+    if baseline is None:
+        return str(value)
+    return f"{value} / {baseline}"
+
+
+def metric_retained_share(
+    value_numeric: float | int | None,
+    baseline_numeric: float | int | None,
+) -> str | None:
+    """Return a compact secondary label with share of the baseline value."""
+    if value_numeric is None or baseline_numeric in (None, 0):
+        return None
+    share = float(value_numeric) / float(baseline_numeric) * 100.0
+    return f"{share:.0f}% wartości bazowej"

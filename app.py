@@ -38,17 +38,30 @@ try:
     if not state.selected_products: st.info("Wybierz co najmniej jeden produkt jednostkowy w panelu po lewej."); st.stop()
 
     filters=state.filters_tuple()
+    baseline_filters=state.filters_tuple(exclude={"duration"})
     with st.spinner("Agreguję dane..."):
-        result_all=aggregated(filters,state.method,refs.death_discharge_code,tuple(refs.regions.items()))
-    result_all=add_population_rate(result_all,population)
-    result=filter_by_min_facility_hospitalizations(result_all,state.min_hosp)
+        result_before_threshold=aggregated(filters,state.method,refs.death_discharge_code,tuple(refs.regions.items()))
+        baseline_result=(
+            result_before_threshold
+            if not state.duration
+            else aggregated(baseline_filters,state.method,refs.death_discharge_code,tuple(refs.regions.items()))
+        )
+    result_before_threshold=add_population_rate(result_before_threshold,population)
+    baseline_result=add_population_rate(baseline_result,population)
+    result=filter_by_min_facility_hospitalizations(result_before_threshold,state.min_hosp)
 
     tab_mortality,tab_admissions=st.tabs(["Wolumen i śmiertelność","Tryb przyjęcia"])
     with tab_mortality:
-        render_mortality(result=result,result_all=result_all,min_hosp=state.min_hosp,state=state,refs=refs,product_meta=product_meta,product_legend=legend,population_metadata=population_meta)
+        render_mortality(result=result,baseline_result=baseline_result,min_hosp=state.min_hosp,state=state,refs=refs,product_meta=product_meta,product_legend=legend,population_metadata=population_meta)
     with tab_admissions:
-        with st.spinner("Agreguję tryby przyjęcia..."): admission_data=admission_comparison(filters,state.method)
-        render_admissions(admission_data=admission_data,min_hosp=state.min_hosp,state=state,refs=refs,population_by_ow=population,population_metadata=population_meta)
+        with st.spinner("Agreguję tryby przyjęcia..."):
+            admission_data=admission_comparison(filters,state.method)
+            baseline_admission_data=(
+                admission_data
+                if not state.duration
+                else admission_comparison(baseline_filters,state.method)
+            )
+        render_admissions(admission_data=admission_data,baseline_admission_data=baseline_admission_data,min_hosp=state.min_hosp,state=state,refs=refs,population_by_ow=population,population_metadata=population_meta)
     st.markdown(footer_html(refs.analysis_year),unsafe_allow_html=True)
 except Exception as exc:
     st.error("Aplikacja napotkała błąd podczas ładowania danych."); st.exception(exc)
