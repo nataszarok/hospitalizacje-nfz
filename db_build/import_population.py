@@ -13,10 +13,10 @@ import unicodedata
 
 import pandas as pd
 
-BASE_DIR = Path(__file__).resolve().parent
+BASE_DIR = Path(__file__).resolve().parents[1]
 DEFAULT_XLSX = BASE_DIR / "data_sources" / "gus" / "Dzial_04_Ludnosc.xlsx"
 DB_PATH = BASE_DIR / "health_dashboard.db"
-SQL_PATH = BASE_DIR / "sql" / "create_population.sql"
+SQL_PATH = BASE_DIR / "db_build" / "sql" / "create_population.sql"
 
 SOURCE_URL = (
     "https://stat.gov.pl/obszary-tematyczne/roczniki-statystyczne/"

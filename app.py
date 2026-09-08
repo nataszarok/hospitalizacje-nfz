@@ -21,9 +21,9 @@ if not DB_PATH.exists():
 try:
     refs=reference_data(); status=pipeline_status()
     if status is None:
-        st.error("Brak materializowanych agregatów dashboardu."); st.code("poetry run python refresh_aggregates.py"); st.stop()
+        st.error("Brak materializowanych agregatów dashboardu."); st.code("poetry run python -m db_build.refresh_aggregates"); st.stop()
     if int(status[0]) != 0:
-        st.error("Dane hospitalizacje zostały zmienione, a agregaty dashboardu są nieaktualne."); st.code("poetry run python refresh_aggregates.py"); st.stop()
+        st.error("Dane hospitalizacje zostały zmienione, a agregaty dashboardu są nieaktualne."); st.code("poetry run python -m db_build.refresh_aggregates"); st.stop()
 
     mapping=product_mapping(); product_meta=build_product_meta(mapping)
     population=population_by_ow(); population_meta=population_metadata()

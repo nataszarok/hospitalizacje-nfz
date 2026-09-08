@@ -69,12 +69,17 @@ def normalize_city_series(series: pd.Series) -> pd.Series:
     return series.map(normalize_city_name)
 
 def distinct_cities(con):
-    q = '''SELECT TRIM("Miejscowość") AS city
-           FROM szpitale_laczone
-           WHERE "Miejscowość" IS NOT NULL
-             AND TRIM("Miejscowość") <> '' '''
+    q = '''SELECT DISTINCT TRIM(s.miejscowosc) AS city
+           FROM nfz_swiadczeniodawcy_unique s
+           JOIN (
+               SELECT DISTINCT OW_NFZ, NIP_PODMIOTU
+               FROM dashboard_facility_product
+           ) h
+             ON h.OW_NFZ = s.oddzial_nfz
+            AND CAST(h.NIP_PODMIOTU AS TEXT) = s.nip
+           WHERE s.miejscowosc IS NOT NULL
+             AND TRIM(s.miejscowosc) <> '' '''
     cities = pd.read_sql_query(q, con)["city"].dropna().map(normalize_city_name)
-    # Case-insensitive uniqueness after display normalization; source DB stays untouched.
     return sorted(dict.fromkeys(cities.tolist()), key=str.casefold)
 
 def should_use_preaggregate(filters: dict) -> bool:
@@ -96,7 +101,7 @@ def load_aggregated(con, filters: tuple, method: str, death_code: int, region_ma
         for col,key in [("KOD_PRODUKTU_KONTRAKTOWEGO","contracts"),("KOD_TRYBU_PRZYJECIA","admission"),("KOD_TRYBU_WYPISU","discharge"),("MIESIAC","months"),("PLEC_PACJENTA","sex"),("GRUPA_WIEKOWA_PACJENTA","age"),("PRZEDZIAL_DLUGOSCI_TRWANIA_HOSPITALIZACJI","duration")]: _sql_in(col,f.get(key,()),where,params)
         table="hospitalizacje"; hosp="LICZBA_HOSPITALIZACJI_NUM" if method.startswith("Symulacyjna") else "LICZBA_HOSPITALIZACJI_MIN"; death_expr=f'SUM(CASE WHEN h.KOD_TRYBU_WYPISU = ? THEN h."{hosp}" ELSE 0 END)'; params=[death_code]+params
     ws=" WHERE "+" AND ".join(where) if where else ""
-    q=f'''SELECT h.OW_NFZ,h.NIP_PODMIOTU,h.KOD_PRODUKTU_JEDNOSTKOWEGO,COALESCE(s."Świadczeniodawca",'NIP '||h.NIP_PODMIOTU) "Świadczeniodawca",COALESCE(s."Województwo",'') "Województwo",COALESCE(s."Miejscowość",'') "Miejscowość",SUM(h."{hosp}") hospitalizacje_ogolem,{death_expr} zgony FROM {table} h LEFT JOIN szpitale_laczone s ON s.NIP=CAST(h.NIP_PODMIOTU AS TEXT){ws} GROUP BY h.OW_NFZ,h.NIP_PODMIOTU,h.KOD_PRODUKTU_JEDNOSTKOWEGO,s."Świadczeniodawca",s."Województwo",s."Miejscowość"'''
+    q=f'''SELECT h.OW_NFZ,h.NIP_PODMIOTU,h.KOD_PRODUKTU_JEDNOSTKOWEGO,COALESCE(NULLIF(s.swiadczeniodawca_wyswietlany,''),s.swiadczeniodawca,'NIP '||h.NIP_PODMIOTU) "Świadczeniodawca",'' "Województwo",COALESCE(s.miejscowosc,'') "Miejscowość",SUM(h."{hosp}") hospitalizacje_ogolem,{death_expr} zgony FROM {table} h LEFT JOIN nfz_swiadczeniodawcy_unique s ON s.nip=CAST(h.NIP_PODMIOTU AS TEXT) AND s.oddzial_nfz=h.OW_NFZ{ws} GROUP BY h.OW_NFZ,h.NIP_PODMIOTU,h.KOD_PRODUKTU_JEDNOSTKOWEGO,s.swiadczeniodawca_wyswietlany,s.swiadczeniodawca,s.miejscowosc'''
     data=pd.read_sql_query(q,con,params=params)
     if data.empty:return data
     data["OW_NFZ"]=data["OW_NFZ"].astype(str).str.replace(r"\.0$","",regex=True).str.zfill(2); data["Województwo"]=data["Województwo"].replace("",pd.NA).fillna(data["OW_NFZ"].map(region_map)).fillna(""); data["KOD_PRODUKTU_JEDNOSTKOWEGO"]=data["KOD_PRODUKTU_JEDNOSTKOWEGO"].astype(str); data["Miejscowość"] = normalize_city_series(data["Miejscowość"])
@@ -108,7 +113,7 @@ def load_admission_comparison(con, filters: tuple, method: str):
     else:
         for col,key in [("KOD_PRODUKTU_KONTRAKTOWEGO","contracts"),("KOD_TRYBU_WYPISU","discharge"),("MIESIAC","months"),("PLEC_PACJENTA","sex"),("GRUPA_WIEKOWA_PACJENTA","age"),("PRZEDZIAL_DLUGOSCI_TRWANIA_HOSPITALIZACJI","duration")]: _sql_in(col,f.get(key,()),where,params)
         table="hospitalizacje"; hosp="LICZBA_HOSPITALIZACJI_NUM" if method.startswith("Symulacyjna") else "LICZBA_HOSPITALIZACJI_MIN"
-    q=f'''SELECT h.OW_NFZ,h.NIP_PODMIOTU,h.KOD_PRODUKTU_JEDNOSTKOWEGO,h.KOD_TRYBU_PRZYJECIA,COALESCE(s."Świadczeniodawca",'NIP '||CAST(h.NIP_PODMIOTU AS TEXT)) "Świadczeniodawca",COALESCE(s."Miejscowość",'') "Miejscowość",SUM(h."{hosp}") hospitalizacje_ogolem FROM {table} h LEFT JOIN szpitale_laczone s ON s.NIP=CAST(h.NIP_PODMIOTU AS TEXT) WHERE {" AND ".join(where)} GROUP BY h.OW_NFZ,h.NIP_PODMIOTU,h.KOD_PRODUKTU_JEDNOSTKOWEGO,h.KOD_TRYBU_PRZYJECIA,s."Świadczeniodawca",s."Miejscowość"'''
+    q=f'''SELECT h.OW_NFZ,h.NIP_PODMIOTU,h.KOD_PRODUKTU_JEDNOSTKOWEGO,h.KOD_TRYBU_PRZYJECIA,COALESCE(NULLIF(s.swiadczeniodawca_wyswietlany,''),s.swiadczeniodawca,'NIP '||CAST(h.NIP_PODMIOTU AS TEXT)) "Świadczeniodawca",COALESCE(s.miejscowosc,'') "Miejscowość",SUM(h."{hosp}") hospitalizacje_ogolem FROM {table} h LEFT JOIN nfz_swiadczeniodawcy_unique s ON s.nip=CAST(h.NIP_PODMIOTU AS TEXT) AND s.oddzial_nfz=h.OW_NFZ WHERE {" AND ".join(where)} GROUP BY h.OW_NFZ,h.NIP_PODMIOTU,h.KOD_PRODUKTU_JEDNOSTKOWEGO,h.KOD_TRYBU_PRZYJECIA,s.swiadczeniodawca_wyswietlany,s.swiadczeniodawca,s.miejscowosc'''
     data=pd.read_sql_query(q,con,params=params)
     if not data.empty: data["OW_NFZ"]=data["OW_NFZ"].astype(str).str.replace(r"\.0$","",regex=True).str.zfill(2); data["KOD_PRODUKTU_JEDNOSTKOWEGO"]=data["KOD_PRODUKTU_JEDNOSTKOWEGO"].astype(str); data["Miejscowość"] = normalize_city_series(data["Miejscowość"])
     return data

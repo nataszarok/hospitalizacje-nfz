@@ -42,3 +42,54 @@ def combine_hospital_sources(psz_unique: pd.DataFrame, supplement: pd.DataFrame)
     keep = ["NIP", "Świadczeniodawca", "Miejscowość"]
     if "Województwo" in combined.columns: keep.append("Województwo")
     return combined[keep].drop_duplicates("NIP", keep="first").reset_index(drop=True)
+
+NFZ_PROVIDER_COLUMNS = [
+    "nip", "swiadczeniodawca", "miejscowosc", "kod", "regon",
+    "kod_pocztowy", "ulica", "gmina", "oddzial_nfz", "telefon",
+]
+
+
+def prepare_nfz_providers(
+    raw: pd.DataFrame,
+    manual_rows: list[dict[str, str]] | None = None,
+    branch_overrides: dict[str, str] | None = None,
+) -> pd.DataFrame:
+    """Prepare a 1:1 NFZ provider dictionary keyed by (oddzial_nfz, nip).
+
+    Source duplicates are intentionally collapsed with keep='last' after
+    branch corrections and optional manual supplementation. The dashboard
+    therefore has exactly one metadata row for every analytical facility key.
+    """
+    missing = [column for column in NFZ_PROVIDER_COLUMNS if column not in raw.columns]
+    if missing:
+        raise ValueError(f"Brak wymaganych kolumn NFZ: {missing}")
+
+    work = raw[NFZ_PROVIDER_COLUMNS].copy()
+    work["nip"] = normalize_nip(work["nip"])
+    work["oddzial_nfz"] = (
+        work["oddzial_nfz"].astype("string")
+        .str.replace(r"\.0$", "", regex=True)
+        .str.replace(r"\D", "", regex=True)
+        .str.zfill(2)
+    )
+    for column in NFZ_PROVIDER_COLUMNS:
+        work[column] = work[column].astype("string").str.strip()
+
+    work = work[work["nip"].str.fullmatch(r"\d{10}", na=False)].copy()
+    work = work[work["oddzial_nfz"].str.fullmatch(r"\d{2}", na=False)].copy()
+
+    for nip, corrected_branch in (branch_overrides or {}).items():
+        work.loc[work["nip"].eq(str(nip)), "oddzial_nfz"] = str(corrected_branch).zfill(2)
+
+    if manual_rows:
+        manual = pd.DataFrame(manual_rows, columns=NFZ_PROVIDER_COLUMNS, dtype="string")
+        manual["nip"] = normalize_nip(manual["nip"])
+        manual["oddzial_nfz"] = manual["oddzial_nfz"].astype("string").str.zfill(2)
+        work = pd.concat([work, manual], ignore_index=True)
+
+    work = work.drop_duplicates(["oddzial_nfz", "nip"], keep="last").reset_index(drop=True)
+    work[NFZ_PROVIDER_COLUMNS] = work[NFZ_PROVIDER_COLUMNS].fillna("")
+
+    if work.duplicated(["oddzial_nfz", "nip"]).any():
+        raise RuntimeError("Deduplikacja NFZ po (oddzial_nfz, nip) nie powiodła się")
+    return work

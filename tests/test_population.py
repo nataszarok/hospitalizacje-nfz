@@ -4,7 +4,7 @@ import pandas as pd
 import pytest
 
 from dashboard.domain.population import RATE_SCALE, add_population_rate
-from import_population import extract_population
+from db_build.import_population import extract_population
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -31,7 +31,7 @@ def test_population_import_extracts_first_gus_sheet():
 
 def test_population_source_is_reproducible():
     assert (ROOT / "data_sources" / "gus" / "Dzial_04_Ludnosc.xlsx").exists()
-    assert (ROOT / "sql" / "create_population.sql").exists()
+    assert (ROOT / "db_build" / "sql" / "create_population.sql").exists()
     assert (ROOT / "docs" / "population_gus.md").exists()
 
 

@@ -124,3 +124,52 @@ def test_population_mazowieckie_matches_gus_sheet(conn):
         "SELECT population, reference_date, source_sheet FROM population_voivodeship WHERE ow_nfz='07'"
     ).fetchone()
     assert row == (5_508_300, '2024-12-31', '1 (19)')
+
+
+def test_nfz_provider_table_is_unique_by_branch_and_nip(conn):
+    total, unique_keys = conn.execute(
+        "SELECT COUNT(*), COUNT(DISTINCT oddzial_nfz || '|' || nip) "
+        "FROM nfz_swiadczeniodawcy_unique"
+    ).fetchone()
+    assert total == unique_keys
+
+
+def test_nfz_provider_join_covers_all_hospital_facilities(conn):
+    total_pairs = conn.execute(
+        "SELECT COUNT(*) FROM (SELECT OW_NFZ, NIP_PODMIOTU FROM hospitalizacje "
+        "GROUP BY OW_NFZ, NIP_PODMIOTU)"
+    ).fetchone()[0]
+    matched_pairs = conn.execute(
+        "SELECT COUNT(*) FROM ("
+        "SELECT h.OW_NFZ, h.NIP_PODMIOTU FROM hospitalizacje h "
+        "JOIN nfz_swiadczeniodawcy_unique s "
+        "ON s.oddzial_nfz=h.OW_NFZ AND s.nip=CAST(h.NIP_PODMIOTU AS TEXT) "
+        "GROUP BY h.OW_NFZ, h.NIP_PODMIOTU)"
+    ).fetchone()[0]
+    assert total_pairs == 833
+    assert matched_pairs == total_pairs
+
+
+def test_nfz_provider_join_does_not_multiply_hospital_rows(conn):
+    raw = conn.execute("SELECT COUNT(*) FROM hospitalizacje").fetchone()[0]
+    joined = conn.execute(
+        "SELECT COUNT(*) FROM hospitalizacje h "
+        "LEFT JOIN nfz_swiadczeniodawcy_unique s "
+        "ON s.oddzial_nfz=h.OW_NFZ AND s.nip=CAST(h.NIP_PODMIOTU AS TEXT)"
+    ).fetchone()[0]
+    assert joined == raw == 3_881_675
+
+
+def test_manual_provider_rows_and_branch_correction(conn):
+    zgorzelec = conn.execute(
+        "SELECT oddzial_nfz, kod, regon, miejscowosc FROM nfz_swiadczeniodawcy_unique WHERE nip='6151706942'"
+    ).fetchone()
+    przystupa = conn.execute(
+        "SELECT oddzial_nfz, kod, regon, miejscowosc FROM nfz_swiadczeniodawcy_unique WHERE nip='5422208990'"
+    ).fetchone()
+    boleslawiec = conn.execute(
+        "SELECT oddzial_nfz, miejscowosc FROM nfz_swiadczeniodawcy_unique WHERE nip='6121542507'"
+    ).fetchone()
+    assert zgorzelec == ('01', '3401029', '231161448', 'ZGORZELEC')
+    assert przystupa == ('10', '100003731', '200236185', 'BIELSK PODLASKI')
+    assert boleslawiec == ('01', 'BOLESŁAWIEC')

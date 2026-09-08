@@ -10,12 +10,12 @@ from dashboard.ui.axis_options import X_AXIS_PER_100K
 ROOT = Path(__file__).resolve().parents[1]
 
 def test_sql_moved_to_sql_directory():
-    assert (ROOT / "sql" / "create_aggregates.sql").exists()
+    assert (ROOT / "db_build" / "sql" / "create_aggregates.sql").exists()
     assert not (ROOT / "create_aggregates.sql").exists()
 
 def test_build_and_refresh_reference_sql_directory():
-    assert "sql' / 'create_aggregates.sql" in (ROOT / "build_db.py").read_text(encoding="utf-8")
-    assert '"sql" / "create_aggregates.sql"' in (ROOT / "refresh_aggregates.py").read_text(encoding="utf-8")
+    assert "db_build' / 'sql' / 'create_aggregates.sql" in (ROOT / "db_build" / "build_db.py").read_text(encoding="utf-8")
+    assert '"db_build" / "sql" / "create_aggregates.sql"' in (ROOT / "db_build" / "refresh_aggregates.py").read_text(encoding="utf-8")
 
 def test_preaggregate_decision_is_explicit_and_testable():
     assert should_use_preaggregate({"products": ("x",), "months": ()})
@@ -90,10 +90,10 @@ def test_app_is_thin_orchestrator():
 
 
 def test_population_sql_and_import_process_are_separated():
-    assert (ROOT / "sql" / "create_population.sql").exists()
-    assert (ROOT / "import_population.py").exists()
+    assert (ROOT / "db_build" / "sql" / "create_population.sql").exists()
+    assert (ROOT / "db_build" / "import_population.py").exists()
     assert (ROOT / "docs" / "population_gus.md").exists()
-    build = (ROOT / "build_db.py").read_text(encoding="utf-8")
+    build = (ROOT / "db_build" / "build_db.py").read_text(encoding="utf-8")
     assert "import_population" in build
 
 def test_scatter_can_use_population_normalized_x_axis():
@@ -563,10 +563,22 @@ def test_distinct_cities_query_is_valid_and_deduplicates_case_variants():
     from dashboard.data.database import distinct_cities
 
     con = sqlite3.connect(":memory:")
-    con.execute('CREATE TABLE szpitale_laczone ("Miejscowość" TEXT)')
+    con.execute('CREATE TABLE nfz_swiadczeniodawcy_unique (oddzial_nfz TEXT, nip TEXT, miejscowosc TEXT)')
+    con.execute('CREATE TABLE dashboard_facility_product (OW_NFZ TEXT, NIP_PODMIOTU TEXT)')
     con.executemany(
-        'INSERT INTO szpitale_laczone ("Miejscowość") VALUES (?)',
-        [("WARSZAWA",), ("Warszawa",), ("  BIELSKO-BIAŁA  ",), ("",), (None,)],
+        'INSERT INTO nfz_swiadczeniodawcy_unique VALUES (?,?,?)',
+        [
+            ("07", "1", "WARSZAWA"),
+            ("07", "2", "Warszawa"),
+            ("12", "3", "  BIELSKO-BIAŁA  "),
+            ("01", "4", "NIEUŻYWANE MIASTO"),
+            ("01", "5", ""),
+            ("01", "6", None),
+        ],
+    )
+    con.executemany(
+        'INSERT INTO dashboard_facility_product VALUES (?,?)',
+        [("07", "1"), ("07", "2"), ("12", "3"), ("01", "5"), ("01", "6")],
     )
 
     assert distinct_cities(con) == ["Bielsko-Biała", "Warszawa"]

@@ -5,12 +5,14 @@ import numpy as np
 import pandas as pd
 
 from dashboard.domain.preprocessing import combine_hospital_sources, deduplicate_hospitals_by_nip, normalize_nip
-from import_population import import_population
+from db_build.import_population import import_population
+from db_build.import_nfz_providers import prepare_provider_dataframe, verify_hospital_join, write_provider_table
 
-BASE = Path(__file__).resolve().parent
-CSV_ZIP = BASE / 'hospitalizacje_2025.csv.zip'
-XLSX = BASE / 'PSZ_Polska_2026_z_NIP(1).xlsx'
-PRODUCT_MAP = BASE / 'kody_produktu_jgp.csv'
+BASE = Path(__file__).resolve().parents[1]
+CSV_ZIP = BASE / 'data_sources' / 'hospitalizacje_2025.csv.zip'
+XLSX = BASE / 'data_sources' / 'PSZ_Polska_2026_z_NIP(1).xlsx'
+PRODUCT_MAP = BASE / 'data_sources' / 'kody_produktu_jgp.csv'
+NFZ_PROVIDERS = BASE / 'data_sources' / 'nfz_swiadczeniodawcy_2025.csv'
 DB_PATH = BASE / 'health_dashboard.db'
 CSV_MEMBER = 'hospitalizacje_2025.csv'
 CHUNK_SIZE = 200_000
@@ -125,7 +127,7 @@ def main():
     sz_psz_unique = deduplicate_hospitals_by_nip(sz)
     sz_psz_unique.to_sql('szpitale_psz_unique', conn, index=False, if_exists='replace')
 
-    supplement_path = BASE / 'szpitale_uzupelnienie.csv'
+    supplement_path = BASE / 'data_sources' / 'szpitale_uzupelnienie.csv'
     if supplement_path.exists():
         supp = pd.read_csv(supplement_path, dtype={'NIP': 'string'})
         supp['NIP'] = norm_nip(supp['NIP'])
@@ -136,6 +138,11 @@ def main():
 
     combined = combine_hospital_sources(sz_psz_unique, supp)
     combined.to_sql('szpitale_laczone', conn, index=False, if_exists='replace')
+
+    # Nowy główny słownik metadanych placówek: 1 rekord na (OW_NFZ, NIP).
+    # Stare tabele PSZ/uzupełnienia pozostają w bazie dla audytowalności.
+    providers = prepare_provider_dataframe(NFZ_PROVIDERS)
+    write_provider_table(conn, providers)
 
     rng = np.random.default_rng(SEED)
     wartosci = np.array([1,2,3,4])
@@ -186,10 +193,16 @@ def main():
     conn.execute('CREATE UNIQUE INDEX idx_szpitale_psz_unique_nip ON szpitale_psz_unique(NIP)')
     conn.execute('CREATE UNIQUE INDEX idx_szpitale_uzupelnienie_nip ON szpitale_uzupelnienie(NIP)')
     conn.execute('CREATE UNIQUE INDEX idx_szpitale_laczone_nip ON szpitale_laczone(NIP)')
+    join_audit = verify_hospital_join(conn)
+    print(
+        'Weryfikacja NFZ join: '
+        f"{join_audit['matched_pairs']:,}/{join_audit['hospital_pairs']:,} par; "
+        f"{join_audit['joined_rows']:,}/{join_audit['hospital_rows']:,} wierszy"
+    )
     rebuild_filter_values(conn)
     write_reference_tables(conn)
     # Materializowane agregaty muszą być ostatnim krokiem po imporcie hospitalizacji.
-    conn.executescript((BASE / 'sql' / 'create_aggregates.sql').read_text(encoding='utf-8'))
+    conn.executescript((BASE / 'db_build' / 'sql' / 'create_aggregates.sql').read_text(encoding='utf-8'))
     conn.commit()
     conn.execute('ANALYZE')
     conn.close()

@@ -1,9 +1,9 @@
 from pathlib import Path
 import sqlite3
 
-BASE = Path(__file__).resolve().parent
+BASE = Path(__file__).resolve().parents[1]
 DB_PATH = BASE / "health_dashboard.db"
-SQL_PATH = BASE / "sql" / "create_aggregates.sql"
+SQL_PATH = BASE / "db_build" / "sql" / "create_aggregates.sql"
 
 
 def main():

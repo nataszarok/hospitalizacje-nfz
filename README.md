@@ -16,7 +16,7 @@ Po uruchomieniu otwórz adres pokazany przez Streamlit, zwykle `http://localhost
 ## Zawartość
 - `app.py` — aplikacja Streamlit
 - `health_dashboard.db` — gotowa baza SQLite
-- `build_db.py` — skrypt do ponownego zbudowania bazy z danych źródłowych
+- `db_build/build_db.py` — skrypt do ponownego zbudowania bazy z danych źródłowych
 - `pyproject.toml` — zależności Poetry
 - `.streamlit/config.toml` — konfiguracja Streamlit z jasnym motywem
 
@@ -27,7 +27,7 @@ Aplikacja korzysta z tabeli pomocniczej `filter_values`, dzięki czemu opcje fil
 Plik `health_dashboard.db` **nie jest dołączony do tej paczki**. Umieść istniejący plik `health_dashboard.db` w katalogu głównym projektu (obok `app.py`) albo zbuduj go ponownie poleceniem:
 
 ```bash
-poetry run python build_db.py
+poetry run python -m db_build.build_db
 ```
 
 Następnie uruchom aplikację:
@@ -52,7 +52,7 @@ Mapowanie `OW_NFZ` użyte w aplikacji:
 
 ## Mapowanie produktów i symbole
 
-Plik `kody_produktu_jgp.csv` jest częścią projektu. W selektorze produktu aplikacja pokazuje:
+Plik `data_sources/kody_produktu_jgp.csv` jest częścią projektu. W selektorze produktu aplikacja pokazuje:
 
 `KOD_PRODUKTU_JEDNOSTKOWEGO — KOD_JGP — NAZWA`
 
@@ -80,15 +80,15 @@ Aplikacja zawiera osobny tab **Tryb przyjęcia**, porównujący przyjęcia plano
 
 ## Słowniki i konfiguracja w SQLite
 
-Aplikacja nie korzysta już z `kody_produktu_jgp.csv` podczas działania. Konfiguracja i słowniki są odczytywane z `health_dashboard.db`:
+Aplikacja nie korzysta już z `data_sources/kody_produktu_jgp.csv` podczas działania. Konfiguracja i słowniki są odczytywane z `health_dashboard.db`:
 
 - `app_config` — rok analizy, kod zgonu, domyślny produkt, parametry estymacji `<5>`;
 - `nfz_regions` — mapowanie OW NFZ → województwo;
 - `admission_modes` — opisy trybów przyjęcia;
 - `highlight_palette` i `product_symbols` — paleta wyróżnień i symbole produktów;
-- `produkty_jgp` — dane z `kody_produktu_jgp.csv`;
-- `szpitale_uzupelnienie` — dane z `szpitale_uzupelnienie.csv`;
-- `hospitalizacje` — dane z `hospitalizacje_2025.csv.zip`.
+- `produkty_jgp` — dane z `data_sources/kody_produktu_jgp.csv`;
+- `szpitale_uzupelnienie` — dane z `data_sources/szpitale_uzupelnienie.csv`;
+- `hospitalizacje` — dane z `data_sources/hospitalizacje_2025.csv.zip`.
 
 Domyślnym produktem jest `5.51.01.0005010` (E10).
 
@@ -103,12 +103,12 @@ Dzięki temu standardowy widok nie grupuje przy każdym odświeżeniu ~3,9 mln r
 Po podmianie/importowaniu nowych danych do `hospitalizacje` **obowiązkowo** uruchom:
 
 ```bash
-poetry run python refresh_aggregates.py
+poetry run python -m db_build.refresh_aggregates
 ```
 
 SQL tworzący agregaty znajduje się w `create_aggregates.sql`. Triggery SQLite automatycznie ustawiają `data_pipeline_status.needs_refresh=1` po INSERT/UPDATE/DELETE tabeli `hospitalizacje`. Jeżeli agregaty są nieaktualne, aplikacja zatrzyma się z komunikatem i poda polecenie odświeżenia, zamiast pokazywać stare wyniki.
 
-Pełne zbudowanie bazy przez `build_db.py` również wykonuje `create_aggregates.sql` jako ostatni etap, więc po pełnym rebuildzie osobne odświeżenie nie jest potrzebne.
+Pełne zbudowanie bazy przez `db_build/build_db.py` również wykonuje `create_aggregates.sql` jako ostatni etap, więc po pełnym rebuildzie osobne odświeżenie nie jest potrzebne.
 
 ## Architektura po refaktorze
 
@@ -118,9 +118,9 @@ Pełne zbudowanie bazy przez `build_db.py` również wykonuje `create_aggregates
 - `dashboard/domain/` — analityka, preprocessing i formatowanie słowników bez zależności od UI,
 - `dashboard/ui/` — wykresy Plotly, markdown/CSS, komponenty, sidebar i widoki zakładek,
 - `sql/` — skrypty SQL, obecnie `create_aggregates.sql`,
-- `build_db.py` / `refresh_aggregates.py` — jawne procesy budowy i odświeżania danych.
+- `db_build/build_db.py` / `db_build/refresh_aggregates.py` — jawne procesy budowy i odświeżania danych.
 
-Po zmianie danych źródłowych nadal należy wykonać `poetry run python refresh_aggregates.py`; skrypt korzysta z `sql/create_aggregates.sql`.
+Po zmianie danych źródłowych nadal należy wykonać `poetry run python -m db_build.refresh_aggregates`; skrypt korzysta z `db_build/sql/create_aggregates.sql`.
 
 ## Ludność województw i hospitalizacje / 100 000 mieszkańców
 
@@ -138,10 +138,10 @@ Plik źródłowy użyty do importu:
 Import / odświeżenie ludności:
 
 ```bash
-poetry run python import_population.py
+poetry run python -m db_build.import_population
 ```
 
-Schemat tabeli znajduje się w `sql/create_population.sql`. Pełny opis źródła, walidacji i sposobu wyliczania wskaźnika znajduje się w `docs/population_gus.md`.
+Schemat tabeli znajduje się w `db_build/sql/create_population.sql`. Pełny opis źródła, walidacji i sposobu wyliczania wskaźnika znajduje się w `docs/population_gus.md`.
 
 Wskaźnik jest liczony jako `hospitalizacje placówki / ludność województwa × 100 000`. Województwo jest przypisywane przez OW NFZ placówki; nie jest to miejsce zamieszkania pacjenta.
 
@@ -163,3 +163,14 @@ niezgodne z cyklem życia `st.session_state`.
 
 ### Tryb przyjęcia — wspólna skala osi
 Wykres porównujący przyjęcia planowane i nagłe używa tego samego zakresu liczbowego na obu osiach (od 0 do wspólnego maksimum z 5% zapasem). Dotyczy to zarówno wartości nominalnych, jak i wariantu na 100 000 mieszkańców. Szara przerywana linia `y = x` pokazuje punkt równowagi: punkty powyżej linii mają więcej przyjęć nagłych niż planowanych, a poniżej — więcej planowanych niż nagłych.
+
+### Świadczeniodawcy NFZ 2025
+
+Głównym słownikiem metadanych placówek jest `nfz_swiadczeniodawcy_unique`, tworzona z `data_sources/nfz_swiadczeniodawcy_2025.csv` przez:
+
+```bash
+poetry run python -m db_build.import_nfz_providers
+```
+
+Tabela jest unikalna po `(oddzial_nfz, nip)` i aplikacja łączy ją z `hospitalizacje` po `(OW_NFZ, NIP_PODMIOTU)`. Skrypt wykonuje również kontrolę pełnego pokrycia i braku multiplikacji rekordów. Poprzednie tabele PSZ/uzupełnień pozostają w `.db` jako źródła historyczne.
+

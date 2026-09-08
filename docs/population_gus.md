@@ -34,7 +34,7 @@ Kluczem jest `ow_nfz`, dzięki czemu ludność może być jednoznacznie dołącz
 Po podmianie pliku XLSX uruchom:
 
 ```bash
-poetry run python import_population.py
+poetry run python -m db_build.import_population
 ```
 
 Skrypt:
@@ -45,10 +45,10 @@ Skrypt:
 4. zamienia wartości z tysięcy osób na osoby,
 5. dopasowuje nazwy województw do `nfz_regions`,
 6. sprawdza kompletność 16 województw i zgodność sumy województw z pozycją Polska,
-7. odtwarza tabelę zgodnie z `sql/create_population.sql`,
+7. odtwarza tabelę zgodnie z `db_build/sql/create_population.sql`,
 8. zapisuje dane i metadane źródłowe do `health_dashboard.db`.
 
-Pełny rebuild przez `build_db.py` również uruchamia import ludności na końcu procesu.
+Pełny rebuild przez `db_build/build_db.py` również uruchamia import ludności na końcu procesu.
 
 ## Wskaźnik hospitalizacji / 100 000
 
