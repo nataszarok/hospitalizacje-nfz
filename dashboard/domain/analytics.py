@@ -128,6 +128,24 @@ def area_product_stats(
         total_hosp = float(subset["hospitalizacje_ogolem"].sum())
         total_deaths = float(subset["zgony"].sum())
         facilities = count_facilities(subset)
+
+        # Wskaźnik populacyjny liczymy z zagregowanego wolumenu obszaru, a nie
+        # jako średnią wskaźników placówek. Dla statystyk województwa wszystkie
+        # wiersze powinny mieć jeden wspólny mianownik. Jeżeli danych ludności
+        # brakuje albo pojawia się więcej niż jeden mianownik, nie zgadujemy.
+        population = None
+        hospitalizations_per_100k = None
+        if "ludnosc_wojewodztwa" in subset.columns:
+            populations = (
+                pd.to_numeric(subset["ludnosc_wojewodztwa"], errors="coerce")
+                .dropna()
+                .loc[lambda values: values > 0]
+                .drop_duplicates()
+            )
+            if len(populations) == 1:
+                population = float(populations.iloc[0])
+                hospitalizations_per_100k = total_hosp / population * 100_000
+
         return {
             "label": label,
             "product_code": product_code,
@@ -135,6 +153,8 @@ def area_product_stats(
             "zgony": total_deaths,
             "smiertelnosc": 100 * total_deaths / total_hosp if total_hosp else 0.0,
             "hospitalizacje_na_placowke": total_hosp / facilities if facilities else 0.0,
+            "hospitalizacje_na_100k": hospitalizations_per_100k,
+            "ludnosc_wojewodztwa": population,
             "placowki": facilities,
         }
 

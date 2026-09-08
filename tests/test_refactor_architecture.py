@@ -264,3 +264,35 @@ def test_prepare_then_callback_models_streamlit_widget_lifecycle():
         [X_AXIS_TOTAL, X_AXIS_PER_100K], X_AXIS_TOTAL,
     )
     assert state[MORTALITY_X_AXIS_WIDGET_KEY] == X_AXIS_TOTAL
+
+
+def test_compact_voivodeship_stats_can_show_population_rate():
+    html = compact_stats_html(
+        "Mazowieckie",
+        [{
+            "label": "Łącznie",
+            "hospitalizacje": 160,
+            "hospitalizacje_na_placowke": 80,
+            "hospitalizacje_na_100k": 3.2,
+            "smiertelnosc": 12.5,
+            "placowki": 2,
+        }],
+        show_population_rate=True,
+    )
+    assert "Hosp./100 tys." in html
+    assert "3.20" in html
+
+
+def test_compact_city_stats_hide_population_rate_by_default():
+    html = compact_stats_html(
+        "Warszawa",
+        [{
+            "label": "Łącznie",
+            "hospitalizacje": 160,
+            "hospitalizacje_na_placowke": 80,
+            "hospitalizacje_na_100k": 3.2,
+            "smiertelnosc": 12.5,
+            "placowki": 2,
+        }],
+    )
+    assert "Hosp./100 tys." not in html

@@ -222,3 +222,29 @@ def test_dataset_summary_is_weighted_and_counts_ow_nip_pairs():
     assert summary["hospitalizacje"] == 200
     assert summary["zgony"] == 20
     assert summary["smiertelnosc"] == pytest.approx(10.0)
+
+
+def test_area_product_stats_calculates_weighted_hospitalizations_per_100k():
+    df = sample_hospitalizations()
+    df["ludnosc_wojewodztwa"] = df["OW_NFZ"].astype(str).str.zfill(2).map(
+        {"07": 5_000_000, "12": 4_000_000}
+    )
+    out = area_product_stats(
+        df,
+        "OW_NFZ",
+        ["07"],
+        product_labels={"A": "Produkt A", "B": "Produkt B"},
+        area_names={"07": "Mazowieckie"},
+    )
+    rows = out["Mazowieckie"]
+    assert rows[0]["hospitalizacje"] == 160
+    assert rows[0]["hospitalizacje_na_100k"] == pytest.approx(3.2)
+    assert rows[1]["hospitalizacje_na_100k"] == pytest.approx(2.2)
+    assert rows[2]["hospitalizacje_na_100k"] == pytest.approx(1.0)
+
+
+def test_area_product_stats_does_not_guess_population_rate_with_multiple_denominators():
+    df = sample_hospitalizations()
+    df["ludnosc_wojewodztwa"] = [5_000_000, 5_100_000, 5_000_000, 4_000_000, 4_000_000]
+    out = area_product_stats(df, "OW_NFZ", ["07"])
+    assert out["07"][0]["hospitalizacje_na_100k"] is None

@@ -191,7 +191,15 @@ def render_mortality(
                 else {}
             )
             for name, rows in stats.items():
-                st.markdown(compact_stats_html(name, rows, baseline.get(name)), unsafe_allow_html=True)
+                st.markdown(
+                    compact_stats_html(
+                        name,
+                        rows,
+                        baseline.get(name),
+                        show_population_rate=(area_col == "OW_NFZ"),
+                    ),
+                    unsafe_allow_html=True,
+                )
 
     with st.expander("Tabela danych · wolumen i śmiertelność"):
         cols = [
