@@ -25,6 +25,29 @@ def aggregate_status(con):
     try: return con.execute("SELECT needs_refresh,refreshed_at,source_rows,aggregate_rows,note FROM data_pipeline_status WHERE pipeline_name='dashboard_aggregates'").fetchone()
     except sqlite3.Error: return None
 
+
+
+def load_population_by_ow(con) -> dict[str, int]:
+    rows = con.execute(
+        "SELECT ow_nfz, population FROM population_voivodeship ORDER BY ow_nfz"
+    ).fetchall()
+    return {str(ow).zfill(2): int(population) for ow, population in rows}
+
+def load_population_metadata(con) -> dict[str, str]:
+    row = con.execute(
+        """SELECT reference_date, source_publication, source_table, source_sheet,
+                  source_unit, source_url, source_file
+           FROM population_voivodeship
+           ORDER BY ow_nfz LIMIT 1"""
+    ).fetchone()
+    if row is None:
+        return {}
+    keys = [
+        "reference_date", "source_publication", "source_table", "source_sheet",
+        "source_unit", "source_url", "source_file",
+    ]
+    return dict(zip(keys, row))
+
 def load_product_mapping(con):
     return pd.read_sql_query('SELECT KOD_PRODUKTU_JEDNOSTKOWEGO,KOD_JGP,NAZWA FROM produkty_jgp ORDER BY KOD_PRODUKTU_JEDNOSTKOWEGO', con, dtype={"KOD_PRODUKTU_JEDNOSTKOWEGO":str,"KOD_JGP":str,"NAZWA":str}).drop_duplicates("KOD_PRODUKTU_JEDNOSTKOWEGO")
 

@@ -8,4 +8,6 @@ __pycache__/
 health_dashboard.db
 *.db-wal
 *.db-shm
+
 *.csv
+data_sources/

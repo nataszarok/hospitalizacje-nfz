@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 
 from dashboard.domain.preprocessing import combine_hospital_sources, deduplicate_hospitals_by_nip, normalize_nip
+from import_population import import_population
 
 BASE = Path(__file__).resolve().parent
 CSV_ZIP = BASE / 'hospitalizacje_2025.csv.zip'
@@ -192,6 +193,7 @@ def main():
     conn.commit()
     conn.execute('ANALYZE')
     conn.close()
+    import_population(db_path=DB_PATH)
     print(f'Gotowe: {DB_PATH} ({DB_PATH.stat().st_size/1024/1024:.1f} MB)')
 
 if __name__ == '__main__':

@@ -2,6 +2,7 @@ from __future__ import annotations
 import streamlit as st
 from .database import (
     connect_readonly, load_reference_data, aggregate_status, load_product_mapping,
+    load_population_by_ow, load_population_metadata,
     distinct_values as _distinct_values, distinct_cities as _distinct_cities,
     load_aggregated as _load_aggregated, load_admission_comparison as _load_admission_comparison,
 )
@@ -17,6 +18,14 @@ def reference_data():
 @st.cache_data(show_spinner=False, ttl=60)
 def pipeline_status():
     return aggregate_status(get_connection())
+
+@st.cache_data(show_spinner=False)
+def population_by_ow():
+    return load_population_by_ow(get_connection())
+
+@st.cache_data(show_spinner=False)
+def population_metadata():
+    return load_population_metadata(get_connection())
 
 @st.cache_data(show_spinner=False)
 def product_mapping():

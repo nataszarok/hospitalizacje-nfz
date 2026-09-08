@@ -83,7 +83,7 @@ def test_product_5061_has_493_facilities_by_ow_and_nip(conn):
 def test_reference_tables_are_stored_in_database(conn):
     expected = {
         'app_config', 'nfz_regions', 'admission_modes',
-        'highlight_palette', 'product_symbols', 'produkty_jgp',
+        'highlight_palette', 'product_symbols', 'produkty_jgp', 'population_voivodeship',
     }
     present = {
         row[0] for row in conn.execute(
@@ -109,3 +109,18 @@ def test_csv_backed_reference_data_are_in_database(conn):
     assert conn.execute("SELECT COUNT(*) FROM produkty_jgp").fetchone()[0] == 693
     assert conn.execute("SELECT COUNT(*) FROM szpitale_uzupelnienie").fetchone()[0] == 125
     assert conn.execute("SELECT COUNT(*) FROM hospitalizacje").fetchone()[0] == 3_881_675
+
+
+def test_population_table_has_all_voivodeships_and_gus_total(conn):
+    count, total = conn.execute(
+        "SELECT COUNT(*), SUM(population) FROM population_voivodeship"
+    ).fetchone()
+    assert count == 16
+    assert total == 37_489_000
+
+
+def test_population_mazowieckie_matches_gus_sheet(conn):
+    row = conn.execute(
+        "SELECT population, reference_date, source_sheet FROM population_voivodeship WHERE ow_nfz='07'"
+    ).fetchone()
+    assert row == (5_508_300, '2024-12-31', '1 (19)')

@@ -12,7 +12,9 @@ def about_markdown(year:str)->str:
 **Jednostka placówki:** unikalna para **OW NFZ + NIP**.  
 **Jak korzystać:** wybierz produkt i filtry w panelu bocznym, a następnie przełączaj moduły analityczne.
 
-**Interpretacja:** dashboard służy do analizy danych zagregowanych, a nie do oceny jakości pojedynczej placówki bez kontekstu. Wartości źródłowe oznaczone jako `<5` są przeliczane zgodnie z metodą wybraną w panelu bocznym.'''
+**Interpretacja:** dashboard służy do analizy danych zagregowanych, a nie do oceny jakości pojedynczej placówki bez kontekstu. Wartości źródłowe oznaczone jako `<5` są przeliczane zgodnie z metodą wybraną w panelu bocznym.
+
+**Ludność:** wariant osi X „hospitalizacje / 100 000 mieszkańców” wykorzystuje ludność województw wg GUS, stan na 31.12.2024. Mianownik jest przypisany według OW NFZ placówki, a nie miejsca zamieszkania pacjenta.'''
 
 def footer_html(year:str)->str:
     return f'<div class="footer-note"><b>Hospitalizacje {year} · MVP panelu analitycznego.</b> Wartości oznaczone jako &lt;5 nie są dokładnymi liczbami. Metoda konserwatywna przyjmuje 1, a metoda symulacyjna korzysta z zapisanych wartości 1–4 (seed zapisany w bazie, prawdopodobieństwa ∝ exp(-x)).</div>'

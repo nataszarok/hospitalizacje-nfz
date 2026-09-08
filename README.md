@@ -121,3 +121,42 @@ Pełne zbudowanie bazy przez `build_db.py` również wykonuje `create_aggregates
 - `build_db.py` / `refresh_aggregates.py` — jawne procesy budowy i odświeżania danych.
 
 Po zmianie danych źródłowych nadal należy wykonać `poetry run python refresh_aggregates.py`; skrypt korzysta z `sql/create_aggregates.sql`.
+
+## Ludność województw i hospitalizacje / 100 000 mieszkańców
+
+Pierwszy wykres pozwala przełączać oś X pomiędzy:
+
+- `Liczba hospitalizacji ogółem`,
+- `Liczba hospitalizacji / 100 000 mieszkańców`.
+
+Dane ludności pochodzą z GUS, publikacji **Rocznik Statystyczny Województw 2025**, Dział IV „Ludność”, pierwszy arkusz `1 (19)`, **TABL. 1 (19). LUDNOŚĆ W 2024 R. — Stan w dniu 31 grudnia**, kolumna `Ogółem` (w tys. osób). W SQLite wartości są zapisane w osobach w tabeli `population_voivodeship`.
+
+Plik źródłowy użyty do importu:
+
+`data_sources/gus/Dzial_04_Ludnosc.xlsx`
+
+Import / odświeżenie ludności:
+
+```bash
+poetry run python import_population.py
+```
+
+Schemat tabeli znajduje się w `sql/create_population.sql`. Pełny opis źródła, walidacji i sposobu wyliczania wskaźnika znajduje się w `docs/population_gus.md`.
+
+Wskaźnik jest liczony jako `hospitalizacje placówki / ludność województwa × 100 000`. Województwo jest przypisywane przez OW NFZ placówki; nie jest to miejsce zamieszkania pacjenta.
+
+### Stabilne identyfikatory wariantów osi X
+
+Stan wyboru osi X jest zapisywany pod stabilnymi identyfikatorami (`total`, `per_100k`).
+Polskie etykiety są wyłącznie warstwą prezentacyjną (`format_func` w Streamlit), dzięki czemu
+zmiana tekstu w UI nie zmienia logiki, kluczy wykresów ani wartości w `session_state`.
+Aplikacja zawiera migrację wartości zapisanych przez wcześniejsze wersje, które używały pełnych etykiet.
+
+
+## Stan widgetów Streamlit
+
+Przełącznik osi X używa wzorca rozdzielającego trwały stan aplikacji od technicznego
+stanu widgetu. `prepare_widget_choice()` przywraca wartość widgetu wyłącznie przed jego
+utworzeniem, a `sync_widget_choice()` jest callbackiem `on_change` i aktualizuje tylko
+stan kanoniczny. Dzięki temu kod nie modyfikuje klucza widgetu po instancjacji, co jest
+niezgodne z cyklem życia `st.session_state`.
