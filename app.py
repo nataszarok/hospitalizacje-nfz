@@ -8,7 +8,7 @@ from dashboard.data.loaders import (
 )
 from dashboard.domain.analytics import filter_by_min_facility_hospitalizations
 from dashboard.domain.population import add_population_rate
-from dashboard.domain.labels import build_product_meta, product_label, product_legend_label, admission_mode_label
+from dashboard.domain.labels import build_product_meta, product_label, product_legend_label
 from dashboard.ui.content import APP_CSS, header_html, about_markdown, footer_html
 from dashboard.ui.sidebar import render_sidebar
 from dashboard.ui.views import render_mortality, render_admissions
@@ -29,12 +29,10 @@ try:
     population=population_by_ow(); population_meta=population_metadata()
     label=lambda code: product_label(code,product_meta)
     legend=lambda code: product_legend_label(code,product_meta)
-    admission_label=lambda code: admission_mode_label(code,refs.admission_modes)
-
     st.markdown(APP_CSS,unsafe_allow_html=True); st.markdown(header_html(refs.analysis_year),unsafe_allow_html=True)
     with st.expander("O panelu · dane, zakres i interpretacja",expanded=False): st.markdown(about_markdown(refs.analysis_year))
 
-    state=render_sidebar(default_product=refs.default_product_code,region_name_to_code={v:k for k,v in refs.regions.items()},distinct_values=distinct_values,distinct_cities=distinct_cities,product_label=label,admission_label=admission_label)
+    state=render_sidebar(default_product=refs.default_product_code,region_name_to_code={v:k for k,v in refs.regions.items()},distinct_values=distinct_values,distinct_cities=distinct_cities,product_label=label)
     if not state.selected_products: st.info("Wybierz co najmniej jeden produkt jednostkowy w panelu po lewej."); st.stop()
 
     filters=state.filters_tuple()

@@ -13,17 +13,11 @@ def render_sidebar(
     distinct_values: Callable,
     distinct_cities: Callable,
     product_label: Callable[[str], str],
-    admission_label: Callable[[object], str],
 ) -> SidebarState:
     with st.sidebar:
-        # 1. Ustawienia analizy
-        st.markdown("## Ustawienia analizy")
-        st.caption(
-            "Zawęź dane i zdefiniuj kontekst porównania. Filtry obowiązują oba "
-            "moduły, z wyjątkiem opisanych odstępstw."
-        )
+        st.markdown("## Panel filtrów")
 
-        # 2. Zakres świadczeń
+        # 1. Zakres świadczeń
         st.markdown(
             '<div class="sidebar-kicker">Zakres świadczeń</div>',
             unsafe_allow_html=True,
@@ -41,13 +35,8 @@ def render_sidebar(
             st.caption(
                 "Kształt punktu oznacza produkt; kolor oznacza wybraną geografię."
             )
-        admission = st.multiselect(
-            "Kod trybu przyjęcia",
-            distinct_values("KOD_TRYBU_PRZYJECIA"),
-            format_func=admission_label,
-        )
 
-        # 3. Wyróżnienie geograficzne
+        # 2. Wyróżnienie geograficzne
         st.divider()
         st.markdown(
             '<div class="sidebar-kicker">Wyróżnienie geograficzne</div>',
@@ -55,11 +44,12 @@ def render_sidebar(
         )
         view_mode = (
             st.segmented_control(
-                "Perspektywa",
+                "Wyróżnienie geograficzne",
                 ["Województwa", "Miasta"],
                 default="Województwa",
                 selection_mode="single",
                 key="view_mode",
+                label_visibility="collapsed",
             )
             or "Województwa"
         )
@@ -80,10 +70,10 @@ def render_sidebar(
             )
             selected_ow = []
 
-        # 4. Próg wolumenu
+        # 3. Filtry
         st.divider()
         st.markdown(
-            '<div class="sidebar-kicker">Próg wolumenu</div>',
+            '<div class="sidebar-kicker">Filtry</div>',
             unsafe_allow_html=True,
         )
         min_hosp = st.number_input(
@@ -96,13 +86,6 @@ def render_sidebar(
                 "filtrach, w tym po filtrze długości hospitalizacji."
             ),
         )
-
-        # 5. Długość hospitalizacji — świadomie poza filtrem rozwijanym.
-        st.divider()
-        st.markdown(
-            '<div class="sidebar-kicker">Długość hospitalizacji</div>',
-            unsafe_allow_html=True,
-        )
         duration = st.multiselect(
             "Przedział długości hospitalizacji",
             distinct_values("PRZEDZIAL_DLUGOSCI_TRWANIA_HOSPITALIZACJI"),
@@ -112,56 +95,58 @@ def render_sidebar(
             ),
         )
 
-        # 6. Estymacja wartości ukrytych
+        # Filtry dodatkowe są tymczasowo ukryte w interfejsie.
+        # Zachowujemy neutralne wartości, żeby logika zapytań pozostała bez zmian.
+        contracts: list[str] = []
+        discharge: list[str] = []
+        months: list[str] = []
+        sex: list[str] = []
+        age: list[str] = []
+
+        # TODO: przywrócić w razie potrzeby:
+        # with st.expander("Filtry dodatkowe"):
+        #     contracts = st.multiselect(
+        #         "Kod produktu kontraktowego",
+        #         distinct_values("KOD_PRODUKTU_KONTRAKTOWEGO"),
+        #     )
+        #     discharge = st.multiselect(
+        #         "Kod trybu wypisu", distinct_values("KOD_TRYBU_WYPISU")
+        #     )
+        #     months = st.multiselect("Miesiąc", distinct_values("MIESIAC"))
+        #     sex = st.multiselect(
+        #         "Płeć pacjenta", distinct_values("PLEC_PACJENTA")
+        #     )
+        #     age = st.multiselect(
+        #         "Grupa wiekowa", distinct_values("GRUPA_WIEKOWA_PACJENTA")
+        #     )
+
+        # 4. Estymacja wartości ukrytych
         st.divider()
         st.markdown(
             '<div class="sidebar-kicker">Estymacja wartości ukrytych</div>',
             unsafe_allow_html=True,
         )
-        method = st.radio(
-            "Jak przeliczać wartości oznaczone jako '<5'?",
+        method = st.selectbox(
+            "Wartości <5",
             [
                 "Symulacyjna: losowanie 1–4",
                 "Konserwatywna: każde <5 = 1",
             ],
             index=1,
             help=(
-                "Metoda konserwatywna przypisuje <5 wartość 1. Metoda symulacyjna "
-                "używa zapisanych w bazie wartości 1–4."
+                "Dane źródłowe nie podają dokładnej liczby hospitalizacji dla komórek "
+                "oznaczonych jako <5. Metoda konserwatywna zastępuje każdą taką wartość "
+                "liczbą 1. Metoda symulacyjna przypisuje wartości 1–4 z ustalonego losowania "
+                "zapisanego w bazie (seed 42); mniejsze wartości są bardziej prawdopodobne, "
+                "zgodnie z wagami proporcjonalnymi do exp(-x). Wybór metody wpływa także "
+                "na liczbę zgonów, gdy rekord z wartością <5 dotyczy trybu wypisu 9."
             ),
         )
-        st.caption(
-            "<5 → 1. Najbardziej zachowawcze oszacowanie liczby hospitalizacji."
-            if method.startswith("Konserwatywna")
-            else "<5 → 1–4. Stałe losowanie zapisane w bazie."
-        )
-
-        # 7. Filtry dodatkowe
-        st.divider()
-        st.markdown(
-            '<div class="sidebar-kicker">Filtry dodatkowe</div>',
-            unsafe_allow_html=True,
-        )
-        with st.expander("Rozwiń filtry dodatkowe"):
-            contracts = st.multiselect(
-                "Kod produktu kontraktowego",
-                distinct_values("KOD_PRODUKTU_KONTRAKTOWEGO"),
-            )
-            discharge = st.multiselect(
-                "Kod trybu wypisu", distinct_values("KOD_TRYBU_WYPISU")
-            )
-            months = st.multiselect("Miesiąc", distinct_values("MIESIAC"))
-            sex = st.multiselect(
-                "Płeć pacjenta", distinct_values("PLEC_PACJENTA")
-            )
-            age = st.multiselect(
-                "Grupa wiekowa", distinct_values("GRUPA_WIEKOWA_PACJENTA")
-            )
 
     return SidebarState(
         method,
         selected_products,
-        admission,
+        [],  # Filtr trybu przyjęcia został usunięty z panelu bocznego.
         selected_ow,
         selected_cities,
         view_mode,

@@ -59,9 +59,23 @@ def distinct_values(con, column: str):
         return pd.read_sql_query("SELECT value_text FROM filter_values WHERE column_name=? ORDER BY value_text",con,params=[column])["value_text"].dropna().astype(str).tolist()
     raise ValueError("Niedozwolona kolumna filtra")
 
+def normalize_city_name(value: object) -> str:
+    """Normalize city display names without changing source values in SQLite."""
+    if pd.isna(value):
+        return ""
+    return " ".join(str(value).strip().split()).title()
+
+def normalize_city_series(series: pd.Series) -> pd.Series:
+    return series.map(normalize_city_name)
+
 def distinct_cities(con):
-    q='''SELECT DISTINCT TRIM("Miejscowość") city FROM szpitale_laczone WHERE "Miejscowość" IS NOT NULL AND TRIM("Miejscowość") <> '' ORDER BY city'''
-    return pd.read_sql_query(q,con)["city"].dropna().astype(str).tolist()
+    q = '''SELECT TRIM("Miejscowość") AS city
+           FROM szpitale_laczone
+           WHERE "Miejscowość" IS NOT NULL
+             AND TRIM("Miejscowość") <> '' '''
+    cities = pd.read_sql_query(q, con)["city"].dropna().map(normalize_city_name)
+    # Case-insensitive uniqueness after display normalization; source DB stays untouched.
+    return sorted(dict.fromkeys(cities.tolist()), key=str.casefold)
 
 def should_use_preaggregate(filters: dict) -> bool:
     return not any(filters.get(k,()) for k in SECONDARY_FILTERS)
@@ -85,7 +99,7 @@ def load_aggregated(con, filters: tuple, method: str, death_code: int, region_ma
     q=f'''SELECT h.OW_NFZ,h.NIP_PODMIOTU,h.KOD_PRODUKTU_JEDNOSTKOWEGO,COALESCE(s."Świadczeniodawca",'NIP '||h.NIP_PODMIOTU) "Świadczeniodawca",COALESCE(s."Województwo",'') "Województwo",COALESCE(s."Miejscowość",'') "Miejscowość",SUM(h."{hosp}") hospitalizacje_ogolem,{death_expr} zgony FROM {table} h LEFT JOIN szpitale_laczone s ON s.NIP=CAST(h.NIP_PODMIOTU AS TEXT){ws} GROUP BY h.OW_NFZ,h.NIP_PODMIOTU,h.KOD_PRODUKTU_JEDNOSTKOWEGO,s."Świadczeniodawca",s."Województwo",s."Miejscowość"'''
     data=pd.read_sql_query(q,con,params=params)
     if data.empty:return data
-    data["OW_NFZ"]=data["OW_NFZ"].astype(str).str.replace(r"\.0$","",regex=True).str.zfill(2); data["Województwo"]=data["Województwo"].replace("",pd.NA).fillna(data["OW_NFZ"].map(region_map)).fillna(""); data["KOD_PRODUKTU_JEDNOSTKOWEGO"]=data["KOD_PRODUKTU_JEDNOSTKOWEGO"].astype(str)
+    data["OW_NFZ"]=data["OW_NFZ"].astype(str).str.replace(r"\.0$","",regex=True).str.zfill(2); data["Województwo"]=data["Województwo"].replace("",pd.NA).fillna(data["OW_NFZ"].map(region_map)).fillna(""); data["KOD_PRODUKTU_JEDNOSTKOWEGO"]=data["KOD_PRODUKTU_JEDNOSTKOWEGO"].astype(str); data["Miejscowość"] = normalize_city_series(data["Miejscowość"])
     return add_derived_metrics(data).sort_values("hospitalizacje_ogolem",ascending=False).reset_index(drop=True)
 
 def load_admission_comparison(con, filters: tuple, method: str):
@@ -96,5 +110,5 @@ def load_admission_comparison(con, filters: tuple, method: str):
         table="hospitalizacje"; hosp="LICZBA_HOSPITALIZACJI_NUM" if method.startswith("Symulacyjna") else "LICZBA_HOSPITALIZACJI_MIN"
     q=f'''SELECT h.OW_NFZ,h.NIP_PODMIOTU,h.KOD_PRODUKTU_JEDNOSTKOWEGO,h.KOD_TRYBU_PRZYJECIA,COALESCE(s."Świadczeniodawca",'NIP '||CAST(h.NIP_PODMIOTU AS TEXT)) "Świadczeniodawca",COALESCE(s."Miejscowość",'') "Miejscowość",SUM(h."{hosp}") hospitalizacje_ogolem FROM {table} h LEFT JOIN szpitale_laczone s ON s.NIP=CAST(h.NIP_PODMIOTU AS TEXT) WHERE {" AND ".join(where)} GROUP BY h.OW_NFZ,h.NIP_PODMIOTU,h.KOD_PRODUKTU_JEDNOSTKOWEGO,h.KOD_TRYBU_PRZYJECIA,s."Świadczeniodawca",s."Miejscowość"'''
     data=pd.read_sql_query(q,con,params=params)
-    if not data.empty: data["OW_NFZ"]=data["OW_NFZ"].astype(str).str.replace(r"\.0$","",regex=True).str.zfill(2); data["KOD_PRODUKTU_JEDNOSTKOWEGO"]=data["KOD_PRODUKTU_JEDNOSTKOWEGO"].astype(str)
+    if not data.empty: data["OW_NFZ"]=data["OW_NFZ"].astype(str).str.replace(r"\.0$","",regex=True).str.zfill(2); data["KOD_PRODUKTU_JEDNOSTKOWEGO"]=data["KOD_PRODUKTU_JEDNOSTKOWEGO"].astype(str); data["Miejscowość"] = normalize_city_series(data["Miejscowość"])
     return data

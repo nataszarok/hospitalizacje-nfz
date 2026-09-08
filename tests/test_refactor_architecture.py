@@ -396,23 +396,48 @@ def test_admission_shared_range_gives_zero_values_visual_margin():
     assert _shared_axis_range_with_padding(x, y) == (-0.5, 10.5)
 
 
-def test_sidebar_sections_follow_requested_order_and_duration_is_standalone():
+def test_sidebar_uses_compact_requested_structure():
     sidebar = (ROOT / "dashboard" / "ui" / "sidebar.py").read_text(encoding="utf-8")
+
+    assert "## Panel filtrów" in sidebar
+    assert "## Ustawienia analizy" not in sidebar
+    assert '"Kod trybu przyjęcia"' not in sidebar
+
     labels = [
-        "## Ustawienia analizy",
         "Zakres świadczeń",
         "Wyróżnienie geograficzne",
-        "Próg wolumenu",
-        "Długość hospitalizacji",
+        "Filtry",
         "Estymacja wartości ukrytych",
-        "Filtry dodatkowe",
     ]
     positions = [sidebar.index(label) for label in labels]
     assert positions == sorted(positions)
-    # Długość hospitalizacji jest renderowana przed expanderem filtrów dodatkowych.
-    assert sidebar.index('"Przedział długości hospitalizacji"') < sidebar.index(
-        'with st.expander("Rozwiń filtry dodatkowe")'
-    )
+
+    # Próg i długość są jednym zwartym blokiem filtrów, bez osobnych nagłówków.
+    assert '"Minimalna liczba hospitalizacji na placówkę"' in sidebar
+    assert '"Przedział długości hospitalizacji"' in sidebar
+    assert sidebar.index('"Minimalna liczba hospitalizacji na placówkę"') < sidebar.index(
+        '"Przedział długości hospitalizacji"'
+    ) < sidebar.index('contracts: list[str] = []')
+    assert '# with st.expander("Filtry dodatkowe"):' in sidebar
+    assert '        with st.expander("Filtry dodatkowe"):' not in sidebar
+
+    # Estymacja jest oszczędnym pojedynczym wyborem zamiast listy radio + opisu.
+    assert 'method = st.selectbox(' in sidebar
+    assert 'method = st.radio(' not in sidebar
+    assert "seed 42" in sidebar
+    assert "exp(-x)" in sidebar
+    assert "trybu wypisu 9" in sidebar
+
+
+def test_sidebar_removed_admission_filter_defaults_to_no_admission_restriction():
+    sidebar = (ROOT / "dashboard" / "ui" / "sidebar.py").read_text(encoding="utf-8")
+    app = (ROOT / "app.py").read_text(encoding="utf-8")
+    views = (ROOT / "dashboard" / "ui" / "views.py").read_text(encoding="utf-8")
+
+    assert "admission_label" not in app
+    assert "admission_mode_label" not in app
+    assert "[],  # Filtr trybu przyjęcia został usunięty" in sidebar
+    assert 'filtr „Kod trybu przyjęcia” z panelu bocznego' not in views
 
 
 def test_duration_remains_a_substantive_filter_before_volume_threshold():
@@ -519,3 +544,36 @@ def test_kpi_cards_reserve_fixed_space_for_secondary_share_and_fill_column():
     assert "min-height:7.35rem" in metric_css
     assert "width:100%" in metric_css
     assert "box-sizing:border-box" in metric_css
+
+
+def test_city_names_are_normalized_for_display_and_selection():
+    import pandas as pd
+    from dashboard.data.database import normalize_city_name, normalize_city_series
+
+    assert normalize_city_name("WARSZAWA") == "Warszawa"
+    assert normalize_city_name(" Warszawa ") == "Warszawa"
+    assert normalize_city_name("BIELSKO-BIAŁA") == "Bielsko-Biała"
+    assert normalize_city_series(pd.Series(["WARSZAWA", "Warszawa"])).tolist() == [
+        "Warszawa", "Warszawa"
+    ]
+
+
+def test_distinct_cities_query_is_valid_and_deduplicates_case_variants():
+    import sqlite3
+    from dashboard.data.database import distinct_cities
+
+    con = sqlite3.connect(":memory:")
+    con.execute('CREATE TABLE szpitale_laczone ("Miejscowość" TEXT)')
+    con.executemany(
+        'INSERT INTO szpitale_laczone ("Miejscowość") VALUES (?)',
+        [("WARSZAWA",), ("Warszawa",), ("  BIELSKO-BIAŁA  ",), ("",), (None,)],
+    )
+
+    assert distinct_cities(con) == ["Bielsko-Biała", "Warszawa"]
+
+
+def test_sidebar_no_longer_uses_perspektywa_label():
+    from pathlib import Path
+    source = Path("dashboard/ui/sidebar.py").read_text(encoding="utf-8")
+    assert '"Perspektywa"' not in source
+    assert 'label_visibility="collapsed"' in source

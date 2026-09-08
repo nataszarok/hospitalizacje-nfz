@@ -283,11 +283,6 @@ def render_admissions(
         'przyjęcia planowane (kod 6), a oś Y sumę przyjęć nagłych (kody 2 i 3).</div>',
         unsafe_allow_html=True,
     )
-    st.info(
-        'W tym module filtr „Kod trybu przyjęcia” z panelu bocznego jest celowo '
-        'pomijany. Porównanie zawsze obejmuje kody 6 vs 2+3.'
-    )
-
     all_stats = admission_facility_stats(admission_data)
     all_stats = add_admission_population_rates(all_stats, population_by_ow)
     baseline_stats = admission_facility_stats(baseline_admission_data)
