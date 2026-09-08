@@ -16,6 +16,11 @@ ADMISSION_SCALE_LABELS = {
     X_AXIS_PER_100K: "Liczba hospitalizacji / 100 000 mieszkańców",
 }
 
+AXIS_CONTROL_LABELS = {
+    X_AXIS_TOTAL: "Liczba hospitalizacji",
+    X_AXIS_PER_100K: "Na 100 tys. mieszk.",
+}
+
 # One-time migration for values saved by older app versions. Application logic
 # depends on stable IDs, not presentation labels.
 X_AXIS_LEGACY_VALUES = {label: option_id for option_id, label in X_AXIS_LABELS.items()}
@@ -35,3 +40,11 @@ def admission_scale_label(option_id: str) -> str:
         return ADMISSION_SCALE_LABELS[option_id]
     except KeyError as exc:
         raise ValueError(f"Unknown admission scale option ID: {option_id!r}") from exc
+
+
+def axis_control_label(option_id: str) -> str:
+    """Compact label for segmented controls placed next to chart headings."""
+    try:
+        return AXIS_CONTROL_LABELS[option_id]
+    except KeyError as exc:
+        raise ValueError(f"Unknown axis option ID: {option_id!r}") from exc

@@ -11,8 +11,7 @@ from .axis_options import (
     X_AXIS_LEGACY_VALUES,
     X_AXIS_OPTIONS,
     X_AXIS_PER_100K,
-    x_axis_label,
-    admission_scale_label,
+    axis_control_label,
 )
 from .components import compact_stats_html, metric_display_value, metric_retained_share
 from .state import (
@@ -58,12 +57,6 @@ def render_mortality(
     product_legend,
     population_metadata: dict[str, str],
 ):
-    st.markdown(
-        '<div class="section-copy"><b>Wolumen hospitalizacji a śmiertelność.</b> '
-        'Każdy punkt reprezentuje placówkę; wyróżnienia geograficzne zachowują '
-        'pozostałe placówki jako tło porównawcze.</div>',
-        unsafe_allow_html=True,
-    )
     if result.empty:
         st.warning("Brak placówek spełniających wybrany próg liczby hospitalizacji.")
         return
@@ -115,8 +108,8 @@ def render_mortality(
             {
                 "label": "Śmiertelność ogółem",
                 "show_share_secondary": False,
-                "value": f"{cur['smiertelnosc']:.2f}%",
-                "baseline": f"{base['smiertelnosc']:.2f}%" if has_comparison else None,
+                "value": f"{cur['smiertelnosc']:.1f}%",
+                "baseline": f"{base['smiertelnosc']:.1f}%" if has_comparison else None,
                 "value_numeric": cur["smiertelnosc"],
                 "baseline_numeric": base["smiertelnosc"] if has_comparison else None,
                 "tooltip": ctx + "Suma zgonów / suma hospitalizacji × 100.",
@@ -144,10 +137,18 @@ def render_mortality(
             aliases=X_AXIS_LEGACY_VALUES,
         )
 
-        st.segmented_control(
+        heading_col, axis_col = st.columns([1.7, 0.75], gap="small", vertical_alignment="bottom")
+        with heading_col:
+            st.markdown(
+                '<div class="chart-heading">Śmiertelność a wolumen</div>'
+                '<div class="chart-context">Każdy punkt to placówka; wyróżnione obszary pozostają na tle pozostałych placówek.</div>',
+                unsafe_allow_html=True,
+            )
+        with axis_col:
+            st.segmented_control(
             "Oś X",
             options=X_AXIS_OPTIONS,
-            format_func=x_axis_label,
+            format_func=axis_control_label,
             selection_mode="single",
             key=MORTALITY_X_AXIS_WIDGET_KEY,
             on_change=sync_widget_choice,
@@ -159,22 +160,14 @@ def render_mortality(
                 X_AXIS_DEFAULT,
             ),
             kwargs={"aliases": X_AXIS_LEGACY_VALUES},
-            help=(
-                "W wariancie na 100 000 mianownikiem jest liczba mieszkańców województwa "
-                "przypisanego do placówki przez OW NFZ. Dane ludności: GUS, stan 31.12.2024."
-            ),
-        )
+                help=(
+                    "W wariancie na 100 000 mianownikiem jest liczba mieszkańców województwa "
+                    "przypisanego do placówki przez OW NFZ. Dane ludności: GUS, stan 31.12.2024."
+                ),
+            )
         # Callback jest wykonywany przed rerunem, więc po każdej interakcji
         # trwały stan zawiera już aktualne ID. Nie zapisujemy tutaj widget_key.
         x_axis_mode = st.session_state[MORTALITY_X_AXIS_STATE_KEY]
-        if x_axis_mode == X_AXIS_PER_100K:
-            ref_date = population_metadata.get("reference_date", "2024-12-31")
-            st.caption(
-                "Normalizacja: hospitalizacje placówki / ludność województwa × 100 000. "
-                f"Ludność wg GUS, stan na {ref_date}. To mianownik dla województwa placówki, "
-                "nie miejsce zamieszkania pacjentów."
-            )
-
         fig = make_scatter(
             result,
             state.selected_ow if state.view_mode == "Województwa" else [],
@@ -277,12 +270,6 @@ def render_admissions(
     population_by_ow: dict[str, int],
     population_metadata: dict[str, str],
 ):
-    st.markdown(
-        '<div class="section-title">Przyjęcia planowane a nagłe</div>'
-        '<div class="section-copy">Każdy punkt to jedna placówka. Oś X pokazuje '
-        'przyjęcia planowane (kod 6), a oś Y sumę przyjęć nagłych (kody 2 i 3).</div>',
-        unsafe_allow_html=True,
-    )
     all_stats = admission_facility_stats(admission_data)
     all_stats = add_admission_population_rates(all_stats, population_by_ow)
     baseline_stats = admission_facility_stats(baseline_admission_data)
@@ -332,35 +319,35 @@ def render_admissions(
         X_AXIS_DEFAULT,
         aliases=X_AXIS_LEGACY_VALUES,
     )
-    st.segmented_control(
-        "Skala osi X i Y",
-        options=X_AXIS_OPTIONS,
-        format_func=admission_scale_label,
-        selection_mode="single",
-        key=ADMISSION_SCALE_WIDGET_KEY,
-        on_change=sync_widget_choice,
-        args=(
-            st.session_state,
-            ADMISSION_SCALE_STATE_KEY,
-            ADMISSION_SCALE_WIDGET_KEY,
-            X_AXIS_OPTIONS,
-            X_AXIS_DEFAULT,
-        ),
-        kwargs={"aliases": X_AXIS_LEGACY_VALUES},
-        help=(
-            "Zmiana skali dotyczy równocześnie obu osi: planowanych na osi X i nagłych na osi Y. "
-            "W wariancie na 100 000 mianownikiem jest liczba mieszkańców województwa placówki."
-        ),
-    )
-    scale_mode = st.session_state[ADMISSION_SCALE_STATE_KEY]
-    if scale_mode == X_AXIS_PER_100K:
-        ref_date = population_metadata.get("reference_date", "2024-12-31")
-        st.caption(
-            "Normalizacja obu osi: liczba przyjęć placówki / ludność województwa × 100 000. "
-            f"Ludność wg GUS, stan na {ref_date}. Mianownik wynika z OW NFZ placówki, "
-            "nie miejsca zamieszkania pacjentów."
+    heading_col, scale_col = st.columns([1.7, 0.75], gap="small", vertical_alignment="bottom")
+    with heading_col:
+        st.markdown(
+            '<div class="chart-heading">Przyjęcia planowane a nagłe</div>'
+            '<div class="chart-context">Każdy punkt to placówka · X: planowane (6) · Y: nagłe (2+3).</div>',
+            unsafe_allow_html=True,
         )
-
+    with scale_col:
+        st.segmented_control(
+            "Skala osi X i Y",
+            options=X_AXIS_OPTIONS,
+            format_func=axis_control_label,
+            selection_mode="single",
+            key=ADMISSION_SCALE_WIDGET_KEY,
+            on_change=sync_widget_choice,
+            args=(
+                st.session_state,
+                ADMISSION_SCALE_STATE_KEY,
+                ADMISSION_SCALE_WIDGET_KEY,
+                X_AXIS_OPTIONS,
+                X_AXIS_DEFAULT,
+            ),
+            kwargs={"aliases": X_AXIS_LEGACY_VALUES},
+            help=(
+                "Zmiana skali dotyczy równocześnie obu osi: planowanych na osi X i nagłych na osi Y. "
+                "W wariancie na 100 000 mianownikiem jest liczba mieszkańców województwa placówki."
+            ),
+        )
+    scale_mode = st.session_state[ADMISSION_SCALE_STATE_KEY]
     selected_ow = state.selected_ow if state.view_mode == "Województwa" else []
     selected_cities = state.selected_cities if state.view_mode == "Miasta" else []
     st.plotly_chart(

@@ -174,14 +174,16 @@ def make_admission_comparison_chart(
         template="plotly_white",
         xaxis_title=x_title,
         yaxis_title=y_title,
+        hovermode="closest",
         paper_bgcolor="#FFFFFF",
         plot_bgcolor="#FFFFFF",
         font=dict(color="#172033", family="Arial"),
-        hoverlabel=dict(bgcolor="#FFFFFF", font_color="#111111", bordercolor="#B8BDC7"),
+        hoverlabel=dict(bgcolor="#5F6672", font_color="#FFFFFF", bordercolor="#5F6672", font_size=13),
+        hoverdistance=18,
         showlegend=bool(selected_ow or selected_cities),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0, font=dict(color="#111111")),
         margin=dict(l=20, r=20, t=70 if (selected_ow or selected_cities) else 30, b=50),
-        height=650,
+        height=540,
     )
     fig.update_xaxes(
         range=list(shared_range),
@@ -327,7 +329,8 @@ def make_scatter(
         paper_bgcolor="#FFFFFF",
         plot_bgcolor="#FFFFFF",
         font=dict(color="#172033", family="Arial"),
-        hoverlabel=dict(bgcolor="#FFFFFF", font_color="#111111", bordercolor="#B8BDC7"),
+        hoverlabel=dict(bgcolor="#5F6672", font_color="#FFFFFF", bordercolor="#5F6672", font_size=13),
+        hoverdistance=18,
         legend=dict(
             orientation="h",
             yanchor="bottom",
@@ -337,7 +340,7 @@ def make_scatter(
             font=dict(color="#111111"),
         ),
         margin=dict(l=20, r=20, t=70, b=20),
-        height=650,
+        height=540,
     )
     fig.update_xaxes(
         showgrid=True,

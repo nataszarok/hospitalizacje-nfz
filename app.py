@@ -30,8 +30,6 @@ try:
     label=lambda code: product_label(code,product_meta)
     legend=lambda code: product_legend_label(code,product_meta)
     st.markdown(APP_CSS,unsafe_allow_html=True); st.markdown(header_html(refs.analysis_year),unsafe_allow_html=True)
-    with st.expander("O panelu · dane, zakres i interpretacja",expanded=False): st.markdown(about_markdown(refs.analysis_year))
-
     state=render_sidebar(default_product=refs.default_product_code,region_name_to_code={v:k for k,v in refs.regions.items()},distinct_values=distinct_values,distinct_cities=distinct_cities,product_label=label)
     if not state.selected_products: st.info("Wybierz co najmniej jeden produkt jednostkowy w panelu po lewej."); st.stop()
 
@@ -48,7 +46,7 @@ try:
     baseline_result=add_population_rate(baseline_result,population)
     result=filter_by_min_facility_hospitalizations(result_before_threshold,state.min_hosp)
 
-    tab_mortality,tab_admissions=st.tabs(["Wolumen i śmiertelność","Tryb przyjęcia"])
+    tab_mortality,tab_admissions,tab_about=st.tabs(["Wolumen i śmiertelność","Tryb przyjęcia","Metodologia i dane"])
     with tab_mortality:
         render_mortality(result=result,baseline_result=baseline_result,min_hosp=state.min_hosp,state=state,refs=refs,product_meta=product_meta,product_legend=legend,population_metadata=population_meta)
     with tab_admissions:
@@ -60,6 +58,8 @@ try:
                 else admission_comparison(baseline_filters,state.method)
             )
         render_admissions(admission_data=admission_data,baseline_admission_data=baseline_admission_data,min_hosp=state.min_hosp,state=state,refs=refs,population_by_ow=population,population_metadata=population_meta)
+    with tab_about:
+        st.markdown(about_markdown(refs.analysis_year))
     st.markdown(footer_html(refs.analysis_year),unsafe_allow_html=True)
 except Exception as exc:
     st.error("Aplikacja napotkała błąd podczas ładowania danych."); st.exception(exc)

@@ -29,7 +29,8 @@ def render_sidebar(
             products,
             default=defaults,
             format_func=product_label,
-            help="Lista pokazuje kod, JGP i nazwę produktu.",
+            max_selections=5,
+            help="Lista pokazuje kod, JGP i nazwę produktu. Możesz wybrać maksymalnie 5 produktów.",
         )
         if len(selected_products) > 1:
             st.caption(
@@ -57,7 +58,9 @@ def render_sidebar(
             selected_regions = st.multiselect(
                 "Województwa do wyróżnienia",
                 list(region_name_to_code),
+                max_selections=5,
                 key="region_sidebar_selector",
+                help="Możesz wyróżnić maksymalnie 5 województw jednocześnie.",
             )
             selected_ow = [region_name_to_code[x] for x in selected_regions]
             selected_cities = []
@@ -65,8 +68,10 @@ def render_sidebar(
             selected_cities = st.multiselect(
                 "Miejscowości do wyróżnienia",
                 distinct_cities(),
-                placeholder="Wybierz jedno lub więcej miast",
+                placeholder="Wybierz maksymalnie 5 miast",
+                max_selections=5,
                 key="city_sidebar_selector",
+                help="Możesz wyróżnić maksymalnie 5 miast jednocześnie.",
             )
             selected_ow = []
 

@@ -32,8 +32,8 @@ def test_metric_value_and_compact_stats_are_pure_render_helpers():
     assert metric_display_value("372", "493") == "372 / 493"
     assert metric_display_value("493") == "493"
     assert metric_display_value("0.63%", "0.66%") == "0.63% / 0.66%"
-    assert metric_retained_share(372, 493) == "75% wartości bazowej"
-    assert metric_retained_share(0.63, 0.66) == "95% wartości bazowej"
+    assert metric_retained_share(372, 493) == "75.5% wartości bazowej"
+    assert metric_retained_share(0.63, 0.66) == "95.5% wartości bazowej"
     assert metric_retained_share(100, 0) is None
     html = compact_stats_html("Mazowieckie", [{"label":"Łącznie","hospitalizacje":100,"hospitalizacje_na_placowke":10,"smiertelnosc":2.5,"placowki":10}])
     assert "Mazowieckie" in html and "2.50%" in html
@@ -540,8 +540,8 @@ def test_kpi_percentage_is_hidden_without_comparison_baseline():
 def test_kpi_cards_reserve_fixed_space_for_secondary_share_and_fill_column():
     content = (ROOT / "dashboard" / "ui" / "content.py").read_text(encoding="utf-8")
     metric_css = content[content.index('[data-testid="stMetric"]'):content.index('[data-testid="stMetricLabel"]')]
-    assert "height:7.35rem" in metric_css
-    assert "min-height:7.35rem" in metric_css
+    assert "height:88px" in metric_css
+    assert "min-height:88px" in metric_css
     assert "width:100%" in metric_css
     assert "box-sizing:border-box" in metric_css
 
@@ -577,3 +577,65 @@ def test_sidebar_no_longer_uses_perspektywa_label():
     source = Path("dashboard/ui/sidebar.py").read_text(encoding="utf-8")
     assert '"Perspektywa"' not in source
     assert 'label_visibility="collapsed"' in source
+
+
+def test_about_content_is_a_third_tab_not_an_expander():
+    app = (ROOT / "app.py").read_text(encoding="utf-8")
+    assert 'st.tabs(["Wolumen i śmiertelność","Tryb przyjęcia","Metodologia i dane"])' in app
+    assert 'with tab_about:' in app
+    assert 'st.markdown(about_markdown(refs.analysis_year))' in app
+    assert 'st.expander("O panelu' not in app
+
+
+def test_compact_dashboard_header_and_chart_height_for_first_viewport():
+    content = (ROOT / "dashboard" / "ui" / "content.py").read_text(encoding="utf-8")
+    charts = (ROOT / "dashboard" / "ui" / "charts.py").read_text(encoding="utf-8")
+    assert "Hospitalizacje w Polsce" in content
+    assert "Analiza wolumenu, śmiertelności i trybu przyjęcia" in content
+    assert "padding-top:.85rem" in content
+    assert charts.count("height=540") >= 2
+
+
+def test_chart_controls_share_row_with_chart_heading():
+    views = (ROOT / "dashboard" / "ui" / "views.py").read_text(encoding="utf-8")
+    assert "heading_col, axis_col = st.columns" in views
+    assert "heading_col, scale_col = st.columns" in views
+    assert "Śmiertelność a wolumen" in views
+    assert "Przyjęcia planowane a nagłe" in views
+
+
+def test_compact_axis_control_labels_fit_chart_header():
+    from dashboard.ui.axis_options import X_AXIS_PER_100K, X_AXIS_TOTAL, axis_control_label
+    assert axis_control_label(X_AXIS_TOTAL) == "Liczba hospitalizacji"
+    assert axis_control_label(X_AXIS_PER_100K) == "Na 100 tys. mieszk."
+
+
+def test_admission_chart_uses_closest_hover_mode():
+    fig = make_admission_comparison_chart(_admission_chart_df())
+    assert fig.layout.hovermode == "closest"
+
+
+def test_hover_feedback_uses_native_plotly_hover_label_not_css_point_hover():
+    content = (ROOT / "dashboard" / "ui" / "content.py").read_text(encoding="utf-8")
+    assert "path.point:hover" not in content
+
+    fig = make_scatter(
+        _scatter_df(), ["07"], ["p1"], [], {"07":"Mazowieckie"},
+        ["#000000"], ["circle"], lambda p:p
+    )
+    assert fig.layout.hovermode == "closest"
+    assert fig.layout.hoverdistance == 18
+    assert fig.layout.hoverlabel.bgcolor == "#5F6672"
+    assert fig.layout.hoverlabel.font.color == "#FFFFFF"
+
+    admission = make_admission_comparison_chart(_admission_chart_df())
+    assert admission.layout.hoverdistance == 18
+    assert admission.layout.hoverlabel.bgcolor == "#5F6672"
+
+
+def test_sidebar_limits_products_regions_and_cities_to_five_selections():
+    sidebar = Path("dashboard/ui/sidebar.py").read_text(encoding="utf-8")
+    assert sidebar.count("max_selections=5") >= 3
+    assert "Możesz wybrać maksymalnie 5 produktów." in sidebar
+    assert "Możesz wyróżnić maksymalnie 5 województw jednocześnie." in sidebar
+    assert "Możesz wyróżnić maksymalnie 5 miast jednocześnie." in sidebar
