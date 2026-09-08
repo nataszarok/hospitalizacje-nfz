@@ -33,3 +33,19 @@ def test_population_source_is_reproducible():
     assert (ROOT / "data_sources" / "gus" / "Dzial_04_Ludnosc.xlsx").exists()
     assert (ROOT / "sql" / "create_population.sql").exists()
     assert (ROOT / "docs" / "population_gus.md").exists()
+
+
+def test_add_admission_population_rates_normalizes_both_axes_together():
+    from dashboard.domain.population import add_admission_population_rates
+
+    df = pd.DataFrame([{
+        "OW_NFZ": "07",
+        "planowane": 100,
+        "nagle": 250,
+        "razem_planowane_nagle": 350,
+    }])
+    out = add_admission_population_rates(df, {"07": 5_000_000})
+    assert out.loc[0, "planowane_na_100k"] == pytest.approx(2.0)
+    assert out.loc[0, "nagle_na_100k"] == pytest.approx(5.0)
+    assert out.loc[0, "razem_planowane_nagle_na_100k"] == pytest.approx(7.0)
+    assert out.loc[0, "ludnosc_wojewodztwa"] == 5_000_000

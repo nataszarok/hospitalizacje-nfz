@@ -48,7 +48,7 @@ try:
         render_mortality(result=result,result_all=result_all,min_hosp=state.min_hosp,state=state,refs=refs,product_meta=product_meta,product_legend=legend,population_metadata=population_meta)
     with tab_admissions:
         with st.spinner("Agreguję tryby przyjęcia..."): admission_data=admission_comparison(filters,state.method)
-        render_admissions(admission_data=admission_data,min_hosp=state.min_hosp)
+        render_admissions(admission_data=admission_data,min_hosp=state.min_hosp,state=state,refs=refs,population_by_ow=population,population_metadata=population_meta)
     st.markdown(footer_html(refs.analysis_year),unsafe_allow_html=True)
 except Exception as exc:
     st.error("Aplikacja napotkała błąd podczas ładowania danych."); st.exception(exc)

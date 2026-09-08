@@ -160,3 +160,6 @@ stanu widgetu. `prepare_widget_choice()` przywraca wartość widgetu wyłącznie
 utworzeniem, a `sync_widget_choice()` jest callbackiem `on_change` i aktualizuje tylko
 stan kanoniczny. Dzięki temu kod nie modyfikuje klucza widgetu po instancjacji, co jest
 niezgodne z cyklem życia `st.session_state`.
+
+### Tryb przyjęcia — wspólna skala osi
+Wykres porównujący przyjęcia planowane i nagłe używa tego samego zakresu liczbowego na obu osiach (od 0 do wspólnego maksimum z 5% zapasem). Dotyczy to zarówno wartości nominalnych, jak i wariantu na 100 000 mieszkańców. Szara przerywana linia `y = x` pokazuje punkt równowagi: punkty powyżej linii mają więcej przyjęć nagłych niż planowanych, a poniżej — więcej planowanych niż nagłych.

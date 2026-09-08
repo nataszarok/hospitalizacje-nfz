@@ -4,6 +4,7 @@ import pandas as pd
 import streamlit as st
 
 from dashboard.domain.analytics import area_product_stats, dataset_summary, admission_facility_stats
+from dashboard.domain.population import add_admission_population_rates
 from .charts import make_scatter, make_admission_comparison_chart
 from .axis_options import (
     X_AXIS_DEFAULT,
@@ -11,6 +12,7 @@ from .axis_options import (
     X_AXIS_OPTIONS,
     X_AXIS_PER_100K,
     x_axis_label,
+    admission_scale_label,
 )
 from .components import compact_stats_html, metric_display_value
 from .state import (
@@ -19,6 +21,9 @@ from .state import (
     prepare_widget_choice,
     sync_widget_choice,
     mortality_chart_key,
+    ADMISSION_SCALE_STATE_KEY,
+    ADMISSION_SCALE_WIDGET_KEY,
+    admission_chart_key,
 )
 
 
@@ -234,7 +239,15 @@ def render_mortality(
         st.dataframe(table, use_container_width=True, hide_index=True)
 
 
-def render_admissions(*, admission_data: pd.DataFrame, min_hosp: int):
+def render_admissions(
+    *,
+    admission_data: pd.DataFrame,
+    min_hosp: int,
+    state,
+    refs,
+    population_by_ow: dict[str, int],
+    population_metadata: dict[str, str],
+):
     st.markdown(
         '<div class="section-title">Przyjęcia planowane a nagłe</div>'
         '<div class="section-copy">Każdy punkt to jedna placówka. Oś X pokazuje '
@@ -242,10 +255,12 @@ def render_admissions(*, admission_data: pd.DataFrame, min_hosp: int):
         unsafe_allow_html=True,
     )
     st.info(
-        "W tym module filtr „Kod trybu przyjęcia” z panelu bocznego jest celowo "
-        "pomijany. Porównanie zawsze obejmuje kody 6 vs 2+3."
+        'W tym module filtr „Kod trybu przyjęcia” z panelu bocznego jest celowo '
+        'pomijany. Porównanie zawsze obejmuje kody 6 vs 2+3.'
     )
+
     all_stats = admission_facility_stats(admission_data)
+    all_stats = add_admission_population_rates(all_stats, population_by_ow)
     stats = (
         all_stats[all_stats["razem_planowane_nagle"] >= min_hosp].copy()
         if min_hosp > 0 and not all_stats.empty
@@ -254,6 +269,7 @@ def render_admissions(*, admission_data: pd.DataFrame, min_hosp: int):
     if stats.empty:
         st.warning("Brak placówek spełniających warunki porównania kodów przyjęcia 2, 3 i 6.")
         return
+
     p = stats["planowane"].sum()
     u = stats["nagle"].sum()
     ap = all_stats["planowane"].sum()
@@ -273,21 +289,75 @@ def render_admissions(*, admission_data: pd.DataFrame, min_hosp: int):
             {"label": "Planowane + nagłe", "value": f"{p + u:,.0f}".replace(",", " "), "baseline": f"{ap + au:,.0f}".replace(",", " ") if min_hosp > 0 else None, "tooltip": ctx},
         ]
     )
+
+    scale_mode = prepare_widget_choice(
+        st.session_state,
+        ADMISSION_SCALE_STATE_KEY,
+        ADMISSION_SCALE_WIDGET_KEY,
+        X_AXIS_OPTIONS,
+        X_AXIS_DEFAULT,
+        aliases=X_AXIS_LEGACY_VALUES,
+    )
+    st.segmented_control(
+        "Skala osi X i Y",
+        options=X_AXIS_OPTIONS,
+        format_func=admission_scale_label,
+        selection_mode="single",
+        key=ADMISSION_SCALE_WIDGET_KEY,
+        on_change=sync_widget_choice,
+        args=(
+            st.session_state,
+            ADMISSION_SCALE_STATE_KEY,
+            ADMISSION_SCALE_WIDGET_KEY,
+            X_AXIS_OPTIONS,
+            X_AXIS_DEFAULT,
+        ),
+        kwargs={"aliases": X_AXIS_LEGACY_VALUES},
+        help=(
+            "Zmiana skali dotyczy równocześnie obu osi: planowanych na osi X i nagłych na osi Y. "
+            "W wariancie na 100 000 mianownikiem jest liczba mieszkańców województwa placówki."
+        ),
+    )
+    scale_mode = st.session_state[ADMISSION_SCALE_STATE_KEY]
+    if scale_mode == X_AXIS_PER_100K:
+        ref_date = population_metadata.get("reference_date", "2024-12-31")
+        st.caption(
+            "Normalizacja obu osi: liczba przyjęć placówki / ludność województwa × 100 000. "
+            f"Ludność wg GUS, stan na {ref_date}. Mianownik wynika z OW NFZ placówki, "
+            "nie miejsca zamieszkania pacjentów."
+        )
+
+    selected_ow = state.selected_ow if state.view_mode == "Województwa" else []
+    selected_cities = state.selected_cities if state.view_mode == "Miasta" else []
     st.plotly_chart(
-        make_admission_comparison_chart(stats),
+        make_admission_comparison_chart(
+            stats,
+            selected_ow=selected_ow,
+            selected_cities=selected_cities,
+            region_names=refs.regions,
+            colors=refs.highlight_colors,
+            scale_mode=scale_mode,
+        ),
         use_container_width=True,
         theme=None,
         config={"displaylogo": False},
-        key="admission_scatter_nominal",
+        key=admission_chart_key(scale_mode, state.view_mode),
     )
+
     with st.expander("Tabela danych · tryby przyjęcia"):
         table = stats.rename(
             columns={
                 "planowane": "Planowane (6)",
                 "nagle": "Nagłe (2+3)",
                 "razem_planowane_nagle": "Planowane + nagłe",
+                "planowane_na_100k": "Planowane / 100 000",
+                "nagle_na_100k": "Nagłe / 100 000",
+                "razem_planowane_nagle_na_100k": "Planowane + nagłe / 100 000",
+                "ludnosc_wojewodztwa": "Ludność województwa (31.12.2024)",
             }
         )
+        rate_cols = ["Planowane / 100 000", "Nagłe / 100 000", "Planowane + nagłe / 100 000"]
+        table[rate_cols] = table[rate_cols].round(2)
         st.dataframe(
             table[
                 [
@@ -298,8 +368,13 @@ def render_admissions(*, admission_data: pd.DataFrame, min_hosp: int):
                     "Planowane (6)",
                     "Nagłe (2+3)",
                     "Planowane + nagłe",
+                    "Ludność województwa (31.12.2024)",
+                    "Planowane / 100 000",
+                    "Nagłe / 100 000",
+                    "Planowane + nagłe / 100 000",
                 ]
             ],
             use_container_width=True,
             hide_index=True,
         )
+

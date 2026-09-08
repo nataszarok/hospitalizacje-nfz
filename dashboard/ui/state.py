@@ -5,6 +5,8 @@ from collections.abc import Mapping, MutableMapping, Sequence
 
 MORTALITY_X_AXIS_STATE_KEY = "mortality_x_axis_mode"
 MORTALITY_X_AXIS_WIDGET_KEY = "mortality_x_axis_selector"
+ADMISSION_SCALE_STATE_KEY = "admission_scale_mode"
+ADMISSION_SCALE_WIDGET_KEY = "admission_scale_selector"
 
 
 def _normalize_choice(
@@ -107,3 +109,9 @@ def mortality_chart_key(view_mode: str, x_axis_id: str) -> str:
     """Stable Plotly key based only on stable internal IDs."""
     view = "regions" if view_mode == "Województwa" else "cities"
     return f"mortality_chart_{view}_{x_axis_id}"
+
+
+def admission_chart_key(scale_id: str, view_mode: str) -> str:
+    """Stable admission Plotly key based on scale and geography mode IDs."""
+    view = "regions" if view_mode == "Województwa" else "cities"
+    return f"admission_chart_{view}_{scale_id}"

@@ -11,14 +11,27 @@ X_AXIS_LABELS = {
     X_AXIS_PER_100K: "Liczba hospitalizacji / 100 000 mieszkańców",
 }
 
-# Jednorazowa migracja wartości zapisanych przez starszą wersję aplikacji.
-# Logika aplikacji nie zależy już od etykiet prezentacyjnych.
+ADMISSION_SCALE_LABELS = {
+    X_AXIS_TOTAL: "Liczba hospitalizacji ogółem",
+    X_AXIS_PER_100K: "Liczba hospitalizacji / 100 000 mieszkańców",
+}
+
+# One-time migration for values saved by older app versions. Application logic
+# depends on stable IDs, not presentation labels.
 X_AXIS_LEGACY_VALUES = {label: option_id for option_id, label in X_AXIS_LABELS.items()}
 
 
 def x_axis_label(option_id: str) -> str:
-    """Return the presentation label for a stable X-axis option ID."""
+    """Return presentation label for a stable mortality X-axis option ID."""
     try:
         return X_AXIS_LABELS[option_id]
     except KeyError as exc:
         raise ValueError(f"Unknown X-axis option ID: {option_id!r}") from exc
+
+
+def admission_scale_label(option_id: str) -> str:
+    """Return presentation label for a stable admission chart scale ID."""
+    try:
+        return ADMISSION_SCALE_LABELS[option_id]
+    except KeyError as exc:
+        raise ValueError(f"Unknown admission scale option ID: {option_id!r}") from exc

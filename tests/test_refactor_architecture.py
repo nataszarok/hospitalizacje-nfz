@@ -45,11 +45,38 @@ def test_scatter_builder_keeps_hover_and_highlight_layers():
     assert all("Śmiertelność" in trace.hovertemplate for trace in fig.data)
     assert fig.layout.hovermode == "closest"
 
+def _admission_chart_df():
+    return pd.DataFrame([
+        {"OW_NFZ":"07","NIP_PODMIOTU":"1234567890","Świadczeniodawca":"A","Miejscowość":"Warszawa","planowane":10,"nagle":20,"razem_planowane_nagle":30,"ludnosc_wojewodztwa":5_000_000,"planowane_na_100k":0.2,"nagle_na_100k":0.4,"razem_planowane_nagle_na_100k":0.6},
+        {"OW_NFZ":"12","NIP_PODMIOTU":"1234567891","Świadczeniodawca":"B","Miejscowość":"Katowice","planowane":40,"nagle":50,"razem_planowane_nagle":90,"ludnosc_wojewodztwa":4_000_000,"planowane_na_100k":1.0,"nagle_na_100k":1.25,"razem_planowane_nagle_na_100k":2.25},
+    ])
+
 def test_admission_chart_hover_contract():
-    df = pd.DataFrame([{"OW_NFZ":"07","NIP_PODMIOTU":"1234567890","Świadczeniodawca":"A","Miejscowość":"Warszawa","planowane":10,"nagle":20,"razem_planowane_nagle":30}])
-    fig = make_admission_comparison_chart(df)
+    fig = make_admission_comparison_chart(_admission_chart_df())
     assert len(fig.data) == 1
     assert "unikalną parę OW NFZ + NIP" in fig.data[0].hovertemplate
+    assert "Planowane / 100 000" in fig.data[0].hovertemplate
+
+def test_admission_chart_switches_both_axes_to_per_100k():
+    from dashboard.ui.axis_options import X_AXIS_PER_100K
+    fig = make_admission_comparison_chart(_admission_chart_df(), scale_mode=X_AXIS_PER_100K)
+    assert fig.layout.xaxis.title.text == "Przyjęcia planowane / 100 000 mieszkańców"
+    assert fig.layout.yaxis.title.text == "Przyjęcia nagłe / 100 000 mieszkańców"
+    assert list(fig.data[0].x) == [0.2, 1.0]
+    assert list(fig.data[0].y) == [0.4, 1.25]
+
+def test_admission_chart_defaults_to_gray_and_highlights_selected_region():
+    fig = make_admission_comparison_chart(
+        _admission_chart_df(),
+        selected_ow=["07"],
+        region_names={"07":"Mazowieckie"},
+        colors=["#123456"],
+    )
+    assert len(fig.data) == 2
+    assert fig.data[0].name == "Pozostałe placówki"
+    assert fig.data[0].marker.color == "#C7CBD1"
+    assert fig.data[1].name == "Mazowieckie"
+    assert fig.data[1].marker.color == "#123456"
 
 def test_app_is_thin_orchestrator():
     app = (ROOT / "app.py").read_text(encoding="utf-8")
@@ -296,3 +323,69 @@ def test_compact_city_stats_hide_population_rate_by_default():
         }],
     )
     assert "Hosp./100 tys." not in html
+
+
+def test_admission_scale_has_independent_stable_session_state():
+    from dashboard.ui.axis_options import X_AXIS_DEFAULT, X_AXIS_OPTIONS, X_AXIS_PER_100K
+    from dashboard.ui.state import (
+        ADMISSION_SCALE_STATE_KEY, ADMISSION_SCALE_WIDGET_KEY,
+        prepare_widget_choice, sync_widget_choice, admission_chart_key,
+    )
+    state = {ADMISSION_SCALE_STATE_KEY: X_AXIS_PER_100K}
+    prepare_widget_choice(
+        state, ADMISSION_SCALE_STATE_KEY, ADMISSION_SCALE_WIDGET_KEY,
+        X_AXIS_OPTIONS, X_AXIS_DEFAULT,
+    )
+    assert state[ADMISSION_SCALE_WIDGET_KEY] == X_AXIS_PER_100K
+    assert admission_chart_key(X_AXIS_PER_100K, "Województwa").endswith("_per_100k")
+
+    # Callback copies the widget value only to canonical application state.
+    dict.__setitem__(state, ADMISSION_SCALE_WIDGET_KEY, "total")
+    sync_widget_choice(
+        state, ADMISSION_SCALE_STATE_KEY, ADMISSION_SCALE_WIDGET_KEY,
+        X_AXIS_OPTIONS, X_AXIS_DEFAULT,
+    )
+    assert state[ADMISSION_SCALE_STATE_KEY] == "total"
+
+def test_admission_chart_uses_identical_axis_ranges_and_equality_line_total():
+    fig = make_admission_comparison_chart(_admission_chart_df())
+    assert list(fig.layout.xaxis.range) == list(fig.layout.yaxis.range)
+    assert list(fig.layout.xaxis.range) == [8.0, 52.0]
+    assert len(fig.layout.shapes) == 1
+    line = fig.layout.shapes[0]
+    assert line.type == "line"
+    assert line.x0 == line.y0 == 8.0
+    assert line.x1 == line.y1 == 52.0
+    assert line.line.dash == "dash"
+    assert line.line.color == "#9CA3AF"
+
+
+def test_admission_chart_uses_identical_axis_ranges_and_equality_line_per_100k():
+    from dashboard.ui.axis_options import X_AXIS_PER_100K
+    fig = make_admission_comparison_chart(_admission_chart_df(), scale_mode=X_AXIS_PER_100K)
+    assert list(fig.layout.xaxis.range) == list(fig.layout.yaxis.range)
+    assert list(fig.layout.xaxis.range) == [0.14750000000000002, 1.3025]
+    line = fig.layout.shapes[0]
+    assert line.x0 == line.y0 == 0.14750000000000002
+    assert line.x1 == line.y1 == 1.3025
+
+
+def test_admission_shared_range_has_safe_fallback_for_zero_values():
+    from dashboard.ui.charts import _shared_axis_range_with_padding
+    x = pd.Series([0, 0])
+    y = pd.Series([0, 0])
+    assert _shared_axis_range_with_padding(x, y) == (-0.05, 0.05)
+
+
+def test_admission_shared_range_uses_combined_data_minimum_with_margin():
+    from dashboard.ui.charts import _shared_axis_range_with_padding
+    x = pd.Series([10, 40])
+    y = pd.Series([20, 50])
+    assert _shared_axis_range_with_padding(x, y) == (8.0, 52.0)
+
+
+def test_admission_shared_range_gives_zero_values_visual_margin():
+    from dashboard.ui.charts import _shared_axis_range_with_padding
+    x = pd.Series([0, 10])
+    y = pd.Series([2, 8])
+    assert _shared_axis_range_with_padding(x, y) == (-0.5, 10.5)
