@@ -91,3 +91,33 @@ Aplikacja nie korzysta już z `kody_produktu_jgp.csv` podczas działania. Konfig
 - `hospitalizacje` — dane z `hospitalizacje_2025.csv.zip`.
 
 Domyślnym produktem jest `5.51.01.0005010` (E10).
+
+## Preagregacja i aktualizacja danych
+
+Dashboard korzysta z materializowanych agregatów SQLite dla najczęstszej ścieżki analizy:
+- `dashboard_facility_product` — placówka (OW NFZ + NIP) × produkt,
+- `dashboard_facility_product_admission` — placówka × produkt × tryb przyjęcia.
+
+Dzięki temu standardowy widok nie grupuje przy każdym odświeżeniu ~3,9 mln rekordów źródłowych. Filtry szczegółowe (m.in. miesiąc, płeć, wiek, długość hospitalizacji, produkt kontraktowy i tryb wypisu) nadal wymagają tabeli źródłowej, bo zachowanie dowolnych przecięć tych filtrów w jednym małym agregacie nie jest możliwe bez utraty informacji.
+
+Po podmianie/importowaniu nowych danych do `hospitalizacje` **obowiązkowo** uruchom:
+
+```bash
+poetry run python refresh_aggregates.py
+```
+
+SQL tworzący agregaty znajduje się w `create_aggregates.sql`. Triggery SQLite automatycznie ustawiają `data_pipeline_status.needs_refresh=1` po INSERT/UPDATE/DELETE tabeli `hospitalizacje`. Jeżeli agregaty są nieaktualne, aplikacja zatrzyma się z komunikatem i poda polecenie odświeżenia, zamiast pokazywać stare wyniki.
+
+Pełne zbudowanie bazy przez `build_db.py` również wykonuje `create_aggregates.sql` jako ostatni etap, więc po pełnym rebuildzie osobne odświeżenie nie jest potrzebne.
+
+## Architektura po refaktorze
+
+`app.py` jest wyłącznie cienką warstwą orkiestracji Streamlit. Kod został rozdzielony według odpowiedzialności:
+
+- `dashboard/data/` — dostęp do SQLite, zapytania i cache Streamlit,
+- `dashboard/domain/` — analityka, preprocessing i formatowanie słowników bez zależności od UI,
+- `dashboard/ui/` — wykresy Plotly, markdown/CSS, komponenty, sidebar i widoki zakładek,
+- `sql/` — skrypty SQL, obecnie `create_aggregates.sql`,
+- `build_db.py` / `refresh_aggregates.py` — jawne procesy budowy i odświeżania danych.
+
+Po zmianie danych źródłowych nadal należy wykonać `poetry run python refresh_aggregates.py`; skrypt korzysta z `sql/create_aggregates.sql`.

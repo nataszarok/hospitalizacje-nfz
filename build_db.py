@@ -4,7 +4,7 @@ import zipfile
 import numpy as np
 import pandas as pd
 
-from dashboard_logic import combine_hospital_sources, deduplicate_hospitals_by_nip, normalize_nip
+from dashboard.domain.preprocessing import combine_hospital_sources, deduplicate_hospitals_by_nip, normalize_nip
 
 BASE = Path(__file__).resolve().parent
 CSV_ZIP = BASE / 'hospitalizacje_2025.csv.zip'
@@ -187,6 +187,8 @@ def main():
     conn.execute('CREATE UNIQUE INDEX idx_szpitale_laczone_nip ON szpitale_laczone(NIP)')
     rebuild_filter_values(conn)
     write_reference_tables(conn)
+    # Materializowane agregaty muszą być ostatnim krokiem po imporcie hospitalizacji.
+    conn.executescript((BASE / 'sql' / 'create_aggregates.sql').read_text(encoding='utf-8'))
     conn.commit()
     conn.execute('ANALYZE')
     conn.close()
