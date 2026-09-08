@@ -77,3 +77,17 @@ poetry run pytest -q
 ## Widok trybu przyjęcia
 
 Aplikacja zawiera osobny tab **Tryb przyjęcia**, porównujący przyjęcia planowane (kod 6) z nagłymi (kody 2 + 3). Wykres może prezentować wartości nominalne albo udziały procentowe liczone w ramach sumy planowane + nagłe. Filtr `Kod trybu przyjęcia` z panelu bocznego celowo nie ogranicza tego porównania; pozostałe filtry są respektowane.
+
+## Słowniki i konfiguracja w SQLite
+
+Aplikacja nie korzysta już z `kody_produktu_jgp.csv` podczas działania. Konfiguracja i słowniki są odczytywane z `health_dashboard.db`:
+
+- `app_config` — rok analizy, kod zgonu, domyślny produkt, parametry estymacji `<5>`;
+- `nfz_regions` — mapowanie OW NFZ → województwo;
+- `admission_modes` — opisy trybów przyjęcia;
+- `highlight_palette` i `product_symbols` — paleta wyróżnień i symbole produktów;
+- `produkty_jgp` — dane z `kody_produktu_jgp.csv`;
+- `szpitale_uzupelnienie` — dane z `szpitale_uzupelnienie.csv`;
+- `hospitalizacje` — dane z `hospitalizacje_2025.csv.zip`.
+
+Domyślnym produktem jest `5.51.01.0005010` (E10).

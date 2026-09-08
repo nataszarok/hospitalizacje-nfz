@@ -3,5 +3,9 @@ __pycache__/
 *.py[cod]
 .streamlit/secrets.toml
 .DS_Store
+
+# Lokalna baza danych - nie commitujemy jej do repozytorium
+health_dashboard.db
+*.db-wal
+*.db-shm
 *.csv
-*.db

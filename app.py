@@ -10,52 +10,6 @@ from dashboard_logic import (
 )
 
 DB_PATH = Path(__file__).resolve().parent / "health_dashboard.db"
-PRODUCT_MAP_PATH = Path(__file__).resolve().parent / "kody_produktu_jgp.csv"
-KOD_ZGONU = 9
-DEFAULT_PRODUCT = "5.51.01.0005061"
-
-OW_NFZ_TO_WOJEWODZTWO = {
-    "01": "Dolnośląskie",
-    "02": "Kujawsko-Pomorskie",
-    "03": "Lubelskie",
-    "04": "Lubuskie",
-    "05": "Łódzkie",
-    "06": "Małopolskie",
-    "07": "Mazowieckie",
-    "08": "Opolskie",
-    "09": "Podkarpackie",
-    "10": "Podlaskie",
-    "11": "Pomorskie",
-    "12": "Śląskie",
-    "13": "Świętokrzyskie",
-    "14": "Warmińsko-Mazurskie",
-    "15": "Wielkopolskie",
-    "16": "Zachodniopomorskie",
-}
-WOJEWODZTWO_TO_OW_NFZ = {v: k for k, v in OW_NFZ_TO_WOJEWODZTWO.items()}
-
-HIGHLIGHT_COLORS = [
-    "#2563EB", "#DC2626", "#16A34A", "#9333EA", "#EA580C", "#0891B2",
-    "#DB2777", "#65A30D", "#4F46E5", "#CA8A04", "#0F766E", "#7C3AED",
-    "#B91C1C", "#0369A1", "#15803D", "#A21CAF",
-]
-PRODUCT_SYMBOLS = [
-    "circle", "diamond", "square", "triangle-up", "cross", "x",
-    "triangle-down", "star", "hexagon", "pentagon",
-]
-
-
-ADMISSION_MODE_LABELS = {
-    2: "Przyjęcie w trybie nagłym w wyniku przekazania przez zespół ratownictwa medycznego",
-    3: "Przyjęcie w trybie nagłym – inne przypadki",
-    5: "Przyjęcie noworodka w wyniku porodu w tym szpitalu",
-    6: "Przyjęcie planowe na podstawie skierowania",
-    7: "Przyjęcie planowe osoby korzystającej ze świadczeń poza kolejnością na podstawie ustawowych uprawnień",
-    8: "Przeniesienie z innego szpitala",
-    9: "Przyjęcie osoby podlegającej obowiązkowemu leczeniu",
-    10: "Przyjęcie przymusowe",
-    11: "Przyjęcie na podstawie karty diagnostyki i leczenia onkologicznego",
-}
 
 def admission_mode_label(code) -> str:
     """Etykieta UI dla kodu trybu przyjęcia; do filtrowania nadal trafia sam kod."""
@@ -67,88 +21,11 @@ def admission_mode_label(code) -> str:
     return f"{normalized} — {description}" if description else str(normalized)
 
 st.set_page_config(
-    page_title="Hospitalizacje 2025 — panel analityczny",
+    page_title="Hospitalizacje — panel analityczny",
     page_icon="🏥",
     layout="wide",
     initial_sidebar_state="expanded",
 )
-
-st.markdown(
-    """
-    <style>
-    :root {
-        --app-ink: #172033;
-        --app-muted: #667085;
-        --app-border: #E6EAF0;
-        --app-soft: #F7F9FC;
-        --app-accent: #2856A3;
-        --app-accent-soft: #EEF4FF;
-    }
-    .stApp { background: #FFFFFF; color: var(--app-ink); }
-    .block-container { max-width: 1480px; padding-top: 1.65rem; padding-bottom: 2.5rem; }
-    [data-testid="stSidebar"] { border-right: 1px solid var(--app-border); background: #FAFBFD; }
-    [data-testid="stSidebar"] .block-container { padding-top: 1.4rem; }
-    [data-testid="stMetric"] {
-        background: #FFFFFF; border: 1px solid var(--app-border); border-radius: 12px;
-        padding: 0.8rem 0.95rem; box-shadow: 0 1px 2px rgba(16,24,40,.03);
-    }
-    [data-testid="stMetricLabel"] { color: var(--app-muted); }
-    [data-testid="stMetricValue"] { color: var(--app-ink); letter-spacing: -0.02em; }
-    [data-testid="stPlotlyChart"] {
-        background: #FFFFFF; border: 1px solid var(--app-border); border-radius: 14px;
-        padding: 0.25rem; overflow: hidden; box-shadow: 0 1px 3px rgba(16,24,40,.035);
-    }
-    div[data-baseweb="tab-list"] { gap: .35rem; border-bottom: 1px solid var(--app-border); }
-    button[data-baseweb="tab"] { font-weight: 650; padding-left: 1rem; padding-right: 1rem; }
-    div[data-testid="stExpander"] { border: 1px solid var(--app-border); border-radius: 10px; }
-    .app-eyebrow { color: var(--app-accent); font-size: .76rem; font-weight: 750; letter-spacing: .09em; text-transform: uppercase; margin-bottom: .45rem; }
-    .app-title { color: var(--app-ink); font-size: clamp(1.75rem, 2.6vw, 2.45rem); line-height: 1.04; font-weight: 760; letter-spacing: -.035em; margin: 0; }
-    .app-subtitle { color: var(--app-muted); max-width: 900px; font-size: .94rem; line-height: 1.45; margin-top: .35rem; }
-    .app-badges { display:flex; gap:.5rem; flex-wrap:wrap; margin-top: 1rem; }
-    .app-badge { background: var(--app-soft); border: 1px solid var(--app-border); color:#475467; border-radius:999px; padding:.28rem .62rem; font-size:.78rem; font-weight:600; }
-    .info-grid { display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap:.75rem; margin: 1.25rem 0 1.4rem 0; }
-    .info-card { background:#FFFFFF; border:1px solid var(--app-border); border-radius:12px; padding:.85rem 1rem; }
-    .info-card .k { color:#344054; font-weight:700; font-size:.84rem; margin-bottom:.22rem; }
-    .info-card .v { color:var(--app-muted); font-size:.79rem; line-height:1.45; }
-    .section-kicker { color: var(--app-accent); font-size:.72rem; font-weight:750; letter-spacing:.07em; text-transform:uppercase; margin-bottom:.18rem; }
-    .section-title { color:var(--app-ink); font-size:1.28rem; line-height:1.25; font-weight:730; margin:0; }
-    .section-copy { color:var(--app-muted); font-size:.88rem; line-height:1.5; margin:.3rem 0 .8rem 0; }
-    .sidebar-kicker { color:#667085; font-size:.7rem; font-weight:750; letter-spacing:.07em; text-transform:uppercase; margin-top:.45rem; margin-bottom:.15rem; }
-    .baseline-note { color:#667085; font-size:.78rem; padding:.55rem .72rem; background:#F8FAFC; border:1px solid #EAECF0; border-radius:9px; margin:.45rem 0 .7rem 0; }
-    .footer-note { color:#7B8494; font-size:.76rem; line-height:1.5; padding-top:1rem; border-top:1px solid var(--app-border); margin-top:1.6rem; }
-    @media (max-width: 900px) { .info-grid { grid-template-columns:1fr; } .block-container { padding-left:1rem; padding-right:1rem; } }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
-
-st.markdown(
-    """
-    <div class="app-eyebrow">Panel analityczny · Polska · 2025</div>
-    <h1 class="app-title">Hospitalizacje 2025</h1>
-    <div class="app-subtitle">Interaktywna analiza hospitalizacji, wyników leczenia i trybów przyjęcia na poziomie placówek i regionów.</div>
-    """,
-    unsafe_allow_html=True,
-)
-
-with st.expander("O panelu · dane, zakres i interpretacja", expanded=False):
-    st.markdown(
-        """
-        **Hospitalizacje 2025** to rozwijane narzędzie do eksploracji danych hospitalizacyjnych za 2025 rok. Obecne MVP obejmuje
-        analizę wolumenu i śmiertelności oraz porównanie przyjęć planowych i nagłych; kolejne moduły mogą być dokładane bez zmiany
-        głównej struktury panelu.
-
-        **Zakres analizy:** hospitalizacje, zgony, śmiertelność, tryb przyjęcia oraz przekroje produktowe i geograficzne.  
-        **Jednostka placówki:** unikalna para **OW NFZ + NIP** — ten sam NIP może reprezentować odrębne placówki w różnych OW NFZ.  
-        **Jak korzystać:** wybierz produkt i filtry w panelu bocznym, a następnie przełączaj moduły analityczne. Wyróżnienie miasta
-        lub województwa zachowuje pozostałe punkty jako tło porównawcze.
-
-        **Interpretacja:** dashboard służy do analizy danych zagregowanych, a nie do oceny jakości pojedynczej placówki bez kontekstu.
-        Wyniki zależą m.in. od produktu, profilu pacjentów, trybu przyjęcia i wolumenu. Wartości źródłowe oznaczone jako `<5`
-        są przeliczane zgodnie z metodą wybraną w panelu bocznym.
-        """
-    )
-
 
 if not DB_PATH.exists():
     st.error(f"Nie znaleziono bazy danych: {DB_PATH}")
@@ -167,18 +44,155 @@ def get_connection():
         st.stop()
 
 @st.cache_data(show_spinner=False)
+def load_app_config() -> dict[str, str]:
+    rows = pd.read_sql_query("SELECT key, value FROM app_config", get_connection())
+    return dict(zip(rows["key"].astype(str), rows["value"].astype(str)))
+
+@st.cache_data(show_spinner=False)
+def load_reference_tables():
+    regions = pd.read_sql_query(
+        "SELECT ow_nfz, wojewodztwo FROM nfz_regions ORDER BY sort_order, ow_nfz",
+        get_connection(),
+        dtype={"ow_nfz": str},
+    )
+    admissions = pd.read_sql_query(
+        "SELECT code, label FROM admission_modes ORDER BY sort_order, code",
+        get_connection(),
+    )
+    colors = pd.read_sql_query(
+        "SELECT color FROM highlight_palette ORDER BY position", get_connection()
+    )["color"].astype(str).tolist()
+    symbols = pd.read_sql_query(
+        "SELECT symbol FROM product_symbols ORDER BY position", get_connection()
+    )["symbol"].astype(str).tolist()
+    return regions, admissions, colors, symbols
+
+APP_CONFIG = load_app_config()
+ANALYSIS_YEAR = APP_CONFIG["analysis_year"]
+KOD_ZGONU = int(APP_CONFIG["death_discharge_code"])
+DEFAULT_PRODUCT = APP_CONFIG["default_product_code"]
+SIMULATION_SEED = int(APP_CONFIG["simulation_seed"])
+
+_REGIONS, _ADMISSIONS, HIGHLIGHT_COLORS, PRODUCT_SYMBOLS = load_reference_tables()
+OW_NFZ_TO_WOJEWODZTWO = dict(zip(_REGIONS["ow_nfz"].astype(str).str.zfill(2), _REGIONS["wojewodztwo"].astype(str)))
+WOJEWODZTWO_TO_OW_NFZ = {v: k for k, v in OW_NFZ_TO_WOJEWODZTWO.items()}
+ADMISSION_MODE_LABELS = dict(zip(_ADMISSIONS["code"].astype(int), _ADMISSIONS["label"].astype(str)))
+
+
+st.markdown(
+    """
+    <style>
+    :root {
+        --app-ink: #172033;
+        --app-muted: #667085;
+        --app-border: #E6EAF0;
+        --app-soft: #F7F9FC;
+        --app-accent: #2856A3;
+        --app-accent-soft: #EEF4FF;
+    }
+    .stApp { background: #FFFFFF; color: var(--app-ink); }
+    /* Nie modyfikujemy pozycji/wysokości warstw systemowych Streamlit.
+       To celowe: header/toolbar uczestniczą w obsłudze interakcji frontendowych. */
+    .block-container { max-width: 1480px; padding-top: 1.65rem; padding-bottom: 2.5rem; }
+    [data-testid="stSidebar"] { border-right: 1px solid var(--app-border); background: #FAFBFD; }
+    [data-testid="stSidebar"] .block-container { padding-top: 1.4rem; }
+    [data-testid="stMetric"] {
+        background: #FFFFFF; border: 1px solid var(--app-border); border-radius: 12px;
+        padding: 0.8rem 0.95rem; box-shadow: 0 1px 2px rgba(16,24,40,.03);
+    }
+    [data-testid="stMetricLabel"] { color: var(--app-muted); }
+    [data-testid="stMetricValue"] { color: var(--app-ink); letter-spacing: -0.02em; }
+    [data-testid="stPlotlyChart"] {
+        background: #FFFFFF; border: 1px solid var(--app-border); border-radius: 14px;
+        padding: 0.25rem; overflow: hidden; box-shadow: 0 1px 3px rgba(16,24,40,.035);
+    }
+    div[data-baseweb="tab-list"] { gap: .35rem; border-bottom: 1px solid var(--app-border); }
+    button[data-baseweb="tab"] { font-weight: 650; padding-left: 1rem; padding-right: 1rem; }
+    div[data-testid="stExpander"] { border: 1px solid var(--app-border); border-radius: 10px; }
+    .app-eyebrow { color: var(--app-accent); font-size: .76rem; font-weight: 750; letter-spacing: .09em; text-transform: uppercase; margin-bottom: .20rem; }
+    .app-title { color: var(--app-ink); font-size: clamp(1.75rem, 2.6vw, 2.45rem); line-height: 1.04; font-weight: 760; letter-spacing: -.035em; margin: 0; }
+    .app-subtitle { color: var(--app-muted); max-width: 900px; font-size: .94rem; line-height: 1.45; margin-top: .18rem; }
+    .app-badges { display:flex; gap:.5rem; flex-wrap:wrap; margin-top: 1rem; }
+    .app-badge { background: var(--app-soft); border: 1px solid var(--app-border); color:#475467; border-radius:999px; padding:.28rem .62rem; font-size:.78rem; font-weight:600; }
+    .info-grid { display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap:.75rem; margin: 1.25rem 0 1.4rem 0; }
+    .info-card { background:#FFFFFF; border:1px solid var(--app-border); border-radius:12px; padding:.85rem 1rem; }
+    .info-card .k { color:#344054; font-weight:700; font-size:.84rem; margin-bottom:.22rem; }
+    .info-card .v { color:var(--app-muted); font-size:.79rem; line-height:1.45; }
+    .section-kicker { color: var(--app-accent); font-size:.72rem; font-weight:750; letter-spacing:.07em; text-transform:uppercase; margin-bottom:.18rem; }
+    .section-title { color:var(--app-ink); font-size:1.28rem; line-height:1.25; font-weight:730; margin:0; }
+    .section-copy { color:var(--app-muted); font-size:.88rem; line-height:1.5; margin:.3rem 0 .8rem 0; }
+    .sidebar-kicker { color:#667085; font-size:.7rem; font-weight:750; letter-spacing:.07em; text-transform:uppercase; margin-top:.45rem; margin-bottom:.15rem; }
+
+    /* Zwarte natywne KPI Streamlit: tooltipy działają przez parametr help w st.metric. */
+    div[data-testid="stMetric"] { min-height: 0; }
+    div[data-testid="stMetric"] > div { gap: .08rem; }
+    div[data-testid="stMetricLabel"] { font-size: .78rem; }
+    div[data-testid="stMetricValue"] { font-size: 1.55rem; line-height: 1.12; }
+    .baseline-note { color:#667085; font-size:.78rem; padding:.55rem .72rem; background:#F8FAFC; border:1px solid #EAECF0; border-radius:9px; margin:.45rem 0 .7rem 0; }
+    .footer-note { color:#7B8494; font-size:.76rem; line-height:1.5; padding-top:1rem; border-top:1px solid var(--app-border); margin-top:1.6rem; }
+    @media (max-width: 900px) { .info-grid { grid-template-columns:1fr; } .block-container { padding-left:1rem; padding-right:1rem; } }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+st.markdown(
+    f"""
+    <div class="app-eyebrow">Panel analityczny · Polska · {ANALYSIS_YEAR}</div>
+    <h1 class="app-title">Hospitalizacje {ANALYSIS_YEAR}</h1>
+    <div class="app-subtitle">Interaktywna analiza hospitalizacji, wyników leczenia i trybów przyjęcia na poziomie placówek i regionów.</div>
+    """,
+    unsafe_allow_html=True,
+)
+
+with st.expander("O panelu · dane, zakres i interpretacja", expanded=False):
+    st.markdown(
+        f"""
+        **Hospitalizacje {ANALYSIS_YEAR}** to rozwijane narzędzie do eksploracji danych hospitalizacyjnych za {ANALYSIS_YEAR} rok. Obecne MVP obejmuje
+        analizę wolumenu i śmiertelności oraz porównanie przyjęć planowych i nagłych; kolejne moduły mogą być dokładane bez zmiany
+        głównej struktury panelu.
+
+        **Zakres analizy:** hospitalizacje, zgony, śmiertelność, tryb przyjęcia oraz przekroje produktowe i geograficzne.  
+        **Jednostka placówki:** unikalna para **OW NFZ + NIP** — ten sam NIP może reprezentować odrębne placówki w różnych OW NFZ.  
+        **Jak korzystać:** wybierz produkt i filtry w panelu bocznym, a następnie przełączaj moduły analityczne. Wyróżnienie miasta
+        lub województwa zachowuje pozostałe punkty jako tło porównawcze.
+
+        **Interpretacja:** dashboard służy do analizy danych zagregowanych, a nie do oceny jakości pojedynczej placówki bez kontekstu.
+        Wyniki zależą m.in. od produktu, profilu pacjentów, trybu przyjęcia i wolumenu. Wartości źródłowe oznaczone jako `<5`
+        są przeliczane zgodnie z metodą wybraną w panelu bocznym.
+        """
+    )
+
+
+def render_kpi_cards(cards: list[dict]) -> None:
+    """Renderuje zwarte KPI jako natywne st.metric z działającym tooltipem help."""
+    cols = st.columns(len(cards), gap="small")
+    for col, card in zip(cols, cards):
+        value = str(card["value"])
+        baseline = card.get("baseline")
+        # Przy aktywnym progu zapisujemy: wynik po progu / wynik bez progu.
+        display_value = f"{value} / {baseline}" if baseline is not None else value
+        with col:
+            st.metric(
+                label=str(card["label"]),
+                value=display_value,
+                help=str(card.get("tooltip", "")) or None,
+                border=True,
+            )
+
+
+@st.cache_data(show_spinner=False)
 def load_product_mapping() -> pd.DataFrame:
-    if not PRODUCT_MAP_PATH.exists():
-        return pd.DataFrame(columns=["KOD_PRODUKTU_JEDNOSTKOWEGO", "KOD_JGP", "NAZWA"])
-    mapping = pd.read_csv(PRODUCT_MAP_PATH, encoding="utf-8-sig", dtype=str)
-    mapping = mapping[["KOD_PRODUKTU_JEDNOSTKOWEGO", "KOD_JGP", "NAZWA"]].dropna(
-        subset=["KOD_PRODUKTU_JEDNOSTKOWEGO"]
+    mapping = pd.read_sql_query(
+        'SELECT KOD_PRODUKTU_JEDNOSTKOWEGO, KOD_JGP, NAZWA FROM produkty_jgp ORDER BY KOD_PRODUKTU_JEDNOSTKOWEGO',
+        get_connection(),
+        dtype={"KOD_PRODUKTU_JEDNOSTKOWEGO": str, "KOD_JGP": str, "NAZWA": str},
     )
     return mapping.drop_duplicates("KOD_PRODUKTU_JEDNOSTKOWEGO")
 
 PRODUCT_MAPPING = load_product_mapping()
 def clean_label_value(value) -> str:
-    """Zamienia wartości z CSV (w tym NaN) na bezpieczny tekst do UI."""
+    """Zamienia wartości ze słownika w bazie (w tym NaN) na bezpieczny tekst do UI."""
     if pd.isna(value):
         return ""
     return str(value).strip()
@@ -524,17 +538,6 @@ def _compact_stats_html(area_name: str, rows: list[dict], baseline_rows: list[di
 
 
 try:
-    st.markdown('<div class="section-kicker">Perspektywa geograficzna</div>', unsafe_allow_html=True)
-    view_mode = st.segmented_control(
-        "Wyróżniaj na wykresie",
-        options=["Województwa", "Miasta"],
-        default="Województwa",
-        selection_mode="single",
-        key="view_mode",
-    )
-    if view_mode is None:
-        view_mode = "Województwa"
-
     with st.sidebar:
         st.markdown("## Ustawienia analizy")
         st.caption("Zawęź dane i zdefiniuj kontekst porównania. Filtry obowiązują oba moduły, z wyjątkiem opisanych odstępstw.")
@@ -550,14 +553,14 @@ try:
                 "W danych źródłowych część komórek nie zawiera dokładnej liczby, tylko oznaczenie '<5'. "
                 "Metoda konserwatywna przypisuje każdej takiej komórce wartość 1, więc daje najniższy możliwy "
                 "wkład tych komórek do sum. Metoda symulacyjna korzysta z wcześniej zapisanych w bazie wartości "
-                "1–4, wylosowanych raz z seedem 42; niższe liczby mają większe prawdopodobieństwo zgodnie z wagami exp(-x). "
+                "1–4, wylosowanych raz z seedem zapisanym w bazie danych; niższe liczby mają większe prawdopodobieństwo zgodnie z wagami exp(-x). "
                 "Wybór wpływa na sumy hospitalizacji, śmiertelność i położenie punktów, ale nie zmienia liczby rekordów źródłowych."
             ),
         )
         if method.startswith("Konserwatywna"):
             st.caption("<5 → 1. Najbardziej zachowawcze oszacowanie liczby hospitalizacji.")
         else:
-            st.caption("<5 → 1–4. Stałe losowanie (seed 42), z większym prawdopodobieństwem niższych wartości.")
+            st.caption("<5 → 1–4. Stałe losowanie (seed zapisany w bazie), z większym prawdopodobieństwem niższych wartości.")
 
         st.divider()
         st.markdown('<div class="sidebar-kicker">Zakres świadczeń</div>', unsafe_allow_html=True)
@@ -582,6 +585,16 @@ try:
         )
         st.divider()
         st.markdown('<div class="sidebar-kicker">Wyróżnienie geograficzne</div>', unsafe_allow_html=True)
+        view_mode = st.segmented_control(
+            "Perspektywa",
+            options=["Województwa", "Miasta"],
+            default="Województwa",
+            selection_mode="single",
+            key="view_mode",
+            help="Wybierz, czy na wykresach chcesz wyróżniać województwa czy miejscowości. Pozostałe placówki pozostają widoczne jako tło porównawcze.",
+        )
+        if view_mode is None:
+            view_mode = "Województwa"
         if view_mode == "Województwa":
             if "region_selection_cache" not in st.session_state:
                 st.session_state["region_selection_cache"] = []
@@ -654,6 +667,8 @@ try:
         result_all = load_aggregated(filters, method)
 
     result = filter_by_min_facility_hospitalizations(result_all, min_hosp)
+    # Tworzymy zakładki w tym samym miejscu cyklu renderowania co w wersji,
+    # w której interakcje działały poprawnie. Sidebar pozostaje tylko ustawieniem analizy.
     tab_mortality, tab_admissions = st.tabs(["Wolumen i śmiertelność", "Tryb przyjęcia"])
 
     with tab_mortality:
@@ -668,25 +683,38 @@ try:
         else:
             current_summary = dataset_summary(result)
             baseline_summary = dataset_summary(result_all)
-            if min_hosp > 0:
-                st.markdown(
-                    f'<div class="baseline-note"><b>Aktywny próg wolumenu: ≥ {min_hosp}</b> hospitalizacji na placówkę. '
-                    'Główne wartości pokazują dane po progu, a wiersz <b>Bez progu</b> zachowuje punkt odniesienia dla identycznego zestawu filtrów.</div>',
-                    unsafe_allow_html=True,
-                )
-            c1, c2, c3, c4 = st.columns(4)
-            c1.metric("Placówki", f"{current_summary['placowki']:,}".replace(",", " "),
-                      help="Placówka = unikalna para OW NFZ + NIP.")
-            c2.metric("Hospitalizacje", f"{current_summary['hospitalizacje']:,.0f}".replace(",", " "))
-            c3.metric("Zgony", f"{current_summary['zgony']:,.0f}".replace(",", " "))
-            c4.metric("Śmiertelność ogółem", f"{current_summary['smiertelnosc']:.2f}%",
-                      help="Śmiertelność ważona: suma zgonów / suma hospitalizacji × 100.")
-            if min_hosp > 0:
-                b1, b2, b3, b4 = st.columns(4)
-                b1.caption(f"Bez progu: **{baseline_summary['placowki']:,}** placówek".replace(",", " "))
-                b2.caption(f"Bez progu: **{baseline_summary['hospitalizacje']:,.0f}**".replace(",", " "))
-                b3.caption(f"Bez progu: **{baseline_summary['zgony']:,.0f}**".replace(",", " "))
-                b4.caption(f"Bez progu: **{baseline_summary['smiertelnosc']:.2f}%**")
+            threshold_context = (
+                f"Aktywny próg: co najmniej {min_hosp} hospitalizacji na placówkę (OW NFZ + NIP). "
+                "Format wartości: po progu / bez progu. Pierwsza liczba uwzględnia aktywny próg wolumenu, druga pokazuje identyczne filtry bez tego ograniczenia. "
+                if min_hosp > 0 else
+                "Próg wolumenu jest wyłączony, więc wartość obejmuje wszystkie placówki spełniające pozostałe filtry. "
+            )
+            render_kpi_cards([
+                {
+                    "label": "Placówki",
+                    "value": f"{current_summary['placowki']:,}".replace(",", " "),
+                    "baseline": f"{baseline_summary['placowki']:,}".replace(",", " ") if min_hosp > 0 else None,
+                    "tooltip": threshold_context + "Placówka jest definiowana jako unikalna para OW NFZ + NIP.",
+                },
+                {
+                    "label": "Hospitalizacje",
+                    "value": f"{current_summary['hospitalizacje']:,.0f}".replace(",", " "),
+                    "baseline": f"{baseline_summary['hospitalizacje']:,.0f}".replace(",", " ") if min_hosp > 0 else None,
+                    "tooltip": threshold_context + "Suma hospitalizacji po aktualnych filtrach i zgodnie z wybraną metodą przeliczenia wartości <5.",
+                },
+                {
+                    "label": "Zgony",
+                    "value": f"{current_summary['zgony']:,.0f}".replace(",", " "),
+                    "baseline": f"{baseline_summary['zgony']:,.0f}".replace(",", " ") if min_hosp > 0 else None,
+                    "tooltip": threshold_context + "Suma hospitalizacji zakończonych trybem wypisu 9.",
+                },
+                {
+                    "label": "Śmiertelność ogółem",
+                    "value": f"{current_summary['smiertelnosc']:.2f}%",
+                    "baseline": f"{baseline_summary['smiertelnosc']:.2f}%" if min_hosp > 0 else None,
+                    "tooltip": threshold_context + "Śmiertelność jest ważona: suma zgonów / suma hospitalizacji × 100, a nie średnia z odsetków poszczególnych placówek.",
+                },
+            ])
 
             chart_col, stats_col = st.columns([4.25, 1.1], gap="medium")
             with chart_col:
@@ -696,7 +724,13 @@ try:
                 else:
                     fig = make_scatter(result, [], selected_products, selected_cities)
                     chart_key = "chart_cities"
-                st.plotly_chart(fig, use_container_width=True, theme=None, config={"displaylogo": False}, key=chart_key)
+                st.plotly_chart(
+                    fig,
+                    use_container_width=True,
+                    theme=None,
+                    config={"displaylogo": False},
+                    key=chart_key,
+                )
 
             with stats_col:
                 if view_mode == "Województwa":
@@ -754,10 +788,6 @@ try:
             "W tym module filtr „Kod trybu przyjęcia” z panelu bocznego jest celowo pomijany. "
             "Porównanie zawsze obejmuje pełne kody 6 vs 2+3. Jeśli wybierzesz kilka produktów, ich wolumen jest sumowany do jednego punktu placówki."
         )
-        if min_hosp > 0:
-            st.caption(
-                f"Próg ≥ {min_hosp} w tym tabie jest liczony na sumie przyjęć planowanych (6) + nagłych (2+3) dla całej placówki."
-            )
         with st.spinner("Agreguję tryby przyjęcia..."):
             admission_data = load_admission_comparison(filters, method)
 
@@ -776,28 +806,46 @@ try:
             total_both = total_planned + total_urgent
             facilities_now = facility_admissions[["OW_NFZ", "NIP_PODMIOTU"]].drop_duplicates().shape[0]
 
-            a1, a2, a3, a4 = st.columns(4)
-            a1.metric("Placówki", f"{facilities_now:,}".replace(",", " "),
-                      help="Placówka = unikalna para OW NFZ + NIP.")
-            a2.metric("Planowane (6)", f"{total_planned:,.0f}".replace(",", " "),
-                      help="Suma hospitalizacji z kodem trybu przyjęcia 6: przyjęcie planowe na podstawie skierowania.")
-            a3.metric("Nagłe (2+3)", f"{total_urgent:,.0f}".replace(",", " "),
-                      help="Suma hospitalizacji z kodem 2 (nagłe przez ZRM) oraz kodem 3 (inne przyjęcia nagłe).")
-            a4.metric("Planowane + nagłe", f"{total_both:,.0f}".replace(",", " "))
-
-            if min_hosp > 0 and not facility_admissions_all.empty:
-                all_planned = facility_admissions_all["planowane"].sum()
-                all_urgent = facility_admissions_all["nagle"].sum()
-                all_facilities = facility_admissions_all[["OW_NFZ", "NIP_PODMIOTU"]].drop_duplicates().shape[0]
-                r1, r2, r3, r4 = st.columns(4)
-                r1.caption(f"Bez progu: **{all_facilities:,}** placówek".replace(",", " "))
-                r2.caption(f"Bez progu: **{all_planned:,.0f}**".replace(",", " "))
-                r3.caption(f"Bez progu: **{all_urgent:,.0f}**".replace(",", " "))
-                r4.caption(f"Bez progu: **{(all_planned + all_urgent):,.0f}**".replace(",", " "))
+            all_planned = facility_admissions_all["planowane"].sum() if not facility_admissions_all.empty else 0
+            all_urgent = facility_admissions_all["nagle"].sum() if not facility_admissions_all.empty else 0
+            all_facilities = (
+                facility_admissions_all[["OW_NFZ", "NIP_PODMIOTU"]].drop_duplicates().shape[0]
+                if not facility_admissions_all.empty else 0
+            )
+            admission_threshold_context = (
+                f"Aktywny próg: co najmniej {min_hosp} przyjęć planowanych + nagłych na placówkę. "
+                "Format wartości: po progu / bez progu. Pierwsza liczba uwzględnia aktywny próg, druga pokazuje identyczne filtry bez tego ograniczenia. "
+                if min_hosp > 0 else
+                "Próg wolumenu jest wyłączony. "
+            )
+            render_kpi_cards([
+                {
+                    "label": "Placówki", "value": f"{facilities_now:,}".replace(",", " "),
+                    "baseline": f"{all_facilities:,}".replace(",", " ") if min_hosp > 0 else None,
+                    "tooltip": admission_threshold_context + "Placówka = unikalna para OW NFZ + NIP.",
+                },
+                {
+                    "label": "Planowane (6)", "value": f"{total_planned:,.0f}".replace(",", " "),
+                    "baseline": f"{all_planned:,.0f}".replace(",", " ") if min_hosp > 0 else None,
+                    "tooltip": admission_threshold_context + "Kod 6: przyjęcie planowe na podstawie skierowania.",
+                },
+                {
+                    "label": "Nagłe (2+3)", "value": f"{total_urgent:,.0f}".replace(",", " "),
+                    "baseline": f"{all_urgent:,.0f}".replace(",", " ") if min_hosp > 0 else None,
+                    "tooltip": admission_threshold_context + "Kod 2: przyjęcie nagłe po przekazaniu przez ZRM; kod 3: inne przyjęcie w trybie nagłym.",
+                },
+                {
+                    "label": "Planowane + nagłe", "value": f"{total_both:,.0f}".replace(",", " "),
+                    "baseline": f"{(all_planned + all_urgent):,.0f}".replace(",", " ") if min_hosp > 0 else None,
+                    "tooltip": admission_threshold_context + "Suma kodów trybu przyjęcia 6, 2 i 3.",
+                },
+            ])
 
             st.plotly_chart(
                 make_admission_comparison_chart(facility_admissions),
-                use_container_width=True, theme=None, config={"displaylogo": False},
+                use_container_width=True,
+                theme=None,
+                config={"displaylogo": False},
                 key="admission_scatter_nominal",
             )
 
@@ -815,11 +863,11 @@ try:
                 )
 
     st.markdown(
-        """
+        f"""
         <div class="footer-note">
-        <b>Hospitalizacje 2025 · MVP panelu analitycznego.</b> Wartości oznaczone jako &lt;5 nie są dokładnymi liczbami.
+        <b>Hospitalizacje {ANALYSIS_YEAR} · MVP panelu analitycznego.</b> Wartości oznaczone jako &lt;5 nie są dokładnymi liczbami.
         Metoda konserwatywna przyjmuje 1, a metoda symulacyjna korzysta z zapisanych wartości 1–4
-        (seed 42, prawdopodobieństwa ∝ exp(-x)). Interpretuj porównania razem z wolumenem i zakresem aktywnych filtrów.
+        (seed zapisany w bazie, prawdopodobieństwa ∝ exp(-x)). Interpretuj porównania razem z wolumenem i zakresem aktywnych filtrów.
         </div>
         """,
         unsafe_allow_html=True,

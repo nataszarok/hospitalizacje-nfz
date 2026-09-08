@@ -78,3 +78,34 @@ def test_product_5061_has_493_facilities_by_ow_and_nip(conn):
         (product,),
     ).fetchone()[0]
     assert count == 493
+
+
+def test_reference_tables_are_stored_in_database(conn):
+    expected = {
+        'app_config', 'nfz_regions', 'admission_modes',
+        'highlight_palette', 'product_symbols', 'produkty_jgp',
+    }
+    present = {
+        row[0] for row in conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table'"
+        ).fetchall()
+    }
+    assert expected.issubset(present)
+
+
+def test_default_product_is_e10(conn):
+    code = conn.execute(
+        "SELECT value FROM app_config WHERE key='default_product_code'"
+    ).fetchone()[0]
+    assert code == '5.51.01.0005010'
+    row = conn.execute(
+        "SELECT KOD_JGP FROM produkty_jgp WHERE KOD_PRODUKTU_JEDNOSTKOWEGO=?",
+        (code,),
+    ).fetchone()
+    assert row == ('E10',)
+
+
+def test_csv_backed_reference_data_are_in_database(conn):
+    assert conn.execute("SELECT COUNT(*) FROM produkty_jgp").fetchone()[0] == 693
+    assert conn.execute("SELECT COUNT(*) FROM szpitale_uzupelnienie").fetchone()[0] == 125
+    assert conn.execute("SELECT COUNT(*) FROM hospitalizacje").fetchone()[0] == 3_881_675

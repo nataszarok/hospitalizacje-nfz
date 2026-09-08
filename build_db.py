@@ -9,6 +9,7 @@ from dashboard_logic import combine_hospital_sources, deduplicate_hospitals_by_n
 BASE = Path(__file__).resolve().parent
 CSV_ZIP = BASE / 'hospitalizacje_2025.csv.zip'
 XLSX = BASE / 'PSZ_Polska_2026_z_NIP(1).xlsx'
+PRODUCT_MAP = BASE / 'kody_produktu_jgp.csv'
 DB_PATH = BASE / 'health_dashboard.db'
 CSV_MEMBER = 'hospitalizacje_2025.csv'
 CHUNK_SIZE = 200_000
@@ -23,6 +24,83 @@ RAW_COLUMNS = [
 
 def norm_nip(s: pd.Series) -> pd.Series:
     return normalize_nip(s)
+
+
+def write_reference_tables(conn: sqlite3.Connection):
+    """Zapisuje słowniki i konfigurację używane przez aplikację do SQLite."""
+    config = [
+        ('analysis_year', '2025', 'Rok danych prezentowanych w panelu'),
+        ('death_discharge_code', '9', 'Kod trybu wypisu oznaczający zgon'),
+        ('default_product_code', '5.51.01.0005010', 'Domyślnie wybrany produkt jednostkowy (E10)'),
+        ('simulation_seed', str(SEED), 'Seed użyty przy jednorazowym losowaniu wartości 1–4 dla <5'),
+        ('suppressed_min', '1', 'Dolna wartość zastępująca <5'),
+        ('suppressed_max', '4', 'Górna wartość zastępująca <5'),
+        ('suppressed_weight_formula', 'exp(-x)', 'Wagi losowania wartości 1–4 dla <5'),
+    ]
+    conn.execute('DROP TABLE IF EXISTS app_config')
+    conn.execute('CREATE TABLE app_config (key TEXT PRIMARY KEY, value TEXT NOT NULL, description TEXT)')
+    conn.executemany('INSERT INTO app_config VALUES (?,?,?)', config)
+
+    regions = [
+        ('01','Dolnośląskie',1), ('02','Kujawsko-Pomorskie',2), ('03','Lubelskie',3),
+        ('04','Lubuskie',4), ('05','Łódzkie',5), ('06','Małopolskie',6),
+        ('07','Mazowieckie',7), ('08','Opolskie',8), ('09','Podkarpackie',9),
+        ('10','Podlaskie',10), ('11','Pomorskie',11), ('12','Śląskie',12),
+        ('13','Świętokrzyskie',13), ('14','Warmińsko-Mazurskie',14),
+        ('15','Wielkopolskie',15), ('16','Zachodniopomorskie',16),
+    ]
+    conn.execute('DROP TABLE IF EXISTS nfz_regions')
+    conn.execute('CREATE TABLE nfz_regions (ow_nfz TEXT PRIMARY KEY, wojewodztwo TEXT NOT NULL UNIQUE, sort_order INTEGER NOT NULL)')
+    conn.executemany('INSERT INTO nfz_regions VALUES (?,?,?)', regions)
+
+    admissions = [
+        (2, 'Przyjęcie w trybie nagłym w wyniku przekazania przez zespół ratownictwa medycznego', 1),
+        (3, 'Przyjęcie w trybie nagłym – inne przypadki', 2),
+        (5, 'Przyjęcie noworodka w wyniku porodu w tym szpitalu', 3),
+        (6, 'Przyjęcie planowe na podstawie skierowania', 4),
+        (7, 'Przyjęcie planowe osoby korzystającej ze świadczeń poza kolejnością na podstawie ustawowych uprawnień', 5),
+        (8, 'Przeniesienie z innego szpitala', 6),
+        (9, 'Przyjęcie osoby podlegającej obowiązkowemu leczeniu', 7),
+        (10, 'Przyjęcie przymusowe', 8),
+        (11, 'Przyjęcie na podstawie karty diagnostyki i leczenia onkologicznego', 9),
+    ]
+    conn.execute('DROP TABLE IF EXISTS admission_modes')
+    conn.execute('CREATE TABLE admission_modes (code INTEGER PRIMARY KEY, label TEXT NOT NULL, sort_order INTEGER NOT NULL)')
+    conn.executemany('INSERT INTO admission_modes VALUES (?,?,?)', admissions)
+
+    colors = ['#2563EB','#DC2626','#16A34A','#9333EA','#EA580C','#0891B2','#DB2777','#65A30D','#4F46E5','#CA8A04','#0F766E','#7C3AED','#B91C1C','#0369A1','#15803D','#A21CAF']
+    conn.execute('DROP TABLE IF EXISTS highlight_palette')
+    conn.execute('CREATE TABLE highlight_palette (position INTEGER PRIMARY KEY, color TEXT NOT NULL)')
+    conn.executemany('INSERT INTO highlight_palette VALUES (?,?)', list(enumerate(colors, 1)))
+
+    symbols = ['circle','diamond','square','triangle-up','cross','x','triangle-down','star','hexagon','pentagon']
+    conn.execute('DROP TABLE IF EXISTS product_symbols')
+    conn.execute('CREATE TABLE product_symbols (position INTEGER PRIMARY KEY, symbol TEXT NOT NULL)')
+    conn.executemany('INSERT INTO product_symbols VALUES (?,?)', list(enumerate(symbols, 1)))
+
+    products = pd.read_csv(PRODUCT_MAP, encoding='utf-8-sig', dtype=str)
+    products = products[['KOD_PRODUKTU_JEDNOSTKOWEGO','KOD_JGP','NAZWA']].dropna(subset=['KOD_PRODUKTU_JEDNOSTKOWEGO'])
+    products = products.drop_duplicates('KOD_PRODUKTU_JEDNOSTKOWEGO')
+    products.to_sql('produkty_jgp', conn, index=False, if_exists='replace')
+    conn.execute('CREATE UNIQUE INDEX idx_produkty_jgp_code ON produkty_jgp(KOD_PRODUKTU_JEDNOSTKOWEGO)')
+
+
+def rebuild_filter_values(conn: sqlite3.Connection):
+    """Buduje słownik wartości filtrów z tabeli hospitalizacje."""
+    conn.execute('DROP TABLE IF EXISTS filter_values')
+    conn.execute('CREATE TABLE filter_values (column_name TEXT NOT NULL, value_text TEXT, value_num REAL)')
+    text_cols = [
+        'KOD_PRODUKTU_JEDNOSTKOWEGO', 'KOD_PRODUKTU_KONTRAKTOWEGO', 'OW_NFZ',
+        'PLEC_PACJENTA', 'GRUPA_WIEKOWA_PACJENTA', 'PRZEDZIAL_DLUGOSCI_TRWANIA_HOSPITALIZACJI',
+    ]
+    num_cols = ['KOD_TRYBU_PRZYJECIA', 'KOD_TRYBU_WYPISU', 'MIESIAC']
+    for col in text_cols:
+        sql = 'INSERT INTO filter_values(column_name, value_text) SELECT ?, CAST("' + col + '" AS TEXT) FROM hospitalizacje WHERE "' + col + '" IS NOT NULL GROUP BY "' + col + '"'
+        conn.execute(sql, (col,))
+    for col in num_cols:
+        sql = 'INSERT INTO filter_values(column_name, value_num) SELECT ?, CAST("' + col + '" AS REAL) FROM hospitalizacje WHERE "' + col + '" IS NOT NULL GROUP BY "' + col + '"'
+        conn.execute(sql, (col,))
+    conn.execute('CREATE INDEX idx_filter_values_column ON filter_values(column_name)')
 
 
 def main():
@@ -107,6 +185,8 @@ def main():
     conn.execute('CREATE UNIQUE INDEX idx_szpitale_psz_unique_nip ON szpitale_psz_unique(NIP)')
     conn.execute('CREATE UNIQUE INDEX idx_szpitale_uzupelnienie_nip ON szpitale_uzupelnienie(NIP)')
     conn.execute('CREATE UNIQUE INDEX idx_szpitale_laczone_nip ON szpitale_laczone(NIP)')
+    rebuild_filter_values(conn)
+    write_reference_tables(conn)
     conn.commit()
     conn.execute('ANALYZE')
     conn.close()
