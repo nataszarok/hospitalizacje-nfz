@@ -38,7 +38,7 @@ export function MortalityChart({ rows, axisMode, geographyMode, highlightedRegio
         name,
         x: subset.map((row) => axisMode === "per_100k" ? row.hospitalizationsPer100k : row.hospitalizations),
         y: subset.map((row) => row.mortalityPct),
-        customdata: subset.map((row) => [row.providerName, row.nip, row.owNfz, regionByCode.get(row.owNfz) ?? row.voivodeship, row.city, row.hospitalizations, row.deaths, row.hospitalizationsPer100k, row.productCode]),
+        customdata: subset.map((row) => [row.providerName, row.nip, row.owNfz, regionByCode.get(row.owNfz) ?? row.voivodeship, row.city, row.hospitalizations, row.deaths, row.hospitalizationsPer100k, productByCode.get(row.productCode)?.label ?? row.productCode]),
         marker: {
           size: emphasized ? 11 : 9,
           opacity: emphasized ? 0.94 : 0.68,

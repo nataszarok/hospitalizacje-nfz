@@ -3,7 +3,8 @@ import { getPool } from "@/lib/db";
 import type { EstimationMethod, MortalityRow, ProductOption, ReferencePayload, RegionOption } from "@/lib/types";
 
 function productLabel(code: string, jgpCode: string | null, name: string | null): string {
-  return [code, jgpCode, name].filter((value) => value && value.trim()).join(" — ");
+  const label = [jgpCode, name].filter((value) => value && value.trim()).join(" — ");
+  return label || code;
 }
 
 export async function loadReferenceData(): Promise<ReferencePayload> {
