@@ -14,6 +14,7 @@ def main():
         conn.executescript(SQL_PATH.read_text(encoding="utf-8"))
         conn.execute("ANALYZE dashboard_facility_product")
         conn.execute("ANALYZE dashboard_facility_product_admission")
+        conn.execute("ANALYZE dashboard_facility_product_duration_admission")
         row = conn.execute(
             "SELECT source_rows, aggregate_rows, refreshed_at FROM data_pipeline_status WHERE pipeline_name='dashboard_aggregates'"
         ).fetchone()

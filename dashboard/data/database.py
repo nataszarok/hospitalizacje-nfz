@@ -6,7 +6,7 @@ from dashboard.domain.analytics import add_derived_metrics
 
 ALLOWED_NUM = {"KOD_TRYBU_PRZYJECIA", "KOD_TRYBU_WYPISU", "MIESIAC"}
 ALLOWED_TEXT = {"KOD_PRODUKTU_JEDNOSTKOWEGO", "KOD_PRODUKTU_KONTRAKTOWEGO", "OW_NFZ", "PLEC_PACJENTA", "GRUPA_WIEKOWA_PACJENTA", "PRZEDZIAL_DLUGOSCI_TRWANIA_HOSPITALIZACJI"}
-SECONDARY_FILTERS = ("contracts", "discharge", "months", "sex", "age", "duration")
+SECONDARY_FILTERS = ("contracts", "discharge", "months", "sex", "age")
 
 def connect_readonly(path=DB_PATH):
     con = sqlite3.connect(f"file:{path}?mode=ro", uri=True, check_same_thread=False)
@@ -93,8 +93,14 @@ def load_aggregated(con, filters: tuple, method: str, death_code: int, region_ma
     f=dict(filters); where=[]; params=[]; _sql_in("KOD_PRODUKTU_JEDNOSTKOWEGO",f.get("products",()),where,params)
     admission=f.get("admission",()); pre=should_use_preaggregate(f)
     if pre:
-        table="dashboard_facility_product_admission" if admission else "dashboard_facility_product"
-        if admission: _sql_in("KOD_TRYBU_PRZYJECIA",admission,where,params)
+        duration=f.get("duration",())
+        if duration:
+            table="dashboard_facility_product_duration_admission"
+            _sql_in("PRZEDZIAL_DLUGOSCI_TRWANIA_HOSPITALIZACJI",duration,where,params)
+            if admission: _sql_in("KOD_TRYBU_PRZYJECIA",admission,where,params)
+        else:
+            table="dashboard_facility_product_admission" if admission else "dashboard_facility_product"
+            if admission: _sql_in("KOD_TRYBU_PRZYJECIA",admission,where,params)
         hosp="HOSP_NUM" if method.startswith("Symulacyjna") else "HOSP_MIN"; deaths="DEATHS_NUM" if method.startswith("Symulacyjna") else "DEATHS_MIN"
         death_expr=f'SUM(h."{deaths}")'
     else:
@@ -109,7 +115,14 @@ def load_aggregated(con, filters: tuple, method: str, death_code: int, region_ma
 
 def load_admission_comparison(con, filters: tuple, method: str):
     f=dict(filters); where=[]; params=[]; _sql_in("KOD_PRODUKTU_JEDNOSTKOWEGO",f.get("products",()),where,params); where.append('h."KOD_TRYBU_PRZYJECIA" IN (2,3,6)'); pre=should_use_preaggregate(f)
-    if pre: table="dashboard_facility_product_admission"; hosp="HOSP_NUM" if method.startswith("Symulacyjna") else "HOSP_MIN"
+    if pre:
+        duration=f.get("duration",())
+        if duration:
+            table="dashboard_facility_product_duration_admission"
+            _sql_in("PRZEDZIAL_DLUGOSCI_TRWANIA_HOSPITALIZACJI",duration,where,params)
+        else:
+            table="dashboard_facility_product_admission"
+        hosp="HOSP_NUM" if method.startswith("Symulacyjna") else "HOSP_MIN"
     else:
         for col,key in [("KOD_PRODUKTU_KONTRAKTOWEGO","contracts"),("KOD_TRYBU_WYPISU","discharge"),("MIESIAC","months"),("PLEC_PACJENTA","sex"),("GRUPA_WIEKOWA_PACJENTA","age"),("PRZEDZIAL_DLUGOSCI_TRWANIA_HOSPITALIZACJI","duration")]: _sql_in(col,f.get(key,()),where,params)
         table="hospitalizacje"; hosp="LICZBA_HOSPITALIZACJI_NUM" if method.startswith("Symulacyjna") else "LICZBA_HOSPITALIZACJI_MIN"

@@ -70,3 +70,36 @@ END;
 CREATE TRIGGER trg_hospitalizacje_dashboard_stale_delete AFTER DELETE ON hospitalizacje BEGIN
   UPDATE data_pipeline_status SET needs_refresh=1, note='Zmieniono hospitalizacje. Uruchom: poetry run python refresh_aggregates.py' WHERE pipeline_name='dashboard_aggregates';
 END;
+
+-- Serving aggregate at the finest grain needed by the public dashboard.
+-- It makes the visible runtime filters independent of the raw hospitalizacje table.
+DROP TABLE IF EXISTS dashboard_facility_product_duration_admission;
+CREATE TABLE dashboard_facility_product_duration_admission AS
+SELECT
+    OW_NFZ,
+    NIP_PODMIOTU,
+    KOD_PRODUKTU_JEDNOSTKOWEGO,
+    PRZEDZIAL_DLUGOSCI_TRWANIA_HOSPITALIZACJI,
+    KOD_TRYBU_PRZYJECIA,
+    SUM(LICZBA_HOSPITALIZACJI_NUM) AS HOSP_NUM,
+    SUM(LICZBA_HOSPITALIZACJI_MIN) AS HOSP_MIN,
+    SUM(CASE WHEN KOD_TRYBU_WYPISU = 9 THEN LICZBA_HOSPITALIZACJI_NUM ELSE 0 END) AS DEATHS_NUM,
+    SUM(CASE WHEN KOD_TRYBU_WYPISU = 9 THEN LICZBA_HOSPITALIZACJI_MIN ELSE 0 END) AS DEATHS_MIN
+FROM hospitalizacje
+GROUP BY
+    OW_NFZ,
+    NIP_PODMIOTU,
+    KOD_PRODUKTU_JEDNOSTKOWEGO,
+    PRZEDZIAL_DLUGOSCI_TRWANIA_HOSPITALIZACJI,
+    KOD_TRYBU_PRZYJECIA;
+CREATE UNIQUE INDEX idx_dfpda_key
+ON dashboard_facility_product_duration_admission(
+    OW_NFZ, NIP_PODMIOTU, KOD_PRODUKTU_JEDNOSTKOWEGO,
+    PRZEDZIAL_DLUGOSCI_TRWANIA_HOSPITALIZACJI, KOD_TRYBU_PRZYJECIA
+);
+CREATE INDEX idx_dfpda_product
+ON dashboard_facility_product_duration_admission(KOD_PRODUKTU_JEDNOSTKOWEGO);
+CREATE INDEX idx_dfpda_duration
+ON dashboard_facility_product_duration_admission(PRZEDZIAL_DLUGOSCI_TRWANIA_HOSPITALIZACJI);
+CREATE INDEX idx_dfpda_admission
+ON dashboard_facility_product_duration_admission(KOD_TRYBU_PRZYJECIA);

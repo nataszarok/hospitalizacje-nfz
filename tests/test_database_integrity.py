@@ -173,3 +173,37 @@ def test_manual_provider_rows_and_branch_correction(conn):
     assert zgorzelec == ('01', '3401029', '231161448', 'ZGORZELEC')
     assert przystupa == ('10', '100003731', '200236185', 'BIELSK PODLASKI')
     assert boleslawiec == ('01', 'BOLESŁAWIEC')
+
+
+def test_duration_admission_serving_aggregate_has_expected_grain(conn):
+    total = conn.execute(
+        "SELECT COUNT(*) FROM dashboard_facility_product_duration_admission"
+    ).fetchone()[0]
+    unique_keys = conn.execute(
+        "SELECT COUNT(*) FROM (SELECT OW_NFZ,NIP_PODMIOTU,KOD_PRODUKTU_JEDNOSTKOWEGO,"
+        "PRZEDZIAL_DLUGOSCI_TRWANIA_HOSPITALIZACJI,KOD_TRYBU_PRZYJECIA "
+        "FROM dashboard_facility_product_duration_admission GROUP BY 1,2,3,4,5)"
+    ).fetchone()[0]
+    assert total == unique_keys == 543_633
+
+
+def test_duration_serving_aggregate_matches_raw_for_default_product(conn):
+    product = '5.51.01.0005010'
+    duration = '3-5 dni'
+    raw = conn.execute(
+        "SELECT SUM(LICZBA_HOSPITALIZACJI_MIN), "
+        "SUM(CASE WHEN KOD_TRYBU_WYPISU=9 THEN LICZBA_HOSPITALIZACJI_MIN ELSE 0 END), "
+        "SUM(LICZBA_HOSPITALIZACJI_NUM), "
+        "SUM(CASE WHEN KOD_TRYBU_WYPISU=9 THEN LICZBA_HOSPITALIZACJI_NUM ELSE 0 END) "
+        "FROM hospitalizacje WHERE KOD_PRODUKTU_JEDNOSTKOWEGO=? "
+        "AND PRZEDZIAL_DLUGOSCI_TRWANIA_HOSPITALIZACJI=?",
+        (product, duration),
+    ).fetchone()
+    serving = conn.execute(
+        "SELECT SUM(HOSP_MIN),SUM(DEATHS_MIN),SUM(HOSP_NUM),SUM(DEATHS_NUM) "
+        "FROM dashboard_facility_product_duration_admission "
+        "WHERE KOD_PRODUKTU_JEDNOSTKOWEGO=? "
+        "AND PRZEDZIAL_DLUGOSCI_TRWANIA_HOSPITALIZACJI=?",
+        (product, duration),
+    ).fetchone()
+    assert serving == raw

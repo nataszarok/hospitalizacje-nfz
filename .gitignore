@@ -9,5 +9,5 @@ health_dashboard.db
 *.db-wal
 *.db-shm
 
-*.csv
+data_exports/
 data_sources/
