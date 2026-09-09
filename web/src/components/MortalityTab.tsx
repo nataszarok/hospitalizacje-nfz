@@ -44,7 +44,7 @@ export function MortalityTab({
       <KpiStrip current={data.current} baseline={data.baseline} compare={data.hasComparison} />
       <section className="chart-section">
         <div className="chart-header">
-          <div><h2>Śmiertelność a wolumen</h2><p>Każdy punkt to placówka; wyróżnione obszary pozostają na tle pozostałych placówek.</p></div>
+          <div><h2>Śmiertelność a wolumen</h2><p>Każdy punkt to świadczeniodawca; wyróżnione obszary pozostają na tle pozostałych świadczeniodawców.</p></div>
         </div>
         {data.rows.length > 0 ? <div className="analysis-grid">
           <div className="plot-column">
@@ -77,13 +77,13 @@ export function MortalityTab({
             products={selectedProductDefinitions}
             hasComparison={data.hasComparison}
           />
-        </div> : <div className="empty-chart">{selectedProducts.length === 0 ? "Wybierz co najmniej jeden produkt." : "Brak placówek spełniających wybrane kryteria."}</div>}
+        </div> : <div className="empty-chart">{selectedProducts.length === 0 ? "Wybierz co najmniej jeden produkt." : "Brak świadczeniodawców spełniających wybrane kryteria."}</div>}
       </section>
       <details className="data-details">
         <summary>Tabela danych · wolumen i śmiertelność</summary>
         <div className="table-wrap">
           <table>
-            <thead><tr><th>Świadczeniodawca</th><th>NIP</th><th>Produkt</th><th>OW NFZ</th><th>Województwo</th><th>Miasto</th><th>Hospitalizacje</th><th>Zgony</th><th>Śmiertelność</th></tr></thead>
+            <thead><tr><th>Świadczeniodawca</th><th>NIP</th><th>Produkt</th><th>Kod województwa</th><th>Województwo</th><th>Miasto</th><th>Hospitalizacje</th><th>Zgony</th><th>Śmiertelność</th></tr></thead>
             <tbody>{data.rows.slice(0, 500).map((row) => <tr key={`${row.owNfz}-${row.nip}-${row.productCode}`}><td>{row.providerName}</td><td>{row.nip}</td><td title={productMap.get(row.productCode)?.label}>{row.productCode}</td><td>{row.owNfz}</td><td>{row.voivodeship}</td><td>{row.city}</td><td>{Math.round(row.hospitalizations).toLocaleString("pl-PL")}</td><td>{Math.round(row.deaths).toLocaleString("pl-PL")}</td><td>{row.mortalityPct.toFixed(1)}%</td></tr>)}</tbody>
           </table>
           {data.rows.length > 500 ? <p className="table-note">Podgląd pokazuje pierwsze 500 wierszy.</p> : null}

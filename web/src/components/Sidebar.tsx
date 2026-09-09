@@ -49,7 +49,7 @@ export function Sidebar({
         <div className="sidebar-title">Panel analityczny</div>
       </div>
     </div>
-    <p className="sidebar-intro">Zawęź zakres analizy i wyróżnij wybrane obszary bez usuwania pozostałych placówek z wykresu.</p>
+    <p className="sidebar-intro">Zawęź zakres analizy i wyróżnij wybrane obszary bez usuwania pozostałych świadczeniodawców z wykresu.</p>
 
     <FilterSection title="Zakres świadczeń">
       <LabelWithInfo htmlFor="products" help="">Produkt jednostkowy</LabelWithInfo>
@@ -102,7 +102,7 @@ export function Sidebar({
     </FilterSection>
 
     <FilterSection title="Filtry">
-      <LabelWithInfo htmlFor="minHosp" help="Próg jest liczony po aktualnych filtrach na poziomie całej placówki, czyli unikalnej pary OW NFZ + NIP. Jeśli wybrano kilka produktów, ich hospitalizacje są najpierw sumowane dla placówki. Próg wpływa na punkty, tabele i główne statystyki. Dla porównania aplikacja nadal pokazuje wartości bez tego progu.">Minimalna liczba hospitalizacji na placówkę</LabelWithInfo>
+      <LabelWithInfo htmlFor="minHosp" help="Próg jest liczony po aktualnych filtrach na poziomie całego świadczeniodawcy, czyli unikalnej pary województwo + NIP. Jeśli wybrano kilka produktów, ich hospitalizacje są najpierw sumowane dla świadczeniodawcy. Próg wpływa na punkty, tabele i główne statystyki. Dla porównania aplikacja nadal pokazuje wartości bez tego progu.">Minimalna liczba hospitalizacji na świadczeniodawcę</LabelWithInfo>
       <NumberInput
         id="minHosp"
         min={0}

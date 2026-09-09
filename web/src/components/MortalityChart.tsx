@@ -26,10 +26,11 @@ export function MortalityChart({ rows, axisMode, geographyMode, highlightedRegio
       const Plotly = (await import("plotly.js-dist-min")).default;
       if (cancelled || !chartRef.current) return;
 
+      const appFontFamily = getComputedStyle(document.body).fontFamily || "Inter, ui-sans-serif, system-ui, sans-serif";
       const productCodes = [...new Set(rows.map((row) => row.productCode))];
       const geoSelection = geographyMode === "regions" ? highlightedRegions : highlightedCities;
       const geoKey = (row: MortalityRow) => geographyMode === "regions" ? row.owNfz : row.city;
-      const geoLabel = (key: string) => geographyMode === "regions" ? (regionByCode.get(key) ?? `OW NFZ ${key}`) : key;
+      const geoLabel = (key: string) => geographyMode === "regions" ? (regionByCode.get(key) ?? `Województwo ${key}`) : key;
       const showLegend = geoSelection.length > 0 || productCodes.length > 1;
 
       const makeTrace = (subset: MortalityRow[], productCode: string, productIndex: number, name: string, color: string, emphasized = false) => ({
@@ -38,7 +39,7 @@ export function MortalityChart({ rows, axisMode, geographyMode, highlightedRegio
         name,
         x: subset.map((row) => axisMode === "per_100k" ? row.hospitalizationsPer100k : row.hospitalizations),
         y: subset.map((row) => row.mortalityPct),
-        customdata: subset.map((row) => [row.providerName, row.nip, row.owNfz, regionByCode.get(row.owNfz) ?? row.voivodeship, row.city, row.hospitalizations, row.deaths, row.hospitalizationsPer100k, productByCode.get(row.productCode)?.label ?? row.productCode]),
+        customdata: subset.map((row) => [row.providerName, row.nip, row.owNfz, regionByCode.get(row.owNfz) ?? row.voivodeship, row.city, row.hospitalizations, row.deaths, row.hospitalizationsPer100k, row.productCode]),
         marker: {
           size: emphasized ? 11 : 9,
           opacity: emphasized ? 0.94 : 0.68,
@@ -49,10 +50,8 @@ export function MortalityChart({ rows, axisMode, geographyMode, highlightedRegio
         hovertemplate: [
           "<b>%{customdata[0]}</b>",
           "NIP: %{customdata[1]}",
-          "OW NFZ: %{customdata[2]}",
           "Województwo: %{customdata[3]}",
           "Miejscowość: %{customdata[4]}",
-          "Produkt: %{customdata[8]}",
           "Hospitalizacje: %{customdata[5]:,.0f}",
           "Zgony: %{customdata[6]:,.0f}",
           "Śmiertelność: %{y:.2f}%",
@@ -101,7 +100,7 @@ export function MortalityChart({ rows, axisMode, geographyMode, highlightedRegio
         plot_bgcolor: "#FFFFFF",
         hovermode: "closest",
         hoverdistance: 18,
-        font: { family: "Inter, ui-sans-serif, system-ui, sans-serif", color: "#172033", size: 12 },
+        font: { family: appFontFamily, color: "#172033", size: 12 },
         xaxis: {
           title: { text: axisMode === "per_100k" ? "Hospitalizacje na 100 tys. mieszkańców" : "Liczba hospitalizacji", standoff: 18, font: { size: 15, color: "#344054" } },
           gridcolor: "#EEF1F5",

@@ -15,16 +15,16 @@ export function MethodologyPanel({ year }: { year: string | number }) {
 
           <Text>
             <strong>Zakres analizy:</strong> hospitalizacje, zgony, śmiertelność, tryb przyjęcia oraz przekroje produktowe i geograficzne.<br />
-            <strong>Jednostka placówki:</strong> unikalna para <strong>OW NFZ + NIP</strong>.<br />
+            <strong>Jednostka świadczeniodawcy:</strong> unikalna para <strong>województwo + NIP</strong>.<br />
             <strong>Jak korzystać:</strong> wybierz produkt i filtry w panelu bocznym, a następnie przełączaj moduły analityczne.
           </Text>
 
           <Text>
-            <strong>Interpretacja:</strong> dashboard służy do analizy danych zagregowanych, a nie do oceny jakości pojedynczej placówki bez kontekstu. Wartości źródłowe oznaczone jako <code>&lt;5</code> są przeliczane zgodnie z metodą wybraną w panelu bocznym.
+            <strong>Interpretacja:</strong> dashboard służy do analizy danych zagregowanych, a nie do oceny jakości pojedynczego świadczeniodawcy bez kontekstu. Wartości źródłowe oznaczone jako <code>&lt;5</code> są przeliczane zgodnie z metodą wybraną w panelu bocznym.
           </Text>
 
           <Text>
-            <strong>Ludność:</strong> wariant osi X „hospitalizacje / 100 000 mieszkańców” wykorzystuje ludność województw wg GUS, stan na 31.12.2024. Mianownik jest przypisany według OW NFZ placówki, a nie miejsca zamieszkania pacjenta.
+            <strong>Ludność:</strong> wariant osi X „hospitalizacje / 100 000 mieszkańców” wykorzystuje ludność województw wg GUS, stan na 31.12.2024. Mianownik jest przypisany według województwa świadczeniodawcy, a nie miejsca zamieszkania pacjenta.
           </Text>
         </Stack>
       </Paper>

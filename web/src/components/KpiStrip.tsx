@@ -17,7 +17,7 @@ function KpiInfo({ label }: { label: string }) {
 
 export function KpiStrip({ current, baseline, compare }: { current: KpiSummary; baseline: KpiSummary; compare: boolean }) {
   const cards = [
-    { label: "Placówki", help: "", value: integer(current.facilities), base: integer(baseline.facilities), raw: current.facilities, rawBase: baseline.facilities, share: true },
+    { label: "Świadczeniodawcy", help: "", value: integer(current.facilities), base: integer(baseline.facilities), raw: current.facilities, rawBase: baseline.facilities, share: true },
     { label: "Hospitalizacje", help: "", value: integer(current.hospitalizations), base: integer(baseline.hospitalizations), raw: current.hospitalizations, rawBase: baseline.hospitalizations, share: true },
     { label: "Zgony", help: "", value: integer(current.deaths), base: integer(baseline.deaths), raw: current.deaths, rawBase: baseline.deaths, share: true },
     { label: "Śmiertelność ogółem", help: "", value: pct(current.mortalityPct), base: pct(baseline.mortalityPct), raw: current.mortalityPct, rawBase: baseline.mortalityPct, share: false },
