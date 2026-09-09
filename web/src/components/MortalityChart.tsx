@@ -87,7 +87,7 @@ export function MortalityChart({ rows, axisMode, geographyMode, highlightedRegio
         marker: {
           size: 13,
           opacity: 1,
-          color: "#4B4F56",
+          color: "#D92D20",
           symbol: "circle",
           line: { width: 1.4, color: "#FFFFFF" },
         },
@@ -105,9 +105,10 @@ export function MortalityChart({ rows, axisMode, geographyMode, highlightedRegio
         xaxis: {
           title: { text: axisMode === "per_100k" ? "Hospitalizacje na 100 tys. mieszkańców" : "Liczba hospitalizacji", standoff: 18, font: { size: 15, color: "#344054" } },
           gridcolor: "#EEF1F5",
-          zerolinecolor: "#D8DDE6",
+          zerolinecolor: "#EEF1F5",
+          zerolinewidth: 3,
         },
-        yaxis: { title: { text: "Śmiertelność (%)", standoff: 18, font: { size: 15, color: "#344054" } }, tickfont: { size: 11, color: "#667085" }, gridcolor: "#EEF1F5", zerolinecolor: "#D8DDE6" },
+        yaxis: { title: { text: "Śmiertelność (%)", standoff: 18, font: { size: 15, color: "#344054" } }, tickfont: { size: 11, color: "#667085" }, gridcolor: "#EEF1F5", zerolinecolor: "#EEF1F5", zerolinewidth: 3,},
         legend: { orientation: "h", yanchor: "bottom", y: 1.02, xanchor: "left", x: 0, font: { size: 11, color: "#111111" } },
         showlegend: showLegend,
         hoverlabel: { bgcolor: "#5F6672", font: { color: "#FFFFFF", size: 13 } },
