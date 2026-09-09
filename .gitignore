@@ -1,13 +1,12 @@
-.venv/
-__pycache__/
-*.py[cod]
-.streamlit/secrets.toml
-.DS_Store
-
 # Lokalna baza danych - nie commitujemy jej do repozytorium
 health_dashboard.db
 *.db-wal
 *.db-shm
 
 data_exports/
-data_sources/
+
+node_modules/
+.next/
+.env
+.env.local
+.vercel/
