@@ -1,4 +1,4 @@
-import { ActionIcon, Tooltip } from "@mantine/core";
+import { ActionIcon, Grid, Paper, Tooltip } from "@mantine/core";
 import type { KpiSummary } from "@/lib/types";
 
 function integer(value: number) {
@@ -23,12 +23,14 @@ export function KpiStrip({ current, baseline, compare }: { current: KpiSummary; 
     { label: "Śmiertelność ogółem", help: "", value: pct(current.mortalityPct), base: pct(baseline.mortalityPct), raw: current.mortalityPct, rawBase: baseline.mortalityPct, share: false },
   ];
 
-  return <div className="kpi-grid">{cards.map((card) => {
+  return <Grid className="kpi-grid" gutter="sm">{cards.map((card) => {
     const retained = card.rawBase > 0 ? (card.raw / card.rawBase) * 100 : 0;
-    return <section className="kpi-card" key={card.label}>
-      <div className="kpi-label">{card.label}<KpiInfo label={card.help} /></div>
-      <div className="kpi-value">{card.value}{compare ? <><span className="kpi-separator"> / </span><span className="kpi-baseline">{card.base}</span></> : null}</div>
-      {compare && card.share ? <div className="kpi-secondary">{pct(retained)} wartości bazowej</div> : <div className="kpi-secondary">&nbsp;</div>}
-    </section>;
-  })}</div>;
+    return <Grid.Col span={3} key={card.label}>
+      <Paper component="section" className="kpi-card" withBorder radius="md" p="md" shadow="xs">
+        <div className="kpi-label">{card.label}<KpiInfo label={card.help} /></div>
+        <div className="kpi-value">{card.value}{compare ? <><span className="kpi-separator"> / </span><span className="kpi-baseline">{card.base}</span></> : null}</div>
+        <div className="kpi-secondary">{compare && card.share ? `${pct(retained)} wartości bazowej` : <>&nbsp;</>}</div>
+      </Paper>
+    </Grid.Col>;
+  })}</Grid>;
 }
