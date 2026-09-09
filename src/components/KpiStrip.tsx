@@ -23,7 +23,7 @@ export function KpiStrip({ current, baseline, compare }: { current: KpiSummary; 
     { label: "Śmiertelność ogółem", help: "", value: pct(current.mortalityPct), base: pct(baseline.mortalityPct), raw: current.mortalityPct, rawBase: baseline.mortalityPct, share: false },
   ];
 
-  return <Grid className="kpi-grid" gutter="sm">{cards.map((card) => {
+  return <Grid className="kpi-grid">{cards.map((card) => {
     const retained = card.rawBase > 0 ? (card.raw / card.rawBase) * 100 : 0;
     return <Grid.Col span={3} key={card.label}>
       <Paper component="section" className="kpi-card" withBorder radius="md" p="md" shadow="xs">
