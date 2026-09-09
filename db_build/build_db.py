@@ -10,7 +10,7 @@ from db_build.import_nfz_providers import prepare_provider_dataframe, verify_hos
 
 BASE = Path(__file__).resolve().parents[1]
 CSV_ZIP = BASE / 'data_sources' / 'hospitalizacje_2025.csv.zip'
-XLSX = BASE / 'data_sources' / 'PSZ_Polska_2026_z_NIP(1).xlsx'
+XLSX = BASE / 'data_sources' / 'PSZ_Polska_2026_z_NIP.xlsx'
 PRODUCT_MAP = BASE / 'data_sources' / 'kody_produktu_jgp.csv'
 NFZ_PROVIDERS = BASE / 'data_sources' / 'nfz_swiadczeniodawcy_2025.csv'
 DB_PATH = BASE / 'health_dashboard.db'
