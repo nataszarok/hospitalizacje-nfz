@@ -1,45 +1,46 @@
-# Web dashboard (Next.js + TypeScript)
+# Hospitalizacje NFZ
 
-Nowa aplikacja jest budowana równolegle do istniejącego Streamlita. Katalog `web/` nie zastępuje `app.py`, `dashboard/` ani `db_build/`.
+Interaktywny dashboard do eksploracji danych o hospitalizacjach w
+Polsce.
 
-## Zakres tego etapu
+Aplikacja pozwala analizować wolumen hospitalizacji i śmiertelność w
+przekroju świadczeniodawców, produktów JGP oraz geografii.
 
-- Next.js App Router + TypeScript.
-- Backend Node.js z `pg` i `DATABASE_URL` do PostgreSQL/Supabase.
-- `/api/reference` — produkty, województwa, miasta, długości pobytu i konfiguracja.
-- `/api/mortality` — pierwszy kompletny backend dla zakładki „Wolumen i śmiertelność”.
-- Semantyka current/baseline zgodna ze Streamlitem: current uwzględnia długość pobytu i próg, baseline ignoruje oba.
-- Próg jest liczony per `(OW_NFZ, NIP)` po zsumowaniu wszystkich wybranych produktów.
-- Geografia jest tylko wyróżnieniem na froncie i nie filtruje SQL.
-- Obsługa metod `<5`: `min` i `sim`.
-- Oś X: wolumen lub hospitalizacje / 100 000 ludności województwa OW NFZ.
-- Do 5 produktów i do 5 wyróżnianych województw/miast.
+## Co można sprawdzić?
 
-Zakładki „Tryb przyjęcia” i „Metodologia i dane” są widoczne jako następne etapy, ale w tym patchu są jeszcze wyłączone.
+Dashboard umożliwia m.in.:
 
-## Konfiguracja lokalna
+-   porównywanie liczby hospitalizacji pomiędzy świadczeniodawcami,
+-   analizę śmiertelności,
+-   analizę hospitalizacji w przeliczeniu na 100 000 mieszkańców,
+-   wybór i porównywanie produktów JGP,
+-   wyróżnianie województw i miast,
+-   filtrowanie wyników według wybranych parametrów.
 
-```bash
-cd web
-cp .env.example .env.local
-```
+Wartości źródłowe oznaczone jako `<5` mogą być analizowane z
+wykorzystaniem dostępnych w aplikacji metod estymacji.
 
-W `.env.local` ustaw `DATABASE_URL` na connection string PostgreSQL Supabase. Nie używaj prefiksu `NEXT_PUBLIC_` — hasło do bazy ma pozostać wyłącznie po stronie serwera.
+## Dane
 
-```bash
-npm install
-npm run dev
-```
+Dashboard wykorzystuje dane dotyczące hospitalizacji rozliczonych przez
+NFZ oraz dane ludności województw publikowane przez GUS.
 
-Aplikacja: http://localhost:3000
+Jednostką świadczeniodawcy jest unikalne połączenie województwa NFZ i
+NIP.
 
-## Test kompilacji
+Wskaźnik hospitalizacji na 100 000 mieszkańców wykorzystuje ludność
+województwa przypisanego do świadczeniodawcy. Nie jest to wskaźnik
+oparty na miejscu zamieszkania pacjenta.
 
-```bash
-npm run typecheck
-npm run build
-```
+## Interpretacja
 
-## Vercel
+Dashboard służy do eksploracji i porównywania zagregowanych danych
+hospitalizacyjnych.
 
-Root Directory projektu Vercel ustaw na `web`. Dodaj `DATABASE_URL` jako Environment Variable. Kod korzystający z bazy działa w Node.js Route Handlers, nie w przeglądarce.
+Prezentowane wyniki należy interpretować w kontekście zakresu i
+charakteru danych źródłowych. Aplikacja nie powinna być traktowana jako
+samodzielne narzędzie do oceny jakości pojedynczego świadczeniodawcy.
+
+## Status
+
+Projekt jest rozwijanym MVP.
