@@ -68,6 +68,7 @@ export function MortalityTab({
             />
           </div>
           <AreaStatsPanel
+            kind="mortality"
             geographyMode={geoMode}
             selectedKeys={geoMode === "regions" ? highlightedRegions : highlightedCities}
             groups={geoMode === "regions" ? data.areaStats.regions : data.areaStats.cities}

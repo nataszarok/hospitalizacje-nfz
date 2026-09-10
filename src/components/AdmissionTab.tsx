@@ -1,5 +1,6 @@
 "use client";
 
+import { AreaStatsPanel } from "@/components/AreaStatsPanel";
 import { AdmissionChart } from "@/components/AdmissionChart";
 import type { AdmissionPayload, GeographyMode, ReferencePayload } from "@/lib/types";
 
@@ -13,6 +14,8 @@ export function AdmissionTab({ reference, data, loading, error, selectedProducts
   highlightedRegions: string[];
   highlightedCities: string[];
 }) {
+  const selectedAreaKeys = geoMode === "regions" ? highlightedRegions : highlightedCities;
+
   return <>
     {error ? <div className="alert">{error}</div> : null}
     <div className={loading ? "content loading" : "content"}>
@@ -23,13 +26,23 @@ export function AdmissionTab({ reference, data, loading, error, selectedProducts
             <p>Każdy punkt to świadczeniodawca. Oś X pokazuje przyjęcia planowane (kod 6), a oś Y sumę przyjęć nagłych (kody 2 i 3).</p>
           </div>
         </div>
-        {data.rows.length > 0 ? <AdmissionChart
-          rows={data.rows}
-          geographyMode={geoMode}
-          highlightedRegions={highlightedRegions}
-          highlightedCities={highlightedCities}
-          regions={reference.regions}
-        /> : <div className="empty-chart">{selectedProducts.length === 0 ? "Wybierz co najmniej jeden produkt." : "Brak świadczeniodawców spełniających wybrane kryteria."}</div>}
+        {data.rows.length > 0 ? <div className="analysis-grid">
+          <div className="plot-column">
+            <AdmissionChart
+              rows={data.rows}
+              geographyMode={geoMode}
+              highlightedRegions={highlightedRegions}
+              highlightedCities={highlightedCities}
+              regions={reference.regions}
+            />
+          </div>
+          <AreaStatsPanel
+            kind="admissions"
+            geographyMode={geoMode}
+            selectedKeys={selectedAreaKeys}
+            rows={data.rows}
+          />
+        </div> : <div className="empty-chart">{selectedProducts.length === 0 ? "Wybierz co najmniej jeden produkt." : "Brak świadczeniodawców spełniających wybrane kryteria."}</div>}
       </section>
       <details className="data-details">
         <summary>Tabela danych · tryb przyjęcia</summary>
