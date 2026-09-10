@@ -11,6 +11,10 @@ function hospitalizationColumn(method: EstimationMethod): "hosp_min" | "hosp_sim
   return method === "sim" ? "hosp_sim" : "hosp_min";
 }
 
+function per100k(value: number, population: number): number {
+  return population > 0 ? (value / population) * 100_000 : 0;
+}
+
 export async function loadReferenceData(): Promise<ReferencePayload> {
   const db = getPool();
   const [config, productsResult, regionsResult, citiesResult, durationResult] = await Promise.all([
@@ -138,7 +142,7 @@ export async function loadMortalityRows(query: MortalityQuery): Promise<Mortalit
       hospitalizations,
       deaths,
       mortalityPct: hospitalizations > 0 ? (deaths / hospitalizations) * 100 : 0,
-      hospitalizationsPer100k: population > 0 ? (hospitalizations / population) * 100_000 : 0,
+      hospitalizationsPer100k: per100k(hospitalizations, population),
     };
   });
 }
@@ -205,11 +209,13 @@ export async function loadAdmissionRows(query: AdmissionQuery): Promise<Admissio
       f.provider_name,
       COALESCE(f.city, '') AS city,
       r.voivodeship,
+      pop.population,
       a.planned_admissions,
       a.urgent_admissions
     FROM by_facility a
     JOIN facilities f USING (ow_nfz, nip)
     JOIN nfz_regions r USING (ow_nfz)
+    JOIN population_voivodeship pop USING (ow_nfz)
     WHERE (a.planned_admissions + a.urgent_admissions) >= $${minIndex}::double precision
     ORDER BY (a.planned_admissions + a.urgent_admissions) DESC, a.ow_nfz, a.nip
   `;
@@ -220,6 +226,7 @@ export async function loadAdmissionRows(query: AdmissionQuery): Promise<Admissio
     provider_name: string;
     city: string;
     voivodeship: string;
+    population: string | number;
     planned_admissions: string | number;
     urgent_admissions: string | number;
   }>(sql, params);
@@ -227,15 +234,20 @@ export async function loadAdmissionRows(query: AdmissionQuery): Promise<Admissio
   return result.rows.map((row) => {
     const plannedAdmissions = Number(row.planned_admissions);
     const urgentAdmissions = Number(row.urgent_admissions);
+    const totalAdmissions = plannedAdmissions + urgentAdmissions;
+    const population = Number(row.population);
     return {
       owNfz: row.ow_nfz,
       nip: row.nip,
       providerName: row.provider_name,
       city: row.city,
       voivodeship: row.voivodeship,
+      population,
       plannedAdmissions,
       urgentAdmissions,
-      totalAdmissions: plannedAdmissions + urgentAdmissions,
+      totalAdmissions,
+      plannedAdmissionsPer100k: per100k(plannedAdmissions, population),
+      urgentAdmissionsPer100k: per100k(urgentAdmissions, population),
     };
   });
 }

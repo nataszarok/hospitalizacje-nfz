@@ -1,15 +1,18 @@
 "use client";
 
+import { SegmentedControl } from "@mantine/core";
 import { AreaStatsPanel } from "@/components/AreaStatsPanel";
 import { AdmissionChart } from "@/components/AdmissionChart";
-import type { AdmissionPayload, GeographyMode, ReferencePayload } from "@/lib/types";
+import type { AdmissionPayload, AxisMode, GeographyMode, ReferencePayload } from "@/lib/types";
 
-export function AdmissionTab({ reference, data, loading, error, selectedProducts, geoMode, highlightedRegions, highlightedCities }: {
+export function AdmissionTab({ reference, data, loading, error, selectedProducts, axisMode, setAxisMode, geoMode, highlightedRegions, highlightedCities }: {
   reference: ReferencePayload;
   data: AdmissionPayload;
   loading: boolean;
   error: string | null;
   selectedProducts: string[];
+  axisMode: AxisMode;
+  setAxisMode: (value: AxisMode) => void;
   geoMode: GeographyMode;
   highlightedRegions: string[];
   highlightedCities: string[];
@@ -23,13 +26,25 @@ export function AdmissionTab({ reference, data, loading, error, selectedProducts
         <div className="chart-header">
           <div>
             <h2>Przyjęcia planowane a nagłe</h2>
-            <p>Każdy punkt to świadczeniodawca. Oś X pokazuje przyjęcia planowane (kod 6), a oś Y sumę przyjęć nagłych (kody 2 i 3).</p>
+            <p>Każdy punkt to świadczeniodawca. Oś X pokazuje przyjęcia planowane (kod 6), a oś Y sumę przyjęć nagłych (kody 2 i 3). Przełącznik zmienia jednostkę obu osi.</p>
           </div>
         </div>
         {data.rows.length > 0 ? <div className="analysis-grid">
           <div className="plot-column">
+            <div className="plot-toolbar">
+              <SegmentedControl
+                value={axisMode}
+                onChange={(value) => setAxisMode(value as AxisMode)}
+                data={[
+                  { value: "total", label: "Liczba hospitalizacji" },
+                  { value: "per_100k", label: "Na 100 tys. mieszk." },
+                ]}
+                className="axis-segmented"
+              />
+            </div>
             <AdmissionChart
               rows={data.rows}
+              axisMode={axisMode}
               geographyMode={geoMode}
               highlightedRegions={highlightedRegions}
               highlightedCities={highlightedCities}

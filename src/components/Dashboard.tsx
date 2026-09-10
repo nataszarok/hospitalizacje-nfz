@@ -24,6 +24,7 @@ export function Dashboard() {
   const [method, setMethod] = useState<EstimationMethod>("min");
   const [minHosp, setMinHosp] = useState(0);
   const [axisMode, setAxisMode] = useState<AxisMode>("total");
+  const [admissionAxisMode, setAdmissionAxisMode] = useState<AxisMode>("total");
   const [geoMode, setGeoMode] = useState<GeographyMode>("regions");
   const [highlightedRegions, setHighlightedRegions] = useState<string[]>([]);
   const [highlightedCities, setHighlightedCities] = useState<string[]>([]);
@@ -136,6 +137,8 @@ export function Dashboard() {
         loading={loading}
         error={error}
         selectedProducts={selectedProducts}
+        axisMode={admissionAxisMode}
+        setAxisMode={setAdmissionAxisMode}
         geoMode={geoMode}
         highlightedRegions={highlightedRegions}
         highlightedCities={highlightedCities}

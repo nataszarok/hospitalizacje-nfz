@@ -80,9 +80,12 @@ export interface AdmissionRow {
   providerName: string;
   city: string;
   voivodeship: string;
+  population: number;
   plannedAdmissions: number;
   urgentAdmissions: number;
   totalAdmissions: number;
+  plannedAdmissionsPer100k: number;
+  urgentAdmissionsPer100k: number;
 }
 
 export interface AdmissionAreaStatGroup {
