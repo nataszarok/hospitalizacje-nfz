@@ -193,36 +193,45 @@ export async function loadAdmissionRows(query: AdmissionQuery): Promise<Admissio
 
   const minIndex = params.push(query.minHosp);
   const sql = `
-    WITH by_facility AS (
+    WITH by_product AS (
       SELECT
         s.ow_nfz,
         s.nip,
+        s.product_code,
         SUM(CASE WHEN s.${admissionColumn}::text = '6' THEN s.${hospColumn} ELSE 0 END)::double precision AS planned_admissions,
         SUM(CASE WHEN s.${admissionColumn}::text IN ('2', '3') THEN s.${hospColumn} ELSE 0 END)::double precision AS urgent_admissions
       FROM facility_product_duration_admission s
       WHERE ${conditions.join(" AND ")}
-      GROUP BY s.ow_nfz, s.nip
+      GROUP BY s.ow_nfz, s.nip, s.product_code
+    ),
+    eligible_facilities AS (
+      SELECT ow_nfz, nip
+      FROM by_product
+      GROUP BY ow_nfz, nip
+      HAVING SUM(planned_admissions + urgent_admissions) >= $${minIndex}::double precision
     )
     SELECT
       a.ow_nfz,
       a.nip,
+      a.product_code,
       f.provider_name,
       COALESCE(f.city, '') AS city,
       r.voivodeship,
       pop.population,
       a.planned_admissions,
       a.urgent_admissions
-    FROM by_facility a
+    FROM by_product a
+    JOIN eligible_facilities e USING (ow_nfz, nip)
     JOIN facilities f USING (ow_nfz, nip)
     JOIN nfz_regions r USING (ow_nfz)
     JOIN population_voivodeship pop USING (ow_nfz)
-    WHERE (a.planned_admissions + a.urgent_admissions) >= $${minIndex}::double precision
-    ORDER BY (a.planned_admissions + a.urgent_admissions) DESC, a.ow_nfz, a.nip
+    ORDER BY (a.planned_admissions + a.urgent_admissions) DESC, a.ow_nfz, a.nip, a.product_code
   `;
 
   const result = await db.query<{
     ow_nfz: string;
     nip: string;
+    product_code: string;
     provider_name: string;
     city: string;
     voivodeship: string;
@@ -239,6 +248,7 @@ export async function loadAdmissionRows(query: AdmissionQuery): Promise<Admissio
     return {
       owNfz: row.ow_nfz,
       nip: row.nip,
+      productCode: row.product_code,
       providerName: row.provider_name,
       city: row.city,
       voivodeship: row.voivodeship,

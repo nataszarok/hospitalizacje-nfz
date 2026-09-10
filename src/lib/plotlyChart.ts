@@ -31,20 +31,81 @@ export function getGeoKey(row: { owNfz: string; city: string }, geographyMode: G
   return geographyMode === "regions" ? row.owNfz : row.city;
 }
 
-export function getCommonPlotLayout(showLegend: boolean) {
+export function getCommonPlotLayout(showLegend: boolean, legendTitle?: string) {
   return {
     height: getChartHeight(),
     autosize: true,
-    margin: { l: 88, r: 24, t: showLegend ? 78 : 22, b: 88 },
+    margin: { l: 88, r: 24, t: 22, b: 88 },
     paper_bgcolor: "#FFFFFF",
     plot_bgcolor: "#FFFFFF",
     hovermode: "closest",
     hoverdistance: 18,
     font: { family: getAppFontFamily(), color: "#172033", size: 12 },
-    legend: { orientation: "h", yanchor: "bottom", y: 1.02, xanchor: "left", x: 0, font: { size: 11, color: "#111111" } },
+    legend: {
+      orientation: "v",
+      yanchor: "top",
+      y: 0.99,
+      xanchor: "right",
+      x: 0.99,
+      bgcolor: "rgba(255,255,255,0.90)",
+      bordercolor: "#E3E7EE",
+      borderwidth: 1,
+      font: { size: 11, color: "#111111" },
+      title: legendTitle ? { text: legendTitle, font: { size: 11, color: "#667085" } } : undefined,
+      itemclick: false,
+      itemdoubleclick: false,
+    },
     showlegend: showLegend,
     hoverlabel: { bgcolor: "#5F6672", font: { color: "#FFFFFF", size: 13 } },
   };
+}
+
+export function makeDimensionLegendTraces({
+  geographyMode,
+  geoSelection,
+  geoLabel,
+  productCodes,
+  productLabel,
+}: {
+  geographyMode: GeographyMode;
+  geoSelection: string[];
+  geoLabel: (key: string) => string;
+  productCodes: string[];
+  productLabel: (code: string) => string;
+}) {
+  const traces: Record<string, unknown>[] = [];
+
+  if (geoSelection.length > 0) {
+    traces.push({
+      type: "scattergl", mode: "markers", x: [null], y: [null],
+      name: "Pozostałe", hoverinfo: "skip",
+      marker: { size: 9, color: "#C7CBD1", symbol: "circle", line: { width: 0.4, color: "#FFFFFF" } },
+      legendgroup: "geography",
+      legendgrouptitle: { text: geographyMode === "regions" ? "Województwa" : "Miasta" },
+    });
+    geoSelection.forEach((key, index) => {
+      traces.push({
+        type: "scattergl", mode: "markers", x: [null], y: [null],
+        name: geoLabel(key), hoverinfo: "skip",
+        marker: { size: 9, color: HIGHLIGHT_COLORS[index % HIGHLIGHT_COLORS.length], symbol: "circle", line: { width: 0.4, color: "#FFFFFF" } },
+        legendgroup: "geography",
+      });
+    });
+  }
+
+  if (productCodes.length > 1) {
+    productCodes.forEach((code, index) => {
+      traces.push({
+        type: "scattergl", mode: "markers", x: [null], y: [null],
+        name: productLabel(code), hoverinfo: "skip",
+        marker: { size: 9, color: "#667085", symbol: PRODUCT_SYMBOLS[index % PRODUCT_SYMBOLS.length], line: { width: 0.4, color: "#FFFFFF" } },
+        legendgroup: "products",
+        ...(index === 0 ? { legendgrouptitle: { text: "Kod JGP" } } : {}),
+      });
+    });
+  }
+
+  return traces;
 }
 
 export function makeHoverTrace() {

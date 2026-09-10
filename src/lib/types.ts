@@ -77,6 +77,7 @@ export interface MortalityPayload {
 export interface AdmissionRow {
   owNfz: string;
   nip: string;
+  productCode: string;
   providerName: string;
   city: string;
   voivodeship: string;
