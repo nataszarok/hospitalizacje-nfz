@@ -18,7 +18,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="pl" {...mantineHtmlProps}>
       <head><ColorSchemeScript defaultColorScheme="light" /></head>
-      <body className={inter.className}>
+      <body className={inter.className} suppressHydrationWarning>
         <MantineProvider
           defaultColorScheme="light"
           theme={{

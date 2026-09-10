@@ -32,6 +32,7 @@ export function MortalityChart({ rows, axisMode, geographyMode, highlightedRegio
       const geoKey = (row: MortalityRow) => geographyMode === "regions" ? row.owNfz : row.city;
       const geoLabel = (key: string) => geographyMode === "regions" ? (regionByCode.get(key) ?? `Województwo ${key}`) : key;
       const showLegend = geoSelection.length > 0 || productCodes.length > 1;
+      const chartHeight = window.innerHeight <= 850 && window.innerWidth > 1000 ? Math.max(400, Math.min(500, window.innerHeight - 300)) : 540;
 
       const makeTrace = (subset: MortalityRow[], productCode: string, productIndex: number, name: string, color: string, emphasized = false) => ({
         type: "scattergl",
@@ -93,7 +94,7 @@ export function MortalityChart({ rows, axisMode, geographyMode, highlightedRegio
       });
 
       await Plotly.react(chartRef.current, traces, {
-        height: 540,
+        height: chartHeight,
         autosize: true,
         margin: { l: 88, r: 24, t: showLegend ? 78 : 22, b: 88 },
         paper_bgcolor: "#FFFFFF",
