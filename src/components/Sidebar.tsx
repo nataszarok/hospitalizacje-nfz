@@ -52,7 +52,7 @@ export function Sidebar({
     <p className="sidebar-intro">Zawęź zakres analizy i wyróżnij wybrane obszary bez usuwania pozostałych świadczeniodawców z wykresu.</p>
 
     <FilterSection title="Zakres świadczeń">
-      <LabelWithInfo htmlFor="products" help="">Produkt jednostkowy</LabelWithInfo>
+      <LabelWithInfo htmlFor="products" help="Wybierz jedną lub więcej grup JGP. Wybrane grupy są analizowane łącznie.">Produkt jednostkowy</LabelWithInfo>
       <div className="field-help">Możesz porównać maksymalnie 5 produktów.</div>
       <MultiSelect
         id="products"
@@ -102,7 +102,7 @@ export function Sidebar({
     </FilterSection>
 
     <FilterSection title="Filtry">
-      <LabelWithInfo htmlFor="minHosp" help="Próg jest liczony po aktualnych filtrach na poziomie całego świadczeniodawcy, czyli unikalnej pary województwo + NIP. Jeśli wybrano kilka produktów, ich hospitalizacje są najpierw sumowane dla świadczeniodawcy. Próg wpływa na punkty, tabele i główne statystyki. Dla porównania aplikacja nadal pokazuje wartości bez tego progu.">Minimalna liczba hospitalizacji na świadczeniodawcę</LabelWithInfo>
+      <LabelWithInfo htmlFor="minHosp" help="Ogranicza do świadczeniodawców, którzy mają co najmniej wybraną liczbę hospitalizacji. Przykład: przy ustawieniu 100, uwzględnia świadczeniodawców ze 100 lub większą liczbą hospitalizacji.">Minimalna liczba hospitalizacji na świadczeniodawcę</LabelWithInfo>
       <NumberInput
         id="minHosp"
         min={0}
@@ -113,7 +113,7 @@ export function Sidebar({
         clampBehavior="strict"
         className="mantine-filter"
       />
-      <LabelWithInfo htmlFor="durations" help="">Przedział długości hospitalizacji</LabelWithInfo>
+      <LabelWithInfo htmlFor="durations" help="Ogranicza analizę do hospitalizacji w wybranym przedziale długości pobytu.">Przedział długości hospitalizacji</LabelWithInfo>
       <MultiSelect
         id="durations"
         data={reference.durations}
@@ -127,7 +127,7 @@ export function Sidebar({
     </FilterSection>
 
     <FilterSection title="Estymacja wartości ukrytych" last>
-      <LabelWithInfo htmlFor="method" help="">Wartości &lt;5</LabelWithInfo>
+      <LabelWithInfo htmlFor="method" help="Dane źródłowe nie podają dokładnej liczby hospitalizacji dla wartości oznaczonych jako <5. Metoda konserwatywna przyjmuje dla nich wartość 1. Metoda symulacyjna przypisuje wartości 1–4 według rozkładu wykładniczo malejącego, w którym mniejsze wartości są bardziej prawdopodobne. Losowanie jest zapisane w bazie. Wybór metody wpływa również na liczbę zgonów, jeśli wartość <5 dotyczy hospitalizacji zakończonej zgonem.">Wartości &lt;5</LabelWithInfo>
       <Select
         id="method"
         value={method}
