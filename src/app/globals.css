@@ -190,6 +190,10 @@ td:nth-child(6), td:nth-child(7), td:nth-child(8) { white-space:nowrap; }
 .area-stat-label { font-weight:650; color:#344054; margin-bottom:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .area-stat-row.primary .area-stat-label { font-weight:750; color:#172033; }
 .area-stat-row b { color:#28364A; }
+.mortality-area-stat-card .area-stat-title { font-size:11.5px; margin-bottom:4px; }
+.mortality-area-stat-card .area-stat-row { font-size:11.5px; line-height:1.45; }
+.admission-area-stat-card .area-stat-title { font-size:11.5px; margin-bottom:4px; }
+.admission-area-stat-card .area-stat-row { font-size:11.5px; line-height:1.45; }
 .area-stat-baseline { height:auto; min-height:0; max-height:none; margin-top:3px; color:#8992A1; font-size:9.5px; line-height:1.5; white-space:normal; overflow:visible; }
 @media (max-width:1000px) { .plot-toolbar { justify-content:stretch; } .axis-segmented { width:100%; } }
 .field-label-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}.field-label-row .field-label{margin-bottom:0}.info-icon{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border:1px solid #AAB3C1;border-radius:50%;color:#667085;font-size:10px;font-weight:750;line-height:1;font-style:normal;cursor:help}

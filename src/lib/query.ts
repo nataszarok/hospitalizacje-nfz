@@ -1,4 +1,5 @@
 import type { AdmissionAreaStatGroup, AdmissionGeographyStats, AdmissionRow, AreaStatGroup, EstimationMethod, GeographyStats, KpiSummary, MortalityRow } from "@/lib/types";
+import { ratioPct } from "@/lib/metrics";
 
 export function parseCsvParam(value: string | null, max = 100): string[] {
   if (!value) return [];
@@ -99,6 +100,7 @@ function buildAdmissionAreaGroups(rows: AdmissionRow[], mode: "regions" | "citie
       urgentAdmissions,
       totalAdmissions: plannedAdmissions + urgentAdmissions,
       facilities,
+      plannedToUrgentRatioPct: ratioPct(plannedAdmissions, urgentAdmissions),
     };
   }).sort((a, b) => a.name.localeCompare(b.name, "pl"));
 }

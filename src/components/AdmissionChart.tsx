@@ -10,6 +10,7 @@ import {
   makeHoverTrace,
   PLOTLY_CONFIG,
 } from "@/lib/plotlyChart";
+import { ratioPct } from "@/lib/metrics";
 import type { AdmissionRow, AxisMode, GeographyMode, RegionOption } from "@/lib/types";
 
 export function AdmissionChart({ rows, axisMode, geographyMode, highlightedRegions, highlightedCities, regions }: {
@@ -40,7 +41,22 @@ export function AdmissionChart({ rows, axisMode, geographyMode, highlightedRegio
         name,
         x: subset.map((row) => axisMode === "per_100k" ? row.plannedAdmissionsPer100k : row.plannedAdmissions),
         y: subset.map((row) => axisMode === "per_100k" ? row.urgentAdmissionsPer100k : row.urgentAdmissions),
-        customdata: subset.map((row) => [row.providerName, row.nip, row.owNfz, regionByCode.get(row.owNfz) ?? row.voivodeship, row.city, row.plannedAdmissions, row.urgentAdmissions, row.totalAdmissions, row.plannedAdmissionsPer100k, row.urgentAdmissionsPer100k]),
+        customdata: subset.map((row) => {
+          const ratio = ratioPct(row.plannedAdmissions, row.urgentAdmissions);
+          return [
+            row.providerName,
+            row.nip,
+            row.owNfz,
+            regionByCode.get(row.owNfz) ?? row.voivodeship,
+            row.city,
+            row.plannedAdmissions,
+            row.urgentAdmissions,
+            row.totalAdmissions,
+            row.plannedAdmissionsPer100k,
+            row.urgentAdmissionsPer100k,
+            ratio === null ? "—" : `${ratio.toLocaleString("pl-PL", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`,
+          ];
+        }),
         marker: {
           size: emphasized ? 11 : 9,
           opacity: emphasized ? 0.94 : 0.68,
@@ -55,7 +71,7 @@ export function AdmissionChart({ rows, axisMode, geographyMode, highlightedRegio
           "Miejscowość: %{customdata[4]}",
           "Planowane (6): %{customdata[5]:,.0f}",
           "Nagłe (2+3): %{customdata[6]:,.0f}",
-          "Planowane + nagłe: %{customdata[7]:,.0f}",
+          "Planowane / nagłe: %{customdata[10]}",
           axisMode === "per_100k" ? "Planowane / 100 tys.: %{customdata[8]:,.2f}" : "",
           axisMode === "per_100k" ? "Nagłe / 100 tys.: %{customdata[9]:,.2f}" : "",
           "<extra></extra>",

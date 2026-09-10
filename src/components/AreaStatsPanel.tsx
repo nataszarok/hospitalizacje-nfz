@@ -50,7 +50,7 @@ function MortalityAreaStats(props: MortalityProps) {
       const group = groupMap.get(key);
       if (!group) return null;
       const baseline = baselineMap.get(key);
-      return <section className="area-stat-card" key={key}>
+      return <section className="area-stat-card mortality-area-stat-card" key={key}>
         <div className="area-stat-title">{group.name}</div>
         {group.rows.map((row, index) => {
           const baselineRow = baseline?.rows.find((candidate) => candidate.productCode === row.productCode);
@@ -58,12 +58,12 @@ function MortalityAreaStats(props: MortalityProps) {
             <div className="area-stat-label" title={row.productCode ? productMap.get(row.productCode) : undefined}>
               {row.productCode ? (productMap.get(row.productCode) ?? row.productCode) : "Łącznie"}
             </div>
-            <div>Hosp. <b>{number(row.hospitalizations)}</b> · Śmiert. <b>{number(row.mortalityPct, 2)}%</b></div>
-            <div>Hosp./świadczeniodawcę <b>{number(row.hospitalizationsPerFacility, 1)}</b> · Świadczeniodawcy <b>{row.facilities}</b></div>
-            {props.geographyMode === "regions" && row.hospitalizationsPer100k !== null ? <div>Hosp./100 tys. <b>{number(row.hospitalizationsPer100k, 2)}</b></div> : null}
+            <div>Hospitalizacje <b>{number(row.hospitalizations)}</b> · Śmiertelność <b>{number(row.mortalityPct, 2)}%</b></div>
+            <div>L. świadczeniodawców <b>{row.facilities}</b> · Śr hospitalizacja / świadczeniodawca <b>{number(row.hospitalizationsPerFacility, 1)}</b></div>
+            {props.geographyMode === "regions" && row.hospitalizationsPer100k !== null ? <div>Hospitalizacje / 100 tys. mieszk. <b>{number(row.hospitalizationsPer100k, 2)}</b></div> : null}
             {props.hasComparison && baselineRow ? <div className="area-stat-baseline">
-              Bez progu: Hosp. {number(baselineRow.hospitalizations)} · Śmiert. {number(baselineRow.mortalityPct, 2)}% · Świadczeniodawcy {baselineRow.facilities}
-              {props.geographyMode === "regions" && baselineRow.hospitalizationsPer100k !== null ? ` · Hosp./100 tys. ${number(baselineRow.hospitalizationsPer100k, 2)}` : ""}
+              Bez progu hospitalizacji: Hospitalizacje {number(baselineRow.hospitalizations)} · Śmiertelność {number(baselineRow.mortalityPct, 2)}% · L. świadczeniodawców {baselineRow.facilities}
+              {props.geographyMode === "regions" && baselineRow.hospitalizationsPer100k !== null ? ` · Hospitalizacje / 100 tys. mieszk. ${number(baselineRow.hospitalizationsPer100k, 2)}` : ""}
             </div> : null}
           </div>;
         })}
@@ -80,13 +80,12 @@ function AdmissionAreaStats(props: AdmissionProps) {
       const group = groupMap.get(key);
       if (!group) return null;
 
-      return <section className="area-stat-card" key={key}>
+      return <section className="area-stat-card admission-area-stat-card" key={key}>
         <div className="area-stat-title">{group.name}</div>
         <div className="area-stat-row primary">
           <div>Planowane <b>{number(group.plannedAdmissions)}</b> · Nagłe <b>{number(group.urgentAdmissions)}</b></div>
-          <div>Łącznie <b>{number(group.totalAdmissions)}</b> · Świadczeniodawcy <b>{group.facilities}</b></div>
-          <div>Planowane/świadczeniodawcę <b>{number(group.facilities > 0 ? group.plannedAdmissions / group.facilities : 0, 1)}</b></div>
-          <div>Nagłe/świadczeniodawcę <b>{number(group.facilities > 0 ? group.urgentAdmissions / group.facilities : 0, 1)}</b></div>
+          <div>Łącznie <b>{number(group.totalAdmissions)}</b> · L. świadczeniodawców <b>{group.facilities}</b></div>
+          <div>Planowane / nagłe <b>{group.plannedToUrgentRatioPct === null ? "—" : `${number(group.plannedToUrgentRatioPct, 1)}%`}</b></div>
         </div>
       </section>;
     })}

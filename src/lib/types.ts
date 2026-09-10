@@ -95,6 +95,7 @@ export interface AdmissionAreaStatGroup {
   urgentAdmissions: number;
   totalAdmissions: number;
   facilities: number;
+  plannedToUrgentRatioPct: number | null;
 }
 
 export interface AdmissionGeographyStats {
