@@ -1,20 +1,24 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { AdmissionTab } from "@/components/AdmissionTab";
+import { KpiStrip } from "@/components/KpiStrip";
 import { MethodologyPanel } from "@/components/MethodologyPanel";
 import { MortalityTab } from "@/components/MortalityTab";
 import { Sidebar } from "@/components/Sidebar";
-import type { AxisMode, EstimationMethod, GeographyMode, MortalityPayload, ReferencePayload } from "@/lib/types";
+import type { AdmissionPayload, AxisMode, EstimationMethod, GeographyMode, MortalityPayload, ReferencePayload } from "@/lib/types";
 
 const EMPTY_KPI = { facilities: 0, hospitalizations: 0, deaths: 0, mortalityPct: 0 };
 const EMPTY_GEO_STATS = { regions: [], cities: [] };
 const EMPTY_DATA: MortalityPayload = { rows: [], current: EMPTY_KPI, baseline: EMPTY_KPI, hasComparison: false, areaStats: EMPTY_GEO_STATS, baselineAreaStats: EMPTY_GEO_STATS };
+const EMPTY_ADMISSION_DATA: AdmissionPayload = { rows: [] };
 
-type ActiveTab = "mortality" | "methodology";
+type ActiveTab = "mortality" | "admissions" | "methodology";
 
 export function Dashboard() {
   const [reference, setReference] = useState<ReferencePayload | null>(null);
   const [data, setData] = useState<MortalityPayload>(EMPTY_DATA);
+  const [admissionData, setAdmissionData] = useState<AdmissionPayload>(EMPTY_ADMISSION_DATA);
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [durations, setDurations] = useState<string[]>([]);
   const [method, setMethod] = useState<EstimationMethod>("min");
@@ -46,6 +50,7 @@ export function Dashboard() {
   const reload = useCallback(async () => {
     if (selectedProducts.length === 0) {
       setData(EMPTY_DATA);
+      setAdmissionData(EMPTY_ADMISSION_DATA);
       return;
     }
 
@@ -58,9 +63,18 @@ export function Dashboard() {
         method,
         minHosp: String(minHosp),
       });
-      const response = await fetch(`/api/mortality?${params}`, { cache: "no-store" });
-      if (!response.ok) throw new Error("Nie udało się pobrać danych analizy.");
-      setData(await response.json() as MortalityPayload);
+      const [mortalityResponse, admissionResponse] = await Promise.all([
+        fetch(`/api/mortality?${params}`, { cache: "no-store" }),
+        fetch(`/api/admissions?${params}`, { cache: "no-store" }),
+      ]);
+      if (!mortalityResponse.ok) throw new Error("Nie udało się pobrać danych analizy.");
+      if (!admissionResponse.ok) throw new Error("Nie udało się pobrać danych trybu przyjęcia.");
+      const [mortalityPayload, admissionPayload] = await Promise.all([
+        mortalityResponse.json() as Promise<MortalityPayload>,
+        admissionResponse.json() as Promise<AdmissionPayload>,
+      ]);
+      setData(mortalityPayload);
+      setAdmissionData(admissionPayload);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Błąd pobierania danych.");
     } finally {
@@ -99,9 +113,11 @@ export function Dashboard() {
       </header>
       <nav className="tabs" aria-label="Główna nawigacja">
         <button className={activeTab === "mortality" ? "active" : undefined} onClick={() => setActiveTab("mortality")}>Wolumen i śmiertelność</button>
-        <button disabled title="Następny etap migracji">Tryb przyjęcia</button>
+        <button className={activeTab === "admissions" ? "active" : undefined} onClick={() => setActiveTab("admissions")}>Tryb przyjęcia</button>
         <button className={activeTab === "methodology" ? "active" : undefined} onClick={() => setActiveTab("methodology")}>Metodologia i dane</button>
       </nav>
+
+      {activeTab !== "methodology" ? <KpiStrip current={data.current} baseline={data.baseline} compare={data.hasComparison} /> : null}
 
       {activeTab === "mortality" ? <MortalityTab
         reference={reference}
@@ -111,6 +127,15 @@ export function Dashboard() {
         selectedProducts={selectedProducts}
         axisMode={axisMode}
         setAxisMode={setAxisMode}
+        geoMode={geoMode}
+        highlightedRegions={highlightedRegions}
+        highlightedCities={highlightedCities}
+      /> : activeTab === "admissions" ? <AdmissionTab
+        reference={reference}
+        data={admissionData}
+        loading={loading}
+        error={error}
+        selectedProducts={selectedProducts}
         geoMode={geoMode}
         highlightedRegions={highlightedRegions}
         highlightedCities={highlightedCities}

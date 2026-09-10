@@ -253,3 +253,17 @@ td:nth-child(6), td:nth-child(7), td:nth-child(8) { white-space:nowrap; }
   .area-stats-panel { height:calc(var(--compact-chart-height, 470px) + 6px); }
   .data-details { margin-top:7px; }
 }
+.plotly .hoverlayer .hovertext path {
+  fill-opacity: 0.45 !important;
+}
+/* Tryb przyjęcia */
+.admission-table th:nth-child(1) { width:25%; }
+.admission-table th:nth-child(2) { width:12%; }
+.admission-table th:nth-child(3) { width:14%; }
+.admission-table th:nth-child(4) { width:13%; }
+.admission-table th:nth-child(5) { width:12%; }
+.admission-table th:nth-child(6) { width:12%; }
+.admission-table th:nth-child(7) { width:12%; }
+.admission-table td:nth-child(5),
+.admission-table td:nth-child(6),
+.admission-table td:nth-child(7) { white-space:nowrap; }

@@ -73,3 +73,18 @@ export interface MortalityPayload {
   areaStats: GeographyStats;
   baselineAreaStats: GeographyStats;
 }
+
+export interface AdmissionRow {
+  owNfz: string;
+  nip: string;
+  providerName: string;
+  city: string;
+  voivodeship: string;
+  plannedAdmissions: number;
+  urgentAdmissions: number;
+  totalAdmissions: number;
+}
+
+export interface AdmissionPayload {
+  rows: AdmissionRow[];
+}

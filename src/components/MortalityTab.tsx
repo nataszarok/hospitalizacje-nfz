@@ -3,7 +3,6 @@
 import { useMemo } from "react";
 import { SegmentedControl } from "@mantine/core";
 import { AreaStatsPanel } from "@/components/AreaStatsPanel";
-import { KpiStrip } from "@/components/KpiStrip";
 import { MortalityChart } from "@/components/MortalityChart";
 import type { AxisMode, GeographyMode, MortalityPayload, ReferencePayload } from "@/lib/types";
 
@@ -41,7 +40,6 @@ export function MortalityTab({
   return <>
     {error ? <div className="alert">{error}</div> : null}
     <div className={loading ? "content loading" : "content"}>
-      <KpiStrip current={data.current} baseline={data.baseline} compare={data.hasComparison} />
       <section className="chart-section">
         <div className="chart-header">
           <div><h2>Śmiertelność a wolumen</h2><p>Każdy punkt to świadczeniodawca; wyróżnione obszary pozostają na tle pozostałych świadczeniodawców.</p></div>
