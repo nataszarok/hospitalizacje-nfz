@@ -40,7 +40,7 @@ export function AdmissionTab({ reference, data, loading, error, selectedProducts
             kind="admissions"
             geographyMode={geoMode}
             selectedKeys={selectedAreaKeys}
-            rows={data.rows}
+            groups={geoMode === "regions" ? data.areaStats.regions : data.areaStats.cities}
           />
         </div> : <div className="empty-chart">{selectedProducts.length === 0 ? "Wybierz co najmniej jeden produkt." : "Brak świadczeniodawców spełniających wybrane kryteria."}</div>}
       </section>

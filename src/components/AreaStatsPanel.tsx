@@ -1,6 +1,6 @@
 "use client";
 
-import type { AdmissionRow, AreaStatGroup, GeographyMode, ProductOption } from "@/lib/types";
+import type { AdmissionAreaStatGroup, AreaStatGroup, GeographyMode, ProductOption } from "@/lib/types";
 
 function number(value: number, digits = 0) {
   return value.toLocaleString("pl-PL", { minimumFractionDigits: digits, maximumFractionDigits: digits });
@@ -21,7 +21,7 @@ type MortalityProps = CommonProps & {
 
 type AdmissionProps = CommonProps & {
   kind: "admissions";
-  rows: AdmissionRow[];
+  groups: AdmissionAreaStatGroup[];
 };
 
 type AreaStatsPanelProps = MortalityProps | AdmissionProps;
@@ -73,27 +73,20 @@ function MortalityAreaStats(props: MortalityProps) {
 }
 
 function AdmissionAreaStats(props: AdmissionProps) {
-  const regionNames = new Map<string, string>();
-  for (const row of props.rows) regionNames.set(row.owNfz, row.voivodeship);
+  const groupMap = new Map(props.groups.map((group) => [group.key, group]));
 
   return <div className="area-stat-cards">
     {props.selectedKeys.map((key) => {
-      const areaRows = props.rows.filter((row) => props.geographyMode === "regions" ? row.owNfz === key : row.city === key);
-      if (areaRows.length === 0) return null;
-
-      const planned = areaRows.reduce((sum, row) => sum + row.plannedAdmissions, 0);
-      const urgent = areaRows.reduce((sum, row) => sum + row.urgentAdmissions, 0);
-      const total = planned + urgent;
-      const facilities = areaRows.length;
-      const areaName = props.geographyMode === "regions" ? (regionNames.get(key) ?? key) : key;
+      const group = groupMap.get(key);
+      if (!group) return null;
 
       return <section className="area-stat-card" key={key}>
-        <div className="area-stat-title">{areaName}</div>
+        <div className="area-stat-title">{group.name}</div>
         <div className="area-stat-row primary">
-          <div>Planowane <b>{number(planned)}</b> · Nagłe <b>{number(urgent)}</b></div>
-          <div>Łącznie <b>{number(total)}</b> · Świadczeniodawcy <b>{facilities}</b></div>
-          <div>Planowane/świadczeniodawcę <b>{number(planned / facilities, 1)}</b></div>
-          <div>Nagłe/świadczeniodawcę <b>{number(urgent / facilities, 1)}</b></div>
+          <div>Planowane <b>{number(group.plannedAdmissions)}</b> · Nagłe <b>{number(group.urgentAdmissions)}</b></div>
+          <div>Łącznie <b>{number(group.totalAdmissions)}</b> · Świadczeniodawcy <b>{group.facilities}</b></div>
+          <div>Planowane/świadczeniodawcę <b>{number(group.facilities > 0 ? group.plannedAdmissions / group.facilities : 0, 1)}</b></div>
+          <div>Nagłe/świadczeniodawcę <b>{number(group.facilities > 0 ? group.urgentAdmissions / group.facilities : 0, 1)}</b></div>
         </div>
       </section>;
     })}

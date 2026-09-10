@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { loadAdmissionRows } from "@/lib/repository";
-import { parseCsvParam, parseMethod, parseMinHosp } from "@/lib/query";
+import { parseCsvParam, parseMethod, parseMinHosp, summarizeAdmissionGeographies } from "@/lib/query";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     const minHosp = parseMinHosp(params.get("minHosp"));
 
     const rows = await loadAdmissionRows({ products, durations, method, minHosp });
-    return NextResponse.json({ rows });
+    return NextResponse.json({ rows, areaStats: summarizeAdmissionGeographies(rows) });
   } catch (error) {
     console.error(error);
     return NextResponse.json({ error: "Nie udało się policzyć danych trybu przyjęcia." }, { status: 500 });

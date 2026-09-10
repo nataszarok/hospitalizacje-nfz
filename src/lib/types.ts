@@ -85,6 +85,21 @@ export interface AdmissionRow {
   totalAdmissions: number;
 }
 
+export interface AdmissionAreaStatGroup {
+  key: string;
+  name: string;
+  plannedAdmissions: number;
+  urgentAdmissions: number;
+  totalAdmissions: number;
+  facilities: number;
+}
+
+export interface AdmissionGeographyStats {
+  regions: AdmissionAreaStatGroup[];
+  cities: AdmissionAreaStatGroup[];
+}
+
 export interface AdmissionPayload {
   rows: AdmissionRow[];
+  areaStats: AdmissionGeographyStats;
 }

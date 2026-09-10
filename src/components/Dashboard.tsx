@@ -11,7 +11,7 @@ import type { AdmissionPayload, AxisMode, EstimationMethod, GeographyMode, Morta
 const EMPTY_KPI = { facilities: 0, hospitalizations: 0, deaths: 0, mortalityPct: 0 };
 const EMPTY_GEO_STATS = { regions: [], cities: [] };
 const EMPTY_DATA: MortalityPayload = { rows: [], current: EMPTY_KPI, baseline: EMPTY_KPI, hasComparison: false, areaStats: EMPTY_GEO_STATS, baselineAreaStats: EMPTY_GEO_STATS };
-const EMPTY_ADMISSION_DATA: AdmissionPayload = { rows: [] };
+const EMPTY_ADMISSION_DATA: AdmissionPayload = { rows: [], areaStats: EMPTY_GEO_STATS };
 
 type ActiveTab = "mortality" | "admissions" | "methodology";
 

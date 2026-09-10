@@ -1,4 +1,4 @@
-import type { AreaStatGroup, EstimationMethod, GeographyStats, KpiSummary, MortalityRow } from "@/lib/types";
+import type { AdmissionAreaStatGroup, AdmissionGeographyStats, AdmissionRow, AreaStatGroup, EstimationMethod, GeographyStats, KpiSummary, MortalityRow } from "@/lib/types";
 
 export function parseCsvParam(value: string | null, max = 100): string[] {
   if (!value) return [];
@@ -74,5 +74,38 @@ export function summarizeGeographies(rows: MortalityRow[]): GeographyStats {
   return {
     regions: buildAreaGroups(rows, "regions"),
     cities: buildAreaGroups(rows, "cities"),
+  };
+}
+
+function buildAdmissionAreaGroups(rows: AdmissionRow[], mode: "regions" | "cities"): AdmissionAreaStatGroup[] {
+  const grouped = new Map<string, AdmissionRow[]>();
+  for (const row of rows) {
+    const key = mode === "regions" ? row.owNfz : row.city.trim();
+    if (!key) continue;
+    const current = grouped.get(key) ?? [];
+    current.push(row);
+    grouped.set(key, current);
+  }
+
+  return [...grouped.entries()].map(([key, areaRows]) => {
+    const plannedAdmissions = areaRows.reduce((sum, row) => sum + row.plannedAdmissions, 0);
+    const urgentAdmissions = areaRows.reduce((sum, row) => sum + row.urgentAdmissions, 0);
+    const facilities = new Set(areaRows.map((row) => `${row.owNfz}|${row.nip}`)).size;
+
+    return {
+      key,
+      name: mode === "regions" ? areaRows[0]?.voivodeship ?? key : key,
+      plannedAdmissions,
+      urgentAdmissions,
+      totalAdmissions: plannedAdmissions + urgentAdmissions,
+      facilities,
+    };
+  }).sort((a, b) => a.name.localeCompare(b.name, "pl"));
+}
+
+export function summarizeAdmissionGeographies(rows: AdmissionRow[]): AdmissionGeographyStats {
+  return {
+    regions: buildAdmissionAreaGroups(rows, "regions"),
+    cities: buildAdmissionAreaGroups(rows, "cities"),
   };
 }
