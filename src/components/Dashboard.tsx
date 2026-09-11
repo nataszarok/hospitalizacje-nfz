@@ -7,6 +7,7 @@ import { MethodologyPanel } from "@/components/MethodologyPanel";
 import { MortalityTab } from "@/components/MortalityTab";
 import { Sidebar } from "@/components/Sidebar";
 import type { AdmissionPayload, AxisMode, EstimationMethod, GeographyMode, MortalityPayload, ReferencePayload } from "@/lib/types";
+import { admissionsFromDataset, loadStaticDataset, mortalityFromDataset, referenceFromDataset } from "@/lib/staticData";
 
 const EMPTY_KPI = { facilities: 0, hospitalizations: 0, deaths: 0, mortalityPct: 0 };
 const EMPTY_GEO_STATS = { regions: [], cities: [] };
@@ -35,9 +36,8 @@ export function Dashboard() {
   useEffect(() => {
     const load = async () => {
       try {
-        const response = await fetch("/api/reference", { cache: "no-store" });
-        if (!response.ok) throw new Error("Nie udało się pobrać słowników.");
-        const payload = await response.json() as ReferencePayload;
+        const dataset = await loadStaticDataset();
+        const payload = referenceFromDataset(dataset);
         setReference(payload);
         setSelectedProducts(payload.defaultProductCode ? [payload.defaultProductCode] : payload.products.slice(0, 1).map((product) => product.code));
       } catch (err) {
@@ -58,22 +58,10 @@ export function Dashboard() {
     setLoading(true);
     setError(null);
     try {
-      const params = new URLSearchParams({
-        products: selectedProducts.join(","),
-        durations: durations.join(","),
-        method,
-        minHosp: String(minHosp),
-      });
-      const [mortalityResponse, admissionResponse] = await Promise.all([
-        fetch(`/api/mortality?${params}`, { cache: "no-store" }),
-        fetch(`/api/admissions?${params}`, { cache: "no-store" }),
-      ]);
-      if (!mortalityResponse.ok) throw new Error("Nie udało się pobrać danych analizy.");
-      if (!admissionResponse.ok) throw new Error("Nie udało się pobrać danych trybu przyjęcia.");
-      const [mortalityPayload, admissionPayload] = await Promise.all([
-        mortalityResponse.json() as Promise<MortalityPayload>,
-        admissionResponse.json() as Promise<AdmissionPayload>,
-      ]);
+      const dataset = await loadStaticDataset();
+      const query = { products: selectedProducts, durations, method, minHosp };
+      const mortalityPayload = mortalityFromDataset(dataset, query);
+      const admissionPayload = admissionsFromDataset(dataset, query);
       setData(mortalityPayload);
       setAdmissionData(admissionPayload);
     } catch (err) {
