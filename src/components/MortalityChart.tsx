@@ -12,11 +12,15 @@ import {
   PLOTLY_CONFIG,
   PRODUCT_SYMBOLS,
 } from "@/lib/plotlyChart";
+import { aggregateMortalityRowsByProvider, mortalityRowsPerJgp, type MortalityDisplayRow } from "@/lib/mortality";
 import type { AxisMode, GeographyMode, MortalityRow, ProductOption, RegionOption } from "@/lib/types";
 
-export function MortalityChart({ rows, axisMode, geographyMode, highlightedRegions, highlightedCities, products, regions }: {
+export type MortalityDisplayMode = "combined" | "per_jgp";
+
+export function MortalityChart({ rows, axisMode, displayMode, geographyMode, highlightedRegions, highlightedCities, products, regions }: {
   rows: MortalityRow[];
   axisMode: AxisMode;
+  displayMode: MortalityDisplayMode;
   geographyMode: GeographyMode;
   highlightedRegions: string[];
   highlightedCities: string[];
@@ -41,20 +45,31 @@ export function MortalityChart({ rows, axisMode, geographyMode, highlightedRegio
       ];
       const geoSelection = getGeoSelection(geographyMode, highlightedRegions, highlightedCities);
       const geoLabel = (key: string) => geographyMode === "regions" ? (regionByCode.get(key) ?? `Województwo ${key}`) : key;
-      const showLegend = geoSelection.length > 0 || productCodes.length > 1;
+      const isCombined = displayMode === "combined";
+      const showLegend = geoSelection.length > 0 || (!isCombined && productCodes.length > 1);
 
-      const makeTrace = (subset: MortalityRow[], productCode: string, productIndex: number, name: string, color: string, emphasized = false) => ({
+      const makeTrace = (subset: MortalityDisplayRow[], productIndex: number, name: string, color: string, emphasized = false) => ({
         type: "scattergl",
         mode: "markers",
         name,
         showlegend: false,
         x: subset.map((row) => axisMode === "per_100k" ? row.hospitalizationsPer100k : row.hospitalizations),
         y: subset.map((row) => row.mortalityPct),
-        customdata: subset.map((row) => [row.providerName, row.nip, row.owNfz, regionByCode.get(row.owNfz) ?? row.voivodeship, row.city, row.hospitalizations, row.deaths, row.hospitalizationsPer100k, row.productCode]),
+        customdata: subset.map((row) => [
+          row.providerName,
+          row.nip,
+          row.owNfz,
+          regionByCode.get(row.owNfz) ?? row.voivodeship,
+          row.city,
+          row.hospitalizations,
+          row.deaths,
+          row.hospitalizationsPer100k,
+          row.productCodes.map((code) => productByCode.get(code)?.jgpCode ?? code).join(", "),
+        ]),
         marker: {
           size: emphasized ? 11 : 9,
           opacity: emphasized ? 0.94 : 0.68,
-          symbol: productCodes.length === 1 ? "circle" : PRODUCT_SYMBOLS[productIndex % PRODUCT_SYMBOLS.length],
+          symbol: isCombined || productCodes.length === 1 ? "circle" : PRODUCT_SYMBOLS[productIndex % PRODUCT_SYMBOLS.length],
           color,
           line: { width: emphasized ? 0.8 : 0.4, color: "#FFFFFF" },
         },
@@ -63,6 +78,7 @@ export function MortalityChart({ rows, axisMode, geographyMode, highlightedRegio
           "NIP: %{customdata[1]}",
           "Województwo: %{customdata[3]}",
           "Miejscowość: %{customdata[4]}",
+          isCombined ? "Kody JGP: %{customdata[8]}" : "Kod JGP: %{customdata[8]}",
           "Hospitalizacje: %{customdata[5]:,.0f}",
           "Zgony: %{customdata[6]:,.0f}",
           "Śmiertelność: %{y:.2f}%",
@@ -71,34 +87,53 @@ export function MortalityChart({ rows, axisMode, geographyMode, highlightedRegio
       });
 
       const traces: Record<string, unknown>[] = [];
-      productCodes.forEach((productCode, productIndex) => {
-        const productRows = rows.filter((row) => row.productCode === productCode);
-        const productLabel = productByCode.get(productCode)?.jgpCode ?? productCode;
-        const remaining = productRows.filter((row) => !geoSelection.includes(getGeoKey(row, geographyMode)));
+
+      if (isCombined) {
+        const chartRows = aggregateMortalityRowsByProvider(rows);
+        const remaining = chartRows.filter((row) => !geoSelection.includes(getGeoKey(row, geographyMode)));
         if (remaining.length > 0) {
-          traces.push(makeTrace(remaining, productCode, productIndex, `Pozostałe · ${productLabel}`, "#C7CBD1"));
+          traces.push(makeTrace(remaining, 0, "Pozostałe", "#C7CBD1"));
         }
         geoSelection.forEach((key, geoIndex) => {
-          const subset = productRows.filter((row) => getGeoKey(row, geographyMode) === key);
+          const subset = chartRows.filter((row) => getGeoKey(row, geographyMode) === key);
           if (subset.length > 0) {
-            traces.push(makeTrace(subset, productCode, productIndex, `${geoLabel(key)} · ${productLabel}`, HIGHLIGHT_COLORS[geoIndex % HIGHLIGHT_COLORS.length], true));
+            traces.push(makeTrace(subset, 0, geoLabel(key), HIGHLIGHT_COLORS[geoIndex % HIGHLIGHT_COLORS.length], true));
           }
         });
-      });
+      } else {
+        productCodes.forEach((productCode, productIndex) => {
+          const productRows = mortalityRowsPerJgp(rows.filter((row) => row.productCode === productCode));
+          const productLabel = productByCode.get(productCode)?.jgpCode ?? productCode;
+          const remaining = productRows.filter((row) => !geoSelection.includes(getGeoKey(row, geographyMode)));
+          if (remaining.length > 0) {
+            traces.push(makeTrace(remaining, productIndex, `Pozostałe · ${productLabel}`, "#C7CBD1"));
+          }
+          geoSelection.forEach((key, geoIndex) => {
+            const subset = productRows.filter((row) => getGeoKey(row, geographyMode) === key);
+            if (subset.length > 0) {
+              traces.push(makeTrace(subset, productIndex, `${geoLabel(key)} · ${productLabel}`, HIGHLIGHT_COLORS[geoIndex % HIGHLIGHT_COLORS.length], true));
+            }
+          });
+        });
+      }
 
       traces.push(...makeDimensionLegendTraces({
         geographyMode,
         geoSelection,
         geoLabel,
-        productCodes,
+        productCodes: isCombined ? [] : productCodes,
         productLabel: (code) => productByCode.get(code)?.jgpCode ?? code,
       }));
 
       const hoverTraceIndex = traces.length;
       traces.push(makeHoverTrace());
 
+      const legendTitle = isCombined
+        ? (geographyMode === "regions" ? "Województwo" : "Miasto")
+        : (geographyMode === "regions" ? "Województwo - kod JGP" : "Miasto - kod JGP");
+
       await Plotly.react(chartRef.current, traces, {
-        ...getCommonPlotLayout(showLegend, geographyMode === "regions" ? "Województwo - kod JGP" : "Miasto - kod JGP"),
+        ...getCommonPlotLayout(showLegend, legendTitle),
         xaxis: {
           title: { text: axisMode === "per_100k" ? "Hospitalizacje na 100 tys. mieszkańców" : "Liczba hospitalizacji", standoff: 18, font: { size: 15, color: "#344054" } },
           gridcolor: "#EEF1F5",
@@ -116,7 +151,7 @@ export function MortalityChart({ rows, axisMode, geographyMode, highlightedRegio
     };
     void render();
     return () => { cancelled = true; };
-  }, [rows, axisMode, geographyMode, highlightedRegions, highlightedCities, productByCode, regionByCode]);
+  }, [rows, axisMode, displayMode, geographyMode, highlightedRegions, highlightedCities, productByCode, regionByCode, products]);
 
   return <div className="plot-shell"><div ref={chartRef} className="plot" /></div>;
 }

@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { SegmentedControl } from "@mantine/core";
 import { AreaStatsPanel } from "@/components/AreaStatsPanel";
-import { MortalityChart } from "@/components/MortalityChart";
+import { MortalityChart, type MortalityDisplayMode } from "@/components/MortalityChart";
+import { aggregateMortalityRowsByProvider, mortalityRowsPerJgp } from "@/lib/mortality";
 import type { AxisMode, GeographyMode, MortalityPayload, ReferencePayload } from "@/lib/types";
 
 type MortalityTabProps = {
@@ -31,10 +32,15 @@ export function MortalityTab({
   highlightedRegions,
   highlightedCities,
 }: MortalityTabProps) {
+  const [displayMode, setDisplayMode] = useState<MortalityDisplayMode>("combined");
   const productMap = useMemo(() => new Map(reference.products.map((product) => [product.code, product])), [reference.products]);
   const selectedProductDefinitions = useMemo(
     () => reference.products.filter((product) => selectedProducts.includes(product.code)),
     [reference.products, selectedProducts],
+  );
+  const tableRows = useMemo(
+    () => displayMode === "combined" ? aggregateMortalityRowsByProvider(data.rows) : mortalityRowsPerJgp(data.rows),
+    [data.rows, displayMode],
   );
 
   return <>
@@ -46,20 +52,36 @@ export function MortalityTab({
         </div>
         {data.rows.length > 0 ? <div className="analysis-grid">
           <div className="plot-column">
-            <div className="plot-toolbar">
-              <SegmentedControl
-                value={axisMode}
-                onChange={(value) => setAxisMode(value as AxisMode)}
-                data={[
-                  { value: "total", label: "Liczba hospitalizacji" },
-                  { value: "per_100k", label: "Na 100 tys. mieszk." },
-                ]}
-                className="axis-segmented"
-              />
+            <div className="plot-toolbar mortality-plot-toolbar">
+              <div className="plot-control-group">
+                <span className="plot-control-label">Widok JGP</span>
+                <SegmentedControl
+                  value={displayMode}
+                  onChange={(value) => setDisplayMode(value as MortalityDisplayMode)}
+                  data={[
+                    { value: "combined", label: "Zbiorczo" },
+                    { value: "per_jgp", label: "Per JGP" },
+                  ]}
+                  className="display-segmented"
+                />
+              </div>
+              <div className="plot-control-group">
+                <span className="plot-control-label">Oś X</span>
+                <SegmentedControl
+                  value={axisMode}
+                  onChange={(value) => setAxisMode(value as AxisMode)}
+                  data={[
+                    { value: "total", label: "Liczba hospitalizacji" },
+                    { value: "per_100k", label: "Na 100 tys. mieszk." },
+                  ]}
+                  className="axis-segmented"
+                />
+              </div>
             </div>
             <MortalityChart
               rows={data.rows}
               axisMode={axisMode}
+              displayMode={displayMode}
               geographyMode={geoMode}
               highlightedRegions={highlightedRegions}
               highlightedCities={highlightedCities}
@@ -82,10 +104,14 @@ export function MortalityTab({
         <summary>Tabela danych · wolumen i śmiertelność</summary>
         <div className="table-wrap">
           <table>
-            <thead><tr><th>Świadczeniodawca</th><th>NIP</th><th>KOD JGP</th><th>Województwo</th><th>Miasto</th><th>Hospitalizacje</th><th>Zgony</th><th>Śmiertelność</th></tr></thead>
-            <tbody>{data.rows.slice(0, 500).map((row) => <tr key={`${row.owNfz}-${row.nip}-${row.productCode}`}><td title={row.providerName}>{row.providerName}</td><td>{row.nip}</td><td title={productMap.get(row.productCode)?.label}>{productMap.get(row.productCode)?.jgpCode ?? "—"}</td><td title={row.voivodeship}>{row.voivodeship}</td><td title={row.city}>{row.city}</td><td>{Math.round(row.hospitalizations).toLocaleString("pl-PL")}</td><td>{Math.round(row.deaths).toLocaleString("pl-PL")}</td><td>{row.mortalityPct.toFixed(1)}%</td></tr>)}</tbody>
+            <thead><tr><th>Świadczeniodawca</th><th>NIP</th><th>{displayMode === "combined" ? "KODY JGP" : "KOD JGP"}</th><th>Województwo</th><th>Miasto</th><th>Hospitalizacje</th><th>Zgony</th><th>Śmiertelność</th></tr></thead>
+            <tbody>{tableRows.slice(0, 500).map((row) => {
+              const jgpCodes = row.productCodes.map((code) => productMap.get(code)?.jgpCode ?? code).join(", ");
+              const jgpLabels = row.productCodes.map((code) => productMap.get(code)?.label ?? code).join(" · ");
+              return <tr key={displayMode === "combined" ? `${row.owNfz}-${row.nip}` : `${row.owNfz}-${row.nip}-${row.productCode}`}><td title={row.providerName}>{row.providerName}</td><td>{row.nip}</td><td title={jgpLabels}>{jgpCodes || "—"}</td><td title={row.voivodeship}>{row.voivodeship}</td><td title={row.city}>{row.city}</td><td>{Math.round(row.hospitalizations).toLocaleString("pl-PL")}</td><td>{Math.round(row.deaths).toLocaleString("pl-PL")}</td><td>{row.mortalityPct.toFixed(1)}%</td></tr>;
+            })}</tbody>
           </table>
-          {data.rows.length > 500 ? <p className="table-note">Podgląd pokazuje pierwsze 500 wierszy.</p> : null}
+          {tableRows.length > 500 ? <p className="table-note">Podgląd pokazuje pierwsze 500 wierszy.</p> : null}
         </div>
       </details>
     </div>
