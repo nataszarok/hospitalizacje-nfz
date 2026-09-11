@@ -58,7 +58,7 @@ export function readDashboardUrlState(reference: ReferencePayload, search: strin
   const selectedProducts = hasEmptySelection
     ? []
     : jgpParams.length > 0 || legacyProductParams.length > 0
-      ? Array.from(new Set([...selectedFromJgp, ...selectedFromLegacyCodes])).slice(0, 5)
+      ? Array.from(new Set([...selectedFromJgp, ...selectedFromLegacyCodes])).slice(0, 10)
       : defaultProductSelection(reference);
 
   const tabParam = params.get("t");

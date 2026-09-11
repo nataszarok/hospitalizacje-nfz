@@ -53,17 +53,17 @@ export function Sidebar({
     <p className="sidebar-intro">Zawęź zakres analizy i wyróżnij wybrane obszary.</p>
 
     <FilterSection title="Zakres świadczeń">
-      <LabelWithInfo htmlFor="products" help="Wybierz jedną lub więcej grup JGP. Na wykresach grupy JGP są rozróżniane kształtem punktu; statystyki obszarów pozostają agregowane dla całego wybranego zakresu.">Produkt jednostkowy</LabelWithInfo>
-      <div className="field-help">Możesz porównać maksymalnie 5 produktów.</div>
+      <LabelWithInfo htmlFor="products" help="Wybierz jedną lub więcej grup JGP. Na wykresach grupy JGP są rozróżniane kształtem punktu; statystyki obszarów pozostają agregowane dla całego wybranego zakresu.">Produkt jednostkowy (JGP)</LabelWithInfo>
+      <div className="field-help">Możesz porównać maksymalnie 10 produktów.</div>
       <MultiSelect
         id="products"
         data={reference.products.map((product) => ({ value: product.code, label: product.label }))}
         value={selectedProducts}
-        onChange={(values) => setSelectedProducts(values.slice(0, 5))}
+        onChange={(values) => setSelectedProducts(values.slice(0, 10))}
         placeholder="Wybierz produkty"
         searchable
         clearable
-        maxValues={5}
+        maxValues={10}
         hidePickedOptions
         nothingFoundMessage="Brak wyników"
         comboboxProps={{ withinPortal: true, shadow: "md" }}
@@ -80,7 +80,7 @@ export function Sidebar({
         className="mantine-segmented"
       />
       <div className="selection-meta">
-        <span>{highlighted.length}/5 wyróżnionych</span>
+        <span>{highlighted.length}/10 wyróżnionych</span>
         {highlighted.length > 0 ? <button onClick={() => geoMode === "regions" ? setHighlightedRegions([]) : setHighlightedCities([])}>Wyczyść</button> : null}
       </div>
       <MultiSelect
@@ -89,12 +89,12 @@ export function Sidebar({
           : reference.cities.map((city) => ({ value: city, label: formatCityName(city) }))}
         value={highlighted}
         onChange={(values) => geoMode === "regions"
-          ? setHighlightedRegions(values.slice(0, 5))
-          : setHighlightedCities(values.slice(0, 5))}
+          ? setHighlightedRegions(values.slice(0, 10))
+          : setHighlightedCities(values.slice(0, 10))}
         placeholder={geoMode === "regions" ? "Wybierz województwa" : "Wybierz miasta"}
         searchable
         clearable
-        maxValues={5}
+        maxValues={10}
         hidePickedOptions
         nothingFoundMessage="Brak wyników"
         comboboxProps={{ withinPortal: true, shadow: "md" }}

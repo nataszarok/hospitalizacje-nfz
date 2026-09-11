@@ -9,6 +9,7 @@ import { Sidebar } from "@/components/Sidebar";
 import type { AdmissionPayload, AxisMode, EstimationMethod, GeographyMode, MortalityPayload, ReferencePayload } from "@/lib/types";
 import { dashboardUrlSearch, readDashboardUrlState, type DashboardActiveTab } from "@/lib/dashboardUrlState";
 import { admissionsFromDataset, loadStaticDataset, mortalityFromDataset, referenceFromDataset } from "@/lib/staticData";
+import type { MortalityDisplayMode } from "@/lib/mortality";
 
 const EMPTY_KPI = { facilities: 0, hospitalizations: 0, deaths: 0, mortalityPct: 0 };
 const EMPTY_GEO_STATS = { regions: [], cities: [] };
@@ -32,6 +33,7 @@ export function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<DashboardActiveTab>("mortality");
+  const [jgpDisplayMode, setJgpDisplayMode] = useState<MortalityDisplayMode>("combined");
   const [urlStateReady, setUrlStateReady] = useState(false);
 
   useEffect(() => {
@@ -152,10 +154,10 @@ export function Dashboard() {
     <main className="main">
       <header className="page-header">
         <h1>Hospitalizacje w Polsce</h1>
-        <p>Analiza wolumenu, śmiertelności i trybu przyjęcia · NFZ {reference.analysisYear}</p>
+        <p>Analiza liczby hospitalizacji, śmiertelności i trybu przyjęcia · NFZ {reference.analysisYear}</p>
       </header>
       <nav className="tabs" aria-label="Główna nawigacja">
-        <button className={activeTab === "mortality" ? "active" : undefined} onClick={() => setActiveTab("mortality")}>Wolumen i śmiertelność</button>
+        <button className={activeTab === "mortality" ? "active" : undefined} onClick={() => setActiveTab("mortality")}>Liczba hospitalizacji a śmiertelność</button>
         <button className={activeTab === "admissions" ? "active" : undefined} onClick={() => setActiveTab("admissions")}>Tryb przyjęcia</button>
         <button className={activeTab === "methodology" ? "active" : undefined} onClick={() => setActiveTab("methodology")}>Metodologia i dane</button>
       </nav>
@@ -173,6 +175,8 @@ export function Dashboard() {
         geoMode={geoMode}
         highlightedRegions={highlightedRegions}
         highlightedCities={highlightedCities}
+        displayMode={jgpDisplayMode}
+        setDisplayMode={setJgpDisplayMode}
       /> : activeTab === "admissions" ? <AdmissionTab
         reference={reference}
         data={admissionData}
@@ -184,6 +188,8 @@ export function Dashboard() {
         geoMode={geoMode}
         highlightedRegions={highlightedRegions}
         highlightedCities={highlightedCities}
+        displayMode={jgpDisplayMode}
+        setDisplayMode={setJgpDisplayMode}
       /> : <MethodologyPanel year={reference.analysisYear} />}
     </main>
   </div>;

@@ -1,0 +1,21 @@
+.toolbar {
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+.presentationControls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+@media (max-width: 700px) {
+  .toolbar {
+    align-items: stretch;
+  }
+
+  .presentationControls {
+    width: 100%;
+  }
+}

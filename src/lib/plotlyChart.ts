@@ -1,7 +1,18 @@
 import type { GeographyMode } from "@/lib/types";
 
 export const HIGHLIGHT_COLORS = ["#2856A3", "#C65D2E", "#2E7D5B", "#7656A8", "#A06A17"];
-export const PRODUCT_SYMBOLS = ["circle", "square", "diamond", "triangle-up", "cross"];
+export const PRODUCT_SYMBOLS = [
+  "circle",
+  "square",
+  "diamond",
+  "triangle-up",
+  "triangle-down",
+  "triangle-left",
+  "triangle-right",
+  "cross",
+  "x",
+  "star",
+];
 
 export const PLOTLY_CONFIG = {
   responsive: true,
@@ -29,15 +40,6 @@ export function getGeoSelection(
 
 export function getGeoKey(row: { owNfz: string; city: string }, geographyMode: GeographyMode): string {
   return geographyMode === "regions" ? row.owNfz : row.city;
-}
-
-export function formatCityLabel(city: string): string {
-  return city
-    .trim()
-    .toLocaleLowerCase("pl-PL")
-    .replace(/(^|[\s-])([\p{L}])/gu, (_, separator: string, letter: string) =>
-      `${separator}${letter.toLocaleUpperCase("pl-PL")}`,
-    );
 }
 
 export function getCommonPlotLayout(showLegend: boolean, legendTitle?: string) {

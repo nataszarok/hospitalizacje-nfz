@@ -73,7 +73,7 @@ describe("mortality summaries", () => {
     expect(summarize([mortalityRow({ hospitalizations: 0, deaths: 0 })]).mortalityPct).toBe(0);
   });
 
-  it("builds region totals and product subrows only for multi-product areas", () => {
+  it("builds region totals and product subrows", () => {
     const stats = summarizeGeographies([
       mortalityRow({ productCode: "P1", hospitalizations: 100, deaths: 5 }),
       mortalityRow({ productCode: "P2", hospitalizations: 50, deaths: 5 }),
@@ -88,6 +88,14 @@ describe("mortality summaries", () => {
     });
 
     expect(stats.regions[0].rows[0].hospitalizationsPer100k).toBeCloseTo(15);
+  });
+
+  it("keeps a product subrow even when an area contains only one product", () => {
+    const stats = summarizeGeographies([mortalityRow({ productCode: "P1" })]);
+
+    expect(stats.regions[0].rows).toHaveLength(2);
+    expect(stats.regions[0].rows[0].productCode).toBeNull();
+    expect(stats.regions[0].rows[1].productCode).toBe("P1");
   });
 
   it("does not invent per-100k city rates", () => {

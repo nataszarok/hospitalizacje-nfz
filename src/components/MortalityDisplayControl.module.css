@@ -1,0 +1,54 @@
+.control {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  min-height: 36px;
+}
+
+.label {
+  color: #667085;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.segmented {
+  width: 164px;
+  padding: 3px;
+  border: 1px solid #e4e7ec;
+  border-radius: 10px;
+  background: #f2f4f7;
+}
+
+.segmented :global(.mantine-SegmentedControl-label) {
+  padding: 5px 9px;
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: #475467;
+}
+
+.segmented :global(.mantine-SegmentedControl-indicator) {
+  border-radius: 7px;
+  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.08), 0 1px 2px rgba(16, 24, 40, 0.04);
+}
+
+@media (max-width: 900px) {
+  .control {
+    flex: 1 1 250px;
+    justify-content: space-between;
+  }
+}
+
+@media (max-width: 700px) {
+  .control {
+    width: 100%;
+    flex-basis: 100%;
+  }
+
+  .segmented {
+    width: min(164px, calc(100% - 86px));
+  }
+}
