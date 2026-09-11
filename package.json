@@ -10,7 +10,9 @@
     "typecheck": "tsc --noEmit",
     "generate:data": "node scripts/generate-static-data.mjs",
     "verify:static": "node scripts/verify-static.mjs",
-    "refresh:data": "npm run generate:data && npm run verify:static"
+    "refresh:data": "npm run generate:data && npm run verify:static",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@mantine/core": "^9.6.0",
@@ -21,11 +23,15 @@
     "react-dom": "^19.2.0"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
     "@types/node": "^22.15.0",
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.0",
     "eslint": "^9.0.0",
     "eslint-config-next": "^16.0.0",
-    "typescript": "^5.8.0"
+    "jsdom": "^30.0.1",
+    "typescript": "^5.8.0",
+    "vitest": "^5.0.0"
   }
 }

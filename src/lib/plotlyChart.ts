@@ -126,8 +126,17 @@ export function makeHoverTrace() {
   };
 }
 
-type PlotElement = HTMLDivElement & {
-  on: (event: string, handler: (event: any) => void) => void;
+export type PlotlyHoverEvent = {
+  points?: Array<{
+    curveNumber: number;
+    pointNumber: number;
+    x: unknown;
+    y: unknown;
+  }>;
+};
+
+export type PlotElement = HTMLDivElement & {
+  on: (event: string, handler: (event: PlotlyHoverEvent) => void) => void;
   removeAllListeners: (event: string) => void;
 };
 

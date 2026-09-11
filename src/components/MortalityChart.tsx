@@ -11,6 +11,7 @@ import {
   makeHoverTrace,
   PLOTLY_CONFIG,
   PRODUCT_SYMBOLS,
+  type PlotElement,
 } from "@/lib/plotlyChart";
 import type { AxisMode, GeographyMode, MortalityRow, ProductOption, RegionOption } from "@/lib/types";
 
@@ -108,15 +109,12 @@ export function MortalityChart({ rows, axisMode, geographyMode, highlightedRegio
         yaxis: { title: { text: "Śmiertelność (%)", standoff: 18, font: { size: 15, color: "#344054" } }, tickfont: { size: 11, color: "#667085" }, gridcolor: "#EEF1F5", zerolinecolor: "#EEF1F5", zerolinewidth: 3 },
       }, PLOTLY_CONFIG);
 
-      const plot = chartRef.current as HTMLDivElement & {
-        on: (event: string, handler: (event: any) => void) => void;
-        removeAllListeners: (event: string) => void;
-      };
+      const plot = chartRef.current as PlotElement;
       attachHoverMarker({ plot, Plotly, traces, hoverTraceIndex });
     };
     void render();
     return () => { cancelled = true; };
-  }, [rows, axisMode, geographyMode, highlightedRegions, highlightedCities, productByCode, regionByCode]);
+  }, [rows, axisMode, geographyMode, highlightedRegions, highlightedCities, products, productByCode, regionByCode]);
 
   return <div className="plot-shell"><div ref={chartRef} className="plot" /></div>;
 }
