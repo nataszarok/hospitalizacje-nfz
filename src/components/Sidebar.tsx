@@ -50,7 +50,7 @@ export function Sidebar({
         <div className="sidebar-title">Panel analityczny</div>
       </div>
     </div>
-    <p className="sidebar-intro">Zawęź zakres analizy i wyróżnij wybrane obszary bez usuwania pozostałych świadczeniodawców z wykresu.</p>
+    <p className="sidebar-intro">Zawęź zakres analizy i wyróżnij wybrane obszary.</p>
 
     <FilterSection title="Zakres świadczeń">
       <LabelWithInfo htmlFor="products" help="Wybierz jedną lub więcej grup JGP. Na wykresach grupy JGP są rozróżniane kształtem punktu; statystyki obszarów pozostają agregowane dla całego wybranego zakresu.">Produkt jednostkowy</LabelWithInfo>

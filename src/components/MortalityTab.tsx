@@ -43,7 +43,7 @@ export function MortalityTab({
     <div className={loading ? "content loading" : "content"}>
       <section className="chart-section">
         <div className="chart-header">
-          <div><h2>Śmiertelność a wolumen</h2><p>Każdy punkt to świadczeniodawca; wyróżnione obszary pozostają na tle pozostałych świadczeniodawców.</p></div>
+          <div><h2>Śmiertelność a liczba hospitalizacji</h2><p>Każdy punkt to świadczeniodawca.</p></div>
         </div>
         {data.rows.length > 0 ? <div className="plot-column">
             <div className="plot-toolbar">
