@@ -141,7 +141,7 @@ export function Sidebar({
         className="mantine-filter"
       />
     </FilterSection>
-    <div className="sidebar-status"><span className="status-dot" />Dane analityczne · PostgreSQL</div>
+    <div className="sidebar-status"><span className="status-dot" />Dane statyczne</div>
   </aside>;
 }
 

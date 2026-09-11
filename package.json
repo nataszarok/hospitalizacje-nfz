@@ -4,14 +4,15 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "npm run generate:data && npm run verify:static && next build && node scripts/finalize-static-build.mjs",
     "start": "next start",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "generate:data": "node scripts/generate-static-data.mjs",
+    "verify:static": "node scripts/verify-static.mjs"
   },
   "dependencies": {
     "next": "^16.0.0",
-    "pg": "^8.16.0",
     "plotly.js-dist-min": "^3.1.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
@@ -20,7 +21,6 @@
   },
   "devDependencies": {
     "@types/node": "^22.15.0",
-    "@types/pg": "^8.15.0",
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.0",
     "eslint": "^9.0.0",
