@@ -9,7 +9,9 @@ node_modules/
 .next/
 .env
 .env.local
-.vercel/
+
 # Generated build artifacts
+/.next/
+/out/
 /dist/
-/public/data/
+

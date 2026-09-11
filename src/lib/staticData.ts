@@ -22,10 +22,17 @@ export interface StaticQuery { products: string[]; durations: string[]; method: 
 
 let datasetPromise: Promise<StaticDataset> | null = null;
 export function loadStaticDataset(): Promise<StaticDataset> {
-  datasetPromise ??= fetch("/data/dashboard.json").then((r) => {
-    if (!r.ok) throw new Error("Nie udało się pobrać statycznego zbioru danych.");
-    return r.json() as Promise<StaticDataset>;
-  });
+  datasetPromise ??= (async () => {
+    const response = await fetch("/data/dashboard.json.gz");
+    if (!response.ok || !response.body) throw new Error("Nie udało się pobrać statycznego zbioru danych.");
+
+    if (typeof DecompressionStream === "undefined") {
+      throw new Error("Ta przeglądarka nie obsługuje dekompresji danych gzip.");
+    }
+
+    const decompressed = response.body.pipeThrough(new DecompressionStream("gzip"));
+    return new Response(decompressed).json() as Promise<StaticDataset>;
+  })();
   return datasetPromise;
 }
 

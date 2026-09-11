@@ -1,11 +1,13 @@
-import { createReadStream, createWriteStream } from "node:fs";
-import { mkdir, readFile } from "node:fs/promises";
+import { createReadStream } from "node:fs";
+import { mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { createInterface } from "node:readline";
+import { gzipSync } from "node:zlib";
 import path from "node:path";
 
 const ROOT = process.cwd();
 const DATA = path.join(ROOT, "data_exports", "supabase");
-const OUTPUT = path.join(ROOT, "public", "data", "dashboard.json");
+const OUTPUT_DIR = path.join(ROOT, "public", "data");
+const OUTPUT = path.join(OUTPUT_DIR, "dashboard.json.gz");
 
 function parseCsvLine(line) {
   const out = [];
@@ -27,7 +29,10 @@ async function readCsv(name) {
   const text = await readFile(path.join(DATA, name), "utf8");
   const lines = text.replace(/^\uFEFF/, "").split(/\r?\n/).filter(Boolean);
   const headers = parseCsvLine(lines[0]);
-  return lines.slice(1).map((line) => Object.fromEntries(headers.map((h, i) => [h, parseCsvLine(line)[i] ?? ""])));
+  return lines.slice(1).map((line) => {
+    const values = parseCsvLine(line);
+    return Object.fromEntries(headers.map((h, i) => [h, values[i] ?? ""]));
+  });
 }
 
 const [configRows, productRows, regionRows, facilityRows, populationRows] = await Promise.all([
@@ -40,32 +45,45 @@ const regions = regionRows.sort((a,b) => Number(a.sort_order)-Number(b.sort_orde
 const facilities = facilityRows.map((r) => [r.ow_nfz, r.nip, r.provider_name, r.city || ""]);
 const populations = populationRows.map((r) => [r.ow_nfz, Number(r.population)]);
 
-await mkdir(path.dirname(OUTPUT), { recursive: true });
-const out = createWriteStream(OUTPUT, "utf8");
-out.write('{"version":1');
-out.write(',"analysisYear":' + JSON.stringify(config.analysis_year || "2025"));
-out.write(',"defaultProductCode":' + JSON.stringify(config.default_product_code || products[0]?.[0] || ""));
-out.write(',"products":' + JSON.stringify(products));
-out.write(',"regions":' + JSON.stringify(regions));
-out.write(',"facilities":' + JSON.stringify(facilities));
-out.write(',"populations":' + JSON.stringify(populations));
-out.write(',"facts":[');
-
-const input = createInterface({ input: createReadStream(path.join(DATA, "facility_product_duration_admission.csv")), crlfDelay: Infinity });
+const facts = [];
+const input = createInterface({
+  input: createReadStream(path.join(DATA, "facility_product_duration_admission.csv")),
+  crlfDelay: Infinity,
+});
 let headers = null;
-let first = true;
-let count = 0;
 for await (const line of input) {
   if (!headers) { headers = parseCsvLine(line.replace(/^\uFEFF/, "")); continue; }
   if (!line) continue;
   const values = parseCsvLine(line);
   const r = Object.fromEntries(headers.map((h, i) => [h, values[i] ?? ""]));
-  // Compact array: region, nip, product, duration, admission, hospSim, hospMin, deathsSim, deathsMin
-  const fact = [r.ow_nfz, r.nip, r.product_code, r.duration_group, String(r.admission_code ?? r.admission_mode ?? ""), Number(r.hosp_sim), Number(r.hosp_min), Number(r.deaths_sim), Number(r.deaths_min)];
-  if (!first) out.write(',');
-  out.write(JSON.stringify(fact));
-  first = false; count++;
+  facts.push([
+    r.ow_nfz, r.nip, r.product_code, r.duration_group,
+    String(r.admission_code ?? r.admission_mode ?? ""),
+    Number(r.hosp_sim), Number(r.hosp_min), Number(r.deaths_sim), Number(r.deaths_min),
+  ]);
 }
-out.end(']}');
-await new Promise((resolve, reject) => { out.on("finish", resolve); out.on("error", reject); });
-console.log(`Generated ${OUTPUT} with ${count.toLocaleString("en-US")} fact rows.`);
+
+const dataset = {
+  version: 1,
+  analysisYear: config.analysis_year || "2025",
+  defaultProductCode: config.default_product_code || products[0]?.[0] || "",
+  products,
+  regions,
+  facilities,
+  populations,
+  facts,
+};
+
+await mkdir(OUTPUT_DIR, { recursive: true });
+for (const name of await readdir(OUTPUT_DIR)) {
+  if (name === "dashboard.json" || /^dashboard-facts-\d+\.json$/.test(name)) {
+    await rm(path.join(OUTPUT_DIR, name), { force: true });
+  }
+}
+
+const json = JSON.stringify(dataset);
+const gz = gzipSync(Buffer.from(json), { level: 9 });
+await writeFile(OUTPUT, gz);
+
+console.log(`Generated ${OUTPUT} with ${facts.length.toLocaleString("en-US")} fact rows.`);
+console.log(`Compressed size: ${(gz.length / 1024 / 1024).toFixed(2)} MiB.`);
