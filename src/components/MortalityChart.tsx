@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef } from "react";
+import { formatCityName } from "@/lib/formatters";
 import {
   attachHoverMarker,
   getCommonPlotLayout,
@@ -41,7 +42,7 @@ export function MortalityChart({ rows, axisMode, geographyMode, highlightedRegio
         ...[...rowProductCodes].filter((code) => !productByCode.has(code)),
       ];
       const geoSelection = getGeoSelection(geographyMode, highlightedRegions, highlightedCities);
-      const geoLabel = (key: string) => geographyMode === "regions" ? (regionByCode.get(key) ?? `Województwo ${key}`) : key;
+      const geoLabel = (key: string) => geographyMode === "regions" ? (regionByCode.get(key) ?? `Województwo ${key}`) : formatCityName(key);
       const showLegend = geoSelection.length > 0 || productCodes.length > 1;
 
       const makeTrace = (subset: MortalityRow[], productCode: string, productIndex: number, name: string, color: string, emphasized = false) => ({
@@ -51,7 +52,7 @@ export function MortalityChart({ rows, axisMode, geographyMode, highlightedRegio
         showlegend: false,
         x: subset.map((row) => axisMode === "per_100k" ? row.hospitalizationsPer100k : row.hospitalizations),
         y: subset.map((row) => row.mortalityPct),
-        customdata: subset.map((row) => [row.providerName, row.nip, row.owNfz, regionByCode.get(row.owNfz) ?? row.voivodeship, row.city, row.hospitalizations, row.deaths, row.hospitalizationsPer100k, row.productCode]),
+        customdata: subset.map((row) => [row.providerName, row.nip, row.owNfz, regionByCode.get(row.owNfz) ?? row.voivodeship, formatCityName(row.city), row.hospitalizations, row.deaths, row.hospitalizationsPer100k, row.productCode]),
         marker: {
           size: emphasized ? 11 : 9,
           opacity: emphasized ? 0.94 : 0.68,

@@ -31,6 +31,15 @@ export function getGeoKey(row: { owNfz: string; city: string }, geographyMode: G
   return geographyMode === "regions" ? row.owNfz : row.city;
 }
 
+export function formatCityLabel(city: string): string {
+  return city
+    .trim()
+    .toLocaleLowerCase("pl-PL")
+    .replace(/(^|[\s-])([\p{L}])/gu, (_, separator: string, letter: string) =>
+      `${separator}${letter.toLocaleUpperCase("pl-PL")}`,
+    );
+}
+
 export function getCommonPlotLayout(showLegend: boolean, legendTitle?: string) {
   return {
     height: getChartHeight(),

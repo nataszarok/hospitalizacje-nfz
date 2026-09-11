@@ -3,6 +3,7 @@
 import { ActionIcon, MultiSelect, NumberInput, SegmentedControl, Select, Tooltip } from "@mantine/core";
 import type { Dispatch, SetStateAction } from "react";
 import type { EstimationMethod, GeographyMode, ReferencePayload } from "@/lib/types";
+import { formatCityName } from "@/lib/formatters";
 
 type SidebarProps = {
   reference: ReferencePayload;
@@ -85,7 +86,7 @@ export function Sidebar({
       <MultiSelect
         data={geoMode === "regions"
           ? reference.regions.map((region) => ({ value: region.owNfz, label: region.name }))
-          : reference.cities.map((city) => ({ value: city, label: city }))}
+          : reference.cities.map((city) => ({ value: city, label: formatCityName(city) }))}
         value={highlighted}
         onChange={(values) => geoMode === "regions"
           ? setHighlightedRegions(values.slice(0, 5))
