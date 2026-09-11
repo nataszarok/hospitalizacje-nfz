@@ -107,7 +107,7 @@ export function MortalityTab({
         <div className="chart-header">
           <div>
             <h2>Liczba hospitalizacji a śmiertelność</h2>
-            <p>Każdy punkt to świadczeniodawca.
+            <p>Każdy punkt to świadczeniodawca.</p>
           </div>
         </div>
 
