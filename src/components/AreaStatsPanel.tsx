@@ -1,5 +1,6 @@
 "use client";
 
+import { formatCityName } from "@/lib/formatters";
 import type { AdmissionAreaStatGroup, AreaStatGroup, GeographyMode, ProductOption } from "@/lib/types";
 
 function number(value: number, digits = 0) {
@@ -51,7 +52,7 @@ function MortalityAreaStats(props: MortalityProps) {
       if (!group) return null;
       const baseline = baselineMap.get(key);
       return <section className="area-stat-card mortality-area-stat-card" key={key}>
-        <div className="area-stat-title">{group.name}</div>
+        <div className="area-stat-title">{props.geographyMode === "cities" ? formatCityName(group.name) : group.name}</div>
         {group.rows.map((row, index) => {
           const baselineRow = baseline?.rows.find((candidate) => candidate.productCode === row.productCode);
           return <div className={index === 0 ? "area-stat-row primary" : "area-stat-row"} key={row.productCode ?? "total"}>
@@ -81,7 +82,7 @@ function AdmissionAreaStats(props: AdmissionProps) {
       if (!group) return null;
 
       return <section className="area-stat-card admission-area-stat-card" key={key}>
-        <div className="area-stat-title">{group.name}</div>
+        <div className="area-stat-title">{props.geographyMode === "cities" ? formatCityName(group.name) : group.name}</div>
         <div className="area-stat-row primary">
           <div>Planowane <b>{number(group.plannedAdmissions)}</b> · Nagłe <b>{number(group.urgentAdmissions)}</b></div>
           <div>Łącznie <b>{number(group.totalAdmissions)}</b> · L. świadczeniodawców <b>{group.facilities}</b></div>

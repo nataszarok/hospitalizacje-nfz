@@ -3,6 +3,7 @@
 import { ChartScaleControl } from "@/components/ChartScaleControl";
 import { AreaStatsPopover } from "@/components/AreaStatsPopover";
 import { AdmissionChart } from "@/components/AdmissionChart";
+import { formatCityName } from "@/lib/formatters";
 import type { AdmissionPayload, AxisMode, GeographyMode, ReferencePayload } from "@/lib/types";
 
 export function AdmissionTab({ reference, data, loading, error, selectedProducts, axisMode, setAxisMode, geoMode, highlightedRegions, highlightedCities }: {
@@ -56,7 +57,7 @@ export function AdmissionTab({ reference, data, loading, error, selectedProducts
         <div className="table-wrap">
           <table className="admission-table">
             <thead><tr><th>Świadczeniodawca</th><th>NIP</th><th>Kod JGP</th><th>Województwo</th><th>Miasto</th><th>Planowane (6)</th><th>Nagłe (2+3)</th><th>Planowane + nagłe</th></tr></thead>
-            <tbody>{data.rows.slice(0, 500).map((row) => <tr key={`${row.owNfz}-${row.nip}-${row.productCode}`}><td title={row.providerName}>{row.providerName}</td><td>{row.nip}</td><td>{productByCode.get(row.productCode)?.jgpCode ?? row.productCode}</td><td title={row.voivodeship}>{row.voivodeship}</td><td title={row.city}>{row.city}</td><td>{Math.round(row.plannedAdmissions).toLocaleString("pl-PL")}</td><td>{Math.round(row.urgentAdmissions).toLocaleString("pl-PL")}</td><td>{Math.round(row.totalAdmissions).toLocaleString("pl-PL")}</td></tr>)}</tbody>
+            <tbody>{data.rows.slice(0, 500).map((row) => <tr key={`${row.owNfz}-${row.nip}-${row.productCode}`}><td title={row.providerName}>{row.providerName}</td><td>{row.nip}</td><td>{productByCode.get(row.productCode)?.jgpCode ?? row.productCode}</td><td title={row.voivodeship}>{row.voivodeship}</td><td title={formatCityName(row.city)}>{formatCityName(row.city)}</td><td>{Math.round(row.plannedAdmissions).toLocaleString("pl-PL")}</td><td>{Math.round(row.urgentAdmissions).toLocaleString("pl-PL")}</td><td>{Math.round(row.totalAdmissions).toLocaleString("pl-PL")}</td></tr>)}</tbody>
           </table>
           {data.rows.length > 500 ? <p className="table-note">Podgląd pokazuje pierwsze 500 wierszy.</p> : null}
         </div>

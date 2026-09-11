@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { ChartScaleControl } from "@/components/ChartScaleControl";
 import { AreaStatsPopover } from "@/components/AreaStatsPopover";
 import { MortalityChart } from "@/components/MortalityChart";
+import { formatCityName } from "@/lib/formatters";
 import type { AxisMode, GeographyMode, MortalityPayload, ReferencePayload } from "@/lib/types";
 
 type MortalityTabProps = {
@@ -73,7 +74,7 @@ export function MortalityTab({
         <div className="table-wrap">
           <table>
             <thead><tr><th>Świadczeniodawca</th><th>NIP</th><th>KOD JGP</th><th>Województwo</th><th>Miasto</th><th>Hospitalizacje</th><th>Zgony</th><th>Śmiertelność</th></tr></thead>
-            <tbody>{data.rows.slice(0, 500).map((row) => <tr key={`${row.owNfz}-${row.nip}-${row.productCode}`}><td title={row.providerName}>{row.providerName}</td><td>{row.nip}</td><td title={productMap.get(row.productCode)?.label}>{productMap.get(row.productCode)?.jgpCode ?? "—"}</td><td title={row.voivodeship}>{row.voivodeship}</td><td title={row.city}>{row.city}</td><td>{Math.round(row.hospitalizations).toLocaleString("pl-PL")}</td><td>{Math.round(row.deaths).toLocaleString("pl-PL")}</td><td>{row.mortalityPct.toFixed(1)}%</td></tr>)}</tbody>
+            <tbody>{data.rows.slice(0, 500).map((row) => <tr key={`${row.owNfz}-${row.nip}-${row.productCode}`}><td title={row.providerName}>{row.providerName}</td><td>{row.nip}</td><td title={productMap.get(row.productCode)?.label}>{productMap.get(row.productCode)?.jgpCode ?? "—"}</td><td title={row.voivodeship}>{row.voivodeship}</td><td title={formatCityName(row.city)}>{formatCityName(row.city)}</td><td>{Math.round(row.hospitalizations).toLocaleString("pl-PL")}</td><td>{Math.round(row.deaths).toLocaleString("pl-PL")}</td><td>{row.mortalityPct.toFixed(1)}%</td></tr>)}</tbody>
           </table>
           {data.rows.length > 500 ? <p className="table-note">Podgląd pokazuje pierwsze 500 wierszy.</p> : null}
         </div>
