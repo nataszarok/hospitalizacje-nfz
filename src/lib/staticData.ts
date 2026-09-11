@@ -41,7 +41,7 @@ function label(code: string, jgp: string | null, name: string | null) {
 }
 
 export function referenceFromDataset(d: StaticDataset): ReferencePayload {
-  const cities = [...new Set(d.facilities.map((f) => f[3]).filter(Boolean))].sort((a,b) => a.localeCompare(b, "pl"));
+  const cities = [...new Set(d.facilities.map((f) => f[3].trim()).filter(Boolean))].sort((a,b) => a.localeCompare(b, "pl"));
   const durations = [...new Set(d.facts.map((f) => f[3]).filter(Boolean))].sort((a,b) => a.localeCompare(b, "pl", { numeric: true }));
   return {
     analysisYear: d.analysisYear, defaultProductCode: d.defaultProductCode,
