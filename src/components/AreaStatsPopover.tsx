@@ -52,10 +52,10 @@ export function AreaStatsPopover(props: AreaStatsPanelProps) {
       aria-expanded={open}
       aria-controls={panelId}
       onClick={() => setOpen((value) => !value)}
-      title="Statystyki obszarów"
+      aria-label="Statystyki obszarów"
+      data-tooltip="Statystyki obszarów"
     >
       <StatsIcon />
-      <span>Statystyki obszarów</span>
     </button>
 
     {open ? <>

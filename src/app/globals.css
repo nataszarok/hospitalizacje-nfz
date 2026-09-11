@@ -266,19 +266,18 @@ td:nth-child(6), td:nth-child(7), td:nth-child(8) { white-space:nowrap; }
 .plot-toolbar { gap:8px; }
 .area-stats-popover-root { position:relative; flex:0 0 auto; }
 .area-stats-trigger {
+  position:relative;
   display:inline-flex;
   align-items:center;
   justify-content:center;
-  gap:7px;
-  min-height:34px;
-  padding:6px 10px;
+  width:34px;
+  height:34px;
+  padding:0;
   border:1px solid #DCE2EA;
   border-radius:9px;
   background:#FFFFFF;
   color:#475467;
   font:inherit;
-  font-size:11.5px;
-  font-weight:700;
   line-height:1;
   cursor:pointer;
   box-shadow:0 1px 2px rgba(16,24,40,.03);
@@ -288,7 +287,37 @@ td:nth-child(6), td:nth-child(7), td:nth-child(8) { white-space:nowrap; }
 .area-stats-trigger:active { transform:translateY(1px); }
 .area-stats-trigger:focus-visible { outline:3px solid rgba(76,110,245,.16); outline-offset:2px; }
 .area-stats-trigger.is-open { background:#F3F6FF; border-color:#BFCBF5; color:#3146A8; box-shadow:0 1px 3px rgba(49,70,168,.08); }
-.area-stats-trigger-icon { width:15px; height:15px; fill:none; stroke:currentColor; stroke-width:1.45; stroke-linecap:round; stroke-linejoin:round; }
+.area-stats-trigger-icon { width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:1.45; stroke-linecap:round; stroke-linejoin:round; }
+.area-stats-trigger::after {
+  content:attr(data-tooltip);
+  position:absolute;
+  z-index:120;
+  right:0;
+  bottom:calc(100% + 8px);
+  width:max-content;
+  max-width:220px;
+  padding:6px 8px;
+  border-radius:7px;
+  background:#1F2937;
+  color:#FFFFFF;
+  font-size:11px;
+  font-weight:650;
+  line-height:1.2;
+  letter-spacing:0;
+  white-space:nowrap;
+  box-shadow:0 6px 18px rgba(15,23,42,.16);
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+  transform:translateY(3px);
+  transition:opacity .12s ease, transform .12s ease, visibility .12s ease;
+}
+.area-stats-trigger:hover::after,
+.area-stats-trigger:focus-visible::after {
+  opacity:1;
+  visibility:visible;
+  transform:translateY(0);
+}
 
 .area-stats-popover {
   position:absolute;
@@ -323,8 +352,7 @@ td:nth-child(6), td:nth-child(7), td:nth-child(8) { white-space:nowrap; }
 
 @media (max-width:720px) {
   .plot-toolbar { gap:6px; }
-  .area-stats-trigger { min-width:34px; padding:6px 8px; }
-  .area-stats-trigger span { display:none; }
+  .area-stats-trigger::after { display:none; }
   .area-stats-backdrop {
     display:block;
     position:fixed;
