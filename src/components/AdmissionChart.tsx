@@ -11,6 +11,7 @@ import {
   makeHoverTrace,
   PLOTLY_CONFIG,
   PRODUCT_SYMBOLS,
+  type PlotElement,
 } from "@/lib/plotlyChart";
 import { ratioPct } from "@/lib/metrics";
 import type { AdmissionRow, AxisMode, GeographyMode, ProductOption, RegionOption } from "@/lib/types";
@@ -134,15 +135,12 @@ export function AdmissionChart({ rows, axisMode, geographyMode, highlightedRegio
         },
       }, PLOTLY_CONFIG);
 
-      const plot = chartRef.current as HTMLDivElement & {
-        on: (event: string, handler: (event: any) => void) => void;
-        removeAllListeners: (event: string) => void;
-      };
+      const plot = chartRef.current as PlotElement;
       attachHoverMarker({ plot, Plotly, traces, hoverTraceIndex });
     };
     void render();
     return () => { cancelled = true; };
-  }, [rows, axisMode, geographyMode, highlightedRegions, highlightedCities, productByCode, regionByCode]);
+  }, [rows, axisMode, geographyMode, highlightedRegions, highlightedCities, products, productByCode, regionByCode]);
 
   return <div className="plot-shell"><div ref={chartRef} className="plot" /></div>;
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { AdmissionTab } from "@/components/AdmissionTab";
 import { KpiStrip } from "@/components/KpiStrip";
 import { MethodologyPanel } from "@/components/MethodologyPanel";
@@ -60,32 +60,41 @@ export function Dashboard() {
     void load();
   }, []);
 
-  const reload = useCallback(async () => {
-    if (selectedProducts.length === 0) {
-      setData(EMPTY_DATA);
-      setAdmissionData(EMPTY_ADMISSION_DATA);
-      setError(null);
-      setLoading(false);
-      return;
-    }
+  useEffect(() => {
+    if (!reference || !urlStateReady) return;
 
-    setLoading(true);
-    setError(null);
-    try {
-      const dataset = await loadStaticDataset();
-      const query = { products: selectedProducts, durations, method, minHosp };
-      const mortalityPayload = mortalityFromDataset(dataset, query);
-      const admissionPayload = admissionsFromDataset(dataset, query);
-      setData(mortalityPayload);
-      setAdmissionData(admissionPayload);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Błąd pobierania danych.");
-    } finally {
-      setLoading(false);
-    }
-  }, [selectedProducts, durations, method, minHosp]);
+    let cancelled = false;
+    const refreshData = async () => {
+      try {
+        const dataset = await loadStaticDataset();
+        if (cancelled) return;
 
-  useEffect(() => { if (reference && urlStateReady) void reload(); }, [reference, reload, urlStateReady]);
+        if (selectedProducts.length === 0) {
+          setData(EMPTY_DATA);
+          setAdmissionData(EMPTY_ADMISSION_DATA);
+          setError(null);
+          setLoading(false);
+          return;
+        }
+
+        setLoading(true);
+        setError(null);
+        const query = { products: selectedProducts, durations, method, minHosp };
+        setData(mortalityFromDataset(dataset, query));
+        setAdmissionData(admissionsFromDataset(dataset, query));
+        setLoading(false);
+      } catch (err) {
+        if (cancelled) return;
+        setError(err instanceof Error ? err.message : "Błąd pobierania danych.");
+        setLoading(false);
+      }
+    };
+
+    void refreshData();
+    return () => {
+      cancelled = true;
+    };
+  }, [reference, urlStateReady, selectedProducts, durations, method, minHosp]);
 
   useEffect(() => {
     if (!reference || !urlStateReady) return;
