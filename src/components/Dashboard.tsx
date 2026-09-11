@@ -7,6 +7,7 @@ import { MethodologyPanel } from "@/components/MethodologyPanel";
 import { MortalityTab } from "@/components/MortalityTab";
 import { Sidebar } from "@/components/Sidebar";
 import type { AdmissionPayload, AxisMode, EstimationMethod, GeographyMode, MortalityPayload, ReferencePayload } from "@/lib/types";
+import { dashboardUrlSearch, readDashboardUrlState, type DashboardActiveTab } from "@/lib/dashboardUrlState";
 import { admissionsFromDataset, loadStaticDataset, mortalityFromDataset, referenceFromDataset } from "@/lib/staticData";
 
 const EMPTY_KPI = { facilities: 0, hospitalizations: 0, deaths: 0, mortalityPct: 0 };
@@ -14,7 +15,6 @@ const EMPTY_GEO_STATS = { regions: [], cities: [] };
 const EMPTY_DATA: MortalityPayload = { rows: [], current: EMPTY_KPI, baseline: EMPTY_KPI, hasComparison: false, areaStats: EMPTY_GEO_STATS, baselineAreaStats: EMPTY_GEO_STATS };
 const EMPTY_ADMISSION_DATA: AdmissionPayload = { rows: [], areaStats: EMPTY_GEO_STATS };
 
-type ActiveTab = "mortality" | "admissions" | "methodology";
 
 export function Dashboard() {
   const [reference, setReference] = useState<ReferencePayload | null>(null);
@@ -31,15 +31,27 @@ export function Dashboard() {
   const [highlightedCities, setHighlightedCities] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<ActiveTab>("mortality");
+  const [activeTab, setActiveTab] = useState<DashboardActiveTab>("mortality");
+  const [urlStateReady, setUrlStateReady] = useState(false);
 
   useEffect(() => {
     const load = async () => {
       try {
         const dataset = await loadStaticDataset();
         const payload = referenceFromDataset(dataset);
+        const urlState = readDashboardUrlState(payload, window.location.search);
+        setSelectedProducts(urlState.selectedProducts);
+        setDurations(urlState.durations);
+        setMethod(urlState.method);
+        setMinHosp(urlState.minHosp);
+        setAxisMode(urlState.axisMode);
+        setAdmissionAxisMode(urlState.admissionAxisMode);
+        setGeoMode(urlState.geoMode);
+        setHighlightedRegions(urlState.highlightedRegions);
+        setHighlightedCities(urlState.highlightedCities);
+        setActiveTab(urlState.activeTab);
         setReference(payload);
-        setSelectedProducts(payload.defaultProductCode ? [payload.defaultProductCode] : payload.products.slice(0, 1).map((product) => product.code));
+        setUrlStateReady(true);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Błąd inicjalizacji aplikacji.");
         setLoading(false);
@@ -52,6 +64,8 @@ export function Dashboard() {
     if (selectedProducts.length === 0) {
       setData(EMPTY_DATA);
       setAdmissionData(EMPTY_ADMISSION_DATA);
+      setError(null);
+      setLoading(false);
       return;
     }
 
@@ -71,7 +85,38 @@ export function Dashboard() {
     }
   }, [selectedProducts, durations, method, minHosp]);
 
-  useEffect(() => { if (reference) void reload(); }, [reference, reload]);
+  useEffect(() => { if (reference && urlStateReady) void reload(); }, [reference, reload, urlStateReady]);
+
+  useEffect(() => {
+    if (!reference || !urlStateReady) return;
+    const search = dashboardUrlSearch(reference, {
+      selectedProducts,
+      durations,
+      method,
+      minHosp,
+      axisMode,
+      admissionAxisMode,
+      geoMode,
+      highlightedRegions,
+      highlightedCities,
+      activeTab,
+    });
+    const nextUrl = `${window.location.pathname}${search}${window.location.hash}`;
+    window.history.replaceState(window.history.state, "", nextUrl);
+  }, [
+    reference,
+    urlStateReady,
+    selectedProducts,
+    durations,
+    method,
+    minHosp,
+    axisMode,
+    admissionAxisMode,
+    geoMode,
+    highlightedRegions,
+    highlightedCities,
+    activeTab,
+  ]);
 
   if (!reference && loading) return <main className="center-state">Ładowanie aplikacji…</main>;
   if (!reference) return <main className="center-state error">{error ?? "Brak konfiguracji."}</main>;
