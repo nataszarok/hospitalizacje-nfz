@@ -76,8 +76,8 @@ export function readDashboardUrlState(reference: ReferencePayload, search: strin
     axisMode: params.get("x") === "100k" ? "per_100k" : "total",
     admissionAxisMode: params.get("ax") === "100k" ? "per_100k" : "total",
     geoMode: params.get("g") === "c" ? "cities" : "regions",
-    highlightedRegions: validValues(params.getAll("r"), regionCodes, 5),
-    highlightedCities: validValues(params.getAll("c"), cityValues, 5),
+    highlightedRegions: validValues(params.getAll("r"), regionCodes, 10),
+    highlightedCities: validValues(params.getAll("c"), cityValues, 10),
     activeTab,
   };
 }
