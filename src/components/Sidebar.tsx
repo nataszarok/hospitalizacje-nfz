@@ -20,6 +20,8 @@ type SidebarProps = {
   setHighlightedRegions: Dispatch<SetStateAction<string[]>>;
   highlightedCities: string[];
   setHighlightedCities: Dispatch<SetStateAction<string[]>>;
+  findHospitalMode?: boolean;
+  hospitalProfileMode?: boolean;
 };
 
 export function Sidebar({
@@ -38,8 +40,11 @@ export function Sidebar({
   setHighlightedRegions,
   highlightedCities,
   setHighlightedCities,
+  findHospitalMode = false,
+  hospitalProfileMode = false,
 }: SidebarProps) {
   const highlighted = geoMode === "regions" ? highlightedRegions : highlightedCities;
+  const focusedMode = findHospitalMode || hospitalProfileMode;
 
   return <aside className="sidebar">
     <div className="sidebar-brand">
@@ -49,9 +54,9 @@ export function Sidebar({
         <div className="sidebar-title">Panel analityczny</div>
       </div>
     </div>
-    <p className="sidebar-intro">Zawęź zakres analizy i wyróżnij wybrane obszary bez usuwania pozostałych świadczeniodawców z wykresu.</p>
+    <p className="sidebar-intro">{hospitalProfileMode ? "Szpital wybierzesz w zakładce Profil szpitala. Tutaj możesz zawęzić analizę długością pobytu i metodą estymacji." : findHospitalMode ? "Sekcję JGP wybierzesz w zakładce Znajdź szpital. Tutaj możesz dodatkowo zawęzić ranking wspólnymi filtrami danych." : "Zawęź zakres analizy i wyróżnij wybrane obszary bez usuwania pozostałych świadczeniodawców z wykresu."}</p>
 
-    <FilterSection title="Zakres świadczeń">
+    {!focusedMode ? <FilterSection title="Zakres świadczeń">
       <LabelWithInfo htmlFor="products" help="Wybierz jedną lub więcej grup JGP. Na wykresach grupy JGP są rozróżniane kształtem punktu; statystyki obszarów pozostają agregowane dla całego wybranego zakresu.">Produkt jednostkowy</LabelWithInfo>
       <div className="field-help">Możesz porównać maksymalnie 5 produktów.</div>
       <MultiSelect
@@ -68,9 +73,9 @@ export function Sidebar({
         comboboxProps={{ withinPortal: true, shadow: "md" }}
         className="mantine-filter"
       />
-    </FilterSection>
+    </FilterSection> : null}
 
-    <FilterSection title="Wyróżnienie geograficzne">
+    {!focusedMode ? <FilterSection title="Wyróżnienie geograficzne">
       <SegmentedControl
         fullWidth
         value={geoMode}
@@ -99,20 +104,22 @@ export function Sidebar({
         comboboxProps={{ withinPortal: true, shadow: "md" }}
         className="mantine-filter"
       />
-    </FilterSection>
+    </FilterSection> : null}
 
     <FilterSection title="Filtry">
-      <LabelWithInfo htmlFor="minHosp" help="Ogranicza do świadczeniodawców, którzy mają co najmniej wybraną liczbę hospitalizacji. Przykład: przy ustawieniu 100, uwzględnia świadczeniodawców ze 100 lub większą liczbą hospitalizacji.">Minimalna liczba hospitalizacji na świadczeniodawcę</LabelWithInfo>
-      <NumberInput
-        id="minHosp"
-        min={0}
-        step={10}
-        value={minHosp}
-        onChange={(value) => setMinHosp(Math.max(0, Number(value) || 0))}
-        allowDecimal={false}
-        clampBehavior="strict"
-        className="mantine-filter"
-      />
+      {!hospitalProfileMode ? <>
+        <LabelWithInfo htmlFor="minHosp" help="Ogranicza do świadczeniodawców, którzy mają co najmniej wybraną liczbę hospitalizacji. Przykład: przy ustawieniu 100, uwzględnia świadczeniodawców ze 100 lub większą liczbą hospitalizacji.">Minimalna liczba hospitalizacji na świadczeniodawcę</LabelWithInfo>
+        <NumberInput
+          id="minHosp"
+          min={0}
+          step={10}
+          value={minHosp}
+          onChange={(value) => setMinHosp(Math.max(0, Number(value) || 0))}
+          allowDecimal={false}
+          clampBehavior="strict"
+          className="mantine-filter"
+        />
+      </> : null}
       <LabelWithInfo htmlFor="durations" help="Ogranicza analizę do hospitalizacji w wybranym przedziale długości pobytu.">Przedział długości hospitalizacji</LabelWithInfo>
       <MultiSelect
         id="durations"

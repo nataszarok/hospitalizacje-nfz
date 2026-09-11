@@ -14,6 +14,15 @@ export interface RegionOption {
   name: string;
 }
 
+export interface HospitalOption {
+  owNfz: string;
+  nip: string;
+  providerName: string;
+  city: string;
+  voivodeship: string;
+  label: string;
+}
+
 export interface ReferencePayload {
   analysisYear: string;
   defaultProductCode: string;
@@ -21,6 +30,7 @@ export interface ReferencePayload {
   regions: RegionOption[];
   cities: string[];
   durations: string[];
+  hospitals: HospitalOption[];
 }
 
 export interface MortalityRow {
@@ -107,4 +117,35 @@ export interface AdmissionGeographyStats {
 export interface AdmissionPayload {
   rows: AdmissionRow[];
   areaStats: AdmissionGeographyStats;
+}
+
+export interface HospitalRankingRow {
+  owNfz: string;
+  nip: string;
+  providerName: string;
+  city: string;
+  voivodeship: string;
+  hospitalizations: number;
+  sharePct: number;
+}
+
+export interface HospitalRankingPayload {
+  rows: HospitalRankingRow[];
+  totalHospitalizations: number;
+  facilities: number;
+}
+
+
+export interface HospitalProfileRow {
+  jgpCode: string;
+  jgpName: string | null;
+  hospitalizations: number;
+  sharePct: number;
+}
+
+export interface HospitalProfilePayload {
+  provider: HospitalOption | null;
+  rows: HospitalProfileRow[];
+  totalHospitalizations: number;
+  jgpGroups: number;
 }

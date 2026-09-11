@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { AdmissionTab } from "@/components/AdmissionTab";
+import { FindHospitalTab } from "@/components/FindHospitalTab";
+import { HospitalProfileTab } from "@/components/HospitalProfileTab";
 import { KpiStrip } from "@/components/KpiStrip";
 import { MethodologyPanel } from "@/components/MethodologyPanel";
 import { MortalityTab } from "@/components/MortalityTab";
@@ -13,7 +15,7 @@ const EMPTY_GEO_STATS = { regions: [], cities: [] };
 const EMPTY_DATA: MortalityPayload = { rows: [], current: EMPTY_KPI, baseline: EMPTY_KPI, hasComparison: false, areaStats: EMPTY_GEO_STATS, baselineAreaStats: EMPTY_GEO_STATS };
 const EMPTY_ADMISSION_DATA: AdmissionPayload = { rows: [], areaStats: EMPTY_GEO_STATS };
 
-type ActiveTab = "mortality" | "admissions" | "methodology";
+type ActiveTab = "mortality" | "admissions" | "findHospital" | "hospitalProfile" | "methodology";
 
 export function Dashboard() {
   const [reference, setReference] = useState<ReferencePayload | null>(null);
@@ -105,20 +107,24 @@ export function Dashboard() {
       setHighlightedRegions={setHighlightedRegions}
       highlightedCities={highlightedCities}
       setHighlightedCities={setHighlightedCities}
+      findHospitalMode={activeTab === "findHospital"}
+      hospitalProfileMode={activeTab === "hospitalProfile"}
     />
 
     <main className="main">
       <header className="page-header">
         <h1>Hospitalizacje w Polsce</h1>
-        <p>Analiza wolumenu, śmiertelności i trybu przyjęcia · NFZ {reference.analysisYear}</p>
+        <p>Analiza wolumenu, śmiertelności i rankingu świadczeniodawców · NFZ {reference.analysisYear}</p>
       </header>
       <nav className="tabs" aria-label="Główna nawigacja">
         <button className={activeTab === "mortality" ? "active" : undefined} onClick={() => setActiveTab("mortality")}>Wolumen i śmiertelność</button>
-        <button className={activeTab === "admissions" ? "active" : undefined} onClick={() => setActiveTab("admissions")}>Tryb przyjęcia</button>
+        <button disabled className={activeTab === "admissions" ? "active" : undefined} onClick={() => setActiveTab("admissions")}>Tryb przyjęcia</button>
+        <button className={activeTab === "findHospital" ? "active" : undefined} onClick={() => setActiveTab("findHospital")}>Znajdź szpital</button>
+        <button className={activeTab === "hospitalProfile" ? "active" : undefined} onClick={() => setActiveTab("hospitalProfile")}>Profil szpitala</button>
         <button className={activeTab === "methodology" ? "active" : undefined} onClick={() => setActiveTab("methodology")}>Metodologia i dane</button>
       </nav>
 
-      {activeTab !== "methodology" ? <KpiStrip current={data.current} baseline={data.baseline} compare={data.hasComparison} /> : null}
+      {activeTab === "mortality" || activeTab === "admissions" ? <KpiStrip current={data.current} baseline={data.baseline} compare={data.hasComparison} /> : null}
 
       {activeTab === "mortality" ? <MortalityTab
         reference={reference}
@@ -142,6 +148,15 @@ export function Dashboard() {
         geoMode={geoMode}
         highlightedRegions={highlightedRegions}
         highlightedCities={highlightedCities}
+      /> : activeTab === "findHospital" ? <FindHospitalTab
+        reference={reference}
+        durations={durations}
+        method={method}
+        minHosp={minHosp}
+      /> : activeTab === "hospitalProfile" ? <HospitalProfileTab
+        reference={reference}
+        durations={durations}
+        method={method}
       /> : <MethodologyPanel year={reference.analysisYear} />}
     </main>
   </div>;

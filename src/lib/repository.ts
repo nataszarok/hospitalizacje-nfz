@@ -1,6 +1,6 @@
 import "server-only";
 import { getPool } from "@/lib/db";
-import type { AdmissionRow, EstimationMethod, MortalityRow, ProductOption, ReferencePayload, RegionOption } from "@/lib/types";
+import type { AdmissionRow, EstimationMethod, HospitalProfilePayload, HospitalRankingPayload, MortalityRow, ProductOption, ReferencePayload, RegionOption } from "@/lib/types";
 
 function productLabel(code: string, jgpCode: string | null, name: string | null): string {
   const label = [jgpCode, name].filter((value) => value && value.trim()).join(" — ");
@@ -17,7 +17,7 @@ function per100k(value: number, population: number): number {
 
 export async function loadReferenceData(): Promise<ReferencePayload> {
   const db = getPool();
-  const [config, productsResult, regionsResult, citiesResult, durationResult] = await Promise.all([
+  const [config, productsResult, regionsResult, citiesResult, durationResult, hospitalsResult] = await Promise.all([
     db.query<{ key: string; value: string }>("SELECT key, value FROM app_config"),
     db.query<{ product_code: string; jgp_code: string | null; product_name: string | null }>(
       "SELECT product_code, jgp_code, product_name FROM products ORDER BY product_code"
@@ -36,6 +36,19 @@ export async function loadReferenceData(): Promise<ReferencePayload> {
     db.query<{ duration_group: string }>(
       "SELECT DISTINCT duration_group FROM facility_product_duration_admission ORDER BY duration_group"
     ),
+    db.query<{ ow_nfz: string; nip: string; provider_name: string; city: string; voivodeship: string }>(`
+      SELECT DISTINCT
+        f.ow_nfz,
+        f.nip,
+        f.provider_name,
+        COALESCE(f.city, '') AS city,
+        r.voivodeship
+      FROM facilities f
+      JOIN nfz_regions r USING (ow_nfz)
+      JOIN facility_product_duration_admission s
+        ON s.ow_nfz = f.ow_nfz AND s.nip = f.nip
+      ORDER BY f.provider_name, r.voivodeship, f.nip
+    `),
   ]);
 
   const cfg = new Map(config.rows.map((row) => [row.key, row.value]));
@@ -54,6 +67,14 @@ export async function loadReferenceData(): Promise<ReferencePayload> {
     regions,
     cities: citiesResult.rows.map((row) => row.city),
     durations: durationResult.rows.map((row) => row.duration_group),
+    hospitals: hospitalsResult.rows.map((row) => ({
+      owNfz: row.ow_nfz,
+      nip: row.nip,
+      providerName: row.provider_name,
+      city: row.city,
+      voivodeship: row.voivodeship,
+      label: [row.provider_name, row.city, row.voivodeship].filter(Boolean).join(" · "),
+    })),
   };
 }
 
@@ -260,4 +281,152 @@ export async function loadAdmissionRows(query: AdmissionQuery): Promise<Admissio
       urgentAdmissionsPer100k: per100k(urgentAdmissions, population),
     };
   });
+}
+
+
+interface HospitalRankingQuery {
+  products: string[];
+  durations: string[];
+  method: EstimationMethod;
+  minHosp: number;
+}
+
+export async function loadHospitalRanking(query: HospitalRankingQuery): Promise<HospitalRankingPayload> {
+  if (query.products.length === 0) return { rows: [], totalHospitalizations: 0, facilities: 0 };
+
+  const db = getPool();
+  const hospColumn = hospitalizationColumn(query.method);
+  const params: unknown[] = [query.products];
+  const conditions = ["s.product_code = ANY($1::text[])"];
+
+  if (query.durations.length > 0) {
+    params.push(query.durations);
+    conditions.push(`s.duration_group = ANY($${params.length}::text[])`);
+  }
+
+  const minIndex = params.push(query.minHosp);
+  const sql = `
+    WITH ranked AS (
+      SELECT
+        s.ow_nfz,
+        s.nip,
+        SUM(s.${hospColumn})::double precision AS hospitalizations
+      FROM facility_product_duration_admission s
+      WHERE ${conditions.join(" AND ")}
+      GROUP BY s.ow_nfz, s.nip
+      HAVING SUM(s.${hospColumn}) >= $${minIndex}::double precision
+    )
+    SELECT
+      h.ow_nfz,
+      h.nip,
+      f.provider_name,
+      COALESCE(f.city, '') AS city,
+      r.voivodeship,
+      h.hospitalizations
+    FROM ranked h
+    JOIN facilities f USING (ow_nfz, nip)
+    JOIN nfz_regions r USING (ow_nfz)
+    ORDER BY h.hospitalizations DESC, f.provider_name, h.ow_nfz, h.nip
+  `;
+
+  const result = await db.query<{
+    ow_nfz: string;
+    nip: string;
+    provider_name: string;
+    city: string;
+    voivodeship: string;
+    hospitalizations: string | number;
+  }>(sql, params);
+
+  const totalHospitalizations = result.rows.reduce((sum, row) => sum + Number(row.hospitalizations), 0);
+  const rows = result.rows.map((row) => {
+    const hospitalizations = Number(row.hospitalizations);
+    return {
+      owNfz: row.ow_nfz,
+      nip: row.nip,
+      providerName: row.provider_name,
+      city: row.city,
+      voivodeship: row.voivodeship,
+      hospitalizations,
+      sharePct: totalHospitalizations > 0 ? hospitalizations / totalHospitalizations * 100 : 0,
+    };
+  });
+
+  return { rows, totalHospitalizations, facilities: rows.length };
+}
+
+
+interface HospitalProfileQuery {
+  owNfz: string;
+  nip: string;
+  durations: string[];
+  method: EstimationMethod;
+}
+
+export async function loadHospitalProfile(query: HospitalProfileQuery): Promise<HospitalProfilePayload> {
+  if (!query.owNfz || !query.nip) return { provider: null, rows: [], totalHospitalizations: 0, jgpGroups: 0 };
+
+  const db = getPool();
+  const hospColumn = hospitalizationColumn(query.method);
+  const params: unknown[] = [query.owNfz, query.nip];
+  const conditions = ["s.ow_nfz = $1", "s.nip = $2", "p.jgp_code IS NOT NULL", "BTRIM(p.jgp_code) <> ''"];
+
+  if (query.durations.length > 0) {
+    params.push(query.durations);
+    conditions.push(`s.duration_group = ANY($${params.length}::text[])`);
+  }
+
+  const result = await db.query<{
+    jgp_code: string;
+    jgp_name: string | null;
+    hospitalizations: string | number;
+  }>(`
+    SELECT
+      p.jgp_code,
+      MAX(p.product_name) AS jgp_name,
+      SUM(s.${hospColumn})::double precision AS hospitalizations
+    FROM facility_product_duration_admission s
+    JOIN products p ON p.product_code = s.product_code
+    WHERE ${conditions.join(" AND ")}
+    GROUP BY p.jgp_code
+    HAVING SUM(s.${hospColumn}) > 0
+    ORDER BY hospitalizations DESC, p.jgp_code
+  `, params);
+
+  const providerResult = await db.query<{
+    ow_nfz: string;
+    nip: string;
+    provider_name: string;
+    city: string;
+    voivodeship: string;
+  }>(`
+    SELECT f.ow_nfz, f.nip, f.provider_name, COALESCE(f.city, '') AS city, r.voivodeship
+    FROM facilities f
+    JOIN nfz_regions r USING (ow_nfz)
+    WHERE f.ow_nfz = $1 AND f.nip = $2
+    LIMIT 1
+  `, [query.owNfz, query.nip]);
+
+  const totalHospitalizations = result.rows.reduce((sum, row) => sum + Number(row.hospitalizations), 0);
+  const providerRow = providerResult.rows[0];
+  const provider = providerRow ? {
+    owNfz: providerRow.ow_nfz,
+    nip: providerRow.nip,
+    providerName: providerRow.provider_name,
+    city: providerRow.city,
+    voivodeship: providerRow.voivodeship,
+    label: [providerRow.provider_name, providerRow.city, providerRow.voivodeship].filter(Boolean).join(" · "),
+  } : null;
+
+  const rows = result.rows.map((row) => {
+    const hospitalizations = Number(row.hospitalizations);
+    return {
+      jgpCode: row.jgp_code,
+      jgpName: row.jgp_name,
+      hospitalizations,
+      sharePct: totalHospitalizations > 0 ? hospitalizations / totalHospitalizations * 100 : 0,
+    };
+  });
+
+  return { provider, rows, totalHospitalizations, jgpGroups: rows.length };
 }

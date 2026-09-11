@@ -261,3 +261,47 @@ td:nth-child(6), td:nth-child(7), td:nth-child(8) { white-space:nowrap; }
 .admission-table td:nth-child(5),
 .admission-table td:nth-child(6),
 .admission-table td:nth-child(7) { white-space:nowrap; }
+
+/* Find hospital */
+.find-hospital-section { max-width:1180px; }
+.find-hospital-controls { display:grid; grid-template-columns:minmax(240px,.75fr) minmax(360px,1.25fr); gap:12px; padding:12px; margin:8px 0 9px; border:1px solid var(--border); border-radius:12px; background:#FBFCFE; }
+.find-hospital-label { display:block; margin:0 0 6px; font-size:11.5px; font-weight:650; color:#475467; }
+.find-hospital-selection { display:flex; align-items:baseline; gap:9px; margin:0 2px 10px; color:#667085; font-size:11.5px; }
+.find-hospital-selection strong { color:#2856A3; font-size:13px; }
+.find-hospital-summary { display:grid; grid-template-columns:170px 170px minmax(260px,1fr); gap:10px; margin:0 0 10px; }
+.find-hospital-summary > div { min-width:0; padding:10px 12px; border:1px solid #E3E7ED; border-radius:10px; background:#fff; }
+.find-hospital-summary span { display:block; margin-bottom:4px; color:#667085; font-size:10.5px; font-weight:650; }
+.find-hospital-summary strong { display:block; color:#172033; font-size:17px; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.find-hospital-summary > div:last-child strong { font-size:12px; }
+.find-hospital-plot-shell { max-width:1180px; }
+.hospital-ranking-table th:nth-child(1) { width:5%; }
+.hospital-ranking-table th:nth-child(2) { width:37%; }
+.hospital-ranking-table th:nth-child(3) { width:18%; }
+.hospital-ranking-table th:nth-child(4) { width:16%; }
+.hospital-ranking-table th:nth-child(5) { width:14%; }
+.hospital-ranking-table th:nth-child(6) { width:10%; }
+.hospital-ranking-table td:nth-child(1), .hospital-ranking-table td:nth-child(5), .hospital-ranking-table td:nth-child(6) { white-space:nowrap; }
+@media (max-width:900px) { .find-hospital-controls { grid-template-columns:1fr; } .find-hospital-summary { grid-template-columns:1fr 1fr; } .find-hospital-summary > div:last-child { grid-column:1 / -1; } }
+.find-hospital-chart-caption { margin:2px 3px 6px; color:#475467; font-size:11.5px; font-weight:650; }
+.find-hospital-controls-single { grid-template-columns:minmax(280px,520px); }
+
+/* Hospital profile */
+.hospital-profile-section { max-width:1180px; }
+.hospital-profile-search { max-width:760px; padding:12px; margin:8px 0 10px; border:1px solid var(--border); border-radius:12px; background:#FBFCFE; }
+.hospital-profile-placeholder { padding:54px 18px; border:1px dashed #D7DEE8; border-radius:12px; color:#7B8494; text-align:center; font-size:12px; background:#FBFCFE; }
+.hospital-profile-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; margin:2px 0 10px; padding:2px; }
+.hospital-profile-heading strong { display:block; color:#172033; font-size:15px; line-height:1.35; }
+.hospital-profile-heading span { display:block; margin-top:2px; color:#667085; font-size:11px; }
+.hospital-profile-summary { display:grid; grid-template-columns:170px 170px 170px; gap:10px; margin:0 0 10px; }
+.hospital-profile-summary > div { padding:10px 12px; border:1px solid #E3E7ED; border-radius:10px; background:#fff; }
+.hospital-profile-summary span { display:block; margin-bottom:4px; color:#667085; font-size:10.5px; font-weight:650; }
+.hospital-profile-summary strong { display:block; color:#172033; font-size:17px; line-height:1.2; }
+.hospital-profile-plot-shell { max-width:1180px; }
+.hospital-profile-table th:nth-child(1) { width:5%; }
+.hospital-profile-table th:nth-child(2) { width:10%; }
+.hospital-profile-table th:nth-child(3) { width:55%; }
+.hospital-profile-table th:nth-child(4) { width:16%; }
+.hospital-profile-table th:nth-child(5) { width:14%; }
+.hospital-profile-table td:nth-child(1), .hospital-profile-table td:nth-child(2), .hospital-profile-table td:nth-child(4), .hospital-profile-table td:nth-child(5) { white-space:nowrap; }
+@media (max-width:700px) { .hospital-profile-summary { grid-template-columns:1fr 1fr; } .hospital-profile-summary > div:last-child { grid-column:1 / -1; } }
+.hospital-profile-chart-separator { height:1px; margin:16px 0 14px; background:#EEF1F5; }
