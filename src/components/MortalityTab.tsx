@@ -1,8 +1,8 @@
 "use client";
 
 import { useMemo } from "react";
-import { SegmentedControl } from "@mantine/core";
 import { AreaStatsPanel } from "@/components/AreaStatsPanel";
+import { ChartScaleControl } from "@/components/ChartScaleControl";
 import { MortalityChart } from "@/components/MortalityChart";
 import type { AxisMode, GeographyMode, MortalityPayload, ReferencePayload } from "@/lib/types";
 
@@ -47,15 +47,7 @@ export function MortalityTab({
         {data.rows.length > 0 ? <div className="analysis-grid">
           <div className="plot-column">
             <div className="plot-toolbar">
-              <SegmentedControl
-                value={axisMode}
-                onChange={(value) => setAxisMode(value as AxisMode)}
-                data={[
-                  { value: "total", label: "Liczba hospitalizacji" },
-                  { value: "per_100k", label: "Na 100 tys. mieszk." },
-                ]}
-                className="axis-segmented"
-              />
+              <ChartScaleControl value={axisMode} onChange={setAxisMode} />
             </div>
             <MortalityChart
               rows={data.rows}
