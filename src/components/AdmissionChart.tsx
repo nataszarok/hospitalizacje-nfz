@@ -1,7 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useRef } from "react";
+import {
+  admissionRowsPerJgp,
+  aggregateAdmissionRowsByProvider,
+  type AdmissionDisplayRow,
+} from "@/lib/admissions";
 import { formatCityName } from "@/lib/formatters";
+import type { MortalityDisplayMode } from "@/lib/mortality";
 import {
   attachHoverMarker,
   getCommonPlotLayout,
@@ -17,9 +23,19 @@ import {
 import { ratioPct } from "@/lib/metrics";
 import type { AdmissionRow, AxisMode, GeographyMode, ProductOption, RegionOption } from "@/lib/types";
 
-export function AdmissionChart({ rows, axisMode, geographyMode, highlightedRegions, highlightedCities, products, regions }: {
+export function AdmissionChart({
+  rows,
+  axisMode,
+  displayMode,
+  geographyMode,
+  highlightedRegions,
+  highlightedCities,
+  products,
+  regions,
+}: {
   rows: AdmissionRow[];
   axisMode: AxisMode;
+  displayMode: MortalityDisplayMode;
   geographyMode: GeographyMode;
   highlightedRegions: string[];
   highlightedCities: string[];
@@ -32,6 +48,7 @@ export function AdmissionChart({ rows, axisMode, geographyMode, highlightedRegio
 
   useEffect(() => {
     let cancelled = false;
+
     const render = async () => {
       if (!chartRef.current) return;
       const Plotly = (await import("plotly.js-dist-min")).default;
@@ -42,17 +59,32 @@ export function AdmissionChart({ rows, axisMode, geographyMode, highlightedRegio
         ...products.filter((product) => rowProductCodes.has(product.code)).map((product) => product.code),
         ...[...rowProductCodes].filter((code) => !productByCode.has(code)),
       ];
-      const geoSelection = getGeoSelection(geographyMode, highlightedRegions, highlightedCities);
-      const geoLabel = (key: string) => geographyMode === "regions" ? (regionByCode.get(key) ?? `Województwo ${key}`) : formatCityName(key);
-      const showLegend = geoSelection.length > 0 || productCodes.length > 1;
 
-      const makeTrace = (subset: AdmissionRow[], productIndex: number, name: string, color: string, emphasized = false) => ({
+      const geoSelection = getGeoSelection(geographyMode, highlightedRegions, highlightedCities);
+      const geoLabel = (key: string) => geographyMode === "regions"
+        ? (regionByCode.get(key) ?? `Województwo ${key}`)
+        : formatCityName(key);
+
+      const isCombined = displayMode === "combined";
+      const showLegend = geoSelection.length > 0 || (!isCombined && productCodes.length > 1);
+
+      const makeTrace = (
+        subset: AdmissionDisplayRow[],
+        productIndex: number,
+        name: string,
+        color: string,
+        emphasized = false,
+      ) => ({
         type: "scattergl",
         mode: "markers",
         name,
         showlegend: false,
-        x: subset.map((row) => axisMode === "per_100k" ? row.plannedAdmissionsPer100k : row.plannedAdmissions),
-        y: subset.map((row) => axisMode === "per_100k" ? row.urgentAdmissionsPer100k : row.urgentAdmissions),
+        x: subset.map((row) => axisMode === "per_100k"
+          ? row.plannedAdmissionsPer100k
+          : row.plannedAdmissions),
+        y: subset.map((row) => axisMode === "per_100k"
+          ? row.urgentAdmissionsPer100k
+          : row.urgentAdmissions),
         customdata: subset.map((row) => {
           const ratio = ratioPct(row.plannedAdmissions, row.urgentAdmissions);
           return [
@@ -66,14 +98,20 @@ export function AdmissionChart({ rows, axisMode, geographyMode, highlightedRegio
             row.totalAdmissions,
             row.plannedAdmissionsPer100k,
             row.urgentAdmissionsPer100k,
-            ratio === null ? "—" : `${ratio.toLocaleString("pl-PL", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`,
-            productByCode.get(row.productCode)?.jgpCode ?? row.productCode,
+            ratio === null
+              ? "—"
+              : `${ratio.toLocaleString("pl-PL", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`,
+            row.productCodes
+              .map((code) => productByCode.get(code)?.jgpCode ?? code)
+              .join(", "),
           ];
         }),
         marker: {
           size: emphasized ? 11 : 9,
           opacity: emphasized ? 0.94 : 0.68,
-          symbol: productCodes.length === 1 ? "circle" : PRODUCT_SYMBOLS[productIndex % PRODUCT_SYMBOLS.length],
+          symbol: isCombined || productCodes.length === 1
+            ? "circle"
+            : PRODUCT_SYMBOLS[productIndex % PRODUCT_SYMBOLS.length],
           color,
           line: { width: emphasized ? 0.8 : 0.4, color: "#FFFFFF" },
         },
@@ -82,7 +120,7 @@ export function AdmissionChart({ rows, axisMode, geographyMode, highlightedRegio
           "NIP: %{customdata[1]}",
           "Województwo: %{customdata[3]}",
           "Miejscowość: %{customdata[4]}",
-          "Kod JGP: %{customdata[11]}",
+          isCombined ? "Kody JGP: %{customdata[11]}" : "Kod JGP: %{customdata[11]}",
           "Planowane (6): %{customdata[5]:,.0f}",
           "Nagłe (2+3): %{customdata[6]:,.0f}",
           "Planowane / nagłe: %{customdata[10]}",
@@ -93,42 +131,109 @@ export function AdmissionChart({ rows, axisMode, geographyMode, highlightedRegio
       });
 
       const traces: Record<string, unknown>[] = [];
-      productCodes.forEach((productCode, productIndex) => {
-        const productRows = rows.filter((row) => row.productCode === productCode);
-        const productLabel = productByCode.get(productCode)?.jgpCode ?? productCode;
-        const remaining = productRows.filter((row) => !geoSelection.includes(getGeoKey(row, geographyMode)));
+
+      if (isCombined) {
+        const chartRows = aggregateAdmissionRowsByProvider(rows);
+        const remaining = chartRows.filter(
+          (row) => !geoSelection.includes(getGeoKey(row, geographyMode)),
+        );
+
         if (remaining.length > 0) {
-          traces.push(makeTrace(remaining, productIndex, `Pozostałe · ${productLabel}`, "#C7CBD1"));
+          traces.push(makeTrace(remaining, 0, "Pozostałe", "#C7CBD1"));
         }
+
         geoSelection.forEach((key, geoIndex) => {
-          const subset = productRows.filter((row) => getGeoKey(row, geographyMode) === key);
+          const subset = chartRows.filter(
+            (row) => getGeoKey(row, geographyMode) === key,
+          );
+
           if (subset.length > 0) {
-            traces.push(makeTrace(subset, productIndex, `${geoLabel(key)} · ${productLabel}`, HIGHLIGHT_COLORS[geoIndex % HIGHLIGHT_COLORS.length], true));
+            traces.push(makeTrace(
+              subset,
+              0,
+              geoLabel(key),
+              HIGHLIGHT_COLORS[geoIndex % HIGHLIGHT_COLORS.length],
+              true,
+            ));
           }
         });
-      });
+      } else {
+        productCodes.forEach((productCode, productIndex) => {
+          const productRows = admissionRowsPerJgp(
+            rows.filter((row) => row.productCode === productCode),
+          );
+          const productLabel = productByCode.get(productCode)?.jgpCode ?? productCode;
+
+          const remaining = productRows.filter(
+            (row) => !geoSelection.includes(getGeoKey(row, geographyMode)),
+          );
+
+          if (remaining.length > 0) {
+            traces.push(makeTrace(
+              remaining,
+              productIndex,
+              `Pozostałe · ${productLabel}`,
+              "#C7CBD1",
+            ));
+          }
+
+          geoSelection.forEach((key, geoIndex) => {
+            const subset = productRows.filter(
+              (row) => getGeoKey(row, geographyMode) === key,
+            );
+
+            if (subset.length > 0) {
+              traces.push(makeTrace(
+                subset,
+                productIndex,
+                `${geoLabel(key)} · ${productLabel}`,
+                HIGHLIGHT_COLORS[geoIndex % HIGHLIGHT_COLORS.length],
+                true,
+              ));
+            }
+          });
+        });
+      }
 
       traces.push(...makeDimensionLegendTraces({
         geographyMode,
         geoSelection,
         geoLabel,
-        productCodes,
+        productCodes: isCombined ? [] : productCodes,
         productLabel: (code) => productByCode.get(code)?.jgpCode ?? code,
       }));
 
       const hoverTraceIndex = traces.length;
       traces.push(makeHoverTrace());
 
+      const legendTitle = isCombined
+        ? (geographyMode === "regions" ? "Województwo" : "Miasto")
+        : (geographyMode === "regions"
+            ? "Województwo - kod JGP"
+            : "Miasto - kod JGP");
+
       await Plotly.react(chartRef.current, traces, {
-        ...getCommonPlotLayout(showLegend, geographyMode === "regions" ? "Województwo - kod JGP" : "Miasto - kod JGP"),
+        ...getCommonPlotLayout(showLegend, legendTitle),
         xaxis: {
-          title: { text: axisMode === "per_100k" ? "Przyjęcia planowane na 100 tys. mieszkańców (kod 6)" : "Liczba przyjęć planowanych (kod 6)", standoff: 18, font: { size: 15, color: "#344054" } },
+          title: {
+            text: axisMode === "per_100k"
+              ? "Przyjęcia planowane na 100 tys. mieszkańców (kod 6)"
+              : "Liczba przyjęć planowanych (kod 6)",
+            standoff: 18,
+            font: { size: 15, color: "#344054" },
+          },
           gridcolor: "#EEF1F5",
           zerolinecolor: "#EEF1F5",
           zerolinewidth: 3,
         },
         yaxis: {
-          title: { text: axisMode === "per_100k" ? "Przyjęcia nagłe na 100 tys. mieszkańców (kody 2 + 3)" : "Liczba przyjęć nagłych (kody 2 + 3)", standoff: 18, font: { size: 15, color: "#344054" } },
+          title: {
+            text: axisMode === "per_100k"
+              ? "Przyjęcia nagłe na 100 tys. mieszkańców (kody 2 + 3)"
+              : "Liczba przyjęć nagłych (kody 2 + 3)",
+            standoff: 18,
+            font: { size: 15, color: "#344054" },
+          },
           tickfont: { size: 11, color: "#667085" },
           gridcolor: "#EEF1F5",
           zerolinecolor: "#EEF1F5",
@@ -139,9 +244,23 @@ export function AdmissionChart({ rows, axisMode, geographyMode, highlightedRegio
       const plot = chartRef.current as PlotElement;
       attachHoverMarker({ plot, Plotly, traces, hoverTraceIndex });
     };
+
     void render();
-    return () => { cancelled = true; };
-  }, [rows, axisMode, geographyMode, highlightedRegions, highlightedCities, products, productByCode, regionByCode]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    rows,
+    axisMode,
+    displayMode,
+    geographyMode,
+    highlightedRegions,
+    highlightedCities,
+    products,
+    productByCode,
+    regionByCode,
+  ]);
 
   return <div className="plot-shell"><div ref={chartRef} className="plot" /></div>;
 }

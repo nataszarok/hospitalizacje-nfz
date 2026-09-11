@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
 import "@testing-library/jest-dom/vitest";
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { AdmissionTab } from "@/components/AdmissionTab";
 import { MortalityTab } from "@/components/MortalityTab";
@@ -108,6 +108,8 @@ const commonProps = {
   geoMode: "regions" as const,
   highlightedRegions: [] as string[],
   highlightedCities: [] as string[],
+  displayMode: "combined" as const,
+  setDisplayMode: vi.fn(),
 };
 
 describe("MortalityTab data table", () => {
@@ -115,17 +117,21 @@ describe("MortalityTab data table", () => {
     render(<MortalityTab {...commonProps} data={mortalityPayload([mortalityRow()])} />);
 
     const table = screen.getByRole("table");
-    const headers = within(table).getAllByRole("columnheader").map((cell) => cell.textContent);
-    expect(headers).toEqual([
+    const headers = within(table).getAllByRole("columnheader");
+    expect(headers).toHaveLength(8);
+
+    for (const label of [
       "Świadczeniodawca",
       "NIP",
-      "KOD JGP",
+      "KODY JGP",
       "Województwo",
       "Miasto",
       "Hospitalizacje",
       "Zgony",
       "Śmiertelność",
-    ]);
+    ]) {
+      expect(within(table).getByRole("button", { name: label })).toBeInTheDocument();
+    }
 
     const cells = within(table).getAllByRole("cell").map((cell) => cell.textContent);
     expect(cells).toEqual([
@@ -136,7 +142,7 @@ describe("MortalityTab data table", () => {
       "Warszawa",
       (12_345).toLocaleString("pl-PL"),
       (322).toLocaleString("pl-PL"),
-      "2.3%",
+      "2.6%",
     ]);
   });
 
@@ -148,7 +154,7 @@ describe("MortalityTab data table", () => {
     expect(screen.queryByText("P1")).not.toBeInTheDocument();
   });
 
-  it("shows an em dash when a row references a product missing from reference data", () => {
+  it("falls back to the internal product code when JGP metadata is missing", () => {
     render(
       <MortalityTab
         {...commonProps}
@@ -156,7 +162,57 @@ describe("MortalityTab data table", () => {
       />,
     );
 
-    expect(screen.getByText("—")).toBeInTheDocument();
+    expect(screen.getByText("UNKNOWN")).toBeInTheDocument();
+  });
+
+  it("shows one combined provider row with all selected JGP codes by default", () => {
+    render(
+      <MortalityTab
+        {...commonProps}
+        selectedProducts={["P1", "P2"]}
+        data={mortalityPayload([
+          mortalityRow({ hospitalizations: 100, deaths: 2 }),
+          mortalityRow({ productCode: "P2", hospitalizations: 50, deaths: 3 }),
+        ])}
+      />,
+    );
+
+    const table = screen.getByRole("table");
+    expect(within(table).getAllByRole("row")).toHaveLength(2);
+
+    const cells = within(table).getAllByRole("cell").map((cell) => cell.textContent);
+    expect(cells).toContain("E10, A01");
+    expect(cells).toContain((150).toLocaleString("pl-PL"));
+    expect(cells).toContain((5).toLocaleString("pl-PL"));
+    expect(cells).toContain("3.3%");
+  });
+
+
+  it("sorts mortality rows by numeric columns in both directions", () => {
+    render(
+      <MortalityTab
+        {...commonProps}
+        data={mortalityPayload([
+          mortalityRow({ nip: "1111111111", providerName: "Mniejszy", hospitalizations: 10 }),
+          mortalityRow({ nip: "2222222222", providerName: "Większy", hospitalizations: 200 }),
+        ])}
+      />,
+    );
+
+    const table = screen.getByRole("table");
+    const header = within(table).getByRole("button", { name: /Hospitalizacje/ });
+
+    fireEvent.click(header);
+    let rows = within(table).getAllByRole("row");
+    expect(within(rows[1]).getByText("Mniejszy")).toBeInTheDocument();
+    expect(within(rows[2]).getByText("Większy")).toBeInTheDocument();
+    expect(header.closest("th")).toHaveAttribute("aria-sort", "ascending");
+
+    fireEvent.click(header);
+    rows = within(table).getAllByRole("row");
+    expect(within(rows[1]).getByText("Większy")).toBeInTheDocument();
+    expect(within(rows[2]).getByText("Mniejszy")).toBeInTheDocument();
+    expect(header.closest("th")).toHaveAttribute("aria-sort", "descending");
   });
 
   it("renders only the first 500 rows and displays the truncation note", () => {
@@ -212,17 +268,21 @@ describe("AdmissionTab data table", () => {
     render(<AdmissionTab {...commonProps} data={admissionPayload([admissionRow()])} />);
 
     const table = screen.getByRole("table");
-    const headers = within(table).getAllByRole("columnheader").map((cell) => cell.textContent);
-    expect(headers).toEqual([
+    const headers = within(table).getAllByRole("columnheader");
+    expect(headers).toHaveLength(8);
+
+    for (const label of [
       "Świadczeniodawca",
       "NIP",
-      "Kod JGP",
+      "Kody JGP",
       "Województwo",
       "Miasto",
       "Planowane (6)",
       "Nagłe (2+3)",
       "Planowane + nagłe",
-    ]);
+    ]) {
+      expect(within(table).getByRole("button", { name: label })).toBeInTheDocument();
+    }
 
     const cells = within(table).getAllByRole("cell").map((cell) => cell.textContent);
     expect(cells).toEqual([
@@ -235,6 +295,63 @@ describe("AdmissionTab data table", () => {
       (2_346).toLocaleString("pl-PL"),
       (14_691).toLocaleString("pl-PL"),
     ]);
+  });
+
+
+  it("shows one combined provider row with all selected JGP codes", () => {
+    render(
+      <AdmissionTab
+        {...commonProps}
+        selectedProducts={["P1", "P2"]}
+        data={admissionPayload([
+          admissionRow({ plannedAdmissions: 100, urgentAdmissions: 20, totalAdmissions: 120 }),
+          admissionRow({
+            productCode: "P2",
+            plannedAdmissions: 50,
+            urgentAdmissions: 10,
+            totalAdmissions: 60,
+          }),
+        ])}
+      />,
+    );
+
+    const table = screen.getByRole("table");
+    expect(within(table).getAllByRole("row")).toHaveLength(2);
+
+    const cells = within(table).getAllByRole("cell").map((cell) => cell.textContent);
+    expect(cells).toContain("E10, A01");
+    expect(cells).toContain((150).toLocaleString("pl-PL"));
+    expect(cells).toContain((30).toLocaleString("pl-PL"));
+    expect(cells).toContain((180).toLocaleString("pl-PL"));
+  });
+
+  it("sorts admission rows by text and numeric columns", () => {
+    render(
+      <AdmissionTab
+        {...commonProps}
+        data={admissionPayload([
+          admissionRow({ nip: "1111111111", providerName: "Żuraw", plannedAdmissions: 300 }),
+          admissionRow({ nip: "2222222222", providerName: "Alfa", plannedAdmissions: 20 }),
+        ])}
+      />,
+    );
+
+    const table = screen.getByRole("table");
+
+    fireEvent.click(within(table).getByRole("button", { name: /Świadczeniodawca/ }));
+    let rows = within(table).getAllByRole("row");
+    expect(within(rows[1]).getByText("Alfa")).toBeInTheDocument();
+    expect(within(rows[2]).getByText("Żuraw")).toBeInTheDocument();
+
+    fireEvent.click(within(table).getByRole("button", { name: /Planowane \(6\)/ }));
+    rows = within(table).getAllByRole("row");
+    expect(within(rows[1]).getByText("Alfa")).toBeInTheDocument();
+    expect(within(rows[2]).getByText("Żuraw")).toBeInTheDocument();
+
+    fireEvent.click(within(table).getByRole("button", { name: /Planowane \(6\)/ }));
+    rows = within(table).getAllByRole("row");
+    expect(within(rows[1]).getByText("Żuraw")).toBeInTheDocument();
+    expect(within(rows[2]).getByText("Alfa")).toBeInTheDocument();
   });
 
   it("falls back to the internal product code when JGP metadata is missing", () => {

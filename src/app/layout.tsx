@@ -11,7 +11,7 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: "Hospitalizacje w Polsce",
-  description: "Analiza wolumenu, śmiertelności i trybu przyjęcia · NFZ 2025",
+  description: "Analiza liczby hospitalizacji, śmiertelności i trybu przyjęcia · NFZ 2025",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

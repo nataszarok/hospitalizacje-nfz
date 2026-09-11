@@ -10,7 +10,7 @@ export function MethodologyPanel({ year }: { year: string | number }) {
 
         <Stack gap="sm">
           <Text>
-            <strong>Hospitalizacje {year}</strong> to rozwijane narzędzie do eksploracji danych hospitalizacyjnych za {year} rok. Obecne MVP obejmuje analizę wolumenu i śmiertelności oraz porównanie przyjęć planowych i nagłych.
+            <strong>Hospitalizacje {year}</strong> to rozwijane narzędzie do eksploracji danych hospitalizacyjnych za {year} rok. Obecne MVP obejmuje analizę liczby hospitalizacji i śmiertelności oraz porównanie przyjęć planowych i nagłych.
           </Text>
 
           <Text>

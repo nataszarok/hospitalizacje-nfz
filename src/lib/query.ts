@@ -58,10 +58,12 @@ function buildAreaGroups(rows: MortalityRow[], mode: "regions" | "cities"): Area
   return [...grouped.entries()].map(([key, areaRows]) => {
     const products = [...new Set(areaRows.map((row) => row.productCode))];
     const statRows = [summarizeAreaSubset(areaRows, null, mode === "regions")];
-    if (products.length > 1) {
-      for (const productCode of products) {
-        statRows.push(summarizeAreaSubset(areaRows.filter((row) => row.productCode === productCode), productCode, mode === "regions"));
-      }
+    for (const productCode of products) {
+      statRows.push(summarizeAreaSubset(
+        areaRows.filter((row) => row.productCode === productCode),
+        productCode,
+        mode === "regions",
+      ));
     }
     return {
       key,
