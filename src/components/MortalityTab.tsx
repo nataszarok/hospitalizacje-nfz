@@ -1,8 +1,8 @@
 "use client";
 
 import { useMemo } from "react";
-import { AreaStatsPanel } from "@/components/AreaStatsPanel";
 import { ChartScaleControl } from "@/components/ChartScaleControl";
+import { AreaStatsPopover } from "@/components/AreaStatsPopover";
 import { MortalityChart } from "@/components/MortalityChart";
 import type { AxisMode, GeographyMode, MortalityPayload, ReferencePayload } from "@/lib/types";
 
@@ -44,10 +44,18 @@ export function MortalityTab({
         <div className="chart-header">
           <div><h2>Śmiertelność a wolumen</h2><p>Każdy punkt to świadczeniodawca; wyróżnione obszary pozostają na tle pozostałych świadczeniodawców.</p></div>
         </div>
-        {data.rows.length > 0 ? <div className="analysis-grid">
-          <div className="plot-column">
+        {data.rows.length > 0 ? <div className="plot-column">
             <div className="plot-toolbar">
               <ChartScaleControl value={axisMode} onChange={setAxisMode} />
+              <AreaStatsPopover
+                kind="mortality"
+                geographyMode={geoMode}
+                selectedKeys={geoMode === "regions" ? highlightedRegions : highlightedCities}
+                groups={geoMode === "regions" ? data.areaStats.regions : data.areaStats.cities}
+                baselineGroups={geoMode === "regions" ? data.baselineAreaStats.regions : data.baselineAreaStats.cities}
+                products={selectedProductDefinitions}
+                hasComparison={data.hasComparison}
+              />
             </div>
             <MortalityChart
               rows={data.rows}
@@ -58,17 +66,7 @@ export function MortalityTab({
               products={selectedProductDefinitions}
               regions={reference.regions}
             />
-          </div>
-          <AreaStatsPanel
-            kind="mortality"
-            geographyMode={geoMode}
-            selectedKeys={geoMode === "regions" ? highlightedRegions : highlightedCities}
-            groups={geoMode === "regions" ? data.areaStats.regions : data.areaStats.cities}
-            baselineGroups={geoMode === "regions" ? data.baselineAreaStats.regions : data.baselineAreaStats.cities}
-            products={selectedProductDefinitions}
-            hasComparison={data.hasComparison}
-          />
-        </div> : <div className="empty-chart">{selectedProducts.length === 0 ? "Wybierz co najmniej jeden produkt." : "Brak świadczeniodawców spełniających wybrane kryteria."}</div>}
+          </div> : <div className="empty-chart">{selectedProducts.length === 0 ? "Wybierz co najmniej jeden produkt." : "Brak świadczeniodawców spełniających wybrane kryteria."}</div>}
       </section>
       <details className="data-details">
         <summary>Tabela danych · wolumen i śmiertelność</summary>

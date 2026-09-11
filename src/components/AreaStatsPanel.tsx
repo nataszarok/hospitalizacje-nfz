@@ -24,7 +24,7 @@ type AdmissionProps = CommonProps & {
   groups: AdmissionAreaStatGroup[];
 };
 
-type AreaStatsPanelProps = MortalityProps | AdmissionProps;
+export type AreaStatsPanelProps = MortalityProps | AdmissionProps;
 
 function AreaStatsFrame({ geographyMode, selectedKeys, children }: CommonProps & { children: React.ReactNode }) {
   return <aside className="area-stats-panel">

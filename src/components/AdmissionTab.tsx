@@ -1,7 +1,7 @@
 "use client";
 
-import { AreaStatsPanel } from "@/components/AreaStatsPanel";
 import { ChartScaleControl } from "@/components/ChartScaleControl";
+import { AreaStatsPopover } from "@/components/AreaStatsPopover";
 import { AdmissionChart } from "@/components/AdmissionChart";
 import type { AdmissionPayload, AxisMode, GeographyMode, ReferencePayload } from "@/lib/types";
 
@@ -30,10 +30,15 @@ export function AdmissionTab({ reference, data, loading, error, selectedProducts
             <p>Każdy punkt to świadczeniodawca. Oś X pokazuje przyjęcia planowane (kod 6), a oś Y sumę przyjęć nagłych (kody 2 i 3). Przełącznik zmienia jednostkę obu osi.</p>
           </div>
         </div>
-        {data.rows.length > 0 ? <div className="analysis-grid">
-          <div className="plot-column">
+        {data.rows.length > 0 ? <div className="plot-column">
             <div className="plot-toolbar">
               <ChartScaleControl value={axisMode} onChange={setAxisMode} />
+              <AreaStatsPopover
+                kind="admissions"
+                geographyMode={geoMode}
+                selectedKeys={selectedAreaKeys}
+                groups={geoMode === "regions" ? data.areaStats.regions : data.areaStats.cities}
+              />
             </div>
             <AdmissionChart
               rows={data.rows}
@@ -44,14 +49,7 @@ export function AdmissionTab({ reference, data, loading, error, selectedProducts
               products={reference.products}
               regions={reference.regions}
             />
-          </div>
-          <AreaStatsPanel
-            kind="admissions"
-            geographyMode={geoMode}
-            selectedKeys={selectedAreaKeys}
-            groups={geoMode === "regions" ? data.areaStats.regions : data.areaStats.cities}
-          />
-        </div> : <div className="empty-chart">{selectedProducts.length === 0 ? "Wybierz co najmniej jeden produkt." : "Brak świadczeniodawców spełniających wybrane kryteria."}</div>}
+          </div> : <div className="empty-chart">{selectedProducts.length === 0 ? "Wybierz co najmniej jeden produkt." : "Brak świadczeniodawców spełniających wybrane kryteria."}</div>}
       </section>
       <details className="data-details">
         <summary>Tabela danych · tryb przyjęcia</summary>

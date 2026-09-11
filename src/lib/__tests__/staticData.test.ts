@@ -14,7 +14,7 @@ function dataset(): Dataset {
     ],
     regions: [["07", "Mazowieckie"], ["12", "Małopolskie"]],
     facilities: [
-      ["07", "111", "Szpital A", "Warszawa"],
+      ["07", "111", "Szpital A", " Warszawa "],
       ["07", "222", "Szpital B", "Radom"],
       ["12", "333", "Szpital C", "Kraków"],
     ],
@@ -35,6 +35,7 @@ describe("referenceFromDataset", () => {
     const reference = referenceFromDataset(dataset());
     expect(reference.products[0]).toMatchObject({ code: "P1", jgpCode: "A01", label: "A01 — Produkt 1" });
     expect(reference.cities).toEqual(["Kraków", "Radom", "Warszawa"]);
+    expect(reference.cities.some((city) => city !== city.trim())).toBe(false);
     expect(reference.durations).toEqual(["0-1", "2-3"]);
   });
 });
@@ -48,6 +49,7 @@ describe("mortalityFromDataset", () => {
       ["222", 3, 0],
     ]);
     expect(result.current).toMatchObject({ facilities: 3, hospitalizations: 103, deaths: 10 });
+    expect(result.areaStats.cities.find((group) => group.key === "Warszawa")?.name).toBe("Warszawa");
   });
 
   it("switches consistently to sim estimates", () => {
