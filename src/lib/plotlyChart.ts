@@ -42,7 +42,7 @@ export function getGeoKey(row: { owNfz: string; city: string }, geographyMode: G
   return geographyMode === "regions" ? row.owNfz : row.city;
 }
 
-export function getCommonPlotLayout(showLegend: boolean, legendTitle?: string) {
+export function getCommonPlotLayout(showLegend: boolean) {
   return {
     height: getChartHeight(),
     autosize: true,
@@ -62,7 +62,6 @@ export function getCommonPlotLayout(showLegend: boolean, legendTitle?: string) {
       bordercolor: "#E3E7EE",
       borderwidth: 1,
       font: { size: 11, color: "#111111" },
-      title: legendTitle ? { text: legendTitle, font: { size: 11, color: "#667085" } } : undefined,
       itemclick: false,
       itemdoubleclick: false,
     },
