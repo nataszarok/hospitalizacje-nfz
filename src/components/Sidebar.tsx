@@ -53,7 +53,7 @@ export function Sidebar({
     <p className="sidebar-intro">Zawęź zakres analizy i wyróżnij wybrane obszary.</p>
 
     <FilterSection title="Zakres świadczeń">
-      <LabelWithInfo htmlFor="products" help="Wybierz jedną lub więcej grup JGP. Na wykresach grupy JGP są rozróżniane kształtem punktu; statystyki obszarów pozostają agregowane dla całego wybranego zakresu.">Produkt jednostkowy (JGP)</LabelWithInfo>
+      <LabelWithInfo htmlFor="products" help="Wybierz jedną lub więcej grup JGP. Gwiazdka (*) na końcu nazwy oznacza, że to JGP o charakterze zabiegowym.">Produkt jednostkowy (JGP)</LabelWithInfo>
       <div className="field-help">Możesz porównać maksymalnie 10 produktów.</div>
       <MultiSelect
         id="products"
