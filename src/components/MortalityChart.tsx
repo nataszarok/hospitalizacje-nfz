@@ -210,12 +210,6 @@ export function MortalityChart({
       const hoverTraceIndex = traces.length;
       traces.push(makeHoverTrace());
 
-      const legendTitle = isCombined
-        ? (geographyMode === "regions" ? "Województwo" : "Miasto")
-        : (geographyMode === "regions"
-            ? "Województwo - kod JGP"
-            : "Miasto - kod JGP");
-
       const maxMortality = Math.max(
         0,
         ...rows.map((row) => row.mortalityPct),
@@ -232,7 +226,7 @@ export function MortalityChart({
         chartRef.current,
         traces,
         {
-          ...getCommonPlotLayout(showLegend, legendTitle),
+          ...getCommonPlotLayout(showLegend),
           xaxis: {
             title: {
               text: axisMode === "per_100k"
