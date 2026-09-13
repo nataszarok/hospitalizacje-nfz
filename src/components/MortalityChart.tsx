@@ -210,6 +210,18 @@ export function MortalityChart({
       const hoverTraceIndex = traces.length;
       traces.push(makeHoverTrace());
 
+      const maxMortality = Math.max(
+        0,
+        ...rows.map((row) => row.mortalityPct),
+      );
+
+      const maxRange = Math.max(
+        1,
+        Math.ceil(maxMortality * 1.1),
+      );
+
+      const minRange = -maxRange * 0.02;
+
       await Plotly.react(
         chartRef.current,
         traces,
@@ -237,6 +249,7 @@ export function MortalityChart({
             gridcolor: "#EEF1F5",
             zerolinecolor: "#EEF1F5",
             zerolinewidth: 3,
+            range: [minRange, maxRange],
           },
         },
         PLOTLY_CONFIG,
