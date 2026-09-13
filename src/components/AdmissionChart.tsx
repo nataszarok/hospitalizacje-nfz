@@ -206,14 +206,8 @@ export function AdmissionChart({
       const hoverTraceIndex = traces.length;
       traces.push(makeHoverTrace());
 
-      const legendTitle = isCombined
-        ? (geographyMode === "regions" ? "Województwo" : "Miasto")
-        : (geographyMode === "regions"
-            ? "Województwo - kod JGP"
-            : "Miasto - kod JGP");
-
       await Plotly.react(chartRef.current, traces, {
-        ...getCommonPlotLayout(showLegend, legendTitle),
+        ...getCommonPlotLayout(showLegend),
         xaxis: {
           title: {
             text: axisMode === "per_100k"
