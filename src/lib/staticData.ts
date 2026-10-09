@@ -180,8 +180,11 @@ export function hospitalPeerBenchmarkFromDataset(
   method: EstimationMethod,
   rpwdlByNip?: Record<string, {
     liczba_oddzialow?: number;
+    liczba_komorek?: number;
+    liczba_poradni?: number;
     lozka_ogolem?: number;
     oddzialy?: { nazwa?: string; specjalnosc?: string; kod?: string | null; lozka?: number }[];
+    poradnie?: { nazwa?: string; specjalnosc?: string; kod?: string | null; lozka?: number }[];
   }>,
   peerThresholdPct = 75,
   explicitPeers?: Map<string, HospitalPeerSelectionEntry>
@@ -561,6 +564,7 @@ export function hospitalPeerBenchmarkFromDataset(
   const selectedHosp = target.hosp;
   const selectedDeaths = target.deaths;
   const selected = {
+    providerName:targetFacility.name,
     hospitalizations:selectedHosp,
     mortalityPct:selectedHosp > 0 ? selectedDeaths/selectedHosp*100 : 0,
     proceduralSharePct:procShare(target),

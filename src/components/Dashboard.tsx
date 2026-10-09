@@ -56,9 +56,9 @@ export function Dashboard() {
         setHighlightedRegions(urlState.highlightedRegions);
         setHighlightedCities(urlState.highlightedCities);
         setActiveTab(urlState.activeTab);
-        setHospitalKey(urlState.hospitalKey);
-        setHospitalSubtab(urlState.hospitalSubtab);
-        setPeerThreshold(urlState.peerThreshold);
+        setHospitalKey(urlState.hospitalKey ?? "");
+        setHospitalSubtab(urlState.hospitalSubtab ?? "summary");
+        setPeerThreshold(urlState.peerThreshold ?? 75);
         setReference(payload);
         setUrlStateReady(true);
       } catch (err) {

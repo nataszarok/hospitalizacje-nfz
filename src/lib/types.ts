@@ -201,6 +201,7 @@ export interface HospitalPeerBenchmark {
     uniqueJgpOver10: number;
   };
   selected: {
+    providerName: string;
     hospitalizations: number;
     mortalityPct: number;
     proceduralSharePct: number;
@@ -216,6 +217,26 @@ export interface HospitalPeerBenchmark {
     targetHospitalizations: number; targetDeaths: number; targetMortalityPct: number;
     peerHospitalizations: number; peerDeaths: number; peerHospitals: number; peerMortalityPct: number;
     expectedDeaths: number; excessDeaths: number;
+    peerPoints?: {
+      key: string; name: string;
+      hospitalizations: number; deaths: number; mortalityPct: number;
+    }[];
   }[];
   totalExcessDeaths: number;
+  jgpMortalityDistribution: {
+    productCode: string; jgpCode: string; name: string | null;
+    targetHospitalizations: number; targetDeaths: number; targetMortalityPct: number;
+    peerPoints: {
+      key: string; name: string;
+      hospitalizations: number; deaths: number; mortalityPct: number;
+    }[];
+    peerHospitalizations: number; peerDeaths: number; peerMortalityPct: number | null;
+  }[];
+  mortalityVolumeBuckets: {
+    labels: string[];
+    selected: number[];
+    peers: number[];
+    selectedHosp: number[];
+    peerHosp: number[];
+  };
 }

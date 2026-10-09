@@ -487,8 +487,8 @@ function HospitalCharts({ analysis, products }: { analysis: HospitalAnalysis; pr
             isOther:true,
           }] : []),
         ];
-        const familyBaseColors=rows.map(row=>row.isOther ? "#EAECF0" : "#98A2B3");
-        const familyBaseTextColors=rows.map(row=>row.isOther ? "#344054" : "#FFFFFF");
+        const familyBaseColors:string[]=rows.map(row=>row.isOther ? "#EAECF0" : "#98A2B3");
+        const familyBaseTextColors:string[]=rows.map(row=>row.isOther ? "#344054" : "#FFFFFF");
 
         await Plotly.react(familyRef.current,[{
           type:"treemap",
