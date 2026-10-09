@@ -108,3 +108,135 @@ export interface AdmissionPayload {
   rows: AdmissionRow[];
   areaStats: AdmissionGeographyStats;
 }
+
+export interface HospitalDirectoryEntry {
+  key: string;
+  owNfz: string;
+  nip: string;
+  name: string;
+  city: string;
+}
+
+export interface HospitalCodeStat {
+  productCode: string;
+  jgpCode: string | null;
+  hospitalizations: number;
+  deaths: number;
+  mortalityPct: number;
+  sharePct: number;
+}
+
+export interface HospitalAnalysis {
+  key: string;
+  owNfz: string;
+  nip: string;
+  providerName: string;
+  city: string;
+  voivodeship: string;
+  hospitalizations: number;
+  deaths: number;
+  mortalityPct: number;
+  nationalSharePct: number;
+  uniqueJgp: number;
+  uniqueJgpOver10: number;
+  proceduralHospitalizations: number;
+  proceduralSharePct: number;
+  codes: HospitalCodeStat[];
+  admissions: { planned: number; urgent: number; other: number; total: number };
+}
+
+
+export interface HospitalPeer {
+  key: string;
+  providerName: string;
+  city: string;
+  voivodeship: string;
+  similarityPct: number;
+  distanceScore?: number;
+  peerGrade?: "A" | "B";
+  pairMetrics?: {
+    targetHospitalizations:number; peerHospitalizations:number;
+    targetDeaths:number; peerDeaths:number;
+    targetCoreBeds:number; peerCoreBeds:number;
+    targetCoreTypes:number; peerCoreTypes:number;
+    targetCoreXSupported:number; peerCoreXSupported:number;
+    targetClinics:number; peerClinics:number;
+    sharedCoreTypes:number; sharedJgp:number;
+    targetJgpOver10:number; peerJgpOver10:number;
+    coreTypeSetSimilarity:number; jgpSetSimilarity:number; jgpSharedVolumeSimilarity:number;
+    bedCosineSimilarity:number; bedWeightedJaccardSimilarity:number;
+  };
+  hospitalizations: number;
+  mortalityPct: number;
+  proceduralSharePct: number;
+  urgentSharePct: number;
+  uniqueJgpOver10: number;
+  coreBeds: number;
+  coreWards: number;
+  cellCount: number;
+  clinicCount: number;
+  similarityBreakdown: {
+    structuralPct: number; clinicalPct: number;
+    wardTypesPct: number; wardBedsPct: number;
+    cellCountPct: number; clinicTypesPct: number; clinicCountPct: number;
+    hospitalScalePct: number;
+    bedScalePct: number;
+    scalePct: number;
+    wardCountScalePct: number;
+    cellCountScalePct: number;
+    complexityPct: number;
+    jgpSetPct: number; jgpRankPct: number; jgpProportionPct: number;
+    urgentModePct: number;
+    sharedJgp: number; targetJgp: number; peerJgp: number;
+  };
+}
+
+export interface HospitalPeerBenchmark {
+  peers: HospitalPeer[];
+  median: {
+    hospitalizations: number;
+    mortalityPct: number;
+    proceduralSharePct: number;
+    urgentSharePct: number;
+    uniqueJgpOver10: number;
+  };
+  selected: {
+    providerName: string;
+    hospitalizations: number;
+    mortalityPct: number;
+    proceduralSharePct: number;
+    urgentSharePct: number;
+    uniqueJgpOver10: number;
+    coreBeds: number;
+    coreWards: number;
+    cellCount: number;
+    clinicCount: number;
+  };
+  mortalityOutliers: {
+    productCode: string; jgpCode: string; name: string | null;
+    targetHospitalizations: number; targetDeaths: number; targetMortalityPct: number;
+    peerHospitalizations: number; peerDeaths: number; peerHospitals: number; peerMortalityPct: number;
+    expectedDeaths: number; excessDeaths: number;
+    peerPoints?: {
+      key: string; name: string;
+      hospitalizations: number; deaths: number; mortalityPct: number;
+    }[];
+  }[];
+  totalExcessDeaths: number;
+  jgpMortalityDistribution: {
+    productCode: string; jgpCode: string; name: string | null;
+    targetHospitalizations: number; targetDeaths: number; targetMortalityPct: number;
+    peerPoints: {
+      key: string; name: string;
+      hospitalizations: number; deaths: number; mortalityPct: number;
+    }[];
+    peerHospitalizations: number; peerDeaths: number; peerMortalityPct: number | null;
+  }[];
+  mortalityVolumeBuckets: {
+    labels: string[];
+    selected: number[];
+    peers: number[];
+    selectedHosp: number[];
+    peerHosp: number[];
+  };
+}
