@@ -21,6 +21,7 @@ type SidebarProps = {
   setHighlightedRegions: Dispatch<SetStateAction<string[]>>;
   highlightedCities: string[];
   setHighlightedCities: Dispatch<SetStateAction<string[]>>;
+  activeTab?: string;
 };
 
 export function Sidebar({
@@ -39,8 +40,39 @@ export function Sidebar({
   setHighlightedRegions,
   highlightedCities,
   setHighlightedCities,
+  activeTab,
 }: SidebarProps) {
   const highlighted = geoMode === "regions" ? highlightedRegions : highlightedCities;
+
+  if (activeTab === "hospital") return <aside className="sidebar">
+    <div className="sidebar-brand">
+      <div className="sidebar-brand-mark">H</div>
+      <div>
+        <div className="sidebar-eyebrow">NFZ · analiza {reference.analysisYear}</div>
+        <div className="sidebar-title">Panel analityczny</div>
+      </div>
+    </div>
+
+    <div id="hospital-sidebar-slot" />
+
+    <FilterSection title="Estymacja wartości ukrytych" last>
+      <LabelWithInfo htmlFor="method" help="Dane źródłowe nie podają dokładnej liczby hospitalizacji dla wartości oznaczonych jako <5. Wybór metody wpływa również na liczbę zgonów, jeśli wartość <5 dotyczy hospitalizacji zakończonej zgonem.">Wartości &lt;5</LabelWithInfo>
+      <Select
+        id="method"
+        value={method}
+        onChange={(value) => value && setMethod(value as EstimationMethod)}
+        data={[
+          { value:"sim", label:"Symulacyjna: losowanie 1–4" },
+          { value:"min", label:"Konserwatywna: każde <5 = 1" },
+        ]}
+        allowDeselect={false}
+        comboboxProps={{withinPortal:true,shadow:"md"}}
+        className="mantine-filter"
+      />
+    </FilterSection>
+    <div id="hospital-sidebar-bottom-slot" />
+    <div className="sidebar-status"><span className="status-dot" />Dane statyczne</div>
+  </aside>;
 
   return <aside className="sidebar">
     <div className="sidebar-brand">

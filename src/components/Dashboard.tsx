@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { AdmissionTab } from "@/components/AdmissionTab";
 import { KpiStrip } from "@/components/KpiStrip";
+import { HospitalAnalysisTab } from "@/components/HospitalAnalysisTab";
 import { MethodologyPanel } from "@/components/MethodologyPanel";
 import { MortalityTab } from "@/components/MortalityTab";
 import { Sidebar } from "@/components/Sidebar";
@@ -35,6 +36,9 @@ export function Dashboard() {
   const [activeTab, setActiveTab] = useState<DashboardActiveTab>("mortality");
   const [jgpDisplayMode, setJgpDisplayMode] = useState<MortalityDisplayMode>("combined");
   const [urlStateReady, setUrlStateReady] = useState(false);
+  const [hospitalKey, setHospitalKey] = useState("");
+  const [hospitalSubtab, setHospitalSubtab] = useState<"summary"|"comparison"|"similarity">("summary");
+  const [peerThreshold, setPeerThreshold] = useState(75);
 
   useEffect(() => {
     const load = async () => {
@@ -52,6 +56,9 @@ export function Dashboard() {
         setHighlightedRegions(urlState.highlightedRegions);
         setHighlightedCities(urlState.highlightedCities);
         setActiveTab(urlState.activeTab);
+        setHospitalKey(urlState.hospitalKey);
+        setHospitalSubtab(urlState.hospitalSubtab);
+        setPeerThreshold(urlState.peerThreshold);
         setReference(payload);
         setUrlStateReady(true);
       } catch (err) {
@@ -111,6 +118,9 @@ export function Dashboard() {
       highlightedRegions,
       highlightedCities,
       activeTab,
+      hospitalKey,
+      hospitalSubtab,
+      peerThreshold,
     });
     const nextUrl = `${window.location.pathname}${search}${window.location.hash}`;
     window.history.replaceState(window.history.state, "", nextUrl);
@@ -127,6 +137,9 @@ export function Dashboard() {
     highlightedRegions,
     highlightedCities,
     activeTab,
+    hospitalKey,
+    hospitalSubtab,
+    peerThreshold,
   ]);
 
   if (!reference && loading) return <main className="center-state">Ładowanie aplikacji…</main>;
@@ -149,6 +162,7 @@ export function Dashboard() {
       setHighlightedRegions={setHighlightedRegions}
       highlightedCities={highlightedCities}
       setHighlightedCities={setHighlightedCities}
+      activeTab={activeTab}
     />
 
     <main className="main">
@@ -159,10 +173,11 @@ export function Dashboard() {
       <nav className="tabs" aria-label="Główna nawigacja">
         <button className={activeTab === "mortality" ? "active" : undefined} onClick={() => setActiveTab("mortality")}>Liczba hospitalizacji a śmiertelność</button>
         <button className={activeTab === "admissions" ? "active" : undefined} onClick={() => setActiveTab("admissions")}>Tryb przyjęcia</button>
+        <button className={activeTab === "hospital" ? "active" : undefined} onClick={() => setActiveTab("hospital")}>Profil szpitala</button>
         <button className={activeTab === "methodology" ? "active" : undefined} onClick={() => setActiveTab("methodology")}>Metodologia i dane</button>
       </nav>
 
-      {activeTab !== "methodology" ? <KpiStrip current={data.current} baseline={data.baseline} compare={data.hasComparison} /> : null}
+      {activeTab !== "methodology" && activeTab !== "hospital" ? <KpiStrip current={data.current} baseline={data.baseline} compare={data.hasComparison} /> : null}
 
       {activeTab === "mortality" ? <MortalityTab
         reference={reference}
@@ -190,7 +205,7 @@ export function Dashboard() {
         highlightedCities={highlightedCities}
         displayMode={jgpDisplayMode}
         setDisplayMode={setJgpDisplayMode}
-      /> : <MethodologyPanel year={reference.analysisYear} />}
+      /> : activeTab === "hospital" ? <HospitalAnalysisTab method={method} products={reference.products} hospitalKey={hospitalKey} setHospitalKey={setHospitalKey} hospitalSubtab={hospitalSubtab} setHospitalSubtab={setHospitalSubtab} peerThreshold={peerThreshold} setPeerThreshold={setPeerThreshold} /> : <MethodologyPanel year={reference.analysisYear} />}
     </main>
   </div>;
 }

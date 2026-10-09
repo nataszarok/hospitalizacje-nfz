@@ -1,0 +1,336 @@
+/* ================================================================
+   Hospital Analysis — shared base
+
+   Only rules shared by the hospital feature live here.
+   Summary-specific rules: HospitalProfileSummary.css
+   Comparison-specific rules: HospitalComparison.css
+   ================================================================ */
+
+.hospital-analysis{
+  --hospital-page-gap:16px;
+  --hospital-card-gap:14px;
+  --hospital-card-bg:#FFFFFF;
+  --hospital-card-border:#E4E7EC;
+  --hospital-card-radius:12px;
+  --hospital-card-padding-y:18px;
+  --hospital-card-padding-x:20px;
+  --hospital-metric-bg:#FFFFFF;
+  --hospital-title:#101828;
+  --hospital-text:#344054;
+  --hospital-muted:#667085;
+  --hospital-faint:#98A2B3;
+  min-width:0;
+  container-type:inline-size;
+  container-name:hospital-profile;
+}
+
+.hospital-analysis .hospital-surface-card{
+  box-sizing:border-box;
+  margin:0;
+  padding:var(--hospital-card-padding-y) var(--hospital-card-padding-x);
+  background:var(--hospital-card-bg);
+  border:1px solid var(--hospital-card-border);
+  border-radius:var(--hospital-card-radius);
+  box-shadow:none;
+}
+
+.hospital-analysis .hospital-surface-card>.hospital-peer-chart-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px 18px;
+  margin:0 0 12px;
+}
+
+.hospital-analysis .hospital-surface-card>.hospital-peer-chart-head>div{
+  min-width:0;
+}
+
+.hospital-analysis .hospital-surface-card>.hospital-peer-chart-head span{
+  display:block;
+  margin-bottom:3px;
+  color:var(--hospital-muted);
+  font-size:10px;
+  line-height:1.2;
+  font-weight:700;
+  letter-spacing:.05em;
+  text-transform:uppercase;
+}
+
+.hospital-analysis .hospital-surface-card>.hospital-peer-chart-head h3{
+  margin:0;
+  color:var(--hospital-title);
+  font-size:16px;
+  line-height:1.25;
+  font-weight:700;
+}
+
+.hospital-analysis .hospital-surface-card>.hospital-peer-chart-head>small{
+  position:static!important;
+  flex:0 1 300px;
+  max-width:300px;
+  margin:0!important;
+  color:var(--hospital-muted);
+  font-size:10px;
+  line-height:1.35;
+  text-align:right;
+}
+
+.hospital-analysis .hospital-metric-grid{
+  gap:12px;
+  margin:0;
+}
+
+.hospital-analysis .hospital-metric-grid>div{
+  box-sizing:border-box;
+  background:var(--hospital-metric-bg);
+  border:1px solid var(--hospital-card-border);
+  border-radius:10px;
+  box-shadow:none;
+}
+
+.hospital-jgp-code-bars,
+.hospital-jgp-family-treemap,
+.hospital-peer-chart-plot,
+.hospital-jgp-modal-plot{
+  background:transparent;
+}
+
+.hospital-empty{
+  min-height:360px;
+  display:grid;
+  place-items:center;
+  color:#667085;
+  border:1px dashed #D0D5DD;
+  border-radius:12px;
+  background:#FCFCFD;
+}
+
+/* Shared chart-card primitive used by Summary and comparison. */
+.hospital-peer-chart-card{
+  min-width:0;
+  padding:15px 15px 7px;
+  border:1px solid #E3E8F0;
+  border-radius:14px;
+  background:#fff;
+}
+
+.hospital-peer-chart-head{
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:14px;
+  min-height:36px;
+  margin-bottom:2px;
+}
+
+.hospital-peer-chart-head span{
+  display:block;
+  margin-bottom:2px;
+  color:#7B8494;
+  font-size:8.5px;
+  font-weight:800;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+}
+
+.hospital-peer-chart-head h3{
+  margin:0;
+  color:#172033;
+  font-size:14px;
+  line-height:1.2;
+}
+
+.hospital-peer-chart-head small{
+  max-width:220px;
+  color:#98A2B3;
+  font-size:8.5px;
+  line-height:1.3;
+  text-align:right;
+}
+
+/* Shared sortable-table control. */
+.hospital-sort-header{
+  display:inline-flex;
+  align-items:center;
+  justify-content:flex-start;
+  gap:5px;
+  width:100%;
+  border:0;
+  background:transparent;
+  padding:0;
+  color:inherit;
+  font:inherit;
+  text-transform:inherit;
+  letter-spacing:inherit;
+  cursor:pointer;
+  white-space:nowrap;
+}
+
+.hospital-sort-header:hover,
+.hospital-sort-header.is-active{
+  color:#101828;
+}
+
+.hospital-sort-icon{
+  font-size:10px;
+  line-height:1;
+  color:#98A2B3;
+}
+
+.hospital-sort-header.is-active .hospital-sort-icon{
+  color:#344054;
+}
+
+/* Shared tooltip primitive used by Summary and comparison views. */
+.hospital-peer-tooltip{
+  display:none;
+  position:absolute;
+  z-index:30;
+  right:12px;
+  top:calc(100% - 4px);
+  width:min(370px,calc(100vw - 48px));
+  padding:12px;
+  border:1px solid #D9E0EA;
+  border-radius:11px;
+  background:#FFFFFF;
+  box-shadow:0 14px 34px rgba(16,24,40,.14);
+}
+
+.hospital-peer-tooltip-head,
+.hospital-peer-tooltip-row,
+.hospital-peer-tooltip-sub{
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  gap:14px;
+}
+
+.hospital-peer-tooltip-head{
+  padding-bottom:8px;
+  margin-bottom:5px;
+  border-bottom:1px solid #EDF1F6;
+}
+
+.hospital-peer-tooltip-head>b{
+  color:#344054;
+  font-size:11px;
+}
+
+.hospital-peer-tooltip-head>strong{
+  color:#2856A3;
+  font-size:13px;
+}
+
+.hospital-peer-tooltip-row{
+  padding:5px 0;
+  color:#475467;
+  font-size:9.5px;
+}
+
+.hospital-peer-tooltip-row>b{
+  color:#172033;
+  font-size:10px;
+}
+
+.hospital-peer-tooltip-sub{
+  padding:2px 0 2px 10px;
+  color:#98A2B3;
+  font-size:8.5px;
+}
+
+.hospital-peer-tooltip-sub>b{
+  color:#667085;
+}
+
+.hospital-peer-tooltip>small{
+  display:block;
+  margin-top:7px;
+  padding-top:7px;
+  border-top:1px solid #EDF1F6;
+  color:#98A2B3;
+  font-size:8px;
+  line-height:1.35;
+}
+
+.hospital-peer-tooltip-group + .hospital-peer-tooltip-group{
+  margin-top:8px;
+  padding-top:8px;
+  border-top:1px solid #EDF1F6;
+}
+
+.hospital-peer-tooltip-grouphead{
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  gap:12px;
+  padding:2px 0 4px;
+}
+
+.hospital-peer-tooltip-grouphead>b{
+  color:#344054;
+  font-size:10px;
+}
+
+.hospital-peer-tooltip-grouphead>strong{
+  color:#2856A3;
+  font-size:11px;
+}
+
+/* Hospital sidebar density. These are feature-level overrides, not globals. */
+#hospital-sidebar-slot .filter-section,
+#hospital-sidebar-bottom-slot .filter-section{
+  padding:12px!important;
+  border-radius:11px!important;
+}
+
+#hospital-sidebar-slot .sidebar-kicker,
+#hospital-sidebar-bottom-slot .sidebar-kicker{
+  font-size:9px!important;
+  letter-spacing:.08em!important;
+}
+
+#hospital-sidebar-slot .field-label,
+#hospital-sidebar-bottom-slot .field-label{
+  font-size:12px!important;
+}
+
+#hospital-sidebar-slot .mantine-filter,
+#hospital-sidebar-bottom-slot .mantine-filter{
+  font-size:12px!important;
+}
+
+@media(min-width:1100px){
+  .hospital-analysis{
+    padding-top:12px;
+  }
+}
+
+@media(max-width:900px){
+  .hospital-analysis{
+    --hospital-page-gap:14px;
+    --hospital-card-gap:12px;
+    --hospital-card-padding-y:16px;
+    --hospital-card-padding-x:16px;
+  }
+
+  .hospital-analysis .hospital-surface-card>.hospital-peer-chart-head{
+    flex-direction:column;
+  }
+
+  .hospital-analysis .hospital-surface-card>.hospital-peer-chart-head>small{
+    max-width:none;
+    text-align:left;
+  }
+}
+
+@media(max-width:700px){
+  .hospital-peer-tooltip{
+    position:fixed;
+    left:16px;
+    right:16px;
+    top:auto;
+    bottom:16px;
+    width:auto;
+  }
+}

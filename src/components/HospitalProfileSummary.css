@@ -1,0 +1,1005 @@
+/* ================================================================
+   Hospital Profile — Summary
+
+   Current production styling for the "Profil szpitala" summary.
+   There is no V2 wrapper. The root scope is:
+     .hospital-analysis.hospital-subtab-summary
+   ================================================================ */
+
+.hospital-analysis.hospital-subtab-summary .hospital-summary-stack{
+  display:grid;
+  gap:var(--hospital-page-gap);
+  min-width:0;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-summary-stack>*{
+  margin-top:0!important;
+  margin-bottom:0!important;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-summary-profile-empty{
+  margin:0;
+}
+
+/* ================================================================
+   Profil szpitala — Podsumowanie.
+   Jedyny właściciel stylów widoku Podsumowanie.
+   Desktop bazowy: browser zoom 100% + widoczny lewy sidebar.
+   ================================================================ */
+
+.hospital-analysis.hospital-subtab-summary .hospital-summary-redesign{
+  --hp-blue:#2F6FED;
+  --hp-text:#172033;
+  --hp-border:#DCE4EF;
+  display:grid;
+  gap:0;
+  min-width:0;
+  max-width:100%;
+  container-type:inline-size;
+  container-name:hospital-summary;
+}
+
+
+/* Shared primitives used by the summary profile. */
+.hospital-analysis.hospital-subtab-summary .hospital-profile-card{
+  box-sizing:border-box;
+  min-width:0;
+  min-height:124px;
+  padding:11px 13px;
+  display:flex;
+  flex-direction:column;
+  border:1px solid var(--hp-border);
+  border-radius:17px;
+  background:#fff;
+  box-shadow:0 2px 8px rgba(16,24,40,.025);
+}
+
+
+.hospital-analysis.hospital-subtab-summary .hospital-profile-card-head{
+  display:flex;
+  align-items:flex-start;
+  gap:9px;
+  margin:0 0 7px;
+}
+.hospital-analysis.hospital-subtab-summary .hospital-profile-card-head>div:last-child{min-width:0}
+.hospital-analysis.hospital-subtab-summary .hospital-profile-card-head span{
+  color:var(--hp-text);
+}
+
+
+.hospital-analysis.hospital-subtab-summary .hospital-summary-redesign .hospital-jgp-bars-card{grid-area:bars!important}
+.hospital-analysis.hospital-subtab-summary .hospital-summary-redesign .hospital-jgp-family-panel{grid-area:family!important}
+.hospital-analysis.hospital-subtab-summary .hospital-summary-redesign .hospital-jgp-bars-card, .hospital-analysis.hospital-subtab-summary .hospital-summary-redesign .hospital-jgp-family-panel{
+  min-width:0!important;padding:13px!important;border:1px solid var(--hp-border)!important;border-radius:16px!important;background:#fff!important;box-shadow:0 2px 8px rgba(16,24,40,.025)!important;
+}
+.hospital-analysis.hospital-subtab-summary .hospital-profile-chart-head{display:flex!important;align-items:flex-start!important;justify-content:space-between!important;gap:10px!important;margin:0 0 8px!important}
+
+
+.hospital-analysis.hospital-subtab-summary .modebar{display:none!important}
+
+
+.hospital-analysis.hospital-subtab-summary .hospital-empty-inline{
+  padding:12px;
+  color:#98A2B3;
+  font-size:8px;
+}
+
+
+/* Second row — four KPI cards, aligned with the comparison-method card hierarchy. */
+.hospital-analysis.hospital-subtab-summary .hospital-profile-stats-card{
+  margin:0 0 16px!important;
+  padding:0;
+  border:0;
+  background:transparent;
+  box-shadow:none;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-profile-stats-grid{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:10px;
+  min-width:0;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-profile-stat{
+  min-width:0;
+  display:block;
+  padding:11px 15px;
+  border:1px solid #E4E7EC;
+  border-radius:12px;
+  background:#fff;
+  box-shadow:0 1px 2px rgba(16,24,40,.04);
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-profile-stat>span{
+  display:block;
+  margin:0 0 6px;
+  color:#667085;
+  font-size:clamp(10.5px,1.11cqw,12.5px);
+  line-height:1.2;
+  font-weight:600;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-profile-stat>strong{
+  display:block;
+  margin:0 0 9px;
+  color:#101828;
+  font-size:clamp(18px,1.93cqw,22px);
+  line-height:1.1;
+  font-weight:650;
+  letter-spacing:-.025em;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-profile-stat>small{
+  display:block;
+  padding-top:7px;
+  border-top:1px solid #F2F4F7;
+  color:#667085;
+  font-size:clamp(9px,.97cqw,11px);
+  line-height:1.25;
+  font-weight:400;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+
+/* ================================================================
+   Component: RPWDL
+   Section heading, organization summary, capabilities and wards.
+   One source of truth; responsive changes remain in named queries.
+   ================================================================ */
+
+.hospital-analysis.hospital-subtab-summary .hospital-profile-section-head{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  max-width:none;
+  margin:0 0 9px!important;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-profile-section-icon{
+  width:29px;
+  height:29px;
+  flex:0 0 29px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:9px;
+  background:#EEF4FF;
+  color:var(--hp-blue);
+  font-size:14px;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-profile-section-icon svg{
+  display:block;
+  width:1em;
+  height:1em;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-profile-section-head>div:last-child{
+  min-width:0;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-summary-redesign .hospital-profile-section-head h3{
+  margin:0;
+  color:var(--hp-text);
+  font-size:clamp(15px,1.08cqw,17px);
+  line-height:1.15;
+  font-weight:600;
+  letter-spacing:-.012em;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-summary-redesign .hospital-profile-section-head p{
+  margin:2px 0 0;
+  color:#718096;
+  font-size:clamp(10px,.98cqw,11px);
+  line-height:1.3;
+  font-weight:400;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-section-head{
+  margin-top:24px!important;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-overview{
+  min-width:0;
+  margin:0;
+  padding:15px;
+  border:1px solid #DCE4EE;
+  border-radius:18px;
+  background:#fff;
+  box-shadow:0 2px 8px rgba(16,24,40,.02);
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-overview-meta{
+  display:flex;
+  justify-content:flex-end;
+  margin:0 0 9px;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-overview-meta small{
+  color:#98A2B3;
+  font-size:clamp(9px,.9cqw,10px);
+  line-height:1.3;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-kpis{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:8px;
+  margin-top:0;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-kpi{
+  min-width:0;
+  display:flex;
+  gap:8px;
+  align-items:flex-start;
+  padding:10px;
+  border:1px solid #E6EBF2;
+  border-radius:12px;
+  background:#FAFBFC;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-kpi-icon{
+  width:28px;
+  height:28px;
+  flex:0 0 28px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:8px;
+  background:#EEF4FF;
+  color:#2563EB;
+  font-size:13px;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-kpi-icon svg{width:1em;height:1em}
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-kpi>div{min-width:0}
+
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-kpi b{
+  display:block;
+  color:#101828;
+  font-size:21px;
+  line-height:1;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-kpi span:not(.hospital-rpwdl-kpi-icon){
+  display:block;
+  margin-top:4px;
+  color:#344054;
+  font-size:clamp(11px,1.12cqw,12.5px);
+  line-height:1.25;
+  font-weight:700;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-kpi small{
+  display:block;
+  margin-top:3px;
+  color:#98A2B3;
+  font-size:clamp(9.5px,.96cqw,11px);
+  line-height:1.3;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-present{
+  margin-top:12px;
+  padding:11px 12px;
+  border:1px solid #E6EBF2;
+  border-radius:12px;
+  background:#fff;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-present-head{
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:8px;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-present-head>span{
+  color:#344054;
+  font-size:clamp(10.5px,1.05cqw,12px);
+  font-weight:750;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-present-head>small{
+  max-width:520px;
+  color:#98A2B3;
+  font-size:clamp(9px,.9cqw,10px);
+  text-align:right;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-present-badges{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-present-badges>span{
+  display:inline-flex;
+  align-items:baseline;
+  gap:5px;
+  padding:5px 8px;
+  border:1px solid #D8E2F0;
+  border-radius:999px;
+  background:#F5F8FD;
+  color:#344054;
+  font-style:normal;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-present-badges strong{font-size:clamp(9.5px,.96cqw,11px);line-height:1.25}
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-present-badges small{color:#667085;font-size:clamp(9px,.9cqw,10px);line-height:1.25}
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-present-badges>em{color:#98A2B3;font-size:8px;font-style:normal}
+
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-disclosures{
+  display:grid;
+  gap:7px;
+  margin-top:12px;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-disclosure{
+  overflow:hidden;
+  border:1px solid #E6EBF2;
+  border-radius:11px;
+  background:#fff;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-disclosure>button{
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  padding:10px 12px;
+  border:0;
+  background:transparent;
+  color:inherit;
+  text-align:left;
+  cursor:pointer;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-disclosure>button:hover{background:#F8FAFC}
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-disclosure>button>span{min-width:0}
+
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-disclosure>button strong{
+  display:block;
+  color:#344054;
+  font-size:clamp(11px,1.08cqw,12px);
+  line-height:1.25;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-disclosure>button small{
+  display:block;
+  margin-top:3px;
+  color:#98A2B3;
+  font-size:clamp(9.5px,.96cqw,10.5px);
+  line-height:1.3;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-disclosure>button i{
+  flex:0 0 auto;
+  color:#667085;
+  font-size:17px;
+  line-height:1;
+  font-style:normal;
+  transition:transform .16s ease;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-disclosure.is-open>button i{transform:rotate(180deg)}
+
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-disclosure-body{
+  padding:0 12px 12px;
+  border-top:1px solid #F2F4F7;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-disclosure-body .hospital-field-cloud{
+  display:flex;
+  flex-wrap:wrap;
+  gap:5px;
+  padding-top:10px;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-disclosure-body .hospital-field-cloud>span{
+  display:inline-flex;
+  padding:5px 8px;
+  border:1px solid #DCE3ED;
+  border-radius:999px;
+  background:#F8FAFC;
+  color:#344054;
+  font-size:clamp(10px,.98cqw,11px);
+  line-height:1.25;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-table-wrap{
+  padding:0;
+  overflow-x:auto;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-wards-table{
+  width:100%;
+  border-collapse:collapse;
+  table-layout:fixed;
+  font-size:clamp(10.5px,1.02cqw,11.5px);
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-wards-table th{
+  padding:9px 10px;
+  border-bottom:1px solid #E6EBF2;
+  background:#F8FAFC;
+  color:#667085;
+  font-size:clamp(9.5px,.94cqw,10.5px);
+  line-height:1.25;
+  font-weight:750;
+  text-align:left;
+  text-transform:uppercase;
+  letter-spacing:.035em;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-wards-table td{
+  padding:9px 10px;
+  border-bottom:1px solid #EEF2F6;
+  color:#475467;
+  line-height:1.4;
+  vertical-align:top;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-wards-table tbody tr:last-child td{border-bottom:0}
+
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-wards-table th:nth-child(1),
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-wards-table td:nth-child(1){width:42%}
+
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-wards-table th:nth-child(2),
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-wards-table td:nth-child(2){
+  width:10%;
+  text-align:right;
+  white-space:nowrap;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-wards-table th:nth-child(3),
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-wards-table td:nth-child(3){width:48%}
+
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-wards-table td strong{color:#344054;font-weight:700}
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-wards-table th .hospital-sort-header{width:100%;justify-content:flex-start}
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-wards-table th.num .hospital-sort-header{justify-content:flex-end}
+
+
+/* ================================================================
+   Component: hospital top line
+   Identity is intentionally unboxed; finance stays a compact card.
+   ================================================================ */
+
+.hospital-analysis.hospital-subtab-summary .hospital-profile-topline{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(260px,320px);
+  gap:18px;
+  align-items:stretch;
+  margin-bottom:14px;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-profile-topline .hospital-profile-banner{
+  position:relative;
+  isolation:isolate;
+  display:grid;
+  grid-template-columns:48px minmax(0,1fr);
+  grid-template-rows:1fr;
+  column-gap:13px;
+  align-items:center;
+  width:100%;
+  min-width:0;
+  min-height:96px;
+  height:100%;
+  margin:0;
+  padding:0;
+  overflow:visible;
+  border:0;
+  border-radius:0;
+  background:transparent;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-profile-topline .hospital-profile-identity-icon{
+  grid-column:1;
+  grid-row:1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:46px;
+  height:46px;
+  flex-basis:46px;
+  align-self:center;
+  border-radius:12px;
+  background:linear-gradient(180deg,#EAF2FF,#DDEBFF);
+  color:var(--hp-blue);
+  box-shadow:inset 0 0 0 1px rgba(47,111,237,.07);
+  font-size:21px;
+  z-index:2;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-profile-topline .hospital-profile-identity-icon svg{
+  display:block;
+  width:1em;
+  height:1em;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-profile-topline .hospital-profile-identity-copy{
+  grid-column:2;
+  grid-row:1;
+  align-self:center;
+  min-width:0;
+  max-width:none;
+  z-index:2;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-profile-topline .hospital-profile-identity-copy h2{
+  margin:0;
+  max-width:100%;
+  color:#101828;
+  font-size:clamp(16px,1.64cqw,18px);
+  line-height:1.08;
+  font-weight:600;
+  letter-spacing:-.018em;
+  text-wrap:balance;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-profile-topline .hospital-profile-identity-meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:0;
+  margin-top:4px;
+  color:#718096;
+  font-size:clamp(9px,.92cqw,10px);
+  line-height:1.2;
+  font-weight:400;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-profile-topline .hospital-profile-identity-meta>span{
+  display:inline-flex;
+  align-items:center;
+  margin:0;
+  color:#667085;
+  font-size:11px;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-profile-topline .hospital-profile-identity-meta>span:not(:last-child)::after{
+  content:"·";
+  margin:0 8px;
+  color:#A0AEC0;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-profile-topline .hospital-profile-identity-copy>p{
+  margin:6px 0 0;
+  max-width:720px;
+  color:#475467;
+  font-size:clamp(9.5px,.98cqw,10.5px);
+  line-height:1.32;
+  font-weight:400;
+}
+
+
+/* Finance */
+.hospital-analysis.hospital-subtab-summary .hospital-profile-card-finance-top{
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  min-width:0;
+  min-height:96px;
+  margin:0;
+  padding:10px 12px;
+  overflow:hidden;
+  border:1px solid var(--hp-border);
+  border-radius:17px;
+  box-shadow:0 2px 8px rgba(16,24,40,.025);
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-profile-card-finance.is-profit{
+  background:linear-gradient(135deg,#F7FCF8,#EFF8F1);
+  border-color:#D7EBDD;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-profile-card-finance.is-loss{
+  background:linear-gradient(135deg,#FFF3F1,#FDEAE7);
+  border-color:#F0C8C3;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-profile-card-finance.is-neutral,
+.hospital-analysis.hospital-subtab-summary .hospital-profile-card-finance.is-missing{
+  background:linear-gradient(135deg,#FCFCFD,#F7F9FC);
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-profile-card-finance-top .hospital-profile-card-head-finance{
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  align-items:center;
+  width:100%;
+  margin:0 0 12px;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-profile-card-finance-top .hospital-profile-card-head-finance>div:last-child{
+  min-width:0;
+  align-self:center;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-profile-card-finance-top .hospital-profile-card-head-finance span{
+  display:block;
+  margin:0;
+  font-size:clamp(10.5px,1.11cqw,12.5px);
+  line-height:1.2;
+  font-weight:600;
+  white-space:nowrap;
+  overflow:visible;
+  text-overflow:clip;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-profile-card-finance-top .hospital-profile-finance-body{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  width:100%;
+  min-width:0;
+  max-width:none;
+  margin:0;
+  padding:0 68px 0 0;
+  z-index:2;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-profile-card-finance.is-profit .hospital-profile-finance-body b{color:#078142}
+.hospital-analysis.hospital-subtab-summary .hospital-profile-card-finance.is-loss .hospital-profile-finance-body b{color:#B42318}
+
+.hospital-analysis.hospital-subtab-summary .hospital-profile-card-finance-top .hospital-profile-finance-amount{
+  display:block;
+  width:max-content;
+  max-width:100%;
+  margin:0;
+  padding:0;
+  font-size:clamp(20px,1.5cqw,25px);
+  line-height:1;
+  font-weight:650;
+  letter-spacing:-.03em;
+  white-space:nowrap;
+  text-wrap:nowrap;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-profile-card-finance-top .hospital-profile-finance-revenue{
+  display:block;
+  margin:0;
+  padding:0;
+  color:#475467;
+  font-size:clamp(10px,1.06cqw,12px);
+  line-height:1.2;
+  font-weight:500;
+  white-space:nowrap;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-profile-card-finance-top .hospital-profile-finance-body em{
+  display:block;
+  margin-top:5px;
+  color:#B54708;
+  font-size:8px;
+  font-style:normal;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-profile-card-finance-top .hospital-profile-finance-bars{
+  position:absolute;
+  right:11px;
+  bottom:11px;
+  display:flex;
+  align-items:flex-end;
+  gap:3px;
+  width:54px;
+  margin:0;
+  opacity:.14;
+  pointer-events:none;
+  z-index:1;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-profile-card-finance-top .hospital-profile-finance-bars i{
+  display:block;
+  width:6px;
+  border-radius:4px 4px 1px 1px;
+  background:#12B76A;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-profile-card-finance.is-loss .hospital-profile-finance-bars i{background:#F04438}
+.hospital-analysis.hospital-subtab-summary .hospital-profile-card-finance-top .hospital-profile-finance-bars i:nth-child(1){height:14px}
+.hospital-analysis.hospital-subtab-summary .hospital-profile-card-finance-top .hospital-profile-finance-bars i:nth-child(2){height:20px}
+.hospital-analysis.hospital-subtab-summary .hospital-profile-card-finance-top .hospital-profile-finance-bars i:nth-child(3){height:18px}
+.hospital-analysis.hospital-subtab-summary .hospital-profile-card-finance-top .hospital-profile-finance-bars i:nth-child(4){height:25px}
+.hospital-analysis.hospital-subtab-summary .hospital-profile-card-finance-top .hospital-profile-finance-bars i:nth-child(5){height:34px}
+.hospital-analysis.hospital-subtab-summary .hospital-profile-card-finance-top .hospital-profile-finance-bars i:nth-child(6){height:27px}
+
+
+/* ================================================================
+   Component: JGP charts
+   Two charts. One source of truth.
+   ================================================================ */
+
+.hospital-analysis.hospital-subtab-summary .hospital-summary-jgp-layout{
+  display:grid;
+  margin:0!important;
+  gap:0!important;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-summary-redesign .hospital-summary-jgp-grid{
+  display:grid!important;
+  grid-template-columns:minmax(0,1.18fr) minmax(0,.92fr)!important;
+  grid-template-areas:"bars family"!important;
+  gap:12px!important;
+  align-items:stretch;
+  min-width:0;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-jgp-profile-section{
+  min-width:0;
+  padding:0;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-jgp-profile-section .hospital-jgp-bars-card,
+.hospital-analysis.hospital-subtab-summary .hospital-jgp-profile-section .hospital-jgp-family-panel{
+  min-height:0;
+  padding:10px 10px 6px!important;
+  border:0!important;
+  border-radius:11px!important;
+  background:#FAFBFC!important;
+  box-shadow:none!important;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-jgp-family-panel{
+  display:flex;
+  flex-direction:column;
+}
+
+
+.hospital-analysis.hospital-subtab-summary .hospital-jgp-profile-section .hospital-profile-chart-head-simple{
+  min-height:28px;
+  margin:0 0 5px!important;
+  padding:0 2px!important;
+  align-items:center!important;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-jgp-profile-section .hospital-profile-chart-title{
+  display:block!important;
+  align-items:center!important;
+  gap:8px!important;
+  min-width:0;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-jgp-profile-section .hospital-profile-chart-title h3{
+  margin:0!important;
+  color:#172033!important;
+  font-size:clamp(13px,.96cqw,15px)!important;
+  line-height:1.18!important;
+  font-weight:600!important;
+  letter-spacing:-.01em!important;
+  white-space:nowrap;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-jgp-profile-section .hospital-profile-chart-head-simple>small{
+  max-width:210px;
+  margin:2px 0 0;
+  padding-top:0!important;
+  color:#7B879B!important;
+  font-size:clamp(7.5px,.50cqw,8.5px)!important;
+  line-height:1.2!important;
+  font-weight:400!important;
+  text-align:right;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-jgp-profile-section .hospital-jgp-family-head>small b{
+  color:#101828;
+  font-size:clamp(9.5px,.66cqw,11px)!important;
+  font-weight:600!important;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-summary-redesign .hospital-jgp-code-bars,
+.hospital-analysis.hospital-subtab-summary .hospital-summary-redesign .hospital-jgp-family-treemap{
+  position:relative;
+  display:block!important;
+  width:100%!important;
+  max-width:100%!important;
+  height:400px!important;
+  min-height:400px!important;
+  overflow:hidden;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-summary-jgp-grid>.hospital-chart-card{
+  position:relative!important;
+  inset:auto!important;
+  transform:none!important;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-jgp-family-treemap text{
+  pointer-events:none;
+  font-weight:600;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-summary-redesign .hospital-jgp-code-bars .ytick text,
+.hospital-analysis.hospital-subtab-summary .hospital-summary-redesign .hospital-jgp-code-bars .xtick text{
+  font-weight:400!important;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-summary-redesign .hospital-jgp-family-treemap .slicetext{
+  font-weight:500!important;
+}
+
+
+/* ================================================================
+   Responsive system — hospital summary
+   One named query container: .hospital-summary-redesign.
+   Breakpoints are ordered from wider to narrower.
+   Top-line hero/finance is outside this container; its old queries
+   were dead code and are intentionally removed.
+   ================================================================ */
+
+@container hospital-summary (max-width:1100px){
+  .hospital-analysis.hospital-subtab-summary .hospital-summary-redesign .hospital-jgp-code-bars,
+  .hospital-analysis.hospital-subtab-summary .hospital-summary-redesign .hospital-jgp-family-treemap{
+    height:390px!important;
+    min-height:390px!important;
+  }
+}
+
+@container hospital-summary (max-width:900px){
+
+  .hospital-analysis.hospital-subtab-summary .hospital-rpwdl-section-head{
+    margin-top:20px!important;
+  }
+}
+
+@container hospital-summary (max-width:800px){
+  .hospital-analysis.hospital-subtab-summary .hospital-profile-stats-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+
+@container hospital-summary (max-width:760px){
+  .hospital-analysis.hospital-subtab-summary .hospital-rpwdl-kpis{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+
+  .hospital-analysis.hospital-subtab-summary .hospital-rpwdl-present-head{
+    flex-direction:column;
+    align-items:flex-start;
+  }
+
+  .hospital-analysis.hospital-subtab-summary .hospital-rpwdl-present-head>small{
+    text-align:left;
+  }
+}
+
+@container hospital-summary (max-width:720px){
+  .hospital-analysis.hospital-subtab-summary .hospital-summary-redesign .hospital-jgp-code-bars,
+  .hospital-analysis.hospital-subtab-summary .hospital-summary-redesign .hospital-jgp-family-treemap{
+    height:360px!important;
+    min-height:360px!important;
+  }
+
+  .hospital-analysis.hospital-subtab-summary .hospital-jgp-profile-section .hospital-profile-chart-title h3{
+    white-space:normal;
+  }
+
+  .hospital-analysis.hospital-subtab-summary .hospital-rpwdl-present-head{
+    gap:3px;
+  }
+}
+
+@container hospital-summary (max-width:560px){
+  .hospital-analysis.hospital-subtab-summary .hospital-profile-stats-grid{
+    grid-template-columns:1fr;
+  }
+}
+
+@container hospital-summary (max-width:520px){
+  .hospital-analysis.hospital-subtab-summary .hospital-rpwdl-kpis{
+    grid-template-columns:1fr;
+  }
+
+  .hospital-analysis.hospital-subtab-summary .hospital-rpwdl-wards-table{
+    min-width:620px;
+  }
+}
+
+/* ================================================================
+   Responsive system — hospital top line
+   Query container: .hospital-analysis.
+   Above 900px the existing desktop layout is unchanged.
+   ================================================================ */
+
+@container hospital-profile (max-width:900px){
+  .hospital-analysis.hospital-subtab-summary .hospital-profile-topline{
+    grid-template-columns:minmax(0,1fr) minmax(230px,280px);
+    gap:14px;
+  }
+}
+
+@container hospital-profile (max-width:760px){
+  .hospital-analysis.hospital-subtab-summary .hospital-profile-topline{
+    grid-template-columns:1fr;
+  }
+
+  .hospital-analysis.hospital-subtab-summary .hospital-profile-topline .hospital-profile-banner,
+  .hospital-analysis.hospital-subtab-summary .hospital-profile-card-finance-top{
+    width:100%;
+  }
+}
+
+/* Summary chart tooltips. */
+.hospital-analysis.hospital-subtab-summary .hospital-summary-chart-shell{
+  position:relative;
+  min-width:0;
+  overflow:visible;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-summary-chart-tooltip{
+  display:block!important;
+  visibility:visible!important;
+  opacity:1!important;
+  position:absolute!important;
+  right:auto!important;
+  bottom:auto!important;
+  transform:none!important;
+  width:min(330px,calc(100% - 20px))!important;
+  max-width:330px!important;
+  max-height:min(420px,calc(100vh - 32px))!important;
+  overflow-y:auto!important;
+  z-index:120!important;
+  pointer-events:none!important;
+  box-shadow:0 10px 30px rgba(16,24,40,.12)!important;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-summary-chart-tooltip .hospital-peer-tooltip-head{
+  padding-bottom:7px!important;
+  margin-bottom:7px!important;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-summary-chart-tooltip .hospital-peer-tooltip-group{
+  padding:7px 0!important;
+  margin:0!important;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-summary-chart-tooltip .hospital-peer-tooltip-grouphead{
+  margin-bottom:4px!important;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-summary-chart-tooltip .hospital-peer-tooltip-row{
+  padding:3px 0!important;
+  gap:10px!important;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-summary-chart-tooltip .hospital-peer-tooltip-row>span{
+  min-width:0;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-summary-chart-tooltip .hospital-peer-tooltip-row>b{
+  text-align:right;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-summary-tooltip-name>b{
+  max-width:205px;
+  white-space:normal;
+  line-height:1.3;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-summary-jgp-grid>.hospital-chart-card:hover{
+  z-index:20;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-summary-chart-tooltip--side{
+  transform:translateY(-50%)!important;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-summary-chart-tooltip--above{
+  transform:translateY(-100%)!important;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-summary-chart-tooltip--below{
+  transform:none!important;
+}

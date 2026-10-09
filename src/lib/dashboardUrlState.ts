@@ -1,6 +1,6 @@
 import type { AxisMode, EstimationMethod, GeographyMode, ReferencePayload } from "@/lib/types";
 
-export type DashboardActiveTab = "mortality" | "admissions" | "methodology";
+export type DashboardActiveTab = "mortality" | "admissions" | "hospital" | "methodology";
 
 export type DashboardUrlState = {
   selectedProducts: string[];
@@ -13,6 +13,9 @@ export type DashboardUrlState = {
   highlightedRegions: string[];
   highlightedCities: string[];
   activeTab: DashboardActiveTab;
+  hospitalKey?: string;
+  hospitalSubtab?: "summary" | "comparison" | "similarity";
+  peerThreshold?: number;
 };
 
 function defaultProductSelection(reference: ReferencePayload) {
@@ -64,6 +67,8 @@ export function readDashboardUrlState(reference: ReferencePayload, search: strin
   const tabParam = params.get("t");
   const activeTab: DashboardActiveTab = tabParam === "a"
     ? "admissions"
+    : tabParam === "h"
+      ? "hospital"
     : tabParam === "m"
       ? "methodology"
       : "mortality";
@@ -79,6 +84,9 @@ export function readDashboardUrlState(reference: ReferencePayload, search: strin
     highlightedRegions: validValues(params.getAll("r"), regionCodes, 10),
     highlightedCities: validValues(params.getAll("c"), cityValues, 10),
     activeTab,
+    hospitalKey: params.get("hospital") ?? "",
+    hospitalSubtab: params.get("hv") === "c" ? "comparison" : params.get("hv") === "s" ? "similarity" : "summary",
+    peerThreshold: Math.min(90, Math.max(70, nonNegativeInteger(params.get("peer")) || 75)),
   };
 }
 
@@ -110,7 +118,13 @@ export function dashboardUrlSearch(reference: ReferencePayload, state: Dashboard
   if (state.axisMode === "per_100k") params.set("x", "100k");
   if (state.admissionAxisMode === "per_100k") params.set("ax", "100k");
   if (state.activeTab === "admissions") params.set("t", "a");
+  if (state.activeTab === "hospital") params.set("t", "h");
   if (state.activeTab === "methodology") params.set("t", "m");
+  if (state.hospitalKey) params.set("hospital", state.hospitalKey);
+  if (state.hospitalSubtab === "comparison") params.set("hv", "c");
+  if (state.hospitalSubtab === "similarity") params.set("hv", "s");
+  const peerThreshold = state.peerThreshold ?? 75;
+  if (peerThreshold !== 75) params.set("peer", String(Math.min(90, Math.max(70, Math.floor(peerThreshold)))));
 
   const search = params.toString();
   return search ? `?${search}` : "";
