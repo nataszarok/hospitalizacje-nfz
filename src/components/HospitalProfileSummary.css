@@ -268,7 +268,7 @@
   line-height:1;
 }
 
-.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-kpi span:not(.hospital-rpwdl-kpi-icon){
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-kpi>div>span{
   display:block;
   margin-top:4px;
   color:#344054;
@@ -277,12 +277,160 @@
   font-weight:700;
 }
 
-.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-kpi small{
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-kpi>div>small{
   display:block;
   margin-top:3px;
   color:#98A2B3;
   font-size:clamp(9.5px,.96cqw,11px);
   line-height:1.3;
+}
+
+
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-kpi-label{
+  display:flex!important;
+  align-items:center;
+  gap:5px;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-help{
+  position:relative;
+  display:inline-flex;
+  align-items:center;
+  margin:0;
+  color:inherit;
+  font-size:inherit;
+  font-weight:inherit;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-help>button{
+  width:16px;
+  height:16px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:0;
+  border:1px solid #CBD5E1;
+  border-radius:50%;
+  background:#fff;
+  color:#667085;
+  font-family:inherit;
+  font-size:10px;
+  font-weight:700;
+  line-height:1;
+  cursor:help;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-help>button:hover,
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-help>button:focus-visible{
+  border-color:#98A2B3;
+  color:#344054;
+  outline:none;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-help-popover{
+  display:none;
+  position:absolute;
+  right:0;
+  top:calc(100% + 8px);
+  z-index:80;
+  width:min(360px,78vw);
+  padding:12px;
+  border:1px solid #DCE3ED;
+  border-radius:12px;
+  background:#fff;
+  box-shadow:0 14px 34px rgba(16,24,40,.16);
+  color:#344054;
+  text-align:left;
+  font-weight:400;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-help:hover .hospital-rpwdl-help-popover,
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-help:focus-within .hospital-rpwdl-help-popover{
+  display:block;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-help-popover>strong{
+  display:block;
+  color:#101828;
+  font-size:12px;
+  line-height:1.3;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-help-popover>small{
+  display:block;
+  margin:3px 0 9px;
+  color:#667085;
+  font-size:10px;
+  line-height:1.35;
+}
+
+
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-help-popover.is-table{
+  width:min(430px,78vw);
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-help-popover .hospital-rpwdl-help-note{
+  margin:8px 0 0;
+  color:#667085;
+  font-size:9.5px;
+  line-height:1.35;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-location-table-wrap{
+  display:block;
+  overflow-x:auto;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-location-table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:10.5px;
+  line-height:1.35;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-location-table th{
+  padding:6px 7px;
+  border-bottom:1px solid #E6EBF2;
+  background:#F8FAFC;
+  color:#667085;
+  font-size:9px;
+  font-weight:750;
+  text-transform:uppercase;
+  letter-spacing:.025em;
+  text-align:right;
+  white-space:nowrap;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-location-table th:first-child{
+  width:48%;
+  text-align:left;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-location-table th:nth-child(2){
+  width:20%;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-location-table th:nth-child(3){
+  width:32%;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-location-table td{
+  padding:7px;
+  border-bottom:1px solid #EEF2F6;
+  color:#475467;
+  text-align:right;
+  white-space:nowrap;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-location-table td:first-child{
+  color:#344054;
+  font-weight:650;
+  text-align:left;
+  white-space:normal;
+}
+
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-location-table tbody tr:last-child td{
+  border-bottom:0;
 }
 
 .hospital-analysis.hospital-subtab-summary .hospital-rpwdl-present{

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Select, Tooltip } from "@mantine/core";
+import { Select } from "@mantine/core";
 import { createPortal } from "react-dom";
 import type { EstimationMethod, HospitalAnalysis, HospitalDirectoryEntry, ProductOption } from "@/lib/types";
 import { hospitalAnalysisFromDataset, hospitalDirectoryFromDataset, loadStaticDataset } from "@/lib/staticData";
@@ -53,29 +53,31 @@ function loadFinancialResults(){
   }
   return financialResultsPromise;
 }
-type FacilityMedicalField = { x?:string; name?:string; source_viii?:string[] };
-type FacilityCapability = { present?:boolean; beds?:number; cells_count?:number; source_viii?:string[]; dialysis_stations?:number; day_places?:number };
-type FacilitySite = {
-  facility_id:string; name:string; hospital_cells_count:number; outpatient_cells_count:number; support_cells_count:number;
-  capacity:Record<string,number>; hospital_x_codes_core?:string[]; hospital_medical_fields_core?:FacilityMedicalField[]; hospital_medical_fields_core_supported?:FacilityMedicalField[]; outpatient_medical_fields?:FacilityMedicalField[];
-  core_capacity?:{raw_types?:Record<string,{beds?:number;cells_count?:number;names?:string[];family?:string}>};
-  special_capabilities?:Record<string,FacilityCapability>;
-  non_core_capacity?:Record<string,FacilityCapability>;
-  primary_address?:{city?:string;street?:string;building?:string;postal_code?:string};
+type RpwdlSummaryCapability = { count?:number; beds?:number; stations?:number; day_places?:number };
+type RpwdlCoreWard = { code:string; name:string; beds:number; fields:string[] };
+type RpwdlLocationType = { locations:number; cells?:number; aos_cells?:number; beds?:number };
+type RpwdlSummaryProfileRecord = {
+  oz_nfz:string;
+  nip:string;
+  source_city:string;
+  primary_address?:{city?:string;street?:string;building?:string};
+  core:{ward_count:number;beds:number;field_count:number;fields:string[];wards:RpwdlCoreWard[]};
+  outpatient:{cell_count:number;field_count:number;fields:string[];location_count:number};
+  registry:{
+    location_count:number;city_count:number;total_beds:number;
+    location_types:Record<string,RpwdlLocationType>;
+  };
+  capabilities:Record<string,RpwdlSummaryCapability>;
 };
-type FacilityProfileRecord = {
-  oz_nfz:string; nip:string; source_name:string; source_city:string; facility_count:number; facilities:FacilitySite[];
-  aggregate:{facility_count:number;hospital_beds_total:number;core_beds_total:number;core_type_count_raw:number;core_x_supported_count:number;core_types_raw?:string[];core_x_supported_codes?:string[]};
-};
-type FacilityProfilesPayload={version:number;rpwdl_snapshot_date:string;records:FacilityProfileRecord[]};
+type RpwdlSummaryProfilesPayload={version:number;source_version?:number;rpwdl_snapshot_date:string;records:RpwdlSummaryProfileRecord[]};
 type RpwdlWardSortKey="name"|"beds"|"fields";
-let facilityProfilesPromise:Promise<FacilityProfilesPayload>|null=null;
-function loadRpwdlFacilityProfiles(){
-  if(!facilityProfilesPromise){
-    facilityProfilesPromise=fetch("/data/rpwdl_facility_profiles.json.gz",{cache:"force-cache"}).then(parseMaybeGzip) as Promise<FacilityProfilesPayload>;
-    facilityProfilesPromise=facilityProfilesPromise.catch(e=>{facilityProfilesPromise=null;throw e;});
+let rpwdlSummaryProfilesPromise:Promise<RpwdlSummaryProfilesPayload>|null=null;
+function loadRpwdlSummaryProfiles(){
+  if(!rpwdlSummaryProfilesPromise){
+    rpwdlSummaryProfilesPromise=fetch("/data/rpwdl_summary_profiles.json.gz",{cache:"force-cache"}).then(parseMaybeGzip) as Promise<RpwdlSummaryProfilesPayload>;
+    rpwdlSummaryProfilesPromise=rpwdlSummaryProfilesPromise.catch(e=>{rpwdlSummaryProfilesPromise=null;throw e;});
   }
-  return facilityProfilesPromise;
+  return rpwdlSummaryProfilesPromise;
 }
 async function parseMaybeGzip(r: Response) {
   if (!r.ok) throw new Error(`Nie udało się pobrać danych (${r.status})`);
@@ -187,6 +189,14 @@ function ProfileGlyph({name,className=""}:{name:string;className?:string}){
   return <svg {...common} className={className}><circle cx="12" cy="12" r="8"/></svg>;
 }
 
+
+
+function RpwdlHelp({label,children,table=false}:{label:string;children:React.ReactNode;table?:boolean}){
+  return <span className="hospital-rpwdl-help">
+    <button type="button" aria-label={label}>?</button>
+    <span className={`hospital-rpwdl-help-popover${table ? " is-table" : ""}`} role="tooltip">{children}</span>
+  </span>;
+}
 
 function HospitalCharts({ analysis, products }: { analysis: HospitalAnalysis; products: ProductOption[] }) {
   const topRef = useRef<HTMLDivElement>(null);
@@ -667,7 +677,7 @@ export function HospitalAnalysisTab({ method, products, hospitalKey, setHospital
   const [directory, setDirectory] = useState<HospitalDirectoryEntry[]>([]);
   const [city, setCity] = useState("");
   const [analysis, setAnalysis] = useState<HospitalAnalysis | null>(null);
-  const [facilityProfiles, setFacilityProfiles] = useState<Record<string,FacilityProfileRecord>>({});
+  const [rpwdlSummaryProfiles, setRpwdlSummaryProfiles] = useState<Record<string,RpwdlSummaryProfileRecord>>({});
   const [facilitySnapshotDate,setFacilitySnapshotDate]=useState<string>("");
   const [financialResults,setFinancialResults]=useState<Record<string,FinancialEntityRecord>>({});
   const [sidebarSlot, setSidebarSlot] = useState<HTMLElement | null>(null);
@@ -697,13 +707,13 @@ export function HospitalAnalysisTab({ method, products, hospitalKey, setHospital
     void loadStaticDataset()
       .then((d) => {
         setDirectory(hospitalDirectoryFromDataset(d));
-        return Promise.allSettled([loadRpwdlFacilityProfiles(), loadFinancialResults()]);
+        return Promise.allSettled([loadRpwdlSummaryProfiles(), loadFinancialResults()]);
       })
       .then(([fp, fin]) => {
         if(fp.status === "fulfilled"){
-          const byKey:Record<string,FacilityProfileRecord>={};
+          const byKey:Record<string,RpwdlSummaryProfileRecord>={};
           fp.value.records.forEach(x=>{byKey[`${x.oz_nfz}|${x.nip}`]=x;});
-          setFacilityProfiles(byKey);
+          setRpwdlSummaryProfiles(byKey);
           setFacilitySnapshotDate(fp.value.rpwdl_snapshot_date);
         }
         if(fin.status === "fulfilled"){
@@ -712,7 +722,7 @@ export function HospitalAnalysisTab({ method, products, hospitalKey, setHospital
           setFinancialResults(byNip);
         }
         const optionalErrors = [
-          fp.status === "rejected" ? `profile placówek RPWDL: ${fp.reason instanceof Error ? fp.reason.message : "błąd"}` : null,
+          fp.status === "rejected" ? `zagregowany profil RPWDL: ${fp.reason instanceof Error ? fp.reason.message : "błąd"}` : null,
           fin.status === "rejected" ? `wyniki finansowe: ${fin.reason instanceof Error ? fin.reason.message : "błąd"}` : null,
         ].filter(Boolean);
         setError(optionalErrors.length ? `Dane podstawowe działają. Nie udało się załadować: ${optionalErrors.join("; ")}` : null);
@@ -728,9 +738,9 @@ export function HospitalAnalysisTab({ method, products, hospitalKey, setHospital
       .sort((a,b) => a.city.localeCompare(b.city, "pl") || a.name.localeCompare(b.name, "pl"))
       .slice(0, 30);
   }, [directory, city]);
-  const facilityProfile = hospitalKey ? facilityProfiles[hospitalKey] : undefined;
-  const facilityAddress=facilityProfile?.facilities.find(site=>site.primary_address)?.primary_address;
-  const facilityCity=facilityAddress?.city ?? facilityProfile?.source_city;
+  const rpwdlSummaryProfile = hospitalKey ? rpwdlSummaryProfiles[hospitalKey] : undefined;
+  const facilityAddress=rpwdlSummaryProfile?.primary_address;
+  const facilityCity=facilityAddress?.city ?? rpwdlSummaryProfile?.source_city;
   const facilityStreetAddress=[facilityAddress?.street,facilityAddress?.building].filter(Boolean).join(" ");
   const financialEntity=analysis ? financialResults[normalizeNip(analysis.nip)] : undefined;
   const financialResult=financialEntity?.years.find(x=>x.year===financialEntity.latest_result_year) ?? null;
@@ -746,145 +756,68 @@ export function HospitalAnalysisTab({ method, products, hospitalKey, setHospital
     ? (analysis.proceduralSharePct>=45 ? "profil bardziej zabiegowy" : analysis.proceduralSharePct<=20 ? "profil bardziej zachowawczy" : "profil mieszany")
     : "";
   const hospitalProfileSummary=analysis
-    ? (facilityProfile
-      ? `Placówka ${hospitalScaleLabel}. Ma ${hospitalTreatmentLabel}, ${nf.format(analysis.uniqueJgpOver10)} aktywnych JGP, ${nf.format(facilityProfile.aggregate.core_type_count_raw)} główne oddziały i ${nf.format(facilityProfile.aggregate.core_beds_total)} łóżka szpitalne.`
+    ? (rpwdlSummaryProfile
+      ? `Placówka ${hospitalScaleLabel}. Ma ${hospitalTreatmentLabel}, ${nf.format(analysis.uniqueJgpOver10)} aktywnych JGP, ${nf.format(rpwdlSummaryProfile.core.ward_count)} główne oddziały i ${nf.format(rpwdlSummaryProfile.core.beds)} łóżka na głównych oddziałach.`
       : `Placówka ${hospitalScaleLabel}. Ma ${hospitalTreatmentLabel} i ${nf.format(analysis.uniqueJgpOver10)} aktywnych JGP.`)
     : "";
-  const facilityStats = useMemo(()=>{
-    if(!facilityProfile) return null;
-    const hospitalCells=facilityProfile.facilities.reduce((s,x)=>s+(x.hospital_cells_count||0),0);
-    const outpatientCells=facilityProfile.facilities.reduce((s,x)=>s+(x.outpatient_cells_count||0),0);
-    const supportCells=facilityProfile.facilities.reduce((s,x)=>s+(x.support_cells_count||0),0);
-    const dialysis=facilityProfile.facilities.reduce((s,x)=>s+(x.capacity?.["Liczba stanowisk dializacyjnych"]||0),0);
-    const dayPlaces=facilityProfile.facilities.reduce((s,x)=>s+(x.capacity?.["Liczba miejsc pobytu dziennego"]||0),0);
-    const coreFieldMap=new Map<string,string>();
-    for(const site of facilityProfile.facilities){
-      for(const code of site.hospital_x_codes_core??[]) if(!coreFieldMap.has(code)) coreFieldMap.set(code,code);
-      for(const field of site.hospital_medical_fields_core??[]){
-        if(field.x) coreFieldMap.set(field.x,field.name||field.x);
-      }
-    }
-    const fields=[...coreFieldMap.entries()].sort(([a],[b])=>a.localeCompare(b,"pl")).map(([,name])=>name);
-    const outpatientFields=[...new Set(facilityProfile.facilities.flatMap(x=>(x.outpatient_medical_fields??[]).map(y=>y.name).filter(Boolean) as string[]))].sort((a,b)=>a.localeCompare(b,"pl"));
 
-    const coreWardMap=new Map<string,{code:string;names:Set<string>;beds:number;fields:Set<string>}>();
-    for(const site of facilityProfile.facilities){
-      const rawTypes=site.core_capacity?.raw_types??{};
-      const siteFields=site.hospital_medical_fields_core??[];
-      for(const [code,raw] of Object.entries(rawTypes)){
-        const entry=coreWardMap.get(code) ?? {code,names:new Set<string>(),beds:0,fields:new Set<string>()};
-        for(const name of raw.names??[]) if(name) entry.names.add(name);
-        entry.beds += Number(raw.beds)||0;
-        for(const field of siteFields){
-          if(field.name && field.source_viii?.includes(code)) entry.fields.add(field.name);
-        }
-        coreWardMap.set(code,entry);
-      }
-    }
-    const coreWards=[...coreWardMap.values()].map(row=>({
-      code:row.code,
-      name:[...row.names].sort((a,b)=>a.localeCompare(b,"pl")).join(" / ") || `Oddział ${row.code}`,
-      beds:row.beds,
-      fields:[...row.fields].sort((a,b)=>a.localeCompare(b,"pl")),
-    })).sort((a,b)=>a.name.localeCompare(b.name,"pl"));
-
-    const capabilityBeds=(key:string, fallbackKey?:string)=>{
-      let present=false, beds=0;
-      for(const site of facilityProfile.facilities){
-        const primary=site.special_capabilities?.[key];
-        const fallback=fallbackKey ? site.non_core_capacity?.[fallbackKey] : undefined;
-        const cap=primary ?? fallback;
-        if(cap?.present){ present=true; beds += cap.beds ?? 0; }
-      }
-      return {present,beds};
-    };
-    const sor=capabilityBeds("emergency_department","emergency_department");
-    const admission=capabilityBeds("admission_room","admission_room");
-    const chronic=capabilityBeds("chronic_care_ward","chronic_care");
-    const palliative=capabilityBeds("palliative_ward","palliative");
-    const icu=capabilityBeds("intensive_care","intensive_care");
-    const stroke=capabilityBeds("stroke_unit","stroke_unit");
-    const ccu=capabilityBeds("cardiac_intensive_care","cardiac_intensive_care");
-    const rehab=capabilityBeds("rehabilitation","rehabilitation");
-    const psychiatry=capabilityBeds("psychiatry_addiction","psychiatry_addiction");
-    const hospice=capabilityBeds("hospice","hospice");
-    const neonatology=capabilityBeds("neonatology","neonatology");
-
-    const flagPresent=(key:string)=>{
-      for(const site of facilityProfile.facilities){
-        if(site.special_capabilities?.[key]?.present) return true;
-      }
-      return false;
-    };
-    const operatingBlock=flagPresent("operating_block");
-    const deliveryRoom=flagPresent("delivery_room");
-    const dialysisPresent=flagPresent("dialysis") || dialysis>0;
-
-    const supportText=facilityProfile.facilities
-      .flatMap(site=>[
-        site.name,
-        ...(site.hospital_medical_fields_core??[]).map(x=>x.name??""),
-        ...(site.outpatient_medical_fields??[]).map(x=>x.name??""),
-        ...(site.special_capabilities ? Object.keys(site.special_capabilities) : []),
-        ...(site.non_core_capacity ? Object.keys(site.non_core_capacity) : []),
-      ])
-      .join(" ")
-      .toLocaleLowerCase("pl");
-
-    const textMarker=(terms:string[])=>terms.some(term=>supportText.includes(term.toLocaleLowerCase("pl")));
-    const pozPresent=textMarker(["podstawowa opieka zdrowotna","poz"]);
-    const nplPresent=textMarker(["nocna i świąteczna","nocna opieka","npl"]);
-
+  const rpwdlStats = useMemo(()=>{
+    if(!rpwdlSummaryProfile) return null;
+    const capability=rpwdlSummaryProfile.capabilities??{};
+    const bedDetail=(key:string)=>capability[key]?.beds ? `${nf.format(capability[key]!.beds!)} łóżek` : "";
+    const countDetail=(key:string,label:string)=>capability[key]?.count ? `${nf.format(capability[key]!.count!)} ${label}` : "";
     const capabilities=[
-      {key:"core",group:"Profil organizacyjny",label:"Główne oddziały",present:facilityProfile.aggregate.core_type_count_raw>0,detail:`${nf.format(facilityProfile.aggregate.core_type_count_raw)} oddziałów · ${nf.format(fields.length)} dziedzin`},
-      {key:"outpatient",group:"Profil organizacyjny",label:"Opieka ambulatoryjna",present:outpatientCells>0,detail:`${nf.format(outpatientCells)} komórek · ${nf.format(outpatientFields.length)} dziedzin`},
-      {key:"support",group:"Profil organizacyjny",label:"Diagnostyka i zaplecze",present:supportCells>0,detail:`${nf.format(supportCells)} komórek${dayPlaces ? ` · ${nf.format(dayPlaces)} miejsc dziennych` : ""}`},
+      {key:"sor",label:"SOR",present:!!capability.sor,detail:bedDetail("sor")},
+      {key:"admission",label:"Izba przyjęć",present:!!capability.admission,detail:bedDetail("admission")},
+      {key:"icu",label:"OIT",present:!!capability.icu,detail:bedDetail("icu")},
+      {key:"stroke",label:"Oddział udarowy",present:!!capability.stroke,detail:bedDetail("stroke")},
+      {key:"ccu",label:"Intensywny nadzór kardiologiczny",present:!!capability.ccu,detail:bedDetail("ccu")},
+      {key:"operating",label:"Blok operacyjny",present:!!capability.operating,detail:""},
+      {key:"delivery",label:"Sala porodowa",present:!!capability.delivery,detail:""},
+      {key:"long_term",label:"ZOL / ZPO",present:!!capability.long_term,detail:bedDetail("long_term")},
+      {key:"palliative",label:"Opieka paliatywna",present:!!capability.palliative,detail:bedDetail("palliative")},
+      {key:"hospice",label:"Hospicjum",present:!!capability.hospice,detail:bedDetail("hospice")},
+      {key:"rehab",label:"Rehabilitacja stacjonarna",present:!!capability.rehab,detail:bedDetail("rehab")},
+      {key:"spa",label:"Leczenie uzdrowiskowe / sanatoryjne",present:!!capability.spa,detail:bedDetail("spa")},
+      {key:"psychiatry",label:"Psychiatria / leczenie uzależnień",present:!!capability.psychiatry,detail:bedDetail("psychiatry")},
+      {key:"dialysis",label:"Dializy",present:!!capability.dialysis,detail:capability.dialysis?.stations ? `${nf.format(capability.dialysis.stations)} stanowisk` : bedDetail("dialysis")},
+      {key:"day_treatment",label:"Leczenie jednego dnia",present:!!capability.day_treatment,detail:capability.day_treatment?.day_places ? `${nf.format(capability.day_treatment.day_places)} miejsc dziennych` : bedDetail("day_treatment")},
+      {key:"zrm",label:"ZRM",present:!!capability.zrm,detail:countDetail("zrm","zespołów")},
+      {key:"poz",label:"POZ",present:!!capability.poz,detail:countDetail("poz","komórek")},
+      {key:"npl",label:"Nocna i świąteczna opieka",present:!!capability.npl,detail:countDetail("npl","komórek")},
+    ].filter(x=>x.present);
 
-      {key:"sor",group:"Ratunkowe i intensywne",label:"SOR",present:sor.present,detail:sor.beds ? `${nf.format(sor.beds)} łóżek` : ""},
-      {key:"admission",group:"Ratunkowe i intensywne",label:"Izba przyjęć",present:admission.present,detail:admission.beds ? `${nf.format(admission.beds)} łóżek` : ""},
-      {key:"icu",group:"Ratunkowe i intensywne",label:"OIT",present:icu.present,detail:icu.beds ? `${nf.format(icu.beds)} łóżek` : ""},
-      {key:"stroke",group:"Ratunkowe i intensywne",label:"Oddział udarowy",present:stroke.present,detail:stroke.beds ? `${nf.format(stroke.beds)} łóżek` : ""},
-      {key:"ccu",group:"Ratunkowe i intensywne",label:"Intensywny nadzór kardiologiczny",present:ccu.present,detail:ccu.beds ? `${nf.format(ccu.beds)} łóżek` : ""},
+    const locationLabels:Record<string,string>={
+      hospital:"Szpitalne",
+      outpatient:"Ambulatoryjne (AOS)",
+      long_term:"ZOL / ZPO",
+      spa:"Uzdrowiskowe / sanatoryjne",
+    };
+    const locationOrder=["hospital","outpatient","long_term","spa"];
+    const locationRows=locationOrder.flatMap(key=>{
+      const row=rpwdlSummaryProfile.registry.location_types?.[key];
+      return row && (row.locations||row.aos_cells||row.beds) ? [{key,label:locationLabels[key],...row}] : [];
+    });
 
-      {key:"operating",group:"Zabiegowe",label:"Blok operacyjny",present:operatingBlock,detail:""},
-      {key:"delivery",group:"Zabiegowe",label:"Sala porodowa",present:deliveryRoom,detail:""},
-
-      {key:"chronic",group:"Długoterminowe i opiekuńcze",label:"ZOL / ZPO",present:chronic.present,detail:chronic.beds ? `${nf.format(chronic.beds)} łóżek` : ""},
-      {key:"palliative",group:"Długoterminowe i opiekuńcze",label:"Opieka paliatywna",present:palliative.present,detail:palliative.beds ? `${nf.format(palliative.beds)} łóżek` : ""},
-      {key:"hospice",group:"Długoterminowe i opiekuńcze",label:"Hospicjum",present:hospice.present,detail:hospice.beds ? `${nf.format(hospice.beds)} łóżek` : ""},
-      {key:"rehab",group:"Długoterminowe i opiekuńcze",label:"Rehabilitacja",present:rehab.present,detail:rehab.beds ? `${nf.format(rehab.beds)} łóżek` : ""},
-
-      {key:"dialysis",group:"Specjalistyczne",label:"Dializy",present:dialysisPresent,detail:dialysis ? `${nf.format(dialysis)} stanowisk` : ""},
-      {key:"psychiatry",group:"Specjalistyczne",label:"Psychiatria / leczenie uzależnień",present:psychiatry.present,detail:psychiatry.beds ? `${nf.format(psychiatry.beds)} łóżek` : ""},
-      {key:"neonatology",group:"Specjalistyczne",label:"Neonatologia",present:neonatology.present,detail:neonatology.beds ? `${nf.format(neonatology.beds)} łóżek` : ""},
-      {key:"poz",group:"Podstawowa i doraźna",label:"POZ",present:pozPresent,detail:""},
-      {key:"npl",group:"Podstawowa i doraźna",label:"Nocna i świąteczna opieka",present:nplPresent,detail:""},
-    ];
-    return {hospitalCells,outpatientCells,supportCells,dialysis,dayPlaces,fields,outpatientFields,coreWards,capabilities};
-  },[facilityProfile]);
-
-  const facilityProfileDescriptor=useMemo(()=>{
-    if(!facilityProfile || !facilityStats) return "";
-    const fieldCount=facilityStats.fields.length;
-    const outpatientCount=facilityStats.outpatientFields.length;
-    const breadth=fieldCount>=25 ? "bardzo szeroki profil specjalistyczny" : fieldCount>=12 ? "szeroki profil specjalistyczny" : "bardziej skoncentrowany profil";
-    const extras=[
-      outpatientCount>=20 ? "rozbudowaną opiekę ambulatoryjną" : outpatientCount>=8 ? "opiekę ambulatoryjną" : "",
-      facilityStats.supportCells>=50 ? "rozbudowane zaplecze diagnostyczne i wspierające" : facilityStats.supportCells>0 ? "zaplecze diagnostyczne i wspierające" : "",
-    ].filter(Boolean);
-    return `Placówka ma ${breadth}${extras.length ? ` oraz ${extras.join(" i ")}` : ""}.`;
-  },[facilityProfile,facilityStats]);
+    return {
+      fields:rpwdlSummaryProfile.core.fields,
+      outpatientFields:rpwdlSummaryProfile.outpatient.fields,
+      coreWards:rpwdlSummaryProfile.core.wards,
+      capabilities,
+      locationRows,
+    };
+  },[rpwdlSummaryProfile]);
 
   const sortedRpwdlWards=useMemo(()=>{
-    if(!facilityStats) return [];
-    return [...facilityStats.coreWards].sort((a,b)=>{
+    if(!rpwdlStats) return [];
+    return [...rpwdlStats.coreWards].sort((a,b)=>{
       let cmp=0;
       if(rpwdlWardSortKey==="name") cmp=a.name.localeCompare(b.name,"pl");
       else if(rpwdlWardSortKey==="beds") cmp=a.beds-b.beds;
       else cmp=a.fields.length-b.fields.length || a.fields.join(" · ").localeCompare(b.fields.join(" · "),"pl");
       return rpwdlWardSortDir==="asc" ? cmp : -cmp;
     });
-  },[facilityStats,rpwdlWardSortKey,rpwdlWardSortDir]);
+  },[rpwdlStats,rpwdlWardSortKey,rpwdlWardSortDir]);
 
   const sortRpwdlWards=(key:RpwdlWardSortKey)=>{
     if(rpwdlWardSortKey===key) setRpwdlWardSortDir(v=>v==="asc"?"desc":"asc");
@@ -1004,8 +937,8 @@ export function HospitalAnalysisTab({ method, products, hospitalKey, setHospital
 
             <div className="hospital-profile-stat">
               <span>Główne oddziały</span>
-              <strong>{facilityProfile ? nf.format(facilityProfile.aggregate.core_type_count_raw) : "—"}</strong>
-              <small>{facilityProfile ? `${nf.format(facilityProfile.aggregate.core_beds_total)} łóżek szpitalnych` : "Brak danych RPWDL"}</small>
+              <strong>{rpwdlSummaryProfile ? nf.format(rpwdlSummaryProfile.core.ward_count) : "—"}</strong>
+              <small>{rpwdlSummaryProfile ? `${nf.format(rpwdlSummaryProfile.core.beds)} łóżek na głównych oddziałach` : "Brak danych RPWDL"}</small>
             </div>
           </div>
         </section>
@@ -1022,57 +955,83 @@ export function HospitalAnalysisTab({ method, products, hospitalKey, setHospital
           </div>
         </div>
 
-        {facilityProfile && facilityStats ? <section className="hospital-chart-card hospital-peer-chart-card hospital-surface-card hospital-summary-profile-card hospital-rpwdl-overview">
+        {rpwdlSummaryProfile && rpwdlStats ? <section className="hospital-chart-card hospital-peer-chart-card hospital-surface-card hospital-summary-profile-card hospital-rpwdl-overview">
           <div className="hospital-rpwdl-overview-meta">
-            <small>{facilitySnapshotDate ? `Stan na ${facilitySnapshotDate} · ` : ""}dopasowanie po OW NFZ i NIP</small>
+            <small>{facilitySnapshotDate ? `Stan na ${facilitySnapshotDate} · ` : ""}zagregowany profil po OW NFZ i NIP</small>
           </div>
 
           <div className="hospital-rpwdl-kpis">
             <div className="hospital-rpwdl-kpi">
               <span className="hospital-rpwdl-kpi-icon"><ProfileGlyph name="bed"/></span>
-              <div><b>{nf.format(facilityProfile.aggregate.core_type_count_raw)}</b><span>Główne oddziały</span><small>{nf.format(facilityProfile.aggregate.core_beds_total)} łóżek szpitalnych</small></div>
+              <div><b>{nf.format(rpwdlSummaryProfile.core.ward_count)}</b><span>Główne oddziały</span><small>{nf.format(rpwdlSummaryProfile.core.beds)} łóżek na głównych oddziałach</small></div>
             </div>
             <div className="hospital-rpwdl-kpi">
               <span className="hospital-rpwdl-kpi-icon"><ProfileGlyph name="building"/></span>
-              <div><b>{nf.format(facilityStats.fields.length)}</b><span>Dziedziny główne</span><small>zakres specjalizacji oddziałów</small></div>
+              <div><b>{nf.format(rpwdlStats.fields.length)}</b><span className="hospital-rpwdl-kpi-label">Dziedziny główne
+                <RpwdlHelp label="Wyjaśnij liczbę dziedzin głównych">
+                  <strong>Jak rozumieć dziedziny główne?</strong>
+                  <small>W tym profilu {nf.format(rpwdlStats.fields.length)} oznacza liczbę unikalnych dziedzin medycyny wykrytych na {nf.format(rpwdlSummaryProfile.core.ward_count)} głównych typach oddziałów. Nie ma relacji 1:1: jeden oddział może realizować kilka dziedzin, a ta sama dziedzina może występować na kilku oddziałach.</small>
+                </RpwdlHelp>
+              </span><small>zakres specjalizacji głównych oddziałów</small></div>
             </div>
             <div className="hospital-rpwdl-kpi">
               <span className="hospital-rpwdl-kpi-icon"><ProfileGlyph name="users"/></span>
-              <div><b>{nf.format(facilityStats.outpatientCells)}</b><span>Opieka ambulatoryjna</span><small>{nf.format(facilityStats.outpatientFields.length)} dziedzin</small></div>
+              <div><b>{nf.format(rpwdlSummaryProfile.outpatient.cell_count)}</b><span className="hospital-rpwdl-kpi-label">Opieka ambulatoryjna
+                <RpwdlHelp label="Wyjaśnij liczbę komórek AOS">
+                  <strong>Jak rozumieć tę liczbę?</strong>
+                  <small>{nf.format(rpwdlSummaryProfile.outpatient.cell_count)} oznacza liczbę aktywnych komórek AOS w całym podmiocie. Są to pozycje organizacyjne RPWDL z kodem VIII 1xxx, zwykle poradnie lub gabinety. W tym profilu działają w {nf.format(rpwdlSummaryProfile.outpatient.location_count)} lokalizacjach i obejmują {nf.format(rpwdlSummaryProfile.outpatient.field_count)} unikalnych dziedzin.</small>
+                </RpwdlHelp>
+              </span><small>{nf.format(rpwdlSummaryProfile.outpatient.field_count)} dziedzin · {nf.format(rpwdlSummaryProfile.outpatient.location_count)} lokalizacji</small></div>
             </div>
-            <div className="hospital-rpwdl-kpi">
-              <span className="hospital-rpwdl-kpi-icon"><ProfileGlyph name="flask"/></span>
-              <div><b>{nf.format(facilityStats.supportCells)}</b><span>Diagnostyka i zaplecze</span><small>{facilityStats.dayPlaces ? `${nf.format(facilityStats.dayPlaces)} miejsc dziennych` : "komórki wspierające"}</small></div>
+            <div className="hospital-rpwdl-kpi hospital-rpwdl-kpi-locations">
+              <span className="hospital-rpwdl-kpi-icon"><ProfileGlyph name="building"/></span>
+              <div>
+                <b>{nf.format(rpwdlSummaryProfile.registry.location_count)}</b>
+                <span className="hospital-rpwdl-kpi-label">Lokalizacje RPWDL
+                  <RpwdlHelp label="Pokaż strukturę lokalizacji RPWDL" table>
+                    <strong>Struktura lokalizacji</strong>
+                    <small>{nf.format(rpwdlSummaryProfile.registry.location_count)} lokalizacji · {nf.format(rpwdlSummaryProfile.registry.city_count)} miejscowości · {nf.format(rpwdlSummaryProfile.registry.total_beds)} łóżek łącznie</small>
+                    <span className="hospital-rpwdl-location-table-wrap">
+                      <table className="hospital-rpwdl-location-table">
+                        <thead><tr><th>Typ działalności</th><th>Lokalizacje</th><th>Skala</th></tr></thead>
+                        <tbody>{rpwdlStats.locationRows.map(row=>{
+                          const aosCells=row.aos_cells ?? row.cells ?? rpwdlSummaryProfile.outpatient.cell_count;
+                          const scale=row.key==="outpatient"
+                            ? `${nf.format(aosCells)} komórek AOS`
+                            : row.beds!=null && row.beds>0
+                              ? `${nf.format(row.beds)} łóżek`
+                              : "brak liczby łóżek";
+                          return <tr key={row.key}>
+                            <td>{row.label}</td>
+                            <td>{nf.format(row.locations)}</td>
+                            <td>{scale}</td>
+                          </tr>;
+                        })}</tbody>
+                      </table>
+                    </span>
+                    <small className="hospital-rpwdl-help-note">Dla AOS „skala” oznacza liczbę aktywnych komórek AOS (zwykle poradni lub gabinetów). Dla działalności łóżkowej pokazuje liczbę łóżek.</small>
+                  </RpwdlHelp>
+                </span>
+                <small>{nf.format(rpwdlSummaryProfile.registry.city_count)} miejscowości · {nf.format(rpwdlSummaryProfile.registry.total_beds)} łóżek łącznie</small>
+              </div>
             </div>
           </div>
 
           <div className="hospital-rpwdl-present">
             <div className="hospital-rpwdl-present-head">
               <span>Dodatkowe wykryte elementy</span>
-              <small>Dodatkowe elementy organizacyjne wykryte poza głównymi oddziałami i opieką ambulatoryjną.</small>
+              <small>Elementy spoza podstawowego profilu głównych oddziałów. Liczba łóżek lub stanowisk jest pokazana, gdy RPWDL ją podaje.</small>
             </div>
             <div className="hospital-rpwdl-present-badges">
-              {facilityStats.capabilities.filter(x=>x.present && [
-                "sor","admission","icu","stroke","ccu",
-                "operating","delivery",
-                "chronic","palliative","hospice","rehab",
-                "dialysis","psychiatry","neonatology",
-                "poz","npl"
-              ].includes(x.key)).map(x=><span key={x.key}><strong>{x.label}</strong>{x.detail ? <small>{x.detail}</small> : null}</span>)}
-              {!facilityStats.capabilities.some(x=>x.present && [
-                "sor","admission","icu","stroke","ccu",
-                "operating","delivery",
-                "chronic","palliative","hospice","rehab",
-                "dialysis","psychiatry","neonatology",
-                "poz","npl"
-              ].includes(x.key)) ? <em>Brak dodatkowych wykrytych elementów.</em> : null}
+              {rpwdlStats.capabilities.map(x=><span key={x.key}><strong>{x.label}</strong>{x.detail ? <small>{x.detail}</small> : null}</span>)}
+              {!rpwdlStats.capabilities.length ? <em>Brak dodatkowych wykrytych elementów.</em> : null}
             </div>
           </div>
 
           <div className="hospital-rpwdl-disclosures">
             <div className={`hospital-rpwdl-disclosure ${rpwdlOpen.core ? "is-open" : ""}`}>
               <button type="button" aria-expanded={rpwdlOpen.core} onClick={()=>setRpwdlOpen(v=>({...v,core:!v.core}))}>
-                <span><strong>Główne oddziały i dziedziny</strong><small>{nf.format(facilityStats.fields.length)} dziedzin · {nf.format(facilityProfile.aggregate.core_type_count_raw)} oddziałów · {nf.format(facilityProfile.aggregate.core_beds_total)} łóżek</small></span>
+                <span><strong>Główne oddziały i dziedziny</strong><small>{nf.format(rpwdlStats.fields.length)} dziedzin · {nf.format(rpwdlSummaryProfile.core.ward_count)} oddziałów · {nf.format(rpwdlSummaryProfile.core.beds)} łóżek</small></span>
                 <i aria-hidden="true">⌄</i>
               </button>
               {rpwdlOpen.core ? <div className="hospital-rpwdl-disclosure-body hospital-rpwdl-table-wrap">
@@ -1097,19 +1056,17 @@ export function HospitalAnalysisTab({ method, products, hospitalKey, setHospital
 
             <div className={`hospital-rpwdl-disclosure ${rpwdlOpen.outpatient ? "is-open" : ""}`}>
               <button type="button" aria-expanded={rpwdlOpen.outpatient} onClick={()=>setRpwdlOpen(v=>({...v,outpatient:!v.outpatient}))}>
-                <span><strong>Opieka ambulatoryjna</strong><small>{nf.format(facilityStats.outpatientCells)} komórek · {nf.format(facilityStats.outpatientFields.length)} dziedzin</small></span>
+                <span><strong>Opieka ambulatoryjna</strong><small>{nf.format(rpwdlSummaryProfile.outpatient.cell_count)} komórek AOS · {nf.format(rpwdlSummaryProfile.outpatient.field_count)} dziedzin · {nf.format(rpwdlSummaryProfile.outpatient.location_count)} lokalizacji</small></span>
                 <i aria-hidden="true">⌄</i>
               </button>
               {rpwdlOpen.outpatient ? <div className="hospital-rpwdl-disclosure-body">
                 <div className="hospital-field-cloud">
-                  {facilityStats.outpatientFields.length ? facilityStats.outpatientFields.map((name,i)=><span key={`outpatient-${name}-${i}`}>{name}</span>) : <em>Brak dziedzin ambulatoryjnych w profilu.</em>}
+                  {rpwdlStats.outpatientFields.length ? rpwdlStats.outpatientFields.map((name,i)=><span key={`outpatient-${name}-${i}`}>{name}</span>) : <em>Brak dziedzin ambulatoryjnych w profilu.</em>}
                 </div>
               </div> : null}
             </div>
-
-
           </div>
-        </section> : <div className="hospital-empty hospital-summary-profile-empty">Brak dopasowania do nowego profilu RPWDL dla klucza OW NFZ + NIP.</div>}
+        </section> : <div className="hospital-empty hospital-summary-profile-empty">Brak dopasowania do zagregowanego profilu RPWDL dla klucza OW NFZ + NIP.</div>}
       </div>
 
 
