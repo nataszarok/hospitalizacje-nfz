@@ -86,6 +86,13 @@ function newPeerSelection(rows:PeerPair[],hospitalKey:string,gradeScope:"A"|"AB"
   return out;
 }
 
+const pairSideValue=(entry:{pair:PeerPair;targetIsA:boolean}|undefined,fieldA:keyof PeerPair,fieldB:keyof PeerPair,peerSide:boolean)=>{
+  if(!entry) return 0;
+  const useA=peerSide ? !entry.targetIsA : entry.targetIsA;
+  return Number(entry.pair[useA ? fieldA : fieldB] ?? 0);
+};
+
+
 function PairBenchmarkPanel({ benchmark, hoveredPeerKey, onHoverPeer, method, gradeScope, maxDistance, peerPairs, hospitalKey }: {
   benchmark: HospitalPeerBenchmark;
   hoveredPeerKey: string | null;
@@ -120,18 +127,6 @@ function PairBenchmarkPanel({ benchmark, hoveredPeerKey, onHoverPeer, method, gr
     }
     return map;
   },[peerPairs,hospitalKey]);
-
-  const sharePct=(value:number|null|undefined)=>{
-    const n=Number(value);
-    if(!Number.isFinite(n)) return 0;
-    return Math.abs(n)<=1.000001 ? n*100 : n;
-  };
-
-  const pairSideValue=(entry:{pair:PeerPair;targetIsA:boolean}|undefined,fieldA:keyof PeerPair,fieldB:keyof PeerPair,peerSide:boolean)=>{
-    if(!entry) return 0;
-    const useA=peerSide ? !entry.targetIsA : entry.targetIsA;
-    return Number(entry.pair[useA ? fieldA : fieldB] ?? 0);
-  };
 
   const mainPairEntry=useMemo(()=>{
     for(const p of benchmark.peers){
@@ -203,7 +198,7 @@ function PairBenchmarkPanel({ benchmark, hoveredPeerKey, onHoverPeer, method, gr
     }
   };
 
-  const PeerGroupHeader=({sortKey,children,num=false}:{sortKey:PeerGroupSortKey;children:React.ReactNode;num?:boolean})=>
+  const renderPeerGroupHeader=(sortKey:PeerGroupSortKey,children:React.ReactNode,num=false)=>
     <th className={num?"num":undefined} aria-sort={peerGroupSortKey===sortKey?(peerGroupSortDir==="asc"?"ascending":"descending"):"none"}>
       <button
         type="button"
@@ -284,13 +279,13 @@ function PairBenchmarkPanel({ benchmark, hoveredPeerKey, onHoverPeer, method, gr
             <thead>
               <tr>
                 <th className="hospital-peer-group-provider-col">Placówka</th>
-                <PeerGroupHeader sortKey="grade">Klasa</PeerGroupHeader>
-                <PeerGroupHeader sortKey="distance" num>Dystans</PeerGroupHeader>
-                <PeerGroupHeader sortKey="hospitalizations" num>Hospitalizacje</PeerGroupHeader>
-                <PeerGroupHeader sortKey="beds" num>Łóżka główne</PeerGroupHeader>
-                <PeerGroupHeader sortKey="coreTypes" num>Główne oddziały</PeerGroupHeader>
-                <PeerGroupHeader sortKey="sharedJgp" num>Wspólne JGP</PeerGroupHeader>
-                <PeerGroupHeader sortKey="jgpFamilySimilarity" num>Podobieństwo rodzin JGP</PeerGroupHeader>
+                {renderPeerGroupHeader("grade", "Klasa")}
+                {renderPeerGroupHeader("distance", "Dystans", true)}
+                {renderPeerGroupHeader("hospitalizations", "Hospitalizacje", true)}
+                {renderPeerGroupHeader("beds", "Łóżka główne", true)}
+                {renderPeerGroupHeader("coreTypes", "Główne oddziały", true)}
+                {renderPeerGroupHeader("sharedJgp", "Wspólne JGP", true)}
+                {renderPeerGroupHeader("jgpFamilySimilarity", "Podobieństwo rodzin JGP", true)}
               </tr>
             </thead>
 
@@ -387,55 +382,47 @@ export function HospitalSimilarityTab({
   maxDistance?:number;
   peerThreshold?:number;
 }){
-  const [benchmark,setBenchmark]=useState<HospitalPeerBenchmark|null>(null);
-  const [peerPairs,setPeerPairs]=useState<PeerPair[]>([]);
-  const [valuations,setValuations]=useState<JgpValuation[]>([]);
+  const [result,setResult]=useState<{
+    key:string;benchmark:HospitalPeerBenchmark|null;peerPairs:PeerPair[];
+    valuations:JgpValuation[];error:string|null;
+  }|null>(null);
   const [hoveredPeerKey,setHoveredPeerKey]=useState<string|null>(null);
-  const [loading,setLoading]=useState(true);
-  const [error,setError]=useState<string|null>(null);
+  const queryKey=JSON.stringify([hospitalKey,method,gradeScope,maxDistance,peerThreshold]);
+  const currentResult=result?.key===queryKey ? result : null;
+  const benchmark=currentResult?.benchmark ?? null;
+  const peerPairs=currentResult?.peerPairs ?? [];
+  const error=currentResult?.error ?? null;
+  const loading=Boolean(hospitalKey && !currentResult);
 
   useEffect(()=>{
-    if(!hospitalKey){
-      setBenchmark(null);
-      setLoading(false);
-      return;
-    }
-
+    if(!hospitalKey) return;
     let cancelled=false;
-    setLoading(true);
-
     void Promise.all([loadStaticDataset(),loadPeerPairs(),loadJgpValuations()])
       .then(([dataset,pairsPayload,jgpValuations])=>{
         if(cancelled) return;
-
-        const selection=newPeerSelection(
-          pairsPayload.rows,
-          hospitalKey,
-          gradeScope,
-          maxDistance,
-          method
-        );
-
-        setPeerPairs(pairsPayload.rows);
-        setValuations(jgpValuations);
-        setBenchmark(
-          selection.size
+        const selection=newPeerSelection(pairsPayload.rows,hospitalKey,gradeScope,maxDistance,method);
+        setResult({
+          key:queryKey,peerPairs:pairsPayload.rows,valuations:jgpValuations,
+          benchmark:selection.size
             ? hospitalPeerBenchmarkFromDataset(dataset,hospitalKey,method,{},peerThreshold,selection)
-            : null
-        );
-        setError(null);
+            : null,
+          error:null,
+        });
       })
       .catch((e)=>{
         if(cancelled) return;
-        setBenchmark(null);
-        setError(e instanceof Error ? e.message : "Błąd nowej metody porównawczej.");
-      })
-      .finally(()=>{ if(!cancelled) setLoading(false); });
-
+        setResult({
+          key:queryKey,peerPairs:[],valuations:[],benchmark:null,
+          error:e instanceof Error ? e.message : "Błąd nowej metody porównawczej.",
+        });
+      });
     return()=>{cancelled=true;};
-  },[hospitalKey,method,gradeScope,maxDistance,peerThreshold]);
+  },[hospitalKey,method,gradeScope,maxDistance,peerThreshold,queryKey]);
 
-  const valuationByJgp=useMemo(()=>new Map(valuations.map(x=>[x.kod_jgp,x])),[valuations]);
+  const valuationByJgp=useMemo(
+    ()=>new Map((currentResult?.valuations ?? []).map(x=>[x.kod_jgp,x])),
+    [currentResult?.valuations]
+  );
 
   if(loading) return <div className="hospital-empty">Ładowanie analizy porównawczej…</div>;
   if(error) return <div className="alert">{error}</div>;

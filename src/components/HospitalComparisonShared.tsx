@@ -1,6 +1,5 @@
 "use client";
 
-import { Tooltip } from "@mantine/core";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type * as React from "react";
 import type { HospitalPeerBenchmark, ProductOption } from "@/lib/types";
@@ -128,6 +127,64 @@ export type PeerPair = {
   [key:string]:string|number|PeerGrade|undefined;
 };
 
+type PlotlyHoverEvent={
+  points?:Array<{curveNumber:number;pointIndex:number;pointNumber:number}>;
+  event?:MouseEvent;
+};
+type PlotlyDiv=HTMLDivElement & {
+  on?: (event:string,callback:(event:PlotlyHoverEvent)=>void)=>void;
+  removeAllListeners?: (event:string)=>void;
+  __benchmarkTooltipCleanup?:()=>void;
+};
+type MortalityDisplayRow=HospitalPeerBenchmark["mortalityOutliers"][number] & {
+  displayName:string;diff:number;valuation:number|null;
+};
+type MortalityPeerPoint={name?:string;mortalityPct:number;hospitalizations:number;deaths:number};
+function getProductJgpCode(product:ProductOption){
+  const alias=product as ProductOption & {jgpCode?:string;jgp?:string};
+  return String(alias.jgpCode ?? alias.jgp ?? product.code ?? "").trim();
+}
+function popupTooltipPosition(shell:HTMLDivElement|null,clientX:number,clientY:number){
+  if(!shell) return {left:12,top:120};
+  const r=shell.getBoundingClientRect();
+  const x=clientX-r.left;
+  const y=clientY-r.top;
+  const tooltipWidth=Math.min(330,Math.max(240,r.width-24));
+  const gap=14;
+  const roomRight=r.width-x;
+  const roomLeft=x;
+  const placeRight=roomRight>=tooltipWidth+gap || roomRight>=roomLeft;
+  const left=placeRight ? Math.min(x+gap,r.width-tooltipWidth-10) : Math.max(10,x-tooltipWidth-gap);
+  const top=Math.max(90,Math.min(r.height-90,y));
+  return {left,top};
+}
+function benchmarkTooltipPosition(shell:HTMLDivElement|null,clientX:number,clientY:number){
+  if(!shell) return {left:12,top:150};
+  const r=shell.getBoundingClientRect();
+  const x=clientX-r.left;
+  const y=clientY-r.top;
+  const tooltipWidth=Math.min(330,Math.max(240,r.width-24));
+  const gap=14;
+  const roomRight=r.width-x;
+  const roomLeft=x;
+  const placeRight=roomRight>=tooltipWidth+gap || roomRight>=roomLeft;
+  const left=placeRight ? Math.min(x+gap,r.width-tooltipWidth-10) : Math.max(10,x-tooltipWidth-gap);
+  const top=Math.max(100,Math.min(r.height-100,y));
+  return {left,top};
+}
+function getPairRenderedPoint(map:HTMLDivElement|null,shell:HTMLDivElement|null,index:number,pairMode:boolean){
+  if(!pairMode || !map || !shell) return null;
+  const traces=map.querySelectorAll<SVGGElement>("g.trace.scatter");
+  const peerTrace=traces.item(0);
+  if(!peerTrace) return null;
+  const points=peerTrace.querySelectorAll<SVGPathElement>("path.point");
+  const node=points.item(index);
+  if(!node) return null;
+  const r=node.getBoundingClientRect();
+  const shellRect=shell.getBoundingClientRect();
+  return {pointLeft:r.left+r.width/2-shellRect.left,pointTop:r.top+r.height/2-shellRect.top};
+}
+
 export function JgpMortalityDifferenceTable({ benchmark, products, valuationByJgp, pairMode=false }:{
   benchmark:HospitalPeerBenchmark;
   products:ProductOption[];
@@ -138,7 +195,7 @@ export function JgpMortalityDifferenceTable({ benchmark, products, valuationByJg
   const [sortKey,setSortKey]=useState<SortKey>("excess");
   const [sortDir,setSortDir]=useState<"asc"|"desc">("desc");
   const [largeDifferencesOnly,setLargeDifferencesOnly]=useState(false);
-  const [selectedRow,setSelectedRow]=useState<any|null>(null);
+  const [selectedRow,setSelectedRow]=useState<MortalityDisplayRow|null>(null);
   const popupPlotRef=useRef<HTMLDivElement>(null);
   const popupPlotShellRef=useRef<HTMLDivElement>(null);
   const [popupPlotMounted,setPopupPlotMounted]=useState(false);
@@ -151,29 +208,29 @@ export function JgpMortalityDifferenceTable({ benchmark, products, valuationByJg
 
   const names=useMemo(()=>{
     const m=new Map<string,string>();
-    products.forEach((p:any)=>{
-      const code=String(p.jgpCode ?? p.jgp ?? p.code ?? "").trim();
+    products.forEach((p)=>{
+      const code=getProductJgpCode(p);
       if(code && p.name) m.set(code,displayJgpLabel(String(p.name)));
     });
     return m;
   },[products]);
 
   const rows=useMemo(()=>benchmark.mortalityOutliers
-    .filter((x:any)=>{
+    .filter((x)=>{
       if(x.targetHospitalizations<=10 || x.peerHospitals<2) return false;
       if(!largeDifferencesOnly) return true;
       const pp=Math.abs(x.targetMortalityPct-x.peerMortalityPct);
       const relative=x.peerMortalityPct>0 ? pp/x.peerMortalityPct : (x.targetMortalityPct>0 ? Infinity : 0);
       return pp>=2 && relative>=.5;
     })
-    .map((x:any)=>({
+    .map((x)=>({
       ...x,
       displayName:names.get(x.jgpCode) ?? "—",
       diff:x.targetMortalityPct-x.peerMortalityPct,
       valuation:valuationByJgp.get(x.jgpCode)?.pkt_hospitalizacja ?? null
     }))
-    .sort((a:any,b:any)=>{
-      const value=(x:any)=>{
+    .sort((a,b)=>{
+      const value=(x:MortalityDisplayRow)=>{
         switch(sortKey){
           case "jgp": return x.jgpCode;
           case "name": return x.displayName;
@@ -191,7 +248,7 @@ export function JgpMortalityDifferenceTable({ benchmark, products, valuationByJg
         }
       };
       const av=value(a),bv=value(b);
-      const cmp=typeof av==="string" ? av.localeCompare(String(bv),"pl") : av-bv;
+      const cmp=typeof av==="string" ? av.localeCompare(String(bv),"pl") : Number(av)-Number(bv);
       return sortDir==="asc" ? cmp : -cmp;
     }),[benchmark.mortalityOutliers,names,valuationByJgp,sortKey,sortDir,largeDifferencesOnly]);
 
@@ -199,32 +256,12 @@ export function JgpMortalityDifferenceTable({ benchmark, products, valuationByJg
     if(sortKey===key) setSortDir(v=>v==="asc"?"desc":"asc");
     else { setSortKey(key); setSortDir("desc"); }
   };
-  const Header=({k,children,num=false}:{k:SortKey;children:React.ReactNode;num?:boolean})=>
+  const renderHeader=(k:SortKey,children:React.ReactNode,num=false)=>
     <th className={num?"num":undefined} aria-sort={sortKey===k?(sortDir==="asc"?"ascending":"descending"):"none"}>
       <button type="button" className={`hospital-sort-header${sortKey===k?" is-active":""}`} onClick={()=>sort(k)}>
         <span>{children}</span><span className="hospital-sort-icon">{sortKey===k?(sortDir==="asc"?"↑":"↓"):"↕"}</span>
       </button>
     </th>;
-
-  const popupTooltipPosition=(clientX:number,clientY:number)=>{
-    const shell=popupPlotShellRef.current;
-    if(!shell) return {left:12,top:120};
-    const r=shell.getBoundingClientRect();
-    const x=clientX-r.left;
-    const y=clientY-r.top;
-    const tooltipWidth=Math.min(330,Math.max(240,r.width-24));
-    const gap=14;
-    const roomRight=r.width-x;
-    const roomLeft=x;
-    const placeRight=roomRight>=tooltipWidth+gap || roomRight>=roomLeft;
-    const left=placeRight
-      ? Math.min(x+gap,r.width-tooltipWidth-10)
-      : Math.max(10,x-tooltipWidth-gap);
-    // Keep the center of the tooltip away from the very top/bottom of the plot.
-    const top=Math.max(90,Math.min(r.height-90,y));
-    return {left,top};
-  };
-
 
   useEffect(()=>{
     if(!selectedRow || !popupPlotMounted || !popupPlotRef.current) return;
@@ -235,16 +272,17 @@ export function JgpMortalityDifferenceTable({ benchmark, products, valuationByJg
       const Plotly=(await import("plotly.js-dist-min")).default;
       if(cancelled || !popupPlotRef.current) return;
 
-      const points=(selectedRow.peerPoints ?? []).filter((p:any)=>p.hospitalizations>0);
-      const peerName=(p:any)=>displayHospitalName(String(p?.name ?? "Peer"));
+      const points=((selectedRow as MortalityDisplayRow & {peerPoints?:MortalityPeerPoint[]}).peerPoints ?? [])
+        .filter((p)=>p.hospitalizations>0);
+      const peerName=(p:(typeof points)[number])=>displayHospitalName(String(p?.name ?? "Peer"));
       const selectedName=displayHospitalName(benchmark.selected.providerName);
 
       await Plotly.react(popupPlotRef.current,[
         {
           type:"scatter",mode:"markers",name:"Peery",
-          x:points.map((p:any)=>p.mortalityPct),
+          x:points.map((p)=>p.mortalityPct),
           y:points.map(()=>selectedRow.jgpCode),
-          customdata:points.map((p:any)=>[peerName(p),p.hospitalizations,p.deaths]),
+          customdata:points.map((p)=>[peerName(p),p.hospitalizations,p.deaths]),
           marker:{size:9,color:"#98A2B3",opacity:.7,line:{width:.7,color:"#fff"}},
           hoverinfo:pairMode ? "none" : undefined,
           hovertemplate:pairMode ? undefined : "<b>%{customdata[0]}</b><br>Śmiertelność: <b>%{x:.1f}%</b><br>Hospitalizacje: %{customdata[1]:,.0f}<br>Zgony: %{customdata[2]:,.0f}<extra>Peer</extra>"
@@ -273,7 +311,7 @@ export function JgpMortalityDifferenceTable({ benchmark, products, valuationByJg
         margin:{l:28,r:16,t:8,b:48},
         legend:{orientation:"h",x:0,y:1.12,font:{size:10}},
         xaxis:(()=>{
-          const values=[...points.map((p:any)=>p.mortalityPct),selectedRow.targetMortalityPct,selectedRow.peerMortalityPct].filter((v:any)=>Number.isFinite(v));
+          const values=[...points.map((p)=>p.mortalityPct),selectedRow.targetMortalityPct,selectedRow.peerMortalityPct].filter((v)=>Number.isFinite(v));
           const min=Math.min(...values),max=Math.max(...values),span=max-min;
           const minRange=4;
           const range=Math.max(span,minRange);
@@ -286,17 +324,17 @@ export function JgpMortalityDifferenceTable({ benchmark, products, valuationByJg
       },PLOTLY_CONFIG);
 
       if(pairMode && popupPlotRef.current){
-        const plot=popupPlotRef.current as any;
+        const plot=popupPlotRef.current as PlotlyDiv;
         plot.removeAllListeners?.("plotly_hover");
         plot.removeAllListeners?.("plotly_unhover");
 
         const reset=()=>setPopupTooltip(null);
 
-        plot.on?.("plotly_hover",(ev:any)=>{
+        plot.on?.("plotly_hover",(ev:PlotlyHoverEvent)=>{
           const pt=ev?.points?.[0];
           if(!pt) return;
           const mouse=ev?.event;
-          const pos=popupTooltipPosition(Number(mouse?.clientX ?? 0),Number(mouse?.clientY ?? 0));
+          const pos=popupTooltipPosition(popupPlotShellRef.current,Number(mouse?.clientX ?? 0),Number(mouse?.clientY ?? 0));
 
           if(pt.curveNumber===0 && Number.isInteger(pt.pointIndex)){
             const p=points[pt.pointIndex];
@@ -362,13 +400,13 @@ export function JgpMortalityDifferenceTable({ benchmark, products, valuationByJg
     <div className="hospital-jgp-table-viewport"><div className="hospital-jgp-table-scroll">
       <table className="hospital-jgp-outlier-table">
         <thead><tr>
-          <Header k="jgp">JGP</Header><Header k="name">Nazwa</Header>
-          <Header k="targetHosp" num>Hosp.</Header><Header k="targetDeaths" num>Zgony</Header><Header k="targetMortality" num>Śmiert. szpitala</Header>
-          <Header k="peerHosp" num>Hosp. peerów</Header><Header k="peerDeaths" num>Zgony peerów</Header><Header k="peerMortality" num>Śmiert. peerów</Header>
-          <Header k="diff" num>Różnica</Header><Header k="expected" num>Oczek. zgony</Header><Header k="excess" num>Nadmiar</Header>
-          <Header k="peerCount" num>Peery z JGP</Header><Header k="valuation" num>Wycena</Header>
+          {renderHeader("jgp", "JGP")}{renderHeader("name", "Nazwa")}
+          {renderHeader("targetHosp", "Hosp.", true)}{renderHeader("targetDeaths", "Zgony", true)}{renderHeader("targetMortality", "Śmiert. szpitala", true)}
+          {renderHeader("peerHosp", "Hosp. peerów", true)}{renderHeader("peerDeaths", "Zgony peerów", true)}{renderHeader("peerMortality", "Śmiert. peerów", true)}
+          {renderHeader("diff", "Różnica", true)}{renderHeader("expected", "Oczek. zgony", true)}{renderHeader("excess", "Nadmiar", true)}
+          {renderHeader("peerCount", "Peery z JGP", true)}{renderHeader("valuation", "Wycena", true)}
         </tr></thead>
-        <tbody>{rows.map((x:any)=><tr key={x.productCode} className="hospital-jgp-clickable-row" tabIndex={0} onClick={()=>{setPopupPlotMounted(false);setSelectedRow(x)}} onKeyDown={e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();setPopupPlotMounted(false);setSelectedRow(x)}}}>
+        <tbody>{rows.map((x)=><tr key={x.productCode} className="hospital-jgp-clickable-row" tabIndex={0} onClick={()=>{setPopupPlotMounted(false);setSelectedRow(x)}} onKeyDown={e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();setPopupPlotMounted(false);setSelectedRow(x)}}}>
           <td><b>{x.jgpCode}</b></td><td className="name">{x.displayName}</td>
           <td className="num">{nf.format(x.targetHospitalizations)}</td><td className="num">{nf.format(x.targetDeaths)}</td>
           <td className="num">{pct(x.targetMortalityPct)}</td><td className="num">{nf.format(x.peerHospitalizations)}</td>
@@ -458,7 +496,7 @@ function pairDistanceTop3(row:PeerPair|undefined){
     {label:"—",raw:0,contribution:0,similarityPct:100},
   ];
   return PAIR_DISTANCE_MODEL.map(([key,label,scale,cap,knot,base,hinge])=>{
-    const raw=Number((row as any)[key])||0;
+    const raw=Number(row[key])||0;
     const scaled=Math.min(raw/scale,cap);
     const contribution=base*scaled+hinge*Math.max(scaled-knot,0);
     return {
@@ -471,7 +509,7 @@ function pairDistanceTop3(row:PeerPair|undefined){
 }
 
 export function PeerComparisonCharts({ benchmark, hoveredPeerKey, onHoverPeer, products, valuationByJgp, pairMode=false, peerPairs=[], hospitalKey="" }: { benchmark: HospitalPeerBenchmark; hoveredPeerKey:string|null; onHoverPeer:(key:string|null)=>void; products:ProductOption[]; valuationByJgp:Map<string,JgpValuation>; pairMode?:boolean; peerPairs?:PeerPair[]; hospitalKey?:string }) {
-  const jgpNameByCode=useMemo(()=>{ const m=new Map<string,string>(); products.forEach((p:any)=>{ const code=String(p.jgpCode ?? p.jgp ?? p.code ?? "").trim(); if(code && p.name) m.set(code,displayJgpLabel(String(p.name))); }); return m; },[products]);
+  const jgpNameByCode=useMemo(()=>{ const m=new Map<string,string>(); products.forEach((p)=>{ const code=getProductJgpCode(p); if(code && p.name) m.set(code,displayJgpLabel(String(p.name))); }); return m; },[products]);
   const pairByPeerKey=useMemo(()=>{
     const m=new Map<string,PeerPair>();
     for(const row of peerPairs){
@@ -493,22 +531,6 @@ export function PeerComparisonCharts({ benchmark, hoveredPeerKey, onHoverPeer, p
     expectedDeaths:number;peerHospitals:number;valuation:number|null;
   }|null>(null);
   const plotHighlightKey=pairMode ? null : hoveredPeerKey;
-
-  const getPairRenderedPoint=(index:number)=>{
-    if(!pairMode || !mapRef.current || !pairMapShellRef.current) return null;
-    const traces=mapRef.current.querySelectorAll<SVGGElement>("g.trace.scatter");
-    const peerTrace=traces.item(0);
-    if(!peerTrace) return null;
-    const points=peerTrace.querySelectorAll<SVGPathElement>("path.point");
-    const node=points.item(index);
-    if(!node) return null;
-    const r=node.getBoundingClientRect();
-    const shellRect=pairMapShellRef.current.getBoundingClientRect();
-    return {
-      pointLeft:r.left+r.width/2-shellRect.left,
-      pointTop:r.top+r.height/2-shellRect.top,
-    };
-  };
 
   const handlePairPointerMove=(e:React.MouseEvent<HTMLDivElement>)=>{
     if(!pairMode || !mapRef.current || !pairMapShellRef.current) return;
@@ -590,20 +612,16 @@ export function PeerComparisonCharts({ benchmark, hoveredPeerKey, onHoverPeer, p
     }
   };
   useEffect(()=>{
-    if(!pairMode || !hoveredPeerKey){
-      setPairListHighlight(null);
-      return;
-    }
-    const index=benchmark.peers.findIndex(p=>p.key===hoveredPeerKey);
-    if(index<0){
-      setPairListHighlight(null);
-      return;
-    }
-    let raf1=0;
     let raf2=0;
-    raf1=requestAnimationFrame(()=>{
+    const raf1=requestAnimationFrame(()=>{
+      const index=pairMode && hoveredPeerKey
+        ? benchmark.peers.findIndex(p=>p.key===hoveredPeerKey) : -1;
+      if(index<0){
+        setPairListHighlight(null);
+        return;
+      }
       raf2=requestAnimationFrame(()=>{
-        const pos=getPairRenderedPoint(index);
+        const pos=getPairRenderedPoint(mapRef.current,pairMapShellRef.current,index,pairMode);
         setPairListHighlight(pos ? {index,...pos} : null);
       });
     });
@@ -612,24 +630,6 @@ export function PeerComparisonCharts({ benchmark, hoveredPeerKey, onHoverPeer, p
       cancelAnimationFrame(raf2);
     };
   },[pairMode,hoveredPeerKey,benchmark.peers]);
-
-  const benchmarkTooltipPosition=(clientX:number,clientY:number)=>{
-    const shell=benchmarkShellRef.current;
-    if(!shell) return {left:12,top:150};
-    const r=shell.getBoundingClientRect();
-    const x=clientX-r.left;
-    const y=clientY-r.top;
-    const tooltipWidth=Math.min(330,Math.max(240,r.width-24));
-    const gap=14;
-    const roomRight=r.width-x;
-    const roomLeft=x;
-    const placeRight=roomRight>=tooltipWidth+gap || roomRight>=roomLeft;
-    const left=placeRight
-      ? Math.min(x+gap,r.width-tooltipWidth-10)
-      : Math.max(10,x-tooltipWidth-gap);
-    const top=Math.max(100,Math.min(r.height-100,y));
-    return {left,top};
-  };
 
   useEffect(() => {
     let cancelled=false;
@@ -681,11 +681,11 @@ export function PeerComparisonCharts({ benchmark, hoveredPeerKey, onHoverPeer, p
           xaxis:{title:{text:"Liczba łóżek na głównych oddziałach",standoff:3,font:{size:11}},automargin:true,gridcolor:"#EEF1F5",rangemode:"tozero"},
           yaxis:{title:{text:"Liczba hospitalizacji",standoff:3,font:{size:11}},automargin:true,gridcolor:"#EEF1F5",rangemode:"tozero"}
         },PLOTLY_CONFIG);
-        const plot=mapRef.current as HTMLDivElement & { on?: (event:string,cb:(ev:any)=>void)=>void; removeAllListeners?: (event:string)=>void };
+        const plot=mapRef.current as PlotlyDiv;
         plot.removeAllListeners?.("plotly_hover");
         plot.removeAllListeners?.("plotly_unhover");
         if(!pairMode){
-          plot.on?.("plotly_hover",(ev:any)=>{
+          plot.on?.("plotly_hover",(ev:PlotlyHoverEvent)=>{
             const pt=ev?.points?.[0];
             if(pt?.curveNumber===0 && Number.isInteger(pt.pointIndex)) onHoverPeer(peers[pt.pointIndex]?.key ?? null);
           });
@@ -727,19 +727,19 @@ export function PeerComparisonCharts({ benchmark, hoveredPeerKey, onHoverPeer, p
         },PLOTLY_CONFIG);
 
         if(pairMode && benchmarkRef.current){
-          const plot=benchmarkRef.current as any;
+          const plot=benchmarkRef.current as PlotlyDiv;
           plot.removeAllListeners?.("plotly_hover");
           plot.removeAllListeners?.("plotly_unhover");
 
           const resetBenchmarkTooltip=()=>setBenchmarkTooltip(null);
 
-          plot.on?.("plotly_hover",(ev:any)=>{
+          plot.on?.("plotly_hover",(ev:PlotlyHoverEvent)=>{
             const pt=ev?.points?.[0];
             if(pt?.curveNumber!==0 || !Number.isInteger(pt.pointIndex)) return;
             const row=top[pt.pointIndex];
             if(!row) return;
             const mouse=ev?.event;
-            const pos=benchmarkTooltipPosition(Number(mouse?.clientX ?? 0),Number(mouse?.clientY ?? 0));
+            const pos=benchmarkTooltipPosition(benchmarkShellRef.current,Number(mouse?.clientX ?? 0),Number(mouse?.clientY ?? 0));
             setBenchmarkTooltip({
               ...pos,
               jgpCode:row.jgpCode,
@@ -755,18 +755,18 @@ export function PeerComparisonCharts({ benchmark, hoveredPeerKey, onHoverPeer, p
           });
 
           plot.on?.("plotly_unhover",resetBenchmarkTooltip);
-          const previousCleanup=(plot as any).__benchmarkTooltipCleanup;
+          const previousCleanup=plot.__benchmarkTooltipCleanup;
           previousCleanup?.();
           const mouseLeave=()=>resetBenchmarkTooltip();
           plot.addEventListener?.("mouseleave",mouseLeave);
-          (plot as any).__benchmarkTooltipCleanup=()=>plot.removeEventListener?.("mouseleave",mouseLeave);
+          plot.__benchmarkTooltipCleanup=()=>plot.removeEventListener?.("mouseleave",mouseLeave);
         }
       }
 
 
     });
     return()=>{cancelled=true};
-  },[benchmark,plotHighlightKey,onHoverPeer,pairMode,pairByPeerKey]);
+  },[benchmark,plotHighlightKey,onHoverPeer,pairMode,jgpNameByCode,valuationByJgp]);
   return <div className="hospital-peer-charts">
     <section className="hospital-peer-chart-card hospital-surface-card">
       <div className="hospital-peer-chart-head"><div><span>Mapa peerów</span><h3>Realna skala struktury vs zakres leczenia</h3></div><small>{pairMode ? "Czerwony: wybrany szpital · szary: peery. Tooltip jest liczony niezależnie od hoveru Plotly." : "Czerwony: wybrany szpital · szary: peery. Podobieństwo jest dopiero w hoverze."}</small></div>

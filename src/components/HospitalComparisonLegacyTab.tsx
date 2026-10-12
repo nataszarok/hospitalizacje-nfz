@@ -142,40 +142,43 @@ export function HospitalComparisonLegacyTab({
   products:ProductOption[];
   peerThreshold:number;
 }){
-  const [benchmark,setBenchmark]=useState<HospitalPeerBenchmark|null>(null);
-  const [valuations,setValuations]=useState<JgpValuation[]>([]);
+  const [result,setResult]=useState<{
+    key:string;benchmark:HospitalPeerBenchmark|null;valuations:JgpValuation[];error:string|null;
+  }|null>(null);
   const [hoveredPeerKey,setHoveredPeerKey]=useState<string|null>(null);
-  const [loading,setLoading]=useState(true);
-  const [error,setError]=useState<string|null>(null);
+  const queryKey=JSON.stringify([hospitalKey,method,peerThreshold]);
+  const currentResult=result?.key===queryKey ? result : null;
+  const benchmark=currentResult?.benchmark ?? null;
+  const error=currentResult?.error ?? null;
+  const loading=Boolean(hospitalKey && !currentResult);
 
   useEffect(()=>{
-    if(!hospitalKey){
-      setBenchmark(null);
-      setLoading(false);
-      return;
-    }
-
+    if(!hospitalKey) return;
     let cancelled=false;
-    setLoading(true);
-
     void Promise.all([loadStaticDataset(),loadRpwdlProfiles(),loadJgpValuations()])
       .then(([dataset,rpwdl,jgpValuations])=>{
         if(cancelled) return;
-        setValuations(jgpValuations);
-        setBenchmark(hospitalPeerBenchmarkFromDataset(dataset,hospitalKey,method,rpwdl,peerThreshold));
-        setError(null);
+        setResult({
+          key:queryKey,
+          valuations:jgpValuations,
+          benchmark:hospitalPeerBenchmarkFromDataset(dataset,hospitalKey,method,rpwdl,peerThreshold),
+          error:null,
+        });
       })
       .catch((e)=>{
         if(cancelled) return;
-        setBenchmark(null);
-        setError(e instanceof Error ? e.message : "Błąd starej metody porównawczej.");
-      })
-      .finally(()=>{ if(!cancelled) setLoading(false); });
-
+        setResult({
+          key:queryKey,valuations:[],benchmark:null,
+          error:e instanceof Error ? e.message : "Błąd starej metody porównawczej.",
+        });
+      });
     return()=>{cancelled=true;};
-  },[hospitalKey,method,peerThreshold]);
+  },[hospitalKey,method,peerThreshold,queryKey]);
 
-  const valuationByJgp=useMemo(()=>new Map(valuations.map(x=>[x.kod_jgp,x])),[valuations]);
+  const valuationByJgp=useMemo(
+    ()=>new Map((currentResult?.valuations ?? []).map(x=>[x.kod_jgp,x])),
+    [currentResult?.valuations]
+  );
 
   if(loading) return <div className="hospital-empty">Ładowanie analizy porównawczej…</div>;
   if(error) return <div className="alert">{error}</div>;
