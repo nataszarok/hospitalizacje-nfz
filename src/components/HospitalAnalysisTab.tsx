@@ -198,6 +198,143 @@ function RpwdlHelp({label,children,table=false}:{label:string;children:React.Rea
   </span>;
 }
 
+type PlotlyHoverEvent = {
+  points?: Array<{curveNumber:number;pointIndex:number;pointNumber:number}>;
+  event?: MouseEvent;
+};
+type PlotlyDiv = HTMLDivElement & {
+  on?: (event:string, callback:(event:PlotlyHoverEvent)=>void)=>void;
+  removeAllListeners?: (event:string)=>void;
+};
+
+const tooltipPosition=(shell:HTMLDivElement|null,clientX:number,clientY:number,estimatedHeight=210)=>{
+  if(!shell) return {left:12,top:12};
+  const r=shell.getBoundingClientRect();
+  const x=clientX-r.left;
+  const y=clientY-r.top;
+  const tooltipWidth=Math.min(330,Math.max(230,r.width-24));
+  const gap=14;
+  const left=x+r.width*0.02+tooltipWidth+gap<r.width
+    ? Math.min(x+gap,r.width-tooltipWidth-10)
+    : Math.max(10,x-tooltipWidth-gap);
+  const halfHeight=Math.min(estimatedHeight/2,Math.max(40,(r.height-20)/2));
+  const top=Math.max(halfHeight+10,Math.min(r.height-halfHeight-10,y));
+  return {left,top};
+};
+
+
+const treemapTooltipPosition=(
+  shell:HTMLDivElement|null,
+  eventTarget:EventTarget|null|undefined,
+  clientX:number,
+  clientY:number,
+  estimatedHeight=180,
+)=>{
+  if(!shell) return {left:12,top:12,placement:"side" as const};
+
+  const shellRect=shell.getBoundingClientRect();
+  const target=eventTarget instanceof Element ? eventTarget : null;
+  const slice=target?.closest("g.slice") ?? target?.closest("path.surface") ?? target;
+  const boxRect=slice instanceof Element ? slice.getBoundingClientRect() : null;
+
+  if(!boxRect || boxRect.width<=0 || boxRect.height<=0){
+    const fallback=tooltipPosition(shell,clientX,clientY,estimatedHeight);
+    return {...fallback,placement:"side" as const};
+  }
+
+  const gap=14;
+  const viewportPad=12;
+  const tooltipWidth=Math.min(330,Math.max(230,shellRect.width-24));
+  const tooltipHeight=Math.min(estimatedHeight,Math.max(120,window.innerHeight-viewportPad*2));
+  const roomRight=window.innerWidth-boxRect.right-viewportPad;
+  const roomLeft=boxRect.left-viewportPad;
+  const roomAbove=boxRect.top-viewportPad;
+  const roomBelow=window.innerHeight-boxRect.bottom-viewportPad;
+  const boxCenterY=boxRect.top+boxRect.height/2;
+  const clampedCenterY=Math.max(
+    viewportPad+tooltipHeight/2,
+    Math.min(window.innerHeight-viewportPad-tooltipHeight/2,boxCenterY),
+  );
+
+  // Priorytet: prawa/lewa strona kafla. To gwarantuje brak nakładania na box.
+  if(roomRight>=tooltipWidth+gap){
+    return {
+      left:boxRect.right+gap-shellRect.left,
+      top:clampedCenterY-shellRect.top,
+      placement:"side" as const,
+    };
+  }
+  if(roomLeft>=tooltipWidth+gap){
+    return {
+      left:boxRect.left-gap-tooltipWidth-shellRect.left,
+      top:clampedCenterY-shellRect.top,
+      placement:"side" as const,
+    };
+  }
+
+  // Gdy po bokach brakuje miejsca, tooltip trafia całkowicie nad albo pod box.
+  const centeredViewportLeft=Math.max(
+    viewportPad,
+    Math.min(window.innerWidth-viewportPad-tooltipWidth,boxRect.left+boxRect.width/2-tooltipWidth/2),
+  );
+  if(roomAbove>=tooltipHeight+gap || roomAbove>=roomBelow){
+    return {
+      left:centeredViewportLeft-shellRect.left,
+      top:boxRect.top-gap-shellRect.top,
+      placement:"above" as const,
+    };
+  }
+  return {
+    left:centeredViewportLeft-shellRect.left,
+    top:boxRect.bottom+gap-shellRect.top,
+    placement:"below" as const,
+  };
+};
+
+const wrapTreemapName=(value:string,maxLine=18)=>{
+  const words=value.trim().split(/\s+/).filter(Boolean);
+  if(!words.length) return "";
+  const lines:string[]=[];
+  let line="";
+  for(const word of words){
+    const next=line ? `${line} ${word}` : word;
+    if(line && next.length>maxLine){
+      lines.push(line);
+      line=word;
+    }else{
+      line=next;
+    }
+  }
+  if(line) lines.push(line);
+  return lines.join("<br>");
+};
+
+const treemapLabel=(row:{label:string;name:string;sharePct:number;isOther:boolean})=>{
+  if(row.isOther){
+    return row.sharePct>=7
+      ? `<b>Pozostałe</b><br>${pf.format(row.sharePct)}%`
+      : "<b>Inne</b>";
+  }
+
+  // Kod sekcji jest zawsze pierwszym i obowiązkowym elementem etykiety.
+  // Pełną nazwę pokazujemy dopiero, gdy udział daje realną szansę na jej zmieszczenie.
+  const fullNameThreshold=
+    row.name.length<=22 ? 8 :
+    row.name.length<=38 ? 12 :
+    18;
+
+  if(row.sharePct>=fullNameThreshold){
+    return `<b>${row.label}</b><br>${wrapTreemapName(row.name)}<br>${pf.format(row.sharePct)}%`;
+  }
+
+  if(row.sharePct>=5){
+    return `<b>${row.label}</b><br>${pf.format(row.sharePct)}%`;
+  }
+
+  return `<b>${row.label}</b>`;
+};
+
+
 function HospitalCharts({ analysis, products }: { analysis: HospitalAnalysis; products: ProductOption[] }) {
   const topRef = useRef<HTMLDivElement>(null);
   const familyRef = useRef<HTMLDivElement>(null);
@@ -258,133 +395,6 @@ function HospitalCharts({ analysis, products }: { analysis: HospitalAnalysis; pr
     };
   },[analysis.codes]);
 
-  const tooltipPosition=(shell:HTMLDivElement|null,clientX:number,clientY:number,estimatedHeight=210)=>{
-    if(!shell) return {left:12,top:12};
-    const r=shell.getBoundingClientRect();
-    const x=clientX-r.left;
-    const y=clientY-r.top;
-    const tooltipWidth=Math.min(330,Math.max(230,r.width-24));
-    const gap=14;
-    const left=x+r.width*0.02+tooltipWidth+gap<r.width
-      ? Math.min(x+gap,r.width-tooltipWidth-10)
-      : Math.max(10,x-tooltipWidth-gap);
-    const halfHeight=Math.min(estimatedHeight/2,Math.max(40,(r.height-20)/2));
-    const top=Math.max(halfHeight+10,Math.min(r.height-halfHeight-10,y));
-    return {left,top};
-  };
-
-
-  const treemapTooltipPosition=(
-    shell:HTMLDivElement|null,
-    eventTarget:EventTarget|null|undefined,
-    clientX:number,
-    clientY:number,
-    estimatedHeight=180,
-  )=>{
-    if(!shell) return {left:12,top:12,placement:"side" as const};
-
-    const shellRect=shell.getBoundingClientRect();
-    const target=eventTarget instanceof Element ? eventTarget : null;
-    const slice=target?.closest("g.slice") ?? target?.closest("path.surface") ?? target;
-    const boxRect=slice instanceof Element ? slice.getBoundingClientRect() : null;
-
-    if(!boxRect || boxRect.width<=0 || boxRect.height<=0){
-      const fallback=tooltipPosition(shell,clientX,clientY,estimatedHeight);
-      return {...fallback,placement:"side" as const};
-    }
-
-    const gap=14;
-    const viewportPad=12;
-    const tooltipWidth=Math.min(330,Math.max(230,shellRect.width-24));
-    const tooltipHeight=Math.min(estimatedHeight,Math.max(120,window.innerHeight-viewportPad*2));
-    const roomRight=window.innerWidth-boxRect.right-viewportPad;
-    const roomLeft=boxRect.left-viewportPad;
-    const roomAbove=boxRect.top-viewportPad;
-    const roomBelow=window.innerHeight-boxRect.bottom-viewportPad;
-    const boxCenterY=boxRect.top+boxRect.height/2;
-    const clampedCenterY=Math.max(
-      viewportPad+tooltipHeight/2,
-      Math.min(window.innerHeight-viewportPad-tooltipHeight/2,boxCenterY),
-    );
-
-    // Priorytet: prawa/lewa strona kafla. To gwarantuje brak nakładania na box.
-    if(roomRight>=tooltipWidth+gap){
-      return {
-        left:boxRect.right+gap-shellRect.left,
-        top:clampedCenterY-shellRect.top,
-        placement:"side" as const,
-      };
-    }
-    if(roomLeft>=tooltipWidth+gap){
-      return {
-        left:boxRect.left-gap-tooltipWidth-shellRect.left,
-        top:clampedCenterY-shellRect.top,
-        placement:"side" as const,
-      };
-    }
-
-    // Gdy po bokach brakuje miejsca, tooltip trafia całkowicie nad albo pod box.
-    const centeredViewportLeft=Math.max(
-      viewportPad,
-      Math.min(window.innerWidth-viewportPad-tooltipWidth,boxRect.left+boxRect.width/2-tooltipWidth/2),
-    );
-    if(roomAbove>=tooltipHeight+gap || roomAbove>=roomBelow){
-      return {
-        left:centeredViewportLeft-shellRect.left,
-        top:boxRect.top-gap-shellRect.top,
-        placement:"above" as const,
-      };
-    }
-    return {
-      left:centeredViewportLeft-shellRect.left,
-      top:boxRect.bottom+gap-shellRect.top,
-      placement:"below" as const,
-    };
-  };
-
-  const wrapTreemapName=(value:string,maxLine=18)=>{
-    const words=value.trim().split(/\s+/).filter(Boolean);
-    if(!words.length) return "";
-    const lines:string[]=[];
-    let line="";
-    for(const word of words){
-      const next=line ? `${line} ${word}` : word;
-      if(line && next.length>maxLine){
-        lines.push(line);
-        line=word;
-      }else{
-        line=next;
-      }
-    }
-    if(line) lines.push(line);
-    return lines.join("<br>");
-  };
-
-  const treemapLabel=(row:{label:string;name:string;sharePct:number;isOther:boolean})=>{
-    if(row.isOther){
-      return row.sharePct>=7
-        ? `<b>Pozostałe</b><br>${pf.format(row.sharePct)}%`
-        : "<b>Inne</b>";
-    }
-
-    // Kod sekcji jest zawsze pierwszym i obowiązkowym elementem etykiety.
-    // Pełną nazwę pokazujemy dopiero, gdy udział daje realną szansę na jej zmieszczenie.
-    const fullNameThreshold=
-      row.name.length<=22 ? 8 :
-      row.name.length<=38 ? 12 :
-      18;
-
-    if(row.sharePct>=fullNameThreshold){
-      return `<b>${row.label}</b><br>${wrapTreemapName(row.name)}<br>${pf.format(row.sharePct)}%`;
-    }
-
-    if(row.sharePct>=5){
-      return `<b>${row.label}</b><br>${pf.format(row.sharePct)}%`;
-    }
-
-    return `<b>${row.label}</b>`;
-  };
-
   useEffect(() => {
     let cancelled=false;
     const cleanups:Array<()=>void>=[];
@@ -435,7 +445,7 @@ function HospitalCharts({ analysis, products }: { analysis: HospitalAnalysis; pr
           yaxis:{title:"",automargin:true},
         },{...PLOTLY_CONFIG,displayModeBar:false});
 
-        const plot=topRef.current as any;
+        const plot=topRef.current as PlotlyDiv;
         plot.removeAllListeners?.("plotly_hover");
         plot.removeAllListeners?.("plotly_unhover");
 
@@ -444,7 +454,7 @@ function HospitalCharts({ analysis, products }: { analysis: HospitalAnalysis; pr
           setChartTooltip(current=>current?.kind==="jgp" ? null : current);
         };
 
-        plot.on?.("plotly_hover",(ev:any)=>{
+        plot.on?.("plotly_hover",(ev:PlotlyHoverEvent)=>{
           const pt=ev?.points?.[0];
           if(pt?.curveNumber!==0 || !Number.isInteger(pt.pointIndex)) return;
           const row=top[pt.pointIndex];
@@ -529,7 +539,7 @@ function HospitalCharts({ analysis, products }: { analysis: HospitalAnalysis; pr
           hovermode:"closest",
         },{...PLOTLY_CONFIG,displayModeBar:false});
 
-        const familyPlot=familyRef.current as any;
+        const familyPlot=familyRef.current as PlotlyDiv;
         familyPlot.removeAllListeners?.("plotly_hover");
         familyPlot.removeAllListeners?.("plotly_unhover");
 
@@ -541,7 +551,7 @@ function HospitalCharts({ analysis, products }: { analysis: HospitalAnalysis; pr
           setChartTooltip(current=>current?.kind==="family" ? null : current);
         };
 
-        familyPlot.on?.("plotly_hover",(ev:any)=>{
+        familyPlot.on?.("plotly_hover",(ev:PlotlyHoverEvent)=>{
           const pt=ev?.points?.[0];
           if(pt?.curveNumber!==0 || !Number.isInteger(pt.pointNumber)) return;
           const row=rows[pt.pointNumber];
@@ -675,20 +685,39 @@ export function HospitalAnalysisTab({ method, products, hospitalKey, setHospital
   peerThreshold:number; setPeerThreshold:(value:number)=>void;
 }) {
   const [directory, setDirectory] = useState<HospitalDirectoryEntry[]>([]);
-  const [city, setCity] = useState("");
-  const [analysis, setAnalysis] = useState<HospitalAnalysis | null>(null);
+  const [analysisResult,setAnalysisResult]=useState<{
+    hospitalKey:string;method:EstimationMethod;value:HospitalAnalysis|null;
+  }|null>(null);
+  const analysis=analysisResult?.hospitalKey===hospitalKey && analysisResult.method===method
+    ? analysisResult.value : null;
   const [rpwdlSummaryProfiles, setRpwdlSummaryProfiles] = useState<Record<string,RpwdlSummaryProfileRecord>>({});
   const [facilitySnapshotDate,setFacilitySnapshotDate]=useState<string>("");
   const [financialResults,setFinancialResults]=useState<Record<string,FinancialEntityRecord>>({});
   const [sidebarSlot, setSidebarSlot] = useState<HTMLElement | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [directoryLoading, setDirectoryLoading] = useState(true);
+  const loading=directoryLoading || Boolean(hospitalKey && (analysisResult?.hospitalKey!==hospitalKey || analysisResult.method!==method));
   const [error, setError] = useState<string | null>(null);
-  const [rpwdlOpen,setRpwdlOpen]=useState<{core:boolean;outpatient:boolean}>({
-    core:false,
-    outpatient:false,
+  // Stan interfejsu jest przypisany do szpitala; zmiana szpitala przywraca domyślne ustawienia.
+  type RpwdlUiState={
+    hospitalKey:string;
+    open:{core:boolean;outpatient:boolean};
+    sortKey:RpwdlWardSortKey;
+    sortDir:"asc"|"desc";
+  };
+  const defaultRpwdlUi=():RpwdlUiState=>({
+    hospitalKey,open:{core:false,outpatient:false},sortKey:"beds",sortDir:"desc",
   });
-  const [rpwdlWardSortKey,setRpwdlWardSortKey]=useState<RpwdlWardSortKey>("beds");
-  const [rpwdlWardSortDir,setRpwdlWardSortDir]=useState<"asc"|"desc">("desc");
+  const [rpwdlUi,setRpwdlUi]=useState<RpwdlUiState>(defaultRpwdlUi);
+  const activeRpwdlUi=rpwdlUi.hospitalKey===hospitalKey ? rpwdlUi : defaultRpwdlUi();
+  const rpwdlOpen=activeRpwdlUi.open;
+  const rpwdlWardSortKey=activeRpwdlUi.sortKey;
+  const rpwdlWardSortDir=activeRpwdlUi.sortDir;
+  const setRpwdlOpen=(update:(previous:RpwdlUiState["open"])=>RpwdlUiState["open"])=>{
+    setRpwdlUi(previous=>{
+      const current=previous.hospitalKey===hospitalKey ? previous : defaultRpwdlUi();
+      return {...current,open:update(current.open)};
+    });
+  };
 
   void hospitalSubtab;
   void setHospitalSubtab;
@@ -696,13 +725,10 @@ export function HospitalAnalysisTab({ method, products, hospitalKey, setHospital
   void setPeerThreshold;
 
   useEffect(() => {
-    setSidebarSlot(document.getElementById("hospital-sidebar-slot"));
+    // Opóźniony odczyt po montażu: React nie wykonuje setState synchronicznie w efekcie.
+    const frame=requestAnimationFrame(()=>setSidebarSlot(document.getElementById("hospital-sidebar-slot")));
+    return ()=>cancelAnimationFrame(frame);
   }, []);
-  useEffect(()=>{
-    setRpwdlOpen({core:false,outpatient:false});
-    setRpwdlWardSortKey("beds");
-    setRpwdlWardSortDir("desc");
-  },[hospitalKey]);
   useEffect(() => {
     void loadStaticDataset()
       .then((d) => {
@@ -726,18 +752,10 @@ export function HospitalAnalysisTab({ method, products, hospitalKey, setHospital
           fin.status === "rejected" ? `wyniki finansowe: ${fin.reason instanceof Error ? fin.reason.message : "błąd"}` : null,
         ].filter(Boolean);
         setError(optionalErrors.length ? `Dane podstawowe działają. Nie udało się załadować: ${optionalErrors.join("; ")}` : null);
-        setLoading(false);
+        setDirectoryLoading(false);
       })
-      .catch((e) => { setError(e instanceof Error ? e.message : "Błąd danych"); setLoading(false); });
+      .catch((e) => { setError(e instanceof Error ? e.message : "Błąd danych"); setDirectoryLoading(false); });
   }, []);
-  const hospitalMatches = useMemo(() => {
-    const q = city.trim().toLocaleLowerCase("pl");
-    if (!q) return [];
-    return directory
-      .filter((x) => `${x.city} ${x.name}`.toLocaleLowerCase("pl").includes(q))
-      .sort((a,b) => a.city.localeCompare(b.city, "pl") || a.name.localeCompare(b.name, "pl"))
-      .slice(0, 30);
-  }, [directory, city]);
   const rpwdlSummaryProfile = hospitalKey ? rpwdlSummaryProfiles[hospitalKey] : undefined;
   const facilityAddress=rpwdlSummaryProfile?.primary_address;
   const facilityCity=facilityAddress?.city ?? rpwdlSummaryProfile?.source_city;
@@ -820,14 +838,16 @@ export function HospitalAnalysisTab({ method, products, hospitalKey, setHospital
   },[rpwdlStats,rpwdlWardSortKey,rpwdlWardSortDir]);
 
   const sortRpwdlWards=(key:RpwdlWardSortKey)=>{
-    if(rpwdlWardSortKey===key) setRpwdlWardSortDir(v=>v==="asc"?"desc":"asc");
-    else {
-      setRpwdlWardSortKey(key);
-      setRpwdlWardSortDir(key==="name"?"asc":"desc");
-    }
+    setRpwdlUi(previous=>{
+      const current=previous.hospitalKey===hospitalKey ? previous : defaultRpwdlUi();
+      return current.sortKey===key
+        ? {...current,sortDir:current.sortDir==="asc"?"desc":"asc"}
+        : {...current,sortKey:key,sortDir:key==="name"?"asc":"desc"};
+    });
   };
 
-  const RpwdlWardHeader=({sortKey,children,num=false}:{sortKey:RpwdlWardSortKey;children:React.ReactNode;num?:boolean})=>
+  // Funkcja renderująca JSX, nie komponent tworzony wewnątrz renderu.
+  const renderRpwdlWardHeader=(sortKey:RpwdlWardSortKey,children:React.ReactNode,num=false)=>
     <th className={num?"num":undefined} aria-sort={rpwdlWardSortKey===sortKey?(rpwdlWardSortDir==="asc"?"ascending":"descending"):"none"}>
       <button
         type="button"
@@ -840,15 +860,19 @@ export function HospitalAnalysisTab({ method, products, hospitalKey, setHospital
     </th>;
 
   useEffect(() => {
-    if (!hospitalKey) { setAnalysis(null); return; }
+    if (!hospitalKey) return;
     let cancelled = false;
-    setLoading(true);
     void loadStaticDataset()
       .then((d) => {
-        if (!cancelled) setAnalysis(hospitalAnalysisFromDataset(d, hospitalKey, method));
+        if (!cancelled) setAnalysisResult({
+          hospitalKey,method,value:hospitalAnalysisFromDataset(d,hospitalKey,method),
+        });
       })
-      .catch((e) => { if (!cancelled) setError(e instanceof Error ? e.message : "Błąd analizy"); })
-      .finally(() => { if (!cancelled) setLoading(false); });
+      .catch((e) => {
+        if (cancelled) return;
+        setError(e instanceof Error ? e.message : "Błąd analizy");
+        setAnalysisResult({hospitalKey,method,value:null});
+      });
     return () => { cancelled = true; };
   }, [hospitalKey, method]);
   return <section className={`hospital-analysis ${loading ? "loading" : ""} hospital-subtab-summary`}>
@@ -860,9 +884,7 @@ export function HospitalAnalysisTab({ method, products, hospitalKey, setHospital
           value={hospitalKey || null}
           onChange={(value) => {
             if (!value) return;
-            const selected=directory.find((x)=>x.key===value);
             setHospitalKey(value);
-            if (selected) setCity(`${selected.name} · ${selected.city}`);
           }}
           data={directory.map((x)=>({value:x.key,label:`${x.name} · ${x.city}`}))}
           placeholder="Wybierz szpital"
@@ -894,7 +916,7 @@ export function HospitalAnalysisTab({ method, products, hospitalKey, setHospital
 
         <div className={`hospital-profile-card hospital-profile-card-finance hospital-profile-card-finance-top ${financialTone}`}>
           <div className="hospital-profile-card-head hospital-profile-card-head-finance">
-            
+
             <div>
               <span>
                 {financialHasResult
@@ -913,7 +935,7 @@ export function HospitalAnalysisTab({ method, products, hospitalKey, setHospital
           </div>
         </div>
       </div>
-      
+
       <div className="hospital-summary-stack hospital-summary-redesign">
         <section className="hospital-profile-stats-card" aria-label="Najważniejsze informacje o szpitalu">
           <div className="hospital-profile-stats-grid">
@@ -1038,9 +1060,9 @@ export function HospitalAnalysisTab({ method, products, hospitalKey, setHospital
                 {sortedRpwdlWards.length ? <table className="hospital-rpwdl-wards-table">
                   <thead>
                     <tr>
-                      <RpwdlWardHeader sortKey="name">Oddział</RpwdlWardHeader>
-                      <RpwdlWardHeader sortKey="beds" num>Łóżka</RpwdlWardHeader>
-                      <RpwdlWardHeader sortKey="fields">Realizowane dziedziny</RpwdlWardHeader>
+                      {renderRpwdlWardHeader("name", "Oddział")}
+                      {renderRpwdlWardHeader("beds", "Łóżka", true)}
+                      {renderRpwdlWardHeader("fields", "Realizowane dziedziny")}
                     </tr>
                   </thead>
                   <tbody>
