@@ -124,11 +124,11 @@ describe("HospitalAnalysisTab — profil szpitala", () => {
     fireEvent.click(screen.getByRole("button", { name: /Główne oddziały i dziedziny/ }));
     const table = document.querySelector(".hospital-rpwdl-wards-table") as HTMLTableElement;
     expect(table).toBeInTheDocument();
-    expect(within(table).getAllByRole("row").slice(1).map((row) => row.cells[0]?.textContent)).toEqual([
+    expect(within(table).getAllByRole("row").slice(1).map((row) => row.querySelector("td")?.textContent)).toEqual([
       "Chirurgia", "Kardiologia",
     ]);
     fireEvent.click(within(table).getByRole("button", { name: /Łóżka/ }));
-    expect(within(table).getAllByRole("row").slice(1).map((row) => row.cells[0]?.textContent)).toEqual([
+    expect(within(table).getAllByRole("row").slice(1).map((row) => row.querySelector("td")?.textContent)).toEqual([
       "Kardiologia", "Chirurgia",
     ]);
     expect(within(table).getByRole("button", { name: /Łóżka/ }).closest("th")).toHaveAttribute("aria-sort", "ascending");
