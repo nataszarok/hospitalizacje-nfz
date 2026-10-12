@@ -18,3 +18,8 @@ node_modules/
 *.tsbuildinfo
 
 pipeline.md
+
+/data/
+/db_build/
+
+.DS_Store
