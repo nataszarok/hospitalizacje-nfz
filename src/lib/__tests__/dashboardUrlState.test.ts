@@ -52,6 +52,9 @@ describe("dashboard URL state", () => {
       highlightedRegions: ["07"],
       highlightedCities: ["Warszawa"],
       activeTab: "admissions",
+      hospitalKey: "",
+      hospitalSubtab: "summary",
+      peerThreshold: 75,
     };
     expect(readDashboardUrlState(reference, dashboardUrlSearch(reference, state))).toEqual(state);
   });
