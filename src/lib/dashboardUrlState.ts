@@ -14,7 +14,7 @@ export type DashboardUrlState = {
   highlightedCities: string[];
   activeTab: DashboardActiveTab;
   hospitalKey?: string;
-  hospitalSubtab?: "summary" | "comparison" | "similarity";
+  hospitalSubtab?: "summary" | "comparison";
   peerThreshold?: number;
 };
 
@@ -85,7 +85,8 @@ export function readDashboardUrlState(reference: ReferencePayload, search: strin
     highlightedCities: validValues(params.getAll("c"), cityValues, 10),
     activeTab,
     hospitalKey: params.get("hospital") ?? "",
-    hospitalSubtab: params.get("hv") === "c" ? "comparison" : params.get("hv") === "s" ? "similarity" : "summary",
+    // "s" to dawny link do zakładki Podobieństwo, która jest teraz zakładką Porównanie.
+    hospitalSubtab: params.get("hv") === "c" || params.get("hv") === "s" ? "comparison" : "summary",
     peerThreshold: Math.min(90, Math.max(70, nonNegativeInteger(params.get("peer")) || 75)),
   };
 }
@@ -122,7 +123,6 @@ export function dashboardUrlSearch(reference: ReferencePayload, state: Dashboard
   if (state.activeTab === "methodology") params.set("t", "m");
   if (state.hospitalKey) params.set("hospital", state.hospitalKey);
   if (state.hospitalSubtab === "comparison") params.set("hv", "c");
-  if (state.hospitalSubtab === "similarity") params.set("hv", "s");
   const peerThreshold = state.peerThreshold ?? 75;
   if (peerThreshold !== 75) params.set("peer", String(Math.min(90, Math.max(70, Math.floor(peerThreshold)))));
 
