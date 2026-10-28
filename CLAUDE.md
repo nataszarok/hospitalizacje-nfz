@@ -52,7 +52,9 @@ npm run refresh:data # przebudowa public/data/dashboard.json.gz z data_exports/
   Stare linki dashboardu z parametrami na `/` przekierowuje `LegacyDashboardRedirect`.
 - `src/components/portal/` — elementy portalu: `HomePage` (widok strony głównej; liczby w pasku faktów
   liczy `datasetHighlights` podczas budowania), `SiteHeader` (nagłówek w `layout.tsx`), `PortalIcon`.
-  Ilustracja hero to własny SVG (`public/images/hospital-corridor.svg`) — bez zewnętrznych licencji.
+  Grafika hero (`public/images/hero-data.svg`) powstaje z danych skryptem `scripts/build_hero_art.py`
+  (szpitale: hospitalizacje × udział przyjęć nagłych) — bez zdjęć i zewnętrznych licencji.
+  Po aktualizacji `dashboard.json.gz` uruchom skrypt ponownie.
   Nagłówek i dashboard synchronizują zakładkę zdarzeniami z `src/lib/dashboardNavigation.ts`;
   adresy podstron dashboardu są w `DASHBOARD_HREFS`.
 - `src/components/` — komponenty UI. Zakładka „Profil szpitala” to `HospitalAnalysisTab`

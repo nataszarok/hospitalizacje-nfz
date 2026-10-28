@@ -15,7 +15,7 @@ describe("Strona główna", () => {
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Polskie szpitalnictwo");
     const hero = screen.getByRole("heading", { level: 1 }).closest("section")!;
     expect(within(hero).getAllByRole("link").map((link) => link.getAttribute("href"))).toEqual(["#odkrywaj"]);
-    expect(screen.getByRole("img", { name: "Ilustracja: korytarz szpitala" })).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: /Grafika z danych: szpitale w Polsce/ })).toBeInTheDocument();
   });
 
   it("pokazuje w pasku faktów liczby z danych, a nie same etykiety", () => {

@@ -1,7 +1,7 @@
 .home { color: var(--color-text); }
 .container { width: min(calc(100% - var(--atlas-page-gutter) - var(--atlas-page-gutter)), var(--atlas-page-max)); margin-inline: auto; }
 .hero { height: 465px; position: relative; overflow: hidden; background: #eaf4f2; display: flex; align-items: center; }
-.heroPhoto { position: absolute; inset: 0 0 0 37%; background-image: url('/images/hospital-corridor.svg'); background-repeat: no-repeat; background-size: cover; background-position: center 54%; -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 28%); mask-image: linear-gradient(90deg, transparent 0, #000 28%); }
+.heroPhoto { position: absolute; inset: 0 0 0 37%; background-image: url('/images/hero-data.svg'); background-repeat: no-repeat; background-size: cover; background-position: center 54%; -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 28%); mask-image: linear-gradient(90deg, transparent 0, #000 28%); }
 .heroShade { position: absolute; inset: 0; background: linear-gradient(90deg, #f3f9f8 0%, #f3f9f8 25%, rgba(243,249,248,.95) 35%, rgba(243,249,248,.76) 46%, rgba(243,249,248,.14) 66%, rgba(243,249,248,0) 87%); }
 .hero .container { position: relative; z-index: 1; }
 .heroContent { max-width: 575px; padding: 45px 0 53px; }
