@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { admissionsFromDataset, mortalityFromDataset, referenceFromDataset } from "@/lib/staticData";
+import { admissionsFromDataset, datasetHighlights, mortalityFromDataset, referenceFromDataset } from "@/lib/staticData";
 
 type Dataset = Parameters<typeof referenceFromDataset>[0];
 
@@ -106,5 +106,17 @@ describe("admissionsFromDataset", () => {
       rows: [],
       areaStats: { regions: [], cities: [] },
     });
+  });
+});
+
+describe("datasetHighlights", () => {
+  it("liczy hospitalizacje metodą sim, unikalnych świadczeniodawców i grupy JGP", () => {
+    expect(datasetHighlights(dataset())).toEqual({ analysisYear: "2024", hospitalizations: 128, providers: 3, jgpGroups: 2 });
+  });
+
+  it("pomija puste kody JGP i nie liczy dwa razy tej samej grupy", () => {
+    const d = dataset();
+    d.products.push(["P3", "A01", "Produkt 3"], ["P4", null, "Bez JGP"], ["P5", "  ", "Pusty"]);
+    expect(datasetHighlights(d).jgpGroups).toBe(2);
   });
 });

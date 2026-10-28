@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { DASHBOARD_TAB_CHANGED_EVENT, DASHBOARD_TAB_NAVIGATE_EVENT, type DashboardNavigation } from "@/lib/dashboardNavigation";
 import { AdmissionTab } from "@/components/AdmissionTab";
 import { KpiStrip } from "@/components/KpiStrip";
 import { HospitalAnalysisTab } from "@/components/HospitalAnalysisTab";
@@ -39,6 +40,24 @@ export function Dashboard() {
   const [hospitalKey, setHospitalKey] = useState("");
   const [hospitalSubtab, setHospitalSubtab] = useState<"summary"|"comparison"|"similarity">("summary");
   const [peerThreshold, setPeerThreshold] = useState(75);
+
+  // Most z nagłówkiem portalu: nagłówek wybiera zakładkę, dashboard zgłasza aktywną zakładkę.
+  useEffect(() => {
+    const handleNavigation = (event: Event) => {
+      const { tab, hospitalSubtab: subtab } = (event as CustomEvent<DashboardNavigation>).detail;
+      setActiveTab(tab);
+      if (subtab) setHospitalSubtab(subtab);
+    };
+    window.addEventListener(DASHBOARD_TAB_NAVIGATE_EVENT, handleNavigation);
+    return () => window.removeEventListener(DASHBOARD_TAB_NAVIGATE_EVENT, handleNavigation);
+  }, []);
+
+  useEffect(() => {
+    if (!urlStateReady) return;
+    window.dispatchEvent(new CustomEvent<DashboardNavigation>(DASHBOARD_TAB_CHANGED_EVENT, {
+      detail: { tab: activeTab, hospitalSubtab: hospitalSubtab === "comparison" ? "comparison" : "summary" },
+    }));
+  }, [activeTab, hospitalSubtab, urlStateReady]);
 
   useEffect(() => {
     const load = async () => {
