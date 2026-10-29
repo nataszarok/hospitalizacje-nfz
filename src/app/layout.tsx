@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "@mantine/core/styles.css";
 import "./globals.css";
+import "../styles/portal.css";
+import { SiteHeader } from "@/components/portal/SiteHeader";
+import { SITE_NAME } from "@/lib/site";
 import { ColorSchemeScript, MantineProvider, mantineHtmlProps } from "@mantine/core";
 
 const inter = Inter({
@@ -10,8 +13,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Hospitalizacje w Polsce",
-  description: "Analiza liczby hospitalizacji, śmiertelności i trybu przyjęcia · NFZ 2025",
+  title: SITE_NAME,
+  description: "Portal o publicznej ochronie zdrowia: hospitalizacje, szpitale publiczne, wyceny JGP i artykuły na podstawie danych NFZ.",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
@@ -26,7 +29,10 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             headings: { fontFamily: inter.style.fontFamily },
           }}
         >
-          {children}
+          <div className="atlas-portal">
+            <SiteHeader />
+            {children}
+          </div>
         </MantineProvider>
       </body>
     </html>

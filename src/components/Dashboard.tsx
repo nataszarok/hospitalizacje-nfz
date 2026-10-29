@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { DASHBOARD_TAB_CHANGED_EVENT, DASHBOARD_TAB_NAVIGATE_EVENT, type DashboardNavigation } from "@/lib/dashboardNavigation";
 import { AdmissionTab } from "@/components/AdmissionTab";
 import { KpiStrip } from "@/components/KpiStrip";
 import { HospitalAnalysisTab } from "@/components/HospitalAnalysisTab";
@@ -39,6 +40,24 @@ export function Dashboard() {
   const [hospitalKey, setHospitalKey] = useState("");
   const [hospitalSubtab, setHospitalSubtab] = useState<"summary"|"comparison">("summary");
   const [peerThreshold, setPeerThreshold] = useState(75);
+
+  // Most z nagłówkiem portalu: nagłówek wybiera zakładkę, dashboard zgłasza aktywną zakładkę.
+  useEffect(() => {
+    const handleNavigation = (event: Event) => {
+      const { tab, hospitalSubtab: subtab } = (event as CustomEvent<DashboardNavigation>).detail;
+      setActiveTab(tab);
+      if (subtab) setHospitalSubtab(subtab);
+    };
+    window.addEventListener(DASHBOARD_TAB_NAVIGATE_EVENT, handleNavigation);
+    return () => window.removeEventListener(DASHBOARD_TAB_NAVIGATE_EVENT, handleNavigation);
+  }, []);
+
+  useEffect(() => {
+    if (!urlStateReady) return;
+    window.dispatchEvent(new CustomEvent<DashboardNavigation>(DASHBOARD_TAB_CHANGED_EVENT, {
+      detail: { tab: activeTab, hospitalSubtab: hospitalSubtab === "comparison" ? "comparison" : "summary" },
+    }));
+  }, [activeTab, hospitalSubtab, urlStateReady]);
 
   useEffect(() => {
     const load = async () => {
@@ -167,8 +186,8 @@ export function Dashboard() {
 
     <main className="main">
       <header className="page-header">
-        <h1>Hospitalizacje w Polsce</h1>
-        <p>Analiza liczby hospitalizacji, śmiertelności i trybu przyjęcia · NFZ {reference.analysisYear}</p>
+        <h1>Analizy hospitalizacji i szpitali</h1>
+        <p>Hospitalizacje, śmiertelność i tryb przyjęcia według grup JGP oraz profile szpitali · dane NFZ {reference.analysisYear}</p>
       </header>
       <nav className="tabs" aria-label="Główna nawigacja">
         <button className={activeTab === "mortality" ? "active" : undefined} onClick={() => setActiveTab("mortality")}>Liczba hospitalizacji a śmiertelność</button>

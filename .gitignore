@@ -23,3 +23,8 @@ pipeline.md
 /db_build/
 
 .DS_Store
+
+# Lokalne pliki Claude Code (instrukcje i ustawienia, nie trafiają do repo)
+CLAUDE.md
+AGENTS.md
+.claude/
