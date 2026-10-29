@@ -22,6 +22,10 @@ type SidebarProps = {
   highlightedCities: string[];
   setHighlightedCities: Dispatch<SetStateAction<string[]>>;
   activeTab?: string;
+  /** Lata z danymi; wybór roku pokazujemy, gdy jest więcej niż jeden. */
+  years?: string[];
+  year?: string;
+  setYear?: (year: string) => void;
 };
 
 export function Sidebar({
@@ -41,6 +45,9 @@ export function Sidebar({
   highlightedCities,
   setHighlightedCities,
   activeTab,
+  years = [],
+  year,
+  setYear,
 }: SidebarProps) {
   const highlighted = geoMode === "regions" ? highlightedRegions : highlightedCities;
 
@@ -48,7 +55,7 @@ export function Sidebar({
     <div className="sidebar-brand">
       <div className="sidebar-brand-mark">H</div>
       <div>
-        <div className="sidebar-eyebrow">NFZ · analiza {reference.analysisYear}</div>
+        <div className="sidebar-eyebrow">NFZ · analiza {years.at(-1) ?? reference.analysisYear}</div>
         <div className="sidebar-title">Panel analityczny</div>
       </div>
     </div>
@@ -83,6 +90,19 @@ export function Sidebar({
       </div>
     </div>
     <p className="sidebar-intro">Zawęź zakres analizy i wyróżnij wybrane obszary.</p>
+
+    {years.length > 1 && setYear ? <FilterSection title="Okres">
+      <LabelWithInfo htmlFor="year" help="Rok, z którego pochodzą hospitalizacje na wykresie i w tabeli. Katalog grup JGP zmienia się między latami, więc lista produktów zależy od roku.">Rok danych</LabelWithInfo>
+      <Select
+        id="year"
+        value={year ?? reference.analysisYear}
+        onChange={(value) => value && setYear(value)}
+        data={[...years].reverse()}
+        allowDeselect={false}
+        comboboxProps={{ withinPortal: true, shadow: "md" }}
+        className="mantine-filter"
+      />
+    </FilterSection> : null}
 
     <FilterSection title="Zakres świadczeń">
       <LabelWithInfo htmlFor="products" help="Wybierz jedną lub więcej grup JGP. Gwiazdka (*) na końcu nazwy oznacza, że to JGP o charakterze zabiegowym.">Produkt jednostkowy (JGP)</LabelWithInfo>

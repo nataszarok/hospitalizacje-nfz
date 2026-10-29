@@ -9,8 +9,8 @@ import { MethodologyPanel } from "@/components/MethodologyPanel";
 import { MortalityTab } from "@/components/MortalityTab";
 import { Sidebar } from "@/components/Sidebar";
 import type { AdmissionPayload, AxisMode, EstimationMethod, GeographyMode, MortalityPayload, ReferencePayload } from "@/lib/types";
-import { dashboardUrlSearch, readDashboardUrlState, type DashboardActiveTab } from "@/lib/dashboardUrlState";
-import { admissionsFromDataset, loadStaticDataset, mortalityFromDataset, referenceFromDataset } from "@/lib/staticData";
+import { dashboardUrlSearch, readDashboardUrlState, resolveDashboardYear, type DashboardActiveTab } from "@/lib/dashboardUrlState";
+import { admissionsFromDataset, loadHospitalizationIndex, loadStaticDataset, mortalityFromDataset, referenceFromDataset } from "@/lib/staticData";
 import type { MortalityDisplayMode } from "@/lib/mortality";
 
 const EMPTY_KPI = { facilities: 0, hospitalizations: 0, deaths: 0, mortalityPct: 0 };
@@ -40,6 +40,9 @@ export function Dashboard() {
   const [hospitalKey, setHospitalKey] = useState("");
   const [hospitalSubtab, setHospitalSubtab] = useState<"summary"|"comparison">("summary");
   const [peerThreshold, setPeerThreshold] = useState(75);
+  const [years, setYears] = useState<string[]>([]);
+  const [latestYear, setLatestYear] = useState("");
+  const [year, setYear] = useState("");
 
   // Most z nagłówkiem portalu: nagłówek wybiera zakładkę, dashboard zgłasza aktywną zakładkę.
   useEffect(() => {
@@ -62,7 +65,9 @@ export function Dashboard() {
   useEffect(() => {
     const load = async () => {
       try {
-        const dataset = await loadStaticDataset();
+        const index = await loadHospitalizationIndex();
+        const initialYear = resolveDashboardYear(new URLSearchParams(window.location.search).get("y") ?? undefined, index.years, index.latestYear);
+        const dataset = await loadStaticDataset(initialYear);
         const payload = referenceFromDataset(dataset);
         const urlState = readDashboardUrlState(payload, window.location.search);
         setSelectedProducts(urlState.selectedProducts);
@@ -78,6 +83,9 @@ export function Dashboard() {
         setHospitalKey(urlState.hospitalKey ?? "");
         setHospitalSubtab(urlState.hospitalSubtab ?? "summary");
         setPeerThreshold(urlState.peerThreshold ?? 75);
+        setYears(index.years);
+        setLatestYear(index.latestYear);
+        setYear(initialYear);
         setReference(payload);
         setUrlStateReady(true);
       } catch (err) {
@@ -88,13 +96,41 @@ export function Dashboard() {
     void load();
   }, []);
 
+  // Zmiana roku: nowy słownik (katalog JGP i placówki zależą od roku). Wybór zostaje, jeśli istnieje w nowym roku.
+  useEffect(() => {
+    if (!reference || !urlStateReady || !year || reference.analysisYear === year) return;
+    let cancelled = false;
+    const switchYear = async () => {
+      try {
+        const dataset = await loadStaticDataset(year);
+        if (cancelled) return;
+        const payload = referenceFromDataset(dataset);
+        const productCodes = new Set(payload.products.map((product) => product.code));
+        const durationValues = new Set(payload.durations);
+        const cityValues = new Set(payload.cities);
+        setSelectedProducts((current) => current.filter((code) => productCodes.has(code)));
+        setDurations((current) => current.filter((value) => durationValues.has(value)));
+        setHighlightedCities((current) => current.filter((value) => cityValues.has(value)));
+        setReference(payload);
+      } catch (err) {
+        if (cancelled) return;
+        setError(err instanceof Error ? err.message : "Błąd pobierania danych.");
+        setLoading(false);
+      }
+    };
+    void switchYear();
+    return () => { cancelled = true; };
+  }, [reference, urlStateReady, year]);
+
   useEffect(() => {
     if (!reference || !urlStateReady) return;
+    // Czekamy, aż słownik nowego roku zastąpi poprzedni.
+    if (year && reference.analysisYear !== year) return;
 
     let cancelled = false;
     const refreshData = async () => {
       try {
-        const dataset = await loadStaticDataset();
+        const dataset = await loadStaticDataset(reference.analysisYear);
         if (cancelled) return;
 
         if (selectedProducts.length === 0) {
@@ -122,7 +158,7 @@ export function Dashboard() {
     return () => {
       cancelled = true;
     };
-  }, [reference, urlStateReady, selectedProducts, durations, method, minHosp]);
+  }, [reference, urlStateReady, year, selectedProducts, durations, method, minHosp]);
 
   useEffect(() => {
     if (!reference || !urlStateReady) return;
@@ -140,7 +176,8 @@ export function Dashboard() {
       hospitalKey,
       hospitalSubtab,
       peerThreshold,
-    });
+      year,
+    }, latestYear);
     const nextUrl = `${window.location.pathname}${search}${window.location.hash}`;
     window.history.replaceState(window.history.state, "", nextUrl);
   }, [
@@ -159,7 +196,12 @@ export function Dashboard() {
     hospitalKey,
     hospitalSubtab,
     peerThreshold,
+    year,
+    latestYear,
   ]);
+
+  // Profil szpitala korzysta z najnowszego roku (finanse i model par są liczone dla niego); wybór roku dotyczy analiz.
+  const dataYear = activeTab === "hospital" && latestYear ? latestYear : reference?.analysisYear;
 
   if (!reference && loading) return <main className="center-state">Ładowanie aplikacji…</main>;
   if (!reference) return <main className="center-state error">{error ?? "Brak konfiguracji."}</main>;
@@ -182,12 +224,15 @@ export function Dashboard() {
       highlightedCities={highlightedCities}
       setHighlightedCities={setHighlightedCities}
       activeTab={activeTab}
+      years={years}
+      year={year}
+      setYear={setYear}
     />
 
     <main className="main">
       <header className="page-header">
         <h1>Analizy hospitalizacji i szpitali</h1>
-        <p>Hospitalizacje, śmiertelność i tryb przyjęcia według grup JGP oraz profile szpitali · dane NFZ {reference.analysisYear}</p>
+        <p>Hospitalizacje, śmiertelność i tryb przyjęcia według grup JGP oraz profile szpitali · dane NFZ {dataYear}</p>
       </header>
       <nav className="tabs" aria-label="Główna nawigacja">
         <button className={activeTab === "mortality" ? "active" : undefined} onClick={() => setActiveTab("mortality")}>Liczba hospitalizacji a śmiertelność</button>

@@ -1,9 +1,21 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { gunzipSync } from "node:zlib";
-import type { StaticDataset } from "@/lib/staticData";
+import type { HospitalizationIndex, StaticDataset } from "@/lib/staticData";
 
-// Odczyt zbioru podczas budowania strony (statyczny eksport). Tylko dla komponentów serwerowych.
-export async function readStaticDatasetFromDisk(file = join(process.cwd(), "public", "data", "dashboard.json.gz")): Promise<StaticDataset> {
-  return JSON.parse(gunzipSync(await readFile(file)).toString("utf8")) as StaticDataset;
+// Odczyt danych podczas budowania strony (statyczny eksport). Tylko dla komponentów serwerowych.
+const DEFAULT_DIR = join(process.cwd(), "public", "data", "hospitalizations");
+
+export async function readHospitalizationIndexFromDisk(dir = DEFAULT_DIR): Promise<HospitalizationIndex> {
+  return JSON.parse(await readFile(join(dir, "index.json"), "utf8")) as HospitalizationIndex;
+}
+
+export async function readStaticDatasetFromDisk(year: string, dir = DEFAULT_DIR): Promise<StaticDataset> {
+  return JSON.parse(gunzipSync(await readFile(join(dir, `${year}.json.gz`))).toString("utf8")) as StaticDataset;
+}
+
+/** Zbiory za wszystkie lata z `index.json`, od najstarszego. */
+export async function readAllStaticDatasetsFromDisk(dir = DEFAULT_DIR): Promise<StaticDataset[]> {
+  const { years } = await readHospitalizationIndexFromDisk(dir);
+  return Promise.all(years.map((year) => readStaticDatasetFromDisk(year, dir)));
 }

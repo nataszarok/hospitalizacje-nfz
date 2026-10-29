@@ -16,6 +16,8 @@ export type DashboardUrlState = {
   hospitalKey?: string;
   hospitalSubtab?: "summary" | "comparison";
   peerThreshold?: number;
+  /** Rok danych z parametru `y`; poprawność sprawdza Dashboard na liście lat. */
+  year?: string;
 };
 
 function defaultProductSelection(reference: ReferencePayload) {
@@ -88,6 +90,7 @@ export function readDashboardUrlState(reference: ReferencePayload, search: strin
     // "s" to dawny link do zakładki Podobieństwo, która jest teraz zakładką Porównanie.
     hospitalSubtab: params.get("hv") === "c" || params.get("hv") === "s" ? "comparison" : "summary",
     peerThreshold: Math.min(90, Math.max(70, nonNegativeInteger(params.get("peer")) || 75)),
+    year: params.get("y")?.trim() || undefined,
   };
 }
 
@@ -95,8 +98,15 @@ function sameArray(left: string[], right: string[]) {
   return left.length === right.length && left.every((value, index) => value === right[index]);
 }
 
-export function dashboardUrlSearch(reference: ReferencePayload, state: DashboardUrlState) {
+/** Rok z adresu, jeśli jest na liście lat; w przeciwnym razie najnowszy rok. */
+export function resolveDashboardYear(requested: string | undefined, years: string[], latestYear: string) {
+  return requested && years.includes(requested) ? requested : latestYear;
+}
+
+// `latestYear`: najnowszy rok nie trafia do adresu, żeby link bez `y` zawsze pokazywał aktualne dane.
+export function dashboardUrlSearch(reference: ReferencePayload, state: DashboardUrlState, latestYear?: string) {
   const params = new URLSearchParams();
+  if (state.year && state.year !== latestYear) params.set("y", state.year);
   const defaultProducts = defaultProductSelection(reference);
 
   if (state.selectedProducts.length === 0) {

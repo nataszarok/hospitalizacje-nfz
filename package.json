@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "generate:data": "node scripts/generate-static-data.mjs",
+    "generate:data": "python3 scripts/build_hospitalizations.py",
     "verify:static": "node scripts/verify-static.mjs",
     "refresh:data": "npm run generate:data && npm run verify:static",
     "test": "vitest run",
