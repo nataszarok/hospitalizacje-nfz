@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Select } from "@mantine/core";
+import { SegmentedControl, Select } from "@mantine/core";
 import { createPortal } from "react-dom";
 import type { EstimationMethod, HospitalAnalysis, HospitalDirectoryEntry, ProductOption } from "@/lib/types";
 import { hospitalAnalysisFromDataset, hospitalDirectoryFromDataset, loadStaticDataset } from "@/lib/staticData";
 import { PLOTLY_CONFIG, getAppFontFamily } from "@/lib/plotlyChart";
+import { HospitalSimilarityTab } from "@/components/HospitalSimilarityTab";
 import "./HospitalAnalysisBase.css";
 import "./HospitalProfileSummary.css";
 
@@ -681,7 +682,7 @@ function HospitalCharts({ analysis, products }: { analysis: HospitalAnalysis; pr
 export function HospitalAnalysisTab({ method, products, hospitalKey, setHospitalKey, hospitalSubtab, setHospitalSubtab, peerThreshold, setPeerThreshold }: {
   method: EstimationMethod; products: ProductOption[];
   hospitalKey:string; setHospitalKey:(value:string)=>void;
-  hospitalSubtab:"summary"|"comparison"|"similarity"; setHospitalSubtab:(value:"summary"|"comparison"|"similarity")=>void;
+  hospitalSubtab:"summary"|"comparison"; setHospitalSubtab:(value:"summary"|"comparison")=>void;
   peerThreshold:number; setPeerThreshold:(value:number)=>void;
 }) {
   const [directory, setDirectory] = useState<HospitalDirectoryEntry[]>([]);
@@ -697,6 +698,9 @@ export function HospitalAnalysisTab({ method, products, hospitalKey, setHospital
   const [directoryLoading, setDirectoryLoading] = useState(true);
   const loading=directoryLoading || Boolean(hospitalKey && (analysisResult?.hospitalKey!==hospitalKey || analysisResult.method!==method));
   const [error, setError] = useState<string | null>(null);
+  // Próg podobieństwa dotyczy starej metody porównawczej (HospitalComparisonLegacyTab), która jest odłączona.
+  void peerThreshold;
+  void setPeerThreshold;
   // Stan interfejsu jest przypisany do szpitala; zmiana szpitala przywraca domyślne ustawienia.
   type RpwdlUiState={
     hospitalKey:string;
@@ -719,10 +723,6 @@ export function HospitalAnalysisTab({ method, products, hospitalKey, setHospital
     });
   };
 
-  void hospitalSubtab;
-  void setHospitalSubtab;
-  void peerThreshold;
-  void setPeerThreshold;
 
   useEffect(() => {
     // Opóźniony odczyt po montażu: React nie wykonuje setState synchronicznie w efekcie.
@@ -875,7 +875,7 @@ export function HospitalAnalysisTab({ method, products, hospitalKey, setHospital
       });
     return () => { cancelled = true; };
   }, [hospitalKey, method]);
-  return <section className={`hospital-analysis ${loading ? "loading" : ""} hospital-subtab-summary`}>
+  return <section className={`hospital-analysis ${loading ? "loading" : ""} hospital-subtab-${hospitalSubtab}`}>
     {sidebarSlot ? createPortal(<>
       <section className="filter-section">
         <div className="sidebar-kicker">Szpital</div>
@@ -895,12 +895,24 @@ export function HospitalAnalysisTab({ method, products, hospitalKey, setHospital
         />
       </section>
 
-      {/* Widoki porównawcze są odłączone. Implementacje są w osobnych modułach metod. */}
+      <section className="filter-section">
+        <div className="sidebar-kicker">Widok</div>
+        <SegmentedControl
+          fullWidth
+          value={hospitalSubtab}
+          onChange={(value)=>setHospitalSubtab(value as "summary"|"comparison")}
+          data={[
+            {value:"summary",label:"Profil"},
+            {value:"comparison",label:"Porównanie"},
+          ]}
+          className="mantine-segmented"
+        />
+      </section>
 
     </>, sidebarSlot) : null}
       {error ? <div className="alert">{error}</div> : null}
 
-    {!analysis ? <div className="hospital-empty">Wyszukaj miasto i wybierz szpital, aby zobaczyć jego pełny profil.</div> : <>
+    {!analysis ? <div className="hospital-empty">Wyszukaj miasto i wybierz szpital, aby zobaczyć jego pełny profil.</div> : hospitalSubtab==="summary" ? <>
       <div className="hospital-profile-topline">
         <div className="hospital-identity hospital-identity-flat hospital-view-heading hospital-profile-identity hospital-profile-banner">
           <div className="hospital-profile-identity-icon" aria-hidden="true"><ProfileGlyph name="hospital"/></div>
@@ -1091,9 +1103,11 @@ export function HospitalAnalysisTab({ method, products, hospitalKey, setHospital
         </section> : <div className="hospital-empty hospital-summary-profile-empty">Brak dopasowania do zagregowanego profilu RPWDL dla klucza OW NFZ + NIP.</div>}
       </div>
 
-
-    {/* Porównania pozostają niepodpięte do Profilu szpitala. */}
-
+    </> : <>
+      <div className="hospital-identity hospital-view-heading">
+        <h2>{displayHospitalName(analysis.providerName)}</h2>
+      </div>
+      <HospitalSimilarityTab hospitalKey={hospitalKey} method={method} products={products}/>
     </>}
   </section>;
 }

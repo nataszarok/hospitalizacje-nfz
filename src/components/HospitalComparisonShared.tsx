@@ -107,20 +107,16 @@ function displayJgpLabel(value:string){
 export type PeerGrade = "A" | "B";
 
 export type PeerPair = {
-  a:string; b:string; peer_grade_pred:PeerGrade; p_peer:number;
-  hospitalizations_a:number; hospitalizations_b:number;
+  a:string; b:string; peer_grade_pred:PeerGrade;
   hospitalizations_sim_a:number; hospitalizations_sim_b:number;
   hospitalizations_min_a:number; hospitalizations_min_b:number;
   deaths_sim_a:number; deaths_sim_b:number; deaths_min_a:number; deaths_min_b:number;
   core_types_a:number; core_types_b:number; core_beds_a:number; core_beds_b:number;
   core_x_supported_count_a:number; core_x_supported_count_b:number;
   clinics_a:number; clinics_b:number; jgp_gt10_a:number; jgp_gt10_b:number;
-  zrm_a:number; zrm_b:number; urgent_other_a:number; urgent_other_b:number;
   core_types_shared:number; jgp_shared:number;
   core_type_set_similarity:number; jgp_shared_volume_similarity:number; jgp_set_similarity:number;
   bed_cosine_similarity:number; bed_weighted_jaccard_similarity:number;
-  jgp_family_weighted_jaccard_similarity?:number;
-  jgp_subfamily_weighted_jaccard_similarity?:number;
   distance_score:number;
   d_jgp_set?:number;
   d_jgp_family_weighted_jaccard?:number;

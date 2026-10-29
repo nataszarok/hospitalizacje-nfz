@@ -37,7 +37,7 @@ export function Dashboard() {
   const [jgpDisplayMode, setJgpDisplayMode] = useState<MortalityDisplayMode>("combined");
   const [urlStateReady, setUrlStateReady] = useState(false);
   const [hospitalKey, setHospitalKey] = useState("");
-  const [hospitalSubtab, setHospitalSubtab] = useState<"summary"|"comparison"|"similarity">("summary");
+  const [hospitalSubtab, setHospitalSubtab] = useState<"summary"|"comparison">("summary");
   const [peerThreshold, setPeerThreshold] = useState(75);
 
   useEffect(() => {
