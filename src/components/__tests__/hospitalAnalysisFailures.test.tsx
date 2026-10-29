@@ -14,7 +14,10 @@ vi.mock("@/lib/staticData", () => ({
   hospitalDirectoryFromDataset: mocks.hospitalDirectoryFromDataset,
   hospitalAnalysisFromDataset: mocks.hospitalAnalysisFromDataset,
 }));
-vi.mock("@mantine/core", () => ({ Select: () => <span data-testid="mock-select" /> }));
+vi.mock("@mantine/core", () => ({
+  Select: () => <span data-testid="mock-select" />,
+  SegmentedControl: () => <span data-testid="mock-segmented" />,
+}));
 vi.mock("plotly.js-dist-min", () => ({
   default: { react: vi.fn().mockResolvedValue(undefined), restyle: vi.fn().mockResolvedValue(undefined), purge: vi.fn() },
 }));

@@ -29,6 +29,15 @@ vi.mock("@mantine/core", () => ({
       {data.map((entry) => <option value={entry.value} key={entry.value}>{entry.label}</option>)}
     </select>
   ),
+  SegmentedControl: ({ data, value, onChange }: {
+    data: { value: string; label: string }[];
+    value: string;
+    onChange: (value: string) => void;
+  }) => (
+    <select aria-label="Widok" value={value} onChange={(e) => onChange(e.target.value)}>
+      {data.map((entry) => <option value={entry.value} key={entry.value}>{entry.label}</option>)}
+    </select>
+  ),
 }));
 vi.mock("plotly.js-dist-min", () => ({
   default: { react: vi.fn().mockResolvedValue(undefined), restyle: vi.fn().mockResolvedValue(undefined), purge: vi.fn() },
@@ -174,5 +183,14 @@ describe("HospitalAnalysisTab — profil szpitala", () => {
     await screen.findByRole("option", { name: /Inny Szpital/ });
     fireEvent.change(screen.getByRole("combobox", { name: "Wybierz szpital" }), { target: { value: altKey } });
     expect(setHospitalKey).toHaveBeenCalledWith(altKey);
+  });
+
+  it("wywołuje setHospitalSubtab po wyborze widoku Porównanie", async () => {
+    const setHospitalSubtab = vi.fn();
+    render(<HospitalAnalysisTab {...baseProps} setHospitalSubtab={setHospitalSubtab} />);
+    const view = await screen.findByRole("combobox", { name: "Widok" });
+    expect(within(view).getAllByRole("option").map((option) => option.textContent)).toEqual(["Profil", "Porównanie"]);
+    fireEvent.change(view, { target: { value: "comparison" } });
+    expect(setHospitalSubtab).toHaveBeenCalledWith("comparison");
   });
 });

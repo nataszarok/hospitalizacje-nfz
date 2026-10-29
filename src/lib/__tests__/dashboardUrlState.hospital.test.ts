@@ -33,14 +33,11 @@ describe("dashboard URL state — szpitale", () => {
     expect(readDashboardUrlState(reference, search)).toEqual(state);
   });
 
-  it.each([
-    ["comparison", "c"],
-    ["similarity", "s"],
-  ] as const)("odtwarza podkartę %s (hv=%s)", (hospitalSubtab, value) => {
-    const state = { ...defaults, activeTab: "hospital" as const, hospitalKey: "12|333", hospitalSubtab, peerThreshold: 85 };
+  it("odtwarza podkartę comparison (hv=c)", () => {
+    const state = { ...defaults, activeTab: "hospital" as const, hospitalKey: "12|333", hospitalSubtab: "comparison" as const, peerThreshold: 85 };
     const search = dashboardUrlSearch(reference, state);
     const params = new URLSearchParams(search);
-    expect(params.get("hv")).toBe(value);
+    expect(params.get("hv")).toBe("c");
     expect(params.get("peer")).toBe("85");
     expect(readDashboardUrlState(reference, search)).toEqual(state);
   });
@@ -55,7 +52,7 @@ describe("dashboard URL state — szpitale", () => {
     ["?peer=1", "summary", 70],
     ["?peer=999", "summary", 90],
     ["?peer=80.9", "summary", 80],
-    ["?hv=s&peer=88", "similarity", 88],
+    ["?hv=s&peer=88", "comparison", 88],
     ["?hv=c&peer=72", "comparison", 72],
   ] as const)("bezpiecznie parsuje %s", (search, subtab, threshold) => {
     expect(readDashboardUrlState(reference, search)).toMatchObject({ hospitalSubtab: subtab, peerThreshold: threshold });
@@ -69,7 +66,7 @@ describe("dashboard URL state — szpitale", () => {
   });
 
   it("nie traci ustawień szpitala przy aktywnej innej karcie", () => {
-    const state = { ...defaults, activeTab: "admissions" as const, hospitalKey: "07|111", hospitalSubtab: "similarity" as const, peerThreshold: 80 };
+    const state = { ...defaults, activeTab: "admissions" as const, hospitalKey: "07|111", hospitalSubtab: "comparison" as const, peerThreshold: 80 };
     expect(readDashboardUrlState(reference, dashboardUrlSearch(reference, state))).toEqual(state);
   });
 });
