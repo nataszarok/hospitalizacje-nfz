@@ -28,7 +28,7 @@ export function HomePage({ highlights }: { highlights: DatasetHighlights }) {
     <LegacyDashboardRedirect />
     <main id="main-content" className={styles.home}>
       <section className={styles.hero} aria-labelledby="hero-title">
-        <div className={styles.heroPhoto} role="img" aria-label="Grafika z danych: szpitale w Polsce według liczby hospitalizacji i śmiertelności" />
+        <div className={styles.heroPhoto} role="img" aria-label="Ilustracja: szpital, rozliczenie z NFZ, kontrola i dane" />
         <div className={styles.heroShade} aria-hidden="true" />
         <div className={styles.container}>
           <div className={styles.heroContent}>
