@@ -111,7 +111,7 @@ describe("admissionsFromDataset", () => {
 
 describe("datasetHighlights", () => {
   it("liczy hospitalizacje metodą sim, unikalnych świadczeniodawców i grupy JGP", () => {
-    expect(datasetHighlights(dataset())).toEqual({ analysisYear: "2024", hospitalizations: 128, providers: 3, jgpGroups: 2 });
+    expect(datasetHighlights(dataset())).toEqual({ yearFrom: "2024", yearTo: "2024", hospitalizations: 128, providers: 3, jgpGroups: 2 });
   });
 
   it("pomija puste kody JGP i nie liczy dwa razy tej samej grupy", () => {

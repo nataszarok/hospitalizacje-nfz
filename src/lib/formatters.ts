@@ -16,3 +16,8 @@ export function formatCompactCount(value: number): string {
   if (Math.abs(value) >= 10_000) return `${compactFormat.format(value / 1_000)} tys.`;
   return integerFormat.format(value);
 }
+
+/** Zakres lat: „2025” dla jednego roku, „2019–2025” dla wielu. */
+export function formatYearRange(from: string, to: string): string {
+  return from === to ? from : `${from}–${to}`;
+}

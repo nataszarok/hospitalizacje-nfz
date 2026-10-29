@@ -186,8 +186,8 @@ export function Dashboard() {
 
     <main className="main">
       <header className="page-header">
-        <h1>Hospitalizacje w Polsce</h1>
-        <p>Analiza liczby hospitalizacji, śmiertelności i trybu przyjęcia · NFZ {reference.analysisYear}</p>
+        <h1>Analizy hospitalizacji i szpitali</h1>
+        <p>Hospitalizacje, śmiertelność i tryb przyjęcia według grup JGP oraz profile szpitali · dane NFZ {reference.analysisYear}</p>
       </header>
       <nav className="tabs" aria-label="Główna nawigacja">
         <button className={activeTab === "mortality" ? "active" : undefined} onClick={() => setActiveTab("mortality")}>Liczba hospitalizacji a śmiertelność</button>

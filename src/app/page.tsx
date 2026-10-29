@@ -5,8 +5,8 @@ import { datasetHighlights } from "@/lib/staticData";
 import { readStaticDatasetFromDisk } from "@/lib/staticDataServer";
 
 export const metadata: Metadata = {
-  title: `${SITE_NAME} | Dane i analizy szpitali`,
-  description: "Przeglądaj analizy hospitalizacji, śmiertelności i trybu przyjęć. Odkrywaj dane NFZ oraz porównuj szpitale.",
+  title: `${SITE_NAME} | Hospitalizacje, szpitale publiczne, wyceny JGP`,
+  description: "Sprawdź, jak wyglądały hospitalizacje, porównuj publiczne szpitale i poznaj system wycen JGP. Analizy i artykuły o publicznej ochronie zdrowia na podstawie danych NFZ.",
 };
 
 export default async function Home() {

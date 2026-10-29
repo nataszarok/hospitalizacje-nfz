@@ -13,8 +13,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: `${SITE_NAME} | Analizy hospitalizacji`,
-  description: "Analizy hospitalizacji, śmiertelności i szpitali na podstawie danych NFZ.",
+  title: SITE_NAME,
+  description: "Portal o publicznej ochronie zdrowia: hospitalizacje, szpitale publiczne, wyceny JGP i artykuły na podstawie danych NFZ.",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

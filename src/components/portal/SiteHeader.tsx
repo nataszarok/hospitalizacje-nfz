@@ -108,7 +108,7 @@ export function SiteHeader() {
     <div className={styles.inner}>
       <Link className={styles.brand} href="/" onClick={() => { setIsOpen(false); setAnalysisOpen(false); setCurrentSection("start"); }} aria-label={`${SITE_NAME} — strona główna`}>
         <span className={styles.brandSymbol}><BrandMark /></span>
-        <span className={styles.brandText}><strong>{SITE_NAME}</strong><span>Dane · Analizy · Porównania</span></span>
+        <span className={styles.brandText}><strong>{SITE_NAME}</strong><span>Hospitalizacje · Szpitale · JGP</span></span>
       </Link>
       <nav id="portal-navigation" className={`${styles.nav} ${isOpen ? styles.navOpen : ""}`} aria-label="Nawigacja portalu">
         {links.map(({ href, label, active }) => active === "analyses" ? (

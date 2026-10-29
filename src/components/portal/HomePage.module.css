@@ -24,13 +24,13 @@
 .sectionEyebrow { font-size: 12px; font-weight: 750; color: var(--color-primary); letter-spacing: .12em; }
 .sectionIntro h2 { font-size: clamp(26px,3vw,32px); margin: 9px 0 6px; letter-spacing: -.035em; line-height: 1.15; }
 .sectionIntro p { font-size: 16px; color: var(--color-text-secondary); margin: 0 0 24px; }
-.topicGrid { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 15px; }
+.topicGrid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 15px; }
 .topic { position: relative; display: flex; flex-direction: column; align-items: flex-start; min-height: 195px; padding: 23px 21px 24px; border: 1px solid var(--color-border); border-radius: 12px; background: var(--color-surface); color: var(--color-text); text-decoration: none; box-shadow: var(--shadow-soft); transition: border-color .18s, transform .18s, box-shadow .18s; }
 .topic:hover { border-color: var(--color-primary); transform: translateY(-3px); box-shadow: 0 12px 25px rgba(20,60,50,.08); }
 .topicIcon { color: var(--color-primary); background: var(--color-primary-soft); border-radius: 12px; width: 53px; height: 53px; display: grid; place-items: center; margin-bottom: 17px; }
 .topic strong { font-size: 17px; line-height: 1.2; letter-spacing: -.015em; }
 .topicDescription { display: block; margin: 7px 0 20px; font-size: 14px; line-height: 1.55; color: var(--color-text-secondary); padding-right: 13px; }
-.topicDisabled { background: #fafcfa; box-shadow: none; }
+.topicDisabled { background: #fafcfa; box-shadow: none; padding-bottom: 60px; }
 .topicDisabled:hover { border-color: var(--color-border); transform: none; box-shadow: none; }
 .topicPlanned { position: absolute; left: 21px; bottom: 20px; color: var(--color-text-secondary); background: var(--color-background-muted); font-size: 12px; padding: 4px 8px; border-radius: 5px; font-weight: 650; }
 .topicArrow { position: absolute; color: var(--color-primary); right: 20px; bottom: 18px; }

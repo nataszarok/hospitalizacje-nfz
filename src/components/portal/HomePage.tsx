@@ -2,7 +2,7 @@ import Link from "next/link";
 import { LegacyDashboardRedirect } from "@/components/portal/LegacyDashboardRedirect";
 import { DASHBOARD_HREFS } from "@/lib/dashboardNavigation";
 import { SITE_NAME } from "@/lib/site";
-import { formatCompactCount } from "@/lib/formatters";
+import { formatCompactCount, formatYearRange } from "@/lib/formatters";
 import type { DatasetHighlights } from "@/lib/staticData";
 import { PortalIcon } from "@/components/portal/PortalIcon";
 import styles from "./HomePage.module.css";
@@ -17,10 +17,12 @@ type Topic = {
 };
 
 const topics: readonly Topic[] = [
-  { title: "Śmiertelność", description: "Wskaźniki i zależności dla wybranych grup JGP.", icon: "heart", href: DASHBOARD_HREFS.mortality, label: "Analizuj śmiertelność" },
-  { title: "Hospitalizacje", description: "Liczba hospitalizacji i tryb przyjęcia.", icon: "bed", href: DASHBOARD_HREFS.admissions, label: "Analizuj hospitalizacje" },
-  { title: "Znajdź szpital", description: "Wybierz placówkę i otwórz jej profil.", icon: "hospital", href: DASHBOARD_HREFS.hospital, label: "Znajdź szpital" },
-  { title: "Porównaj szpitale", description: "Porównaj wybrany szpital z grupą automatycznie dobranych, podobnych placówek.", icon: "compare", href: DASHBOARD_HREFS.comparison, label: "Porównaj szpitale" },
+  { title: "Hospitalizacje", description: "Ile było hospitalizacji, w jakich grupach JGP i z jaką śmiertelnością.", icon: "bed", href: DASHBOARD_HREFS.mortality, label: "Analizuj hospitalizacje" },
+  { title: "Tryb przyjęcia", description: "Przyjęcia planowe i nagłe w szpitalach i regionach.", icon: "heart", href: DASHBOARD_HREFS.admissions, label: "Analizuj tryb przyjęcia" },
+  { title: "Szpitale publiczne", description: "Profil szpitala: oddziały, łóżka, świadczenia i wyniki finansowe.", icon: "hospital", href: DASHBOARD_HREFS.hospital, label: "Znajdź szpital" },
+  { title: "Porównanie szpitali", description: "Porównaj szpital z grupą podobnych placówek dobranych przez model.", icon: "compare", href: DASHBOARD_HREFS.comparison, label: "Porównaj szpitale" },
+  { title: "Wyceny JGP", description: "Jak wygląda system wycen JGP i jak zmieniają się wyceny.", icon: "chart", label: "Wyceny JGP" },
+  { title: "Artykuły", description: "Analizy i komentarze, m.in. o rozliczeniach i kontrolach NFZ.", icon: "book", label: "Artykuły" },
 ];
 
 export function HomePage({ highlights }: { highlights: DatasetHighlights }) {
@@ -32,9 +34,9 @@ export function HomePage({ highlights }: { highlights: DatasetHighlights }) {
         <div className={styles.heroShade} aria-hidden="true" />
         <div className={styles.container}>
           <div className={styles.heroContent}>
-            <span className={styles.eyebrow}><span className={styles.eyebrowLine} /> Portal analityczny · Dane NFZ</span>
-            <h1 id="hero-title">Polskie szpitalnictwo<br />w oparciu o dane.</h1>
-            <p>Analizuj hospitalizacje, poznawaj profile szpitali i porównuj placówki. Zacznij od wybranego tematu lub otwórz zaawansowane analizy.</p>
+            <span className={styles.eyebrow}><span className={styles.eyebrowLine} /> Publiczna ochrona zdrowia · Dane NFZ</span>
+            <h1 id="hero-title">Publiczna ochrona<br />zdrowia w liczbach.</h1>
+            <p>Sprawdź, jak wyglądały hospitalizacje, porównuj publiczne szpitale i poznaj system wycen JGP. Czytaj analizy i artykuły, m.in. o kontrolach NFZ.</p>
             <div className={styles.heroActions}>
               <Link className={styles.primaryButton} href="#odkrywaj">Odkrywaj dane <PortalIcon name="arrow" size={18} /></Link>
             </div>
@@ -43,7 +45,7 @@ export function HomePage({ highlights }: { highlights: DatasetHighlights }) {
       </section>
 
       <section className={`${styles.container} ${styles.facts}`} aria-label="Informacje o danych">
-        <div className={styles.fact}><span className={styles.factIcon}><PortalIcon name="calendar" /></span><div><strong>{highlights.analysisYear}</strong><span>Rok danych NFZ</span></div></div>
+        <div className={styles.fact}><span className={styles.factIcon}><PortalIcon name="calendar" /></span><div><strong>{formatYearRange(highlights.yearFrom, highlights.yearTo)}</strong><span>Zakres danych NFZ</span></div></div>
         <div className={styles.fact}><span className={styles.factIcon}><PortalIcon name="bed" /></span><div><strong>{formatCompactCount(highlights.hospitalizations)}</strong><span>Hospitalizacji (szacunek)</span></div></div>
         <div className={styles.fact}><span className={styles.factIcon}><PortalIcon name="hospital" /></span><div><strong>{formatCompactCount(highlights.providers)}</strong><span>Świadczeniodawców</span></div></div>
         <div className={styles.fact}><span className={styles.factIcon}><PortalIcon name="chart" /></span><div><strong>{formatCompactCount(highlights.jgpGroups)}</strong><span>Grup JGP</span></div></div>
@@ -94,7 +96,7 @@ export function HomePage({ highlights }: { highlights: DatasetHighlights }) {
       </section>
     </main>
     <footer className={styles.footer}>
-      <div className={styles.container}><span>© {SITE_NAME}</span><span>Portal analityczny · Dane NFZ</span><Link href={DASHBOARD_HREFS.methodology}>Metodologia</Link></div>
+      <div className={styles.container}><span>© {SITE_NAME}</span><span>Portal o publicznej ochronie zdrowia · Dane NFZ</span><Link href={DASHBOARD_HREFS.methodology}>Metodologia</Link></div>
     </footer>
   </>;
 }

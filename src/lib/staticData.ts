@@ -37,7 +37,9 @@ export function loadStaticDataset(): Promise<StaticDataset> {
 }
 
 export interface DatasetHighlights {
-  analysisYear: string;
+  /** Zakres lat w zbiorze. POC ma jeden rok; docelowo zbiór obejmie całą dostępną historię. */
+  yearFrom: string;
+  yearTo: string;
   /** Szacunek metodą symulacyjną (wartości <5 losowane z rozkładu). */
   hospitalizations: number;
   providers: number;
@@ -53,7 +55,7 @@ export function datasetHighlights(d: StaticDataset): DatasetHighlights {
     hospitalizations += hSim;
   }
   const jgpGroups = new Set(d.products.map(([, jgp]) => jgp?.trim()).filter(Boolean)).size;
-  return { analysisYear: d.analysisYear, hospitalizations, providers: providers.size, jgpGroups };
+  return { yearFrom: d.analysisYear, yearTo: d.analysisYear, hospitalizations, providers: providers.size, jgpGroups };
 }
 
 function label(code: string, jgp: string | null, name: string | null) {

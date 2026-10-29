@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatCityName, formatCompactCount } from "@/lib/formatters";
+import { formatCityName, formatCompactCount, formatYearRange } from "@/lib/formatters";
 
 describe("formatCityName", () => {
   it("formats city names for display without changing stored values", () => {
@@ -20,5 +20,15 @@ describe("formatCompactCount", () => {
     [0, "0"],
   ])("formatuje %d jako %s", (value, expected) => {
     expect(formatCompactCount(value).replace(/\u00a0/g, " ")).toBe(expected);
+  });
+});
+
+describe("formatYearRange", () => {
+  it("pokazuje jeden rok bez myślnika", () => {
+    expect(formatYearRange("2025", "2025")).toBe("2025");
+  });
+
+  it("pokazuje zakres wielu lat z półpauzą", () => {
+    expect(formatYearRange("2019", "2025")).toBe("2019–2025");
   });
 });
