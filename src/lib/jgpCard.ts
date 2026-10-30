@@ -111,7 +111,7 @@ export interface CartogramCell extends RegionRow {
   shortName: string;
   /** Położenie na skali koloru 0–1 (liniowo od minimum do maksimum bez wartości odstających). */
   scale: number;
-  /** Wartość skrajnie odstająca w górę (powyżej Q3 + 3 × IQR): kolor jak maksimum skali i osobny opis. */
+  /** Wartość skrajnie odstająca w górę (powyżej Q3 + 3 × IQR): osobny, najciemniejszy kolor spoza skali. */
   outlier: boolean;
 }
 
@@ -148,12 +148,20 @@ export function cartogramCells(regions: RegionRow[]): { cells: CartogramCell[]; 
   return { cells, scale: { min, max } };
 }
 
-const LIGHT = [219, 229, 244];
-const DARK = [22, 58, 117];
+// Skala dla wartości nieodstających kończy się na średnim niebieskim; wartości odstające mają
+// wyraźnie ciemniejszy kolor, żeby nie wyglądały jak maksimum skali.
+const LIGHT = [225, 233, 245];
+const DARK = [40, 86, 163];
+export const OUTLIER_COLOR = "rgb(10, 27, 61)";
 
-/** Kolor kafelka dla położenia na skali 0–1 (od jasnego do ciemnego niebieskiego). */
+/** Kolor kafelka dla położenia na skali 0–1 (od jasnego do średniego niebieskiego). */
 export function scaleColor(scale: number): string {
   const t = Math.min(1, Math.max(0, scale));
   const [r, g, b] = LIGHT.map((value, i) => Math.round(value + (DARK[i] - value) * t));
   return `rgb(${r}, ${g}, ${b})`;
+}
+
+/** Kolor komórki kartogramu: wartość odstająca ma własny kolor spoza skali. */
+export function cellColor(cell: Pick<CartogramCell, "scale" | "outlier">): string {
+  return cell.outlier ? OUTLIER_COLOR : scaleColor(cell.scale);
 }

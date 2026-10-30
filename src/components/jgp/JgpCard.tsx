@@ -8,7 +8,7 @@ import { ProviderLink } from "@/components/TableLinks";
 import { TrendView } from "@/components/trends/TrendView";
 import { formatCityName } from "@/lib/formatters";
 import {
-  cartogramCells, MAX_REGIONS, poolAdmissions, poolStats, providerPool, scaleColor, selectedIndex, sumSeries, yearChangePct, type CompareScope,
+  cartogramCells, cellColor, MAX_REGIONS, OUTLIER_COLOR, poolAdmissions, poolStats, providerPool, scaleColor, selectedIndex, sumSeries, yearChangePct, type CompareScope,
 } from "@/lib/jgpCard";
 import type { JgpAdmissionYear, JgpPageData, JgpProviderRow } from "@/lib/jgpPage";
 import { hospitalHref } from "@/lib/portalLinks";
@@ -274,8 +274,8 @@ function RegionsSection({ data, regions, onRegions }: { data: JgpPageData; regio
               return <button
                 key={cell.owNfz}
                 type="button"
-                className={`${styles.tile} ${cell.scale < 0.45 ? styles.tileLight : ""}`}
-                style={{ gridColumn: cell.column, gridRow: cell.row, background: scaleColor(cell.scale), outlineColor: index >= 0 ? REGION_COLORS[index % REGION_COLORS.length] : undefined }}
+                className={`${styles.tile} ${!cell.outlier && cell.scale < 0.5 ? styles.tileLight : ""}`}
+                style={{ gridColumn: cell.column, gridRow: cell.row, background: cellColor(cell), outlineColor: index >= 0 ? REGION_COLORS[index % REGION_COLORS.length] : undefined }}
                 aria-pressed={index >= 0}
                 title={`${cell.name}: ${decimal(cell.per100k)} na 100 tys., ${integer(cell.hospitalizations)} hospitalizacji${cell.outlier ? " (poza skalą)" : ""}`}
                 onClick={() => toggle(cell.owNfz)}
@@ -289,7 +289,7 @@ function RegionsSection({ data, regions, onRegions }: { data: JgpPageData; regio
             <span>{decimal(scale.min)}</span>
             <i className={styles.scaleGradient} style={{ background: `linear-gradient(90deg, ${scaleColor(0)}, ${scaleColor(1)})` }} aria-hidden />
             <span>{decimal(scale.max)} na 100 tys. mieszkańców</span>
-            {outliers.length ? <span className={styles.outlierNote}>▲ poza skalą: {outliers.map((cell) => `${cell.name} ${decimal(cell.per100k)}`).join(", ")}</span> : null}
+            {outliers.length ? <span className={styles.outlierNote}><i className={styles.outlierSwatch} style={{ background: OUTLIER_COLOR }} aria-hidden /> ▲ poza skalą (znacznie więcej): {outliers.map((cell) => `${cell.name} ${decimal(cell.per100k)}`).join(", ")}</span> : null}
           </div>
         </div>
         <div className={styles.mapSide}>
@@ -474,8 +474,12 @@ function ValuationSection({ data }: { data: JgpPageData }) {
         <h3 className={styles.chartTitle}>Rozliczenia NFZ za grupę w kraju, mln zł</h3>
         <div className={styles.valueBars} role="img" aria-label={`Rozliczenia NFZ za ${data.jgpCode}: ${data.valuePln.map((item) => `${item.year} ${millions(item.value)}`).join(", ")}`}>
           {data.valuePln.map((item) => <div key={item.year} className={styles.valueBar}>
-            <span className={styles.valueBarValue}>{(item.value / 1_000_000).toLocaleString("pl-PL", { maximumFractionDigits: 1, minimumFractionDigits: 1 })}</span>
-            <span className={styles.valueBarFill} style={{ height: `${max ? (item.value / max) * 100 : 0}%` }} />
+            {/* Wysokość słupka liczona od osobnego toru, nie od kolumny z podpisami. */}
+            <span className={styles.valueBarTrack}>
+              <span className={styles.valueBarFill} style={{ height: `${max ? (item.value / max) * 100 : 0}%` }}>
+                <span className={styles.valueBarValue}>{(item.value / 1_000_000).toLocaleString("pl-PL", { maximumFractionDigits: 1, minimumFractionDigits: 1 })}</span>
+              </span>
+            </span>
             <span className={styles.valueBarYear}>{item.year}</span>
           </div>)}
         </div>

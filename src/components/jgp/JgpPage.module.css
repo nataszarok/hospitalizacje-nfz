@@ -551,8 +551,15 @@
 }
 
 .outlierNote {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   width: 100%;
   color: #475467;
+}
+
+.scale .outlierSwatch {
+  width: 18px;
 }
 
 .linkButton {
@@ -648,38 +655,51 @@
 
 .valueBars {
   display: flex;
-  align-items: flex-end;
+  align-items: stretch;
   gap: 10px;
-  height: 180px;
-  padding: 12px 12px 0;
+  height: 200px;
+  padding: 24px 12px 0;
 }
 
 .valueBar {
   display: flex;
   flex: 1;
   flex-direction: column;
-  justify-content: flex-end;
-  align-items: center;
   gap: 4px;
-  height: 100%;
+  min-width: 0;
+}
+
+.valueBarTrack {
+  position: relative;
+  flex: 1;
+  border-bottom: 1px solid #d0d5dd;
 }
 
 .valueBarFill {
-  width: 100%;
-  min-height: 2px;
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
   border-radius: 4px 4px 0 0;
   background: #2856a3;
 }
 
 .valueBarValue {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  padding-bottom: 2px;
   font-size: 11px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .valueBarYear {
   color: #667085;
   font-size: 11px;
+  text-align: center;
 }
 
 @media (max-width: 1000px) {

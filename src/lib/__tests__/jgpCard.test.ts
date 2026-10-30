@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cartogramCells, movingAverage, poolAdmissions, poolStats, providerPool, scaleColor, selectedIndex, sumSeries, topShare, yearChangePct } from "@/lib/jgpCard";
+import { cartogramCells, cellColor, movingAverage, OUTLIER_COLOR, poolAdmissions, poolStats, providerPool, scaleColor, selectedIndex, sumSeries, topShare, yearChangePct } from "@/lib/jgpCard";
 import { buildJgpPageData } from "@/lib/jgpPage";
 import type { RegionRow } from "@/lib/regions";
 import { extrasFixture } from "./fixtures/jgpCardFixture";
@@ -102,9 +102,11 @@ describe("cartogramCells", () => {
     expect(cartogramCells([region("99", 5)]).cells).toEqual([]);
   });
 
-  it("kolor przechodzi od jasnego do ciemnego niebieskiego", () => {
-    expect(scaleColor(0)).toBe("rgb(219, 229, 244)");
-    expect(scaleColor(1)).toBe("rgb(22, 58, 117)");
+  it("kolor przechodzi od jasnego do średniego niebieskiego; wartość odstająca ma osobny, ciemniejszy kolor", () => {
+    expect(scaleColor(0)).toBe("rgb(225, 233, 245)");
+    expect(scaleColor(1)).toBe("rgb(40, 86, 163)");
     expect(scaleColor(2)).toBe(scaleColor(1));
+    expect(cellColor({ scale: 1, outlier: true })).toBe(OUTLIER_COLOR);
+    expect(cellColor({ scale: 1, outlier: false })).not.toBe(OUTLIER_COLOR);
   });
 });
