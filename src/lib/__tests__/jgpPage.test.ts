@@ -24,6 +24,8 @@ describe("buildJgpPageData", () => {
     const data = buildJgpPageData(trendsFixture, latestDatasetFixture, "A01", "sim", 1);
     expect(data?.hospitalizations).toBe(34);
     expect(data?.topProviders.map((row) => row.key)).toEqual(["12|222"]);
+    // Pełny ranking zostaje do wyróżnienia `?osrodek=` spoza czołówki.
+    expect(data?.providers.map((row) => row.key)).toEqual(["12|222", "07|111"]);
   });
 
   it("pokazuje lata katalogu dla grupy spoza najnowszego roku", () => {

@@ -1,19 +1,23 @@
 /** @vitest-environment jsdom */
 
 import "@testing-library/jest-dom/vitest";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { HomePage } from "@/components/portal/HomePage";
+
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
 
 const highlights = { yearFrom: "2025", yearTo: "2025", hospitalizations: 7_832_118, providers: 833, jgpGroups: 693 };
 
 afterEach(cleanup);
 
 describe("Strona główna", () => {
-  it("pokazuje hero z jedną akcją prowadzącą do sekcji tematów", () => {
+  it("pokazuje w hero wyszukiwarkę i jeden link do sekcji tematów", () => {
     render(<HomePage highlights={highlights} />);
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Publiczna ochronazdrowia w liczbach.");
     const hero = screen.getByRole("heading", { level: 1 }).closest("section")!;
+    expect(within(hero).getByRole("search")).toBeInTheDocument();
+    expect(within(hero).getByRole("combobox", { name: "Szukaj grupy JGP albo szpitala" })).toBeInTheDocument();
     expect(within(hero).getAllByRole("link").map((link) => link.getAttribute("href"))).toEqual(["#odkrywaj"]);
     expect(screen.getByRole("img", { name: /szpital, rozliczenie z NFZ, kontrola/ })).toBeInTheDocument();
   });

@@ -2,7 +2,7 @@
 
 import "@testing-library/jest-dom/vitest";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { JgpPage } from "@/components/jgp/JgpPage";
 import { buildJgpPageData } from "@/lib/jgpPage";
 import { latestDatasetFixture, trendsFixture } from "@/lib/__tests__/fixtures/trendsFixture";
@@ -70,5 +70,47 @@ describe("JgpPage", () => {
   it("prowadzi do eksploratora z wybraną grupą", () => {
     render(<JgpPage data={data} />);
     expect(screen.getByRole("link", { name: "Pokaż w eksploratorze →" })).toHaveAttribute("href", "/analizy?jgp=A01");
+  });
+});
+
+describe("JgpPage z wyróżnionym świadczeniodawcą (?osrodek=)", () => {
+  const data = buildJgpPageData(trendsFixture, latestDatasetFixture, "A01", "min", 1)!;
+  const openWith = (key: string | null) => window.history.replaceState(null, "", key ? `/jgp/A01?osrodek=${encodeURIComponent(key)}` : "/jgp/A01");
+  afterEach(() => openWith(null));
+
+  it("bez parametru nie pokazuje opisu wybranego świadczeniodawcy", () => {
+    openWith(null);
+    render(<JgpPage data={data} />);
+    expect(screen.queryByRole("region", { name: "Wybrany świadczeniodawca" })).not.toBeInTheDocument();
+  });
+
+  it("pokazuje miejsce i wskaźniki na tle grupy oraz dopisuje wiersz spoza czołówki", () => {
+    openWith("07|111");
+    render(<JgpPage data={data} />);
+    const banner = screen.getByRole("region", { name: "Wybrany świadczeniodawca" });
+    expect(banner).toHaveTextContent("Szpital Alfa");
+    // A01 (min): Beta 18 hosp., 2 zgony; Alfa 12 hosp., 1 zgon → miejsce 2 z 2, 40,0% grupy.
+    expect(banner).toHaveTextContent("2 / 2");
+    expect(banner).toHaveTextContent("40,0% grupy");
+    expect(banner).toHaveTextContent("grupa: 10,0%");
+    const rows = within(tableIn("Kto leczy najwięcej · 2025")).getAllByRole("row").slice(1);
+    expect(rows).toHaveLength(2);
+    expect(rows[1]).toHaveAttribute("aria-current", "true");
+    expect(rows[1]).toHaveTextContent("… 2");
+  });
+
+  it("usuwa wyróżnienie z adresu", () => {
+    openWith("12|222");
+    render(<JgpPage data={data} />);
+    fireEvent.click(screen.getByRole("button", { name: "Usuń wyróżnienie" }));
+    expect(window.location.search).toBe("");
+    expect(screen.queryByRole("region", { name: "Wybrany świadczeniodawca" })).not.toBeInTheDocument();
+  });
+
+  it("mówi, gdy wybrany świadczeniodawca nie leczy w tej grupie", () => {
+    openWith("12|333");
+    render(<JgpPage data={data} />);
+    expect(screen.getByRole("region", { name: "Wybrany świadczeniodawca" })).toHaveTextContent("nie ma hospitalizacji w grupie A01 w 2025 r.");
+    expect(screen.getByRole("link", { name: "Profil szpitala →" })).toHaveAttribute("href", "/szpitale?hospital=12%7C333");
   });
 });

@@ -214,3 +214,98 @@
 .muted {
   color: #667085;
 }
+
+/* Wybrany świadczeniodawca (?osrodek=) */
+.selected {
+  display: grid;
+  gap: 12px;
+  margin: 0 0 8px;
+  padding: 16px;
+  border: 2px solid #c65d2e;
+  border-radius: 12px;
+  background: #fff8f4;
+}
+
+.selected p {
+  margin: 0;
+}
+
+.selectedHead {
+  display: grid;
+  gap: 2px;
+}
+
+.selectedHead strong {
+  font-size: 18px;
+}
+
+.selectedMetrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+
+.selectedMetrics > div {
+  display: grid;
+  gap: 2px;
+  padding: 10px 12px;
+  border: 1px solid #f1d5c6;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.selectedMetrics dt {
+  color: #667085;
+  font-size: 12px;
+}
+
+.selectedMetrics dd {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.selectedMetrics span {
+  color: #667085;
+  font-size: 12px;
+}
+
+.selected .note {
+  padding: 0;
+}
+
+.selectedActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  align-items: center;
+  font-size: 14px;
+}
+
+.selectedActions a {
+  color: #2856a3;
+  font-weight: 600;
+}
+
+.selectedActions button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #475467;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.rowSelected td {
+  background: #fff1e8;
+  font-weight: 600;
+}
+
+@media (max-width: 760px) {
+  .selectedMetrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

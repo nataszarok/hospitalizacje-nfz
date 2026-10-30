@@ -5,6 +5,7 @@ import { SITE_NAME } from "@/lib/site";
 import { formatCompactCount, formatYearRange } from "@/lib/formatters";
 import type { DatasetHighlights } from "@/lib/staticData";
 import { PortalIcon } from "@/components/portal/PortalIcon";
+import { SearchBox } from "@/components/search/SearchBox";
 import styles from "./HomePage.module.css";
 
 // Kafel bez href jest pokazywany jako „Planowane”.
@@ -37,8 +38,9 @@ export function HomePage({ highlights }: { highlights: DatasetHighlights }) {
             <span className={styles.eyebrow}><span className={styles.eyebrowLine} /> Publiczna ochrona zdrowia · Dane NFZ</span>
             <h1 id="hero-title">Publiczna ochrona<br />zdrowia w liczbach.</h1>
             <p>Sprawdź, jak wyglądały hospitalizacje, porównuj publiczne szpitale i poznaj system wycen JGP. Czytaj analizy i artykuły, m.in. o kontrolach NFZ.</p>
-            <div className={styles.heroActions}>
-              <Link className={styles.primaryButton} href="#odkrywaj">Odkrywaj dane <PortalIcon name="arrow" size={18} /></Link>
+            <div className={styles.heroSearch}>
+              <SearchBox variant="hero" />
+              <p className={styles.searchHint}>Np. <b>E10</b>, <b>ozw</b>, <b>Nowa Sól</b> albo <b>E10 Nowa Sól na tle innych</b>. <Link href="#odkrywaj">Albo wybierz temat ↓</Link></p>
             </div>
           </div>
         </div>

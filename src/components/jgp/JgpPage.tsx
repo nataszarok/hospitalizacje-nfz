@@ -1,7 +1,6 @@
 import Link from "next/link";
-import { ProviderLink } from "@/components/TableLinks";
+import { ProvidersTable, SelectedProviderBanner } from "@/components/jgp/JgpProviders";
 import { TrendView } from "@/components/trends/TrendView";
-import { formatCityName } from "@/lib/formatters";
 import type { JgpAdmissionYear, JgpPageData } from "@/lib/jgpPage";
 import styles from "./JgpPage.module.css";
 
@@ -32,6 +31,8 @@ export function JgpPage({ data }: { data: JgpPageData }) {
       <Link className={styles.explorerLink} href={explorerHref}>Pokaż w eksploratorze →</Link>
     </header>
 
+    <SelectedProviderBanner data={data} />
+
     <section className={styles.section} aria-labelledby="jgp-trend">
       <h2 id="jgp-trend" className={styles.sectionTitle}>Jak to się zmieniało w czasie</h2>
       <TrendView productCodes={data.productCodes} method="min" />
@@ -41,31 +42,7 @@ export function JgpPage({ data }: { data: JgpPageData }) {
 
     <section className={styles.section} aria-labelledby="jgp-providers">
       <h2 id="jgp-providers" className={styles.sectionTitle}>Kto leczy najwięcej · {data.year}</h2>
-      <div className={styles.tableCard}>
-        <table className={styles.table}>
-          <thead>
-            <tr>
-              <th>#</th><th>Świadczeniodawca</th><th>Miasto</th><th>Województwo</th>
-              <th className={styles.num}>Hospitalizacje</th><th className={styles.num}>Śmiertelność</th><th className={styles.num}>Nagłe</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.topProviders.map((row, index) => <tr key={row.key}>
-              <td>{index + 1}</td>
-              <td><ProviderLink owNfz={row.owNfz} nip={row.nip} name={row.name} /></td>
-              <td>{formatCityName(row.city)}</td>
-              <td>{row.voivodeship}</td>
-              <td className={styles.num}>{integer(row.hospitalizations)}</td>
-              <td className={styles.num}>{pct(row.mortalityPct)}</td>
-              <td className={styles.num}>{pct(row.urgentPct)}</td>
-            </tr>)}
-          </tbody>
-        </table>
-        <p className={styles.note}>
-          {data.topProviders.length} z {integer(data.providerCount)} świadczeniodawców. Wartości &lt;5 liczone metodą konserwatywną (każde &lt;5 = 1).
-          {" "}<Link href={`/analizy?t=k&jgp=${encodeURIComponent(data.jgpCode)}`}>Wszyscy świadczeniodawcy: wolumen a śmiertelność →</Link>
-        </p>
-      </div>
+      <ProvidersTable data={data} />
     </section>
 
     <RegionsSection data={data} />

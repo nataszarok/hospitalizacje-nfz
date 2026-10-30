@@ -41,6 +41,8 @@ export interface JgpPageData {
   providerCount: number;
   hospitalizations: number;
   topProviders: JgpProviderRow[];
+  /** Wszyscy świadczeniodawcy z najnowszego roku, w kolejności rankingu (do wyróżnienia `?osrodek=`). */
+  providers: JgpProviderRow[];
   /** Województwa w najnowszym roku, od największej liczby na 100 tys. mieszkańców. */
   regions: RegionRow[];
   /** Tryb przyjęcia w latach, w których grupa występuje w danych. */
@@ -103,6 +105,7 @@ export function buildJgpPageData(trends: TrendsDataset, latest: StaticDataset, j
     providerCount: rows.length,
     hospitalizations: rows.reduce((sum, row) => sum + row.hospitalizations, 0),
     topProviders: rows.slice(0, limit),
+    providers: rows,
     regions: regionalBreakdown(trends, productCodes, latest.analysisYear, method, latest.regions, latest.populations),
     admissions,
   };

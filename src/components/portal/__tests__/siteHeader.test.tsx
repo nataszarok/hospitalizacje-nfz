@@ -9,7 +9,7 @@ import {
 } from "@/lib/dashboardNavigation";
 
 const navigation = vi.hoisted(() => ({ pathname: "/" }));
-vi.mock("next/navigation", () => ({ usePathname: () => navigation.pathname }));
+vi.mock("next/navigation", () => ({ usePathname: () => navigation.pathname, useRouter: () => ({ push: vi.fn() }) }));
 
 function openPage(pathname: string, search = "") {
   navigation.pathname = pathname;
@@ -118,5 +118,17 @@ describe("SiteHeader", () => {
     render(<SiteHeader />);
     fireEvent.click(screen.getByRole("button", { name: "Otwórz menu" }));
     expect(screen.getByRole("button", { name: "Zamknij menu" })).toHaveAttribute("aria-expanded", "true");
+  });
+
+  it("na podstronach pokazuje wyszukiwarkę, na stronie głównej nie (jest w hero)", () => {
+    render(<SiteHeader />);
+    expect(screen.queryByRole("search")).not.toBeInTheDocument();
+    cleanup();
+    openPage("/szpitale");
+    render(<SiteHeader />);
+    expect(screen.getByRole("search")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Szukaj" }));
+    expect(screen.getByRole("button", { name: "Zamknij wyszukiwarkę" })).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getAllByRole("search")).toHaveLength(2);
   });
 });

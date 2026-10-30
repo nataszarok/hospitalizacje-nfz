@@ -1,0 +1,22 @@
+.search { position: relative; width: 100%; }
+.field { display: flex; align-items: center; gap: 10px; border: 1px solid var(--color-border); background: #fff; border-radius: 10px; padding: 0 14px; transition: border-color .15s, box-shadow .15s; }
+.field:focus-within { border-color: var(--color-primary); box-shadow: 0 0 0 3px var(--color-primary-soft); }
+.icon { color: var(--color-text-secondary); display: inline-flex; flex: none; }
+.field input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; font: inherit; color: var(--color-text); }
+.field input::-webkit-search-cancel-button { cursor: pointer; }
+.hero .field { min-height: 54px; box-shadow: 0 8px 24px rgba(16,54,45,.08); }
+.hero .field input { font-size: 16px; padding: 14px 0; }
+.header .field { min-height: 38px; border-radius: 9px; padding: 0 10px; }
+.header .field input { font-size: 14px; padding: 8px 0; }
+.list { position: absolute; z-index: 120; left: 0; right: 0; top: calc(100% + 6px); max-height: min(70vh, 460px); overflow-y: auto; background: #fff; border: 1px solid var(--color-border); border-radius: 12px; box-shadow: 0 16px 32px rgba(16,40,35,.14); padding: 6px; }
+.header .list { min-width: 420px; left: auto; }
+.section { padding: 8px 10px 4px; font-size: 11px; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; color: var(--color-text-secondary); }
+.option { display: flex; align-items: flex-start; gap: 10px; padding: 8px 10px; border-radius: 8px; cursor: pointer; }
+.optionActive { background: var(--color-primary-soft); }
+.interpretation .primary { color: var(--color-primary-hover); }
+.code { flex: none; min-width: 44px; font-weight: 750; color: #2856a3; font-variant-numeric: tabular-nums; }
+.text { display: grid; gap: 2px; min-width: 0; }
+.primary { font-size: 14px; font-weight: 600; color: var(--color-text); overflow-wrap: anywhere; }
+.secondary { font-size: 12px; color: var(--color-text-secondary); }
+.status { padding: 12px 10px; font-size: 14px; color: var(--color-text-secondary); }
+@media (max-width: 700px) { .header .list { min-width: 0; left: 0; } }

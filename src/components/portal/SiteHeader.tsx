@@ -10,6 +10,7 @@ import {
 } from "@/lib/dashboardNavigation";
 import type { DashboardActiveTab } from "@/lib/dashboardUrlState";
 import { PortalIcon } from "@/components/portal/PortalIcon";
+import { SearchBox } from "@/components/search/SearchBox";
 import { SITE_NAME } from "@/lib/site";
 import styles from "./SiteHeader.module.css";
 
@@ -53,6 +54,7 @@ function navigateInsidePage(event: React.MouseEvent<HTMLAnchorElement>, pathname
 export function SiteHeader() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const [analysisOpen, setAnalysisOpen] = useState(false);
   const [currentSection, setCurrentSection] = useState<string>("");
   const [currentAnalysisTab, setCurrentAnalysisTab] = useState<DashboardActiveTab | null>(null);
@@ -64,6 +66,7 @@ export function SiteHeader() {
     const syncNavigation = () => {
       setAnalysisOpen(false);
       setIsOpen(false);
+      setSearchOpen(false);
       setCurrentSection(sectionForPath(pathname, window.location.search));
       setCurrentAnalysisTab(pathname === "/analizy" ? navigationFromDashboardHref(`/analizy${window.location.search}`)?.tab ?? null : null);
     };
@@ -107,6 +110,8 @@ export function SiteHeader() {
   }, [analysisOpen]);
 
   const current = currentSection || sectionForPath(pathname, "");
+  // Strona główna ma duże pole wyszukiwania w hero, więc nagłówek go nie powtarza.
+  const showSearch = pathname !== "/";
 
   return <header className={styles.header}>
     <div className={styles.inner}>
@@ -161,8 +166,18 @@ export function SiteHeader() {
         >{label}</Link>)}
       </nav>
       <div className={styles.end}>
+        {showSearch ? <div className={styles.searchInline}><SearchBox variant="header" /></div> : null}
+        {showSearch ? <button
+          type="button"
+          className={styles.searchButton}
+          aria-label={searchOpen ? "Zamknij wyszukiwarkę" : "Szukaj"}
+          aria-expanded={searchOpen}
+          aria-controls="header-search"
+          onClick={() => { setSearchOpen((open) => !open); setIsOpen(false); }}
+        ><PortalIcon name={searchOpen ? "close" : "search"} size={20} /></button> : null}
         <button type="button" className={styles.menuButton} aria-label={isOpen ? "Zamknij menu" : "Otwórz menu"} aria-expanded={isOpen} aria-controls="portal-navigation" onClick={() => { setIsOpen((open) => !open); setAnalysisOpen(false); }}><PortalIcon name={isOpen ? "close" : "menu"} size={22} /></button>
       </div>
     </div>
+    {showSearch && searchOpen ? <div id="header-search" className={styles.searchPanel}><SearchBox variant="header" autoFocus onNavigate={() => setSearchOpen(false)} /></div> : null}
   </header>;
 }
