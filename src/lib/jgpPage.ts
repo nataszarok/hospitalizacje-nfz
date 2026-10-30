@@ -2,9 +2,48 @@ import { isProceduralJgpName, productTrend, type StaticDataset, type TrendsDatas
 import { regionalBreakdown, type RegionRow } from "@/lib/regions";
 import { productCodesForJgp } from "@/lib/trends";
 import type { EstimationMethod } from "@/lib/types";
+import pageCodes from "@/lib/jgpPageCodes.json";
 
-/** Grupy JGP ze stroną `/jgp/[kod]`. Na start jedna grupa; docelowo cały katalog. */
-export const JGP_PAGE_CODES = ["E10"] as const;
+/**
+ * Grupy JGP ze stroną `/jgp/[kod]`. Na start jedna grupa; docelowo cały katalog.
+ * Lista w pliku JSON, bo czyta ją też `scripts/build_jgp_pages.py`.
+ */
+export const JGP_PAGE_CODES: readonly string[] = pageCodes;
+
+/** Model par A/B: pary klasy A z dystansem do tej wartości (jak domyślnie w widoku „Porównanie”). */
+export const PEER_GRADE = "A";
+export const PEER_MAX_DISTANCE = 10.01;
+
+/** Plik grupy z `scripts/build_jgp_pages.py` (`public/data/jgp/<KOD>.json.gz`). */
+export interface JgpGroupFile {
+  version: 1;
+  jgp: string;
+  years: string[];
+  /** [rok, miesiąc, OW NFZ, NIP, grupa trybu p/u/o, hSim, hMin, dSim, dMin] */
+  monthly: [string, number, string, string, string, number, number, number, number][];
+  /** Rozliczenia NFZ w zł: kraj i świadczeniodawcy (rok, OW, NIP, kwota). */
+  valuePln?: { national: Record<string, number>; providers: [string, string, string, number][] };
+}
+
+/** Wycena grupy z katalogu NFZ (punkty). */
+export interface JgpValuation {
+  kod_jgp: string;
+  pkt_hospitalizacja: number | null;
+  pkt_hospitalizacja_planowa?: number | null;
+  pkt_jeden_dzien?: number | null;
+  dni_finansowane_grupa?: number | null;
+  pkt_osobodzien_ponad_ryczalt?: number | null;
+}
+
+/** Para szpitali z modelu podobieństwa (tylko pola używane na stronie grupy). */
+export interface JgpPeerPair { a: string; b: string; peer_grade_pred: string; distance_score: number }
+
+export interface JgpPageExtras {
+  groupFile?: JgpGroupFile | null;
+  valuationYear?: string;
+  valuations?: JgpValuation[];
+  peerPairs?: JgpPeerPair[];
+}
 
 export interface JgpProviderRow {
   key: string;
@@ -17,6 +56,14 @@ export interface JgpProviderRow {
   deaths: number;
   mortalityPct: number;
   urgentPct: number;
+  /** Hospitalizacje miesięcznie (metoda rankingu), w kolejności `JgpPageData.months`; puste bez pliku grupy. */
+  series: number[];
+  /** Hospitalizacje w poprzednim roku albo `null`, gdy brak danych. */
+  previousHospitalizations: number | null;
+  /** Rozliczenia NFZ za grupę w roku rankingu (zł) albo `null`. */
+  valuePln: number | null;
+  /** Indeksy w `JgpPageData.providers` podobnych szpitali (model par), które leczą w tej grupie. */
+  peers: number[];
 }
 
 /** Struktura trybu przyjęcia w jednym roku (p = planowe, u = nagłe, o = pozostałe). */
@@ -47,10 +94,19 @@ export interface JgpPageData {
   regions: RegionRow[];
   /** Tryb przyjęcia w latach, w których grupa występuje w danych. */
   admissions: JgpAdmissionYear[];
+  /** Miesiące wykresu „W czasie” jako „RRRR-MM”; puste bez pliku grupy. */
+  months: string[];
+  /** Cała Polska miesięcznie: hospitalizacje, zgony, przyjęcia nagłe. */
+  national: { hospitalizations: number[]; deaths: number[]; urgent: number[] };
+  /** Hospitalizacje grupy w poprzednim roku albo `null`. */
+  previousHospitalizations: number | null;
+  valuation: { year: string; points: number | null; daysFinanced: number | null; extraDayPoints: number | null } | null;
+  /** Rozliczenia NFZ za grupę w kraju w kolejnych pełnych latach (zł). */
+  valuePln: { year: string; value: number }[];
 }
 
 /** Dane strony grupy JGP: zakres lat z trendów, ranking świadczeniodawców z najnowszego roku. */
-export function buildJgpPageData(trends: TrendsDataset, latest: StaticDataset, jgpCode: string, method: EstimationMethod = "min", limit = 15): JgpPageData | null {
+export function buildJgpPageData(trends: TrendsDataset, latest: StaticDataset, jgpCode: string, method: EstimationMethod = "min", limit = 15, extras: JgpPageExtras = {}): JgpPageData | null {
   const productCodes = productCodesForJgp(trends, jgpCode);
   if (!productCodes.length) return null;
   const products = trends.products.filter(([code]) => productCodes.includes(code));
@@ -73,6 +129,28 @@ export function buildJgpPageData(trends: TrendsDataset, latest: StaticDataset, j
     grouped.set(key, row);
   }
 
+  const file = extras.groupFile && extras.groupFile.jgp === jgpCode ? extras.groupFile : null;
+  const months = file ? file.years.flatMap((year) => Array.from({ length: 12 }, (_, i) => `${year}-${String(i + 1).padStart(2, "0")}`)) : [];
+  const monthIndex = new Map(months.map((month, i) => [month, i]));
+  const previousYear = String(Number(latest.analysisYear) - 1);
+  const series = new Map<string, number[]>();
+  const previous = new Map<string, number>();
+  const national = { hospitalizations: months.map(() => 0), deaths: months.map(() => 0), urgent: months.map(() => 0) };
+  for (const [year, month, ow, nip, admissionGroup, hSim, hMin, dSim, dMin] of file?.monthly ?? []) {
+    const i = monthIndex.get(`${year}-${String(month).padStart(2, "0")}`);
+    if (i === undefined) continue;
+    const h = method === "sim" ? hSim : hMin;
+    const key = `${ow}|${nip}`;
+    const providerSeries = series.get(key) ?? months.map(() => 0);
+    providerSeries[i] += h;
+    series.set(key, providerSeries);
+    if (year === previousYear) previous.set(key, (previous.get(key) ?? 0) + h);
+    national.hospitalizations[i] += h;
+    national.deaths[i] += method === "sim" ? dSim : dMin;
+    if (admissionGroup === "u") national.urgent[i] += h;
+  }
+  const value = new Map((file?.valuePln?.providers ?? []).filter(([year]) => year === latest.analysisYear).map(([, ow, nip, pln]) => [`${ow}|${nip}`, pln]));
+
   const rows = [...grouped.entries()].map(([key, row]): JgpProviderRow => ({
     key,
     owNfz: row.ow,
@@ -84,7 +162,28 @@ export function buildJgpPageData(trends: TrendsDataset, latest: StaticDataset, j
     deaths: row.d,
     mortalityPct: row.h ? (row.d / row.h) * 100 : 0,
     urgentPct: row.h ? (row.urgent / row.h) * 100 : 0,
+    series: series.get(key) ?? (file ? months.map(() => 0) : []),
+    previousHospitalizations: file ? previous.get(key) ?? 0 : null,
+    valuePln: value.get(key) ?? null,
+    peers: [],
   })).sort((a, b) => b.hospitalizations - a.hospitalizations || a.name.localeCompare(b.name, "pl"));
+
+  // Podobne szpitale: pary klasy A z modelu, ograniczone do świadczeniodawców tej grupy.
+  const position = new Map(rows.map((row, i) => [row.key, i]));
+  for (const pair of extras.peerPairs ?? []) {
+    if (pair.peer_grade_pred !== PEER_GRADE || pair.distance_score > PEER_MAX_DISTANCE) continue;
+    const a = position.get(pair.a);
+    const b = position.get(pair.b);
+    if (a === undefined || b === undefined) continue;
+    rows[a].peers.push(b);
+    rows[b].peers.push(a);
+  }
+  for (const row of rows) row.peers.sort((x, y) => x - y);
+
+  const valuationRow = extras.valuations?.find((row) => row.kod_jgp === jgpCode);
+  const previousTotal = file && file.years.includes(previousYear)
+    ? file.monthly.filter(([year]) => year === previousYear).reduce((sum, row) => sum + (method === "sim" ? row[5] : row[6]), 0)
+    : null;
 
   const trend = productTrend(trends, productCodes, method);
   const admissions = trend.yearly.flatMap((point) => point ? [{
@@ -108,5 +207,15 @@ export function buildJgpPageData(trends: TrendsDataset, latest: StaticDataset, j
     providers: rows,
     regions: regionalBreakdown(trends, productCodes, latest.analysisYear, method, latest.regions, latest.populations),
     admissions,
+    months,
+    national,
+    previousHospitalizations: previousTotal,
+    valuation: valuationRow ? {
+      year: extras.valuationYear ?? latest.analysisYear,
+      points: valuationRow.pkt_hospitalizacja ?? null,
+      daysFinanced: valuationRow.dni_finansowane_grupa ?? null,
+      extraDayPoints: valuationRow.pkt_osobodzien_ponad_ryczalt ?? null,
+    } : null,
+    valuePln: Object.entries(file?.valuePln?.national ?? {}).sort(([a], [b]) => a.localeCompare(b)).map(([year, pln]) => ({ year, value: pln })),
   };
 }

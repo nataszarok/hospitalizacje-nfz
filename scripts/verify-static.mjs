@@ -74,3 +74,31 @@ for (const [key, [hSim, hMin]] of nationalSums) {
 }
 console.log(`Regional trends OK: ${regionalTrends.rows.length.toLocaleString("en-US")} rows, ${(regionalSize / 1024).toFixed(0)} KiB.`);
 console.log(`Hospitalization data OK: ${index.years.join(", ")}; ${((totalSize + trendsSize + regionalSize) / 1024 / 1024).toFixed(2)} MiB in total.`);
+
+// Pliki stron grup (scripts/build_jgp_pages.py) muszą sumować się do trendu krajowego grupy.
+const pageCodes = JSON.parse(await readFile("src/lib/jgpPageCodes.json", "utf8"));
+for (const code of pageCodes) {
+  const file = path.join("public/data/jgp", `${code}.json.gz`);
+  const { size, data: group } = await readGzipJson(file);
+  if (JSON.stringify(group.years) !== JSON.stringify(index.years)) throw new Error(`${file} years differ from index.json.`);
+  const productIndexes = new Set(trends.products.flatMap(([, jgp], i) => jgp === code ? [i] : []));
+  const expected = new Map();
+  for (const [year, month, product, admission, hSim, hMin] of trends.monthly) {
+    if (!productIndexes.has(product)) continue;
+    const key = `${year}|${month}|${admission}`;
+    const sum = expected.get(key) ?? [0, 0];
+    expected.set(key, [sum[0] + hSim, sum[1] + hMin]);
+  }
+  const actual = new Map();
+  for (const [year, month, , , admission, hSim, hMin] of group.monthly) {
+    const key = `${year}|${month}|${admission}`;
+    const sum = actual.get(key) ?? [0, 0];
+    actual.set(key, [sum[0] + hSim, sum[1] + hMin]);
+  }
+  if (actual.size !== expected.size) throw new Error(`${file} covers different months than trends.json.gz.`);
+  for (const [key, [hSim, hMin]] of expected) {
+    const sum = actual.get(key);
+    if (!sum || sum[0] !== hSim || sum[1] !== hMin) throw new Error(`${file} does not add up to trends.json.gz for ${key}.`);
+  }
+  console.log(`Group page ${code} OK: ${group.monthly.length.toLocaleString("en-US")} monthly rows${group.valuePln ? `, PLN ${Object.keys(group.valuePln.national).at(0)}–${Object.keys(group.valuePln.national).at(-1)}` : ""}, ${(size / 1024).toFixed(0)} KiB.`);
+}

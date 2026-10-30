@@ -81,18 +81,17 @@ def normalize_nip(series: pd.Series) -> pd.Series:
     return series.astype("string").str.replace(r"\D", "", regex=True)
 
 
-def read_year(path: Path, year: str) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, int]:
-    """Zwraca fakty (szczegóły), trend miesięczny, trend regionalny i miesięczny regionalny dla jednego roku."""
+def iter_frames(path: Path, year: str):
+    """Kolejne fragmenty pliku źródłowego jako ramki z oszacowanymi wartościami „<5” (h_sim, h_min, d_sim, d_min).
+
+    Losowanie idzie po wszystkich wierszach w kolejności pliku, więc każdy skrypt, który czyta plik
+    tą funkcją, dostaje te same wartości co pliki z tego skryptu.
+    """
     rng = np.random.default_rng(SEED)
     values = np.array([1, 2, 3, 4])
     weights = np.exp(-values)
     p = weights / weights.sum()
 
-    facts: list[pd.DataFrame] = []
-    monthly: list[pd.DataFrame] = []
-    regional: list[pd.DataFrame] = []
-    regional_monthly: list[pd.DataFrame] = []
-    rows = 0
     for chunk in pd.read_csv(path, sep=";", dtype=str, chunksize=CHUNK_SIZE, keep_default_na=False):
         chunk = chunk[RAW_COLUMNS]
         years = set(chunk["ROK"].str.strip())
@@ -119,11 +118,22 @@ def read_year(path: Path, year: str) -> tuple[pd.DataFrame, pd.DataFrame, pd.Dat
             "d_sim": np.where(death, h_sim, 0.0), "d_min": np.where(death, h_min, 0.0),
         })
         frame["group"] = frame["admission"].map(admission_group)
+        yield frame, len(chunk)
+
+
+def read_year(path: Path, year: str) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, int]:
+    """Zwraca fakty (szczegóły), trend miesięczny, trend regionalny i miesięczny regionalny dla jednego roku."""
+    facts: list[pd.DataFrame] = []
+    monthly: list[pd.DataFrame] = []
+    regional: list[pd.DataFrame] = []
+    regional_monthly: list[pd.DataFrame] = []
+    rows = 0
+    for frame, chunk_rows in iter_frames(path, year):
         facts.append(frame.groupby(FACT_KEYS, sort=False)[VALUE_COLS].sum().reset_index())
         monthly.append(frame.groupby(["month", "product", "group"], sort=False)[VALUE_COLS].sum().reset_index())
         regional.append(frame.groupby(["ow", "product", "group"], sort=False)[VALUE_COLS].sum().reset_index())
         regional_monthly.append(frame.groupby(["month", "ow", "product", "group"], sort=False)[VALUE_COLS].sum().reset_index())
-        rows += len(chunk)
+        rows += chunk_rows
 
     def combine(parts: list[pd.DataFrame], keys: list[str]) -> pd.DataFrame:
         out = pd.concat(parts).groupby(keys, sort=True)[VALUE_COLS].sum().reset_index()

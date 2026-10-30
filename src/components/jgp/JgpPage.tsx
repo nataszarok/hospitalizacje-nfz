@@ -1,19 +1,25 @@
 import Link from "next/link";
-import { ProvidersTable, SelectedProviderBanner } from "@/components/jgp/JgpProviders";
-import { TrendView } from "@/components/trends/TrendView";
-import type { JgpAdmissionYear, JgpPageData } from "@/lib/jgpPage";
+import { JgpCardSections } from "@/components/jgp/JgpCard";
+import { topShare, yearChangePct } from "@/lib/jgpCard";
+import type { JgpPageData } from "@/lib/jgpPage";
 import styles from "./JgpPage.module.css";
 
 const integer = (value: number) => Math.round(value).toLocaleString("pl-PL");
-const pct = (value: number) => `${value.toLocaleString("pl-PL", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`;
+const decimal = (value: number) => value.toLocaleString("pl-PL", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+const pct = (value: number) => `${decimal(value)}%`;
 
 function yearRange(years: string[]) {
   return years.length > 1 ? `${years[0]}–${years.at(-1)}` : years[0] ?? "—";
 }
 
-/** Strona grupy JGP: trend we wszystkich latach i ranking świadczeniodawców z najnowszego roku. */
+/** Strona grupy JGP: liczby grupy, trend, ośrodki, województwa, tryb przyjęcia i wycena. */
 export function JgpPage({ data }: { data: JgpPageData }) {
   const explorerHref = `/analizy?jgp=${encodeURIComponent(data.jgpCode)}`;
+  const deaths = data.providers.reduce((sum, row) => sum + row.deaths, 0);
+  const urgent = data.providers.reduce((sum, row) => sum + (row.urgentPct / 100) * row.hospitalizations, 0);
+  const change = yearChangePct(data.hospitalizations, data.previousHospitalizations);
+  const latestValue = data.valuePln.at(-1);
+  const firstValue = data.valuePln[0];
   return <main className={styles.page}>
     <nav className={styles.breadcrumbs} aria-label="Ścieżka">
       <Link href="/analizy">Analizy</Link> <span aria-hidden>›</span> <span>Grupy JGP</span>
@@ -23,120 +29,24 @@ export function JgpPage({ data }: { data: JgpPageData }) {
       <div>
         <div className={styles.eyebrow}>Grupa JGP · {data.procedural ? "zabiegowa" : "zachowawcza"}</div>
         <h1><span className={styles.code}>{data.jgpCode}</span> {data.name}</h1>
-        <p>
-          Produkt {data.productCodes.join(", ")} · w danych: {yearRange(data.catalogYears)} ·
-          {" "}{integer(data.hospitalizations)} hospitalizacji u {integer(data.providerCount)} świadczeniodawców w {data.year} r.
-        </p>
+        <p>Produkt {data.productCodes.join(", ")} · w danych: {yearRange(data.catalogYears)}</p>
       </div>
       <Link className={styles.explorerLink} href={explorerHref}>Pokaż w eksploratorze →</Link>
     </header>
 
-    <SelectedProviderBanner data={data} />
+    <dl className={styles.kpiBand} aria-label="Liczby grupy">
+      <div><dt>Hospitalizacje {data.year}</dt><dd>{integer(data.hospitalizations)}</dd><span>{change === null ? "brak poprzedniego roku" : `${change > 0 ? "+" : ""}${decimal(change)}% r/r`}</span></div>
+      <div><dt>Świadczeniodawcy</dt><dd>{integer(data.providerCount)}</dd><span>top 25 = {pct(topShare(data.providers))} hospitalizacji</span></div>
+      <div><dt>Przyjęcia nagłe</dt><dd>{pct(data.hospitalizations ? (urgent / data.hospitalizations) * 100 : 0)}</dd><span>tryb 2 i 3</span></div>
+      <div><dt>Śmiertelność</dt><dd>{pct(data.hospitalizations ? (deaths / data.hospitalizations) * 100 : 0)}</dd><span>zgony w szpitalu</span></div>
+      {data.valuation?.points ? <div className={styles.kpiValue}><dt>Wycena {data.valuation.year}</dt><dd>{integer(data.valuation.points)} pkt</dd><span>za hospitalizację</span></div> : null}
+      {latestValue ? <div className={styles.kpiValue}><dt>Rozliczenia NFZ {latestValue.year}</dt><dd>{(latestValue.value / 1_000_000).toLocaleString("pl-PL", { maximumFractionDigits: 1, minimumFractionDigits: 1 })} mln zł</dd><span>{firstValue && firstValue !== latestValue ? `${firstValue.year}: ${(firstValue.value / 1_000_000).toLocaleString("pl-PL", { maximumFractionDigits: 1, minimumFractionDigits: 1 })} mln zł` : "w kraju"}</span></div> : null}
+    </dl>
 
-    <section className={styles.section} aria-labelledby="jgp-trend">
-      <h2 id="jgp-trend" className={styles.sectionTitle}>Jak to się zmieniało w czasie</h2>
-      <TrendView productCodes={data.productCodes} method="min" />
-    </section>
-
-    <AdmissionsSection data={data} />
-
-    <section className={styles.section} aria-labelledby="jgp-providers">
-      <h2 id="jgp-providers" className={styles.sectionTitle}>Kto leczy najwięcej · {data.year}</h2>
-      <ProvidersTable data={data} />
-    </section>
-
-    <RegionsSection data={data} />
+    <JgpCardSections data={data} />
 
     <section className={styles.planned}>
-      <strong>Planowane:</strong> wycena grupy i jej zmiany, artykuły o tej grupie.
+      <strong>Planowane:</strong> mapa z granicami województw i ośrodkami, rodzina grup OZW, wycena w kolejnych latach, artykuły o tej grupie.
     </section>
   </main>;
-}
-
-const ADMISSION_PARTS: { key: keyof Omit<JgpAdmissionYear, "year" | "total">; label: string; className: string }[] = [
-  { key: "planned", label: "Planowe", className: styles.segmentPlanned },
-  { key: "urgent", label: "Nagłe", className: styles.segmentUrgent },
-  { key: "other", label: "Pozostałe", className: styles.segmentOther },
-];
-
-function AdmissionsSection({ data }: { data: JgpPageData }) {
-  const latest = data.admissions.at(-1);
-  const share = (part: number, total: number) => total > 0 ? (part / total) * 100 : 0;
-  return <section className={styles.section} aria-labelledby="jgp-admissions">
-    <h2 id="jgp-admissions" className={styles.sectionTitle}>Planowo czy w trybie nagłym</h2>
-    <div className={styles.tableCard}>
-      {latest ? <p className={styles.lead}>
-        W {latest.year} r. {pct(share(latest.urgent, latest.total))} hospitalizacji to przyjęcia nagłe,
-        {" "}{pct(share(latest.planned, latest.total))} — planowe.
-      </p> : null}
-      <ul className={styles.legend} aria-label="Legenda">
-        {ADMISSION_PARTS.map((part) => <li key={part.key}><span className={`${styles.swatch} ${part.className}`} aria-hidden />{part.label}</li>)}
-      </ul>
-      <table className={styles.table}>
-        <thead>
-          <tr>
-            <th>Rok</th><th>Struktura przyjęć</th>
-            <th className={styles.num}>Planowe</th><th className={styles.num}>Nagłe</th><th className={styles.num}>Pozostałe</th>
-          </tr>
-        </thead>
-        <tbody>
-          {data.admissions.map((row) => <tr key={row.year}>
-            <td>{row.year}</td>
-            <td>
-              <div className={styles.stack} role="img" aria-label={ADMISSION_PARTS.map((part) => `${part.label} ${pct(share(row[part.key], row.total))}`).join(", ")}>
-                {ADMISSION_PARTS.map((part) => row[part.key] > 0
-                  ? <span key={part.key} className={`${styles.segment} ${part.className}`} style={{ width: `${share(row[part.key], row.total)}%` }} title={`${part.label}: ${pct(share(row[part.key], row.total))}`} />
-                  : null)}
-              </div>
-            </td>
-            <td className={styles.num}>{integer(row.planned)} <span className={styles.muted}>({pct(share(row.planned, row.total))})</span></td>
-            <td className={styles.num}>{integer(row.urgent)} <span className={styles.muted}>({pct(share(row.urgent, row.total))})</span></td>
-            <td className={styles.num}>{integer(row.other)} <span className={styles.muted}>({pct(share(row.other, row.total))})</span></td>
-          </tr>)}
-        </tbody>
-      </table>
-      <p className={styles.note}>
-        Nagłe: tryb przyjęcia 2 i 3. Planowe: tryb 6. Pozostałe: inne kody trybu przyjęcia.
-        {" "}<Link href={`/analizy?t=a&jgp=${encodeURIComponent(data.jgpCode)}`}>Tryb przyjęcia u świadczeniodawców →</Link>
-      </p>
-    </div>
-  </section>;
-}
-
-function RegionsSection({ data }: { data: JgpPageData }) {
-  const max = Math.max(...data.regions.map((row) => row.per100k), 0);
-  const people = data.regions.reduce((sum, row) => sum + row.population, 0);
-  const national = people ? (data.regions.reduce((sum, row) => sum + row.hospitalizations, 0) / people) * 100_000 : 0;
-  const decimal = (value: number) => value.toLocaleString("pl-PL", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
-  return <section className={styles.section} aria-labelledby="jgp-regions">
-    <h2 id="jgp-regions" className={styles.sectionTitle}>Gdzie · {data.year}</h2>
-    <div className={styles.tableCard}>
-      <table className={styles.table}>
-        <thead>
-          <tr>
-            <th>Województwo</th><th>Na 100 tys. mieszkańców</th>
-            <th className={styles.num}>Hospitalizacje</th><th className={styles.num}>Śmiertelność</th><th className={styles.num}>Nagłe</th>
-          </tr>
-        </thead>
-        <tbody>
-          {data.regions.map((row) => <tr key={row.owNfz}>
-            <td>{row.name}</td>
-            <td>
-              <div className={styles.barCell}>
-                <span className={styles.bar} style={{ width: `${max ? (row.per100k / max) * 100 : 0}%` }} aria-hidden />
-                <span className={styles.barValue}>{decimal(row.per100k)}</span>
-              </div>
-            </td>
-            <td className={styles.num}>{integer(row.hospitalizations)}</td>
-            <td className={styles.num}>{pct(row.mortalityPct)}</td>
-            <td className={styles.num}>{pct(row.urgentPct)}</td>
-          </tr>)}
-        </tbody>
-      </table>
-      <p className={styles.note}>
-        Średnia dla Polski: {decimal(national)} na 100 tys. Województwo świadczeniodawcy, nie miejsce zamieszkania pacjenta.
-        {" "}<Link href={`/analizy?t=g&jgp=${encodeURIComponent(data.jgpCode)}`}>Porównaj w eksploratorze →</Link>
-      </p>
-    </div>
-  </section>;
 }

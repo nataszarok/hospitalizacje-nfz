@@ -309,3 +309,368 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+/* Pasek liczb grupy */
+.kpiBand {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0 0 20px;
+}
+
+.kpiBand > div {
+  display: grid;
+  gap: 2px;
+  align-content: start;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid #e4e7ec;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.kpiBand dt {
+  color: #667085;
+  font-size: 12px;
+}
+
+.kpiBand dd {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.kpiBand span {
+  color: #667085;
+  font-size: 12px;
+}
+
+.kpiBand .kpiValue {
+  border-color: #b7d7cf;
+  background: #f3faf8;
+}
+
+/* Spis sekcji i aktywne filtry */
+.sectionNav {
+  position: sticky;
+  top: 74px;
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 16px;
+  margin: 8px 0 0;
+  padding: 10px 0;
+  border-bottom: 1px solid #e4e7ec;
+  background: rgba(255, 255, 255, 0.96);
+  font-size: 14px;
+}
+
+.sectionNav a {
+  color: #344054;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.sectionNav a:hover {
+  color: #2856a3;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.filters button {
+  padding: 4px 10px;
+  border: 1px solid #f1d5c6;
+  border-radius: 999px;
+  background: #fff1e8;
+  color: #9a3f16;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.section {
+  scroll-margin-top: 130px;
+}
+
+.sectionHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin-bottom: 12px;
+}
+
+.sectionHead .sectionTitle {
+  margin: 0;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.segmented {
+  display: inline-flex;
+  overflow: hidden;
+  border: 1px solid #d0d5dd;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.segmented button {
+  padding: 6px 12px;
+  border: 0;
+  border-left: 1px solid #d0d5dd;
+  background: transparent;
+  color: #344054;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.segmented button:first-child {
+  border-left: 0;
+}
+
+.segmented button[aria-pressed="true"] {
+  background: #e8eef9;
+  color: #1f4380;
+}
+
+.segmented button:disabled {
+  color: #98a2b3;
+  cursor: not-allowed;
+}
+
+.selectedTop {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px 16px;
+}
+
+.selectedMetrics {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
+.chartTitle {
+  margin: 0;
+  padding: 12px 12px 0;
+  font-size: 15px;
+}
+
+.dataDetails {
+  border-top: 1px solid #eef1f5;
+}
+
+.dataDetails summary {
+  padding: 10px 12px;
+  color: #344054;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Kartogram województw */
+.mapCard {
+  overflow: visible;
+}
+
+.mapLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  gap: 20px;
+  padding: 14px;
+}
+
+.cartogram {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-rows: repeat(4, 58px);
+  gap: 4px;
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-width: 0;
+  padding: 6px 7px;
+  border: 0;
+  border-radius: 6px;
+  color: #fff;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.tile b {
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+
+.tile[aria-pressed="true"] {
+  outline: 3px solid #c65d2e;
+  outline-offset: 1px;
+}
+
+.tile:focus-visible {
+  outline: 3px solid #172033;
+  outline-offset: 1px;
+}
+
+.tileName {
+  overflow: hidden;
+  font-size: 11px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.level1 { background: #c9d6ec; color: #172033; }
+.level2 { background: #93acd8; color: #172033; }
+.level3 { background: #5d82c3; }
+.level4 { background: #2856a3; }
+.level5 { background: #163a75; }
+
+.scale {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin-top: 8px;
+  color: #667085;
+  font-size: 12px;
+}
+
+.scale i {
+  display: inline-block;
+  width: 24px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+.mapSide {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  font-size: 14px;
+  color: #344054;
+}
+
+.mapSide p {
+  margin: 0;
+}
+
+/* Wycena i wartość */
+.valuation {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr);
+  gap: 12px;
+}
+
+.valuationFacts {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  margin: 0;
+  padding: 12px;
+}
+
+.valuationFacts > div {
+  display: grid;
+  gap: 2px;
+  padding: 12px;
+  border: 1px solid #e4e7ec;
+  border-radius: 8px;
+}
+
+.valuationFacts dt,
+.valuationFacts span {
+  color: #667085;
+  font-size: 12px;
+}
+
+.valuationFacts dd {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 750;
+}
+
+.valueBars {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  height: 180px;
+  padding: 12px 12px 0;
+}
+
+.valueBar {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 4px;
+  height: 100%;
+}
+
+.valueBarFill {
+  width: 100%;
+  min-height: 2px;
+  border-radius: 4px 4px 0 0;
+  background: #2856a3;
+}
+
+.valueBarValue {
+  font-size: 11px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.valueBarYear {
+  color: #667085;
+  font-size: 11px;
+}
+
+@media (max-width: 1000px) {
+  .kpiBand {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .mapLayout,
+  .valuation {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 560px) {
+  .kpiBand {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .cartogram {
+    grid-template-rows: repeat(4, 50px);
+  }
+
+  .tile b {
+    font-size: 13px;
+  }
+
+  .sectionNav {
+    top: 66px;
+  }
+}
