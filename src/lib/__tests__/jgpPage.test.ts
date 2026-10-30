@@ -38,3 +38,15 @@ describe("buildJgpPageData", () => {
     expect(JGP_PAGE_CODES.length).toBeGreaterThan(0);
   });
 });
+
+describe("buildJgpPageData — tryb przyjęcia i typ grupy", () => {
+  it("zwraca strukturę trybu przyjęcia w latach z danymi i typ grupy", () => {
+    const data = buildJgpPageData(trendsFixture, latestDatasetFixture, "A01")!;
+    expect(data.procedural).toBe(false);
+    expect(data.admissions).toEqual([
+      { year: "2023", total: 8, planned: 8, urgent: 0, other: 0 },
+      { year: "2024", total: 8, planned: 0, urgent: 5, other: 3 },
+      { year: "2025", total: 9, planned: 9, urgent: 0, other: 0 },
+    ]);
+  });
+});

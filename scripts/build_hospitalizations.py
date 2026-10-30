@@ -7,6 +7,8 @@ Reads the raw NFZ exports (one CSV per year) and writes:
                                                former dashboard.json.gz; layer 2)
   public/data/hospitalizations/trends.json.gz  small aggregates for every year (layer 1):
                                                JGP x year x month and JGP x year x NFZ branch
+  public/data/hospitalizations/trends-regions.json.gz  JGP x year x month x NFZ branch, loaded
+                                               only when the explorer filters by area
 
 Values "<5" are estimated per year in file order with a fixed seed (method "sim":
 draw 1-4 with weights exp(-x); method "min": 1), exactly like the former db_build
@@ -79,8 +81,8 @@ def normalize_nip(series: pd.Series) -> pd.Series:
     return series.astype("string").str.replace(r"\D", "", regex=True)
 
 
-def read_year(path: Path, year: str) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, int]:
-    """Zwraca fakty (szczegóły), trend miesięczny i trend regionalny dla jednego roku."""
+def read_year(path: Path, year: str) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, int]:
+    """Zwraca fakty (szczegóły), trend miesięczny, trend regionalny i miesięczny regionalny dla jednego roku."""
     rng = np.random.default_rng(SEED)
     values = np.array([1, 2, 3, 4])
     weights = np.exp(-values)
@@ -89,6 +91,7 @@ def read_year(path: Path, year: str) -> tuple[pd.DataFrame, pd.DataFrame, pd.Dat
     facts: list[pd.DataFrame] = []
     monthly: list[pd.DataFrame] = []
     regional: list[pd.DataFrame] = []
+    regional_monthly: list[pd.DataFrame] = []
     rows = 0
     for chunk in pd.read_csv(path, sep=";", dtype=str, chunksize=CHUNK_SIZE, keep_default_na=False):
         chunk = chunk[RAW_COLUMNS]
@@ -119,6 +122,7 @@ def read_year(path: Path, year: str) -> tuple[pd.DataFrame, pd.DataFrame, pd.Dat
         facts.append(frame.groupby(FACT_KEYS, sort=False)[VALUE_COLS].sum().reset_index())
         monthly.append(frame.groupby(["month", "product", "group"], sort=False)[VALUE_COLS].sum().reset_index())
         regional.append(frame.groupby(["ow", "product", "group"], sort=False)[VALUE_COLS].sum().reset_index())
+        regional_monthly.append(frame.groupby(["month", "ow", "product", "group"], sort=False)[VALUE_COLS].sum().reset_index())
         rows += len(chunk)
 
     def combine(parts: list[pd.DataFrame], keys: list[str]) -> pd.DataFrame:
@@ -130,6 +134,7 @@ def read_year(path: Path, year: str) -> tuple[pd.DataFrame, pd.DataFrame, pd.Dat
         combine(facts, FACT_KEYS),
         combine(monthly, ["month", "product", "group"]),
         combine(regional, ["ow", "product", "group"]),
+        combine(regional_monthly, ["month", "ow", "product", "group"]),
         rows,
     )
 
@@ -242,13 +247,14 @@ def main() -> None:
 
     monthly_rows: list[list[Any]] = []
     regional_rows: list[list[Any]] = []
+    regional_monthly_rows: list[list[Any]] = []
     product_years: dict[str, list[str]] = defaultdict(list)
     product_info: dict[str, tuple[str, str]] = {}
     report: list[str] = []
 
     for year in years:
         source = args.data_dir / f"hospitalizacje_{year}.csv"
-        facts, monthly, regional, raw_rows = read_year(source, year)
+        facts, monthly, regional, regional_monthly, raw_rows = read_year(source, year)
 
         codes = sorted(facts["product"].unique())
         products = []
@@ -293,6 +299,7 @@ def main() -> None:
 
         monthly_rows += [[year, *r] for r in monthly[["month", "product", "group"] + VALUE_COLS].values.tolist()]
         regional_rows += [[year, *r] for r in regional[["ow", "product", "group"] + VALUE_COLS].values.tolist()]
+        regional_monthly_rows += [[year, *r] for r in regional_monthly[["month", "ow", "product", "group"] + VALUE_COLS].values.tolist()]
 
     # Trendy: produkty ze wszystkich lat, wiersze odwołują się do indeksu produktu.
     codes = sorted(product_info)
@@ -306,6 +313,16 @@ def main() -> None:
     }
     size = write_json_gz(args.output_dir / "trends.json.gz", trends)
     print(f"trends: {len(trends['monthly']):,} monthly + {len(trends['regional']):,} regional rows, {size / 1024:.0f} KiB")
+
+    # Trend miesięczny według OW NFZ: osobny plik, bo eksplorator potrzebuje go tylko przy filtrze obszaru.
+    # Indeksy produktów są te same co w trends.json.gz.
+    regional_trends = {
+        "version": 1,
+        "years": years,
+        "rows": [[y, m, ow, index[p], g, *v] for y, m, ow, p, g, *v in regional_monthly_rows],
+    }
+    size = write_json_gz(args.output_dir / "trends-regions.json.gz", regional_trends)
+    print(f"trends-regions: {len(regional_trends['rows']):,} rows, {size / 1024:.0f} KiB")
 
     index_payload = {"version": 1, "years": years, "latestYear": years[-1], "defaultProductCode": DEFAULT_PRODUCT_CODE}
     (args.output_dir / "index.json").write_text(json.dumps(index_payload, ensure_ascii=False) + "\n", encoding="utf-8")

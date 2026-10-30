@@ -1,3 +1,4 @@
+import { COUNTRY_AREA, type AnalysisArea } from "@/lib/area";
 import type { AxisMode, EstimationMethod, GeographyMode, ReferencePayload } from "@/lib/types";
 
 /** Widoki-pytania eksploratora: W czasie, Kto leczy, Tryb przyjęcia, Gdzie. */
@@ -14,6 +15,8 @@ export type DashboardUrlState = {
   highlightedRegions: string[];
   highlightedCities: string[];
   activeTab: DashboardActiveTab;
+  /** Obszar analizy: `ow` (OW NFZ) albo `mc` (miasto) w adresie; brak = cała Polska. */
+  area: AnalysisArea;
   /** Rok danych z parametru `y`; poprawność sprawdza Dashboard na liście lat. */
   year?: string;
 };
@@ -74,6 +77,14 @@ export function readDashboardUrlState(reference: ReferencePayload, search: strin
       ? "regions"
       : "trend";
 
+  const regionParam = params.get("ow");
+  const cityParam = params.get("mc");
+  const area: AnalysisArea = regionParam && regionCodes.has(regionParam)
+    ? { kind: "region", owNfz: regionParam }
+    : cityParam && cityValues.has(cityParam)
+      ? { kind: "city", city: cityParam }
+      : COUNTRY_AREA;
+
   return {
     selectedProducts,
     durations: validValues(params.getAll("d"), durationValues),
@@ -85,6 +96,7 @@ export function readDashboardUrlState(reference: ReferencePayload, search: strin
     highlightedRegions: validValues(params.getAll("r"), regionCodes, 10),
     highlightedCities: validValues(params.getAll("c"), cityValues, 10),
     activeTab,
+    area,
     year: params.get("y")?.trim() || undefined,
   };
 }
@@ -115,6 +127,8 @@ export function dashboardUrlSearch(reference: ReferencePayload, state: Dashboard
     });
   }
 
+  if (state.area.kind === "region") params.set("ow", state.area.owNfz);
+  if (state.area.kind === "city") params.set("mc", state.area.city);
   state.durations.forEach((value) => params.append("d", value));
   if (state.method !== "min") params.set("m", state.method);
   if (state.minHosp > 0) params.set("n", String(Math.floor(state.minHosp)));

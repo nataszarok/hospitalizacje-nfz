@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import Plotly from "plotly.js-dist-min";
 import { TrendView } from "@/components/trends/TrendView";
-import { trendsFixture } from "@/lib/__tests__/fixtures/trendsFixture";
+import { regionalTrendsFixture, trendsFixture } from "@/lib/__tests__/fixtures/trendsFixture";
 
 vi.mock("plotly.js-dist-min", () => ({ default: { react: vi.fn().mockResolvedValue(undefined) } }));
 const plotlyReact = vi.mocked(Plotly.react);
@@ -20,18 +20,37 @@ vi.mock("@mantine/core", () => ({
 }));
 
 const loadTrends = vi.fn();
+const loadRegionalTrends = vi.fn();
 vi.mock("@/lib/staticData", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/staticData")>()),
   loadTrends: () => loadTrends(),
+  loadRegionalTrends: () => loadRegionalTrends(),
 }));
 
 beforeEach(() => {
   loadTrends.mockResolvedValue(trendsFixture);
+  loadRegionalTrends.mockReset();
+  loadRegionalTrends.mockResolvedValue(regionalTrendsFixture);
   plotlyReact.mockClear();
 });
 afterEach(cleanup);
 
 describe("TrendView", () => {
+  it("bez obszaru nie pobiera pliku regionalnego", async () => {
+    render(<TrendView productCodes={["P1"]} method="min" />);
+    await screen.findByText("Hospitalizacje 2025");
+    expect(loadRegionalTrends).not.toHaveBeenCalled();
+  });
+
+  it("dla województwa liczy trend z pliku regionalnego i podpisuje obszar", async () => {
+    render(<TrendView productCodes={["P1"]} method="min" region="12" areaLabel="woj. śląskie" areaNote="Uwaga o mieście." />);
+    expect(await screen.findByText(/Wszystkie wybrane produkty razem · woj\. śląskie\./)).toBeInTheDocument();
+    expect(screen.getByText("Uwaga o mieście.")).toBeInTheDocument();
+    expect(loadRegionalTrends).toHaveBeenCalledTimes(1);
+    const rows = screen.getAllByRole("row").slice(1).map((row) => row.firstChild?.nextSibling?.textContent);
+    expect(rows).toEqual(["0", "5", "0"]);
+  });
+
   it("pokazuje podsumowanie najnowszego roku i tabelę lat", async () => {
     render(<TrendView productCodes={["P1"]} method="sim" />);
     expect(await screen.findByText("Hospitalizacje 2025")).toBeInTheDocument();

@@ -1,4 +1,4 @@
-import type { StaticDataset, TrendsDataset } from "@/lib/staticData";
+import type { RegionalTrendsDataset, StaticDataset, TrendsDataset } from "@/lib/staticData";
 
 /** Trzy lata; P2 (F04) znika po 2024, P3 (F99) pojawia się w 2025. */
 export const trendsFixture: TrendsDataset = {
@@ -38,5 +38,20 @@ export const latestDatasetFixture: StaticDataset = {
     ["07", "111", "P1", "2-3", "2", 4, 4, 1, 0],
     ["12", "222", "P1", "0-1", "3", 20, 18, 3, 2],
     ["12", "333", "P3", "0-1", "6", 50, 50, 0, 0],
+  ],
+};
+
+/** Trend miesięczny według OW NFZ; sumuje się do `trendsFixture.monthly`. */
+export const regionalTrendsFixture: RegionalTrendsDataset = {
+  version: 1,
+  years: ["2023", "2024", "2025"],
+  rows: [
+    ["2023", 1, "07", 0, "p", 10, 8, 1, 1],
+    ["2024", 1, "07", 0, "u", 4, 3, 1, 1],
+    ["2024", 1, "12", 0, "u", 2, 2, 1, 0],
+    ["2024", 2, "12", 0, "o", 3, 3, 0, 0],
+    ["2024", 1, "07", 1, "p", 4, 4, 0, 0],
+    ["2025", 1, "07", 0, "p", 12, 9, 0, 0],
+    ["2025", 3, "12", 2, "u", 2, 1, 1, 1],
   ],
 };

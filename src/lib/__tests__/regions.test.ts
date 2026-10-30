@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { regionalBreakdown } from "@/lib/regions";
+import { cityBreakdown, regionalBreakdown } from "@/lib/regions";
 import { latestDatasetFixture as dataset, trendsFixture as trends } from "./fixtures/trendsFixture";
 
 describe("regionalBreakdown", () => {
@@ -19,5 +19,18 @@ describe("regionalBreakdown", () => {
   it("zostawia województwa bez hospitalizacji i bez ludności z zerami", () => {
     const rows = regionalBreakdown(trends, ["P2"], "2025", "min", [...dataset.regions, ["99", "Testowe"]], dataset.populations);
     expect(rows.map((row) => [row.name, row.hospitalizations, row.per100k])).toEqual([["Mazowieckie", 0, 0], ["Śląskie", 0, 0], ["Testowe", 0, 0]]);
+  });
+});
+
+describe("cityBreakdown", () => {
+  it("sumuje hospitalizacje według miasta siedziby, od największej liczby", () => {
+    const rows = cityBreakdown(dataset, ["P1", "P3"], "min");
+    expect(rows.map((row) => [row.city, row.hospitalizations, row.providers])).toEqual([["GLIWICE", 50, 1], ["KATOWICE", 18, 1], ["WARSZAWA", 12, 1]]);
+    expect(rows[2]).toMatchObject({ regions: ["07"], deaths: 1, urgentPct: (4 / 12) * 100 });
+  });
+
+  it("zawęża miasta do jednego OW NFZ", () => {
+    expect(cityBreakdown(dataset, ["P1"], "sim", "12").map((row) => row.city)).toEqual(["KATOWICE"]);
+    expect(cityBreakdown(dataset, ["P1"], "sim", "99")).toEqual([]);
   });
 });

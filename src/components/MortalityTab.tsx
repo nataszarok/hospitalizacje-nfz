@@ -10,8 +10,10 @@ import { JgpCodeLinks, ProviderLink } from "@/components/TableLinks";
 import { formatCityName } from "@/lib/formatters";
 import {
   aggregateMortalityRowsByProvider,
+  mortalityInsights,
   mortalityRowsPerJgp,
   type MortalityDisplayMode,
+  type MortalityInsights,
 } from "@/lib/mortality";
 import { nextSortState, sortTableRows, type SortState } from "@/lib/tableSort";
 import type { AxisMode, GeographyMode, MortalityPayload, ReferencePayload } from "@/lib/types";
@@ -97,6 +99,8 @@ export function MortalityTab({
     });
   }, [productMap, sortState, tableRows]);
 
+  const insights = useMemo(() => mortalityInsights(data.rows), [data.rows]);
+
   const sortBy = (key: MortalitySortKey) => {
     setSortState((current) => nextSortState(current, key));
   };
@@ -152,6 +156,7 @@ export function MortalityTab({
               : "Brak świadczeniodawców spełniających wybrane kryteria."}
           </div>
         )}
+        {insights ? <MortalityInsightText insights={insights} /> : null}
       </section>
 
       <details className="data-details">
@@ -203,4 +208,24 @@ export function MortalityTab({
       </details>
     </div>
   </>;
+}
+
+const pct = (value: number) => `${value.toLocaleString("pl-PL", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`;
+const integer = (value: number) => Math.round(value).toLocaleString("pl-PL");
+
+/** Krótka interpretacja wykresu: średnia śmiertelność, koncentracja wolumenu, małe i duże ośrodki. */
+export function MortalityInsightText({ insights }: { insights: MortalityInsights }) {
+  const { providers, hospitalizations, deaths, mortalityPct, topCount, topSharePct, medianHospitalizations, smallMortalityPct, largeMortalityPct } = insights;
+  return <div className={styles.insight} aria-label="Interpretacja wykresu">
+    <p>
+      Średnia śmiertelność: <strong>{pct(mortalityPct)}</strong> ({integer(deaths)} zgonów na {integer(hospitalizations)} hospitalizacji
+      {" "}u {integer(providers)} świadczeniodawców).
+      {providers > topCount ? <> {topCount} największych ośrodków ma <strong>{pct(topSharePct)}</strong> hospitalizacji.</> : null}
+    </p>
+    {smallMortalityPct !== null && largeMortalityPct !== null ? <p>
+      Mediana: {integer(medianHospitalizations)} hospitalizacji na świadczeniodawcę.
+      {" "}Śmiertelność w ośrodkach poniżej mediany: {pct(smallMortalityPct)}; od mediany w górę: {pct(largeMortalityPct)}.
+      {" "}Różnica może wynikać ze stanu pacjentów i profilu ośrodka — to nie jest ocena jakości leczenia.
+    </p> : null}
+  </div>;
 }

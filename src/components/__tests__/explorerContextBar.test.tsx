@@ -8,9 +8,11 @@ import type { ReferencePayload } from "@/lib/types";
 
 vi.mock("@mantine/core", () => {
   type Option = string | { value: string; label: string };
-  const options = (data: Option[]) => data.map((o) => typeof o === "string" ? { value: o, label: o } : o);
+  type Group = { group: string; items: Option[] };
+  const options = (data: (Option | Group)[]): { value: string; label: string }[] => data.flatMap((o) =>
+    typeof o === "string" ? [{ value: o, label: o }] : "group" in o ? options(o.items) : [o]);
   return {
-    Select: ({ id, data, value, onChange }: { id?: string; data: Option[]; value: string | null; onChange: (v: string | null) => void }) => (
+    Select: ({ id, data, value, onChange }: { id?: string; data: (Option | Group)[]; value: string | null; onChange: (v: string | null) => void }) => (
       <select data-testid={id} value={value ?? ""} onChange={(e) => onChange(e.target.value)}>
         {options(data).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
       </select>
@@ -31,7 +33,7 @@ const noop = () => {};
 function props(overrides: Partial<ExplorerContextBarProps> = {}): ExplorerContextBarProps {
   return {
     view: "mortality", reference, years: ["2024", "2025"], year: "2025", setYear: noop,
-    selectedProducts: ["P1"], setSelectedProducts: noop, method: "min", setMethod: noop, minHosp: 0, setMinHosp: noop,
+    selectedProducts: ["P1"], setSelectedProducts: noop, area: { kind: "country" }, setArea: noop, method: "min", setMethod: noop, minHosp: 0, setMinHosp: noop,
     durations: [], setDurations: noop, geoMode: "regions", setGeoMode: noop,
     highlightedRegions: [], setHighlightedRegions: noop, highlightedCities: [], setHighlightedCities: noop,
     ...overrides,
@@ -54,7 +56,7 @@ describe("ExplorerContextBar", () => {
   it("w widoku „W czasie” zamiast wyboru roku pokazuje zakres lat", () => {
     render(<ExplorerContextBar {...props({ view: "trend" })} />);
     expect(screen.getByText("2024–2025")).toBeInTheDocument();
-    expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
+    expect(document.getElementById("year")?.tagName).toBe("DIV");
     expect(screen.getByText(/obejmuje wszystkie lata/)).toBeInTheDocument();
   });
 
@@ -67,6 +69,18 @@ describe("ExplorerContextBar", () => {
     expect(screen.getByTestId("method")).toHaveValue("sim");
     expect(screen.getByTestId("minHosp")).toBeInTheDocument();
     expect(screen.getByTestId("durations")).toBeInTheDocument();
+  });
+
+  it("wybiera obszar: cała Polska, województwo albo miasto", () => {
+    const setArea = vi.fn();
+    render(<ExplorerContextBar {...props({ setArea, area: { kind: "region", owNfz: "07" } })} />);
+    const area = screen.getByTestId("area");
+    expect(area).toHaveValue("ow:07");
+    expect([...area.querySelectorAll("option")].map((o) => o.textContent)).toEqual(["Cała Polska", "Mazowieckie", "Warszawa"]);
+    fireEvent.change(area, { target: { value: "c:WARSZAWA" } });
+    expect(setArea).toHaveBeenCalledWith({ kind: "city", city: "WARSZAWA" });
+    fireEvent.change(area, { target: { value: "pl" } });
+    expect(setArea).toHaveBeenLastCalledWith({ kind: "country" });
   });
 
   it.each(["trend", "regions"] as const)("w widoku %s filtry placówek są ukryte", (view) => {

@@ -2,6 +2,7 @@
 
 import { MultiSelect, NumberInput, SegmentedControl, Select } from "@mantine/core";
 import { useState, type Dispatch, type ReactNode, type SetStateAction } from "react";
+import { areaFromValue, areaToValue, type AnalysisArea } from "@/lib/area";
 import type { DashboardActiveTab } from "@/lib/dashboardUrlState";
 import { formatCityName } from "@/lib/formatters";
 import type { EstimationMethod, GeographyMode, ReferencePayload } from "@/lib/types";
@@ -15,6 +16,8 @@ export type ExplorerContextBarProps = {
   setYear: (year: string) => void;
   selectedProducts: string[];
   setSelectedProducts: Dispatch<SetStateAction<string[]>>;
+  area: AnalysisArea;
+  setArea: (area: AnalysisArea) => void;
   method: EstimationMethod;
   setMethod: Dispatch<SetStateAction<EstimationMethod>>;
   minHosp: number;
@@ -58,6 +61,25 @@ export function ExplorerContextBar(props: ExplorerContextBarProps) {
           clearable
           maxValues={MAX_PRODUCTS}
           hidePickedOptions
+          nothingFoundMessage="Brak wyników"
+          comboboxProps={{ withinPortal: true, shadow: "md" }}
+          className="mantine-filter"
+        />
+      </div>
+
+      <div className={styles.contextFieldArea}>
+        <label className={styles.contextLabel} htmlFor="area">Obszar</label>
+        <Select
+          id="area"
+          value={areaToValue(props.area)}
+          onChange={(value) => props.setArea(areaFromValue(value))}
+          data={[
+            { group: "Kraj", items: [{ value: "pl", label: "Cała Polska" }] },
+            { group: "Województwa", items: reference.regions.map((region) => ({ value: `ow:${region.owNfz}`, label: region.name })) },
+            { group: "Miasta", items: reference.cities.map((city) => ({ value: `c:${city}`, label: formatCityName(city) })) },
+          ]}
+          searchable
+          allowDeselect={false}
           nothingFoundMessage="Brak wyników"
           comboboxProps={{ withinPortal: true, shadow: "md" }}
           className="mantine-filter"

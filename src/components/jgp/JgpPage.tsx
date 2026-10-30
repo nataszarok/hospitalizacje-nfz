@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ProviderLink } from "@/components/TableLinks";
 import { TrendView } from "@/components/trends/TrendView";
 import { formatCityName } from "@/lib/formatters";
-import type { JgpPageData } from "@/lib/jgpPage";
+import type { JgpAdmissionYear, JgpPageData } from "@/lib/jgpPage";
 import styles from "./JgpPage.module.css";
 
 const integer = (value: number) => Math.round(value).toLocaleString("pl-PL");
@@ -22,7 +22,7 @@ export function JgpPage({ data }: { data: JgpPageData }) {
 
     <header className={styles.header}>
       <div>
-        <div className={styles.eyebrow}>Grupa JGP</div>
+        <div className={styles.eyebrow}>Grupa JGP · {data.procedural ? "zabiegowa" : "zachowawcza"}</div>
         <h1><span className={styles.code}>{data.jgpCode}</span> {data.name}</h1>
         <p>
           Produkt {data.productCodes.join(", ")} · w danych: {yearRange(data.catalogYears)} ·
@@ -36,6 +36,8 @@ export function JgpPage({ data }: { data: JgpPageData }) {
       <h2 id="jgp-trend" className={styles.sectionTitle}>Jak to się zmieniało w czasie</h2>
       <TrendView productCodes={data.productCodes} method="min" />
     </section>
+
+    <AdmissionsSection data={data} />
 
     <section className={styles.section} aria-labelledby="jgp-providers">
       <h2 id="jgp-providers" className={styles.sectionTitle}>Kto leczy najwięcej · {data.year}</h2>
@@ -72,6 +74,56 @@ export function JgpPage({ data }: { data: JgpPageData }) {
       <strong>Planowane:</strong> wycena grupy i jej zmiany, artykuły o tej grupie.
     </section>
   </main>;
+}
+
+const ADMISSION_PARTS: { key: keyof Omit<JgpAdmissionYear, "year" | "total">; label: string; className: string }[] = [
+  { key: "planned", label: "Planowe", className: styles.segmentPlanned },
+  { key: "urgent", label: "Nagłe", className: styles.segmentUrgent },
+  { key: "other", label: "Pozostałe", className: styles.segmentOther },
+];
+
+function AdmissionsSection({ data }: { data: JgpPageData }) {
+  const latest = data.admissions.at(-1);
+  const share = (part: number, total: number) => total > 0 ? (part / total) * 100 : 0;
+  return <section className={styles.section} aria-labelledby="jgp-admissions">
+    <h2 id="jgp-admissions" className={styles.sectionTitle}>Planowo czy w trybie nagłym</h2>
+    <div className={styles.tableCard}>
+      {latest ? <p className={styles.lead}>
+        W {latest.year} r. {pct(share(latest.urgent, latest.total))} hospitalizacji to przyjęcia nagłe,
+        {" "}{pct(share(latest.planned, latest.total))} — planowe.
+      </p> : null}
+      <ul className={styles.legend} aria-label="Legenda">
+        {ADMISSION_PARTS.map((part) => <li key={part.key}><span className={`${styles.swatch} ${part.className}`} aria-hidden />{part.label}</li>)}
+      </ul>
+      <table className={styles.table}>
+        <thead>
+          <tr>
+            <th>Rok</th><th>Struktura przyjęć</th>
+            <th className={styles.num}>Planowe</th><th className={styles.num}>Nagłe</th><th className={styles.num}>Pozostałe</th>
+          </tr>
+        </thead>
+        <tbody>
+          {data.admissions.map((row) => <tr key={row.year}>
+            <td>{row.year}</td>
+            <td>
+              <div className={styles.stack} role="img" aria-label={ADMISSION_PARTS.map((part) => `${part.label} ${pct(share(row[part.key], row.total))}`).join(", ")}>
+                {ADMISSION_PARTS.map((part) => row[part.key] > 0
+                  ? <span key={part.key} className={`${styles.segment} ${part.className}`} style={{ width: `${share(row[part.key], row.total)}%` }} title={`${part.label}: ${pct(share(row[part.key], row.total))}`} />
+                  : null)}
+              </div>
+            </td>
+            <td className={styles.num}>{integer(row.planned)} <span className={styles.muted}>({pct(share(row.planned, row.total))})</span></td>
+            <td className={styles.num}>{integer(row.urgent)} <span className={styles.muted}>({pct(share(row.urgent, row.total))})</span></td>
+            <td className={styles.num}>{integer(row.other)} <span className={styles.muted}>({pct(share(row.other, row.total))})</span></td>
+          </tr>)}
+        </tbody>
+      </table>
+      <p className={styles.note}>
+        Nagłe: tryb przyjęcia 2 i 3. Planowe: tryb 6. Pozostałe: inne kody trybu przyjęcia.
+        {" "}<Link href={`/analizy?t=a&jgp=${encodeURIComponent(data.jgpCode)}`}>Tryb przyjęcia u świadczeniodawców →</Link>
+      </p>
+    </div>
+  </section>;
 }
 
 function RegionsSection({ data }: { data: JgpPageData }) {

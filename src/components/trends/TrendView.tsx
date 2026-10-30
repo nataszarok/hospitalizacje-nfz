@@ -3,7 +3,7 @@
 import { SegmentedControl } from "@mantine/core";
 import { useEffect, useMemo, useState } from "react";
 import { TrendChart, type TrendGranularity, type TrendMeasure } from "@/components/trends/TrendChart";
-import { loadTrends, productTrend, type TrendsDataset } from "@/lib/staticData";
+import { loadRegionalTrends, loadTrends, productTrend, trendsForRegion, type RegionalTrendsDataset, type TrendsDataset } from "@/lib/staticData";
 import { incompleteCoverage, trendSummary } from "@/lib/trends";
 import type { EstimationMethod } from "@/lib/types";
 import styles from "./TrendView.module.css";
@@ -12,12 +12,24 @@ const integer = (value: number) => Math.round(value).toLocaleString("pl-PL");
 const pct = (value: number, signed = false) =>
   `${signed && value > 0 ? "+" : ""}${value.toLocaleString("pl-PL", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`;
 
+export type TrendViewProps = {
+  productCodes: string[];
+  method: EstimationMethod;
+  /** OW NFZ: trend tylko dla świadczeniodawców z tego województwa (brak = cała Polska). */
+  region?: string | null;
+  /** Nazwa obszaru w opisie wykresu, np. „woj. mazowieckie”. */
+  areaLabel?: string;
+  /** Dodatkowa uwaga o obszarze, np. gdy dla miasta pokazujemy województwo. */
+  areaNote?: string | null;
+};
+
 /**
  * Widok „W czasie”: trend hospitalizacji dla wybranych produktów we wszystkich latach.
  * Niezależny od układu dashboardu — używa go zakładka w /analizy i strona grupy JGP.
  */
-export function TrendView({ productCodes, method }: { productCodes: string[]; method: EstimationMethod }) {
-  const [trends, setTrends] = useState<TrendsDataset | null>(null);
+export function TrendView({ productCodes, method, region = null, areaLabel, areaNote }: TrendViewProps) {
+  const [national, setNational] = useState<TrendsDataset | null>(null);
+  const [regional, setRegional] = useState<RegionalTrendsDataset | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [granularity, setGranularity] = useState<TrendGranularity>("month");
   const [measure, setMeasure] = useState<TrendMeasure>("hospitalizations");
@@ -25,10 +37,26 @@ export function TrendView({ productCodes, method }: { productCodes: string[]; me
   useEffect(() => {
     let cancelled = false;
     loadTrends()
-      .then((data) => { if (!cancelled) setTrends(data); })
+      .then((data) => { if (!cancelled) setNational(data); })
       .catch((err: unknown) => { if (!cancelled) setError(err instanceof Error ? err.message : "Błąd pobierania trendów."); });
     return () => { cancelled = true; };
   }, []);
+
+  // Plik regionalny pobieramy dopiero przy wyborze województwa.
+  useEffect(() => {
+    if (!region || regional) return;
+    let cancelled = false;
+    loadRegionalTrends()
+      .then((data) => { if (!cancelled) setRegional(data); })
+      .catch((err: unknown) => { if (!cancelled) setError(err instanceof Error ? err.message : "Błąd pobierania trendów regionalnych."); });
+    return () => { cancelled = true; };
+  }, [region, regional]);
+
+  const trends = useMemo(() => {
+    if (!national) return null;
+    if (!region) return national;
+    return regional ? trendsForRegion(national, regional, region) : null;
+  }, [national, regional, region]);
 
   const trend = useMemo(() => trends && productCodes.length ? productTrend(trends, productCodes, method) : null, [trends, productCodes, method]);
   const gaps = useMemo(() => trends ? incompleteCoverage(trends, productCodes) : [], [trends, productCodes]);
@@ -60,7 +88,8 @@ export function TrendView({ productCodes, method }: { productCodes: string[]; me
       <div className={styles.chartHeader}>
         <div>
           <h2>Hospitalizacje w latach {range}</h2>
-          <p>{granularity === "month" ? "Liczba w kolejnych miesiącach." : "Suma w kolejnych latach."} Wszystkie wybrane produkty razem.</p>
+          <p>{granularity === "month" ? "Liczba w kolejnych miesiącach." : "Suma w kolejnych latach."} Wszystkie wybrane produkty razem{areaLabel ? ` · ${areaLabel}` : ""}.</p>
+          {areaNote ? <p className={styles.areaNote}>{areaNote}</p> : null}
         </div>
         <div className={styles.controls}>
           <SegmentedControl

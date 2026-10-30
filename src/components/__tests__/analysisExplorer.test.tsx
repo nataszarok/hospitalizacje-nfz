@@ -18,17 +18,23 @@ const reference: ReferencePayload = {
 const emptyKpi = { facilities: 0, hospitalizations: 0, deaths: 0, mortalityPct: 0 };
 const emptyGeo = { regions: [], cities: [] };
 
-const loadStaticDataset = vi.fn((year?: string) => Promise.resolve({ analysisYear: year ?? "2025" }));
+const loadStaticDataset = vi.fn((year?: string) => Promise.resolve({
+  analysisYear: year ?? "2025",
+  facilities: [["07", "111", "Szpital", "Warszawa"], ["12", "222", "Filia", "Warszawa"]],
+  facts: [["07", "111", "P1", "0-1", "6", 5, 5, 0, 0], ["12", "222", "P1", "0-1", "6", 9, 9, 0, 0]],
+}));
+const mortalityFromDataset = vi.fn<(...args: unknown[]) => unknown>(() => ({ rows: [], current: emptyKpi, baseline: emptyKpi, hasComparison: false, areaStats: emptyGeo, baselineAreaStats: emptyGeo }));
 vi.mock("@/lib/staticData", () => ({
   loadHospitalizationIndex: () => Promise.resolve({ version: 1, years: ["2024", "2025"], latestYear: "2025", defaultProductCode: "P1" }),
   loadStaticDataset: (year?: string) => loadStaticDataset(year),
   referenceFromDataset: (d: { analysisYear: string }) => ({ ...reference, analysisYear: d.analysisYear }),
-  mortalityFromDataset: () => ({ rows: [], current: emptyKpi, baseline: emptyKpi, hasComparison: false, areaStats: emptyGeo, baselineAreaStats: emptyGeo }),
+  mortalityFromDataset: (...args: unknown[]) => mortalityFromDataset(...args),
   admissionsFromDataset: () => ({ rows: [], areaStats: emptyGeo }),
 }));
 vi.mock("@/components/explorer/ExplorerContextBar", () => ({
-  ExplorerContextBar: ({ view, years, year, setYear, setSelectedProducts }: { view: string; years: string[]; year: string; setYear: (y: string) => void; setSelectedProducts: (v: string[]) => void }) => <section>
+  ExplorerContextBar: ({ view, years, year, setYear, setSelectedProducts, setArea }: { view: string; years: string[]; year: string; setYear: (y: string) => void; setSelectedProducts: (v: string[]) => void; setArea: (a: unknown) => void }) => <section>
     <span>kontekst: {view} · lata {years.join(",")} · rok {year}</span>
+    <button onClick={() => setArea({ kind: "city", city: "Warszawa" })}>miasto Warszawa</button>
     <button onClick={() => setYear("2024")}>rok 2024</button>
     <button onClick={() => setSelectedProducts(["P1", "P2"])}>dwie grupy</button>
   </section>,
@@ -38,7 +44,11 @@ vi.mock("@/components/MortalityTab", () => ({ MortalityTab: () => <div>widok: kt
 vi.mock("@/components/AdmissionTab", () => ({ AdmissionTab: () => <div>widok: tryb przyjęcia</div> }));
 vi.mock("@/components/explorer/RegionView", () => ({ RegionView: ({ year }: { year: string }) => <div>widok: gdzie/{year}</div> }));
 vi.mock("@/components/trends/TrendView", () => ({
-  TrendView: ({ productCodes, method }: { productCodes: string[]; method: string }) => <div>widok: w czasie/{productCodes.join(",")}/{method}</div>,
+  TrendView: ({ productCodes, method, region, areaLabel, areaNote }: { productCodes: string[]; method: string; region?: string | null; areaLabel?: string; areaNote?: string | null }) => <div>
+    <div>widok: w czasie/{productCodes.join(",")}/{method}</div>
+    {region ? <div>trend obszaru: {region} · {areaLabel}</div> : null}
+    {areaNote ? <div>uwaga: {areaNote}</div> : null}
+  </div>,
 }));
 
 const changed = vi.fn();
@@ -47,6 +57,7 @@ const replace = vi.fn();
 beforeEach(() => {
   window.history.replaceState(null, "", "/analizy");
   loadStaticDataset.mockClear();
+  mortalityFromDataset.mockClear();
   changed.mockReset();
   replace.mockReset();
   window.addEventListener(DASHBOARD_TAB_CHANGED_EVENT, changed);
@@ -69,6 +80,23 @@ describe("AnalysisExplorer", () => {
     expect(screen.queryByText("kpi")).not.toBeInTheDocument();
     expect(screen.getByText(/dane NFZ 2024–2025/)).toBeInTheDocument();
     expect(window.location.search).toBe("");
+  });
+
+  it("czyta obszar z adresu i filtruje nim trend oraz dane świadczeniodawców", async () => {
+    window.history.replaceState(null, "", "/analizy?ow=07");
+    render(<AnalysisExplorer />);
+    expect(await screen.findByText("trend obszaru: 07 · woj. mazowieckie")).toBeInTheDocument();
+    expect(screen.getByText(/woj\. mazowieckie · dane NFZ/)).toBeInTheDocument();
+    await waitFor(() => expect(mortalityFromDataset).toHaveBeenLastCalledWith(expect.anything(), expect.objectContaining({ area: { kind: "region", owNfz: "07" } })));
+    expect(window.location.search).toBe("?ow=07");
+  });
+
+  it("dla miasta pokazuje trend województwa z największą liczbą hospitalizacji i wyjaśnia to", async () => {
+    render(<AnalysisExplorer />);
+    fireEvent.click(await screen.findByRole("button", { name: "miasto Warszawa" }));
+    expect(await screen.findByText(/trend obszaru: 12/)).toBeInTheDocument();
+    expect(screen.getByText(/uwaga: Trend miesięczny nie ma podziału na miasta/)).toBeInTheDocument();
+    expect(window.location.search).toBe("?mc=Warszawa");
   });
 
   it("nie ma profilu szpitala ani metodologii", async () => {

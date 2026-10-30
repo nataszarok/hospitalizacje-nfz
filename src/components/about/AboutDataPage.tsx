@@ -24,6 +24,7 @@ export function AboutDataPage({ yearFrom, yearTo }: { yearFrom: string; yearTo: 
         <li><strong>Świadczeniodawca</strong> to unikalna para: oddział wojewódzki NFZ + NIP. Ten sam podmiot działający w dwóch województwach to dwa wiersze.</li>
         <li><strong>Zgon</strong> to hospitalizacja z trybem wypisu „zgon”. Śmiertelność = zgony / hospitalizacje.</li>
         <li><strong>Tryb przyjęcia:</strong> planowe (kod 6), nagłe (kody 2 i 3), pozostałe.</li>
+        <li><strong>Obszar w analizach:</strong> województwo to oddział NFZ, w którym świadczeniodawca rozlicza hospitalizacje. Miasto to siedziba świadczeniodawcy ze słownika placówek — sieć szpitali z siedzibą w jednym mieście może leczyć w kilku województwach. Trend miesięczny ma podział na województwa, nie na miasta.</li>
         <li><strong>Na 100 tys. mieszkańców:</strong> ludność województw wg GUS, stan na 31.12.2024. Liczymy według województwa świadczeniodawcy, nie miejsca zamieszkania pacjenta.</li>
       </ul>
     </section>

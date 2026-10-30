@@ -55,4 +55,22 @@ if (JSON.stringify(trends.years) !== JSON.stringify(index.years)) throw new Erro
 if (!trends.monthly?.length || !trends.regional?.length) throw new Error("trends.json.gz has no rows.");
 
 console.log(`Trends OK: ${trends.monthly.length.toLocaleString("en-US")} monthly rows, ${(trendsSize / 1024).toFixed(0)} KiB.`);
-console.log(`Hospitalization data OK: ${index.years.join(", ")}; ${((totalSize + trendsSize) / 1024 / 1024).toFixed(2)} MiB in total.`);
+
+// Trend miesięczny według OW NFZ musi sumować się do trendu krajowego.
+const { size: regionalSize, data: regionalTrends } = await readGzipJson(path.join(DIR, "trends-regions.json.gz"));
+if (JSON.stringify(regionalTrends.years) !== JSON.stringify(index.years)) throw new Error("trends-regions.json.gz years differ from index.json.");
+const nationalSums = new Map();
+for (const [year, month, product, group, hSim, hMin] of trends.monthly) nationalSums.set(`${year}|${month}|${product}|${group}`, [hSim, hMin]);
+const regionalSums = new Map();
+for (const [year, month, , product, group, hSim, hMin] of regionalTrends.rows) {
+  const key = `${year}|${month}|${product}|${group}`;
+  const sum = regionalSums.get(key) ?? [0, 0];
+  regionalSums.set(key, [sum[0] + hSim, sum[1] + hMin]);
+}
+if (regionalSums.size !== nationalSums.size) throw new Error("trends-regions.json.gz covers different months or products than trends.json.gz.");
+for (const [key, [hSim, hMin]] of nationalSums) {
+  const sum = regionalSums.get(key);
+  if (!sum || sum[0] !== hSim || sum[1] !== hMin) throw new Error(`trends-regions.json.gz does not add up to trends.json.gz for ${key}.`);
+}
+console.log(`Regional trends OK: ${regionalTrends.rows.length.toLocaleString("en-US")} rows, ${(regionalSize / 1024).toFixed(0)} KiB.`);
+console.log(`Hospitalization data OK: ${index.years.join(", ")}; ${((totalSize + trendsSize + regionalSize) / 1024 / 1024).toFixed(2)} MiB in total.`);

@@ -1,18 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AdmissionTab } from "@/components/AdmissionTab";
 import { ExplorerContextBar } from "@/components/explorer/ExplorerContextBar";
 import { RegionView } from "@/components/explorer/RegionView";
 import { KpiStrip } from "@/components/KpiStrip";
 import { MortalityTab } from "@/components/MortalityTab";
 import { TrendView } from "@/components/trends/TrendView";
+import { areaLabel, COUNTRY_AREA, dominantRegionForCity, validArea, type AnalysisArea } from "@/lib/area";
 import { DASHBOARD_TAB_CHANGED_EVENT, DASHBOARD_TAB_NAVIGATE_EVENT, type DashboardNavigation } from "@/lib/dashboardNavigation";
 import { dashboardUrlSearch, legacyAnalysisRedirect, readDashboardUrlState, resolveDashboardYear, type DashboardActiveTab } from "@/lib/dashboardUrlState";
 import type { MortalityDisplayMode } from "@/lib/mortality";
 import { jgpHref } from "@/lib/portalLinks";
-import { admissionsFromDataset, loadHospitalizationIndex, loadStaticDataset, mortalityFromDataset, referenceFromDataset } from "@/lib/staticData";
+import { admissionsFromDataset, loadHospitalizationIndex, loadStaticDataset, mortalityFromDataset, referenceFromDataset, type StaticDataset } from "@/lib/staticData";
 import type { AdmissionPayload, AxisMode, EstimationMethod, GeographyMode, MortalityPayload, ReferencePayload } from "@/lib/types";
 import styles from "./Explorer.module.css";
 
@@ -26,11 +27,11 @@ export const EXPLORER_VIEWS: { tab: DashboardActiveTab; label: string; question:
   { tab: "trend", label: "W czasie", question: "Jak zmieniała się liczba hospitalizacji?" },
   { tab: "mortality", label: "Kto leczy", question: "Którzy świadczeniodawcy leczą i z jaką śmiertelnością?" },
   { tab: "admissions", label: "Tryb przyjęcia", question: "Ile przyjęć jest planowych, a ile nagłych?" },
-  { tab: "regions", label: "Gdzie", question: "Jak hospitalizacje rozkładają się na województwa?" },
+  { tab: "regions", label: "Gdzie", question: "Jak hospitalizacje rozkładają się na województwa i miasta?" },
 ];
 
 /**
- * Eksplorator /analizy: wspólny kontekst (zakres JGP, okres, więcej filtrów) i widoki-pytania.
+ * Eksplorator /analizy: wspólny kontekst (zakres JGP, obszar, okres, więcej filtrów) i widoki-pytania.
  * Cały stan jest w adresie URL.
  */
 export function AnalysisExplorer() {
@@ -38,6 +39,8 @@ export function AnalysisExplorer() {
   const [data, setData] = useState<MortalityPayload>(EMPTY_DATA);
   const [admissionData, setAdmissionData] = useState<AdmissionPayload>(EMPTY_ADMISSION_DATA);
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
+  const [area, setArea] = useState<AnalysisArea>(COUNTRY_AREA);
+  const [dataset, setDataset] = useState<StaticDataset | null>(null);
   const [durations, setDurations] = useState<string[]>([]);
   const [method, setMethod] = useState<EstimationMethod>("min");
   const [minHosp, setMinHosp] = useState(0);
@@ -80,6 +83,7 @@ export function AnalysisExplorer() {
         const payload = referenceFromDataset(await loadStaticDataset(initialYear));
         const urlState = readDashboardUrlState(payload, window.location.search);
         setSelectedProducts(urlState.selectedProducts);
+        setArea(urlState.area);
         setDurations(urlState.durations);
         setMethod(urlState.method);
         setMinHosp(urlState.minHosp);
@@ -116,6 +120,7 @@ export function AnalysisExplorer() {
         setSelectedProducts((current) => current.filter((code) => productCodes.has(code)));
         setDurations((current) => current.filter((value) => durationValues.has(value)));
         setHighlightedCities((current) => current.filter((value) => cityValues.has(value)));
+        setArea((current) => validArea(current, payload));
         setReference(payload);
       } catch (err) {
         if (cancelled) return;
@@ -137,6 +142,7 @@ export function AnalysisExplorer() {
       try {
         const dataset = await loadStaticDataset(reference.analysisYear);
         if (cancelled) return;
+        setDataset(dataset);
         if (selectedProducts.length === 0) {
           setData(EMPTY_DATA);
           setAdmissionData(EMPTY_ADMISSION_DATA);
@@ -146,7 +152,7 @@ export function AnalysisExplorer() {
         }
         setLoading(true);
         setError(null);
-        const query = { products: selectedProducts, durations, method, minHosp };
+        const query = { products: selectedProducts, durations, method, minHosp, area };
         setData(mortalityFromDataset(dataset, query));
         setAdmissionData(admissionsFromDataset(dataset, query));
         setLoading(false);
@@ -158,16 +164,28 @@ export function AnalysisExplorer() {
     };
     void refreshData();
     return () => { cancelled = true; };
-  }, [reference, urlStateReady, year, selectedProducts, durations, method, minHosp]);
+  }, [reference, urlStateReady, year, selectedProducts, durations, method, minHosp, area]);
 
   useEffect(() => {
     if (!reference || !urlStateReady) return;
     const search = dashboardUrlSearch(reference, {
       selectedProducts, durations, method, minHosp, axisMode, admissionAxisMode, geoMode,
-      highlightedRegions, highlightedCities, activeTab, year,
+      highlightedRegions, highlightedCities, activeTab, area, year,
     }, latestYear);
     window.history.replaceState(window.history.state, "", `${window.location.pathname}${search}${window.location.hash}`);
-  }, [reference, urlStateReady, selectedProducts, durations, method, minHosp, axisMode, admissionAxisMode, geoMode, highlightedRegions, highlightedCities, activeTab, year, latestYear]);
+  }, [reference, urlStateReady, selectedProducts, durations, method, minHosp, axisMode, admissionAxisMode, geoMode, highlightedRegions, highlightedCities, activeTab, area, year, latestYear]);
+
+  // Trend miesięczny ma podział na województwa, nie na miasta: dla miasta pokazujemy jego województwo.
+  const trendArea = useMemo(() => {
+    if (!reference || area.kind === "country") return { region: null, label: undefined, note: null };
+    if (area.kind === "region") return { region: area.owNfz, label: areaLabel(area, reference), note: null };
+    const cityName = areaLabel(area, reference);
+    const region = dataset ? dominantRegionForCity(dataset, area.city, selectedProducts, method) : null;
+    if (!region) return { region: null, label: "cała Polska", note: `Trend miesięczny nie ma podziału na miasta, a ${cityName} nie ma hospitalizacji w wybranych grupach. Pokazujemy całą Polskę.` };
+    const regionArea: AnalysisArea = { kind: "region", owNfz: region };
+    const regionName = areaLabel(regionArea, reference);
+    return { region, label: regionName, note: `Trend miesięczny nie ma podziału na miasta. Pokazujemy ${regionName} — tam świadczeniodawcy z miasta ${cityName} mają najwięcej hospitalizacji.` };
+  }, [reference, area, dataset, selectedProducts, method]);
 
   if (!reference && loading) return <main className="center-state">Ładowanie analiz…</main>;
   if (!reference) return <main className="center-state error">{error ?? "Brak konfiguracji."}</main>;
@@ -182,7 +200,7 @@ export function AnalysisExplorer() {
     <header className={styles.header}>
       <div>
         <h1>Analizy hospitalizacji</h1>
-        <p>Hospitalizacje rozliczone w grupach JGP · dane NFZ {range}</p>
+        <p>Hospitalizacje rozliczone w grupach JGP · {areaLabel(area, reference)} · dane NFZ {range}</p>
       </div>
       {groupPage ? <Link className={styles.groupLink} href={groupPage}>Wszystko o grupie {singleProduct?.jgpCode} →</Link> : null}
     </header>
@@ -195,6 +213,8 @@ export function AnalysisExplorer() {
       setYear={setYear}
       selectedProducts={selectedProducts}
       setSelectedProducts={setSelectedProducts}
+      area={area}
+      setArea={setArea}
       method={method}
       setMethod={setMethod}
       minHosp={minHosp}
@@ -222,8 +242,8 @@ export function AnalysisExplorer() {
 
     {activeTab === "mortality" || activeTab === "admissions" ? <KpiStrip current={data.current} baseline={data.baseline} compare={data.hasComparison} /> : null}
 
-    {activeTab === "trend" ? <TrendView productCodes={selectedProducts} method={method} />
-      : activeTab === "regions" ? <RegionView productCodes={selectedProducts} year={reference.analysisYear} method={method} />
+    {activeTab === "trend" ? <TrendView productCodes={selectedProducts} method={method} region={trendArea.region} areaLabel={trendArea.label} areaNote={trendArea.note} />
+      : activeTab === "regions" ? <RegionView productCodes={selectedProducts} year={reference.analysisYear} method={method} area={area} onSelectArea={setArea} />
       : activeTab === "mortality" ? <MortalityTab
         reference={reference}
         data={data}

@@ -85,3 +85,10 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+.chartHeader .areaNote {
+  margin-top: 6px;
+  padding-left: 8px;
+  border-left: 3px solid #d0d5dd;
+  color: #475467;
+}

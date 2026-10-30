@@ -62,6 +62,11 @@
   flex: 0 0 150px;
 }
 
+.contextFieldArea {
+  flex: 0 1 220px;
+  min-width: 180px;
+}
+
 .contextLabel {
   display: block;
   margin-bottom: 5px;
@@ -135,6 +140,8 @@
 
 .viewStack {
   display: grid;
+  /* minmax(0, …): szeroka tabela przewija się w swojej ramce, nie rozpycha strony. */
+  grid-template-columns: minmax(0, 1fr);
   gap: 16px;
 }
 
@@ -165,8 +172,83 @@
   font-size: 13px;
 }
 
+.cityTable {
+  width: 100%;
+  table-layout: auto;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+/* Globalne style tabel ustawiają stałe szerokości kolumn — tu kolumny dopasowują się do treści. */
+.cityTable th:nth-child(n) {
+  position: static;
+  width: auto;
+}
+
+.cityTable th,
+.cityTable td {
+  padding: 8px 10px;
+  border-bottom: 1px solid #eef1f5;
+  text-align: left;
+  overflow-wrap: normal;
+}
+
+.cityTable th {
+  color: #667085;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.cityTable .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.citySelected td {
+  background: #f4f7fc;
+  font-weight: 600;
+}
+
+.cityButton {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #2856a3;
+  font: inherit;
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.barCell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 180px;
+}
+
+.bar {
+  height: 10px;
+  border-radius: 0 4px 4px 0;
+  background: #2856a3;
+}
+
+.barValue {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.cardNote {
+  margin: 8px 0 0;
+  color: #667085;
+  font-size: 12px;
+}
+
 @media (max-width: 640px) {
-  .contextFieldNarrow {
+  .contextFieldNarrow,
+  .contextFieldArea {
     flex: 1 1 100%;
   }
 

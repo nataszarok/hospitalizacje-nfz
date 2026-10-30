@@ -1,4 +1,4 @@
-import type { StaticDataset, TrendsDataset } from "@/lib/staticData";
+import { isProceduralJgpName, productTrend, type StaticDataset, type TrendsDataset } from "@/lib/staticData";
 import { regionalBreakdown, type RegionRow } from "@/lib/regions";
 import { productCodesForJgp } from "@/lib/trends";
 import type { EstimationMethod } from "@/lib/types";
@@ -19,9 +19,20 @@ export interface JgpProviderRow {
   urgentPct: number;
 }
 
+/** Struktura trybu przyjęcia w jednym roku (p = planowe, u = nagłe, o = pozostałe). */
+export interface JgpAdmissionYear {
+  year: string;
+  total: number;
+  planned: number;
+  urgent: number;
+  other: number;
+}
+
 export interface JgpPageData {
   jgpCode: string;
   name: string;
+  /** Grupa zabiegowa (w katalogu NFZ nazwa kończy się „*”) albo zachowawcza. */
+  procedural: boolean;
   productCodes: string[];
   /** Lata, w których grupa występuje w danych. */
   catalogYears: string[];
@@ -32,6 +43,8 @@ export interface JgpPageData {
   topProviders: JgpProviderRow[];
   /** Województwa w najnowszym roku, od największej liczby na 100 tys. mieszkańców. */
   regions: RegionRow[];
+  /** Tryb przyjęcia w latach, w których grupa występuje w danych. */
+  admissions: JgpAdmissionYear[];
 }
 
 /** Dane strony grupy JGP: zakres lat z trendów, ranking świadczeniodawców z najnowszego roku. */
@@ -71,9 +84,19 @@ export function buildJgpPageData(trends: TrendsDataset, latest: StaticDataset, j
     urgentPct: row.h ? (row.urgent / row.h) * 100 : 0,
   })).sort((a, b) => b.hospitalizations - a.hospitalizations || a.name.localeCompare(b.name, "pl"));
 
+  const trend = productTrend(trends, productCodes, method);
+  const admissions = trend.yearly.flatMap((point) => point ? [{
+    year: point.year,
+    total: point.hospitalizations,
+    planned: point.planned,
+    urgent: point.urgent,
+    other: point.hospitalizations - point.planned - point.urgent,
+  }] : []);
+
   return {
     jgpCode,
-    name,
+    name: name.replace(/\s*\*\s*$/, ""),
+    procedural: isProceduralJgpName(name),
     productCodes,
     catalogYears,
     year: latest.analysisYear,
@@ -81,5 +104,6 @@ export function buildJgpPageData(trends: TrendsDataset, latest: StaticDataset, j
     hospitalizations: rows.reduce((sum, row) => sum + row.hospitalizations, 0),
     topProviders: rows.slice(0, limit),
     regions: regionalBreakdown(trends, productCodes, latest.analysisYear, method, latest.regions, latest.populations),
+    admissions,
   };
 }

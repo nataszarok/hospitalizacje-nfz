@@ -1,4 +1,4 @@
-import type { TrendsDataset } from "@/lib/staticData";
+import type { StaticDataset, TrendsDataset } from "@/lib/staticData";
 import type { EstimationMethod } from "@/lib/types";
 
 export interface RegionRow {
@@ -51,4 +51,48 @@ export function regionalBreakdown(
       urgentPct: total.h ? (total.urgent / total.h) * 100 : 0,
     };
   }).sort((a, b) => b.per100k - a.per100k || a.name.localeCompare(b.name, "pl"));
+}
+
+export interface CityRow {
+  city: string;
+  /** Województwa (OW NFZ), w których świadczeniodawcy z miasta mają hospitalizacje. */
+  regions: string[];
+  providers: number;
+  hospitalizations: number;
+  deaths: number;
+  mortalityPct: number;
+  urgentPct: number;
+}
+
+/**
+ * Hospitalizacje wybranych produktów według miasta siedziby świadczeniodawcy (jeden rok).
+ * `owNfz`: tylko hospitalizacje rozliczone w tym OW. Kolejność: najwięcej hospitalizacji.
+ * Danych o liczbie mieszkańców miast nie ma, więc nie liczymy wskaźnika na 100 tys.
+ */
+export function cityBreakdown(d: StaticDataset, productCodes: string[], method: EstimationMethod, owNfz?: string): CityRow[] {
+  const selected = new Set(productCodes);
+  const cities = new Map(d.facilities.map(([ow, nip, , city]) => [`${ow}|${nip}`, city.trim()]));
+  const totals = new Map<string, { h: number; d: number; urgent: number; providers: Set<string>; regions: Set<string> }>();
+  for (const [ow, nip, product, , admission, hSim, hMin, dSim, dMin] of d.facts) {
+    if (!selected.has(product) || (owNfz && ow !== owNfz)) continue;
+    const city = cities.get(`${ow}|${nip}`);
+    if (!city) continue;
+    const total = totals.get(city) ?? { h: 0, d: 0, urgent: 0, providers: new Set<string>(), regions: new Set<string>() };
+    const h = method === "sim" ? hSim : hMin;
+    total.h += h;
+    total.d += method === "sim" ? dSim : dMin;
+    if (admission === "2" || admission === "3") total.urgent += h;
+    total.providers.add(`${ow}|${nip}`);
+    total.regions.add(ow);
+    totals.set(city, total);
+  }
+  return [...totals.entries()].map(([city, total]): CityRow => ({
+    city,
+    regions: [...total.regions].sort(),
+    providers: total.providers.size,
+    hospitalizations: total.h,
+    deaths: total.d,
+    mortalityPct: total.h ? (total.d / total.h) * 100 : 0,
+    urgentPct: total.h ? (total.urgent / total.h) * 100 : 0,
+  })).sort((a, b) => b.hospitalizations - a.hospitalizations || a.city.localeCompare(b.city, "pl"));
 }

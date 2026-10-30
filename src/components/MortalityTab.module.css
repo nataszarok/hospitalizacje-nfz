@@ -19,3 +19,21 @@
     width: 100%;
   }
 }
+
+.insight {
+  margin-top: 12px;
+  padding: 10px 14px;
+  border-left: 3px solid #2856a3;
+  background: #f8fafc;
+  color: #344054;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.insight p {
+  margin: 0;
+}
+
+.insight p + p {
+  margin-top: 4px;
+}

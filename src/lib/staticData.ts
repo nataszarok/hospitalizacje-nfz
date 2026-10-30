@@ -1,4 +1,5 @@
 import type { AdmissionPayload, AdmissionRow, EstimationMethod, MortalityPayload, MortalityRow, ReferencePayload } from "@/lib/types";
+import { areaMatcher, type AnalysisArea } from "@/lib/area";
 import { summarize, summarizeAdmissionGeographies, summarizeGeographies } from "@/lib/query";
 
 type ProductTuple = [string, string | null, string | null];
@@ -18,7 +19,8 @@ export interface StaticDataset {
   facts: FactTuple[];
 }
 
-export interface StaticQuery { products: string[]; durations: string[]; method: EstimationMethod; minHosp: number; }
+/** `area`: obszar analizy (brak = cały kraj). */
+export interface StaticQuery { products: string[]; durations: string[]; method: EstimationMethod; minHosp: number; area?: AnalysisArea; }
 
 /** Spis lat z danymi o hospitalizacjach (`public/data/hospitalizations/index.json`). */
 export interface HospitalizationIndex {
@@ -45,6 +47,16 @@ export interface TrendsDataset {
   monthly: MonthlyTrendTuple[];
   /** Rok, OW NFZ, produkt, grupa trybu, hSim, hMin, dSim, dMin. */
   regional: RegionalTrendTuple[];
+}
+
+type RegionalMonthlyTrendTuple = [string, number, string, number, AdmissionGroup, ...TrendValues];
+
+/** Trend miesięczny według OW NFZ (`trends-regions.json.gz`); indeksy produktów jak w `TrendsDataset`. */
+export interface RegionalTrendsDataset {
+  version: number;
+  years: string[];
+  /** Rok, miesiąc, OW NFZ, produkt, grupa trybu, hSim, hMin, dSim, dMin. */
+  rows: RegionalMonthlyTrendTuple[];
 }
 
 export const HOSPITALIZATIONS_DATA_PATH = "/data/hospitalizations";
@@ -92,10 +104,28 @@ export function loadTrends(): Promise<TrendsDataset> {
   return trendsPromise;
 }
 
+let regionalTrendsPromise: Promise<RegionalTrendsDataset> | null = null;
+/** Trend miesięczny według województw — pobierany dopiero przy filtrze obszaru. */
+export function loadRegionalTrends(): Promise<RegionalTrendsDataset> {
+  regionalTrendsPromise ??= fetchGzipJson<RegionalTrendsDataset>(`${HOSPITALIZATIONS_DATA_PATH}/trends-regions.json.gz`);
+  regionalTrendsPromise.catch(() => { regionalTrendsPromise = null; });
+  return regionalTrendsPromise;
+}
+
+/** Trendy zawężone do jednego OW NFZ: wiersze miesięczne z pliku regionalnego, reszta bez zmian. */
+export function trendsForRegion(t: TrendsDataset, regional: RegionalTrendsDataset, owNfz: string): TrendsDataset {
+  return {
+    ...t,
+    monthly: regional.rows.filter((row) => row[2] === owNfz).map(([year, month, , product, group, ...values]) => [year, month, product, group, ...values]),
+    regional: t.regional.filter((row) => row[1] === owNfz),
+  };
+}
+
 /** Testy: czyści pamięć podręczną pobranych plików. */
 export function resetStaticDataCache() {
   indexPromise = null;
   trendsPromise = null;
+  regionalTrendsPromise = null;
   datasetPromises.clear();
 }
 
@@ -204,11 +234,11 @@ function context(d: StaticDataset) {
 
 function mortalityRows(d: StaticDataset, q: StaticQuery, baseline: boolean): MortalityRow[] {
   if (!q.products.length) return [];
-  const selected = new Set(q.products), durations = new Set(q.durations);
+  const selected = new Set(q.products), durations = new Set(q.durations), inArea = areaMatcher(d, q.area);
   const grouped = new Map<string, {ow:string;nip:string;product:string;h:number;deaths:number}>();
   for (const f of d.facts) {
     const [ow,nip,product,duration,,hSim,hMin,dSim,dMin] = f;
-    if (!selected.has(product) || (!baseline && durations.size && !durations.has(duration))) continue;
+    if (!selected.has(product) || (!baseline && durations.size && !durations.has(duration)) || (inArea && !inArea(ow,nip))) continue;
     const key = `${ow}|${nip}|${product}`;
     const g = grouped.get(key) ?? { ow,nip,product,h:0,deaths:0 };
     g.h += q.method === "sim" ? hSim : hMin;
@@ -233,11 +263,11 @@ export function mortalityFromDataset(d: StaticDataset, q: StaticQuery): Mortalit
 
 export function admissionsFromDataset(d: StaticDataset, q: StaticQuery): AdmissionPayload {
   if (!q.products.length) return { rows:[], areaStats:{regions:[],cities:[]} };
-  const selected = new Set(q.products), durations = new Set(q.durations);
+  const selected = new Set(q.products), durations = new Set(q.durations), inArea = areaMatcher(d, q.area);
   const grouped = new Map<string,{ow:string;nip:string;product:string;planned:number;urgent:number}>();
   for (const f of d.facts) {
     const [ow,nip,product,duration,admission,hSim,hMin] = f;
-    if (!selected.has(product) || (durations.size && !durations.has(duration)) || !["2","3","6"].includes(admission)) continue;
+    if (!selected.has(product) || (durations.size && !durations.has(duration)) || !["2","3","6"].includes(admission) || (inArea && !inArea(ow,nip))) continue;
     const key=`${ow}|${nip}|${product}`; const g=grouped.get(key)??{ow,nip,product,planned:0,urgent:0}; const h=q.method==="sim"?hSim:hMin;
     if (admission==="6") g.planned+=h; else g.urgent+=h; grouped.set(key,g);
   }
@@ -252,7 +282,7 @@ export function hospitalDirectoryFromDataset(d: StaticDataset): import("@/lib/ty
 }
 
 
-function isProceduralJgpName(name: string | null | undefined) {
+export function isProceduralJgpName(name: string | null | undefined) {
   // W katalogu NFZ symbol (*) oznacza grupę JGP o charakterze zabiegowym.
   return Boolean(name && /\*\s*$/.test(name.trim()));
 }

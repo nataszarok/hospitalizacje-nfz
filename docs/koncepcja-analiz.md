@@ -130,13 +130,17 @@ Stan po tej zmianie (branch `feature/analizy-redesign`):
 |---|---|---|---|
 | Spis lat | `public/data/hospitalizations/index.json` | lata, najnowszy rok, domyślny produkt | < 1 KB |
 | 1. Trendy | `trends.json.gz` | JGP × rok × miesiąc × tryb; JGP × rok × OW × tryb | ok. 0,6 MB |
+| 1a. Trendy według OW | `trends-regions.json.gz` | JGP × rok × miesiąc × OW × tryb; pobierany tylko przy filtrze obszaru | ok. 2 MB |
 | 2. Szczegóły roku | `<rok>.json.gz` | dotychczasowy format (OW, NIP, produkt, długość, tryb) | ok. 2,7 MB / rok |
 | 3. Obiekty | `jgp/<kod>.json.gz`, `szpitale/<id>.json.gz` | wszystkie lata dla jednej grupy / placówki | planowane |
 
 - Wszystko buduje `scripts/build_hospitalizations.py` z `data/hospitalizacje_<rok>.csv`
   (`npm run refresh:data`). Dziś: 2024–2025. Dane 2025 są identyczne z dawnym `dashboard.json.gz`.
 - Eksplorator ładuje tylko spis lat i szczegóły wybranego roku; trendy to jeden mały plik dla wszystkich lat.
-- Przy 9 latach (2017–2025): ok. 25 MB szczegółów w osobnych plikach, trendy ok. 2–3 MB.
+  Trend według OW (1a) dochodzi dopiero po wyborze województwa lub miasta. `verify-static.mjs` sprawdza,
+  że sumuje się do trendu krajowego.
+- Przy 9 latach (2017–2025): ok. 25 MB szczegółów w osobnych plikach, trendy ok. 2–3 MB, trend według OW
+  ok. 9 MB (wtedy podzielić go na pliki roczne albo na OW).
   Limit Cloudflare Pages (25 MB na plik, 20 000 plików) nie jest problemem.
 
 **Zmiany katalogu JGP.** `data/kody_produktu_jgp.csv` to katalog bieżący. Kody, których w nim nie ma
@@ -154,12 +158,21 @@ i są dopisane do `data/szpitale_uzupelnienie.csv`. Pozostałe dostają nazwę z
 1. **Dane wieloletnie (zrobione dla 2024–2025)** — warstwy 1–2, wybór roku w obecnym dashboardzie.
 2. **Widok „W czasie” (zrobiony)** — `TrendView` na danych z `trends.json.gz`: podsumowanie, wykres
    miesięczny/roczny, tryb przyjęcia, zgony, ostrzeżenie o zmianie katalogu.
-3. **Eksplorator (zrobiony)** — `/analizy` bez panelu bocznego: pasek kontekstu (zakres JGP, okres,
+3. **Eksplorator (zrobiony)** — `/analizy` bez panelu bocznego: pasek kontekstu (zakres JGP, obszar, okres,
    „Więcej filtrów”) i cztery widoki-pytania: W czasie (domyślny), Kto leczy (`t=k`), Tryb przyjęcia
-   (`t=a`), Gdzie (`t=g`, województwa na 100 tys. z `trends.json.gz`). „Więcej filtrów” pokazuje tylko
-   ustawienia, które działają w bieżącym widoku. Obszar na razie tylko wyróżnia (decyzja 2).
-4. **Strony `/jgp/[kod]` (zrobione dla jednej grupy)** — `/jgp/E10`: trend, ranking świadczeniodawców
-   i województwa z najnowszego roku, liczone podczas budowania. Kody JGP w tabelach eksploratora
+   (`t=a`), Gdzie (`t=g`). „Więcej filtrów” pokazuje tylko ustawienia, które działają w bieżącym widoku.
+   **Obszar filtruje** (decyzja 2): cała Polska, województwo (`ow=07`) albo miasto siedziby (`mc=…`).
+   - W czasie: trend województwa z warstwy 1a. Dla miasta — trend województwa, w którym świadczeniodawcy
+     z miasta mają najwięcej hospitalizacji, z widoczną uwagą (trend miesięczny nie ma podziału na miasta).
+   - Kto leczy, Tryb przyjęcia: tylko świadczeniodawcy z obszaru; pod wykresem „Kto leczy” krótka
+     interpretacja (średnia śmiertelność, udział 10 największych ośrodków, śmiertelność poniżej i powyżej
+     mediany wolumenu).
+   - Gdzie: województwa na 100 tys. (wybrane wyróżnione) i ranking miast (liczba ogółem — brak ludności
+     miast); województwo zawęża listę miast, kliknięcie miasta ustawia obszar.
+   - „Wyróżnij na wykresie” zostaje w „Więcej filtrów” jako osobna funkcja.
+4. **Strony `/jgp/[kod]` (zrobione dla jednej grupy)** — `/jgp/E10`: typ grupy (zabiegowa/zachowawcza),
+   trend, tryb przyjęcia w latach, ranking świadczeniodawców i województwa z najnowszego roku, liczone
+   podczas budowania. Kody JGP w tabelach eksploratora
    linkują do strony grupy, jeśli istnieje; eksplorator pokazuje „Wszystko o grupie …” przy jednej
    wybranej grupie. Lista grup ze stroną: `JGP_PAGE_CODES` w `src/lib/jgpPage.ts`. Dalej: cały katalog
    i warstwa 3 danych (plik na grupę), gdy stron będzie dużo.
@@ -173,6 +186,6 @@ Każdy etap sprawdzamy na podglądzie Cloudflare (`feature-analizy-redesign.hosp
 ## 8. Do decyzji
 
 1. Czy „Kto leczy” i „Tryb przyjęcia” zostają osobnymi widokami, czy łączymy je w jeden widok z przełącznikiem miary?
-2. Czy obszar (województwo) ma filtrować dane, czy tylko wyróżniać na wykresie (dziś: wyróżnia)?
+2. ~~Czy obszar ma filtrować dane, czy tylko wyróżniać?~~ Filtruje (wyróżnianie zostaje w „Więcej filtrów”).
 3. Czy profil szpitala ma pokazywać wybrany rok? Dziś zawsze najnowszy, bo finanse i model par są liczone dla najnowszego roku.
 4. Jak prezentować grupy JGP, które zmieniły się w katalogu: przerwa w trendzie czy łączenie w „rodziny”?
