@@ -132,12 +132,21 @@
   border-bottom: 2px solid var(--border);
 }
 
-.columnRow th:first-child {
+.fixedColumns .columnRow th:first-child {
   width: 5.5rem;
 }
 
-.columnRow th:nth-child(n + 3) {
+.fixedColumns .columnRow th:nth-child(n + 3) {
   width: 8.5rem;
+}
+
+.table td.nowrap {
+  white-space: nowrap;
+}
+
+.singleHeader th {
+  white-space: normal;
+  vertical-align: bottom;
 }
 
 .table td {
@@ -202,5 +211,226 @@
 
   .name {
     max-width: 12rem;
+  }
+}
+
+.figure {
+  margin: 0;
+  min-width: 0;
+}
+
+.figureTitle {
+  margin-bottom: 4px;
+  color: #344054;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+}
+
+.summary {
+  color: var(--text) !important;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.filters label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.control {
+  min-width: 0;
+  max-width: 100%;
+  padding: 7px 10px;
+  border: 1px solid #D0D5DD;
+  border-radius: 8px;
+  background: #fff;
+  color: var(--text);
+  font-size: 13px;
+}
+
+.control:focus {
+  outline: 2px solid rgba(40, 86, 163, .15);
+  border-color: #8FA9D2;
+}
+
+.clear {
+  padding: 7px 10px;
+  border: 0;
+  background: transparent;
+  color: var(--primary);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.departments {
+  max-width: 22rem;
+  color: var(--muted);
+  font-size: 12.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.singleHeader th {
+  top: 0;
+}
+
+.callout {
+  background: #F7F9FC;
+}
+
+.calloutText {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.negative {
+  color: #B42318;
+}
+
+.legendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: 12px;
+}
+
+.legendItem i {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+.split {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(220px, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.verdicts {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  font-size: 13.5px;
+}
+
+.verdicts ul {
+  margin: 6px 0 0;
+  padding-left: 18px;
+  line-height: 1.6;
+}
+
+.aboveTitle,
+.belowTitle {
+  margin: 0;
+  font-size: 14px;
+}
+
+.aboveTitle {
+  color: #2856A3;
+}
+
+.belowTitle {
+  color: #B54708;
+}
+
+.wardGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+  gap: 14px;
+}
+
+.wardCard {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #fff;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+.wardCard:hover {
+  border-color: #B9C6DC;
+}
+
+.wardCard:focus-visible {
+  outline: 2px solid rgba(40, 86, 163, .35);
+  outline-offset: 2px;
+}
+
+.wardCardOn {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 1px var(--primary);
+}
+
+.wardHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.badgeAbove,
+.badgeBelow {
+  flex: none;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.badgeAbove {
+  background: #EEF3FB;
+  color: #2856A3;
+}
+
+.badgeBelow {
+  background: #FEF0E7;
+  color: #B54708;
+}
+
+.clickable {
+  cursor: pointer;
+}
+
+.subTitle {
+  margin: 8px 0 4px;
+  font-size: 15px;
+}
+
+.detailsSummary {
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 650;
+}
+
+@media (max-width: 760px) {
+  .split {
+    grid-template-columns: 1fr;
   }
 }

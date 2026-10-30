@@ -91,7 +91,7 @@ export function SanokCodesView({ dataset }: { dataset: SanokDataset }) {
           </p>
         </div>
         <div className={styles.tableBox}>
-          <table className={styles.table}>
+          <table className={`${styles.table} ${styles.fixedColumns}`}>
             <thead>
               <tr className={styles.groupRow}>
                 <th colSpan={2} />
@@ -151,7 +151,10 @@ export function SanokCodesPage() {
 
   return (
     <main className={styles.page}>
-      <Link className={styles.back} href="/">← Hospitalizacje w Polsce</Link>
+      <nav className={styles.links} aria-label="Nawigacja">
+        <Link className={styles.back} href="/">← Hospitalizacje w Polsce</Link>
+        <Link className={styles.back} href="/sanok-szpital">SP ZOZ w Sanoku: wszystkie kody JGP →</Link>
+      </nav>
       <header className={styles.header}>
         <h1>Kody E w Sanoku</h1>
         <p>Porównanie dwóch placówek pod jednym adresem (ul. 800-lecia 26):</p>

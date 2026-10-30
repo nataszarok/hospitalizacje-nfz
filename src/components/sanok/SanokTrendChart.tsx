@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { getAppFontFamily, PLOTLY_CONFIG } from "@/lib/plotlyChart";
 import { formatQuarter, type SanokQuarterPoint } from "@/lib/sanokCodes";
+import styles from "./SanokCodesPage.module.css";
 
 export const FACILITY_COLORS = ["#2856A3", "#C65D2E"];
 
@@ -64,8 +65,8 @@ export function SanokTrendChart({ title, series, facilityNames, metric }: SanokT
   }, [series, facilityNames, metric]);
 
   return (
-    <figure style={{ margin: 0, minWidth: 0 }}>
-      <figcaption style={{ fontSize: 13, fontWeight: 650, color: "#344054", marginBottom: 4 }}>{title}</figcaption>
+    <figure className={styles.figure}>
+      <figcaption className={styles.figureTitle}>{title}</figcaption>
       <div ref={chartRef} data-testid={`sanok-chart-${metric}`} />
     </figure>
   );
