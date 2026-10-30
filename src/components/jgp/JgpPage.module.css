@@ -522,10 +522,6 @@
   font-variant-numeric: tabular-nums;
 }
 
-.tile[aria-pressed="true"] {
-  outline: 3px solid #c65d2e;
-  outline-offset: 1px;
-}
 
 .tile:focus-visible {
   outline: 3px solid #172033;
@@ -540,11 +536,51 @@
   white-space: nowrap;
 }
 
-.level1 { background: #c9d6ec; color: #172033; }
-.level2 { background: #93acd8; color: #172033; }
-.level3 { background: #5d82c3; }
-.level4 { background: #2856a3; }
-.level5 { background: #163a75; }
+.tileLight {
+  color: #172033;
+}
+
+.tile[aria-pressed="true"] {
+  outline-width: 3px;
+  outline-style: solid;
+  outline-offset: 1px;
+}
+
+.scaleGradient {
+  width: 120px !important;
+}
+
+.outlierNote {
+  width: 100%;
+  color: #475467;
+}
+
+.linkButton {
+  justify-self: start;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #2856a3;
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* Pełna lista ośrodków: przewijanie w obrębie tabeli, ok. 10 wierszy na ekranie. */
+.scrollTable {
+  max-height: 440px;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.scrollTable thead th {
+  position: sticky !important;
+  top: 0;
+  z-index: 1;
+  background: #fff;
+  box-shadow: inset 0 -1px 0 #eef1f5;
+}
 
 .scale {
   display: flex;

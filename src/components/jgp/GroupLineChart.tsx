@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { movingAverage } from "@/lib/jgpCard";
 import { getAppFontFamily, PLOTLY_CONFIG, type PlotElement, type PlotlyHoverEvent } from "@/lib/plotlyChart";
 import { loadPlotly } from "@/lib/plotlyLoader";
 
@@ -15,20 +16,24 @@ export interface ChartLine {
   /** Druga linia podpowiedzi, np. miasto i województwo. */
   detail?: string;
   values: number[];
-  /** „primary” — jedna linia kraju; „selected” — wybrany szpital; domyślnie szara linia ośrodka. */
+  /** „primary” — kraj albo suma; „selected” — wybrany szpital; domyślnie szara linia ośrodka. */
   tone?: "primary" | "selected";
+  /** Własny kolor (linie województw); ma pierwszeństwo przed `tone`. */
+  color?: string;
 }
 
 /**
- * Wykres liniowy miesięcy. Najechanie na linię wyróżnia ją i przyciemnia pozostałe;
- * podpowiedź pokazuje nazwę ośrodka, miesiąc i wartość.
+ * Wykres miesięcy: kropka = wartość w miesiącu, linia = średnia krocząca z 3 miesięcy (3M MA).
+ * Najechanie na serię wyróżnia jej kropki i linię, przyciemnia pozostałe i pokazuje nazwę.
  */
-export function GroupLineChart({ months, lines, valueLabel, ariaLabel }: {
+export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = false }: {
   /** Miesiące jako „RRRR-MM”. */
   months: string[];
   lines: ChartLine[];
   valueLabel: string;
   ariaLabel: string;
+  /** Legenda z nazwami serii (np. województwa). */
+  legend?: boolean;
 }) {
   const chartRef = useRef<HTMLDivElement>(null);
 
@@ -39,57 +44,77 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel }: {
       const Plotly = await loadPlotly();
       if (cancelled || !chartRef.current) return;
       const labels = months.map((month) => `${MONTHS[Number(month.slice(5)) - 1]} ${month.slice(0, 4)}`);
-      // Wybrany szpital rysujemy na końcu, żeby był nad innymi liniami.
+      const x = months.map((month) => `${month}-01`);
+      // Wybrany szpital rysujemy na końcu, żeby był nad innymi seriami.
       const ordered = [...lines.filter((line) => line.tone !== "selected"), ...lines.filter((line) => line.tone === "selected")];
-      const color = (line: ChartLine) => line.tone === "primary" ? PRIMARY : line.tone === "selected" ? SELECTED : BASE;
-      const width = (line: ChartLine) => line.tone ? 2.5 : 1.5;
-      const opacity = (line: ChartLine) => line.tone ? 1 : 0.55;
-      const traces = ordered.map((line) => ({
-        type: "scatter",
-        mode: "lines",
-        name: line.name,
-        x: months.map((month) => `${month}-01`),
-        y: line.values,
-        customdata: labels.map((label) => [label, line.name, line.detail ?? ""]),
-        line: { color: color(line), width: width(line) },
-        opacity: opacity(line),
-        hovertemplate: `<b>%{customdata[1]}</b><br>%{customdata[2]}${line.detail ? "<br>" : ""}%{customdata[0]}: %{y:,.0f} ${valueLabel}<extra></extra>`,
-      }));
+      const emphasized = (line: ChartLine) => Boolean(line.tone || line.color);
+      const color = (line: ChartLine) => line.color ?? (line.tone === "primary" ? PRIMARY : line.tone === "selected" ? SELECTED : BASE);
+      const opacity = (line: ChartLine) => emphasized(line) ? 1 : 0.5;
+      const width = (line: ChartLine) => emphasized(line) ? 2.5 : 1.5;
+      const markerSize = (line: ChartLine) => emphasized(line) ? 7 : 5;
+      // Dwie serie na linię: kropki (wartości) i średnia 3M. Indeks serii = indeks śladu / 2.
+      const traces = ordered.flatMap((line) => {
+        const average = movingAverage(line.values);
+        const custom = labels.map((label, i) => [label, line.name, line.detail ?? "", average[i] === null ? "—" : Math.round(average[i] as number).toLocaleString("pl-PL")]);
+        const head = `<b>%{customdata[1]}</b><br>${line.detail ? "%{customdata[2]}<br>" : ""}%{customdata[0]}`;
+        return [
+          {
+            type: "scatter", mode: "markers", name: line.name, legendgroup: line.key, showlegend: legend,
+            x, y: line.values, customdata: custom,
+            marker: { color: color(line), size: markerSize(line), line: { color: "#FFFFFF", width: 1 } },
+            opacity: opacity(line),
+            hovertemplate: `${head}: %{y:,.0f} ${valueLabel}<br>średnia 3M: %{customdata[3]}<extra></extra>`,
+          },
+          {
+            type: "scatter", mode: "lines", name: `${line.name} · średnia 3M`, legendgroup: line.key, showlegend: false,
+            x, y: average, customdata: custom, connectgaps: false,
+            line: { color: color(line), width: width(line), shape: "spline", smoothing: 0.4 },
+            opacity: opacity(line),
+            hovertemplate: `${head}<br>średnia 3M: %{customdata[3]} ${valueLabel}<extra></extra>`,
+          },
+        ];
+      });
       const plot = chartRef.current as PlotElement;
       await Plotly.react(plot, traces, {
-        height: 380,
+        height: 400,
         autosize: true,
-        margin: { l: 56, r: 16, t: 12, b: 44 },
+        margin: { l: 56, r: 16, t: legend ? 36 : 12, b: 44 },
         paper_bgcolor: "#FFFFFF",
         plot_bgcolor: "#FFFFFF",
         font: { family: getAppFontFamily(), color: "#172033", size: 12 },
         separators: ", ",
         hovermode: "closest",
-        showlegend: false,
+        showlegend: legend,
+        legend: { orientation: "h", x: 0, y: 1.1, font: { size: 12 } },
         hoverlabel: { bgcolor: "#344054", font: { color: "#FFFFFF", size: 13 } },
         xaxis: { type: "date", tickformat: "%m.%Y", dtick: "M3", gridcolor: "#EEF1F5" },
         yaxis: { rangemode: "tozero", gridcolor: "#EEF1F5", zerolinecolor: "#D0D5DD", tickformat: ",.0f" },
       }, PLOTLY_CONFIG);
       if (cancelled || lines.length < 2) return;
-      // Wyróżnienie linii pod kursorem.
+      const all = (pick: (line: ChartLine, series: number) => number | string) => ordered.flatMap((line, series) => [pick(line, series), pick(line, series)]);
       plot.removeAllListeners?.("plotly_hover");
       plot.removeAllListeners?.("plotly_unhover");
       plot.on?.("plotly_hover", (event: PlotlyHoverEvent) => {
-        const active = event.points?.[0]?.curveNumber;
-        if (active === undefined) return;
+        const curve = event.points?.[0]?.curveNumber;
+        if (curve === undefined) return;
+        const active = Math.floor(curve / 2);
         void Plotly.restyle(plot, {
-          opacity: ordered.map((line, i) => i === active ? 1 : line.tone === "selected" ? 0.6 : 0.12),
-          "line.width": ordered.map((line, i) => i === active ? 3.5 : width(line)),
-          "line.color": ordered.map((line, i) => i === active && !line.tone ? PRIMARY : color(line)),
+          opacity: all((line, i) => i === active ? 1 : line.tone === "selected" ? 0.6 : 0.12),
+          "line.width": all((line, i) => i === active ? 3.5 : width(line)),
+          "line.color": all((line, i) => i === active && !emphasized(line) ? PRIMARY : color(line)),
+          "marker.color": all((line, i) => i === active && !emphasized(line) ? PRIMARY : color(line)),
+          "marker.size": all((line, i) => i === active ? 8 : markerSize(line)),
         });
       });
       plot.on?.("plotly_unhover", () => {
-        void Plotly.restyle(plot, { opacity: ordered.map(opacity), "line.width": ordered.map(width), "line.color": ordered.map(color) });
+        void Plotly.restyle(plot, {
+          opacity: all(opacity), "line.width": all(width), "line.color": all(color), "marker.color": all(color), "marker.size": all(markerSize),
+        });
       });
     };
     void render();
     return () => { cancelled = true; };
-  }, [months, lines, valueLabel]);
+  }, [months, lines, valueLabel, legend]);
 
   return <div ref={chartRef} role="img" aria-label={ariaLabel} />;
 }

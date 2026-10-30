@@ -1,4 +1,4 @@
-import type { JgpPageData, JgpProviderRow } from "@/lib/jgpPage";
+import type { JgpAdmissionYear, JgpPageData, JgpProviderRow } from "@/lib/jgpPage";
 import type { RegionRow } from "@/lib/regions";
 
 /** Zakres porównania na karcie grupy: wszyscy świadczeniodawcy albo szpitale podobne do wybranego. */
@@ -7,9 +7,12 @@ export type CompareScope = "all" | "peers";
 export interface CardFilter {
   selectedKey: string | null;
   scope: CompareScope;
-  /** Kod OW NFZ wybrany na mapie albo `null`. */
-  region: string | null;
+  /** Kody OW NFZ wybrane na mapie (pusta lista = cała Polska). */
+  regions: string[];
 }
+
+/** Najwięcej województw zaznaczonych naraz (tyle kolorów linii na wykresie). */
+export const MAX_REGIONS = 6;
 
 /** Indeks wybranego świadczeniodawcy w rankingu albo -1. */
 export function selectedIndex(data: JgpPageData, key: string | null): number {
@@ -27,8 +30,32 @@ export function providerPool(data: JgpPageData, filter: CardFilter): JgpProvider
     const allowed = new Set([selected, ...data.providers[selected].peers]);
     rows = rows.filter((_, i) => allowed.has(i));
   }
-  if (filter.region) rows = rows.filter((row) => row.owNfz === filter.region);
+  if (filter.regions.length) {
+    const allowed = new Set(filter.regions);
+    rows = rows.filter((row) => allowed.has(row.owNfz));
+  }
   return rows;
+}
+
+/** Średnia krocząca z `window` ostatnich miesięcy; pierwsze `window - 1` miesiące bez wartości. */
+export function movingAverage(values: number[], window = 3): (number | null)[] {
+  return values.map((_, i) => i + 1 < window ? null : values.slice(i + 1 - window, i + 1).reduce((sum, value) => sum + value, 0) / window);
+}
+
+/** Tryb przyjęcia w latach dla grupy świadczeniodawców (suma ich struktur rocznych). */
+export function poolAdmissions(rows: JgpProviderRow[]): JgpAdmissionYear[] {
+  const years = new Map<string, JgpAdmissionYear>();
+  for (const row of rows) {
+    for (const point of row.yearly) {
+      const sum = years.get(point.year) ?? { year: point.year, total: 0, planned: 0, urgent: 0, other: 0 };
+      sum.total += point.total;
+      sum.planned += point.planned;
+      sum.urgent += point.urgent;
+      sum.other += point.other;
+      years.set(point.year, sum);
+    }
+  }
+  return [...years.values()].sort((a, b) => a.year.localeCompare(b.year));
 }
 
 /** Suma hospitalizacji miesięcznie dla grupy świadczeniodawców. */
@@ -76,19 +103,51 @@ export interface CartogramCell extends RegionRow {
   column: number;
   row: number;
   shortName: string;
-  /** Klasa koloru 1–5 (kwintyle wartości na 100 tys. mieszkańców). */
-  level: number;
+  /** Położenie na skali koloru 0–1 (liniowo od minimum do maksimum bez wartości odstających). */
+  scale: number;
+  /** Wartość skrajnie odstająca w górę (powyżej Q3 + 3 × IQR): kolor jak maksimum skali i osobny opis. */
+  outlier: boolean;
 }
 
-/** Komórki kartogramu województw z klasą koloru według kwintyli wskaźnika na 100 tys. mieszkańców. */
-export function cartogramCells(regions: RegionRow[]): CartogramCell[] {
+export interface CartogramScale { min: number; max: number }
+
+function quantile(sorted: number[], q: number) {
+  if (!sorted.length) return 0;
+  const position = (sorted.length - 1) * q;
+  const lower = Math.floor(position);
+  return sorted[lower] + (sorted[Math.min(lower + 1, sorted.length - 1)] - sorted[lower]) * (position - lower);
+}
+
+/**
+ * Komórki kartogramu województw. Kolor zależy liniowo od wskaźnika na 100 tys. mieszkańców,
+ * ale skala kończy się na największej wartości nieodstającej — jedno województwo z bardzo wysokim
+ * wynikiem nie spłaszcza różnic między pozostałymi.
+ */
+export function cartogramCells(regions: RegionRow[]): { cells: CartogramCell[]; scale: CartogramScale } {
   const sorted = regions.map((row) => row.per100k).sort((a, b) => a - b);
-  const cut = (q: number) => sorted[Math.min(sorted.length - 1, Math.floor(q * sorted.length))] ?? 0;
-  const thresholds = [cut(0.2), cut(0.4), cut(0.6), cut(0.8)];
-  return regions.flatMap((row) => {
+  const q1 = quantile(sorted, 0.25);
+  const q3 = quantile(sorted, 0.75);
+  // 3 × IQR: tylko wartości skrajnie odstające (np. lubuskie w E10), nie zwykłe różnice regionalne.
+  const fence = q3 + 3 * (q3 - q1);
+  const inRange = sorted.filter((value) => value <= fence);
+  const min = inRange[0] ?? 0;
+  const max = inRange.at(-1) ?? 0;
+  const cells = regions.flatMap((row) => {
     const layout = CARTOGRAM_LAYOUT[row.owNfz];
     if (!layout) return [];
-    const level = 1 + thresholds.filter((threshold) => row.per100k >= threshold).length;
-    return [{ ...row, column: layout[0], row: layout[1], shortName: layout[2], level: Math.min(level, 5) }];
+    const outlier = row.per100k > fence;
+    const scale = outlier ? 1 : max > min ? (row.per100k - min) / (max - min) : 0.5;
+    return [{ ...row, column: layout[0], row: layout[1], shortName: layout[2], scale, outlier }];
   });
+  return { cells, scale: { min, max } };
+}
+
+const LIGHT = [219, 229, 244];
+const DARK = [22, 58, 117];
+
+/** Kolor kafelka dla położenia na skali 0–1 (od jasnego do ciemnego niebieskiego). */
+export function scaleColor(scale: number): string {
+  const t = Math.min(1, Math.max(0, scale));
+  const [r, g, b] = LIGHT.map((value, i) => Math.round(value + (DARK[i] - value) * t));
+  return `rgb(${r}, ${g}, ${b})`;
 }

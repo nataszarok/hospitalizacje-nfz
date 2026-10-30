@@ -23,7 +23,7 @@ vi.mock("@/components/trends/TrendView", () => ({ TrendView: () => <div>trend z 
 
 const data = buildJgpPageData(trendsFixture, latestDatasetFixture, "A01", "min", 15, extrasFixture)!;
 const open = (search = "") => window.history.replaceState(null, "", `/jgp/A01${search}`);
-const rankingRows = () => within(within(screen.getByRole("region", { name: /Kto leczy najwięcej/ })).getAllByRole("table")[0]).getAllByRole("row").slice(1);
+const rankingRows = () => within(screen.getByRole("region", { name: /^Lista ośrodków/ })).getAllByRole("row").slice(1);
 
 beforeEach(() => open());
 afterEach(cleanup);
@@ -70,16 +70,32 @@ describe("Karta grupy — wybrany szpital i filtry", () => {
     expect(banner).toHaveTextContent("wśród podobnych szpitali");
   });
 
-  it("kliknięcie województwa zawęża ranking i wykresy, drugi klik albo ✕ zdejmuje filtr", () => {
+  it("kliknięcie województwa zawęża ranking, wykresy i tryb przyjęcia; ✕ zdejmuje filtr", () => {
     render(<JgpPage data={data} />);
     expect(rankingRows()).toHaveLength(2);
     fireEvent.click(screen.getByRole("button", { name: /Mazowieckie/ }));
     expect(window.location.search).toBe("?ow=07");
     expect(rankingRows().map((row) => within(row).getAllByRole("cell")[1].textContent)).toEqual(["Szpital Alfa"]);
     expect(screen.getByRole("group", { name: /Wykres punktowy: 1 ośrodków, liczba hospitalizacji i śmiertelność/ })).toBeInTheDocument();
-    expect(screen.getByRole("list", { name: "Linie wykresu" })).toHaveTextContent("Wybrane ośrodki (1): 17");
+    expect(screen.getByRole("list", { name: "Linie wykresu" })).toHaveTextContent("Mazowieckie (1): 17");
+    // Tryb przyjęcia liczony dla ośrodków z województwa: Alfa 2025 — 8 planowych, 4 nagłe.
+    const admissions = screen.getByRole("region", { name: "Planowo czy w trybie nagłym" });
+    expect(admissions).toHaveTextContent("Ośrodki po filtrach karty (1). W 2025 r. 33,3% hospitalizacji to przyjęcia nagłe");
     fireEvent.click(screen.getByRole("button", { name: "woj. mazowieckie ✕" }));
     expect(rankingRows()).toHaveLength(2);
+    expect(window.location.search).toBe("");
+  });
+
+  it("kilka województw naraz: linia dla każdego na wykresie „W czasie”", () => {
+    render(<JgpPage data={data} />);
+    fireEvent.click(screen.getByRole("button", { name: /Mazowieckie/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Śląskie/ }));
+    expect(window.location.search).toBe("?ow=07&ow=12");
+    expect(screen.getByRole("button", { name: "Województwa" })).toHaveAttribute("aria-pressed", "true");
+    expect(within(screen.getByRole("list", { name: "Linie wykresu" })).getAllByRole("listitem").map((item) => item.textContent))
+      .toEqual(["Mazowieckie (1): 17", "Śląskie (1): 28"]);
+    expect(rankingRows()).toHaveLength(2);
+    fireEvent.click(screen.getByRole("button", { name: "Wyczyść wybór (2)" }));
     expect(window.location.search).toBe("");
   });
 
@@ -94,6 +110,10 @@ describe("Karta grupy — wybrany szpital i filtry", () => {
 
   it("odczytuje województwo z adresu i ignoruje nieznany kod", () => {
     open("?ow=07");
+    render(<JgpPage data={data} />);
+    expect(rankingRows()).toHaveLength(1);
+    cleanup();
+    open("?ow=99&ow=07&ow=07");
     render(<JgpPage data={data} />);
     expect(rankingRows()).toHaveLength(1);
     cleanup();

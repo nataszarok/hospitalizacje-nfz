@@ -64,6 +64,8 @@ export interface JgpProviderRow {
   valuePln: number | null;
   /** Indeksy w `JgpPageData.providers` podobnych szpitali (model par), które leczą w tej grupie. */
   peers: number[];
+  /** Tryb przyjęcia w latach pliku grupy (do sekcji „Planowo czy nagle” po filtrach); puste bez pliku. */
+  yearly: JgpAdmissionYear[];
 }
 
 /** Struktura trybu przyjęcia w jednym roku (p = planowe, u = nagłe, o = pozostałe). */
@@ -135,6 +137,7 @@ export function buildJgpPageData(trends: TrendsDataset, latest: StaticDataset, j
   const previousYear = String(Number(latest.analysisYear) - 1);
   const series = new Map<string, number[]>();
   const previous = new Map<string, number>();
+  const yearly = new Map<string, Map<string, JgpAdmissionYear>>();
   const national = { hospitalizations: months.map(() => 0), deaths: months.map(() => 0), urgent: months.map(() => 0) };
   for (const [year, month, ow, nip, admissionGroup, hSim, hMin, dSim, dMin] of file?.monthly ?? []) {
     const i = monthIndex.get(`${year}-${String(month).padStart(2, "0")}`);
@@ -145,6 +148,14 @@ export function buildJgpPageData(trends: TrendsDataset, latest: StaticDataset, j
     providerSeries[i] += h;
     series.set(key, providerSeries);
     if (year === previousYear) previous.set(key, (previous.get(key) ?? 0) + h);
+    const years = yearly.get(key) ?? new Map<string, JgpAdmissionYear>();
+    const point = years.get(year) ?? { year, total: 0, planned: 0, urgent: 0, other: 0 };
+    point.total += h;
+    if (admissionGroup === "p") point.planned += h;
+    else if (admissionGroup === "u") point.urgent += h;
+    else point.other += h;
+    years.set(year, point);
+    yearly.set(key, years);
     national.hospitalizations[i] += h;
     national.deaths[i] += method === "sim" ? dSim : dMin;
     if (admissionGroup === "u") national.urgent[i] += h;
@@ -166,6 +177,7 @@ export function buildJgpPageData(trends: TrendsDataset, latest: StaticDataset, j
     previousHospitalizations: file ? previous.get(key) ?? 0 : null,
     valuePln: value.get(key) ?? null,
     peers: [],
+    yearly: file ? file.years.map((year) => yearly.get(key)?.get(year) ?? { year, total: 0, planned: 0, urgent: 0, other: 0 }) : [],
   })).sort((a, b) => b.hospitalizations - a.hospitalizations || a.name.localeCompare(b.name, "pl"));
 
   // Podobne szpitale: pary klasy A z modelu, ograniczone do świadczeniodawców tej grupy.

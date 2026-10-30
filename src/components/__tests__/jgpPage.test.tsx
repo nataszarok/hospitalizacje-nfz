@@ -84,7 +84,7 @@ describe("JgpPage z wyróżnionym świadczeniodawcą (?osrodek=)", () => {
     expect(screen.queryByRole("region", { name: "Wybrany świadczeniodawca" })).not.toBeInTheDocument();
   });
 
-  it("pokazuje miejsce i wskaźniki na tle grupy oraz dopisuje wiersz spoza czołówki", () => {
+  it("pokazuje miejsce i wskaźniki na tle grupy oraz wyróżnia wiersz na pełnej liście", () => {
     openWith("07|111");
     render(<JgpPage data={data} />);
     const banner = screen.getByRole("region", { name: "Wybrany świadczeniodawca" });
@@ -93,10 +93,10 @@ describe("JgpPage z wyróżnionym świadczeniodawcą (?osrodek=)", () => {
     expect(banner).toHaveTextContent("2 / 2");
     expect(banner).toHaveTextContent("40,0% grupy");
     expect(banner).toHaveTextContent("grupa: 10,0%");
-    const rows = within(tableIn("Kto leczy najwięcej · 2025")).getAllByRole("row").slice(1);
+    const rows = within(screen.getByRole("region", { name: /^Lista ośrodków/ })).getAllByRole("row").slice(1);
     expect(rows).toHaveLength(2);
     expect(rows[1]).toHaveAttribute("aria-current", "true");
-    expect(rows[1]).toHaveTextContent("… 2");
+    expect(within(rows[1]).getAllByRole("cell")[0]).toHaveTextContent("2");
   });
 
   it("usuwa wyróżnienie z adresu", () => {
