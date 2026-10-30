@@ -20,10 +20,13 @@ export interface ChartLine {
   tone?: "primary" | "selected";
   /** Własny kolor (linie województw); ma pierwszeństwo przed `tone`. */
   color?: string;
+  /** Kolor linii ośrodka po najechaniu (każdy ośrodek inny); domyślnie niebieski. */
+  accent?: string;
 }
 
 /**
- * Wykres miesięcy: kropka = wartość w miesiącu, linia = średnia krocząca z 3 miesięcy (3M MA).
+ * Wykres miesięcy: kropka = wartość w miesiącu, linia = średnia krocząca z 3 miesięcy (3M MA;
+ * na początku serii średnia z dostępnych miesięcy).
  * Najechanie na serię wyróżnia jej kropki i linię, przyciemnia pozostałe i pokazuje nazwę.
  */
 export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = false }: {
@@ -101,8 +104,8 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
         void Plotly.restyle(plot, {
           opacity: all((line, i) => i === active ? 1 : line.tone === "selected" ? 0.6 : 0.12),
           "line.width": all((line, i) => i === active ? 3.5 : width(line)),
-          "line.color": all((line, i) => i === active && !emphasized(line) ? PRIMARY : color(line)),
-          "marker.color": all((line, i) => i === active && !emphasized(line) ? PRIMARY : color(line)),
+          "line.color": all((line, i) => i === active && !emphasized(line) ? line.accent ?? PRIMARY : color(line)),
+          "marker.color": all((line, i) => i === active && !emphasized(line) ? line.accent ?? PRIMARY : color(line)),
           "marker.size": all((line, i) => i === active ? 8 : markerSize(line)),
         });
       });

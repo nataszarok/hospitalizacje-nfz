@@ -37,9 +37,15 @@ export function providerPool(data: JgpPageData, filter: CardFilter): JgpProvider
   return rows;
 }
 
-/** Średnia krocząca z `window` ostatnich miesięcy; pierwsze `window - 1` miesiące bez wartości. */
-export function movingAverage(values: number[], window = 3): (number | null)[] {
-  return values.map((_, i) => i + 1 < window ? null : values.slice(i + 1 - window, i + 1).reduce((sum, value) => sum + value, 0) / window);
+/**
+ * Średnia krocząca z `window` ostatnich miesięcy. Na początku serii średnia z dostępnych miesięcy,
+ * jeśli jest ich co najmniej `minPeriods` (domyślnie 1: pierwszy miesiąc = jego wartość).
+ */
+export function movingAverage(values: number[], window = 3, minPeriods = 1): (number | null)[] {
+  return values.map((_, i) => {
+    const part = values.slice(Math.max(0, i + 1 - window), i + 1);
+    return part.length < minPeriods ? null : part.reduce((sum, value) => sum + value, 0) / part.length;
+  });
 }
 
 /** Tryb przyjęcia w latach dla grupy świadczeniodawców (suma ich struktur rocznych). */

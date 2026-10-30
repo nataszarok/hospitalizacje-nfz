@@ -57,9 +57,10 @@ describe("providerPool — kilka województw", () => {
 });
 
 describe("movingAverage i poolAdmissions", () => {
-  it("liczy średnią kroczącą z 3 miesięcy, bez wartości dla dwóch pierwszych", () => {
-    expect(movingAverage([3, 6, 9, 12])).toEqual([null, null, 6, 9]);
-    expect(movingAverage([1, 2], 3)).toEqual([null, null]);
+  it("liczy średnią kroczącą z 3 miesięcy; na początku z dostępnych miesięcy", () => {
+    expect(movingAverage([3, 6, 9, 12])).toEqual([3, 4.5, 6, 9]);
+    expect(movingAverage([3, 6, 9, 12], 3, 3)).toEqual([null, null, 6, 9]);
+    expect(movingAverage([])).toEqual([]);
   });
 
   it("sumuje tryb przyjęcia w latach dla wybranych ośrodków", () => {

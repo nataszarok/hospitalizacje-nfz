@@ -27,6 +27,8 @@ const REGION_PARAM = "ow";
 const TOP_LINES = 25;
 // Kolory linii województw (kolejność stała, nie zależy od pozycji w rankingu).
 const REGION_COLORS = ["#2856A3", "#C65D2E", "#2E7D5B", "#7656A8", "#A06A17", "#0F7C8C"];
+// Kolory ośrodków po najechaniu: przypisane według miejsca w kraju, więc ośrodek ma ten sam kolor po zmianie filtrów.
+const PROVIDER_ACCENTS = ["#2856A3", "#2E7D5B", "#7656A8", "#A06A17", "#0F7C8C", "#B4366B", "#5B6B1F", "#3F51B5", "#8C4A2F", "#1D7A50"];
 
 type TimeMode = "national" | "top";
 type NationalMetric = "hospitalizations" | "deaths" | "urgent";
@@ -179,13 +181,17 @@ function TimeSection({ data, pool, regions, peers, selectedRow }: { data: JgpPag
       return [{ key: "pl", name: "Cała Polska", values, tone: "primary" }];
     }
     const shown = selectedRow && !top.includes(selectedRow) ? [...top, selectedRow] : top;
-    return shown.map((row) => ({
-      key: row.key,
-      name: `${data.providers.indexOf(row) + 1}. ${row.name}`,
-      detail: `${formatCityName(row.city)} · OW ${row.voivodeship}`,
-      values: row.series,
-      tone: row === selectedRow ? "selected" : undefined,
-    }));
+    return shown.map((row) => {
+      const rank = data.providers.indexOf(row);
+      return {
+        key: row.key,
+        name: `${rank + 1}. ${row.name}`,
+        detail: `${formatCityName(row.city)} · OW ${row.voivodeship}`,
+        values: row.series,
+        tone: row === selectedRow ? "selected" : undefined,
+        accent: PROVIDER_ACCENTS[rank % PROVIDER_ACCENTS.length],
+      };
+    });
   }, [mode, metric, filtered, regions, pool, top, selectedRow, data]);
 
   if (!data.months.length) {
@@ -221,9 +227,9 @@ function TimeSection({ data, pool, regions, peers, selectedRow }: { data: JgpPag
       />
       <p className={styles.note}>
         {mode === "top"
-          ? <>Linia = ośrodek. Najedź na linię, aby zobaczyć nazwę.{selectedRow ? " Wybrany szpital ma kolor pomarańczowy." : ""} Skala wspólna dla wszystkich ośrodków.</>
+          ? <>Linia = ośrodek. Najedź na linię, aby zobaczyć nazwę; każdy ośrodek ma wtedy własny kolor.{selectedRow ? " Wybrany szpital ma kolor pomarańczowy." : ""} Skala wspólna dla wszystkich ośrodków.</>
           : <>Rok {previousYear} i {data.year}; miesiące według daty wypisu. {regions.length ? "Linia = województwo (suma jego ośrodków)." : filtered ? "Suma ośrodków po filtrach karty." : ""}</>}
-        {" "}Kropka = miesiąc, linia = średnia krocząca z 3 miesięcy (3M). Wartości &lt;5 liczone jako 1.
+        {" "}Kropka = miesiąc, linia = średnia krocząca z 3 miesięcy (3M; na początku z dostępnych miesięcy). Wartości &lt;5 liczone jako 1.
       </p>
       {mode === "top" ? <details className={styles.dataDetails}>
         <summary>Tabela danych · top {top.length}</summary>
