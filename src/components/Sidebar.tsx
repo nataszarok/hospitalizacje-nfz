@@ -50,6 +50,8 @@ export function Sidebar({
   setYear,
 }: SidebarProps) {
   const highlighted = geoMode === "regions" ? highlightedRegions : highlightedCities;
+  // „W czasie” obejmuje wszystkie lata i całą Polskę: rok, wyróżnienia i filtry placówek nie mają tu zastosowania.
+  const isTrend = activeTab === "trend";
 
   if (activeTab === "hospital") return <aside className="sidebar">
     <div className="sidebar-brand">
@@ -85,13 +87,13 @@ export function Sidebar({
     <div className="sidebar-brand">
       <div className="sidebar-brand-mark">H</div>
       <div>
-        <div className="sidebar-eyebrow">NFZ · analiza {reference.analysisYear}</div>
+        <div className="sidebar-eyebrow">NFZ · analiza {isTrend && years.length ? `${years[0]}–${years.at(-1)}` : reference.analysisYear}</div>
         <div className="sidebar-title">Panel analityczny</div>
       </div>
     </div>
-    <p className="sidebar-intro">Zawęź zakres analizy i wyróżnij wybrane obszary.</p>
+    <p className="sidebar-intro">{isTrend ? "Wybierz grupy JGP, których trend chcesz zobaczyć." : "Zawęź zakres analizy i wyróżnij wybrane obszary."}</p>
 
-    {years.length > 1 && setYear ? <FilterSection title="Okres">
+    {!isTrend && years.length > 1 && setYear ? <FilterSection title="Okres">
       <LabelWithInfo htmlFor="year" help="Rok, z którego pochodzą hospitalizacje na wykresie i w tabeli. Katalog grup JGP zmienia się między latami, więc lista produktów zależy od roku.">Rok danych</LabelWithInfo>
       <Select
         id="year"
@@ -123,6 +125,7 @@ export function Sidebar({
       />
     </FilterSection>
 
+    {isTrend ? null : <>
     <FilterSection title="Wyróżnienie geograficzne">
       <SegmentedControl
         fullWidth
@@ -178,6 +181,7 @@ export function Sidebar({
         className="mantine-filter"
       />
     </FilterSection>
+    </>}
 
     <FilterSection title="Estymacja wartości ukrytych" last>
       <LabelWithInfo htmlFor="method" help="Dane źródłowe nie podają dokładnej liczby hospitalizacji dla wartości oznaczonych jako <5. Metoda konserwatywna przyjmuje dla nich wartość 1. Metoda symulacyjna przypisuje wartości 1–4 według rozkładu wykładniczo malejącego, w którym mniejsze wartości są bardziej prawdopodobne. Losowanie jest zapisane w bazie. Wybór metody wpływa również na liczbę zgonów, jeśli wartość <5 dotyczy hospitalizacji zakończonej zgonem.">Wartości &lt;5</LabelWithInfo>

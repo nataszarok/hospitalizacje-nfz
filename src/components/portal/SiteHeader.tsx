@@ -19,6 +19,7 @@ const links = [
 ] as const;
 
 const analysisOptions = [
+  { label: "Hospitalizacje w czasie", href: DASHBOARD_HREFS.trend, tab: "trend", icon: "chart" },
   { label: "Hospitalizacje a śmiertelność", href: DASHBOARD_HREFS.mortality, tab: "mortality", icon: "heart" },
   { label: "Hospitalizacje – Tryb Przyjęcia", href: DASHBOARD_HREFS.admissions, tab: "admissions", icon: "bed" },
 ] as const;

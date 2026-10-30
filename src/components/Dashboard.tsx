@@ -8,6 +8,7 @@ import { HospitalAnalysisTab } from "@/components/HospitalAnalysisTab";
 import { MethodologyPanel } from "@/components/MethodologyPanel";
 import { MortalityTab } from "@/components/MortalityTab";
 import { Sidebar } from "@/components/Sidebar";
+import { TrendView } from "@/components/trends/TrendView";
 import type { AdmissionPayload, AxisMode, EstimationMethod, GeographyMode, MortalityPayload, ReferencePayload } from "@/lib/types";
 import { dashboardUrlSearch, readDashboardUrlState, resolveDashboardYear, type DashboardActiveTab } from "@/lib/dashboardUrlState";
 import { admissionsFromDataset, loadHospitalizationIndex, loadStaticDataset, mortalityFromDataset, referenceFromDataset } from "@/lib/staticData";
@@ -200,8 +201,10 @@ export function Dashboard() {
     latestYear,
   ]);
 
-  // Profil szpitala korzysta z najnowszego roku (finanse i model par są liczone dla niego); wybór roku dotyczy analiz.
-  const dataYear = activeTab === "hospital" && latestYear ? latestYear : reference?.analysisYear;
+  // „W czasie” obejmuje wszystkie lata. Profil szpitala korzysta z najnowszego roku (finanse i model par są liczone dla niego); wybór roku dotyczy analiz.
+  const dataYear = activeTab === "trend" && years.length
+    ? `${years[0]}–${years.at(-1)}`
+    : activeTab === "hospital" && latestYear ? latestYear : reference?.analysisYear;
 
   if (!reference && loading) return <main className="center-state">Ładowanie aplikacji…</main>;
   if (!reference) return <main className="center-state error">{error ?? "Brak konfiguracji."}</main>;
@@ -235,15 +238,16 @@ export function Dashboard() {
         <p>Hospitalizacje, śmiertelność i tryb przyjęcia według grup JGP oraz profile szpitali · dane NFZ {dataYear}</p>
       </header>
       <nav className="tabs" aria-label="Główna nawigacja">
+        <button className={activeTab === "trend" ? "active" : undefined} onClick={() => setActiveTab("trend")}>W czasie</button>
         <button className={activeTab === "mortality" ? "active" : undefined} onClick={() => setActiveTab("mortality")}>Liczba hospitalizacji a śmiertelność</button>
         <button className={activeTab === "admissions" ? "active" : undefined} onClick={() => setActiveTab("admissions")}>Tryb przyjęcia</button>
         <button className={activeTab === "hospital" ? "active" : undefined} onClick={() => setActiveTab("hospital")}>Profil szpitala</button>
         <button className={activeTab === "methodology" ? "active" : undefined} onClick={() => setActiveTab("methodology")}>Metodologia i dane</button>
       </nav>
 
-      {activeTab !== "methodology" && activeTab !== "hospital" ? <KpiStrip current={data.current} baseline={data.baseline} compare={data.hasComparison} /> : null}
+      {activeTab === "mortality" || activeTab === "admissions" ? <KpiStrip current={data.current} baseline={data.baseline} compare={data.hasComparison} /> : null}
 
-      {activeTab === "mortality" ? <MortalityTab
+      {activeTab === "trend" ? <TrendView productCodes={selectedProducts} method={method} /> : activeTab === "mortality" ? <MortalityTab
         reference={reference}
         data={data}
         loading={loading}

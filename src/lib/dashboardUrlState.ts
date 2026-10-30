@@ -1,6 +1,6 @@
 import type { AxisMode, EstimationMethod, GeographyMode, ReferencePayload } from "@/lib/types";
 
-export type DashboardActiveTab = "mortality" | "admissions" | "hospital" | "methodology";
+export type DashboardActiveTab = "trend" | "mortality" | "admissions" | "hospital" | "methodology";
 
 export type DashboardUrlState = {
   selectedProducts: string[];
@@ -69,6 +69,8 @@ export function readDashboardUrlState(reference: ReferencePayload, search: strin
   const tabParam = params.get("t");
   const activeTab: DashboardActiveTab = tabParam === "a"
     ? "admissions"
+    : tabParam === "w"
+      ? "trend"
     : tabParam === "h"
       ? "hospital"
     : tabParam === "m"
@@ -129,6 +131,7 @@ export function dashboardUrlSearch(reference: ReferencePayload, state: Dashboard
   if (state.axisMode === "per_100k") params.set("x", "100k");
   if (state.admissionAxisMode === "per_100k") params.set("ax", "100k");
   if (state.activeTab === "admissions") params.set("t", "a");
+  if (state.activeTab === "trend") params.set("t", "w");
   if (state.activeTab === "hospital") params.set("t", "h");
   if (state.activeTab === "methodology") params.set("t", "m");
   if (state.hospitalKey) params.set("hospital", state.hospitalKey);

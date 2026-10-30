@@ -35,6 +35,9 @@ vi.mock("@/components/Sidebar", () => ({
 vi.mock("@/components/KpiStrip", () => ({ KpiStrip: () => null }));
 vi.mock("@/components/MortalityTab", () => ({ MortalityTab: () => <div>widok: śmiertelność</div> }));
 vi.mock("@/components/AdmissionTab", () => ({ AdmissionTab: () => <div>widok: tryb przyjęcia</div> }));
+vi.mock("@/components/trends/TrendView", () => ({
+  TrendView: ({ productCodes, method }: { productCodes: string[]; method: string }) => <div>widok: w czasie/{productCodes.join(",")}/{method}</div>,
+}));
 vi.mock("@/components/MethodologyPanel", () => ({ MethodologyPanel: () => <div>widok: metodologia</div> }));
 vi.mock("@/components/HospitalAnalysisTab", () => ({
   HospitalAnalysisTab: ({ hospitalSubtab }: { hospitalSubtab: string }) => <div>widok: szpital/{hospitalSubtab}</div>,
@@ -56,11 +59,27 @@ afterEach(() => {
 const lastChange = () => changed.mock.calls.at(-1)?.[0].detail;
 
 describe("Dashboard — most z nagłówkiem portalu", () => {
-  it("zostawia zakładki dashboardu bez zmian", async () => {
+  it("ma zakładkę „W czasie” obok dotychczasowych kart", async () => {
     render(<Dashboard />);
     const tabs = await screen.findByRole("navigation", { name: "Główna nawigacja" });
     expect([...tabs.querySelectorAll("button")].map((b) => b.textContent))
-      .toEqual(["Liczba hospitalizacji a śmiertelność", "Tryb przyjęcia", "Profil szpitala", "Metodologia i dane"]);
+      .toEqual(["W czasie", "Liczba hospitalizacji a śmiertelność", "Tryb przyjęcia", "Profil szpitala", "Metodologia i dane"]);
+    // Domyślnie nadal otwiera się dotychczasowa karta.
+    expect(await screen.findByText("widok: śmiertelność")).toBeInTheDocument();
+  });
+
+  it("otwiera widok „W czasie” z adresu t=w i przekazuje wybrane produkty oraz metodę", async () => {
+    window.history.replaceState(null, "", "/analizy?t=w&m=sim");
+    render(<Dashboard />);
+    expect(await screen.findByText("widok: w czasie/P1/sim")).toBeInTheDocument();
+    expect(screen.getByText(/dane NFZ 2024–2025/)).toBeInTheDocument();
+    await waitFor(() => expect(lastChange()).toEqual({ tab: "trend", hospitalSubtab: "summary" }));
+  });
+
+  it("zapisuje zakładkę „W czasie” w adresie", async () => {
+    render(<Dashboard />);
+    fireEvent.click(await screen.findByRole("button", { name: "W czasie" }));
+    await waitFor(() => expect(window.location.search).toBe("?t=w"));
   });
 
   it("przełącza zakładkę i widok szpitala po zdarzeniu z nagłówka", async () => {

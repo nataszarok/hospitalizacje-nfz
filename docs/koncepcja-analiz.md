@@ -144,15 +144,22 @@ Stan po tej zmianie (branch `feature/analizy-redesign`):
 NFZ (`data/jgp_benefits_nfz.json`, 883 kody historyczne). Trendy wiedzą, w których latach dany produkt
 występuje. Otwarte: mapowanie następców (np. F04 → nowe grupy), żeby trend „rodziny” był ciągły.
 
-**Nazwy placówek.** 7 świadczeniodawców z 2024 r. nie ma w żadnym lokalnym słowniku. Dostają nazwę
-zastępczą „Świadczeniodawca NIP …”. Do uzupełnienia w `data/szpitale_uzupelnienie.csv`.
+**Nazwy placówek.** 7 świadczeniodawców z 2024 r. nie było w żadnym lokalnym słowniku. Nazwy 5 z nich
+pochodzą z API umów NFZ (`app-umw-api/providers`, lista świadczeniodawców oddziału za dany rok)
+i są dopisane do `data/szpitale_uzupelnienie.csv`. Pozostałe dostają nazwę zastępczą
+„Świadczeniodawca NIP …” (skrypt wypisuje ich listę).
 
 ## 7. Etapy
 
 1. **Dane wieloletnie (zrobione dla 2024–2025)** — warstwy 1–2, wybór roku w obecnym dashboardzie.
-2. **Widok „W czasie”** na danych z `trends.json.gz` — pierwszy wykres trendu dla wybranego zakresu JGP.
+2. **Widok „W czasie” (zrobiony)** — zakładka `/analizy?t=w` na danych z `trends.json.gz`
+   (`TrendView`: podsumowanie, wykres miesięczny/roczny, tryb przyjęcia, zgony, ostrzeżenie o zmianie
+   katalogu). Dotychczasowe karty zostają; domyślnie nadal otwiera się „Liczba hospitalizacji a śmiertelność”.
 3. **Wspólny pasek kontekstu** zamiast panelu bocznego; widoki-pytania zamiast kart-wykresów.
-4. **Strony `/jgp/[kod]`** (warstwa 3 danych) i linki z tabel.
+4. **Strony `/jgp/[kod]` (rozpoczęte)** — działa `/jgp/E10`: trend (ten sam `TrendView`) i ranking
+   świadczeniodawców z najnowszego roku, liczony podczas budowania. Lista grup ze stroną:
+   `JGP_PAGE_CODES` w `src/lib/jgpPage.ts`. Dalej: wszystkie grupy, warstwa 3 danych (plik na grupę,
+   gdy stron będzie dużo), linki z tabel, województwa.
 5. **Profil szpitala jako `/szpitale/[id]`**; zakładka w `/analizy` przekierowuje.
 6. **Kolejne lata** (2017–2023) i mapowanie zmian katalogu JGP.
 

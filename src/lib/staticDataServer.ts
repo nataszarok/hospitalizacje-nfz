@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { gunzipSync } from "node:zlib";
-import type { HospitalizationIndex, StaticDataset } from "@/lib/staticData";
+import type { HospitalizationIndex, StaticDataset, TrendsDataset } from "@/lib/staticData";
 
 // Odczyt danych podczas budowania strony (statyczny eksport). Tylko dla komponentów serwerowych.
 const DEFAULT_DIR = join(process.cwd(), "public", "data", "hospitalizations");
@@ -18,4 +18,8 @@ export async function readStaticDatasetFromDisk(year: string, dir = DEFAULT_DIR)
 export async function readAllStaticDatasetsFromDisk(dir = DEFAULT_DIR): Promise<StaticDataset[]> {
   const { years } = await readHospitalizationIndexFromDisk(dir);
   return Promise.all(years.map((year) => readStaticDatasetFromDisk(year, dir)));
+}
+
+export async function readTrendsFromDisk(dir = DEFAULT_DIR): Promise<TrendsDataset> {
+  return JSON.parse(gunzipSync(await readFile(join(dir, "trends.json.gz"))).toString("utf8")) as TrendsDataset;
 }

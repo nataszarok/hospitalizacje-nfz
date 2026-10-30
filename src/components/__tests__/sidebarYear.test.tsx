@@ -63,3 +63,13 @@ describe("Sidebar — rok w nagłówku", () => {
     expect(screen.getByText("NFZ · analiza 2025")).toBeInTheDocument();
   });
 });
+
+describe("Sidebar w widoku „W czasie”", () => {
+  it("ukrywa wybór roku, bo widok obejmuje wszystkie lata", () => {
+    render(<Sidebar {...baseProps} activeTab="trend" years={["2024", "2025"]} year="2024" setYear={noop} />);
+    expect(screen.queryByTestId("year")).not.toBeInTheDocument();
+    expect(screen.queryByText("Wyróżnienie geograficzne")).not.toBeInTheDocument();
+    expect(screen.getByText("Estymacja wartości ukrytych")).toBeInTheDocument();
+    expect(screen.getByText("NFZ · analiza 2024–2025")).toBeInTheDocument();
+  });
+});

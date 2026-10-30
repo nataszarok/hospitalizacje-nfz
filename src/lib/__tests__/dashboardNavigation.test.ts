@@ -5,6 +5,7 @@ describe("tabFromDashboardHref", () => {
   it("rozpoznaje wszystkie działające sekcje dashboardu", () => {
     expect(tabFromDashboardHref("/analizy")).toBe("mortality");
     expect(tabFromDashboardHref("/analizy?t=a")).toBe("admissions");
+    expect(tabFromDashboardHref("/analizy?t=w")).toBe("trend");
     expect(tabFromDashboardHref("/analizy?t=h")).toBe("hospital");
     expect(tabFromDashboardHref("/analizy?t=m")).toBe("methodology");
   });
@@ -25,6 +26,6 @@ describe("navigationFromDashboardHref", () => {
 
   it("każdy adres z DASHBOARD_HREFS wskazuje zakładkę dashboardu", () => {
     expect(Object.values(DASHBOARD_HREFS).map((href) => navigationFromDashboardHref(href)?.tab))
-      .toEqual(["mortality", "admissions", "hospital", "hospital", "methodology"]);
+      .toEqual(["mortality", "trend", "admissions", "hospital", "hospital", "methodology"]);
   });
 });

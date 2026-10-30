@@ -11,6 +11,7 @@ export type DashboardNavigation = { tab: DashboardActiveTab; hospitalSubtab?: Da
 // Adresy podstron dashboardu używane przez stronę główną i nagłówek portalu.
 export const DASHBOARD_HREFS = {
   mortality: "/analizy",
+  trend: "/analizy?t=w",
   admissions: "/analizy?t=a",
   hospital: "/analizy?t=h",
   comparison: "/analizy?t=h&hv=c",
@@ -28,5 +29,6 @@ export function navigationFromDashboardHref(href: string): DashboardNavigation |
   if (tab === "h") return { tab: "hospital", hospitalSubtab: url.searchParams.get("hv") === "c" ? "comparison" : "summary" };
   if (tab === "m") return { tab: "methodology" };
   if (tab === "a") return { tab: "admissions" };
+  if (tab === "w") return { tab: "trend" };
   return { tab: "mortality" };
 }
