@@ -10,9 +10,14 @@ describe("buildJgpPageData", () => {
       year: "2025", providerCount: 2, hospitalizations: 30,
     });
     expect(data?.topProviders).toEqual([
-      { key: "12|222", name: "Szpital Beta", city: "KATOWICE", voivodeship: "Śląskie", hospitalizations: 18, deaths: 2, mortalityPct: (2 / 18) * 100, urgentPct: 100 },
-      { key: "07|111", name: "Szpital Alfa", city: "WARSZAWA", voivodeship: "Mazowieckie", hospitalizations: 12, deaths: 1, mortalityPct: (1 / 12) * 100, urgentPct: (4 / 12) * 100 },
+      { key: "12|222", owNfz: "12", nip: "222", name: "Szpital Beta", city: "KATOWICE", voivodeship: "Śląskie", hospitalizations: 18, deaths: 2, mortalityPct: (2 / 18) * 100, urgentPct: 100 },
+      { key: "07|111", owNfz: "07", nip: "111", name: "Szpital Alfa", city: "WARSZAWA", voivodeship: "Mazowieckie", hospitalizations: 12, deaths: 1, mortalityPct: (1 / 12) * 100, urgentPct: (4 / 12) * 100 },
     ]);
+  });
+
+  it("liczy województwa z trendów najnowszego roku", () => {
+    expect(buildJgpPageData(trendsFixture, latestDatasetFixture, "A01")?.regions.map((row) => [row.name, row.hospitalizations]))
+      .toEqual([["Śląskie", 18], ["Mazowieckie", 12]]);
   });
 
   it("używa metody sim i ogranicza liczbę wierszy", () => {

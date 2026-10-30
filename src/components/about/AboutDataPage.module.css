@@ -1,0 +1,47 @@
+.page {
+  width: min(calc(100% - var(--atlas-page-gutter) - var(--atlas-page-gutter)), 880px);
+  margin: 0 auto;
+  padding: 28px 0 56px;
+  color: #172033;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 28px;
+}
+
+.header p {
+  margin: 6px 0 20px;
+  color: #475467;
+}
+
+.card {
+  margin-top: 14px;
+  padding: 18px 20px;
+  border: 1px solid #e4e7ec;
+  border-radius: 12px;
+  background: #fff;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.card h2 {
+  margin: 0 0 8px;
+  font-size: 18px;
+}
+
+.card p {
+  margin: 0 0 8px;
+}
+
+.card ul {
+  margin: 0 0 8px;
+  padding-left: 20px;
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  font-weight: 600;
+}

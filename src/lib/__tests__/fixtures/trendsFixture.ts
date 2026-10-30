@@ -17,7 +17,12 @@ export const trendsFixture: TrendsDataset = {
     ["2025", 1, 0, "p", 12, 9, 0, 0],
     ["2025", 3, 2, "u", 2, 1, 1, 1],
   ],
-  regional: [],
+  regional: [
+    ["2024", "07", 0, "p", 9, 8, 1, 1],
+    ["2025", "07", 0, "p", 14, 12, 2, 1],
+    ["2025", "12", 0, "u", 20, 18, 3, 2],
+    ["2025", "12", 2, "p", 50, 50, 0, 0],
+  ],
 };
 
 export const latestDatasetFixture: StaticDataset = {

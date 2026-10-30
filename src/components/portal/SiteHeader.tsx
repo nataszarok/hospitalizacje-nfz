@@ -4,7 +4,10 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BrandMark } from "@/components/BrandMark";
-import { DASHBOARD_HREFS, DASHBOARD_TAB_CHANGED_EVENT, DASHBOARD_TAB_NAVIGATE_EVENT, navigationFromDashboardHref, type DashboardNavigation } from "@/lib/dashboardNavigation";
+import {
+  DASHBOARD_HREFS, DASHBOARD_TAB_CHANGED_EVENT, DASHBOARD_TAB_NAVIGATE_EVENT, HOSPITAL_VIEW_CHANGED_EVENT, HOSPITAL_VIEW_NAVIGATE_EVENT,
+  hospitalNavigationFromHref, navigationFromDashboardHref, type DashboardNavigation, type HospitalNavigation,
+} from "@/lib/dashboardNavigation";
 import type { DashboardActiveTab } from "@/lib/dashboardUrlState";
 import { PortalIcon } from "@/components/portal/PortalIcon";
 import { SITE_NAME } from "@/lib/site";
@@ -12,31 +15,39 @@ import styles from "./SiteHeader.module.css";
 
 const links = [
   { label: "Start", href: "/", active: "start" },
-  { label: "Analizy", href: DASHBOARD_HREFS.mortality, active: "analyses" },
+  { label: "Analizy", href: DASHBOARD_HREFS.trend, active: "analyses" },
   { label: "Szpitale", href: DASHBOARD_HREFS.hospital, active: "hospitals" },
   { label: "Porównania", href: DASHBOARD_HREFS.comparison, active: "compare" },
   { label: "O danych", href: DASHBOARD_HREFS.methodology, active: "about" },
 ] as const;
 
 const analysisOptions = [
-  { label: "Hospitalizacje w czasie", href: DASHBOARD_HREFS.trend, tab: "trend", icon: "chart" },
-  { label: "Hospitalizacje a śmiertelność", href: DASHBOARD_HREFS.mortality, tab: "mortality", icon: "heart" },
-  { label: "Hospitalizacje – Tryb Przyjęcia", href: DASHBOARD_HREFS.admissions, tab: "admissions", icon: "bed" },
+  { label: "W czasie", href: DASHBOARD_HREFS.trend, tab: "trend", icon: "chart" },
+  { label: "Kto leczy", href: DASHBOARD_HREFS.mortality, tab: "mortality", icon: "heart" },
+  { label: "Tryb przyjęcia", href: DASHBOARD_HREFS.admissions, tab: "admissions", icon: "bed" },
+  { label: "Gdzie", href: DASHBOARD_HREFS.regions, tab: "regions", icon: "database" },
 ] as const;
 
-function sectionForNavigation({ tab, hospitalSubtab }: DashboardNavigation) {
-  if (tab === "methodology") return "about";
-  if (tab === "hospital") return hospitalSubtab === "comparison" ? "compare" : "hospitals";
-  return "analyses";
+function sectionForPath(pathname: string, search: string) {
+  if (pathname === "/") return "start";
+  if (pathname.startsWith("/analizy") || pathname.startsWith("/jgp")) return "analyses";
+  if (pathname.startsWith("/szpitale")) return hospitalNavigationFromHref(`/szpitale${search}`)?.view === "comparison" ? "compare" : "hospitals";
+  if (pathname.startsWith("/o-danych")) return "about";
+  return "";
 }
 
-// Na stronie /analizy zmiana podstrony nie przeładowuje dashboardu, więc filtry zostają.
-function navigateInsideDashboard(event: React.MouseEvent<HTMLAnchorElement>, pathname: string, href: string) {
-  const navigation = navigationFromDashboardHref(href);
-  if (!navigation || pathname !== "/analizy") return;
+// Na tej samej stronie (/analizy, /szpitale) zmiana widoku idzie zdarzeniem, bez przeładowania — filtry zostają.
+function navigateInsidePage(event: React.MouseEvent<HTMLAnchorElement>, pathname: string, href: string) {
   if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
-  event.preventDefault();
-  window.dispatchEvent(new CustomEvent<DashboardNavigation>(DASHBOARD_TAB_NAVIGATE_EVENT, { detail: navigation }));
+  const analysis = pathname === "/analizy" ? navigationFromDashboardHref(href) : null;
+  const hospital = pathname === "/szpitale" ? hospitalNavigationFromHref(href) : null;
+  if (analysis) {
+    event.preventDefault();
+    window.dispatchEvent(new CustomEvent<DashboardNavigation>(DASHBOARD_TAB_NAVIGATE_EVENT, { detail: analysis }));
+  } else if (hospital) {
+    event.preventDefault();
+    window.dispatchEvent(new CustomEvent<HospitalNavigation>(HOSPITAL_VIEW_NAVIGATE_EVENT, { detail: hospital }));
+  }
 }
 
 export function SiteHeader() {
@@ -44,39 +55,35 @@ export function SiteHeader() {
   const [isOpen, setIsOpen] = useState(false);
   const [analysisOpen, setAnalysisOpen] = useState(false);
   const [currentSection, setCurrentSection] = useState<string>("");
-  const [currentAnalysisTab, setCurrentAnalysisTab] = useState<DashboardActiveTab>("mortality");
+  const [currentAnalysisTab, setCurrentAnalysisTab] = useState<DashboardActiveTab | null>(null);
   const analysisMenuRef = useRef<HTMLDivElement>(null);
   const analysisTriggerRef = useRef<HTMLButtonElement>(null);
 
-  // The dashboard owns filters and the active analysis. The portal header only
-  // reflects its navigation state; no chart or sidebar code is changed.
+  // Strony są właścicielami swojego stanu; nagłówek tylko odzwierciedla aktywną sekcję i widok.
   useEffect(() => {
     const syncNavigation = () => {
       setAnalysisOpen(false);
       setIsOpen(false);
-      if (pathname === "/") {
-        setCurrentSection("start");
-      } else if (pathname.startsWith("/analizy")) {
-        const navigation = navigationFromDashboardHref(`/analizy${window.location.search}`) ?? { tab: "mortality" };
-        setCurrentAnalysisTab(navigation.tab);
-        setCurrentSection(sectionForNavigation(navigation));
-      } else {
-        setCurrentSection("");
-      }
+      setCurrentSection(sectionForPath(pathname, window.location.search));
+      setCurrentAnalysisTab(pathname === "/analizy" ? navigationFromDashboardHref(`/analizy${window.location.search}`)?.tab ?? null : null);
     };
     syncNavigation();
-    const onDashboardTabChange = (event: Event) => {
-      const navigation = (event as CustomEvent<DashboardNavigation>).detail;
-      setCurrentAnalysisTab(navigation.tab);
-      setCurrentSection(sectionForNavigation(navigation));
+    const onAnalysisChange = (event: Event) => {
+      setCurrentAnalysisTab((event as CustomEvent<DashboardNavigation>).detail.tab);
+      setCurrentSection("analyses");
+    };
+    const onHospitalChange = (event: Event) => {
+      setCurrentSection((event as CustomEvent<HospitalNavigation>).detail.view === "comparison" ? "compare" : "hospitals");
     };
     window.addEventListener("popstate", syncNavigation);
     window.addEventListener("hashchange", syncNavigation);
-    window.addEventListener(DASHBOARD_TAB_CHANGED_EVENT, onDashboardTabChange);
+    window.addEventListener(DASHBOARD_TAB_CHANGED_EVENT, onAnalysisChange);
+    window.addEventListener(HOSPITAL_VIEW_CHANGED_EVENT, onHospitalChange);
     return () => {
       window.removeEventListener("popstate", syncNavigation);
       window.removeEventListener("hashchange", syncNavigation);
-      window.removeEventListener(DASHBOARD_TAB_CHANGED_EVENT, onDashboardTabChange);
+      window.removeEventListener(DASHBOARD_TAB_CHANGED_EVENT, onAnalysisChange);
+      window.removeEventListener(HOSPITAL_VIEW_CHANGED_EVENT, onHospitalChange);
     };
   }, [pathname]);
 
@@ -99,11 +106,7 @@ export function SiteHeader() {
     };
   }, [analysisOpen]);
 
-  const current = pathname === "/"
-    ? "start"
-    : pathname.startsWith("/analizy")
-      ? currentSection || "analyses"
-      : "";
+  const current = currentSection || sectionForPath(pathname, "");
 
   return <header className={styles.header}>
     <div className={styles.inner}>
@@ -136,7 +139,7 @@ export function SiteHeader() {
                   setIsOpen(false);
                   setCurrentSection("analyses");
                   // Switching views inside /analizy must preserve all active filters.
-                  navigateInsideDashboard(event, pathname, option.href);
+                  navigateInsidePage(event, pathname, option.href);
                 }}
               >
                 <PortalIcon name={option.icon} size={19} />
@@ -152,7 +155,7 @@ export function SiteHeader() {
           onClick={(event) => {
             setIsOpen(false);
             setAnalysisOpen(false);
-            navigateInsideDashboard(event, pathname, href);
+            navigateInsidePage(event, pathname, href);
             setCurrentSection(active);
           }}
         >{label}</Link>)}

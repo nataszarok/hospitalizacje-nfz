@@ -25,14 +25,23 @@ describe("JgpPage", () => {
   it("pokazuje ranking świadczeniodawców z najnowszego roku", () => {
     render(<JgpPage data={data} />);
     expect(screen.getByRole("heading", { name: "Kto leczy najwięcej · 2025" })).toBeInTheDocument();
-    const rows = within(screen.getByRole("table")).getAllByRole("row").slice(1);
+    const rows = within(screen.getAllByRole("table")[0]).getAllByRole("row").slice(1);
     expect(rows.map((row) => within(row).getAllByRole("cell")[1].textContent)).toEqual(["Szpital Beta", "Szpital Alfa"]);
     expect(rows[0]).toHaveTextContent("Katowice");
     expect(rows[0]).toHaveTextContent("11,1%");
+    expect(within(rows[0]).getByRole("link", { name: "Szpital Beta" })).toHaveAttribute("href", "/szpitale?hospital=12%7C222");
+  });
+
+  it("pokazuje województwa na 100 tys. mieszkańców", () => {
+    render(<JgpPage data={data} />);
+    expect(screen.getByRole("heading", { name: "Gdzie · 2025" })).toBeInTheDocument();
+    const rows = within(screen.getAllByRole("table")[1]).getAllByRole("row").slice(1);
+    expect(rows.map((row) => within(row).getAllByRole("cell")[0].textContent)).toEqual(["Śląskie", "Mazowieckie"]);
+    expect(rows[0]).toHaveTextContent("0,4");
   });
 
   it("prowadzi do eksploratora z wybraną grupą", () => {
     render(<JgpPage data={data} />);
-    expect(screen.getByRole("link", { name: "Pokaż w eksploratorze →" })).toHaveAttribute("href", "/analizy?t=w&jgp=A01");
+    expect(screen.getByRole("link", { name: "Pokaż w eksploratorze →" })).toHaveAttribute("href", "/analizy?jgp=A01");
   });
 });

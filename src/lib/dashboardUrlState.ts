@@ -1,6 +1,7 @@
 import type { AxisMode, EstimationMethod, GeographyMode, ReferencePayload } from "@/lib/types";
 
-export type DashboardActiveTab = "trend" | "mortality" | "admissions" | "hospital" | "methodology";
+/** Widoki-pytania eksploratora: W czasie, Kto leczy, Tryb przyjęcia, Gdzie. */
+export type DashboardActiveTab = "trend" | "mortality" | "admissions" | "regions";
 
 export type DashboardUrlState = {
   selectedProducts: string[];
@@ -13,9 +14,6 @@ export type DashboardUrlState = {
   highlightedRegions: string[];
   highlightedCities: string[];
   activeTab: DashboardActiveTab;
-  hospitalKey?: string;
-  hospitalSubtab?: "summary" | "comparison";
-  peerThreshold?: number;
   /** Rok danych z parametru `y`; poprawność sprawdza Dashboard na liście lat. */
   year?: string;
 };
@@ -67,15 +65,14 @@ export function readDashboardUrlState(reference: ReferencePayload, search: strin
       : defaultProductSelection(reference);
 
   const tabParam = params.get("t");
+  // Bez `t` (i dawne `t=w`): W czasie. `t=k` — Kto leczy, `t=a` — Tryb przyjęcia, `t=g` — Gdzie.
   const activeTab: DashboardActiveTab = tabParam === "a"
     ? "admissions"
-    : tabParam === "w"
-      ? "trend"
-    : tabParam === "h"
-      ? "hospital"
-    : tabParam === "m"
-      ? "methodology"
-      : "mortality";
+    : tabParam === "k"
+      ? "mortality"
+    : tabParam === "g"
+      ? "regions"
+      : "trend";
 
   return {
     selectedProducts,
@@ -88,10 +85,6 @@ export function readDashboardUrlState(reference: ReferencePayload, search: strin
     highlightedRegions: validValues(params.getAll("r"), regionCodes, 10),
     highlightedCities: validValues(params.getAll("c"), cityValues, 10),
     activeTab,
-    hospitalKey: params.get("hospital") ?? "",
-    // "s" to dawny link do zakładki Podobieństwo, która jest teraz zakładką Porównanie.
-    hospitalSubtab: params.get("hv") === "c" || params.get("hv") === "s" ? "comparison" : "summary",
-    peerThreshold: Math.min(90, Math.max(70, nonNegativeInteger(params.get("peer")) || 75)),
     year: params.get("y")?.trim() || undefined,
   };
 }
@@ -130,15 +123,29 @@ export function dashboardUrlSearch(reference: ReferencePayload, state: Dashboard
   state.highlightedCities.forEach((value) => params.append("c", value));
   if (state.axisMode === "per_100k") params.set("x", "100k");
   if (state.admissionAxisMode === "per_100k") params.set("ax", "100k");
+  if (state.activeTab === "mortality") params.set("t", "k");
   if (state.activeTab === "admissions") params.set("t", "a");
-  if (state.activeTab === "trend") params.set("t", "w");
-  if (state.activeTab === "hospital") params.set("t", "h");
-  if (state.activeTab === "methodology") params.set("t", "m");
-  if (state.hospitalKey) params.set("hospital", state.hospitalKey);
-  if (state.hospitalSubtab === "comparison") params.set("hv", "c");
-  const peerThreshold = state.peerThreshold ?? 75;
-  if (peerThreshold !== 75) params.set("peer", String(Math.min(90, Math.max(70, Math.floor(peerThreshold)))));
+  if (state.activeTab === "regions") params.set("t", "g");
 
   const search = params.toString();
   return search ? `?${search}` : "";
+}
+
+/**
+ * Dawne adresy zakładek, które opuściły /analizy: profil szpitala (`t=h`) jest pod /szpitale,
+ * metodologia (`t=m`) pod /o-danych. Zwraca nowy adres albo `null`.
+ */
+export function legacyAnalysisRedirect(search: string): string | null {
+  const params = new URLSearchParams(search);
+  const tab = params.get("t");
+  if (tab === "m") return "/o-danych";
+  if (tab !== "h") return null;
+  const target = new URLSearchParams();
+  const hospital = params.get("hospital");
+  if (hospital) target.set("hospital", hospital);
+  const view = params.get("hv");
+  if (view === "c" || view === "s") target.set("hv", "c");
+  if (params.get("m") === "sim") target.set("m", "sim");
+  const query = target.toString();
+  return `/szpitale${query ? `?${query}` : ""}`;
 }

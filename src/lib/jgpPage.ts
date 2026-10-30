@@ -1,4 +1,5 @@
 import type { StaticDataset, TrendsDataset } from "@/lib/staticData";
+import { regionalBreakdown, type RegionRow } from "@/lib/regions";
 import { productCodesForJgp } from "@/lib/trends";
 import type { EstimationMethod } from "@/lib/types";
 
@@ -7,6 +8,8 @@ export const JGP_PAGE_CODES = ["E10"] as const;
 
 export interface JgpProviderRow {
   key: string;
+  owNfz: string;
+  nip: string;
   name: string;
   city: string;
   voivodeship: string;
@@ -27,6 +30,8 @@ export interface JgpPageData {
   providerCount: number;
   hospitalizations: number;
   topProviders: JgpProviderRow[];
+  /** Województwa w najnowszym roku, od największej liczby na 100 tys. mieszkańców. */
+  regions: RegionRow[];
 }
 
 /** Dane strony grupy JGP: zakres lat z trendów, ranking świadczeniodawców z najnowszego roku. */
@@ -41,11 +46,11 @@ export function buildJgpPageData(trends: TrendsDataset, latest: StaticDataset, j
   const selected = new Set(productCodes);
   const facilities = new Map(latest.facilities.map(([ow, nip, facilityName, city]) => [`${ow}|${nip}`, { name: facilityName, city }]));
   const regions = new Map(latest.regions);
-  const grouped = new Map<string, { ow: string; h: number; d: number; urgent: number }>();
+  const grouped = new Map<string, { ow: string; nip: string; h: number; d: number; urgent: number }>();
   for (const [ow, nip, product, , admission, hSim, hMin, dSim, dMin] of latest.facts) {
     if (!selected.has(product)) continue;
     const key = `${ow}|${nip}`;
-    const row = grouped.get(key) ?? { ow, h: 0, d: 0, urgent: 0 };
+    const row = grouped.get(key) ?? { ow, nip, h: 0, d: 0, urgent: 0 };
     const h = method === "sim" ? hSim : hMin;
     row.h += h;
     row.d += method === "sim" ? dSim : dMin;
@@ -55,6 +60,8 @@ export function buildJgpPageData(trends: TrendsDataset, latest: StaticDataset, j
 
   const rows = [...grouped.entries()].map(([key, row]): JgpProviderRow => ({
     key,
+    owNfz: row.ow,
+    nip: row.nip,
     name: facilities.get(key)?.name ?? key,
     city: facilities.get(key)?.city.trim() ?? "",
     voivodeship: regions.get(row.ow) ?? row.ow,
@@ -73,5 +80,6 @@ export function buildJgpPageData(trends: TrendsDataset, latest: StaticDataset, j
     providerCount: rows.length,
     hospitalizations: rows.reduce((sum, row) => sum + row.hospitalizations, 0),
     topProviders: rows.slice(0, limit),
+    regions: regionalBreakdown(trends, productCodes, latest.analysisYear, method, latest.regions, latest.populations),
   };
 }

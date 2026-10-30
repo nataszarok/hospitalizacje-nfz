@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { getAppFontFamily, PLOTLY_CONFIG } from "@/lib/plotlyChart";
+import { loadPlotly } from "@/lib/plotlyLoader";
 import type { ProductTrend, TrendPoint } from "@/lib/staticData";
 import { monthlySeries } from "@/lib/trends";
 
@@ -10,13 +11,6 @@ export type TrendMeasure = "hospitalizations" | "admission" | "deaths";
 
 const COLORS = { primary: "#2856A3", urgent: "#C65D2E", other: "#98A2B3" };
 const MONTHS = ["sty", "lut", "mar", "kwi", "maj", "cze", "lip", "sie", "wrz", "paź", "lis", "gru"];
-
-// Jeden import biblioteki na całą stronę (widok przełącza wykres wiele razy).
-let plotlyPromise: Promise<typeof import("plotly.js-dist-min")["default"]> | null = null;
-function loadPlotly() {
-  plotlyPromise ??= import("plotly.js-dist-min").then((module) => module.default);
-  return plotlyPromise;
-}
 
 const integer = (value: number) => Math.round(value).toLocaleString("pl-PL");
 

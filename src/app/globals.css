@@ -417,3 +417,7 @@ td:nth-child(6), td:nth-child(7), td:nth-child(8) { white-space:nowrap; }
 @media (prefers-reduced-motion:reduce) {
   .area-stats-trigger, .area-stats-popover, .area-stats-backdrop { animation:none; transition:none; }
 }
+
+/* Linki w tabelach (profil szpitala, strona grupy JGP). */
+.table-link { color:inherit; text-decoration:underline; text-decoration-color:#C7CED9; text-underline-offset:2px; }
+.table-link:hover { color:var(--primary); text-decoration-color:currentColor; }

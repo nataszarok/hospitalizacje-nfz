@@ -6,6 +6,7 @@ import { ChartScaleControl } from "@/components/ChartScaleControl";
 import { MortalityChart } from "@/components/MortalityChart";
 import { MortalityDisplayControl } from "@/components/MortalityDisplayControl";
 import { SortableTableHeader } from "@/components/SortableTableHeader";
+import { JgpCodeLinks, ProviderLink } from "@/components/TableLinks";
 import { formatCityName } from "@/lib/formatters";
 import {
   aggregateMortalityRowsByProvider,
@@ -172,8 +173,7 @@ export function MortalityTab({
             <tbody>
               {sortedTableRows.slice(0, 500).map((row) => {
                 const jgpCodes = row.productCodes
-                  .map((code) => productMap.get(code)?.jgpCode ?? code)
-                  .join(", ");
+                  .map((code) => productMap.get(code)?.jgpCode ?? code);
                 const jgpLabels = row.productCodes
                   .map((code) => productMap.get(code)?.label ?? code)
                   .join(" · ");
@@ -183,9 +183,9 @@ export function MortalityTab({
                     ? `${row.owNfz}-${row.nip}`
                     : `${row.owNfz}-${row.nip}-${row.productCode}`}
                   >
-                    <td title={row.providerName}>{row.providerName}</td>
+                    <td title={row.providerName}><ProviderLink owNfz={row.owNfz} nip={row.nip} name={row.providerName} /></td>
                     <td>{row.nip}</td>
-                    <td title={jgpLabels}>{jgpCodes || "—"}</td>
+                    <td title={jgpLabels}><JgpCodeLinks codes={jgpCodes} /></td>
                     <td title={row.voivodeship}>{row.voivodeship}</td>
                     <td title={formatCityName(row.city)}>{formatCityName(row.city)}</td>
                     <td>{Math.round(row.hospitalizations).toLocaleString("pl-PL")}</td>

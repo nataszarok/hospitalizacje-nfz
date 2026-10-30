@@ -32,13 +32,13 @@ describe("Strona główna", () => {
     expect(screen.getByRole("region", { name: "Informacje o danych" })).toHaveTextContent("2019–2025Zakres danych NFZ");
   });
 
-  it("kieruje kafle działających modułów do podstron dashboardu", () => {
+  it("kieruje kafle działających modułów do analiz i stron szpitali", () => {
     render(<HomePage highlights={highlights} />);
     const discover = screen.getByRole("region", { name: "Co chcesz sprawdzić?" });
     expect(within(discover).getByRole("link", { name: "Analizuj hospitalizacje" })).toHaveAttribute("href", "/analizy");
     expect(within(discover).getByRole("link", { name: "Analizuj tryb przyjęcia" })).toHaveAttribute("href", "/analizy?t=a");
-    expect(within(discover).getByRole("link", { name: "Znajdź szpital" })).toHaveAttribute("href", "/analizy?t=h");
-    expect(within(discover).getByRole("link", { name: "Porównaj szpitale" })).toHaveAttribute("href", "/analizy?t=h&hv=c");
+    expect(within(discover).getByRole("link", { name: "Znajdź szpital" })).toHaveAttribute("href", "/szpitale");
+    expect(within(discover).getByRole("link", { name: "Porównaj szpitale" })).toHaveAttribute("href", "/szpitale?hv=c");
   });
 
   it("pokazuje wyceny JGP i artykuły jako moduły planowane, bez linków", () => {
@@ -52,12 +52,12 @@ describe("Strona główna", () => {
     expect(within(discover).getAllByText("Planowane")).toHaveLength(2);
   });
 
-  it("ma jedno wejście do dashboardu poza kaflami i nie linkuje do zewnętrznych licencji", () => {
+  it("ma jedno wejście do analiz poza kaflami i nie linkuje do zewnętrznych licencji", () => {
     render(<HomePage highlights={highlights} />);
     const hrefs = screen.getAllByRole("link").map((link) => link.getAttribute("href") ?? "");
     expect(screen.getAllByRole("link").filter((link) => link.getAttribute("href") === "/analizy")).toHaveLength(2);
     expect(hrefs.filter((href) => href.startsWith("http"))).toEqual([]);
-    expect(hrefs.filter((href) => href.startsWith("/szpitale") || href.startsWith("/porownaj"))).toEqual([]);
-    expect(screen.getByRole("link", { name: "Metodologia" })).toHaveAttribute("href", "/analizy?t=m");
+    expect(hrefs.filter((href) => href.startsWith("/porownaj"))).toEqual([]);
+    expect(screen.getByRole("link", { name: "Metodologia" })).toHaveAttribute("href", "/o-danych");
   });
 });

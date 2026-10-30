@@ -152,15 +152,20 @@ i są dopisane do `data/szpitale_uzupelnienie.csv`. Pozostałe dostają nazwę z
 ## 7. Etapy
 
 1. **Dane wieloletnie (zrobione dla 2024–2025)** — warstwy 1–2, wybór roku w obecnym dashboardzie.
-2. **Widok „W czasie” (zrobiony)** — zakładka `/analizy?t=w` na danych z `trends.json.gz`
-   (`TrendView`: podsumowanie, wykres miesięczny/roczny, tryb przyjęcia, zgony, ostrzeżenie o zmianie
-   katalogu). Dotychczasowe karty zostają; domyślnie nadal otwiera się „Liczba hospitalizacji a śmiertelność”.
-3. **Wspólny pasek kontekstu** zamiast panelu bocznego; widoki-pytania zamiast kart-wykresów.
-4. **Strony `/jgp/[kod]` (rozpoczęte)** — działa `/jgp/E10`: trend (ten sam `TrendView`) i ranking
-   świadczeniodawców z najnowszego roku, liczony podczas budowania. Lista grup ze stroną:
-   `JGP_PAGE_CODES` w `src/lib/jgpPage.ts`. Dalej: wszystkie grupy, warstwa 3 danych (plik na grupę,
-   gdy stron będzie dużo), linki z tabel, województwa.
-5. **Profil szpitala jako `/szpitale/[id]`**; zakładka w `/analizy` przekierowuje.
+2. **Widok „W czasie” (zrobiony)** — `TrendView` na danych z `trends.json.gz`: podsumowanie, wykres
+   miesięczny/roczny, tryb przyjęcia, zgony, ostrzeżenie o zmianie katalogu.
+3. **Eksplorator (zrobiony)** — `/analizy` bez panelu bocznego: pasek kontekstu (zakres JGP, okres,
+   „Więcej filtrów”) i cztery widoki-pytania: W czasie (domyślny), Kto leczy (`t=k`), Tryb przyjęcia
+   (`t=a`), Gdzie (`t=g`, województwa na 100 tys. z `trends.json.gz`). „Więcej filtrów” pokazuje tylko
+   ustawienia, które działają w bieżącym widoku. Obszar na razie tylko wyróżnia (decyzja 2).
+4. **Strony `/jgp/[kod]` (zrobione dla jednej grupy)** — `/jgp/E10`: trend, ranking świadczeniodawców
+   i województwa z najnowszego roku, liczone podczas budowania. Kody JGP w tabelach eksploratora
+   linkują do strony grupy, jeśli istnieje; eksplorator pokazuje „Wszystko o grupie …” przy jednej
+   wybranej grupie. Lista grup ze stroną: `JGP_PAGE_CODES` w `src/lib/jgpPage.ts`. Dalej: cały katalog
+   i warstwa 3 danych (plik na grupę), gdy stron będzie dużo.
+5. **Szpitale poza `/analizy` (zrobione)** — profil i porównanie są pod `/szpitale` (`?hospital=OW|NIP`,
+   `hv=c`), metodologia pod `/o-danych`. Stare adresy `/analizy?t=h…` i `?t=m` przekierowują.
+   Nazwy świadczeniodawców w tabelach linkują do profilu. Dalej: statyczne `/szpitale/[id]`.
 6. **Kolejne lata** (2017–2023) i mapowanie zmian katalogu JGP.
 
 Każdy etap sprawdzamy na podglądzie Cloudflare (`feature-analizy-redesign.hospitalizacje-nfz.pages.dev`).
@@ -169,5 +174,5 @@ Każdy etap sprawdzamy na podglądzie Cloudflare (`feature-analizy-redesign.hosp
 
 1. Czy „Kto leczy” i „Tryb przyjęcia” zostają osobnymi widokami, czy łączymy je w jeden widok z przełącznikiem miary?
 2. Czy obszar (województwo) ma filtrować dane, czy tylko wyróżniać na wykresie (dziś: wyróżnia)?
-3. Czy profil szpitala ma pokazywać wybrany rok? Dziś zawsze najnowszy, bo finanse i model par są liczone dla 2025.
+3. Czy profil szpitala ma pokazywać wybrany rok? Dziś zawsze najnowszy, bo finanse i model par są liczone dla najnowszego roku.
 4. Jak prezentować grupy JGP, które zmieniły się w katalogu: przerwa w trendzie czy łączenie w „rodziny”?

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ProviderLink } from "@/components/TableLinks";
 import { TrendView } from "@/components/trends/TrendView";
 import { formatCityName } from "@/lib/formatters";
 import type { JgpPageData } from "@/lib/jgpPage";
@@ -13,10 +14,10 @@ function yearRange(years: string[]) {
 
 /** Strona grupy JGP: trend we wszystkich latach i ranking świadczeniodawców z najnowszego roku. */
 export function JgpPage({ data }: { data: JgpPageData }) {
-  const explorerHref = `/analizy?t=w&jgp=${encodeURIComponent(data.jgpCode)}`;
+  const explorerHref = `/analizy?jgp=${encodeURIComponent(data.jgpCode)}`;
   return <main className={styles.page}>
     <nav className={styles.breadcrumbs} aria-label="Ścieżka">
-      <Link href="/analizy?t=w">Analizy</Link> <span aria-hidden>›</span> <span>Grupy JGP</span>
+      <Link href="/analizy">Analizy</Link> <span aria-hidden>›</span> <span>Grupy JGP</span>
     </nav>
 
     <header className={styles.header}>
@@ -49,7 +50,7 @@ export function JgpPage({ data }: { data: JgpPageData }) {
           <tbody>
             {data.topProviders.map((row, index) => <tr key={row.key}>
               <td>{index + 1}</td>
-              <td>{row.name}</td>
+              <td><ProviderLink owNfz={row.owNfz} nip={row.nip} name={row.name} /></td>
               <td>{formatCityName(row.city)}</td>
               <td>{row.voivodeship}</td>
               <td className={styles.num}>{integer(row.hospitalizations)}</td>
@@ -60,13 +61,53 @@ export function JgpPage({ data }: { data: JgpPageData }) {
         </table>
         <p className={styles.note}>
           {data.topProviders.length} z {integer(data.providerCount)} świadczeniodawców. Wartości &lt;5 liczone metodą konserwatywną (każde &lt;5 = 1).
-          {" "}<Link href={`/analizy?jgp=${encodeURIComponent(data.jgpCode)}`}>Wszyscy świadczeniodawcy: wolumen a śmiertelność →</Link>
+          {" "}<Link href={`/analizy?t=k&jgp=${encodeURIComponent(data.jgpCode)}`}>Wszyscy świadczeniodawcy: wolumen a śmiertelność →</Link>
         </p>
       </div>
     </section>
 
+    <RegionsSection data={data} />
+
     <section className={styles.planned}>
-      <strong>Planowane:</strong> wycena grupy i jej zmiany, rozkład na województwa, artykuły o tej grupie.
+      <strong>Planowane:</strong> wycena grupy i jej zmiany, artykuły o tej grupie.
     </section>
   </main>;
+}
+
+function RegionsSection({ data }: { data: JgpPageData }) {
+  const max = Math.max(...data.regions.map((row) => row.per100k), 0);
+  const people = data.regions.reduce((sum, row) => sum + row.population, 0);
+  const national = people ? (data.regions.reduce((sum, row) => sum + row.hospitalizations, 0) / people) * 100_000 : 0;
+  const decimal = (value: number) => value.toLocaleString("pl-PL", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  return <section className={styles.section} aria-labelledby="jgp-regions">
+    <h2 id="jgp-regions" className={styles.sectionTitle}>Gdzie · {data.year}</h2>
+    <div className={styles.tableCard}>
+      <table className={styles.table}>
+        <thead>
+          <tr>
+            <th>Województwo</th><th>Na 100 tys. mieszkańców</th>
+            <th className={styles.num}>Hospitalizacje</th><th className={styles.num}>Śmiertelność</th><th className={styles.num}>Nagłe</th>
+          </tr>
+        </thead>
+        <tbody>
+          {data.regions.map((row) => <tr key={row.owNfz}>
+            <td>{row.name}</td>
+            <td>
+              <div className={styles.barCell}>
+                <span className={styles.bar} style={{ width: `${max ? (row.per100k / max) * 100 : 0}%` }} aria-hidden />
+                <span className={styles.barValue}>{decimal(row.per100k)}</span>
+              </div>
+            </td>
+            <td className={styles.num}>{integer(row.hospitalizations)}</td>
+            <td className={styles.num}>{pct(row.mortalityPct)}</td>
+            <td className={styles.num}>{pct(row.urgentPct)}</td>
+          </tr>)}
+        </tbody>
+      </table>
+      <p className={styles.note}>
+        Średnia dla Polski: {decimal(national)} na 100 tys. Województwo świadczeniodawcy, nie miejsce zamieszkania pacjenta.
+        {" "}<Link href={`/analizy?t=g&jgp=${encodeURIComponent(data.jgpCode)}`}>Porównaj w eksploratorze →</Link>
+      </p>
+    </div>
+  </section>;
 }

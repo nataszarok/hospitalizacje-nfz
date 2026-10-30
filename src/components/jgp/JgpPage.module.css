@@ -127,3 +127,21 @@
   color: #475467;
   font-size: 13px;
 }
+
+.barCell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 220px;
+}
+
+.bar {
+  height: 10px;
+  border-radius: 0 4px 4px 0;
+  background: #2856a3;
+}
+
+.barValue {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}

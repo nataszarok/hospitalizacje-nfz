@@ -28,7 +28,7 @@ const defaults: DashboardUrlState = {
   geoMode: "regions",
   highlightedRegions: [],
   highlightedCities: [],
-  activeTab: "mortality",
+  activeTab: "trend",
 };
 
 describe("dashboard URL state", () => {
@@ -52,9 +52,6 @@ describe("dashboard URL state", () => {
       highlightedRegions: ["07"],
       highlightedCities: ["Warszawa"],
       activeTab: "admissions",
-      hospitalKey: "",
-      hospitalSubtab: "summary",
-      peerThreshold: 75,
     };
     expect(readDashboardUrlState(reference, dashboardUrlSearch(reference, state))).toEqual(state);
   });
@@ -93,7 +90,7 @@ describe("dashboard URL state", () => {
       axisMode: "total",
       admissionAxisMode: "total",
       geoMode: "regions",
-      activeTab: "mortality",
+      activeTab: "trend",
     });
   });
 });

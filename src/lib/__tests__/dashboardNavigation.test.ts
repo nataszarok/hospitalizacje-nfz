@@ -1,31 +1,35 @@
 import { describe, expect, it } from "vitest";
-import { DASHBOARD_HREFS, navigationFromDashboardHref, tabFromDashboardHref } from "../dashboardNavigation";
+import { DASHBOARD_HREFS, hospitalNavigationFromHref, navigationFromDashboardHref, tabFromDashboardHref } from "../dashboardNavigation";
 
 describe("tabFromDashboardHref", () => {
-  it("rozpoznaje wszystkie działające sekcje dashboardu", () => {
-    expect(tabFromDashboardHref("/analizy")).toBe("mortality");
-    expect(tabFromDashboardHref("/analizy?t=a")).toBe("admissions");
+  it("rozpoznaje widoki eksploratora", () => {
+    expect(tabFromDashboardHref("/analizy")).toBe("trend");
     expect(tabFromDashboardHref("/analizy?t=w")).toBe("trend");
-    expect(tabFromDashboardHref("/analizy?t=h")).toBe("hospital");
-    expect(tabFromDashboardHref("/analizy?t=m")).toBe("methodology");
+    expect(tabFromDashboardHref("/analizy?t=k")).toBe("mortality");
+    expect(tabFromDashboardHref("/analizy?t=a")).toBe("admissions");
+    expect(tabFromDashboardHref("/analizy?t=g")).toBe("regions");
   });
 
   it("nie przechwytuje linków do innych stron", () => {
     expect(tabFromDashboardHref("/")).toBeNull();
-    expect(tabFromDashboardHref("/#odkrywaj")).toBeNull();
     expect(tabFromDashboardHref("/szpitale")).toBeNull();
+    expect(tabFromDashboardHref("/o-danych")).toBeNull();
   });
 });
 
-describe("navigationFromDashboardHref", () => {
+describe("hospitalNavigationFromHref", () => {
   it("rozróżnia profil szpitala i porównanie", () => {
-    expect(navigationFromDashboardHref("/analizy?t=h")).toEqual({ tab: "hospital", hospitalSubtab: "summary" });
-    expect(navigationFromDashboardHref("/analizy?t=h&hv=c")).toEqual({ tab: "hospital", hospitalSubtab: "comparison" });
-    expect(navigationFromDashboardHref("/analizy?t=a&hv=c")).toEqual({ tab: "admissions" });
+    expect(hospitalNavigationFromHref("/szpitale")).toEqual({ view: "summary" });
+    expect(hospitalNavigationFromHref("/szpitale?hv=c")).toEqual({ view: "comparison" });
+    expect(hospitalNavigationFromHref("/analizy?hv=c")).toBeNull();
   });
+});
 
-  it("każdy adres z DASHBOARD_HREFS wskazuje zakładkę dashboardu", () => {
-    expect(Object.values(DASHBOARD_HREFS).map((href) => navigationFromDashboardHref(href)?.tab))
-      .toEqual(["mortality", "trend", "admissions", "hospital", "hospital", "methodology"]);
+describe("DASHBOARD_HREFS", () => {
+  it("analizy prowadzą do widoków eksploratora, a szpitale i dane do osobnych stron", () => {
+    expect([DASHBOARD_HREFS.trend, DASHBOARD_HREFS.mortality, DASHBOARD_HREFS.admissions, DASHBOARD_HREFS.regions].map((href) => navigationFromDashboardHref(href)?.tab))
+      .toEqual(["trend", "mortality", "admissions", "regions"]);
+    expect(hospitalNavigationFromHref(DASHBOARD_HREFS.comparison)).toEqual({ view: "comparison" });
+    expect(DASHBOARD_HREFS.methodology).toBe("/o-danych");
   });
 });

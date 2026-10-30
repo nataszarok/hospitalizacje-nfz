@@ -17,7 +17,7 @@ type Topic = {
 };
 
 const topics: readonly Topic[] = [
-  { title: "Hospitalizacje", description: "Ile było hospitalizacji, w jakich grupach JGP i z jaką śmiertelnością.", icon: "bed", href: DASHBOARD_HREFS.mortality, label: "Analizuj hospitalizacje" },
+  { title: "Hospitalizacje", description: "Ile było hospitalizacji, w jakich grupach JGP i z jaką śmiertelnością.", icon: "bed", href: DASHBOARD_HREFS.trend, label: "Analizuj hospitalizacje" },
   { title: "Tryb przyjęcia", description: "Przyjęcia planowe i nagłe w szpitalach i regionach.", icon: "heart", href: DASHBOARD_HREFS.admissions, label: "Analizuj tryb przyjęcia" },
   { title: "Szpitale publiczne", description: "Profil szpitala: oddziały, łóżka, świadczenia i wyniki finansowe.", icon: "hospital", href: DASHBOARD_HREFS.hospital, label: "Znajdź szpital" },
   { title: "Porównanie szpitali", description: "Porównaj szpital z grupą podobnych placówek dobranych przez model.", icon: "compare", href: DASHBOARD_HREFS.comparison, label: "Porównaj szpitale" },
@@ -79,7 +79,7 @@ export function HomePage({ highlights }: { highlights: DatasetHighlights }) {
           <h2 id="workbench-title">Potrzebujesz szczegółowej analizy?</h2>
           <p>Otwórz dashboard. Ustaw grupy JGP, filtry i parametry analizy. Udostępnij link do wybranego widoku.</p>
         </div>
-        <Link className={styles.primaryButton} href={DASHBOARD_HREFS.mortality}>Przejdź do analiz <PortalIcon name="arrow" size={18} /></Link>
+        <Link className={styles.primaryButton} href={DASHBOARD_HREFS.trend}>Przejdź do analiz <PortalIcon name="arrow" size={18} /></Link>
       </section>
 
       <section className={`${styles.container} ${styles.lower}`} aria-label="Informacje o portalu">

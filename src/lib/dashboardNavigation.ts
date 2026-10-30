@@ -1,34 +1,44 @@
-import type { DashboardActiveTab, DashboardUrlState } from "@/lib/dashboardUrlState";
+import type { DashboardActiveTab } from "@/lib/dashboardUrlState";
+import type { HospitalView } from "@/lib/hospitalUrlState";
 
-// Events keep the global navigation in sync with the existing dashboard state.
-// The dashboard remains the owner of URL filter parameters in this migration stage.
+// Zdarzenia synchronizują nagłówek portalu z widokiem strony bez przeładowania (filtry zostają w stanie).
 export const DASHBOARD_TAB_NAVIGATE_EVENT = "atlas:dashboard-navigate";
 export const DASHBOARD_TAB_CHANGED_EVENT = "atlas:dashboard-tab-changed";
+export const HOSPITAL_VIEW_NAVIGATE_EVENT = "atlas:hospital-view-navigate";
+export const HOSPITAL_VIEW_CHANGED_EVENT = "atlas:hospital-view-changed";
 
-export type DashboardHospitalSubtab = NonNullable<DashboardUrlState["hospitalSubtab"]>;
-export type DashboardNavigation = { tab: DashboardActiveTab; hospitalSubtab?: DashboardHospitalSubtab };
+export type DashboardNavigation = { tab: DashboardActiveTab };
+export type HospitalNavigation = { view: HospitalView };
 
-// Adresy podstron dashboardu używane przez stronę główną i nagłówek portalu.
+// Adresy modułów portalu używane przez stronę główną i nagłówek.
 export const DASHBOARD_HREFS = {
-  mortality: "/analizy",
-  trend: "/analizy?t=w",
+  trend: "/analizy",
+  mortality: "/analizy?t=k",
   admissions: "/analizy?t=a",
-  hospital: "/analizy?t=h",
-  comparison: "/analizy?t=h&hv=c",
-  methodology: "/analizy?t=m",
+  regions: "/analizy?t=g",
+  hospital: "/szpitale",
+  comparison: "/szpitale?hv=c",
+  methodology: "/o-danych",
 } as const;
 
 export function tabFromDashboardHref(href: string): DashboardActiveTab | null {
   return navigationFromDashboardHref(href)?.tab ?? null;
 }
 
+/** Widok eksploratora dla adresu /analizy; `null` dla innych stron. */
 export function navigationFromDashboardHref(href: string): DashboardNavigation | null {
   const url = new URL(href, "https://atlas.invalid");
   if (url.pathname !== "/analizy") return null;
   const tab = url.searchParams.get("t");
-  if (tab === "h") return { tab: "hospital", hospitalSubtab: url.searchParams.get("hv") === "c" ? "comparison" : "summary" };
-  if (tab === "m") return { tab: "methodology" };
+  if (tab === "k") return { tab: "mortality" };
   if (tab === "a") return { tab: "admissions" };
-  if (tab === "w") return { tab: "trend" };
-  return { tab: "mortality" };
+  if (tab === "g") return { tab: "regions" };
+  return { tab: "trend" };
+}
+
+/** Widok strony szpitali dla adresu /szpitale; `null` dla innych stron. */
+export function hospitalNavigationFromHref(href: string): HospitalNavigation | null {
+  const url = new URL(href, "https://atlas.invalid");
+  if (url.pathname !== "/szpitale") return null;
+  return { view: url.searchParams.get("hv") === "c" ? "comparison" : "summary" };
 }

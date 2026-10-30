@@ -149,9 +149,17 @@ describe("MortalityTab data table", () => {
   it("uses the public JGP code and exposes the product label as a title", () => {
     render(<MortalityTab {...commonProps} data={mortalityPayload([mortalityRow()])} />);
 
-    const jgpCell = screen.getByText("E10");
+    const jgpCell = screen.getByText("E10").closest("td");
     expect(jgpCell).toHaveAttribute("title", "E10 · Produkt E10");
+    // E10 ma stronę grupy JGP, więc kod jest linkiem.
+    expect(screen.getByRole("link", { name: "E10" })).toHaveAttribute("href", "/jgp/E10");
     expect(screen.queryByText("P1")).not.toBeInTheDocument();
+  });
+
+  it("links provider names to their hospital profile", () => {
+    render(<MortalityTab {...commonProps} data={mortalityPayload([mortalityRow()])} />);
+    const row = mortalityRow();
+    expect(screen.getByRole("link", { name: row.providerName })).toHaveAttribute("href", `/szpitale?hospital=${encodeURIComponent(`${row.owNfz}|${row.nip}`)}`);
   });
 
   it("falls back to the internal product code when JGP metadata is missing", () => {

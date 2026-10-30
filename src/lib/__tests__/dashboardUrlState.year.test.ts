@@ -13,7 +13,7 @@ const reference: ReferencePayload = {
 
 const state: DashboardUrlState = {
   selectedProducts: ["P1"], durations: [], method: "min", minHosp: 0, axisMode: "total", admissionAxisMode: "total",
-  geoMode: "regions", highlightedRegions: [], highlightedCities: [], activeTab: "mortality",
+  geoMode: "regions", highlightedRegions: [], highlightedCities: [], activeTab: "trend",
 };
 
 describe("rok danych w adresie", () => {

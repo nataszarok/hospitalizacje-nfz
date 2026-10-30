@@ -1,0 +1,181 @@
+.explorer {
+  width: min(calc(100% - var(--atlas-page-gutter) - var(--atlas-page-gutter)), var(--atlas-workspace-max));
+  margin: 0 auto;
+  padding: 20px 0 48px;
+  min-width: 0;
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 26px;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.header p {
+  margin: 5px 0 0;
+  color: #667085;
+  font-size: 14px;
+}
+
+.groupLink {
+  padding: 7px 12px;
+  border: 1px solid #d0d5dd;
+  border-radius: 8px;
+  background: #fff;
+  color: #172033;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.contextBar {
+  margin-bottom: 14px;
+  padding: 14px 16px;
+  border: 1px solid #e4e7ec;
+  border-radius: 12px;
+  background: #f8fafd;
+}
+
+.contextRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.contextField {
+  flex: 1 1 420px;
+  min-width: 0;
+}
+
+.contextFieldNarrow {
+  flex: 0 0 150px;
+}
+
+.contextLabel {
+  display: block;
+  margin-bottom: 5px;
+  color: #475467;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.contextStatic {
+  display: flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid #e4e7ec;
+  border-radius: 8px;
+  background: #fff;
+  color: #172033;
+  font-size: 14px;
+}
+
+.contextHint {
+  margin: 8px 0 0;
+  color: #667085;
+  font-size: 12px;
+}
+
+.moreButton {
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid #d0d5dd;
+  border-radius: 8px;
+  background: #fff;
+  color: #344054;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.moreFilters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px 18px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #e4e7ec;
+}
+
+.moreField {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  min-width: 0;
+}
+
+.moreField .contextLabel {
+  margin-bottom: 0;
+}
+
+.fieldHelp {
+  color: #667085;
+  font-size: 11.5px;
+  line-height: 1.4;
+}
+
+.question {
+  margin: -6px 0 12px;
+  color: #475467;
+  font-size: 14px;
+}
+
+.viewStack {
+  display: grid;
+  gap: 16px;
+}
+
+.card {
+  padding: 16px;
+  border: 1px solid #e4e7ec;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.cardHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.cardHeader h2 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.cardHeader p {
+  margin: 4px 0 0;
+  color: #667085;
+  font-size: 13px;
+}
+
+@media (max-width: 640px) {
+  .contextFieldNarrow {
+    flex: 1 1 100%;
+  }
+
+  .moreButton {
+    width: 100%;
+  }
+}
+
+/* Zakładki widoków w jednej linii; na wąskim ekranie przewijają się w poziomie (globalne .tabs). */
+.explorer :global(.tabs) button {
+  white-space: nowrap;
+}
