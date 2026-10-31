@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { JgpCardSections } from "@/components/jgp/JgpCard";
-import { topShare, yearChangePct } from "@/lib/jgpCard";
+import { topShare, yearChangePct, type RegionsMap } from "@/lib/jgpCard";
 import type { JgpPageData } from "@/lib/jgpPage";
 import styles from "./JgpPage.module.css";
 
@@ -13,7 +13,7 @@ function yearRange(years: string[]) {
 }
 
 /** Strona grupy JGP: liczby grupy, trend, ośrodki, województwa, tryb przyjęcia i wycena. */
-export function JgpPage({ data }: { data: JgpPageData }) {
+export function JgpPage({ data, map = null }: { data: JgpPageData; map?: RegionsMap | null }) {
   const explorerHref = `/analizy?jgp=${encodeURIComponent(data.jgpCode)}`;
   const deaths = data.providers.reduce((sum, row) => sum + row.deaths, 0);
   const urgent = data.providers.reduce((sum, row) => sum + (row.urgentPct / 100) * row.hospitalizations, 0);
@@ -43,10 +43,10 @@ export function JgpPage({ data }: { data: JgpPageData }) {
       {latestValue ? <div className={styles.kpiValue}><dt>Rozliczenia NFZ {latestValue.year}</dt><dd>{(latestValue.value / 1_000_000).toLocaleString("pl-PL", { maximumFractionDigits: 1, minimumFractionDigits: 1 })} mln zł</dd><span>{firstValue && firstValue !== latestValue ? `${firstValue.year}: ${(firstValue.value / 1_000_000).toLocaleString("pl-PL", { maximumFractionDigits: 1, minimumFractionDigits: 1 })} mln zł` : "w kraju"}</span></div> : null}
     </dl>
 
-    <JgpCardSections data={data} />
+    <JgpCardSections data={data} map={map} />
 
     <section className={styles.planned}>
-      <strong>Planowane:</strong> mapa z granicami województw i ośrodkami, rodzina grup OZW, wycena w kolejnych latach, artykuły o tej grupie.
+      <strong>Planowane:</strong> ośrodki na mapie, rodzina grup OZW, wycena w kolejnych latach, artykuły o tej grupie.
     </section>
   </main>;
 }

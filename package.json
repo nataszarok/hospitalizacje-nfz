@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "generate:data": "python3 scripts/build_hospitalizations.py && python3 scripts/build_jgp_pages.py",
+    "generate:data": "python3 scripts/build_hospitalizations.py && python3 scripts/build_jgp_pages.py && python3 scripts/build_valuations.py && python3 scripts/build_regions_map.py",
     "verify:static": "node scripts/verify-static.mjs",
     "refresh:data": "npm run generate:data && npm run verify:static",
     "test": "vitest run",

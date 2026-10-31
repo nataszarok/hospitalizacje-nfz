@@ -4,6 +4,7 @@ import "@testing-library/jest-dom/vitest";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { JgpPage } from "@/components/jgp/JgpPage";
+import type { RegionsMap } from "@/lib/jgpCard";
 import { buildJgpPageData } from "@/lib/jgpPage";
 import { extrasFixture } from "@/lib/__tests__/fixtures/jgpCardFixture";
 import { latestDatasetFixture, trendsFixture } from "@/lib/__tests__/fixtures/trendsFixture";
@@ -129,5 +130,32 @@ describe("Karta grupy bez pliku grupy", () => {
     expect(screen.getByText("trend z pliku trendów")).toBeInTheDocument();
     expect(screen.queryByText(/Wycena 2025/)).not.toBeInTheDocument();
     expect(screen.getByRole("region", { name: "Wycena i wartość rozliczeń" })).toHaveTextContent("Brak danych o rozliczeniach w złotych.");
+  });
+});
+
+describe("Karta grupy — mapa z granicami", () => {
+  const map: RegionsMap = {
+    version: 1, source: "test (MIT)", viewBox: [100, 100],
+    regions: [["07", "mazowieckie", "M10 10l20 0 0 20-20 0z", [20, 20]], ["12", "śląskie", "M50 50l20 0 0 20-20 0z", [60, 60]]],
+  };
+
+  it("rysuje województwa jako przyciski i zaznacza je kliknięciem albo klawiszem", () => {
+    render(<JgpPage data={data} map={map} />);
+    const mapGroup = screen.getByRole("group", { name: /Mapa województw/ });
+    const shapes = within(mapGroup).getAllByRole("button");
+    expect(shapes.map((shape) => shape.getAttribute("aria-label"))).toEqual([
+      expect.stringMatching(/^Mazowieckie: /), expect.stringMatching(/^Śląskie: /),
+    ]);
+    fireEvent.click(shapes[0]);
+    expect(window.location.search).toBe("?ow=07");
+    expect(shapes[0]).toHaveAttribute("aria-pressed", "true");
+    fireEvent.keyDown(shapes[1], { key: "Enter" });
+    expect(window.location.search).toBe("?ow=07&ow=12");
+    expect(screen.getByText(/Granice: test \(MIT\)/)).toBeInTheDocument();
+    // Bez mapy karta pokazuje kafelki.
+    cleanup();
+    open();
+    render(<JgpPage data={data} />);
+    expect(screen.getByRole("group", { name: /Kartogram województw/ })).toBeInTheDocument();
   });
 });

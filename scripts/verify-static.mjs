@@ -102,3 +102,25 @@ for (const code of pageCodes) {
   }
   console.log(`Group page ${code} OK: ${group.monthly.length.toLocaleString("en-US")} monthly rows${group.valuePln ? `, PLN ${Object.keys(group.valuePln.national).at(0)}–${Object.keys(group.valuePln.national).at(-1)}` : ""}, ${(size / 1024).toFixed(0)} KiB.`);
 }
+
+// Mapa województw (scripts/build_regions_map.py): 16 województw z kodami OW jak w danych.
+{
+  const { size, data: map } = await readGzipJson("public/data/regions-map.json.gz");
+  const { data: latest } = await readGzipJson(path.join(DIR, `${index.latestYear}.json.gz`));
+  const expected = latest.regions.map(([ow]) => ow).sort().join(",");
+  const actual = map.regions.map(([ow]) => ow).sort().join(",");
+  if (actual !== expected) throw new Error(`regions-map.json.gz regions (${actual}) differ from the dataset (${expected}).`);
+  if (map.regions.some(([, , pathData]) => !/^M\d/.test(pathData))) throw new Error("regions-map.json.gz has an empty or invalid path.");
+  console.log(`Regions map OK: ${map.regions.length} voivodeships, ${(size / 1024).toFixed(1)} KiB.`);
+}
+
+// Wyceny JGP (scripts/build_valuations.py): format krotek, unikalne kody grup.
+{
+  const { size, data: valuations } = await readGzipJson("public/data/wyceny_jgp_2025.json.gz");
+  if (valuations.version !== 2 || !valuations.fields?.includes("kod_jgp") || !valuations.fields.includes("pkt_hospitalizacja")) {
+    throw new Error("wyceny_jgp_2025.json.gz is not in the tuple format (version 2).");
+  }
+  const codes = valuations.rows.map((row) => row[valuations.fields.indexOf("kod_jgp")]);
+  if (!codes.length || new Set(codes).size !== codes.length) throw new Error("wyceny_jgp_2025.json.gz has no rows or duplicate group codes.");
+  console.log(`Valuations OK: ${codes.length} groups, ${(size / 1024).toFixed(1)} KiB.`);
+}

@@ -1,7 +1,9 @@
 import { access, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { gunzipSync } from "node:zlib";
-import type { JgpGroupFile, JgpPeerPair, JgpValuation } from "@/lib/jgpPage";
+import type { RegionsMap } from "@/lib/jgpCard";
+import type { JgpGroupFile, JgpPeerPair } from "@/lib/jgpPage";
+import { decodeValuations, type JgpValuation, type ValuationsFile } from "@/lib/valuations";
 import type { HospitalizationIndex, StaticDataset, TrendsDataset } from "@/lib/staticData";
 
 // Odczyt danych podczas budowania strony (statyczny eksport). Tylko dla komponentów serwerowych.
@@ -43,12 +45,22 @@ export async function readJgpGroupFileFromDisk(jgpCode: string, dir = join(DATA_
 
 /** Katalog wycen JGP (punkty) z rokiem katalogu. */
 export async function readValuationsFromDisk(file = join(DATA_DIR, "wyceny_jgp_2025.json.gz")): Promise<{ year: string; rows: JgpValuation[] }> {
-  const data = await readGzipJson<{ rok: number | string; jgp: JgpValuation[] }>(file);
-  return { year: String(data.rok), rows: data.jgp };
+  const data = await readGzipJson<ValuationsFile>(file);
+  return { year: data.year, rows: decodeValuations(data) };
 }
 
 /** Pary szpitali z modelu podobieństwa (tylko pola potrzebne stronie grupy). */
 export async function readPeerPairsFromDisk(file = join(DATA_DIR, "peer_pairs_ab.json.gz")): Promise<JgpPeerPair[]> {
   const data = await readGzipJson<{ rows: JgpPeerPair[] }>(file);
   return data.rows.map(({ a, b, peer_grade_pred, distance_score }) => ({ a, b, peer_grade_pred, distance_score }));
+}
+
+/** Mapa województw (`scripts/build_regions_map.py`) albo `null`, gdy pliku nie ma. */
+export async function readRegionsMapFromDisk(file = join(DATA_DIR, "regions-map.json.gz")): Promise<RegionsMap | null> {
+  try {
+    await access(file);
+  } catch {
+    return null;
+  }
+  return readGzipJson<RegionsMap>(file);
 }

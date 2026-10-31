@@ -4,7 +4,7 @@ import { JgpPage } from "@/components/jgp/JgpPage";
 import { buildJgpPageData, JGP_PAGE_CODES } from "@/lib/jgpPage";
 import { SITE_NAME } from "@/lib/site";
 import {
-  readHospitalizationIndexFromDisk, readJgpGroupFileFromDisk, readPeerPairsFromDisk, readStaticDatasetFromDisk, readTrendsFromDisk, readValuationsFromDisk,
+  readHospitalizationIndexFromDisk, readJgpGroupFileFromDisk, readPeerPairsFromDisk, readRegionsMapFromDisk, readStaticDatasetFromDisk, readTrendsFromDisk, readValuationsFromDisk,
 } from "@/lib/staticDataServer";
 
 export const dynamicParams = false;
@@ -33,7 +33,7 @@ export async function generateMetadata({ params }: { params: Promise<{ kod: stri
 
 export default async function JgpGroupPage({ params }: { params: Promise<{ kod: string }> }) {
   const { kod } = await params;
-  const data = await pageData(kod);
+  const [data, map] = await Promise.all([pageData(kod), readRegionsMapFromDisk()]);
   if (!data) notFound();
-  return <JgpPage data={data} />;
+  return <JgpPage data={data} map={map} />;
 }

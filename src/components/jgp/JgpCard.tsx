@@ -8,7 +8,8 @@ import { ProviderLink } from "@/components/TableLinks";
 import { TrendView } from "@/components/trends/TrendView";
 import { formatCityName } from "@/lib/formatters";
 import {
-  cartogramCells, cellColor, MAX_REGIONS, OUTLIER_COLOR, poolAdmissions, poolStats, providerPool, scaleColor, selectedIndex, sumSeries, yearChangePct, type CompareScope,
+  cartogramCells, cellColor, MAX_REGIONS, OUTLIER_COLOR, poolAdmissions, poolStats, providerPool, scaleColor, selectedIndex, sumSeries, yearChangePct,
+  type CartogramCell, type CompareScope, type RegionsMap,
 } from "@/lib/jgpCard";
 import type { JgpAdmissionYear, JgpPageData, JgpProviderRow } from "@/lib/jgpPage";
 import { hospitalHref } from "@/lib/portalLinks";
@@ -69,7 +70,7 @@ function useCardState(data: JgpPageData) {
 }
 
 /** Interaktywna część karty grupy JGP: wszystkie sekcje reagują na wybrany szpital, podobne szpitale i województwo. */
-export function JgpCardSections({ data }: { data: JgpPageData }) {
+export function JgpCardSections({ data, map = null }: { data: JgpPageData; map?: RegionsMap | null }) {
   const { selectedKey, scope, regions, write } = useCardState(data);
   const selected = selectedIndex(data, selectedKey);
   const selectedRow = selected >= 0 ? data.providers[selected] : null;
@@ -101,7 +102,7 @@ export function JgpCardSections({ data }: { data: JgpPageData }) {
     </nav>
 
     <TimeSection data={data} pool={pool} regions={regions} peers={effectiveScope === "peers"} selectedRow={selectedRow} />
-    <RegionsSection data={data} regions={regions} onRegions={(next) => write({ selectedKey, scope: effectiveScope, regions: next })} />
+    <RegionsSection data={data} map={map} regions={regions} onRegions={(next) => write({ selectedKey, scope: effectiveScope, regions: next })} />
     <ProvidersSection data={data} pool={pool} selectedRow={selectedRow} filtered={filtered} onSelect={select} />
     <AdmissionsSection data={data} pool={pool} filtered={filtered} selectedRow={selectedRow} onSelect={select} />
     <ValuationSection data={data} />
@@ -254,7 +255,7 @@ function TimeSection({ data, pool, regions, peers, selectedRow }: { data: JgpPag
   </section>;
 }
 
-function RegionsSection({ data, regions, onRegions }: { data: JgpPageData; regions: string[]; onRegions: (regions: string[]) => void }) {
+function RegionsSection({ data, map, regions, onRegions }: { data: JgpPageData; map: RegionsMap | null; regions: string[]; onRegions: (regions: string[]) => void }) {
   const { cells, scale } = cartogramCells(data.regions);
   const outliers = cells.filter((cell) => cell.outlier);
   const people = data.regions.reduce((sum, row) => sum + row.population, 0);
@@ -268,7 +269,7 @@ function RegionsSection({ data, regions, onRegions }: { data: JgpPageData; regio
     <div className={`${styles.tableCard} ${styles.mapCard}`}>
       <div className={styles.mapLayout}>
         <div>
-          <div className={styles.cartogram} role="group" aria-label="Kartogram województw: hospitalizacje na 100 tys. mieszkańców">
+          {map ? <RegionMap map={map} cells={cells} regions={regions} onToggle={toggle} /> : <div className={styles.cartogram} role="group" aria-label="Kartogram województw: hospitalizacje na 100 tys. mieszkańców">
             {cells.map((cell) => {
               const index = regions.indexOf(cell.owNfz);
               return <button
@@ -284,7 +285,7 @@ function RegionsSection({ data, regions, onRegions }: { data: JgpPageData; regio
                 <b>{decimal(cell.per100k)}{cell.outlier ? " ▲" : ""}</b>
               </button>;
             })}
-          </div>
+          </div>}
           <div className={styles.scale}>
             <span>{decimal(scale.min)}</span>
             <i className={styles.scaleGradient} style={{ background: `linear-gradient(90deg, ${scaleColor(0)}, ${scaleColor(1)})` }} aria-hidden />
@@ -296,7 +297,7 @@ function RegionsSection({ data, regions, onRegions }: { data: JgpPageData; regio
           <p><b>Średnia dla Polski: {decimal(national)}</b> na 100 tys. mieszkańców.</p>
           <p>Kliknij województwa (do {MAX_REGIONS} naraz), aby zawęzić kartę. Wykres „W czasie” pokaże linię dla każdego województwa; ranking, tryb przyjęcia i wykresy punktowe — ośrodki z wybranych województw.</p>
           {regions.length ? <button type="button" className={styles.linkButton} onClick={() => onRegions([])}>Wyczyść wybór ({regions.length})</button> : null}
-          <p className={styles.muted}>Skala kolorów kończy się na największej wartości nieodstającej, żeby jedno województwo nie spłaszczało różnic. Województwo = oddział NFZ, w którym świadczeniodawca rozlicza hospitalizacje. Kafelki pokazują przybliżone położenie województw.</p>
+          <p className={styles.muted}>Skala kolorów kończy się na największej wartości nieodstającej, żeby jedno województwo nie spłaszczało różnic. Województwo = oddział NFZ, w którym świadczeniodawca rozlicza hospitalizacje. {map ? `Granice: ${map.source}.` : "Kafelki pokazują przybliżone położenie województw."}</p>
         </div>
       </div>
       <details className={styles.dataDetails}>
@@ -317,6 +318,42 @@ function RegionsSection({ data, regions, onRegions }: { data: JgpPageData; regio
       <p className={styles.note}><Link href={`/analizy?t=g&jgp=${encodeURIComponent(data.jgpCode)}`}>Województwa i miasta w eksploratorze →</Link></p>
     </div>
   </section>;
+}
+
+/** Mapa województw z prawdziwymi granicami (SVG). Kliknięcie albo Enter zaznacza województwo. */
+function RegionMap({ map, cells, regions, onToggle }: { map: RegionsMap; cells: CartogramCell[]; regions: string[]; onToggle: (ow: string) => void }) {
+  const byCode = new Map(cells.map((cell) => [cell.owNfz, cell]));
+  const [width, height] = map.viewBox;
+  const shapes = map.regions.flatMap(([code, , path, label]) => {
+    const cell = byCode.get(code);
+    return cell ? [{ code, path, label, cell }] : [];
+  });
+  return <svg className={styles.regionMap} viewBox={`0 0 ${width} ${height}`} role="group" aria-label="Mapa województw: hospitalizacje na 100 tys. mieszkańców">
+    {shapes.map(({ code, path, cell }) => <path
+      key={code}
+      d={path}
+      className={styles.regionShape}
+      fill={cellColor(cell)}
+      role="button"
+      tabIndex={0}
+      aria-pressed={regions.includes(code)}
+      aria-label={`${cell.name}: ${decimal(cell.per100k)} na 100 tys., ${integer(cell.hospitalizations)} hospitalizacji${cell.outlier ? " (poza skalą)" : ""}`}
+      onClick={() => onToggle(code)}
+      onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onToggle(code); } }}
+    ><title>{`${cell.name}: ${decimal(cell.per100k)} na 100 tys.`}</title></path>)}
+    {/* Obwódki zaznaczonych województw w kolorach linii wykresu, nad pozostałymi granicami. */}
+    {regions.map((code, i) => {
+      const shape = shapes.find((item) => item.code === code);
+      return shape ? <path key={`sel-${code}`} d={shape.path} className={styles.regionSelected} stroke={REGION_COLORS[i % REGION_COLORS.length]} aria-hidden /> : null;
+    })}
+    {shapes.map(({ code, label, cell }) => <text
+      key={`label-${code}`}
+      x={label[0]}
+      y={label[1]}
+      className={`${styles.regionLabel} ${!cell.outlier && cell.scale < 0.5 ? styles.regionLabelDark : ""}`}
+      aria-hidden
+    >{decimal(cell.per100k)}{cell.outlier ? " ▲" : ""}</text>)}
+  </svg>;
 }
 
 function scatterPoint(row: JgpProviderRow, selectedRow: JgpProviderRow | null, y: number, lines: string[]): ScatterPoint {

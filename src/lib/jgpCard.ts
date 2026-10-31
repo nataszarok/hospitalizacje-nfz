@@ -1,6 +1,15 @@
 import type { JgpAdmissionYear, JgpPageData, JgpProviderRow } from "@/lib/jgpPage";
 import type { RegionRow } from "@/lib/regions";
 
+/** Mapa województw z `scripts/build_regions_map.py`: ścieżki SVG gotowe do narysowania. */
+export interface RegionsMap {
+  version: 1;
+  source: string;
+  viewBox: [number, number];
+  /** [kod OW NFZ, nazwa, ścieżka SVG, [x, y] podpisu] */
+  regions: [string, string, string, [number, number]][];
+}
+
 /** Zakres porównania na karcie grupy: wszyscy świadczeniodawcy albo szpitale podobne do wybranego. */
 export type CompareScope = "all" | "peers";
 

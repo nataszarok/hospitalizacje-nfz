@@ -25,15 +25,8 @@ export interface JgpGroupFile {
   valuePln?: { national: Record<string, number>; providers: [string, string, string, number][] };
 }
 
-/** Wycena grupy z katalogu NFZ (punkty). */
-export interface JgpValuation {
-  kod_jgp: string;
-  pkt_hospitalizacja: number | null;
-  pkt_hospitalizacja_planowa?: number | null;
-  pkt_jeden_dzien?: number | null;
-  dni_finansowane_grupa?: number | null;
-  pkt_osobodzien_ponad_ryczalt?: number | null;
-}
+export type { JgpValuation } from "@/lib/valuations";
+import type { JgpValuation } from "@/lib/valuations";
 
 /** Para szpitali z modelu podobieństwa (tylko pola używane na stronie grupy). */
 export interface JgpPeerPair { a: string; b: string; peer_grade_pred: string; distance_score: number }

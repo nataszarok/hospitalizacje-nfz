@@ -730,3 +730,50 @@
     top: 66px;
   }
 }
+
+/* Mapa województw (SVG z granicami z PRG) */
+.regionMap {
+  display: block;
+  width: 100%;
+  max-width: 560px;
+  height: auto;
+}
+
+.regionShape {
+  stroke: #ffffff;
+  stroke-width: 2;
+  stroke-linejoin: round;
+  cursor: pointer;
+  transition: filter 0.15s;
+}
+
+.regionShape:hover {
+  filter: brightness(0.92);
+}
+
+.regionShape:focus-visible {
+  outline: none;
+  stroke: #172033;
+  stroke-width: 4;
+}
+
+.regionSelected {
+  fill: none;
+  stroke-width: 6;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
+.regionLabel {
+  fill: #ffffff;
+  font-size: 26px;
+  font-weight: 700;
+  text-anchor: middle;
+  dominant-baseline: middle;
+  pointer-events: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.regionLabelDark {
+  fill: #172033;
+}
