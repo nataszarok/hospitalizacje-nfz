@@ -14,7 +14,7 @@
 .option { display: flex; align-items: flex-start; gap: 10px; padding: 8px 10px; border-radius: 8px; cursor: pointer; }
 .optionActive { background: var(--color-primary-soft); }
 .interpretation .primary { color: var(--color-primary-hover); }
-.code { flex: none; min-width: 44px; font-weight: 750; color: #2856a3; font-variant-numeric: tabular-nums; }
+.code { flex: none; min-width: 44px; font-weight: 750; color: var(--color-primary); font-variant-numeric: tabular-nums; }
 .text { display: grid; gap: 2px; min-width: 0; }
 .primary { font-size: 14px; font-weight: 600; color: var(--color-text); overflow-wrap: anywhere; }
 .secondary { font-size: 12px; color: var(--color-text-secondary); }

@@ -23,7 +23,7 @@
 .insight {
   margin-top: 12px;
   padding: 10px 14px;
-  border-left: 3px solid #2856a3;
+  border-left: 3px solid var(--primary);
   background: #f8fafc;
   color: #344054;
   font-size: 13px;

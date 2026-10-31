@@ -218,7 +218,7 @@
 }
 
 .hospital-peer-tooltip-head>strong{
-  color:#2856A3;
+  color:var(--primary);
   font-size:13px;
 }
 
@@ -273,7 +273,7 @@
 }
 
 .hospital-peer-tooltip-grouphead>strong{
-  color:#2856A3;
+  color:var(--primary);
   font-size:11px;
 }
 

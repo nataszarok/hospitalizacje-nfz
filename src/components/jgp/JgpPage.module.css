@@ -38,7 +38,7 @@
 }
 
 .code {
-  color: #2856a3;
+  color: var(--color-primary);
 }
 
 .header p {
@@ -138,7 +138,7 @@
 .bar {
   height: 10px;
   border-radius: 0 4px 4px 0;
-  background: #2856a3;
+  background: var(--data);
 }
 
 .barValue {
@@ -200,7 +200,7 @@
 }
 
 .segmentPlanned {
-  background: #2856a3;
+  background: var(--data);
 }
 
 .segmentUrgent {
@@ -285,7 +285,7 @@
 }
 
 .selectedActions a {
-  color: #2856a3;
+  color: var(--color-primary);
   font-weight: 600;
 }
 
@@ -348,8 +348,8 @@
 }
 
 .kpiBand .kpiValue {
-  border-color: #b7d7cf;
-  background: #f3faf8;
+  border-color: var(--color-primary-outline);
+  background: var(--color-primary-soft);
 }
 
 /* Spis sekcji i aktywne filtry */
@@ -375,7 +375,7 @@
 }
 
 .sectionNav a:hover {
-  color: #2856a3;
+  color: var(--color-primary);
 }
 
 .filters {
@@ -387,10 +387,10 @@
 
 .filters button {
   padding: 4px 10px;
-  border: 1px solid #f1d5c6;
+  border: 1px solid var(--color-primary-outline);
   border-radius: 999px;
-  background: #fff1e8;
-  color: #9a3f16;
+  background: var(--color-primary-soft);
+  color: var(--color-primary-hover);
   font: inherit;
   font-size: 13px;
   font-weight: 600;
@@ -445,8 +445,8 @@
 }
 
 .segmented button[aria-pressed="true"] {
-  background: #e8eef9;
-  color: #1f4380;
+  background: var(--color-primary-soft);
+  color: var(--color-primary-hover);
 }
 
 .segmented button:disabled {
@@ -560,7 +560,7 @@
   padding: 0;
   border: 0;
   background: none;
-  color: #2856a3;
+  color: var(--color-primary);
   font: inherit;
   font-weight: 600;
   text-decoration: underline;
@@ -674,7 +674,7 @@
   bottom: 0;
   left: 0;
   border-radius: 4px 4px 0 0;
-  background: #2856a3;
+  background: var(--data);
 }
 
 .valueBarValue {
