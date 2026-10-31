@@ -550,16 +550,9 @@
   width: 120px !important;
 }
 
-.outlierNote {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+.scaleNote {
   width: 100%;
   color: #475467;
-}
-
-.scale .outlierSwatch {
-  width: 18px;
 }
 
 .linkButton {

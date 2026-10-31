@@ -8,7 +8,7 @@ import { ProviderLink } from "@/components/TableLinks";
 import { TrendView } from "@/components/trends/TrendView";
 import { formatCityName } from "@/lib/formatters";
 import {
-  cartogramCells, cellColor, MAX_REGIONS, OUTLIER_COLOR, poolAdmissions, poolStats, providerPool, scaleColor, selectedIndex, sumSeries, yearChangePct,
+  cartogramCells, cellColor, darkLabel, divergingColor, MAX_REGIONS, poolAdmissions, poolStats, providerPool, selectedIndex, sumSeries, yearChangePct,
   type CartogramCell, type CompareScope, type RegionsMap,
 } from "@/lib/jgpCard";
 import type { JgpAdmissionYear, JgpPageData, JgpProviderRow } from "@/lib/jgpPage";
@@ -257,9 +257,7 @@ function TimeSection({ data, pool, regions, peers, selectedRow }: { data: JgpPag
 
 function RegionsSection({ data, map, regions, onRegions }: { data: JgpPageData; map: RegionsMap | null; regions: string[]; onRegions: (regions: string[]) => void }) {
   const { cells, scale } = cartogramCells(data.regions);
-  const outliers = cells.filter((cell) => cell.outlier);
-  const people = data.regions.reduce((sum, row) => sum + row.population, 0);
-  const national = people ? (data.regions.reduce((sum, row) => sum + row.hospitalizations, 0) / people) * 100_000 : 0;
+  const national = scale.national;
   const max = Math.max(...data.regions.map((row) => row.per100k), 0);
   const toggle = (ow: string) => regions.includes(ow)
     ? onRegions(regions.filter((item) => item !== ow))
@@ -275,29 +273,29 @@ function RegionsSection({ data, map, regions, onRegions }: { data: JgpPageData; 
               return <button
                 key={cell.owNfz}
                 type="button"
-                className={`${styles.tile} ${!cell.outlier && cell.scale < 0.5 ? styles.tileLight : ""}`}
+                className={`${styles.tile} ${darkLabel(cell) ? styles.tileLight : ""}`}
                 style={{ gridColumn: cell.column, gridRow: cell.row, background: cellColor(cell), outlineColor: index >= 0 ? REGION_COLORS[index % REGION_COLORS.length] : undefined }}
                 aria-pressed={index >= 0}
-                title={`${cell.name}: ${decimal(cell.per100k)} na 100 tys., ${integer(cell.hospitalizations)} hospitalizacji${cell.outlier ? " (poza skalą)" : ""}`}
+                title={regionTitle(cell)}
                 onClick={() => toggle(cell.owNfz)}
               >
                 <span className={styles.tileName}>{cell.shortName}</span>
-                <b>{decimal(cell.per100k)}{cell.outlier ? " ▲" : ""}</b>
+                <b>{decimal(cell.per100k)}</b>
               </button>;
             })}
           </div>}
           <div className={styles.scale}>
-            <span>{decimal(scale.min)}</span>
-            <i className={styles.scaleGradient} style={{ background: `linear-gradient(90deg, ${scaleColor(0)}, ${scaleColor(1)})` }} aria-hidden />
-            <span>{decimal(scale.max)} na 100 tys. mieszkańców</span>
-            {outliers.length ? <span className={styles.outlierNote}><i className={styles.outlierSwatch} style={{ background: OUTLIER_COLOR }} aria-hidden /> ▲ poza skalą (znacznie więcej): {outliers.map((cell) => `${cell.name} ${decimal(cell.per100k)}`).join(", ")}</span> : null}
+            <span>½ × średniej i mniej</span>
+            <i className={styles.scaleGradient} style={{ background: `linear-gradient(90deg, ${divergingColor(-1)}, ${divergingColor(0)}, ${divergingColor(1)})` }} aria-hidden />
+            <span>2 × średniej i więcej</span>
+            <span className={styles.scaleNote}>Środek skali = średnia Polski ({decimal(national)} na 100 tys.). Liczba na województwie = hospitalizacje na 100 tys. mieszkańców.</span>
           </div>
         </div>
         <div className={styles.mapSide}>
           <p><b>Średnia dla Polski: {decimal(national)}</b> na 100 tys. mieszkańców.</p>
           <p>Kliknij województwa (do {MAX_REGIONS} naraz), aby zawęzić kartę. Wykres „W czasie” pokaże linię dla każdego województwa; ranking, tryb przyjęcia i wykresy punktowe — ośrodki z wybranych województw.</p>
           {regions.length ? <button type="button" className={styles.linkButton} onClick={() => onRegions([])}>Wyczyść wybór ({regions.length})</button> : null}
-          <p className={styles.muted}>Skala kolorów kończy się na największej wartości nieodstającej, żeby jedno województwo nie spłaszczało różnic. Województwo = oddział NFZ, w którym świadczeniodawca rozlicza hospitalizacje. {map ? `Granice: ${map.source}.` : "Kafelki pokazują przybliżone położenie województw."}</p>
+          <p className={styles.muted}>Kolor pokazuje, ile razy więcej albo mniej niż średnia Polski — ta sama skala dla każdej grupy JGP, niezależnie od poziomu wskaźnika. Od 2 × średniej wzwyż kolor jest najciemniejszy; dokładną wartość podaje liczba na mapie. Województwo = oddział NFZ, w którym świadczeniodawca rozlicza hospitalizacje. {map ? `Granice: ${map.source}.` : "Kafelki pokazują przybliżone położenie województw."}</p>
         </div>
       </div>
       <details className={styles.dataDetails}>
@@ -337,10 +335,10 @@ function RegionMap({ map, cells, regions, onToggle }: { map: RegionsMap; cells: 
       role="button"
       tabIndex={0}
       aria-pressed={regions.includes(code)}
-      aria-label={`${cell.name}: ${decimal(cell.per100k)} na 100 tys., ${integer(cell.hospitalizations)} hospitalizacji${cell.outlier ? " (poza skalą)" : ""}`}
+      aria-label={regionTitle(cell)}
       onClick={() => onToggle(code)}
       onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onToggle(code); } }}
-    ><title>{`${cell.name}: ${decimal(cell.per100k)} na 100 tys.`}</title></path>)}
+    ><title>{regionTitle(cell)}</title></path>)}
     {/* Obwódki zaznaczonych województw w kolorach linii wykresu, nad pozostałymi granicami. */}
     {regions.map((code, i) => {
       const shape = shapes.find((item) => item.code === code);
@@ -350,10 +348,16 @@ function RegionMap({ map, cells, regions, onToggle }: { map: RegionsMap; cells: 
       key={`label-${code}`}
       x={label[0]}
       y={label[1]}
-      className={`${styles.regionLabel} ${!cell.outlier && cell.scale < 0.5 ? styles.regionLabelDark : ""}`}
+      className={`${styles.regionLabel} ${darkLabel(cell) ? styles.regionLabelDark : ""}`}
       aria-hidden
-    >{decimal(cell.per100k)}{cell.outlier ? " ▲" : ""}</text>)}
+    >{decimal(cell.per100k)}</text>)}
   </svg>;
+}
+
+/** Opis województwa: wskaźnik, liczba hospitalizacji i odchylenie od średniej Polski. */
+function regionTitle(cell: CartogramCell) {
+  const relation = Math.abs(cell.ratio - 1) < 0.05 ? "blisko średniej Polski" : `${decimal(cell.ratio)} × średniej Polski`;
+  return `${cell.name}: ${decimal(cell.per100k)} na 100 tys. (${relation}), ${integer(cell.hospitalizations)} hospitalizacji`;
 }
 
 function scatterPoint(row: JgpProviderRow, selectedRow: JgpProviderRow | null, y: number, lines: string[]): ScatterPoint {

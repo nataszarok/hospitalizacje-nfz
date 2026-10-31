@@ -118,59 +118,61 @@ export interface CartogramCell extends RegionRow {
   column: number;
   row: number;
   shortName: string;
-  /** Położenie na skali koloru 0–1 (liniowo od minimum do maksimum bez wartości odstających). */
-  scale: number;
-  /** Wartość skrajnie odstająca w górę (powyżej Q3 + 3 × IQR): osobny, najciemniejszy kolor spoza skali. */
-  outlier: boolean;
+  /** Wskaźnik województwa jako wielokrotność średniej Polski (1 = średnia). */
+  ratio: number;
+  /** Położenie na skali koloru od −1 (½ średniej i mniej) przez 0 (średnia) do 1 (2 × średnia i więcej). */
+  position: number;
 }
 
-export interface CartogramScale { min: number; max: number }
-
-function quantile(sorted: number[], q: number) {
-  if (!sorted.length) return 0;
-  const position = (sorted.length - 1) * q;
-  const lower = Math.floor(position);
-  return sorted[lower] + (sorted[Math.min(lower + 1, sorted.length - 1)] - sorted[lower]) * (position - lower);
+export interface CartogramScale {
+  /** Hospitalizacje na 100 tys. mieszkańców w całej Polsce — środek skali. */
+  national: number;
+  /** Wielokrotność średniej na końcach skali (2 → od ½ × do 2 ×). */
+  limit: number;
 }
+
+/** Końce skali kolorów: połowa i dwukrotność średniej Polski. */
+export const RATIO_LIMIT = 2;
 
 /**
- * Komórki kartogramu województw. Kolor zależy liniowo od wskaźnika na 100 tys. mieszkańców,
- * ale skala kończy się na największej wartości nieodstającej — jedno województwo z bardzo wysokim
- * wynikiem nie spłaszcza różnic między pozostałymi.
+ * Komórki mapy województw. Kolor pokazuje odchylenie od średniej Polski w skali logarytmicznej:
+ * ½ × i 2 × średniej są równo oddalone od środka, a skala jest taka sama dla każdej grupy JGP —
+ * niezależnie od tego, czy wskaźniki wynoszą 20 czy 150 na 100 tys. Wartości od 2 × wzwyż
+ * (i od ½ × w dół) mają kolor końca skali; dokładną wartość pokazuje podpis.
  */
 export function cartogramCells(regions: RegionRow[]): { cells: CartogramCell[]; scale: CartogramScale } {
-  const sorted = regions.map((row) => row.per100k).sort((a, b) => a - b);
-  const q1 = quantile(sorted, 0.25);
-  const q3 = quantile(sorted, 0.75);
-  // 3 × IQR: tylko wartości skrajnie odstające (np. lubuskie w E10), nie zwykłe różnice regionalne.
-  const fence = q3 + 3 * (q3 - q1);
-  const inRange = sorted.filter((value) => value <= fence);
-  const min = inRange[0] ?? 0;
-  const max = inRange.at(-1) ?? 0;
+  const people = regions.reduce((sum, row) => sum + row.population, 0);
+  const national = people ? (regions.reduce((sum, row) => sum + row.hospitalizations, 0) / people) * 100_000 : 0;
+  const limit = Math.log2(RATIO_LIMIT);
   const cells = regions.flatMap((row) => {
     const layout = CARTOGRAM_LAYOUT[row.owNfz];
     if (!layout) return [];
-    const outlier = row.per100k > fence;
-    const scale = outlier ? 1 : max > min ? (row.per100k - min) / (max - min) : 0.5;
-    return [{ ...row, column: layout[0], row: layout[1], shortName: layout[2], scale, outlier }];
+    const ratio = national ? row.per100k / national : 1;
+    const position = ratio > 0 ? Math.max(-1, Math.min(1, Math.log2(ratio) / limit)) : -1;
+    return [{ ...row, column: layout[0], row: layout[1], shortName: layout[2], ratio, position }];
   });
-  return { cells, scale: { min, max } };
+  return { cells, scale: { national, limit: RATIO_LIMIT } };
 }
 
-// Skala dla wartości nieodstających kończy się na średnim niebieskim; wartości odstające mają
-// wyraźnie ciemniejszy kolor, żeby nie wyglądały jak maksimum skali.
-const LIGHT = [225, 233, 245];
-const DARK = [40, 86, 163];
-export const OUTLIER_COLOR = "rgb(10, 27, 61)";
+// Skala rozbieżna: niebieski (mniej niż średnia) — jasnoszary (średnia) — czerwony (więcej).
+const BELOW = [40, 86, 163];
+const MIDDLE = [242, 244, 247];
+const ABOVE = [178, 58, 72];
 
-/** Kolor kafelka dla położenia na skali 0–1 (od jasnego do średniego niebieskiego). */
-export function scaleColor(scale: number): string {
-  const t = Math.min(1, Math.max(0, scale));
-  const [r, g, b] = LIGHT.map((value, i) => Math.round(value + (DARK[i] - value) * t));
+/** Kolor dla położenia na skali −1…1. */
+export function divergingColor(position: number): string {
+  const t = Math.min(1, Math.max(-1, position));
+  const end = t < 0 ? BELOW : ABOVE;
+  const [r, g, b] = MIDDLE.map((value, i) => Math.round(value + (end[i] - value) * Math.abs(t)));
   return `rgb(${r}, ${g}, ${b})`;
 }
 
-/** Kolor komórki kartogramu: wartość odstająca ma własny kolor spoza skali. */
-export function cellColor(cell: Pick<CartogramCell, "scale" | "outlier">): string {
-  return cell.outlier ? OUTLIER_COLOR : scaleColor(cell.scale);
+/** Kolor komórki mapy. */
+export function cellColor(cell: Pick<CartogramCell, "position">): string {
+  return divergingColor(cell.position);
+}
+
+/** Czy podpis na komórce ma być ciemny (jasne tło blisko średniej). */
+export function darkLabel(cell: Pick<CartogramCell, "position">): boolean {
+  return Math.abs(cell.position) < 0.5;
 }

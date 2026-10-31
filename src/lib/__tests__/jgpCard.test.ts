@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cartogramCells, cellColor, movingAverage, OUTLIER_COLOR, poolAdmissions, poolStats, providerPool, scaleColor, selectedIndex, sumSeries, topShare, yearChangePct } from "@/lib/jgpCard";
+import { cartogramCells, cellColor, darkLabel, divergingColor, movingAverage, poolAdmissions, poolStats, providerPool, selectedIndex, sumSeries, topShare, yearChangePct } from "@/lib/jgpCard";
 import { buildJgpPageData } from "@/lib/jgpPage";
 import type { RegionRow } from "@/lib/regions";
 import { extrasFixture } from "./fixtures/jgpCardFixture";
@@ -76,37 +76,48 @@ describe("movingAverage i poolAdmissions", () => {
 });
 
 describe("cartogramCells", () => {
-  const region = (owNfz: string, per100k: number): RegionRow => ({ owNfz, name: owNfz, population: 1, hospitalizations: 1, per100k, deaths: 0, mortalityPct: 0, urgentPct: 0 });
+  // Ludność 100 tys. w każdym województwie: średnia Polski = średnia wartości.
+  const region = (owNfz: string, per100k: number): RegionRow => ({ owNfz, name: owNfz, population: 100_000, hospitalizations: per100k, per100k, deaths: 0, mortalityPct: 0, urgentPct: 0 });
   const codes = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13", "14", "15", "16"];
 
-  it("umieszcza województwa na siatce i skaluje kolor liniowo od minimum do maksimum", () => {
-    const { cells, scale } = cartogramCells(codes.map((code, i) => region(code, 10 + i)));
-    expect(cells).toHaveLength(16);
-    expect(scale).toEqual({ min: 10, max: 25 });
-    expect(cells.find((cell) => cell.owNfz === "04")).toMatchObject({ column: 1, row: 2, shortName: "Lubuskie", scale: 0.2, outlier: false });
-    expect(cells.find((cell) => cell.owNfz === "01")?.scale).toBe(0);
-    expect(cells.find((cell) => cell.owNfz === "16")?.scale).toBe(1);
+  it("liczy odchylenie od średniej Polski w skali logarytmicznej: ½ × = −1, średnia = 0, 2 × = 1", () => {
+    const values = [12, 20, 80, ...Array(13).fill(20)];
+    const { cells, scale } = cartogramCells(codes.map((code, i) => region(code, values[i])));
+    const national = (12 + 80 + 14 * 20) / 16;
+    expect(scale.national).toBeCloseTo(national);
+    const byCode = new Map(cells.map((cell) => [cell.owNfz, cell]));
+    expect(byCode.get("04")).toMatchObject({ column: 1, row: 2, shortName: "Lubuskie" });
+    expect(byCode.get("01")?.position).toBeCloseTo(Math.log2(12 / national));
+    expect(byCode.get("02")?.position).toBeCloseTo(Math.log2(20 / national));
+    // 80 to ponad 2 × średniej: koniec skali.
+    expect(byCode.get("03")).toMatchObject({ position: 1 });
+    expect(byCode.get("03")?.ratio).toBeCloseTo(80 / national);
   });
 
-  it("wartość odstająca nie spłaszcza skali pozostałych województw", () => {
-    // Jak E10: lubuskie 75 przy pozostałych 16–31.
-    const values = [22, 22, 20, 75, 23, 18, 17, 17, 17, 21, 25, 21, 31, 23, 24, 19];
-    const { cells, scale } = cartogramCells(codes.map((code, i) => region(code, values[i])));
-    expect(scale).toEqual({ min: 17, max: 31 });
-    expect(cells.find((cell) => cell.owNfz === "04")).toMatchObject({ outlier: true, scale: 1 });
-    expect(cells.find((cell) => cell.owNfz === "13")).toMatchObject({ outlier: false, scale: 1 });
-    expect(cells.find((cell) => cell.owNfz === "01")?.scale).toBeCloseTo(5 / 14);
+  it("skala zależy od proporcji, nie od poziomu: E10 (≈ 20) i grupa z wartościami ≈ 150 dają te same kolory", () => {
+    const e10 = [22.3, 21.9, 20.3, 75.2, 23, 17.7, 16.8, 17.4, 16.6, 21.2, 25, 20.9, 30.7, 23.3, 24.3, 18.5];
+    const low = cartogramCells(codes.map((code, i) => region(code, e10[i]))).cells;
+    const high = cartogramCells(codes.map((code, i) => region(code, e10[i] * 7))).cells;
+    high.forEach((cell, i) => expect(cell.position).toBeCloseTo(low[i].position, 10));
+    const lubuskie = low.find((cell) => cell.owNfz === "04")!;
+    const swietokrzyskie = low.find((cell) => cell.owNfz === "13")!;
+    // Lubuskie (ponad 3 × średniej) ma koniec skali; świętokrzyskie (1,3 ×) jest wyraźnie jaśniejsze.
+    expect(lubuskie.position).toBe(1);
+    expect(swietokrzyskie.position).toBeGreaterThan(0.3);
+    expect(swietokrzyskie.position).toBeLessThan(0.5);
   });
 
   it("pomija nieznane kody", () => {
     expect(cartogramCells([region("99", 5)]).cells).toEqual([]);
   });
 
-  it("kolor przechodzi od jasnego do średniego niebieskiego; wartość odstająca ma osobny, ciemniejszy kolor", () => {
-    expect(scaleColor(0)).toBe("rgb(225, 233, 245)");
-    expect(scaleColor(1)).toBe("rgb(40, 86, 163)");
-    expect(scaleColor(2)).toBe(scaleColor(1));
-    expect(cellColor({ scale: 1, outlier: true })).toBe(OUTLIER_COLOR);
-    expect(cellColor({ scale: 1, outlier: false })).not.toBe(OUTLIER_COLOR);
+  it("kolory: niebieski poniżej średniej, jasnoszary przy średniej, czerwony powyżej", () => {
+    expect(divergingColor(-1)).toBe("rgb(40, 86, 163)");
+    expect(divergingColor(0)).toBe("rgb(242, 244, 247)");
+    expect(divergingColor(1)).toBe("rgb(178, 58, 72)");
+    expect(divergingColor(5)).toBe(divergingColor(1));
+    expect(cellColor({ position: 0 })).toBe(divergingColor(0));
+    expect(darkLabel({ position: 0.2 })).toBe(true);
+    expect(darkLabel({ position: -0.8 })).toBe(false);
   });
 });
