@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { movingAverage } from "@/lib/jgpCard";
-import { getAppFontFamily, PLOTLY_CONFIG, type PlotElement, type PlotlyHoverEvent } from "@/lib/plotlyChart";
+import { getAppFontFamily, makeHoverTrace, PLOTLY_CONFIG, type PlotElement } from "@/lib/plotlyChart";
 import { loadPlotly } from "@/lib/plotlyLoader";
 
 const MONTHS = ["sty", "lut", "mar", "kwi", "maj", "cze", "lip", "sie", "wrz", "paź", "lis", "gru"];
@@ -27,7 +27,10 @@ export interface ChartLine {
 /**
  * Wykres miesięcy: kropka = wartość w miesiącu, linia = średnia krocząca z 3 miesięcy (3M MA;
  * na początku serii średnia z dostępnych miesięcy).
- * Najechanie na serię wyróżnia jej kropki i linię, przyciemnia pozostałe i pokazuje nazwę.
+ * Najechanie: wskazana kropka rośnie i zmienia kolor (osobna seria-znacznik, jak w `attachHoverMarker`),
+ * a cała seria ośrodka jest rysowana na wierzchu w jego kolorze. Zmieniamy tylko serie nakładki.
+ * Wszystkie serie są typu `scattergl` (jak w eksploratorze): `restyle` serii SVG w trakcie najechania
+ * przerysowuje dymek podpowiedzi, wywołuje kolejne najechanie i przepełnia stos.
  */
 export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = false }: {
   /** Miesiące jako „RRRR-MM”. */
@@ -62,21 +65,29 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
         const head = `<b>%{customdata[1]}</b><br>${line.detail ? "%{customdata[2]}<br>" : ""}%{customdata[0]}`;
         return [
           {
-            type: "scatter", mode: "markers", name: line.name, legendgroup: line.key, showlegend: legend,
+            type: "scattergl", mode: "markers", name: line.name, legendgroup: line.key, showlegend: legend,
             x, y: line.values, customdata: custom,
             marker: { color: color(line), size: markerSize(line), line: { color: "#FFFFFF", width: 1 } },
             opacity: opacity(line),
             hovertemplate: `${head}: %{y:,.0f} ${valueLabel}<br>średnia 3M: %{customdata[3]}<extra></extra>`,
           },
           {
-            type: "scatter", mode: "lines", name: `${line.name} · średnia 3M`, legendgroup: line.key, showlegend: false,
+            type: "scattergl", mode: "lines", name: `${line.name} · średnia 3M`, legendgroup: line.key, showlegend: false,
             x, y: average, customdata: custom, connectgaps: false,
-            line: { color: color(line), width: width(line), shape: "spline", smoothing: 0.4 },
+            line: { color: color(line), width: width(line) },
             opacity: opacity(line),
             hovertemplate: `${head}<br>średnia 3M: %{customdata[3]} ${valueLabel}<extra></extra>`,
           },
         ];
       });
+      // Nakładka: wyróżniona seria (kropki + średnia) i znacznik wskazanego punktu. Na start puste.
+      const overlayStart = traces.length;
+      const empty = { x: [null], y: [null] };
+      traces.push(
+        { type: "scattergl", mode: "lines", ...empty, showlegend: false, hoverinfo: "skip", line: { color: PRIMARY, width: 3.5 } } as never,
+        { type: "scattergl", mode: "markers", ...empty, showlegend: false, hoverinfo: "skip", marker: { color: PRIMARY, size: 8, line: { color: "#FFFFFF", width: 1 } } } as never,
+        makeHoverTrace() as never,
+      );
       const plot = chartRef.current as PlotElement;
       await Plotly.react(plot, traces, {
         height: 400,
@@ -93,26 +104,32 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
         xaxis: { type: "date", tickformat: "%m.%Y", dtick: "M3", gridcolor: "#EEF1F5" },
         yaxis: { rangemode: "tozero", gridcolor: "#EEF1F5", zerolinecolor: "#D0D5DD", tickformat: ",.0f" },
       }, PLOTLY_CONFIG);
-      if (cancelled || lines.length < 2) return;
-      const all = (pick: (line: ChartLine, series: number) => number | string) => ordered.flatMap((line, series) => [pick(line, series), pick(line, series)]);
-      plot.removeAllListeners?.("plotly_hover");
-      plot.removeAllListeners?.("plotly_unhover");
-      plot.on?.("plotly_hover", (event: PlotlyHoverEvent) => {
-        const curve = event.points?.[0]?.curveNumber;
-        if (curve === undefined) return;
-        const active = Math.floor(curve / 2);
+      if (cancelled) return;
+      const overlay = [overlayStart, overlayStart + 1, overlayStart + 2];
+      plot.removeAllListeners("plotly_hover");
+      plot.removeAllListeners("plotly_unhover");
+      let restyleInProgress = false;
+      plot.on("plotly_hover", (event) => {
+        const point = event?.points?.[0];
+        if (restyleInProgress || !point || point.curveNumber >= overlayStart) return;
+        const line = ordered[Math.floor(point.curveNumber / 2)];
+        const highlight = line.color ?? (line.tone === "selected" ? SELECTED : line.accent ?? PRIMARY);
+        // Kropka wskazanego miesiąca (także przy najechaniu na linię średniej).
+        const y = line.values[point.pointNumber] ?? null;
+        restyleInProgress = true;
         void Plotly.restyle(plot, {
-          opacity: all((line, i) => i === active ? 1 : line.tone === "selected" ? 0.6 : 0.12),
-          "line.width": all((line, i) => i === active ? 3.5 : width(line)),
-          "line.color": all((line, i) => i === active && !emphasized(line) ? line.accent ?? PRIMARY : color(line)),
-          "marker.color": all((line, i) => i === active && !emphasized(line) ? line.accent ?? PRIMARY : color(line)),
-          "marker.size": all((line, i) => i === active ? 8 : markerSize(line)),
-        });
+          x: [x, x, [point.x]],
+          y: [movingAverage(line.values), line.values, [y]],
+          "line.color": [highlight, highlight, "#FFFFFF"],
+          "marker.color": [highlight, highlight, "#D92D20"],
+        }, overlay);
+        restyleInProgress = false;
       });
-      plot.on?.("plotly_unhover", () => {
-        void Plotly.restyle(plot, {
-          opacity: all(opacity), "line.width": all(width), "line.color": all(color), "marker.color": all(color), "marker.size": all(markerSize),
-        });
+      plot.on("plotly_unhover", () => {
+        if (restyleInProgress) return;
+        restyleInProgress = true;
+        void Plotly.restyle(plot, { x: [[null], [null], [null]], y: [[null], [null], [null]] }, overlay);
+        restyleInProgress = false;
       });
     };
     void render();
