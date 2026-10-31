@@ -8,7 +8,7 @@ import { ProviderLink } from "@/components/TableLinks";
 import { TrendView } from "@/components/trends/TrendView";
 import { formatCityName } from "@/lib/formatters";
 import {
-  cartogramCells, cellColor, darkLabel, divergingColor, MAX_REGIONS, poolAdmissions, poolStats, providerPool, selectedIndex, sumSeries, yearChangePct,
+  cartogramCells, cellColor, darkLabel, scaleColor, MAX_REGIONS, poolAdmissions, poolStats, providerPool, selectedIndex, sumSeries, yearChangePct,
   type CartogramCell, type CompareScope, type RegionsMap,
 } from "@/lib/jgpCard";
 import type { JgpAdmissionYear, JgpPageData, JgpProviderRow } from "@/lib/jgpPage";
@@ -286,7 +286,7 @@ function RegionsSection({ data, map, regions, onRegions }: { data: JgpPageData; 
           </div>}
           <div className={styles.scale}>
             <span>½ × średniej i mniej</span>
-            <i className={styles.scaleGradient} style={{ background: `linear-gradient(90deg, ${divergingColor(-1)}, ${divergingColor(0)}, ${divergingColor(1)})` }} aria-hidden />
+            <i className={styles.scaleGradient} style={{ background: `linear-gradient(90deg, ${scaleColor(-1)}, ${scaleColor(0)}, ${scaleColor(1)})` }} aria-hidden />
             <span>2 × średniej i więcej</span>
             <span className={styles.scaleNote}>Środek skali = średnia Polski ({decimal(national)} na 100 tys.). Liczba na województwie = hospitalizacje na 100 tys. mieszkańców.</span>
           </div>

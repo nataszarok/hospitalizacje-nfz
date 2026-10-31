@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cartogramCells, cellColor, darkLabel, divergingColor, movingAverage, poolAdmissions, poolStats, providerPool, selectedIndex, sumSeries, topShare, yearChangePct } from "@/lib/jgpCard";
+import { cartogramCells, cellColor, darkLabel, scaleColor, movingAverage, poolAdmissions, poolStats, providerPool, selectedIndex, sumSeries, topShare, yearChangePct } from "@/lib/jgpCard";
 import { buildJgpPageData } from "@/lib/jgpPage";
 import type { RegionRow } from "@/lib/regions";
 import { extrasFixture } from "./fixtures/jgpCardFixture";
@@ -111,13 +111,13 @@ describe("cartogramCells", () => {
     expect(cartogramCells([region("99", 5)]).cells).toEqual([]);
   });
 
-  it("kolory: niebieski poniżej średniej, jasnoszary przy średniej, czerwony powyżej", () => {
-    expect(divergingColor(-1)).toBe("rgb(40, 86, 163)");
-    expect(divergingColor(0)).toBe("rgb(242, 244, 247)");
-    expect(divergingColor(1)).toBe("rgb(178, 58, 72)");
-    expect(divergingColor(5)).toBe(divergingColor(1));
-    expect(cellColor({ position: 0 })).toBe(divergingColor(0));
-    expect(darkLabel({ position: 0.2 })).toBe(true);
-    expect(darkLabel({ position: -0.8 })).toBe(false);
+  it("kolory: jedna barwa niebieska od jasnej (½ ×) przez średnią do granatowej (2 ×)", () => {
+    expect(scaleColor(-1)).toBe("rgb(225, 233, 245)");
+    expect(scaleColor(0)).toBe("rgb(110, 145, 204)");
+    expect(scaleColor(1)).toBe("rgb(16, 42, 92)");
+    expect(scaleColor(5)).toBe(scaleColor(1));
+    expect(cellColor({ position: 0 })).toBe(scaleColor(0));
+    expect(darkLabel({ position: -0.9 })).toBe(true);
+    expect(darkLabel({ position: 0.6 })).toBe(false);
   });
 });

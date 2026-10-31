@@ -154,25 +154,30 @@ export function cartogramCells(regions: RegionRow[]): { cells: CartogramCell[]; 
   return { cells, scale: { national, limit: RATIO_LIMIT } };
 }
 
-// Skala rozbieżna: niebieski (mniej niż średnia) — jasnoszary (średnia) — czerwony (więcej).
-const BELOW = [40, 86, 163];
-const MIDDLE = [242, 244, 247];
-const ABOVE = [178, 58, 72];
+// Jedna barwa jak wcześniej: od jasnoniebieskiego (½ × średniej i mniej) przez średni niebieski
+// (średnia Polski) do granatowego (2 × średniej i więcej).
+const STOPS: [number, number[]][] = [[-1, [225, 233, 245]], [0, [110, 145, 204]], [1, [16, 42, 92]]];
+
+function rgbAt(position: number): number[] {
+  const t = Math.min(1, Math.max(-1, position));
+  const [[p0, c0], [p1, c1]] = t <= 0 ? [STOPS[0], STOPS[1]] : [STOPS[1], STOPS[2]];
+  const k = (t - p0) / (p1 - p0);
+  return c0.map((value, i) => Math.round(value + (c1[i] - value) * k));
+}
 
 /** Kolor dla położenia na skali −1…1. */
-export function divergingColor(position: number): string {
-  const t = Math.min(1, Math.max(-1, position));
-  const end = t < 0 ? BELOW : ABOVE;
-  const [r, g, b] = MIDDLE.map((value, i) => Math.round(value + (end[i] - value) * Math.abs(t)));
+export function scaleColor(position: number): string {
+  const [r, g, b] = rgbAt(position);
   return `rgb(${r}, ${g}, ${b})`;
 }
 
 /** Kolor komórki mapy. */
 export function cellColor(cell: Pick<CartogramCell, "position">): string {
-  return divergingColor(cell.position);
+  return scaleColor(cell.position);
 }
 
-/** Czy podpis na komórce ma być ciemny (jasne tło blisko średniej). */
+/** Czy podpis na komórce ma być ciemny (jasne tło). */
 export function darkLabel(cell: Pick<CartogramCell, "position">): boolean {
-  return Math.abs(cell.position) < 0.5;
+  const [r, g, b] = rgbAt(cell.position);
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b > 150;
 }
