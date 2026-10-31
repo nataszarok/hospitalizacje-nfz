@@ -57,20 +57,21 @@ export function movingAverage(values: number[], window = 3, minPeriods = 1): (nu
   });
 }
 
-/** Tryb przyjęcia w latach dla grupy świadczeniodawców (suma ich struktur rocznych). */
-export function poolAdmissions(rows: JgpProviderRow[]): JgpAdmissionYear[] {
-  const years = new Map<string, JgpAdmissionYear>();
-  for (const row of rows) {
-    for (const point of row.yearly) {
-      const sum = years.get(point.year) ?? { year: point.year, total: 0, planned: 0, urgent: 0, other: 0 };
-      sum.total += point.total;
-      sum.planned += point.planned;
-      sum.urgent += point.urgent;
-      sum.other += point.other;
-      years.set(point.year, sum);
+/** Tryb przyjęcia w latach dla grupy świadczeniodawców (suma ich krotek [planowe, nagłe, pozostałe]). */
+export function poolAdmissions(rows: JgpProviderRow[], years: string[]): JgpAdmissionYear[] {
+  return years.map((year, i) => {
+    let planned = 0;
+    let urgent = 0;
+    let other = 0;
+    for (const row of rows) {
+      const point = row.yearly[i];
+      if (!point) continue;
+      planned += point[0];
+      urgent += point[1];
+      other += point[2];
     }
-  }
-  return [...years.values()].sort((a, b) => a.year.localeCompare(b.year));
+    return { year, total: planned + urgent + other, planned, urgent, other };
+  }).filter((point) => point.total > 0);
 }
 
 /** Suma hospitalizacji miesięcznie dla grupy świadczeniodawców. */
@@ -180,4 +181,38 @@ export function cellColor(cell: Pick<CartogramCell, "position">): string {
 export function darkLabel(cell: Pick<CartogramCell, "position">): boolean {
   const [r, g, b] = rgbAt(cell.position);
   return 0.2126 * r + 0.7152 * g + 0.0722 * b > 150;
+}
+
+/** Świadczeniodawca w postaci krotki (dane strony wysyłane do przeglądarki są wtedy ok. 2 × mniejsze). */
+export type PackedProvider = [
+  key: string, name: string, city: string, hospitalizations: number, deaths: number, mortalityPct: number, urgentPct: number,
+  series: number[], previousHospitalizations: number | null, valuePln: number | null, peers: number[], yearly: [number, number, number][],
+];
+
+/** Dane strony z rankingiem w krotkach; `topProviders` odtwarzamy z pełnej listy. */
+export type PackedJgpPageData = Omit<JgpPageData, "providers" | "topProviders"> & { providerRows: PackedProvider[]; topCount: number };
+
+export function packPageData(data: JgpPageData): PackedJgpPageData {
+  const { providers, topProviders, ...rest } = data;
+  return {
+    ...rest,
+    topCount: topProviders.length,
+    providerRows: providers.map((row): PackedProvider => [
+      row.key, row.name, row.city, row.hospitalizations, row.deaths, row.mortalityPct, row.urgentPct,
+      row.series, row.previousHospitalizations, row.valuePln, row.peers, row.yearly,
+    ]),
+  };
+}
+
+export function unpackPageData(packed: PackedJgpPageData): JgpPageData {
+  const { providerRows, topCount, ...rest } = packed;
+  const regionNames = new Map(packed.regions.map((row) => [row.owNfz, row.name]));
+  const providers = providerRows.map(([key, name, city, hospitalizations, deaths, mortalityPct, urgentPct, series, previousHospitalizations, valuePln, peers, yearly]): JgpProviderRow => {
+    const [owNfz, nip] = key.split("|");
+    return {
+      key, owNfz, nip, name, city, voivodeship: regionNames.get(owNfz) ?? owNfz,
+      hospitalizations, deaths, mortalityPct, urgentPct, series, previousHospitalizations, valuePln, peers, yearly,
+    };
+  });
+  return { ...rest, providers, topProviders: providers.slice(0, topCount) };
 }

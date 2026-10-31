@@ -2,7 +2,7 @@ import { access, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { gunzipSync } from "node:zlib";
 import type { RegionsMap } from "@/lib/jgpCard";
-import type { JgpGroupFile, JgpPeerPair } from "@/lib/jgpPage";
+import type { JgpGroupFile, JgpPagesIndex, JgpPeerPair } from "@/lib/jgpPage";
 import { decodeValuations, type JgpValuation, type ValuationsFile } from "@/lib/valuations";
 import type { HospitalizationIndex, StaticDataset, TrendsDataset } from "@/lib/staticData";
 
@@ -15,7 +15,7 @@ export async function readHospitalizationIndexFromDisk(dir = DEFAULT_DIR): Promi
 }
 
 export async function readStaticDatasetFromDisk(year: string, dir = DEFAULT_DIR): Promise<StaticDataset> {
-  return JSON.parse(gunzipSync(await readFile(join(dir, `${year}.json.gz`))).toString("utf8")) as StaticDataset;
+  return readGzipJson<StaticDataset>(join(dir, `${year}.json.gz`));
 }
 
 /** Zbiory za wszystkie lata z `index.json`, od najstarszego. */
@@ -25,11 +25,30 @@ export async function readAllStaticDatasetsFromDisk(dir = DEFAULT_DIR): Promise<
 }
 
 export async function readTrendsFromDisk(dir = DEFAULT_DIR): Promise<TrendsDataset> {
-  return JSON.parse(gunzipSync(await readFile(join(dir, "trends.json.gz"))).toString("utf8")) as TrendsDataset;
+  return readGzipJson<TrendsDataset>(join(dir, "trends.json.gz"));
 }
 
+// Podczas budowania ~700 stron grup czyta te same duże pliki; każdy plik parsujemy raz na proces.
+const gzipCache = new Map<string, Promise<unknown>>();
 async function readGzipJson<T>(file: string): Promise<T> {
-  return JSON.parse(gunzipSync(await readFile(file)).toString("utf8")) as T;
+  let promise = gzipCache.get(file);
+  if (!promise) {
+    promise = readFile(file).then((buffer) => JSON.parse(gunzipSync(buffer).toString("utf8")) as unknown);
+    gzipCache.set(file, promise);
+    promise.catch(() => gzipCache.delete(file));
+  }
+  return promise as Promise<T>;
+}
+
+/** Tylko dla testów: czyści pamięć podręczną odczytów. */
+export function clearDiskCache() {
+  gzipCache.clear();
+  peerPairsCache.clear();
+}
+
+/** Grupy JGP ze stroną (`scripts/build_jgp_pages.py`). */
+export async function readJgpPagesIndexFromDisk(file = join(DATA_DIR, "jgp", "index.json")): Promise<JgpPagesIndex> {
+  return JSON.parse(await readFile(file, "utf8")) as JgpPagesIndex;
 }
 
 /** Plik strony grupy (`scripts/build_jgp_pages.py`) albo `null`, gdy go jeszcze nie zbudowano. */
@@ -50,9 +69,15 @@ export async function readValuationsFromDisk(file = join(DATA_DIR, "wyceny_jgp_2
 }
 
 /** Pary szpitali z modelu podobieństwa (tylko pola potrzebne stronie grupy). */
+const peerPairsCache = new Map<string, Promise<JgpPeerPair[]>>();
 export async function readPeerPairsFromDisk(file = join(DATA_DIR, "peer_pairs_ab.json.gz")): Promise<JgpPeerPair[]> {
-  const data = await readGzipJson<{ rows: JgpPeerPair[] }>(file);
-  return data.rows.map(({ a, b, peer_grade_pred, distance_score }) => ({ a, b, peer_grade_pred, distance_score }));
+  let promise = peerPairsCache.get(file);
+  if (!promise) {
+    promise = readGzipJson<{ rows: JgpPeerPair[] }>(file)
+      .then((data) => data.rows.map(({ a, b, peer_grade_pred, distance_score }) => ({ a, b, peer_grade_pred, distance_score })));
+    peerPairsCache.set(file, promise);
+  }
+  return promise;
 }
 
 /** Mapa województw (`scripts/build_regions_map.py`) albo `null`, gdy pliku nie ma. */

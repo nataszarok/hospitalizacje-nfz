@@ -42,8 +42,8 @@ describe("SearchBox", () => {
     type("ozw");
     const options = await screen.findAllByRole("option");
     expect(options.map((option) => option.textContent)).toEqual([
-      expect.stringMatching(/^E10OZW - diagnostyka inwazyjna8\s?326 hosp\. · 2025 · karta grupy$/),
-      expect.stringMatching(/^E11OZW - leczenie inwazyjne dwuetapowe > 3 dni9\s?888 hosp\. · 2025 · eksplorator$/),
+      expect.stringMatching(/^E11OZW - leczenie inwazyjne dwuetapowe > 3 dni9\s?888 hosp\. · 2025$/),
+      expect.stringMatching(/^E10OZW - diagnostyka inwazyjna8\s?326 hosp\. · 2025$/),
     ]);
     expect(screen.getByText("Grupy JGP")).toBeInTheDocument();
   });

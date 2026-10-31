@@ -45,10 +45,18 @@ describe("SiteHeader", () => {
     expect(screen.getByRole("link", { name: label })).toHaveAttribute("aria-current", "page");
   });
 
-  it.each(["/analizy", "/jgp/E10"])("na %s oznacza aktywną sekcję Analizy", (pathname) => {
-    openPage(pathname);
+  it("na /analizy oznacza aktywną sekcję Analizy", () => {
+    openPage("/analizy");
     render(<SiteHeader />);
     expect(screen.getByRole("button", { name: /Analizy/ }).className).toMatch(/linkActive/);
+  });
+
+  it.each(["/jgp", "/jgp/E10"])("na %s oznacza aktywną pozycję Grupy JGP", (pathname) => {
+    openPage(pathname);
+    render(<SiteHeader />);
+    expect(screen.getByRole("link", { name: "Grupy JGP" })).toHaveAttribute("href", "/jgp");
+    expect(screen.getByRole("link", { name: "Grupy JGP" })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("button", { name: /Analizy/ }).className).not.toMatch(/linkActive/);
   });
 
   it("na /analizy przełącza widok zdarzeniem zamiast przeładowania strony", () => {

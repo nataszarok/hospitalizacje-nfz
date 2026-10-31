@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cartogramCells, cellColor, darkLabel, scaleColor, movingAverage, poolAdmissions, poolStats, providerPool, selectedIndex, sumSeries, topShare, yearChangePct } from "@/lib/jgpCard";
+import { cartogramCells, cellColor, darkLabel, scaleColor, movingAverage, packPageData, unpackPageData, poolAdmissions, poolStats, providerPool, selectedIndex, sumSeries, topShare, yearChangePct } from "@/lib/jgpCard";
 import { buildJgpPageData } from "@/lib/jgpPage";
 import type { RegionRow } from "@/lib/regions";
 import { extrasFixture } from "./fixtures/jgpCardFixture";
@@ -64,11 +64,11 @@ describe("movingAverage i poolAdmissions", () => {
   });
 
   it("sumuje tryb przyjęcia w latach dla wybranych ośrodków", () => {
-    expect(poolAdmissions(data.providers)).toEqual([
+    expect(poolAdmissions(data.providers, data.admissionYears)).toEqual([
       { year: "2024", total: 15, planned: 5, urgent: 10, other: 0 },
       { year: "2025", total: 30, planned: 8, urgent: 22, other: 0 },
     ]);
-    expect(poolAdmissions(data.providers.filter((row) => row.owNfz === "07"))).toEqual([
+    expect(poolAdmissions(data.providers.filter((row) => row.owNfz === "07"), data.admissionYears)).toEqual([
       { year: "2024", total: 5, planned: 5, urgent: 0, other: 0 },
       { year: "2025", total: 12, planned: 8, urgent: 4, other: 0 },
     ]);
@@ -119,5 +119,14 @@ describe("cartogramCells", () => {
     expect(cellColor({ position: 0 })).toBe(scaleColor(0));
     expect(darkLabel({ position: -0.9 })).toBe(true);
     expect(darkLabel({ position: 0.6 })).toBe(false);
+  });
+});
+
+describe("packPageData / unpackPageData", () => {
+  it("pakuje ranking do krotek i odtwarza identyczne dane strony", () => {
+    const packed = packPageData(withPeers);
+    expect(packed).not.toHaveProperty("providers");
+    expect(packed.providerRows[0]).toEqual(["12|222", "Szpital Beta", "KATOWICE", 18, 2, 11.11, 100, withPeers.providers[0].series, 10, 700_000, [1], [[0, 10, 0], [0, 18, 0]]]);
+    expect(unpackPageData(packed)).toEqual(withPeers);
   });
 });

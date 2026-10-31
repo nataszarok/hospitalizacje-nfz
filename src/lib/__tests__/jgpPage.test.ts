@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildJgpPageData, JGP_PAGE_CODES } from "@/lib/jgpPage";
+import { buildJgpPageData } from "@/lib/jgpPage";
 import { latestDatasetFixture, trendsFixture } from "./fixtures/trendsFixture";
 import { extrasFixture } from "./fixtures/jgpCardFixture";
 
@@ -11,8 +11,8 @@ describe("buildJgpPageData", () => {
       year: "2025", providerCount: 2, hospitalizations: 30,
     });
     expect(data?.topProviders).toMatchObject([
-      { key: "12|222", owNfz: "12", nip: "222", name: "Szpital Beta", city: "KATOWICE", voivodeship: "Śląskie", hospitalizations: 18, deaths: 2, mortalityPct: (2 / 18) * 100, urgentPct: 100 },
-      { key: "07|111", owNfz: "07", nip: "111", name: "Szpital Alfa", city: "WARSZAWA", voivodeship: "Mazowieckie", hospitalizations: 12, deaths: 1, mortalityPct: (1 / 12) * 100, urgentPct: (4 / 12) * 100 },
+      { key: "12|222", owNfz: "12", nip: "222", name: "Szpital Beta", city: "KATOWICE", voivodeship: "Śląskie", hospitalizations: 18, deaths: 2, mortalityPct: 11.11, urgentPct: 100 },
+      { key: "07|111", owNfz: "07", nip: "111", name: "Szpital Alfa", city: "WARSZAWA", voivodeship: "Mazowieckie", hospitalizations: 12, deaths: 1, mortalityPct: 8.33, urgentPct: 33.33 },
     ]);
   });
 
@@ -37,9 +37,6 @@ describe("buildJgpPageData", () => {
     expect(buildJgpPageData(trendsFixture, latestDatasetFixture, "ZZZ")).toBeNull();
   });
 
-  it("ma co najmniej jedną grupę do wygenerowania", () => {
-    expect(JGP_PAGE_CODES.length).toBeGreaterThan(0);
-  });
 });
 
 describe("buildJgpPageData — tryb przyjęcia i typ grupy", () => {

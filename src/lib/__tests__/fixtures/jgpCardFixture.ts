@@ -5,19 +5,22 @@ import type { JgpGroupFile, JgpPageExtras } from "@/lib/jgpPage";
  * 2025 (metoda min) sumuje się do faktów: Alfa 12, Beta 18.
  */
 export const groupFileFixture: JgpGroupFile = {
-  version: 1,
+  version: 2,
   jgp: "A01",
   years: ["2024", "2025"],
-  monthly: [
-    ["2024", 1, "07", "111", "p", 6, 5, 0, 0],
-    ["2024", 6, "12", "222", "u", 12, 10, 1, 1],
-    ["2025", 1, "07", "111", "p", 9, 8, 1, 1],
-    ["2025", 2, "07", "111", "u", 4, 4, 1, 0],
-    ["2025", 3, "12", "222", "u", 20, 18, 3, 2],
+  providers: ["07|111", "12|222"],
+  // [świadczeniodawca, miesiąc (rok × 12 + miesiąc − 1), tryb 0/1/2, hospitalizacje, zgony]
+  rows: [
+    [0, 0, 0, 5, 0],
+    [1, 5, 1, 10, 1],
+    [0, 12, 0, 8, 1],
+    [0, 13, 1, 4, 0],
+    [1, 14, 1, 18, 2],
   ],
   valuePln: {
     national: { "2024": 900_000, "2025": 1_200_000 },
-    providers: [["2025", "07", "111", 500_000], ["2025", "12", "222", 700_000], ["2024", "07", "111", 400_000]],
+    year: "2025",
+    providers: [["07|111", 500_000], ["12|222", 700_000]],
   },
 };
 

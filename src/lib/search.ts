@@ -1,5 +1,4 @@
 import { formatCityName } from "@/lib/formatters";
-import { JGP_PAGE_CODES } from "@/lib/jgpPage";
 import { hospitalHref, jgpHref } from "@/lib/portalLinks";
 import type { StaticDataset } from "@/lib/staticData";
 
@@ -124,8 +123,9 @@ function groupHref(code: string) {
   return jgpHref(code) ?? `/analizy?jgp=${encodeURIComponent(code)}`;
 }
 
+// Każda grupa z indeksu (najnowszy rok danych) ma kartę `/jgp/[kod]`.
 function toGroupHit([code, name, hospitalizations]: SearchIndex["groups"][number]): GroupHit {
-  return { code, name, hospitalizations, href: groupHref(code), hasPage: (JGP_PAGE_CODES as readonly string[]).includes(code) };
+  return { code, name, hospitalizations, href: groupHref(code), hasPage: true };
 }
 
 function toHospitalHit(index: SearchIndex, [key, name, city, ow, hospitalizations]: SearchIndex["hospitals"][number]): HospitalHit {
@@ -154,8 +154,6 @@ export function searchGroups(index: SearchIndex, query: string, limit = 6): Grou
     if (code === compact) score = 100;
     else if (/^[a-z]\d/.test(compact) && code.startsWith(compact)) score = 80;
     else if (allMatch(tokens, tokenize(row[1]))) score = 50;
-    // Grupy z kartą wyżej: karta odpowiada na więcej pytań niż eksplorator.
-    if (score && (JGP_PAGE_CODES as readonly string[]).includes(row[0])) score += 5;
     if (score) scored.push({ row, score });
   }
   // Przy równym dopasowaniu wyżej grupy z większą liczbą hospitalizacji (indeks jest już tak posortowany).

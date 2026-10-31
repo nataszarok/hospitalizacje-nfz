@@ -770,3 +770,13 @@
 .regionLabelDark {
   fill: #172033;
 }
+
+.notice {
+  margin: 0 0 16px;
+  padding: 10px 14px;
+  border: 1px solid #fedf89;
+  border-radius: 10px;
+  background: #fffaeb;
+  color: #7a2e0e;
+  font-size: 14px;
+}

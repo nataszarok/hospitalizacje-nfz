@@ -1,16 +1,18 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { JgpPage } from "@/components/jgp/JgpPage";
-import { buildJgpPageData, JGP_PAGE_CODES } from "@/lib/jgpPage";
+import { buildJgpPageData } from "@/lib/jgpPage";
 import { SITE_NAME } from "@/lib/site";
 import {
-  readHospitalizationIndexFromDisk, readJgpGroupFileFromDisk, readPeerPairsFromDisk, readRegionsMapFromDisk, readStaticDatasetFromDisk, readTrendsFromDisk, readValuationsFromDisk,
+  readHospitalizationIndexFromDisk, readJgpGroupFileFromDisk, readJgpPagesIndexFromDisk, readPeerPairsFromDisk, readRegionsMapFromDisk, readStaticDatasetFromDisk, readTrendsFromDisk, readValuationsFromDisk,
 } from "@/lib/staticDataServer";
 
 export const dynamicParams = false;
 
-export function generateStaticParams() {
-  return JGP_PAGE_CODES.map((kod) => ({ kod }));
+// Karta dla każdej grupy JGP z danych (lista z `scripts/build_jgp_pages.py`).
+export async function generateStaticParams() {
+  const { groups } = await readJgpPagesIndexFromDisk();
+  return groups.map((kod) => ({ kod }));
 }
 
 async function pageData(kod: string) {

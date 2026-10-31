@@ -1,14 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { GroupLineChart, type ChartLine } from "@/components/jgp/GroupLineChart";
 import { ProviderScatter, type ScatterPoint } from "@/components/jgp/ProviderScatter";
 import { ProviderLink } from "@/components/TableLinks";
 import { TrendView } from "@/components/trends/TrendView";
 import { formatCityName } from "@/lib/formatters";
 import {
-  cartogramCells, cellColor, darkLabel, scaleColor, MAX_REGIONS, poolAdmissions, poolStats, providerPool, selectedIndex, sumSeries, yearChangePct,
+  cartogramCells, cellColor, darkLabel, scaleColor, MAX_REGIONS, unpackPageData, type PackedJgpPageData, poolAdmissions, poolStats, providerPool, selectedIndex, sumSeries, yearChangePct,
   type CartogramCell, type CompareScope, type RegionsMap,
 } from "@/lib/jgpCard";
 import type { JgpAdmissionYear, JgpPageData, JgpProviderRow } from "@/lib/jgpPage";
@@ -26,6 +26,9 @@ export const SELECTED_PROVIDER_PARAM = "osrodek";
 const SCOPE_PARAM = "porownanie";
 const REGION_PARAM = "ow";
 const TOP_LINES = 25;
+const SERVER_ROWS = 30;
+// Pusta subskrypcja: `useSyncExternalStore` daje `false` podczas renderu statycznego i `true` w przeglądarce.
+const subscribeNothing = () => () => {};
 // Kolory linii województw (kolejność stała, nie zależy od pozycji w rankingu).
 const REGION_COLORS = ["#2856A3", "#C65D2E", "#2E7D5B", "#7656A8", "#A06A17", "#0F7C8C"];
 // Kolory ośrodków po najechaniu: przypisane według miejsca w kraju, więc ośrodek ma ten sam kolor po zmianie filtrów.
@@ -70,7 +73,9 @@ function useCardState(data: JgpPageData) {
 }
 
 /** Interaktywna część karty grupy JGP: wszystkie sekcje reagują na wybrany szpital, podobne szpitale i województwo. */
-export function JgpCardSections({ data, map = null }: { data: JgpPageData; map?: RegionsMap | null }) {
+export function JgpCardSections({ packed, map = null }: { packed: PackedJgpPageData; map?: RegionsMap | null }) {
+  // Ranking przychodzi w krotkach (mniejsza strona); w przeglądarce odtwarzamy pełne wiersze.
+  const data = useMemo(() => unpackPageData(packed), [packed]);
   const { selectedKey, scope, regions, write } = useCardState(data);
   const selected = selectedIndex(data, selectedKey);
   const selectedRow = selected >= 0 ? data.providers[selected] : null;
@@ -368,7 +373,10 @@ function ProvidersSection({ data, pool, selectedRow, filtered, onSelect }: {
   data: JgpPageData; pool: JgpProviderRow[]; selectedRow: JgpProviderRow | null; filtered: boolean; onSelect: (key: string) => void;
 }) {
   // Pełna lista ośrodków po filtrach; tabela przewija się w swoim polu (widać ok. 10 wierszy).
-  const rows = pool.map((row) => ({ row, rank: data.providers.indexOf(row) + 1 }));
+  // W HTML ze statycznego eksportu jest tylko początek listy; resztę rysuje przeglądarka (lżejsza strona).
+  const mounted = useSyncExternalStore(subscribeNothing, () => true, () => false);
+  const visible = mounted ? pool : pool.slice(0, SERVER_ROWS);
+  const rows = visible.map((row) => ({ row, rank: data.providers.indexOf(row) + 1 }));
   const scrollRef = useRef<HTMLDivElement>(null);
   const selectedRef = useRef<HTMLTableRowElement>(null);
   useEffect(() => {
@@ -441,7 +449,7 @@ const ADMISSION_PARTS: { key: keyof Omit<JgpAdmissionYear, "year" | "total">; la
 
 function AdmissionsSection({ data, pool, filtered, selectedRow, onSelect }: { data: JgpPageData; pool: JgpProviderRow[]; filtered: boolean; selectedRow: JgpProviderRow | null; onSelect: (key: string) => void }) {
   // Z pliku grupy liczymy strukturę dla ośrodków po filtrach karty; bez pliku — z trendów kraju.
-  const admissions = data.months.length ? poolAdmissions(pool) : data.admissions;
+  const admissions = data.months.length ? poolAdmissions(pool, data.admissionYears) : data.admissions;
   const latest = admissions.at(-1);
   const share = (part: number, total: number) => total > 0 ? (part / total) * 100 : 0;
   const stats = poolStats(pool);

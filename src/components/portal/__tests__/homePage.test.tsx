@@ -36,11 +36,11 @@ describe("Strona główna", () => {
     expect(screen.getByRole("region", { name: "Informacje o danych" })).toHaveTextContent("2019–2025Zakres danych NFZ");
   });
 
-  it("kieruje kafle działających modułów do analiz i stron szpitali", () => {
+  it("kieruje kafle modułów do katalogu grup, szpitali i eksploratora", () => {
     render(<HomePage highlights={highlights} />);
     const discover = screen.getByRole("region", { name: "Co chcesz sprawdzić?" });
-    expect(within(discover).getByRole("link", { name: "Analizuj hospitalizacje" })).toHaveAttribute("href", "/analizy");
-    expect(within(discover).getByRole("link", { name: "Analizuj tryb przyjęcia" })).toHaveAttribute("href", "/analizy?t=a");
+    expect(within(discover).getByRole("link", { name: "Przeglądaj grupy JGP" })).toHaveAttribute("href", "/jgp");
+    expect(within(discover).getByRole("link", { name: "Otwórz eksplorator" })).toHaveAttribute("href", "/analizy");
     expect(within(discover).getByRole("link", { name: "Znajdź szpital" })).toHaveAttribute("href", "/szpitale");
     expect(within(discover).getByRole("link", { name: "Porównaj szpitale" })).toHaveAttribute("href", "/szpitale?hv=c");
   });

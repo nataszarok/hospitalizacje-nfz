@@ -36,18 +36,18 @@ describe("buildSearchIndex", () => {
 describe("searchGroups", () => {
   it("znajduje grupę po kodzie bez względu na wielkość liter", () => {
     expect(searchGroups(index, "e10").map((hit) => hit.code)).toEqual(["E10"]);
-    expect(searchGroups(index, "e1").map((hit) => hit.code)).toEqual(["E10", "E11"]);
+    expect(searchGroups(index, "e1").map((hit) => hit.code)).toEqual(["E11", "E10"]);
   });
 
-  it("znajduje grupy po słowie z nazwy; grupa z kartą jest pierwsza", () => {
+  it("znajduje grupy po słowie z nazwy; każda grupa prowadzi do swojej karty", () => {
     const hits = searchGroups(index, "ozw");
-    expect(hits.map((hit) => hit.code)).toEqual(["E10", "E11"]);
-    expect(hits[0]).toMatchObject({ href: "/jgp/E10", hasPage: true });
-    expect(hits[1]).toMatchObject({ href: "/analizy?jgp=E11", hasPage: false });
+    expect(hits.map((hit) => hit.code)).toEqual(["E11", "E10"]);
+    expect(hits[0]).toMatchObject({ href: "/jgp/E11", hasPage: true });
+    expect(hits[1]).toMatchObject({ href: "/jgp/E10", hasPage: true });
   });
 
   it("zamienia słowa potoczne i podpowiada niedokończone słowo", () => {
-    expect(searchGroups(index, "zawał").map((hit) => hit.code)).toEqual(["E10", "E11"]);
+    expect(searchGroups(index, "zawał").map((hit) => hit.code)).toEqual(["E11", "E10"]);
     expect(searchGroups(index, "koronarog").map((hit) => hit.code)).toEqual(["E27"]);
     expect(searchGroups(index, "porod").map((hit) => hit.code)).toEqual(["N01"]);
   });
@@ -75,8 +75,8 @@ describe("parseQuery i interpretQuery", () => {
     expect(first.parts).toEqual(["E10", "WIELOSPECJALISTYCZNY SZPITAL W NOWEJ SOLI (Nowa Sól)", "na tle innych ośrodków"]);
   });
 
-  it("dla grupy bez karty prowadzi do eksploratora (Kto leczy)", () => {
-    expect(interpretQuery(parseQuery(index, "E11 Kraków"))[0].href).toBe("/analizy?t=k&jgp=E11");
+  it("grupa i szpital prowadzą do karty grupy z wyróżnionym szpitalem", () => {
+    expect(interpretQuery(parseQuery(index, "E11 Kraków"))[0].href).toBe("/jgp/E11?osrodek=06%7C6751199442");
   });
 
   it("rozpoznaje województwo w dowolnej formie i rok", () => {
@@ -89,7 +89,7 @@ describe("parseQuery i interpretQuery", () => {
   it("prowadzi do sekcji karty dla grupy i perspektywy", () => {
     expect(interpretQuery(parseQuery(index, "e10 gdzie"))[0].href).toBe("/jgp/E10#jgp-regions");
     expect(interpretQuery(parseQuery(index, "e10 trend"))[0].href).toBe("/jgp/E10#jgp-trend");
-    expect(interpretQuery(parseQuery(index, "e11 tryb przyjęcia"))[0].href).toBe("/analizy?t=a&jgp=E11");
+    expect(interpretQuery(parseQuery(index, "e11 tryb przyjęcia"))[0].href).toBe("/jgp/E11#jgp-admissions");
   });
 
   it("szpital na tle innych → porównanie z podobnymi szpitalami", () => {

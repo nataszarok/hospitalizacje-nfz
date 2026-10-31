@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { JgpCardSections } from "@/components/jgp/JgpCard";
-import { topShare, yearChangePct, type RegionsMap } from "@/lib/jgpCard";
+import { packPageData, topShare, yearChangePct, type RegionsMap } from "@/lib/jgpCard";
 import type { JgpPageData } from "@/lib/jgpPage";
 import styles from "./JgpPage.module.css";
 
@@ -22,7 +22,7 @@ export function JgpPage({ data, map = null }: { data: JgpPageData; map?: Regions
   const firstValue = data.valuePln[0];
   return <main className={styles.page}>
     <nav className={styles.breadcrumbs} aria-label="Ścieżka">
-      <Link href="/analizy">Analizy</Link> <span aria-hidden>›</span> <span>Grupy JGP</span>
+      <Link href="/jgp">Grupy JGP</Link> <span aria-hidden>›</span> <span>{data.jgpCode}</span>
     </nav>
 
     <header className={styles.header}>
@@ -34,16 +34,21 @@ export function JgpPage({ data, map = null }: { data: JgpPageData; map?: Regions
       <Link className={styles.explorerLink} href={explorerHref}>Pokaż w eksploratorze →</Link>
     </header>
 
+    {!data.catalogYears.includes(data.year) ? <p className={styles.notice}>
+      Grupa nie występuje w danych z {data.year} r. (w danych: {yearRange(data.catalogYears)}) — zmiana katalogu JGP.
+      Wykres „W czasie” pokazuje lata, w których grupa istniała.
+    </p> : null}
+
     <dl className={styles.kpiBand} aria-label="Liczby grupy">
       <div><dt>Hospitalizacje {data.year}</dt><dd>{integer(data.hospitalizations)}</dd><span>{change === null ? "brak poprzedniego roku" : `${change > 0 ? "+" : ""}${decimal(change)}% r/r`}</span></div>
       <div><dt>Świadczeniodawcy</dt><dd>{integer(data.providerCount)}</dd><span>top 25 = {pct(topShare(data.providers))} hospitalizacji</span></div>
-      <div><dt>Przyjęcia nagłe</dt><dd>{pct(data.hospitalizations ? (urgent / data.hospitalizations) * 100 : 0)}</dd><span>tryb 2 i 3</span></div>
-      <div><dt>Śmiertelność</dt><dd>{pct(data.hospitalizations ? (deaths / data.hospitalizations) * 100 : 0)}</dd><span>zgony w szpitalu</span></div>
+      <div><dt>Przyjęcia nagłe</dt><dd>{data.hospitalizations ? pct((urgent / data.hospitalizations) * 100) : "—"}</dd><span>tryb 2 i 3</span></div>
+      <div><dt>Śmiertelność</dt><dd>{data.hospitalizations ? pct((deaths / data.hospitalizations) * 100) : "—"}</dd><span>zgony w szpitalu</span></div>
       {data.valuation?.points ? <div className={styles.kpiValue}><dt>Wycena {data.valuation.year}</dt><dd>{integer(data.valuation.points)} pkt</dd><span>za hospitalizację</span></div> : null}
       {latestValue ? <div className={styles.kpiValue}><dt>Rozliczenia NFZ {latestValue.year}</dt><dd>{(latestValue.value / 1_000_000).toLocaleString("pl-PL", { maximumFractionDigits: 1, minimumFractionDigits: 1 })} mln zł</dd><span>{firstValue && firstValue !== latestValue ? `${firstValue.year}: ${(firstValue.value / 1_000_000).toLocaleString("pl-PL", { maximumFractionDigits: 1, minimumFractionDigits: 1 })} mln zł` : "w kraju"}</span></div> : null}
     </dl>
 
-    <JgpCardSections data={data} map={map} />
+    <JgpCardSections packed={packPageData(data)} map={map} />
 
     <section className={styles.planned}>
       <strong>Planowane:</strong> ośrodki na mapie, rodzina grup OZW, wycena w kolejnych latach, artykuły o tej grupie.

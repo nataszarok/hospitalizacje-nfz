@@ -34,7 +34,7 @@ function buildOptions(index: SearchIndex, query: string): Option[] {
     ...interpretations.map((item, i): Option => ({ id: `i${i}`, href: item.href, section: "Rozumiem pytanie jako", primary: item.parts.join(" · "), secondary: "" })),
     ...groups.map((hit): Option => ({
       id: `g-${hit.code}`, href: hit.href, section: "Grupy JGP", code: hit.code, primary: hit.name,
-      secondary: `${integer(hit.hospitalizations)} hosp. · ${index.year}${hit.hasPage ? " · karta grupy" : " · eksplorator"}`,
+      secondary: `${integer(hit.hospitalizations)} hosp. · ${index.year}`,
     })),
     ...hospitals.map((hit): Option => ({
       id: `h-${hit.key}`, href: hit.href, section: "Szpitale", primary: hit.name,

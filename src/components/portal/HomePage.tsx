@@ -18,10 +18,10 @@ type Topic = {
 };
 
 const topics: readonly Topic[] = [
-  { title: "Hospitalizacje", description: "Ile było hospitalizacji, w jakich grupach JGP i z jaką śmiertelnością.", icon: "bed", href: DASHBOARD_HREFS.trend, label: "Analizuj hospitalizacje" },
-  { title: "Tryb przyjęcia", description: "Przyjęcia planowe i nagłe w szpitalach i regionach.", icon: "heart", href: DASHBOARD_HREFS.admissions, label: "Analizuj tryb przyjęcia" },
+  { title: "Grupy JGP", description: "Karta każdej grupy: hospitalizacje w czasie, ośrodki, województwa, tryb przyjęcia i wycena.", icon: "bed", href: "/jgp", label: "Przeglądaj grupy JGP" },
   { title: "Szpitale publiczne", description: "Profil szpitala: oddziały, łóżka, świadczenia i wyniki finansowe.", icon: "hospital", href: DASHBOARD_HREFS.hospital, label: "Znajdź szpital" },
   { title: "Porównanie szpitali", description: "Porównaj szpital z grupą podobnych placówek dobranych przez model.", icon: "compare", href: DASHBOARD_HREFS.comparison, label: "Porównaj szpitale" },
+  { title: "Analizy", description: "Eksplorator dla analityków: kilka grup naraz, obszary, filtry i tryb przyjęcia.", icon: "heart", href: DASHBOARD_HREFS.trend, label: "Otwórz eksplorator" },
   { title: "Wyceny JGP", description: "Jak wygląda system wycen JGP i jak zmieniają się wyceny.", icon: "chart", label: "Wyceny JGP" },
   { title: "Artykuły", description: "Analizy i komentarze, m.in. o rozliczeniach i kontrolach NFZ.", icon: "book", label: "Artykuły" },
 ];

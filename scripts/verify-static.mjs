@@ -75,32 +75,39 @@ for (const [key, [hSim, hMin]] of nationalSums) {
 console.log(`Regional trends OK: ${regionalTrends.rows.length.toLocaleString("en-US")} rows, ${(regionalSize / 1024).toFixed(0)} KiB.`);
 console.log(`Hospitalization data OK: ${index.years.join(", ")}; ${((totalSize + trendsSize + regionalSize) / 1024 / 1024).toFixed(2)} MiB in total.`);
 
-// Pliki stron grup (scripts/build_jgp_pages.py) muszą sumować się do trendu krajowego grupy.
-const pageCodes = JSON.parse(await readFile("src/lib/jgpPageCodes.json", "utf8"));
-for (const code of pageCodes) {
-  const file = path.join("public/data/jgp", `${code}.json.gz`);
-  const { size, data: group } = await readGzipJson(file);
-  if (JSON.stringify(group.years) !== JSON.stringify(index.years)) throw new Error(`${file} years differ from index.json.`);
-  const productIndexes = new Set(trends.products.flatMap(([, jgp], i) => jgp === code ? [i] : []));
+// Pliki stron grup (scripts/build_jgp_pages.py, format v2): jeden na każdą grupę JGP z trendów,
+// a ich hospitalizacje (metoda min) sumują się do trendu krajowego grupy w każdym miesiącu i trybie.
+{
+  const pagesIndex = JSON.parse(await readFile("public/data/jgp/index.json", "utf8"));
+  const trendGroups = [...new Set(trends.products.map(([, jgp]) => jgp).filter(Boolean))].sort();
+  if (JSON.stringify(pagesIndex.groups) !== JSON.stringify(trendGroups)) throw new Error("public/data/jgp/index.json groups differ from trends.json.gz.");
+  const ADMISSION = { p: 0, u: 1, o: 2 };
   const expected = new Map();
-  for (const [year, month, product, admission, hSim, hMin] of trends.monthly) {
-    if (!productIndexes.has(product)) continue;
-    const key = `${year}|${month}|${admission}`;
-    const sum = expected.get(key) ?? [0, 0];
-    expected.set(key, [sum[0] + hSim, sum[1] + hMin]);
+  for (const [year, month, product, admission, , hMin] of trends.monthly) {
+    const jgp = trends.products[product][1];
+    const key = `${jgp}|${index.years.indexOf(year) * 12 + month - 1}|${ADMISSION[admission]}`;
+    expected.set(key, (expected.get(key) ?? 0) + hMin);
   }
-  const actual = new Map();
-  for (const [year, month, , , admission, hSim, hMin] of group.monthly) {
-    const key = `${year}|${month}|${admission}`;
-    const sum = actual.get(key) ?? [0, 0];
-    actual.set(key, [sum[0] + hSim, sum[1] + hMin]);
+  let totalSize = 0;
+  let largest = [0, ""];
+  for (const code of pagesIndex.groups) {
+    const file = path.join("public/data/jgp", `${code}.json.gz`);
+    const { size, data: group } = await readGzipJson(file);
+    totalSize += size;
+    if (size > largest[0]) largest = [size, code];
+    if (group.version !== 2 || group.jgp !== code || JSON.stringify(group.years) !== JSON.stringify(index.years)) throw new Error(`${file} has a wrong header.`);
+    const actual = new Map();
+    for (const [provider, month, admission, h] of group.rows) {
+      if (!group.providers[provider]) throw new Error(`${file}: row points to a missing provider ${provider}.`);
+      const key = `${code}|${month}|${admission}`;
+      actual.set(key, (actual.get(key) ?? 0) + h);
+    }
+    for (const [key, h] of expected) {
+      if (!key.startsWith(`${code}|`)) continue;
+      if ((actual.get(key) ?? 0) !== h) throw new Error(`${file} does not add up to trends.json.gz for ${key}: ${actual.get(key) ?? 0} vs ${h}.`);
+    }
   }
-  if (actual.size !== expected.size) throw new Error(`${file} covers different months than trends.json.gz.`);
-  for (const [key, [hSim, hMin]] of expected) {
-    const sum = actual.get(key);
-    if (!sum || sum[0] !== hSim || sum[1] !== hMin) throw new Error(`${file} does not add up to trends.json.gz for ${key}.`);
-  }
-  console.log(`Group page ${code} OK: ${group.monthly.length.toLocaleString("en-US")} monthly rows${group.valuePln ? `, PLN ${Object.keys(group.valuePln.national).at(0)}–${Object.keys(group.valuePln.national).at(-1)}` : ""}, ${(size / 1024).toFixed(0)} KiB.`);
+  console.log(`Group pages OK: ${pagesIndex.groups.length} groups, ${(totalSize / 1024 / 1024).toFixed(2)} MiB, largest ${largest[1]} ${(largest[0] / 1024).toFixed(0)} KiB.`);
 }
 
 // Mapa województw (scripts/build_regions_map.py): 16 województw z kodami OW jak w danych.
