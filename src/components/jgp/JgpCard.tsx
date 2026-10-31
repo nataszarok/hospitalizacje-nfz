@@ -426,7 +426,7 @@ function ProvidersSection({ data, pool, selectedRow, filtered, onSelect }: {
       <h3 className={styles.chartTitle}>Wolumen a śmiertelność</h3>
       <ProviderScatter
         points={points}
-        xTitle="Hospitalizacje (skala logarytmiczna)"
+        xTitle="Hospitalizacje"
         yTitle="Śmiertelność"
         ySuffix="%"
         reference={{ y: stats.mortalityPct, label: `${filtered ? "wybrane" : "grupa"}: ${pct(stats.mortalityPct)}` }}
@@ -498,7 +498,7 @@ function AdmissionsSection({ data, pool, filtered, selectedRow, onSelect }: { da
       <h3 className={styles.chartTitle}>Tryb przyjęcia w ośrodkach · {data.year}</h3>
       <ProviderScatter
         points={points}
-        xTitle="Hospitalizacje (skala logarytmiczna)"
+        xTitle="Hospitalizacje"
         yTitle="Udział przyjęć nagłych"
         ySuffix="%"
         reference={{ y: stats.urgentPct, label: `${filtered ? "wybrane" : "grupa"}: ${pct(stats.urgentPct)}` }}

@@ -40,7 +40,7 @@ export function ProviderScatter({ points, xTitle, yTitle, ySuffix, reference, on
       const traces: Record<string, unknown>[] = groups.map((group, i) => ({
         type: "scattergl",
         mode: "markers",
-        x: group.map((p) => Math.max(p.x, 1)),
+        x: group.map((p) => p.x),
         y: group.map((p) => p.y),
         customdata: group.map((p) => [p.key, `<b>${p.name}</b><br>${p.lines.join("<br>")}`]),
         marker: i === 0
@@ -52,6 +52,7 @@ export function ProviderScatter({ points, xTitle, yTitle, ySuffix, reference, on
       const hoverTraceIndex = traces.length;
       traces.push(makeHoverTrace());
       // Margines pod zerem i nad maksimum: punkty dokładnie na 0 nie są ucinane.
+      const xMax = Math.max(...points.map((p) => p.x), 1);
       const yMax = Math.max(...points.map((p) => p.y), reference?.y ?? 0, 1);
       const plot = chartRef.current as PlotElement;
       await Plotly.react(plot, traces, {
@@ -65,7 +66,7 @@ export function ProviderScatter({ points, xTitle, yTitle, ySuffix, reference, on
         hovermode: "closest",
         showlegend: false,
         hoverlabel: { bgcolor: "#344054", font: { color: "#FFFFFF", size: 13 }, align: "left" },
-        xaxis: { type: "log", title: { text: xTitle }, gridcolor: "#EEF1F5", tickformat: ",.0f" },
+        xaxis: { title: { text: xTitle }, range: [-xMax * 0.03, xMax * 1.05], gridcolor: "#EEF1F5", zerolinecolor: "#D0D5DD", tickformat: ",.0f" },
         yaxis: { title: { text: yTitle }, range: [-yMax * 0.06, yMax * 1.08], gridcolor: "#EEF1F5", zerolinecolor: "#D0D5DD", ticksuffix: ySuffix },
         shapes: reference ? [{ type: "line", xref: "paper", x0: 0, x1: 1, y0: reference.y, y1: reference.y, line: { color: "#667085", width: 1, dash: "dot" } }] : [],
         annotations: reference ? [{ xref: "paper", x: 1, y: reference.y, xanchor: "right", yanchor: "bottom", showarrow: false, text: reference.label, font: { size: 11, color: "#667085" } }] : [],
