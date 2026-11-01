@@ -11,6 +11,7 @@ import type { AdmissionPayload, AxisMode, EstimationMethod, GeographyMode, Morta
 import { dashboardUrlSearch, readDashboardUrlState, type DashboardActiveTab } from "@/lib/dashboardUrlState";
 import { admissionsFromDataset, loadStaticDataset, mortalityFromDataset, referenceFromDataset } from "@/lib/staticData";
 import type { MortalityDisplayMode } from "@/lib/mortality";
+import { PEER_DISTANCE_A_LIMIT } from "@/lib/peerDistance";
 
 const EMPTY_KPI = { facilities: 0, hospitalizations: 0, deaths: 0, mortalityPct: 0 };
 const EMPTY_GEO_STATS = { regions: [], cities: [] };
@@ -39,6 +40,7 @@ export function Dashboard() {
   const [hospitalKey, setHospitalKey] = useState("");
   const [hospitalSubtab, setHospitalSubtab] = useState<"summary"|"comparison">("summary");
   const [peerThreshold, setPeerThreshold] = useState(75);
+  const [peerDistance, setPeerDistance] = useState(PEER_DISTANCE_A_LIMIT);
 
   useEffect(() => {
     const load = async () => {
@@ -59,6 +61,7 @@ export function Dashboard() {
         setHospitalKey(urlState.hospitalKey ?? "");
         setHospitalSubtab(urlState.hospitalSubtab ?? "summary");
         setPeerThreshold(urlState.peerThreshold ?? 75);
+        setPeerDistance(urlState.peerDistance ?? PEER_DISTANCE_A_LIMIT);
         setReference(payload);
         setUrlStateReady(true);
       } catch (err) {
@@ -121,6 +124,7 @@ export function Dashboard() {
       hospitalKey,
       hospitalSubtab,
       peerThreshold,
+      peerDistance,
     });
     const nextUrl = `${window.location.pathname}${search}${window.location.hash}`;
     window.history.replaceState(window.history.state, "", nextUrl);
@@ -140,6 +144,7 @@ export function Dashboard() {
     hospitalKey,
     hospitalSubtab,
     peerThreshold,
+    peerDistance,
   ]);
 
   if (!reference && loading) return <main className="center-state">Ładowanie aplikacji…</main>;
@@ -205,7 +210,7 @@ export function Dashboard() {
         highlightedCities={highlightedCities}
         displayMode={jgpDisplayMode}
         setDisplayMode={setJgpDisplayMode}
-      /> : activeTab === "hospital" ? <HospitalAnalysisTab method={method} products={reference.products} hospitalKey={hospitalKey} setHospitalKey={setHospitalKey} hospitalSubtab={hospitalSubtab} setHospitalSubtab={setHospitalSubtab} peerThreshold={peerThreshold} setPeerThreshold={setPeerThreshold} /> : <MethodologyPanel year={reference.analysisYear} />}
+      /> : activeTab === "hospital" ? <HospitalAnalysisTab method={method} products={reference.products} hospitalKey={hospitalKey} setHospitalKey={setHospitalKey} hospitalSubtab={hospitalSubtab} setHospitalSubtab={setHospitalSubtab} peerThreshold={peerThreshold} setPeerThreshold={setPeerThreshold} peerDistance={peerDistance} setPeerDistance={setPeerDistance} /> : <MethodologyPanel year={reference.analysisYear} />}
     </main>
   </div>;
 }
