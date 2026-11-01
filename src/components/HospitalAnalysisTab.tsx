@@ -689,11 +689,28 @@ function HospitalCharts({ analysis, products }: { analysis: HospitalAnalysis; pr
 
 const peerDistanceFormat=new Intl.NumberFormat("pl-PL",{minimumFractionDigits:2,maximumFractionDigits:2});
 
+// Odstęp między przeliczeniami w czasie przeciągania suwaka (ms).
+export const PEER_DISTANCE_LIVE_DELAY = 120;
+
 // Jeden suwak dystansu: do granicy klasy A zawęża pary A, dalej dołącza pary B.
+// W czasie przeciągania wynik zmienia się na bieżąco (najwyżej co PEER_DISTANCE_LIVE_DELAY ms),
+// po puszczeniu suwaka — od razu.
 export function PeerDistanceSlider({ value, onChange }: { value:number; onChange:(value:number)=>void }) {
-  const [draft,setDraft]=useState<{source:number;value:number}|null>(null);
-  // Szkic dotyczy tylko bieżącej wartości; zmiana z zewnątrz (np. URL) go unieważnia.
-  const shown=draft?.source===value ? draft.value : value;
+  // Pozycja suwaka w czasie przeciągania; null = suwak pokazuje wartość z props.
+  const [draft,setDraft]=useState<number|null>(null);
+  const latest=useRef(value);
+  const timer=useRef<ReturnType<typeof setTimeout>|null>(null);
+  const clearTimer=()=>{
+    if(timer.current) clearTimeout(timer.current);
+    timer.current=null;
+  };
+  useEffect(()=>clearTimer,[]);
+  const shown=draft ?? value;
+  const commit=(next:number)=>{
+    clearTimer();
+    setDraft(null);
+    onChange(clampPeerDistance(next));
+  };
   const scope=peerGradeScope(shown);
   return <div className="hospital-peer-distance">
     <div className="hospital-peer-distance-head">
@@ -706,11 +723,15 @@ export function PeerDistanceSlider({ value, onChange }: { value:number; onChange
       max={PEER_DISTANCE_MAX}
       step={PEER_DISTANCE_STEP}
       value={shown}
-      onChange={(next)=>setDraft({source:value,value:next})}
-      onChangeEnd={(next)=>{
-        setDraft(null);
-        onChange(clampPeerDistance(next));
+      onChange={(next)=>{
+        setDraft(next);
+        latest.current=next;
+        timer.current??=setTimeout(()=>{
+          timer.current=null;
+          onChange(clampPeerDistance(latest.current));
+        },PEER_DISTANCE_LIVE_DELAY);
       }}
+      onChangeEnd={commit}
       label={(x)=>peerDistanceFormat.format(x)}
       marks={[{value:PEER_DISTANCE_A_LIMIT,label:"granica A"}]}
       color={scope==="A" ? "var(--primary)" : "#B26A00"}
@@ -720,10 +741,7 @@ export function PeerDistanceSlider({ value, onChange }: { value:number; onChange
     {shown!==PEER_DISTANCE_A_LIMIT ? <button
       type="button"
       className="hospital-peer-distance-reset"
-      onClick={()=>{
-        setDraft(null);
-        onChange(PEER_DISTANCE_A_LIMIT);
-      }}
+      onClick={()=>commit(PEER_DISTANCE_A_LIMIT)}
     >Przywróć domyślny zakres (A)</button> : null}
   </div>;
 }

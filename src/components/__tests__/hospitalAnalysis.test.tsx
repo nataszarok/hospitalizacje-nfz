@@ -3,7 +3,7 @@
 import "@testing-library/jest-dom/vitest";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { HospitalAnalysisTab } from "@/components/HospitalAnalysisTab";
+import { HospitalAnalysisTab, PEER_DISTANCE_LIVE_DELAY } from "@/components/HospitalAnalysisTab";
 import type { HospitalAnalysis } from "@/lib/types";
 import { products, sampleAnalysis } from "./fixtures/hospitalFixtures";
 
@@ -257,5 +257,29 @@ describe("HospitalAnalysisTab — suwak podobieństwa par", () => {
     render(<HospitalAnalysisTab {...baseProps} hospitalSubtab="comparison" peerDistance={15} />);
     await screen.findByTestId("similarity-tab");
     expect(mocks.similarityProps).toHaveBeenLastCalledWith(expect.objectContaining({ gradeScope: "AB", maxDistance: 15 }));
+  });
+
+  it("w czasie przeciągania przelicza wynik najwyżej co PEER_DISTANCE_LIVE_DELAY ms", async () => {
+    const setPeerDistance = vi.fn();
+    render(<HospitalAnalysisTab {...baseProps} hospitalSubtab="comparison" setPeerDistance={setPeerDistance} />);
+    const slider = await screen.findByRole("slider", { name: "Maksymalny dystans par" });
+    vi.useFakeTimers();
+    try {
+      fireEvent.change(slider, { target: { value: "11.01" } });
+      fireEvent.change(slider, { target: { value: "12.01" } });
+      expect(setPeerDistance).not.toHaveBeenCalled();
+      vi.advanceTimersByTime(PEER_DISTANCE_LIVE_DELAY);
+      expect(setPeerDistance).toHaveBeenCalledTimes(1);
+      expect(setPeerDistance).toHaveBeenLastCalledWith(12.01);
+      fireEvent.change(slider, { target: { value: "12.51" } });
+      vi.advanceTimersByTime(PEER_DISTANCE_LIVE_DELAY);
+      expect(setPeerDistance).toHaveBeenCalledTimes(2);
+      expect(setPeerDistance).toHaveBeenLastCalledWith(12.51);
+      fireEvent.blur(slider);
+      vi.advanceTimersByTime(PEER_DISTANCE_LIVE_DELAY);
+      expect(setPeerDistance).toHaveBeenCalledTimes(3);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

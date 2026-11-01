@@ -383,12 +383,16 @@ export function HospitalSimilarityTab({
   peerThreshold?:number;
 }){
   const [result,setResult]=useState<{
-    key:string;benchmark:HospitalPeerBenchmark|null;peerPairs:PeerPair[];
+    key:string;scopeKey:string;benchmark:HospitalPeerBenchmark|null;peerPairs:PeerPair[];
     valuations:JgpValuation[];error:string|null;
   }|null>(null);
   const [hoveredPeerKey,setHoveredPeerKey]=useState<string|null>(null);
   const queryKey=JSON.stringify([hospitalKey,method,gradeScope,maxDistance,peerThreshold]);
-  const currentResult=result?.key===queryKey ? result : null;
+  // Zmiana zakresu par (suwak) nie czyści widoku: do czasu przeliczenia zostaje poprzedni wynik
+  // tego samego szpitala i metody. Zmiana szpitala lub metody pokazuje ładowanie.
+  const scopeKey=JSON.stringify([hospitalKey,method]);
+  const currentResult=result?.key===queryKey || (result?.scopeKey===scopeKey && !result.error) ? result : null;
+  const updating=Boolean(currentResult && currentResult.key!==queryKey);
   const benchmark=currentResult?.benchmark ?? null;
   const peerPairs=currentResult?.peerPairs ?? [];
   const error=currentResult?.error ?? null;
@@ -402,7 +406,7 @@ export function HospitalSimilarityTab({
         if(cancelled) return;
         const selection=newPeerSelection(pairsPayload.rows,hospitalKey,gradeScope,maxDistance,method);
         setResult({
-          key:queryKey,peerPairs:pairsPayload.rows,valuations:jgpValuations,
+          key:queryKey,scopeKey,peerPairs:pairsPayload.rows,valuations:jgpValuations,
           benchmark:selection.size
             ? hospitalPeerBenchmarkFromDataset(dataset,hospitalKey,method,{},peerThreshold,selection)
             : null,
@@ -412,12 +416,12 @@ export function HospitalSimilarityTab({
       .catch((e)=>{
         if(cancelled) return;
         setResult({
-          key:queryKey,peerPairs:[],valuations:[],benchmark:null,
+          key:queryKey,scopeKey,peerPairs:[],valuations:[],benchmark:null,
           error:e instanceof Error ? e.message : "Błąd nowej metody porównawczej.",
         });
       });
     return()=>{cancelled=true;};
-  },[hospitalKey,method,gradeScope,maxDistance,peerThreshold,queryKey]);
+  },[hospitalKey,method,gradeScope,maxDistance,peerThreshold,queryKey,scopeKey]);
 
   const valuationByJgp=useMemo(
     ()=>new Map((currentResult?.valuations ?? []).map(x=>[x.kod_jgp,x])),
@@ -428,7 +432,7 @@ export function HospitalSimilarityTab({
   if(error) return <div className="alert">{error}</div>;
   if(!benchmark?.peers.length) return <div className="hospital-empty">Dla tej placówki nie znaleziono par spełniających aktualne kryteria.</div>;
 
-  return <div className="hospital-comparison-subtab">
+  return <div className={`hospital-comparison-subtab${updating ? " is-updating" : ""}`} aria-busy={updating}>
     <PairBenchmarkPanel
       benchmark={benchmark}
       hoveredPeerKey={hoveredPeerKey}
