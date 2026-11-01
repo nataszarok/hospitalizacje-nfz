@@ -14,7 +14,7 @@ const defaults: DashboardUrlState = {
   selectedProducts: ["P1"], durations: [], method: "min", minHosp: 0,
   axisMode: "total", admissionAxisMode: "total", geoMode: "regions",
   highlightedRegions: [], highlightedCities: [], activeTab: "mortality",
-  hospitalKey: "", hospitalSubtab: "summary", peerThreshold: 75,
+  hospitalKey: "", hospitalSubtab: "summary", peerThreshold: 75, peerDistance: 10.01,
 };
 
 describe("dashboard URL state — szpitale", () => {
@@ -68,5 +68,23 @@ describe("dashboard URL state — szpitale", () => {
   it("nie traci ustawień szpitala przy aktywnej innej karcie", () => {
     const state = { ...defaults, activeTab: "admissions" as const, hospitalKey: "07|111", hospitalSubtab: "comparison" as const, peerThreshold: 80 };
     expect(readDashboardUrlState(reference, dashboardUrlSearch(reference, state))).toEqual(state);
+  });
+
+  it("koduje dystans par (pd) tylko poza domyślną granicą A", () => {
+    expect(new URLSearchParams(dashboardUrlSearch(reference, { ...defaults, peerDistance: 10.01 })).has("pd")).toBe(false);
+    const state = { ...defaults, activeTab: "hospital" as const, hospitalKey: "07|111", hospitalSubtab: "comparison" as const, peerDistance: 13.51 };
+    const search = dashboardUrlSearch(reference, state);
+    expect(new URLSearchParams(search).get("pd")).toBe("13.51");
+    expect(readDashboardUrlState(reference, search)).toEqual(state);
+  });
+
+  it.each([
+    ["?pd=7.26", 7.26],
+    ["?pd=abc", 10.01],
+    ["?pd=-1", 2.01],
+    ["?pd=99", 17.06],
+    ["?pd=12.3456", 12.36],
+  ] as const)("bezpiecznie parsuje dystans %s", (search, distance) => {
+    expect(readDashboardUrlState(reference, search).peerDistance).toBe(distance);
   });
 });

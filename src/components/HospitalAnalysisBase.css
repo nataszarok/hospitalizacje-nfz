@@ -334,3 +334,13 @@
     width:auto;
   }
 }
+
+/* Suwak dystansu par (widok Porównanie) */
+.hospital-peer-distance { display:grid; gap:8px; }
+.hospital-peer-distance-head { display:flex; justify-content:space-between; align-items:baseline; gap:8px; font-size:12px; }
+.hospital-peer-distance-head b { font-weight:700; color:var(--text); }
+.hospital-peer-distance-head span { color:var(--muted); font-variant-numeric:tabular-nums; }
+.hospital-peer-distance-slider { margin:4px 2px 18px; }
+.hospital-peer-distance-slider .mantine-Slider-markLabel { font-size:10px; color:var(--muted); }
+.hospital-peer-distance-scale { display:flex; justify-content:space-between; font-size:10.5px; color:var(--muted); }
+.hospital-peer-distance-reset { justify-self:start; padding:0; border:0; background:none; color:var(--primary); font-size:11.5px; font-weight:600; text-decoration:underline; text-underline-offset:2px; }

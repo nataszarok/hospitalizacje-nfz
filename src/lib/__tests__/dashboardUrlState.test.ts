@@ -55,6 +55,7 @@ describe("dashboard URL state", () => {
       hospitalKey: "",
       hospitalSubtab: "summary",
       peerThreshold: 75,
+      peerDistance: 10.01,
     };
     expect(readDashboardUrlState(reference, dashboardUrlSearch(reference, state))).toEqual(state);
   });

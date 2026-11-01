@@ -355,10 +355,10 @@ function PairBenchmarkPanel({ benchmark, hoveredPeerKey, onHoverPeer, method, gr
             <div><strong>B</strong><span>podobne, ale z większymi różnicami</span></div>
             <div><strong>N</strong><span>niepodobne</span></div>
           </div>
-          <p>Granice pomiędzy klasami A, B i N zostały wyuczone na ręcznie ocenionych parach szpitali. W aplikacji możesz korzystać tylko z par klasy <strong>A</strong> albo rozszerzyć grupę o klasę <strong>B</strong>. Pary klasy <strong>N</strong> nie są włączane do grupy peerów.</p>
+          <p>Granice pomiędzy klasami A, B i N zostały wyuczone na ręcznie ocenionych parach szpitali. Domyślnie grupę tworzą pary klasy <strong>A</strong>. Suwakiem możesz rozszerzyć ją o pary klasy <strong>B</strong>. Pary klasy <strong>N</strong> nie są włączane do grupy peerów.</p>
         </div>
 
-        <div className="hospital-methodology-note"><b>Jak działa filtr w tej zakładce?</b><p>Najpierw wybierasz zakres klas: <strong>A</strong> albo <strong>A + B</strong>. Następnie możesz ograniczyć grupę suwakiem <strong>maksymalnego dystansu</strong>. Do benchmarku trafiają tylko placówki spełniające oba warunki.</p></div>
+        <div className="hospital-methodology-note"><b>Jak działa filtr w tej zakładce?</b><p>Suwak <strong>Podobieństwo par</strong> w panelu bocznym ustawia <strong>maksymalny dystans</strong>. Domyślnie stoi na granicy klasy <strong>A</strong>: grupę tworzą wszystkie pary A. Przesunięcie w lewo zawęża grupę do najbardziej podobnych par A. Przesunięcie w prawo za granicę A dołącza pary klasy <strong>B</strong> do wybranego dystansu.</p></div>
 
         <div className="hospital-methodology-note"><b>Jak interpretować procenty?</b><p>Wskaźniki podobieństwa prezentowane przy poszczególnych cechach służą do łatwiejszej interpretacji. Nie są statystycznym prawdopodobieństwem. O klasie A, B lub N decyduje modelowy <strong>wynik odległości</strong> i wyuczone progi.</p></div>
       </section>

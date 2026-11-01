@@ -1,12 +1,20 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { SegmentedControl, Select } from "@mantine/core";
+import { SegmentedControl, Select, Slider } from "@mantine/core";
 import { createPortal } from "react-dom";
 import type { EstimationMethod, HospitalAnalysis, HospitalDirectoryEntry, ProductOption } from "@/lib/types";
 import { hospitalAnalysisFromDataset, hospitalDirectoryFromDataset, loadStaticDataset } from "@/lib/staticData";
 import { PLOTLY_CONFIG, getAppFontFamily } from "@/lib/plotlyChart";
 import { HospitalSimilarityTab } from "@/components/HospitalSimilarityTab";
+import {
+  PEER_DISTANCE_A_LIMIT,
+  PEER_DISTANCE_MAX,
+  PEER_DISTANCE_MIN,
+  PEER_DISTANCE_STEP,
+  clampPeerDistance,
+  peerGradeScope,
+} from "@/lib/peerDistance";
 import "./HospitalAnalysisBase.css";
 import "./HospitalProfileSummary.css";
 
@@ -679,11 +687,53 @@ function HospitalCharts({ analysis, products }: { analysis: HospitalAnalysis; pr
 }
 
 
-export function HospitalAnalysisTab({ method, products, hospitalKey, setHospitalKey, hospitalSubtab, setHospitalSubtab, peerThreshold, setPeerThreshold }: {
+const peerDistanceFormat=new Intl.NumberFormat("pl-PL",{minimumFractionDigits:2,maximumFractionDigits:2});
+
+// Jeden suwak dystansu: do granicy klasy A zawęża pary A, dalej dołącza pary B.
+export function PeerDistanceSlider({ value, onChange }: { value:number; onChange:(value:number)=>void }) {
+  const [draft,setDraft]=useState<{source:number;value:number}|null>(null);
+  // Szkic dotyczy tylko bieżącej wartości; zmiana z zewnątrz (np. URL) go unieważnia.
+  const shown=draft?.source===value ? draft.value : value;
+  const scope=peerGradeScope(shown);
+  return <div className="hospital-peer-distance">
+    <div className="hospital-peer-distance-head">
+      <b>{scope==="A" ? "Tylko pary A" : "Pary A + B"}</b>
+      <span>maks. dystans {peerDistanceFormat.format(shown)}</span>
+    </div>
+    <Slider
+      aria-label="Maksymalny dystans par"
+      min={PEER_DISTANCE_MIN}
+      max={PEER_DISTANCE_MAX}
+      step={PEER_DISTANCE_STEP}
+      value={shown}
+      onChange={(next)=>setDraft({source:value,value:next})}
+      onChangeEnd={(next)=>{
+        setDraft(null);
+        onChange(clampPeerDistance(next));
+      }}
+      label={(x)=>peerDistanceFormat.format(x)}
+      marks={[{value:PEER_DISTANCE_A_LIMIT,label:"granica A"}]}
+      color={scope==="A" ? "var(--primary)" : "#B26A00"}
+      className="hospital-peer-distance-slider"
+    />
+    <div className="hospital-peer-distance-scale"><span>bardziej podobne</span><span>więcej par</span></div>
+    {shown!==PEER_DISTANCE_A_LIMIT ? <button
+      type="button"
+      className="hospital-peer-distance-reset"
+      onClick={()=>{
+        setDraft(null);
+        onChange(PEER_DISTANCE_A_LIMIT);
+      }}
+    >Przywróć domyślny zakres (A)</button> : null}
+  </div>;
+}
+
+export function HospitalAnalysisTab({ method, products, hospitalKey, setHospitalKey, hospitalSubtab, setHospitalSubtab, peerThreshold, setPeerThreshold, peerDistance, setPeerDistance }: {
   method: EstimationMethod; products: ProductOption[];
   hospitalKey:string; setHospitalKey:(value:string)=>void;
   hospitalSubtab:"summary"|"comparison"; setHospitalSubtab:(value:"summary"|"comparison")=>void;
   peerThreshold:number; setPeerThreshold:(value:number)=>void;
+  peerDistance:number; setPeerDistance:(value:number)=>void;
 }) {
   const [directory, setDirectory] = useState<HospitalDirectoryEntry[]>([]);
   const [analysisResult,setAnalysisResult]=useState<{
@@ -909,6 +959,11 @@ export function HospitalAnalysisTab({ method, products, hospitalKey, setHospital
         />
       </section>
 
+      {hospitalSubtab==="comparison" ? <section className="filter-section">
+        <div className="sidebar-kicker">Podobieństwo par</div>
+        <PeerDistanceSlider value={peerDistance} onChange={setPeerDistance}/>
+      </section> : null}
+
     </>, sidebarSlot) : null}
       {error ? <div className="alert">{error}</div> : null}
 
@@ -1107,7 +1162,13 @@ export function HospitalAnalysisTab({ method, products, hospitalKey, setHospital
       <div className="hospital-identity hospital-view-heading">
         <h2>{displayHospitalName(analysis.providerName)}</h2>
       </div>
-      <HospitalSimilarityTab hospitalKey={hospitalKey} method={method} products={products}/>
+      <HospitalSimilarityTab
+        hospitalKey={hospitalKey}
+        method={method}
+        products={products}
+        gradeScope={peerGradeScope(peerDistance)}
+        maxDistance={peerDistance}
+      />
     </>}
   </section>;
 }

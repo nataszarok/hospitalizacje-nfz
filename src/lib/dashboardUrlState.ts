@@ -1,4 +1,5 @@
 import type { AxisMode, EstimationMethod, GeographyMode, ReferencePayload } from "@/lib/types";
+import { PEER_DISTANCE_A_LIMIT, clampPeerDistance } from "@/lib/peerDistance";
 
 export type DashboardActiveTab = "mortality" | "admissions" | "hospital" | "methodology";
 
@@ -16,6 +17,7 @@ export type DashboardUrlState = {
   hospitalKey?: string;
   hospitalSubtab?: "summary" | "comparison";
   peerThreshold?: number;
+  peerDistance?: number;
 };
 
 function defaultProductSelection(reference: ReferencePayload) {
@@ -88,6 +90,7 @@ export function readDashboardUrlState(reference: ReferencePayload, search: strin
     // "s" to dawny link do zakładki Podobieństwo, która jest teraz zakładką Porównanie.
     hospitalSubtab: params.get("hv") === "c" || params.get("hv") === "s" ? "comparison" : "summary",
     peerThreshold: Math.min(90, Math.max(70, nonNegativeInteger(params.get("peer")) || 75)),
+    peerDistance: params.has("pd") ? clampPeerDistance(Number(params.get("pd"))) : PEER_DISTANCE_A_LIMIT,
   };
 }
 
@@ -125,6 +128,8 @@ export function dashboardUrlSearch(reference: ReferencePayload, state: Dashboard
   if (state.hospitalSubtab === "comparison") params.set("hv", "c");
   const peerThreshold = state.peerThreshold ?? 75;
   if (peerThreshold !== 75) params.set("peer", String(Math.min(90, Math.max(70, Math.floor(peerThreshold)))));
+  const peerDistance = clampPeerDistance(state.peerDistance ?? PEER_DISTANCE_A_LIMIT);
+  if (peerDistance !== PEER_DISTANCE_A_LIMIT) params.set("pd", String(peerDistance));
 
   const search = params.toString();
   return search ? `?${search}` : "";
