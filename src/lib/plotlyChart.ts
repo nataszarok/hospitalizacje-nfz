@@ -208,6 +208,16 @@ export function attachHoverMarker({
 }
 
 /**
+ * Oś X dla miesięcy: przy krótkim zakresie podpis co kwartał („03.2025”), przy dłuższym co pół roku,
+ * a od 6 lat tylko lata („2019”), żeby podpisy nie nachodziły na siebie.
+ */
+export function monthAxis(months: number) {
+  if (months <= 36) return { type: "date" as const, tickformat: "%m.%Y", dtick: "M3" };
+  if (months <= 72) return { type: "date" as const, tickformat: "%m.%Y", dtick: "M6" };
+  return { type: "date" as const, tickformat: "%Y", dtick: "M12", tick0: "2000-01-01" };
+}
+
+/**
  * Oś Y dla liczb (hospitalizacje, zgony): zakres z marginesem pod zerem (kropki na 0 nie są ucinane przez oś X)
  * i całkowita podziałka przy małych wartościach (bez powtórzonych etykiet typu „0, 0, 1, 1” z kroku 0,2).
  */

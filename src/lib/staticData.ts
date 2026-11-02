@@ -49,14 +49,13 @@ export interface TrendsDataset {
   regional: RegionalTrendTuple[];
 }
 
-type RegionalMonthlyTrendTuple = [string, number, string, number, AdmissionGroup, ...TrendValues];
-
-/** Trend miesięczny według OW NFZ (`trends-regions.json.gz`); indeksy produktów jak w `TrendsDataset`. */
+/** Trend miesięczny jednego OW NFZ (`trends-regions/<OW>.json.gz`); indeksy produktów jak w `TrendsDataset`. */
 export interface RegionalTrendsDataset {
   version: number;
   years: string[];
-  /** Rok, miesiąc, OW NFZ, produkt, grupa trybu, hSim, hMin, dSim, dMin. */
-  rows: RegionalMonthlyTrendTuple[];
+  owNfz: string;
+  /** Rok, miesiąc, produkt, grupa trybu, hSim, hMin, dSim, dMin (jak `TrendsDataset.monthly`). */
+  rows: MonthlyTrendTuple[];
 }
 
 export const HOSPITALIZATIONS_DATA_PATH = "/data/hospitalizations";
@@ -104,20 +103,24 @@ export function loadTrends(): Promise<TrendsDataset> {
   return trendsPromise;
 }
 
-let regionalTrendsPromise: Promise<RegionalTrendsDataset> | null = null;
-/** Trend miesięczny według województw — pobierany dopiero przy filtrze obszaru. */
-export function loadRegionalTrends(): Promise<RegionalTrendsDataset> {
-  regionalTrendsPromise ??= fetchGzipJson<RegionalTrendsDataset>(`${HOSPITALIZATIONS_DATA_PATH}/trends-regions.json.gz`);
-  regionalTrendsPromise.catch(() => { regionalTrendsPromise = null; });
-  return regionalTrendsPromise;
+const regionalTrendsPromises = new Map<string, Promise<RegionalTrendsDataset>>();
+/** Trend miesięczny jednego województwa (OW NFZ) — pobierany dopiero przy filtrze obszaru. */
+export function loadRegionalTrends(owNfz: string): Promise<RegionalTrendsDataset> {
+  let promise = regionalTrendsPromises.get(owNfz);
+  if (!promise) {
+    promise = fetchGzipJson<RegionalTrendsDataset>(`${HOSPITALIZATIONS_DATA_PATH}/trends-regions/${owNfz}.json.gz`);
+    regionalTrendsPromises.set(owNfz, promise);
+    promise.catch(() => regionalTrendsPromises.delete(owNfz));
+  }
+  return promise;
 }
 
-/** Trendy zawężone do jednego OW NFZ: wiersze miesięczne z pliku regionalnego, reszta bez zmian. */
-export function trendsForRegion(t: TrendsDataset, regional: RegionalTrendsDataset, owNfz: string): TrendsDataset {
+/** Trendy zawężone do OW NFZ z pliku regionalnego: wiersze miesięczne z tego pliku, reszta bez zmian. */
+export function trendsForRegion(t: TrendsDataset, regional: RegionalTrendsDataset): TrendsDataset {
   return {
     ...t,
-    monthly: regional.rows.filter((row) => row[2] === owNfz).map(([year, month, , product, group, ...values]) => [year, month, product, group, ...values]),
-    regional: t.regional.filter((row) => row[1] === owNfz),
+    monthly: regional.rows,
+    regional: t.regional.filter((row) => row[1] === regional.owNfz),
   };
 }
 
@@ -125,7 +128,7 @@ export function trendsForRegion(t: TrendsDataset, regional: RegionalTrendsDatase
 export function resetStaticDataCache() {
   indexPromise = null;
   trendsPromise = null;
-  regionalTrendsPromise = null;
+  regionalTrendsPromises.clear();
   datasetPromises.clear();
 }
 

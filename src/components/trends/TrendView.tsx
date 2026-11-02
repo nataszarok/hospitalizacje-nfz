@@ -42,11 +42,11 @@ export function TrendView({ productCodes, method, region = null, areaLabel, area
     return () => { cancelled = true; };
   }, []);
 
-  // Plik regionalny pobieramy dopiero przy wyborze województwa.
+  // Plik województwa pobieramy dopiero przy jego wyborze (osobny plik na każdy OW NFZ).
   useEffect(() => {
-    if (!region || regional) return;
+    if (!region || regional?.owNfz === region) return;
     let cancelled = false;
-    loadRegionalTrends()
+    loadRegionalTrends(region)
       .then((data) => { if (!cancelled) setRegional(data); })
       .catch((err: unknown) => { if (!cancelled) setError(err instanceof Error ? err.message : "Błąd pobierania trendów regionalnych."); });
     return () => { cancelled = true; };
@@ -55,7 +55,7 @@ export function TrendView({ productCodes, method, region = null, areaLabel, area
   const trends = useMemo(() => {
     if (!national) return null;
     if (!region) return national;
-    return regional ? trendsForRegion(national, regional, region) : null;
+    return regional?.owNfz === region ? trendsForRegion(national, regional) : null;
   }, [national, regional, region]);
 
   const trend = useMemo(() => trends && productCodes.length ? productTrend(trends, productCodes, method) : null, [trends, productCodes, method]);

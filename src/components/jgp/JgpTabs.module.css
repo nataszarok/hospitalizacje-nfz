@@ -440,6 +440,26 @@
   gap: 8px;
 }
 
+/* Wiele lat: mapa ciepła pod mapą na całą szerokość; obok mapy legenda i opis wyboru. */
+.geoLong {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.geoLong .mapCol {
+  grid-template-columns: minmax(0, 460px) minmax(0, 1fr);
+  grid-template-rows: auto 1fr;
+  column-gap: 24px;
+  align-items: start;
+}
+
+.geoLong .mapCol > :first-child {
+  grid-row: span 2;
+}
+
+.geoLong .heat td:first-child {
+  min-width: 150px;
+}
+
 .mapInfo {
   display: grid;
   gap: 6px;
@@ -682,6 +702,14 @@
   .cost,
   .two {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .geoLong .mapCol {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .geoLong .mapCol > :first-child {
+    grid-row: auto;
   }
 }
 

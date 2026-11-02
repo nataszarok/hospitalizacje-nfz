@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import Plotly from "plotly.js-dist-min";
 import { TrendView } from "@/components/trends/TrendView";
-import { regionalTrendsFixture, trendsFixture } from "@/lib/__tests__/fixtures/trendsFixture";
+import { regionalTrendsFixtures, trendsFixture } from "@/lib/__tests__/fixtures/trendsFixture";
 
 vi.mock("plotly.js-dist-min", () => ({ default: { react: vi.fn().mockResolvedValue(undefined) } }));
 const plotlyReact = vi.mocked(Plotly.react);
@@ -20,17 +20,17 @@ vi.mock("@mantine/core", () => ({
 }));
 
 const loadTrends = vi.fn();
-const loadRegionalTrends = vi.fn();
+const loadRegionalTrends = vi.fn<(ow: string) => Promise<unknown>>();
 vi.mock("@/lib/staticData", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/staticData")>()),
   loadTrends: () => loadTrends(),
-  loadRegionalTrends: () => loadRegionalTrends(),
+  loadRegionalTrends: (ow: string) => loadRegionalTrends(ow),
 }));
 
 beforeEach(() => {
   loadTrends.mockResolvedValue(trendsFixture);
   loadRegionalTrends.mockReset();
-  loadRegionalTrends.mockResolvedValue(regionalTrendsFixture);
+  loadRegionalTrends.mockImplementation(async (ow) => regionalTrendsFixtures[ow]);
   plotlyReact.mockClear();
 });
 afterEach(cleanup);
@@ -47,8 +47,19 @@ describe("TrendView", () => {
     expect(await screen.findByText(/Wszystkie wybrane produkty razem · woj\. śląskie\./)).toBeInTheDocument();
     expect(screen.getByText("Uwaga o mieście.")).toBeInTheDocument();
     expect(loadRegionalTrends).toHaveBeenCalledTimes(1);
+    expect(loadRegionalTrends).toHaveBeenCalledWith("12");
     const rows = screen.getAllByRole("row").slice(1).map((row) => row.firstChild?.nextSibling?.textContent);
     expect(rows).toEqual(["0", "5", "0"]);
+  });
+
+  it("po zmianie województwa pobiera plik nowego OW", async () => {
+    const { rerender } = render(<TrendView productCodes={["P1"]} method="min" region="12" areaLabel="woj. śląskie" />);
+    await screen.findByText(/woj\. śląskie\./);
+    rerender(<TrendView productCodes={["P1"]} method="min" region="07" areaLabel="woj. mazowieckie" />);
+    await screen.findByText(/woj\. mazowieckie\./);
+    expect(loadRegionalTrends.mock.calls.map(([ow]) => ow)).toEqual(["12", "07"]);
+    const rows = screen.getAllByRole("row").slice(1).map((row) => row.firstChild?.nextSibling?.textContent);
+    expect(rows).toEqual(["8", "3", "9"]);
   });
 
   it("pokazuje podsumowanie najnowszego roku i tabelę lat", async () => {

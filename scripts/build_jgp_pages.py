@@ -28,7 +28,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from build_hospitalizations import ROOT, VALUE_COLS, iter_frames, write_json_gz
+from build_hospitalizations import ALL_YEARS, ROOT, VALUE_COLS, iter_frames, source_path, write_json_gz
 
 SETTLEMENTS_FILE = "zestawienie_swiadczen_2019_2026.csv"
 PROVIDERS_FILE = "nfz_swiadczeniodawcy_2025.csv"
@@ -52,7 +52,7 @@ def read_monthly(data_dir: Path, years: list[str], product_to_group: dict[str, s
     rows: dict[str, list[list]] = defaultdict(list)
     for year in years:
         parts = []
-        for frame, _ in iter_frames(data_dir / f"hospitalizacje_{year}.csv", year):
+        for frame, _ in iter_frames(source_path(data_dir, year), year):
             frame = frame[frame["product"].isin(product_to_group)]
             if len(frame):
                 frame = frame.assign(jgp=frame["product"].map(product_to_group))
@@ -119,7 +119,7 @@ def compact(group: str, years: list[str], rows: list[list], settlements: dict | 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--years", default="2024,2025", help="lata oddzielone przecinkami")
+    parser.add_argument("--years", default=ALL_YEARS, help="lata oddzielone przecinkami")
     parser.add_argument("--data-dir", type=Path, default=ROOT / "data")
     parser.add_argument("--trends", type=Path, default=ROOT / "public" / "data" / "hospitalizations" / "trends.json.gz")
     parser.add_argument("--output-dir", type=Path, default=ROOT / "public" / "data" / "jgp")

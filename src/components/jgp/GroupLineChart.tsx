@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { movingAverage, movingRatio, ratioSeries } from "@/lib/jgpCard";
-import { countAxis, getAppFontFamily, makeHoverTrace, percentAxis, PLOTLY_CONFIG, type PlotElement } from "@/lib/plotlyChart";
+import { countAxis, getAppFontFamily, makeHoverTrace, monthAxis, percentAxis, PLOTLY_CONFIG, type PlotElement } from "@/lib/plotlyChart";
 import { loadPlotly } from "@/lib/plotlyLoader";
 
 const MONTHS = ["sty", "lut", "mar", "kwi", "maj", "cze", "lip", "sie", "wrz", "paź", "lis", "gru"];
@@ -154,7 +154,7 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
           return [...label, ...explain];
         })(),
         hoverlabel: { bgcolor: "#344054", font: { color: "#FFFFFF", size: 13 } },
-        xaxis: { type: "date", tickformat: "%m.%Y", dtick: "M3", gridcolor: "#EEF1F5" },
+        xaxis: { ...monthAxis(x.length), gridcolor: "#EEF1F5" },
         // Margines pod zerem i całkowita podziałka także przy bardzo małych liczbach (np. pojedyncze zgony).
         yaxis: { ...(percent ? percentAxis : countAxis)(ordered.flatMap((line) => series.get(line.key)!.points)), gridcolor: "#EEF1F5", zerolinecolor: "#D0D5DD" },
       }, PLOTLY_CONFIG);

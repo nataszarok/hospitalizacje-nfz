@@ -1,12 +1,21 @@
-import { readFile, stat } from "node:fs/promises";
+import { readdir, readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import { gunzipSync } from "node:zlib";
 
 const DIR = "public/data/hospitalizations";
 const MAX_PAGES_FILE_BYTES = 25 * 1024 * 1024;
 const E10 = "5.51.01.0005010";
-// Punkty kontrolne: E10 w danym roku (metoda min). Nowy rok? Dopisz wartości po sprawdzeniu źródła.
+// Punkty kontrolne: E10 w danym roku (metoda min), policzone niezależnie z pliku źródłowego (awk).
+// Każdy rok w index.json musi mieć punkt kontrolny.
+// 2017: do września E10 obejmowało więcej przypadków (zmiana katalogu JGP od października 2017 r.).
 const E10_CHECKS = {
+  "2017": { facilities: 140, hospitalizations: 20596 },
+  "2018": { facilities: 138, hospitalizations: 10431 },
+  "2019": { facilities: 139, hospitalizations: 10643 },
+  "2020": { facilities: 139, hospitalizations: 8062 },
+  "2021": { facilities: 141, hospitalizations: 8352 },
+  "2022": { facilities: 139, hospitalizations: 8612 },
+  "2023": { facilities: 142, hospitalizations: 8534 },
   "2024": { facilities: 142, hospitalizations: 8236 },
   "2025": { facilities: 143, hospitalizations: 8326 },
 };
@@ -44,6 +53,7 @@ for (const year of index.years) {
   }
 
   const check = E10_CHECKS[year];
+  if (!check) throw new Error(`${year}: no E10 checkpoint in E10_CHECKS (count E10 in the source file and add it).`);
   if (check && (e10Facilities.size !== check.facilities || e10Hospitalizations !== check.hospitalizations)) {
     throw new Error(`${year}: E10 verification failed: ${e10Facilities.size} facilities / ${e10Hospitalizations} hospitalizations.`);
   }
@@ -56,23 +66,33 @@ if (!trends.monthly?.length || !trends.regional?.length) throw new Error("trends
 
 console.log(`Trends OK: ${trends.monthly.length.toLocaleString("en-US")} monthly rows, ${(trendsSize / 1024).toFixed(0)} KiB.`);
 
-// Trend miesięczny według OW NFZ musi sumować się do trendu krajowego.
-const { size: regionalSize, data: regionalTrends } = await readGzipJson(path.join(DIR, "trends-regions.json.gz"));
-if (JSON.stringify(regionalTrends.years) !== JSON.stringify(index.years)) throw new Error("trends-regions.json.gz years differ from index.json.");
+// Trend miesięczny według OW NFZ (plik na każdy OW) musi sumować się do trendu krajowego.
+const regionalDir = path.join(DIR, "trends-regions");
+const regionalSums = new Map();
+let regionalSize = 0;
+let regionalRows = 0;
+const regionCodes = (await readdir(regionalDir)).filter((name) => name.endsWith(".json.gz")).sort();
+if (regionCodes.length !== 16) throw new Error(`trends-regions/ has ${regionCodes.length} files instead of 16.`);
+for (const name of regionCodes) {
+  const { size, data: regional } = await readGzipJson(path.join(regionalDir, name));
+  regionalSize += size;
+  if (regional.version !== 2 || `${regional.owNfz}.json.gz` !== name) throw new Error(`trends-regions/${name} has a wrong header.`);
+  if (JSON.stringify(regional.years) !== JSON.stringify(index.years)) throw new Error(`trends-regions/${name} years differ from index.json.`);
+  regionalRows += regional.rows.length;
+  for (const [year, month, product, group, hSim, hMin] of regional.rows) {
+    const key = `${year}|${month}|${product}|${group}`;
+    const sum = regionalSums.get(key) ?? [0, 0];
+    regionalSums.set(key, [sum[0] + hSim, sum[1] + hMin]);
+  }
+}
 const nationalSums = new Map();
 for (const [year, month, product, group, hSim, hMin] of trends.monthly) nationalSums.set(`${year}|${month}|${product}|${group}`, [hSim, hMin]);
-const regionalSums = new Map();
-for (const [year, month, , product, group, hSim, hMin] of regionalTrends.rows) {
-  const key = `${year}|${month}|${product}|${group}`;
-  const sum = regionalSums.get(key) ?? [0, 0];
-  regionalSums.set(key, [sum[0] + hSim, sum[1] + hMin]);
-}
-if (regionalSums.size !== nationalSums.size) throw new Error("trends-regions.json.gz covers different months or products than trends.json.gz.");
+if (regionalSums.size !== nationalSums.size) throw new Error("trends-regions/ covers different months or products than trends.json.gz.");
 for (const [key, [hSim, hMin]] of nationalSums) {
   const sum = regionalSums.get(key);
-  if (!sum || sum[0] !== hSim || sum[1] !== hMin) throw new Error(`trends-regions.json.gz does not add up to trends.json.gz for ${key}.`);
+  if (!sum || sum[0] !== hSim || sum[1] !== hMin) throw new Error(`trends-regions/ does not add up to trends.json.gz for ${key}.`);
 }
-console.log(`Regional trends OK: ${regionalTrends.rows.length.toLocaleString("en-US")} rows, ${(regionalSize / 1024).toFixed(0)} KiB.`);
+console.log(`Regional trends OK: ${regionCodes.length} files, ${regionalRows.toLocaleString("en-US")} rows, ${(regionalSize / 1024).toFixed(0)} KiB.`);
 console.log(`Hospitalization data OK: ${index.years.join(", ")}; ${((totalSize + trendsSize + regionalSize) / 1024 / 1024).toFixed(2)} MiB in total.`);
 
 // Pliki stron grup (scripts/build_jgp_pages.py, format v2): jeden na każdą grupę JGP z trendów,

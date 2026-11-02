@@ -41,17 +41,27 @@ export const latestDatasetFixture: StaticDataset = {
   ],
 };
 
-/** Trend miesięczny według OW NFZ; sumuje się do `trendsFixture.monthly`. */
-export const regionalTrendsFixture: RegionalTrendsDataset = {
-  version: 1,
-  years: ["2023", "2024", "2025"],
-  rows: [
-    ["2023", 1, "07", 0, "p", 10, 8, 1, 1],
-    ["2024", 1, "07", 0, "u", 4, 3, 1, 1],
-    ["2024", 1, "12", 0, "u", 2, 2, 1, 0],
-    ["2024", 2, "12", 0, "o", 3, 3, 0, 0],
-    ["2024", 1, "07", 1, "p", 4, 4, 0, 0],
-    ["2025", 1, "07", 0, "p", 12, 9, 0, 0],
-    ["2025", 3, "12", 2, "u", 2, 1, 1, 1],
-  ],
+/** Trend miesięczny według OW NFZ (plik na każdy OW); oba pliki razem sumują się do `trendsFixture.monthly`. */
+export const regionalTrendsFixtures: Record<string, RegionalTrendsDataset> = {
+  "07": {
+    version: 2,
+    years: ["2023", "2024", "2025"],
+    owNfz: "07",
+    rows: [
+      ["2023", 1, 0, "p", 10, 8, 1, 1],
+      ["2024", 1, 0, "u", 4, 3, 1, 1],
+      ["2024", 1, 1, "p", 4, 4, 0, 0],
+      ["2025", 1, 0, "p", 12, 9, 0, 0],
+    ],
+  },
+  "12": {
+    version: 2,
+    years: ["2023", "2024", "2025"],
+    owNfz: "12",
+    rows: [
+      ["2024", 1, 0, "u", 2, 2, 1, 0],
+      ["2024", 2, 0, "o", 3, 3, 0, 0],
+      ["2025", 3, 2, "u", 2, 1, 1, 1],
+    ],
+  },
 };

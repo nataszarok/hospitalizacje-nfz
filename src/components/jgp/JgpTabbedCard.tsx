@@ -290,6 +290,8 @@ function OverviewTab({ data, pool, linePool, map, regions, onToggleRegion, onYea
   </>;
 }
 
+const HEAT_SIDE_BY_SIDE_YEARS = 4;
+
 function RegionsSection({ data, pool, map, regions, onToggle, onYear, onRegionYear, onClear, onShowProviders }: {
   data: JgpPageData; pool: JgpProviderRow[]; map: RegionsMap | null; regions: string[]; onToggle: (ow: string) => void; onYear: (year: string) => void;
   onRegionYear: (ow: string, year: string) => void; onClear: () => void; onShowProviders: () => void;
@@ -336,7 +338,8 @@ function RegionsSection({ data, pool, map, regions, onToggle, onYear, onRegionYe
   const rows = [...data.regions].sort((a, b) => a.name.localeCompare(b.name, "pl"));
   return <section className={styles.sec} aria-labelledby="s-gdzie">
     <SectionHead id="s-gdzie" question="Gdzie?" context={`Szpitale w województwie na 100 tys. mieszkańców: mapa ${data.year}, mapa ciepła lat`} tag="Mapa: rok · tabela: lata" />
-    <div className={styles.geo}>
+    {/* Przy wielu latach mapa ciepła nie mieści się obok mapy: idzie pod mapę, na całą szerokość. */}
+    <div className={`${styles.geo} ${heat.length > HEAT_SIDE_BY_SIDE_YEARS ? styles.geoLong : ""}`}>
       <div className={styles.mapCol}>
         {map ? <RegionMap map={map} cells={cells} regions={regions} onToggle={onToggle} colors={REGION_PICK_COLORS} /> : null}
         <div className={base.scale}>

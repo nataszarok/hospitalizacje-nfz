@@ -25,7 +25,7 @@ describe("attachHoverMarker", () => {
   });
 });
 
-import { countAxis, percentAxis } from "@/lib/plotlyChart";
+import { countAxis, monthAxis, percentAxis } from "@/lib/plotlyChart";
 
 describe("countAxis — oś Y dla liczb", () => {
   it("małe liczby: podziałka co 1, margines pod zerem", () => {
@@ -59,5 +59,20 @@ describe("percentAxis — oś Y dla udziałów", () => {
     expect(percentAxis([1.2])).toMatchObject({ dtick: 0.5, tickformat: ",.1f" });
     expect(percentAxis([5.4])).toMatchObject({ dtick: 1, tickformat: ",.0f" });
     expect(percentAxis([40])).toMatchObject({ dtick: 10, tickformat: ",.0f" });
+  });
+});
+
+describe("monthAxis — oś X miesięcy", () => {
+  it("dla 2 lat podpisuje kwartały", () => {
+    expect(monthAxis(24)).toMatchObject({ dtick: "M3", tickformat: "%m.%Y" });
+  });
+
+  it("dla 4–6 lat podpisuje co pół roku", () => {
+    expect(monthAxis(48)).toMatchObject({ dtick: "M6" });
+    expect(monthAxis(72)).toMatchObject({ dtick: "M6" });
+  });
+
+  it("dla dłuższych zakresów podpisuje tylko lata", () => {
+    expect(monthAxis(108)).toMatchObject({ dtick: "M12", tickformat: "%Y" });
   });
 });
