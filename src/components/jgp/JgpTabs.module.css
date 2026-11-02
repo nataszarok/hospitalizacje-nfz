@@ -326,15 +326,6 @@
   text-transform: uppercase;
 }
 
-.callout {
-  margin: 0;
-  padding: 10px 14px;
-  border-left: 3px solid #d39a3a;
-  background: #fbf3e4;
-  color: #5c4310;
-  font-size: 13.5px;
-}
-
 .geo {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);

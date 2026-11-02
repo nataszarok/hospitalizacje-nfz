@@ -334,7 +334,6 @@ function RegionsSection({ data, pool, map, regions, onToggle, onYear, onRegionYe
   const rows = [...data.regions].sort((a, b) => a.name.localeCompare(b.name, "pl"));
   return <section className={styles.sec} aria-labelledby="s-gdzie">
     <SectionHead id="s-gdzie" question="Gdzie?" context={`Szpitale w województwie na 100 tys. mieszkańców: mapa ${data.year}, mapa ciepła lat`} tag="Mapa: rok · tabela: lata" />
-    <p className={styles.callout}><b>To podaż, nie potrzeby.</b> Województwo to oddział NFZ, z którym szpital ma umowę, a nie miejsce zamieszkania pacjenta. Wysoki wskaźnik znaczy: szpitale w tym województwie wykonują dużo tej grupy w stosunku do liczby mieszkańców. Część pacjentów może przyjeżdżać z innych województw.</p>
     <div className={styles.geo}>
       <div className={styles.mapCol}>
         {map ? <RegionMap map={map} cells={cells} regions={regions} onToggle={onToggle} colors={REGION_PICK_COLORS} /> : null}
