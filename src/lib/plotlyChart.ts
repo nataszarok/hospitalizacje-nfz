@@ -206,3 +206,14 @@ export function attachHoverMarker({
     hoverRestyleInProgress = false;
   });
 }
+
+/**
+ * Oś Y dla liczb (hospitalizacje, zgony): zakres z marginesem pod zerem (kropki na 0 nie są ucinane przez oś X)
+ * i całkowita podziałka przy małych wartościach (bez powtórzonych etykiet typu „0, 0, 1, 1” z kroku 0,2).
+ */
+export function countAxis(values: (number | null | undefined)[]) {
+  const max = Math.max(0, ...values.filter((value): value is number => typeof value === "number" && Number.isFinite(value)));
+  const top = max > 0 ? max * 1.1 : 1;
+  const dtick = top <= 5 ? 1 : top <= 10 ? 2 : undefined;
+  return { range: [-top * 0.06, Math.max(top, dtick ?? 0)], ...(dtick ? { dtick } : {}), tickformat: ",.0f" };
+}

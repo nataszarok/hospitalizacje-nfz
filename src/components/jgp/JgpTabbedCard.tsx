@@ -32,9 +32,10 @@ const TOP_LINES = 15;
 const SERVER_ROWS = 30;
 const subscribeNothing = () => () => {};
 // Kolory lejka: poza granicą 95% i 99,8% (w górę i w dół).
-// Kolory wybranych województw (mapa, wykresy punktowe, tabela): kontrastowe wobec niebieskiej skali mapy
-// i bez czerwieni ani pomarańczu, zarezerwowanych dla wybranego ośrodka (czerwona gwiazdka).
-const REGION_PICK_COLORS = ["#7656A8", "#2E7D5B", "#0F7C8C", "#B4366B", "#5B6B1F", "#3F51B5"];
+// Kolory wybranych województw (mapa, wykresy punktowe, tabela): kontrastowe wobec niebieskiej skali mapy,
+// bez czerwieni i pomarańczu (zarezerwowanych dla wybranego ośrodka). Sprawdzone walidatorem palety
+// (jasność, nasycenie, odstęp ΔE ≥ 15 przy normalnym widzeniu; dla daltonizmu dodatkowo podpisy w legendzie).
+const REGION_PICK_COLORS = ["#7B3FA0", "#1A9850", "#D6338A", "#B88A00", "#0097A7", "#9A5B13"];
 // Ośrodki spoza wybranych województw na wykresach „Jak leczą?”.
 const OTHER_POINT = "rgba(152, 162, 179, 0.5)";
 /** Kolor każdego wybranego województwa (kolejność wyboru), ten sam na mapie, wykresach i w tabeli. */
@@ -301,6 +302,28 @@ function RegionsSection({ data, pool, map, regions, onToggle, onYear, onRegionYe
   const position = (value: number, national: number) => value > 0 && national > 0 ? Math.max(-1, Math.min(1, Math.log2(value / national))) : -1;
   const first = heat[0];
   const last = heat.at(-1);
+  // Położenie tła kolumny wybranego roku: od nagłówka roku do komórki w ostatnim wierszu (mierzone po narysowaniu i przy zmianie rozmiaru).
+  const heatRef = useRef<HTMLTableElement>(null);
+  const [band, setBand] = useState<{ left: number; top: number; width: number; height: number } | null>(null);
+  useLayoutEffect(() => {
+    const table = heatRef.current;
+    if (!table) return;
+    const measure = () => {
+      const cells = table.querySelectorAll<HTMLElement>(`[data-year="${data.year}"]`);
+      const first = cells[0];
+      const last = cells[cells.length - 1];
+      if (!first || !last) { setBand(null); return; }
+      const box = table.getBoundingClientRect();
+      const a = first.getBoundingClientRect();
+      const b = last.getBoundingClientRect();
+      setBand({ left: a.left - box.left + table.offsetLeft, top: a.top - box.top + table.offsetTop, width: a.width, height: b.bottom - a.top });
+    };
+    measure();
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(measure);
+    observer.observe(table);
+    return () => observer.disconnect();
+  }, [data.year, data.regions]);
   // Wiersze alfabetycznie (łatwiej znaleźć województwo); kolor pokazuje kolejność.
   const rows = [...data.regions].sort((a, b) => a.name.localeCompare(b.name, "pl"));
   return <section className={styles.sec} aria-labelledby="s-gdzie">
@@ -327,10 +350,12 @@ function RegionsSection({ data, pool, map, regions, onToggle, onYear, onRegionYe
         </div>
       </div>
       <div className={styles.heatWrap} role="region" aria-label="Mapa ciepła: województwa w latach" tabIndex={0}>
-        <table className={styles.heat}>
+        {/* Jedno tło całej kolumny wybranego roku (od nagłówka do ostatniego wiersza), jak „wybrany rok” na wykresie liniowym. */}
+        {band ? <div className={styles.heatBand} style={band} aria-hidden /> : null}
+        <table ref={heatRef} className={styles.heat}>
           <thead><tr>
             <th>Województwo</th>
-            {heat.map((year) => <th key={year.year} className={base.num}>
+            {heat.map((year) => <th key={year.year} className={base.num} data-year={year.year}>
               <button type="button" className={`${styles.yearHead} ${year.year === data.year ? styles.heatOn : ""}`} aria-pressed={year.year === data.year} onClick={() => onYear(year.year)} title={`Pokaż mapę za ${year.year} r.`}>{year.year}</button>
             </th>)}
             {heat.length > 1 ? <th className={base.num}>{first?.year.slice(2)}→{last?.year.slice(2)}</th> : null}
@@ -345,7 +370,7 @@ function RegionsSection({ data, pool, map, regions, onToggle, onYear, onRegionYe
                 {heat.map((year) => {
                   const value = year.values.get(row.owNfz) ?? 0;
                   const pos = position(value, year.national);
-                  return <td key={year.year} className={`${styles.heatCell} ${year.year === data.year ? styles.heatCellOn : ""}`} style={{ background: scaleColor(pos), color: pos > 0.15 ? "#fff" : "#172033" }}>
+                  return <td key={year.year} data-year={year.year} className={styles.heatCell} style={{ background: scaleColor(pos), color: pos > 0.15 ? "#fff" : "#172033" }}>
                     <button type="button" className={styles.heatButton} onClick={() => onRegionYear(row.owNfz, year.year)} title={`${names.get(row.owNfz)} ${year.year}: ${decimal(value)} na 100 tys. — kliknij, żeby pokazać ten rok i województwo`}>{decimal(value)}</button>
                   </td>;
                 })}

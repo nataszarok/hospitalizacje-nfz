@@ -24,3 +24,24 @@ describe("attachHoverMarker", () => {
     expect(Plotly.restyle).toHaveBeenLastCalledWith(plot, { x: [[1]], y: [[2]], "marker.symbol": ["circle"], "marker.size": [13] }, [2]);
   });
 });
+
+import { countAxis } from "@/lib/plotlyChart";
+
+describe("countAxis — oś Y dla liczb", () => {
+  it("małe liczby: podziałka co 1, margines pod zerem", () => {
+    const axis = countAxis([0, 0, 1, 0, null]);
+    expect(axis.dtick).toBe(1);
+    expect(axis.range[0]).toBeLessThan(0);
+    expect(axis.range[1]).toBeGreaterThanOrEqual(1);
+  });
+
+  it("same zera: oś do 1 zamiast zakresu 0–0", () => {
+    expect(countAxis([0, 0, 0]).range[1]).toBe(1);
+  });
+
+  it("do 10: podziałka co 2; większe liczby: podziałka automatyczna", () => {
+    expect(countAxis([3, 8]).dtick).toBe(2);
+    expect(countAxis([120, 880])).not.toHaveProperty("dtick");
+    expect(countAxis([120, 880]).range[1]).toBeCloseTo(968);
+  });
+});

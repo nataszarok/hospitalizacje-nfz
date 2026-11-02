@@ -2,14 +2,14 @@
 
 import { useEffect, useRef } from "react";
 import { movingAverage } from "@/lib/jgpCard";
-import { getAppFontFamily, makeHoverTrace, PLOTLY_CONFIG, type PlotElement } from "@/lib/plotlyChart";
+import { countAxis, getAppFontFamily, makeHoverTrace, PLOTLY_CONFIG, type PlotElement } from "@/lib/plotlyChart";
 import { loadPlotly } from "@/lib/plotlyLoader";
 
 const MONTHS = ["sty", "lut", "mar", "kwi", "maj", "cze", "lip", "sie", "wrz", "paź", "lis", "gru"];
 const BASE = "#98A2B3";
 const PRIMARY = "#2856A3";
 const SELECTED = "#C65D2E";
-// Tło wybranego roku (jak „wybrany rok” w makietach karty).
+// Tło wybranego roku (jak „wybrany rok” w makietach karty); to samo tło ma kolumna roku w mapie ciepła (.heatBand).
 const YEAR_BAND = "rgba(31, 138, 112, 0.10)";
 
 export interface ChartLine {
@@ -133,7 +133,8 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
         })(),
         hoverlabel: { bgcolor: "#344054", font: { color: "#FFFFFF", size: 13 } },
         xaxis: { type: "date", tickformat: "%m.%Y", dtick: "M3", gridcolor: "#EEF1F5" },
-        yaxis: { rangemode: "tozero", gridcolor: "#EEF1F5", zerolinecolor: "#D0D5DD", tickformat: ",.0f" },
+        // Margines pod zerem i całkowita podziałka także przy bardzo małych liczbach (np. pojedyncze zgony).
+        yaxis: { ...countAxis(ordered.flatMap((line) => line.values)), gridcolor: "#EEF1F5", zerolinecolor: "#D0D5DD" },
       }, PLOTLY_CONFIG);
       if (cancelled) return;
       const overlay = [overlayStart, overlayStart + 1, overlayStart + 2];

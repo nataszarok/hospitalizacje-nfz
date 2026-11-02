@@ -131,7 +131,7 @@ describe("Karta w zakładkach — Ośrodki", () => {
     open("?widok=osrodki&ow=07");
     renderCard();
     const urgent = screen.getByRole("group", { name: /udział przyjęć nagłych/ });
-    expect(within(urgent).getByText("Szpital Alfa")).toHaveAttribute("data-color", "#7656A8");
+    expect(within(urgent).getByText("Szpital Alfa")).toHaveAttribute("data-color", "#7B3FA0");
     expect(within(urgent).getByText("Szpital Beta").getAttribute("data-color")).toMatch(/^rgba\(152/);
     expect(screen.getByRole("list", { name: "Legenda województw" })).toHaveTextContent("mazowieckiepozostałe ośrodki");
   });
@@ -209,7 +209,7 @@ describe("Karta w zakładkach — wybrany ośrodek przy wybranych województwach
     expect(screen.getByRole("list", { name: "Legenda województw" })).toHaveTextContent("★wybrany ośrodek: Szpital Alfa");
     const urgent = screen.getByRole("group", { name: /udział przyjęć nagłych/ });
     expect(within(urgent).getByText("Szpital Alfa")).toHaveAttribute("data-label", "");
-    expect(within(urgent).getByText("Szpital Beta")).toHaveAttribute("data-color", "#2E7D5B");
+    expect(within(urgent).getByText("Szpital Beta")).toHaveAttribute("data-color", "#1A9850");
     const lines = screen.getByRole("list", { name: "Linie wykresu" });
     expect(lines.querySelector('[data-tone="selected"]')).toHaveTextContent("Szpital Alfa");
   });
