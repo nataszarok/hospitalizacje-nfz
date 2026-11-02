@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-type IconName = "heart" | "bed" | "hospital" | "compare" | "arrow" | "book" | "database" | "calendar" | "shield" | "menu" | "close" | "external" | "chart" | "chevron";
+type IconName = "heart" | "bed" | "hospital" | "compare" | "arrow" | "book" | "database" | "calendar" | "shield" | "menu" | "close" | "external" | "chart" | "chevron" | "search";
 
 const paths: Record<IconName, ReactNode> = {
   heart: <><path d="M20.8 4.8a5.4 5.4 0 0 0-7.6 0L12 6l-1.2-1.2a5.4 5.4 0 0 0-7.6 7.6L12 21l8.8-8.6a5.4 5.4 0 0 0 0-7.6Z"/><path d="M3 12h5l2-3 3.2 6 1.8-3H21"/></>,
@@ -17,6 +17,7 @@ const paths: Record<IconName, ReactNode> = {
   external: <><path d="M14 4h6v6M20 4 10 14M20 13v6a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h6"/></>,
   chart: <><path d="M3 3v18h18M6 16l5-6 4 3 5-7"/></>,
   chevron: <><path d="m9 18 6-6-6-6"/></>,
+  search: <><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></>,
 };
 
 export function PortalIcon({ name, size = 24, className }: { name: IconName; size?: number; className?: string }) {

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { HomePage } from "@/components/portal/HomePage";
 import { SITE_NAME } from "@/lib/site";
 import { datasetHighlights } from "@/lib/staticData";
-import { readStaticDatasetFromDisk } from "@/lib/staticDataServer";
+import { readAllStaticDatasetsFromDisk } from "@/lib/staticDataServer";
 
 export const metadata: Metadata = {
   title: `${SITE_NAME} | Hospitalizacje, szpitale publiczne, wyceny JGP`,
@@ -10,5 +10,5 @@ export const metadata: Metadata = {
 };
 
 export default async function Home() {
-  return <HomePage highlights={datasetHighlights(await readStaticDatasetFromDisk())} />;
+  return <HomePage highlights={datasetHighlights(await readAllStaticDatasetsFromDisk())} />;
 }

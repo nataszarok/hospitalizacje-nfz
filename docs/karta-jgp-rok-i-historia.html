@@ -1,0 +1,681 @@
+<!doctype html>
+<html lang="pl">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Karta JGP: rok i historia</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Układ: dokument propozycji w jednej kolumnie (~1040 px): dwa poziomy karty → rok i historia → interaktywna makieta z dwiema zakładkami → tabela sekcji → szczegóły → decyzje. Te same tokeny co dokument przebudowy. */
+:root {
+  --bg: #ffffff; --surface: #f5f8f7; --panel: #ffffff;
+  --ink: #172033; --ink-2: #475467; --ink-3: #667085; --line: #e2e8e6;
+  --brand: #087f75; --brand-soft: #e6f3f1; --on-brand: #ffffff;
+  --chart: #2856a3; --chart-soft: rgba(40, 86, 163, 0.10); --chart-2: #c65d2e;
+  --year: #087f75; --year-band: rgba(8, 127, 117, 0.10);
+  --rem: #b54708; --rem-bg: #fef3e2;
+  --fam-1: #2856a3; --fam-2: #5b84c9; --fam-3: #93b0e0; --fam-4: #c7d6f0;
+  --font: "Inter", ui-sans-serif, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1716; --surface: #15201e; --panel: #1a2624; --ink: #e8eeec; --ink-2: #b5c2be; --ink-3: #8b9a96; --line: #2a3936;
+    --brand: #4cc2b2; --brand-soft: #18322e; --on-brand: #0f1716; --chart: #7ea3e6; --chart-soft: rgba(126, 163, 230, 0.14); --chart-2: #e8895c;
+    --year: #4cc2b2; --year-band: rgba(76, 194, 178, 0.13); --rem: #f0b46a; --rem-bg: #3a2a14;
+    --fam-1: #7ea3e6; --fam-2: #5b84c9; --fam-3: #3f69ad; --fam-4: #2c4b7d; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1716; --surface: #15201e; --panel: #1a2624; --ink: #e8eeec; --ink-2: #b5c2be; --ink-3: #8b9a96; --line: #2a3936;
+  --brand: #4cc2b2; --brand-soft: #18322e; --on-brand: #0f1716; --chart: #7ea3e6; --chart-soft: rgba(126, 163, 230, 0.14); --chart-2: #e8895c;
+  --year: #4cc2b2; --year-band: rgba(76, 194, 178, 0.13); --rem: #f0b46a; --rem-bg: #3a2a14;
+  --fam-1: #7ea3e6; --fam-2: #5b84c9; --fam-3: #3f69ad; --fam-4: #2c4b7d; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 15px; line-height: 1.6; }
+.wrap { max-width: 1040px; margin: 0 auto; padding-block: 40px 80px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 56px; }
+h1, h2, h3 { text-wrap: balance; margin: 0; line-height: 1.25; }
+h1 { font-size: clamp(28px, 4vw, 38px); font-weight: 700; letter-spacing: -0.02em; }
+h2 { font-size: 23px; font-weight: 650; letter-spacing: -0.01em; }
+h3 { font-size: 16px; font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+code { font-family: var(--mono); font-size: 0.88em; background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; }
+.kicker { font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--brand); }
+.head { display: grid; gap: 12px; }
+.lead { font-size: 17px; color: var(--ink-2); }
+.badge { justify-self: start; font-size: 12px; font-weight: 600; color: var(--rem); background: var(--rem-bg); border-radius: 999px; padding: 3px 12px; }
+section { display: grid; gap: 18px; }
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+.box { border: 1px solid var(--line); border-radius: 12px; background: var(--panel); padding: 18px 20px; display: grid; gap: 10px; align-content: start; }
+.box p, .box li { font-size: 14px; color: var(--ink-2); }
+.box ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.box .who { font-size: 13px; color: var(--ink-3); }
+.tag { justify-self: start; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; border-radius: 6px; padding: 2px 8px; white-space: nowrap; }
+.tag.y { color: var(--brand); background: var(--brand-soft); }
+.tag.h { color: var(--chart); background: var(--chart-soft); }
+.tag.t { color: var(--ink-2); background: var(--surface); border: 1px solid var(--line); }
+.steps { margin: 0; padding: 0; list-style: none; display: grid; gap: 12px; counter-reset: s; }
+.steps li { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 12px; font-size: 14.5px; }
+.steps li::before { counter-increment: s; content: counter(s); width: 24px; height: 24px; border-radius: 50%; background: var(--brand-soft); color: var(--brand); font-weight: 700; font-size: 12px; display: grid; place-items: center; }
+.steps b { font-weight: 600; }
+.scroll-x { overflow-x: auto; }
+table.doc { border-collapse: collapse; width: 100%; font-size: 14px; min-width: 680px; }
+table.doc th { text-align: left; font-size: 12px; font-weight: 600; color: var(--ink-3); border-bottom: 1px solid var(--line); padding: 8px 10px; }
+table.doc td { border-bottom: 1px solid var(--line); padding: 10px; vertical-align: top; color: var(--ink-2); }
+table.doc td:first-child { color: var(--ink); font-weight: 600; white-space: nowrap; }
+table.doc tr.group td { background: var(--surface); color: var(--ink); font-weight: 650; font-size: 13px; }
+
+/* Makieta karty */
+.mock { border: 1px solid var(--line); border-radius: 14px; background: var(--surface); overflow: hidden; }
+.mock-bar { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--line); background: var(--panel); }
+.mock-bar i { width: 9px; height: 9px; border-radius: 50%; background: var(--line); }
+.mock-bar .url { margin-left: 6px; font-family: var(--mono); font-size: 12px; color: var(--ink-3); background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 2px 10px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.card-head { background: var(--panel); padding: 18px 18px 0; display: grid; gap: 14px; }
+.tabbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; padding: 0 18px; background: var(--panel); border-bottom: 1px solid var(--line); }
+.tabbar .yearpick { padding-block: 6px; }
+.crumbs { font-size: 12.5px; color: var(--ink-3); }
+.title-row { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: baseline; }
+.title-row h3 { font-size: 20px; font-weight: 700; }
+.title-row .fam { font-size: 12.5px; color: var(--chart); }
+.context { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; justify-content: space-between; }
+.yearpick, .areapick { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.yearpick span, .areapick > span { font-size: 12px; color: var(--ink-3); margin-right: 2px; }
+.yearpick button { font: inherit; font-size: 12.5px; font-variant-numeric: tabular-nums; border: 1px solid var(--line); background: var(--panel); color: var(--ink-2); border-radius: 999px; padding: 2px 10px; cursor: pointer; }
+.yearpick button[aria-pressed="true"] { background: var(--brand); border-color: var(--brand); color: var(--on-brand); font-weight: 600; }
+.area-chip { font: inherit; font-size: 12.5px; border: 1px solid var(--chart-2); color: var(--chart-2); background: var(--panel); border-radius: 999px; padding: 2px 10px; cursor: pointer; }
+.area-none { font-size: 12.5px; color: var(--ink-2); }
+.tabs { display: flex; gap: 4px; margin-bottom: -1px; }
+.tabs button { font: inherit; font-size: 14px; font-weight: 600; color: var(--ink-2); background: none; border: 1px solid transparent; border-bottom: 2px solid transparent; padding: 8px 14px; cursor: pointer; border-radius: 8px 8px 0 0; }
+.tabs button[aria-selected="true"] { color: var(--brand); border-bottom-color: var(--brand); }
+.tabs button small { font-weight: 500; color: var(--ink-3); margin-left: 6px; }
+button:focus-visible, .hm td:focus-visible, .rank tr:focus-visible, .link:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+.card-body { padding: 20px 18px 26px; display: grid; gap: 18px; }
+.sec { border: 1px solid var(--line); border-radius: 12px; background: var(--panel); padding: 16px 18px; display: grid; gap: 12px; min-width: 0; }
+.sec-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px 12px; flex-wrap: wrap; }
+.sec-head h4 { margin: 0; font-size: 15.5px; font-weight: 600; }
+.sec-head h4 em { font-style: normal; color: var(--brand); font-variant-numeric: tabular-nums; }
+.note { font-size: 12.5px; color: var(--ink-3); }
+.link { font: inherit; font-size: 13px; color: var(--brand); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; justify-self: start; }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; padding-bottom: 14px; }
+.kpi { border: 1px solid var(--line); border-radius: 10px; background: var(--panel); padding: 10px 14px; display: grid; gap: 2px; }
+.kpi dt { font-size: 12px; color: var(--ink-3); }
+.kpi dd { margin: 0; font-size: 21px; font-weight: 650; font-variant-numeric: tabular-nums; }
+.kpi .sub { font-size: 12px; color: var(--ink-2); display: flex; justify-content: space-between; align-items: center; gap: 8px; font-variant-numeric: tabular-nums; }
+.kpi svg { width: 64px; height: 20px; }
+.up { color: var(--brand); } .down { color: var(--chart-2); }
+svg text { font-family: var(--font); }
+.geo { display: grid; grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr); gap: 20px; align-items: start; }
+.hm { border-collapse: collapse; width: 100%; table-layout: fixed; font-variant-numeric: tabular-nums; }
+.hm td { text-align: center; font-size: 11px; padding: 5px 0; border: 2px solid var(--panel); cursor: pointer; }
+.hm th { font-size: 11px; font-weight: 400; color: var(--ink-3); padding-bottom: 4px; }
+.hm th.on { color: var(--year); font-weight: 700; }
+.hm td.name { text-align: left; font-size: 12px; color: var(--ink); padding-right: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hm tr.sel td.name { color: var(--chart-2); font-weight: 600; }
+.hm td.ch { font-size: 11px; text-align: right; color: var(--ink-2); cursor: default; }
+.rank { border-collapse: collapse; width: 100%; font-size: 13px; font-variant-numeric: tabular-nums; min-width: 600px; }
+.who-where { display: grid; grid-template-columns: minmax(240px, 0.7fr) minmax(0, 1.6fr); gap: 18px; align-items: start; }
+.citymap { display: grid; gap: 6px; position: sticky; top: 64px; }
+.rank tr.hov td { background: var(--surface); }
+@media (max-width: 820px) { .who-where { grid-template-columns: minmax(0, 1fr); } .citymap { position: static; } }
+.rank th { text-align: left; font-size: 11.5px; font-weight: 600; color: var(--ink-3); padding: 6px 8px; border-bottom: 1px solid var(--line); }
+.rank td { padding: 7px 8px; border-bottom: 1px solid var(--line); }
+.rank tbody tr { cursor: pointer; }
+.rank tbody tr:hover td { background: var(--surface); }
+.rank tr.sel td { background: var(--rem-bg); }
+.rank .num { text-align: right; }
+.rank th.on { color: var(--year); }
+.rank svg { width: 110px; height: 26px; display: block; }
+.adm { border-collapse: collapse; width: 100%; font-size: 13px; font-variant-numeric: tabular-nums; }
+.adm td, .adm th { padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: right; }
+.adm th { font-size: 11.5px; font-weight: 600; color: var(--ink-3); }
+.adm td:first-child, .adm th:first-child { text-align: left; }
+.adm tr.on td { background: var(--year-band); font-weight: 600; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12px; color: var(--ink-2); align-items: center; }
+.legend i { display: inline-block; width: 12px; height: 3px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
+.chips-legend { display: flex; flex-wrap: wrap; gap: 8px; font-size: 12px; }
+.famstack { display: flex; height: 28px; border-radius: 6px; overflow: hidden; gap: 2px; }
+.famstack span { display: grid; place-items: center; font-size: 11.5px; font-weight: 600; color: #ffffff; }
+.famstack span.light { color: #172033; }
+.conc { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.focus { border: 1px solid var(--chart-2); border-radius: 12px; background: var(--panel); padding: 14px 18px; display: grid; gap: 10px; }
+.focus .cmp { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.focus .cmp div { display: grid; gap: 2px; font-variant-numeric: tabular-nums; }
+.focus .cmp dt { font-size: 12px; color: var(--ink-3); }
+.focus .cmp dd { margin: 0; font-size: 17px; font-weight: 650; }
+.focus .cmp span { font-size: 12px; color: var(--ink-2); }
+.tree { display: grid; gap: 8px; font-size: 14px; }
+.tree .row { display: grid; grid-template-columns: 160px minmax(0, 1fr); gap: 12px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
+.tree .row b { font-weight: 650; }
+.tree .row code { justify-self: start; }
+.tree .row span { color: var(--ink-2); }
+@media (max-width: 720px) {
+  .geo { grid-template-columns: minmax(0, 1fr); }
+  .tree .row { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+
+<header class="head">
+  <span class="kicker">Propozycja · karta grupy JGP <code>/jgp/[kod]</code></span>
+  <h1>Karta JGP: dwa poziomy, jeden rok, cała historia</h1>
+  <p class="lead">Karta grupy miesza dziś dwa poziomy: obraz grupy w systemie i obraz ośrodków, które ją realizują. Pokazuje też tylko jeden rok, a dane mają kilka lat. Ten dokument proponuje nowy układ: dwie zakładki ze wspólnym wyborem roku i obszaru.</p>
+  <span class="badge">Propozycja do decyzji, nie plan wdrożenia</span>
+</header>
+
+<section aria-labelledby="poziomy">
+  <span class="kicker">1 · Dwa poziomy</span>
+  <h2 id="poziomy">Karta odpowiada na dwa różne pytania</h2>
+  <div class="two">
+    <div class="box">
+      <span class="tag t">Zakładka „Przegląd”</span>
+      <h3>Jak ta grupa wygląda w systemie?</h3>
+      <p class="who">Poziom grupy: kraj i województwa. Czyta np. dziennikarz, decydent, osoba z NFZ.</p>
+      <ul><li>liczba hospitalizacji, trend, sezonowość</li><li>województwa: mapa roku i heatmapa lat</li><li>tryb przyjęcia i śmiertelność w kraju</li><li>wycena i rozliczenia NFZ</li><li>rodzina grup</li></ul>
+    </div>
+    <div class="box">
+      <span class="tag t">Zakładka „Ośrodki”</span>
+      <h3>Kto ją realizuje i jak?</h3>
+      <p class="who">Poziom placówek. Czyta np. analityk, dyrektor szpitala, osoba porównująca szpitale.</p>
+      <ul><li>ośrodki w czasie</li><li>ranking z koncentracją i mini-trendem, obok mapa miast z ośrodkami</li><li>jak leczy: wolumen a śmiertelność, tryb w ośrodkach</li><li>wybrany szpital na tle grupy albo podobnych (panel na górze, tylko po wyborze)</li><li>później: publiczni i prywatni</li></ul>
+    </div>
+  </div>
+  <div class="tree" aria-label="Wspólny nagłówek i dwie zakładki">
+    <div class="row"><b>Wspólny nagłówek</b><span>kod, nazwa, rodzina, pasek liczb kraju, wybór roku, filtr obszaru. Rok i obszar działają w obu zakładkach.</span></div>
+    <div class="row"><code>/jgp/E10</code><span>zakładka „Przegląd” (domyślna)</span></div>
+    <div class="row"><code>?widok=osrodki</code><span>zakładka „Ośrodki”</span></div>
+    <div class="row"><code>?osrodek=OW|NIP</code><span>zawsze otwiera „Ośrodki” z wybranym szpitalem</span></div>
+    <div class="row"><code>?rok=2024&amp;ow=04</code><span>rok i obszar; łączą się z każdym z powyższych</span></div>
+  </div>
+  <div class="box">
+    <h3>Kolejność w zakładce „Ośrodki”: jak „Przegląd”, najpierw czas</h3>
+    <ul>
+      <li><b>Wybrany ośrodek</b> na górze, tylko gdy jest wybrany (kliknięcie albo link z karty szpitala). Bez wyboru nie ma pustego panelu.</li>
+      <li><b>Ośrodki w czasie</b>: pierwsza sekcja, tak jak „W czasie” w „Przeglądzie”. Obie zakładki zaczynają się od wykresu w czasie.</li>
+      <li><b>Kto leczy</b>: ranking z koncentracją nad tabelą i mapą miast obok. Koncentracja to podsumowanie rankingu. Mapa pokazuje, gdzie są ośrodki.</li>
+      <li><b>Wolumen a śmiertelność, tryb w ośrodkach</b>: jak ośrodki leczą. To analiza dla osób, które już wiedzą, kogo szukają.</li>
+    </ul>
+  </div>
+  <ol class="steps">
+    <li><span><b>Przejścia między zakładkami.</b> Województwo wybrane w „Przeglądzie” daje link „Ośrodki w tym województwie”. Link przełącza zakładkę i ustawia filtr obszaru.</span></li>
+    <li><span><b>Wyjście do karty szpitala.</b> Wiersz rankingu wybiera szpital na karcie. Panel wybranego szpitala ma link do jego karty.</span></li>
+    <li><span><b>Granica z kartą szpitala.</b> Szczegóły „szpital × grupa” (oddziały, kwoty szpitala) są na karcie szpitala (etap 4). Zakładka „Ośrodki” pokazuje szpital tylko na tle innych. Karta szpitala ma link do „Ośrodków” z tym szpitalem wybranym.</span></li>
+  </ol>
+</section>
+
+<section aria-labelledby="mapy">
+  <span class="kicker">2 · Dwie mapy</span>
+  <h2 id="mapy">Mapa w każdej zakładce, każda do innego pytania</h2>
+  <div class="scroll-x">
+    <table class="doc">
+      <thead><tr><th></th><th>„Przegląd”: mapa województw</th><th>„Ośrodki”: mapa miast</th></tr></thead>
+      <tbody>
+        <tr><td>Pytanie</td><td>ile hospitalizacji przypada na mieszkańca?</td><td>gdzie są ośrodki i jak są duże?</td></tr>
+        <tr><td>Znak</td><td>kolor województwa: % średniej Polski</td><td>kółko miasta: pole = liczba hospitalizacji</td></tr>
+        <tr><td>Pokazuje</td><td>dostępność względem ludności; historia w heatmapie</td><td>rozmieszczenie, białe plamy, skupienie w dużych miastach</td></tr>
+        <tr><td>Kliknięcie</td><td>ustawia filtr obszaru dla całej karty</td><td>wybiera ośrodek (przy kilku ośrodkach w mieście: lista)</td></tr>
+        <tr><td>Rok</td><td>kolory wybranego roku</td><td>wielkość kółek w wybranym roku; widać ośrodki, które zniknęły albo powstały</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section aria-labelledby="zasada">
+  <span class="kicker">3 · Rok i historia</span>
+  <h2 id="zasada">W każdej zakładce: sekcje roku i sekcje lat</h2>
+  <div class="two">
+    <div class="box">
+      <span class="tag y">Rok</span>
+      <h3>„Jak jest?”</h3>
+      <p>Sekcja pokazuje wybrany rok. Zmiana roku zmienia jej treść: pasek liczb, mapa, koncentracja, ranking, wykresy punktowe.</p>
+    </div>
+    <div class="box">
+      <span class="tag h">Lata</span>
+      <h3>„Jak się zmienia?”</h3>
+      <p>Sekcja zawsze pokazuje wszystkie lata. Wybrany rok jest tylko wyróżniony: „W czasie”, heatmapa, tryb przyjęcia, śmiertelność, rozliczenia, ośrodki w czasie.</p>
+    </div>
+  </div>
+  <ol class="steps">
+    <li><span><b>Jeden wybór roku dla całej karty.</b> Chipy z latami są w pasku zakładek, po prawej. Pasek zostaje na górze ekranu przy przewijaniu, więc rok i zakładka są zawsze pod ręką. Domyślnie wybrany jest najnowszy rok.</span></li>
+    <li><span><b>Bez paska skrótów do sekcji.</b> Każda zakładka ma 4–6 sekcji i mieści się w kilku ekranach. Drugi pasek pod zakładkami wyglądał jak drugi poziom zakładek i powtarzał nagłówki sekcji.</span></li>
+    <li><span><b>Historia nigdy nie znika.</b> Zmiana roku nie ukrywa sekcji „Lata”. Przesuwa tylko wyróżnienie.</span></li>
+    <li><span><b>Mini-trend przy każdym wierszu roku.</b> Ranking ma mały wykres wszystkich lat dla każdego ośrodka, tak jak heatmapa dla województw.</span></li>
+  </ol>
+</section>
+
+<section aria-labelledby="makieta">
+  <span class="kicker">4 · Makieta</span>
+  <h2 id="makieta">Karta po zmianie</h2>
+  <p>Makieta działa. Przełącz zakładkę i rok. Kliknij województwo, komórkę heatmapy albo wiersz rankingu. Dane są przykładowe (lata 2019–2025, rząd wielkości jak w grupie E10), nazwy ośrodków są zmyślone.</p>
+
+  <div class="mock">
+    <div class="mock-bar"><i></i><i></i><i></i><span class="url" id="url">/jgp/E10</span></div>
+    <div class="card-head">
+      <div class="crumbs">Grupy JGP › E10</div>
+      <div class="title-row"><h3>E10 · OZW – diagnostyka inwazyjna</h3><span class="fam">Rodzina OZW: E10, E11, E15, E16</span></div>
+      <div class="areapick"><span>Obszar</span><span id="area"></span></div>
+      <dl class="kpis" id="kpis"></dl>
+    </div>
+    <div class="tabbar">
+      <div class="tabs" role="tablist" aria-label="Zakładki karty">
+        <button type="button" role="tab" id="tab-przeglad" aria-controls="panel-przeglad">Przegląd<small>grupa w systemie</small></button>
+        <button type="button" role="tab" id="tab-osrodki" aria-controls="panel-osrodki">Ośrodki<small id="tab-count"></small></button>
+      </div>
+      <div class="yearpick" id="yearpick" role="group" aria-label="Rok karty"><span>Rok</span></div>
+    </div>
+
+    <div class="card-body" id="panel-przeglad" role="tabpanel" aria-labelledby="tab-przeglad">
+      <div class="sec">
+        <div class="sec-head"><h4>W czasie · wszystkie lata</h4><span class="tag h">Lata</span></div>
+        <div class="legend"><span><i style="background:var(--chart)"></i><span id="trend-label">kraj</span>: hospitalizacje miesięcznie (średnia 3M)</span><span><i style="background:var(--year-band);height:10px;width:14px"></i>wybrany rok</span></div>
+        <div class="scroll-x"><svg id="trend" viewBox="0 0 960 230" style="width:100%;min-width:560px;height:auto" role="img" aria-label="Hospitalizacje miesięcznie we wszystkich latach, wybrany rok wyróżniony tłem"></svg></div>
+      </div>
+
+      <div class="sec">
+        <div class="sec-head"><h4>Gdzie · mapa <em class="yr"></em> i historia województw</h4><span class="chips-legend"><span class="tag y">Mapa: rok</span><span class="tag h">Heatmapa: lata</span></span></div>
+        <div class="geo">
+          <div style="display:grid;gap:6px">
+            <svg id="map" viewBox="0 0 200 190" width="100%" role="img" aria-label="Mapa województw w wybranym roku"></svg>
+            <div id="maplegend" style="font-size:11px;color:var(--ink-3);display:flex;align-items:center;gap:4px;flex-wrap:wrap"></div>
+            <div id="mapinfo" style="font-size:12.5px;color:var(--ink-2)"></div>
+            <button type="button" class="link" id="to-providers"></button>
+          </div>
+          <div style="min-width:0"><table class="hm" id="hm"></table></div>
+        </div>
+        <p class="note">Liczba i kolor: wskaźnik na 100 tys. mieszkańców jako % średniej Polski w danym roku (½×–2×, obecna niebieska skala). Kliknięcie województwa ustawia filtr obszaru dla całej karty.</p>
+      </div>
+
+      <div class="two">
+        <div class="sec">
+          <div class="sec-head"><h4>Tryb przyjęcia · wszystkie lata</h4><span class="tag h">Lata</span></div>
+          <table class="adm" id="adm"></table>
+        </div>
+        <div class="sec">
+          <div class="sec-head"><h4>Śmiertelność w kraju · wszystkie lata</h4><span class="tag h">Lata</span></div>
+          <svg id="mort" viewBox="0 0 440 190" width="100%" role="img" aria-label="Śmiertelność w kraju w latach, wybrany rok wyróżniony"></svg>
+        </div>
+      </div>
+
+      <div class="two">
+        <div class="sec">
+          <div class="sec-head"><h4>Wycena i kwota świadczeń · wszystkie lata</h4><span class="tag h">Lata</span></div>
+          <dl class="conc" id="value-facts"></dl>
+          <svg id="pln" viewBox="0 0 440 190" width="100%" role="img" aria-label="Kwota świadczeń NFZ w milionach złotych w latach, wybrany rok wyróżniony"></svg>
+          <p class="note">Słupki: kwota świadczeń rozliczonych przez NFZ w mln zł (dane E10 z pliku rozliczeń). Wycena: katalog 2025; przy katalogach z wielu lat dojdzie wycena w latach.</p>
+        </div>
+        <div class="sec">
+          <div class="sec-head"><h4>Rodzina OZW · <em class="yr"></em></h4><span class="tag y">Rok</span></div>
+          <div class="famstack" id="fam"></div>
+          <p class="note">Udział wariantów w hospitalizacjach rodziny. Link prowadzi do karty rodziny <code>/jgp/rodziny/ozw</code> (etap 5).</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card-body" id="panel-osrodki" role="tabpanel" aria-labelledby="tab-osrodki" hidden>
+      <div class="focus" id="focus" hidden></div>
+
+      <div class="sec">
+        <div class="sec-head"><h4>Ośrodki w czasie · wszystkie lata</h4><span class="tag h">Lata</span></div>
+        <div class="scroll-x"><svg id="plines" viewBox="0 0 960 240" style="width:100%;min-width:560px;height:auto" role="img" aria-label="Hospitalizacje ośrodków w latach"></svg></div>
+        <p class="note">Linia = ośrodek (dziś „top 25 w czasie” w „W czasie”, tu przeniesiony). Wybrany ośrodek ma kolor; pozostałe są szare. W aplikacji: miesiące i średnia 3M.</p>
+      </div>
+
+      <div class="sec">
+        <div class="sec-head"><h4>Kto leczy · <em class="yr"></em></h4><span class="tag y">Rok + mini-trend</span></div>
+        <dl class="conc" id="conc"></dl>
+        <div class="who-where">
+          <div class="citymap">
+            <svg id="citymap" viewBox="0 0 200 190" width="100%" role="img" aria-label="Mapa miast z ośrodkami; wielkość kółka to liczba hospitalizacji w wybranym roku"></svg>
+            <div class="note" id="cityinfo"></div>
+            <div class="legend"><span><i style="width:8px;height:8px;border-radius:50%;background:var(--chart)"></i>miasto z ośrodkiem</span><span>wielkość = hospitalizacje <span class="yr"></span></span></div>
+          </div>
+          <div class="scroll-x"><table class="rank" id="rank"></table></div>
+        </div>
+        <p class="note">Nad tabelą: koncentracja w wybranym roku (mini-trend: wszystkie lata). Mapa i ranking są połączone: najechanie na wiersz podświetla miasto, kliknięcie miasta albo wiersza wybiera ośrodek. Kółko = suma ośrodków w mieście; przy kilku ośrodkach kliknięcie pokazuje ich listę. Filtr obszaru przyciemnia pozostałe województwa. W aplikacji pełna lista z przewijaniem w tabeli.</p>
+      </div>
+
+      <div class="two">
+        <div class="sec">
+          <div class="sec-head"><h4>Wolumen a śmiertelność · <em class="yr"></em></h4><span class="tag y">Rok</span></div>
+          <svg id="scatter" viewBox="0 0 460 250" width="100%" role="img" aria-label="Ośrodki: liczba hospitalizacji i śmiertelność w wybranym roku"></svg>
+        </div>
+        <div class="sec">
+          <div class="sec-head"><h4>Tryb przyjęcia w ośrodkach · <em class="yr"></em></h4><span class="tag y">Rok</span></div>
+          <svg id="scatter2" viewBox="0 0 460 250" width="100%" role="img" aria-label="Ośrodki: liczba hospitalizacji i udział przyjęć nagłych w wybranym roku"></svg>
+        </div>
+      </div>
+      <p class="note">Oba wykresy: oś X liniowa od zera; kliknięcie punktu wybiera ośrodek.</p>
+    </div>
+  </div>
+</section>
+
+<section aria-labelledby="sekcje">
+  <span class="kicker">5 · Sekcje</span>
+  <h2 id="sekcje">Gdzie trafia każda obecna sekcja</h2>
+  <div class="scroll-x">
+    <table class="doc">
+      <thead><tr><th>Sekcja</th><th>Typ</th><th>Po zmianie roku</th><th>Zmiana względem dziś</th></tr></thead>
+      <tbody>
+        <tr class="group"><td colspan="4">Wspólny nagłówek</td></tr>
+        <tr><td>Pasek liczb</td><td><span class="tag y">Rok</span></td><td>hospitalizacje, kwota świadczeń NFZ roku, śmiertelność, ośrodki; r/r i mini-trend</td><td>dochodzi mini-trend lat; wycena z katalogu zostaje w pasku</td></tr>
+        <tr><td>Wybór roku i obszaru</td><td>—</td><td>—</td><td>nowe; rok w przypiętym pasku zakładek; obszar zastępuje dzisiejszy wybór województw na mapie</td></tr>
+        <tr><td>Pasek skrótów do sekcji</td><td>—</td><td>—</td><td>usuwamy (dziś: W czasie / Gdzie / Kto leczy / Tryb przyjęcia / Wycena)</td></tr>
+        <tr class="group"><td colspan="4">Zakładka „Przegląd”</td></tr>
+        <tr><td>W czasie</td><td><span class="tag h">Lata</span></td><td>tło na wybranym roku</td><td>kraj albo wybrane województwa; linie ośrodków przechodzą do „Ośrodków”</td></tr>
+        <tr><td>Mapa + heatmapa</td><td><span class="tag y">Rok</span> / <span class="tag h">Lata</span></td><td>kolory mapy roku; ramka kolumny heatmapy</td><td>heatmapa nowa; dziś mapa tylko z najnowszego roku</td></tr>
+        <tr><td>Tryb przyjęcia (kraj)</td><td><span class="tag h">Lata</span></td><td>wyróżniony wiersz</td><td>wiersz na każdy rok</td></tr>
+        <tr><td>Śmiertelność w kraju</td><td><span class="tag h">Lata</span></td><td>wyróżniony punkt</td><td>nowa sekcja; dziś tylko w pasku liczb</td></tr>
+        <tr><td>Wycena i kwota świadczeń</td><td><span class="tag h">Lata</span></td><td>kwota roku, średnio na hospitalizację, wyróżniony słupek</td><td>dochodzi średnia kwota na hospitalizację</td></tr>
+        <tr><td>Rodzina grup</td><td><span class="tag y">Rok</span></td><td>udziały wybranego roku</td><td>skrót z etapu 5</td></tr>
+        <tr class="group"><td colspan="4">Zakładka „Ośrodki”</td></tr>
+        <tr><td>1. Wybrany ośrodek</td><td><span class="tag y">Rok</span></td><td>porównanie w wybranym roku</td><td>dziś blok nad kartą; tu tylko po wyborze ośrodka, na górze zakładki</td></tr>
+        <tr><td>2. Ośrodki w czasie</td><td><span class="tag h">Lata</span></td><td>tło na wybranym roku</td><td>przeniesione z „W czasie” (top 25)</td></tr>
+        <tr><td>3. Kto leczy</td><td><span class="tag y">Rok</span></td><td>koncentracja, kolejność, liczby, udział, r/r; wielkość kółek na mapie miast</td><td>koncentracja nad tabelą (nowa); mini-trend; mapa miast obok rankingu (nowa); filtr obszaru z nagłówka</td></tr>
+        <tr><td>4. Wykresy punktowe</td><td><span class="tag y">Rok</span></td><td>punkty wybranego roku</td><td>oś X liniowa (już na branchu)</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section aria-labelledby="szczegoly">
+  <span class="kicker">6 · Szczegóły</span>
+  <h2 id="szczegoly">Przypadki brzegowe i dane</h2>
+  <div class="two">
+    <div class="box">
+      <h3>Przypadki brzegowe</h3>
+      <ul>
+        <li><b>Grupa wycofana:</b> domyślny rok to ostatni rok z danymi grupy. Chipy lat bez danych są wyszarzone.</li>
+        <li><b>Grupa nowa:</b> chipy lat sprzed jej powstania są wyszarzone; heatmapa i mini-trendy mają puste komórki zamiast zer.</li>
+        <li><b>Zmiana katalogu JGP:</b> skok w heatmapie albo mini-trendzie może wynikać z podziału grupy. Pod sekcjami jest stała uwaga.</li>
+        <li><b>Mała grupa</b> (np. kilka ośrodków): zakładka „Ośrodki” pokazuje tylko ranking i koncentrację; wykresy punktowe znikają poniżej 5 ośrodków.</li>
+        <li><b>Siedziba a miejsce leczenia:</b> dziś „miasto” to siedziba świadczeniodawcy. Szpital może leczyć w innym mieście niż siedziba spółki. Docelowo lepszy jest adres zakładu leczniczego z RPWDL.</li>
+        <li><b>Mapa miast w małej grupie:</b> poniżej 5 ośrodków mapa jest prawie pusta, więc zakładka pokazuje sam ranking.</li>
+        <li><b>Wybrany ośrodek bez hospitalizacji w roku:</b> panel pokazuje komunikat jak dziś i mini-trend lat.</li>
+      </ul>
+    </div>
+    <div class="box">
+      <h3>Dane i wydajność</h3>
+      <ul>
+        <li><b>Bez nowych stron.</b> Zakładki działają w przeglądarce na jednej stronie. Liczba plików w <code>dist</code> się nie zmienia.</li>
+        <li><b>HTML strony:</b> zawiera „Przegląd” i najnowszy rok. „Ośrodki” i inne lata przeglądarka liczy z pliku grupy, który już dziś pobiera.</li>
+        <li><b>Pliki grup</b> mają rok w indeksie miesiąca. Przy 7 latach urosną ok. 3,5 raza (dziś łącznie 9 MB).</li>
+        <li><b>Heatmapa:</b> 16 liczb na rok z <code>trends.json.gz</code>. Potrzebna jest ludność województw z każdego roku (GUS).</li>
+        <li><b>Mapa miast:</b> nowy skrypt <code>scripts/build_places.py</code> zapisuje <code>public/data/places.json.gz</code>: krotki <code>[TERYT, nazwa, x, y]</code> w układzie obecnej mapy, kilkanaście KB. Źródło współrzędnych: urzędowe nazwy miejscowości GUGiK (dane otwarte). Kod TERYT miejscowości: z adresu w RPWDL.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section aria-labelledby="decyzje">
+  <span class="kicker">7 · Do decyzji</span>
+  <h2 id="decyzje">Pytania przed wdrożeniem</h2>
+  <ol class="steps">
+    <li><span><b>Nazwy zakładek.</b> „Przegląd” i „Ośrodki”? Inne propozycje: „Grupa” i „Szpitale”, „W systemie” i „W placówkach”.</span></li>
+    <li><span><b>Filtr obszaru w „Przeglądzie”.</b> Czy po wyborze województwa „W czasie” pokazuje województwo zamiast kraju, czy kraj i województwo razem?</span></li>
+    <li><span><b>Opcja „suma lat” w wyborze roku?</b> Przydatna przy małych grupach; komplikuje r/r.</span></li>
+    <li><span><b>Mini-trend: lata czy miesiące?</b> Lata są czytelne przy 7 i więcej latach. Miesiące pokazują sezonowość, ale przy 84 punktach są nieczytelne.</span></li>
+    <li><span><b>Mapa miast: siedziba czy zakład leczniczy?</b> Siedziba jest w danych od razu. Zakład leczniczy jest dokładniejszy, ale wymaga przypisania hospitalizacji do zakładu, nie tylko do NIP. Trzeba sprawdzić, czy dane NFZ to pozwalają.</span></li>
+    <li><span><b>Kolejność wdrożenia.</b> Propozycja: najpierw zakładki i przeniesienie sekcji, potem wybór roku z mapą i heatmapą, potem mini-trendy, potem mapa miast (nowe dane: współrzędne), na końcu pełna historia danych (2019–2023).</span></li>
+  </ol>
+</section>
+
+<section aria-labelledby="odrzucone">
+  <span class="kicker">8 · Odrzucone warianty</span>
+  <h2 id="odrzucone">Rozważone i odrzucone</h2>
+  <div class="two">
+    <div class="box"><h3>Jedna długa strona (dziś)</h3><p>Miesza poziom grupy i poziom ośrodków. Wybór roku i filtry dotyczą różnych rzeczy w różnych miejscach.</p></div>
+    <div class="box"><h3>Dwie osobne strony</h3><p><code>/jgp/E10</code> i <code>/jgp/E10/osrodki</code>: +703 strony, czyli +2 800 plików w <code>dist</code>. Razem z kartami szpitali to blisko limitu 20 000 plików. Powielony nagłówek.</p></div>
+    <div class="box"><h3>Małe mapy, po jednej na rok</h3><p>Przy 6–7 latach mapy są za małe, a przy pełnej historii jest ich za dużo.</p></div>
+    <div class="box"><h3>Mapa zmiany</h3><p>Porównuje tylko dwa lata. Gubi wzrosty i spadki w środku okresu.</p></div>
+    <div class="box"><h3>Suwak albo animacja lat</h3><p>Trudno porównać lata i odczytać wartości. Słaba dostępność.</p></div>
+    <div class="box"><h3>Pasek skrótów do sekcji pod zakładkami</h3><p>Dwa paski nawigacji jeden pod drugim mylą: skróty wyglądają jak drugi poziom zakładek. Przy 4–6 sekcjach w zakładce skróty nie są potrzebne.</p></div>
+    <div class="box"><h3>Osobna zakładka „Historia”</h3><p>Rozdziela stan i zmiany. Żeby porównać, trzeba przełączać widoki.</p></div>
+  </div>
+</section>
+
+</div>
+
+<script>
+const DATA = {"years":[2019,2020,2021,2022,2023,2024,2025],"monthly":[629,638,682,653,675,651,613,621,579,598,581,597,647,691,403,412,433,443,656,626,646,463,516,494,643,661,687,723,679,688,672,636,632,598,604,627,687,692,700,722,708,684,693,667,625,640,643,679,702,696,753,706,719,724,666,666,624,657,669,673,723,710,748,748,741,718,720,705,662,668,638,692,721,763,768,742,742,743,683,688,655,646,649,708],"regions":[["dolnośląskie","M46 99l2 0 0 1 1-1 0 1 1 0 0 1 1 0-1 1 0 1 3 1 1 2 1 0 2 1 2-1 1 0 2 0 0-2 1 0 1-1 3 1 2 2 0 1-1 1 0 3 2 0 1 0 1 0-1 1 2 2-1 2 0 1 1 1-2 1-1-1-1 1-1 0 1 1 0 1 0 1-1 0 0 2 0 1-2 0 0 2-1 0-1 1 1 0 0 1-1 0 0 1 0 1-1 0 0 1-1 2 1 0-1 1 0 2-2 0-1 2 0 1-1 2 0-1-1 0-1 1-1 0 0 1 1 1 0 2 1 1 1 1-1 0 1 1-1 1 0-1 0 1-1-1-1 1-1 0 0 1-1 1-1 0-1 2-2-2-1-3-2-3-1 0 0-2-2 0 0 1-1-2 0 1-1-1 1-1 1-1 1-1 1 1 0-1 0-1 1 0-1-1 1 0-2-3-2 0 0 1-1 0-1-1-1 1 0 1-1 0-1 0 1-1-1-1 0-1-2 1-1-3-2 1-3-1-1 0 0-1-2 0-1 1 0-2-1-1-1-1 0-1 0-1 0-1-1 0-1 0 0-1-1 0 0 1 0-1-1 0-1 0-1 0 0 1 1 0-1 2 1 2-1 0-2-1-1 1 0-1 1-2 2-6 0-1 1-3 0-1-1-1 0-1 1 0 0-1 1-1 2-2 1 1 1 0 0 1 1 0 0-2 1 0 0-1 0-1 1 0 1 1 0-1 2 2 0 1 1-1 1 0 0-1 1 0 0-2 2 0 0-1 1-2-1 0 1-2 1 0 1-1 0-1 0-1 2 1 2 1 0 1 1 0 1 1 1-1 1-2 1 0z",46,123,[87,91,88,91,92,85,84]],["kujawsko-pomorskie","M91 37l1 0 1 0-1 2 1 1 2 0 1 1 0-1 3 0 2 1 0 1 1 0-1 1 1 1 0 1 0 1 0 1 1 0 0-1 2 0 1 1 0 1 1 0 1 0 0 1 2-1 1 1 0 1 1 0-1 1 0 1 1 0 1 3-1 0-1 1-1 0 0 2 1 1 0 1 0 1-2-1 0 1-1 1-2 0 0 1 1 1-1 1 1 2 0 1 1 0-1 1 1 0-2 0 0 1-1 2 1 0 0 1-1 1-1 0 0 1 1 0-1 1 0 1-2 1 1 0 0 1-3 2-1 0-1 0-2-2 0 1-4 1 0-1 0-1-1 0-1-2-1 0 0-1-2 0-2 0 0-1-1-1 0 1-1 1-1 0-1 0-2-1 0-1-2 0 0-1 0 1-2-1 1-1-1 0-1 0-1-1-1 0-1 1 0-1-1 0 0-2-1 0-1 1-1 0 0-2-1-1 0-1 1 0 1 0 0-2 0-2-3-2-1 0-1 0 1-1 0-2 1 0-1-2 1 0-1-1 0-1 2-1 0-1-1-1-1-2-1 0-1-1 1-1 2-2 1-2 0-1 0-1 2 0 0 1 1 0 0-1 2 1 0-1 1 0 0-1 1-2 1 1 1-1 0-2 1 0 1 1 1 0 1-2 1 1 1 0 0 1 1-1 1 1-1 0 1 1 3 0 2 0 0 1 1 0 1 0 0-1 1 0z",87,59,[110,101,101,112,105,110,105]],["lubelskie","M155 94l0-1 1-1 1 0 1-1 1 1 1 0 0-1 2 1 1-1 1 0-1 0 1 1 1-1 1 0 1-1 1 0 1 1 1 0 0-1 0-1 1-1 2 2 1-1 0 1 1 0 0-2 1 1 1-1-1 0 1-1 0-1 1 0 0-1 1-1 1-1 1 0 0 1 3 1 2 1 1 0 0 1 1 1 1 0 1 2 1 2-1 1 0 1-1 1 1 0-1 1 0 1 1 0 0 1 0 1-1 1-1 0 0 1 0 1 0 1 0 2 1 1-1 1 1 0 1 1 1 1-1 1 1 0 0 1-1 3 0 1 1 0 1 2 2 2 1 1-1 0 0 1 1 1 0 2 1 0 0 1 0 1 2 2 2 1-1 1-2 0-1 0 0 2 2 0-1 1 2 0-1 2 1 0 0 2-1 3-1 3-4 1-1 0-1 1 0 1-1 0-2 3-1-1 0-1-2 0 1-1-1-1 0-1-1 0 1 0-1-1-2 2-1-1-4 3-3 0-2 0-1 0-1 0-1 0 0-1 2 0 0-1-2 0-1 0-1 1-1-1 0-1-1 0 0-1 1 0 0-1 1 0 1 0 1-1-2 0 2-1-1 0 0-1-1 0 1-1-2 0-1 0-1-1-2 0 0-2-2 0 1-3-1 0 0-1-2-1-1 1-1 1-1 0 0-2-1-1-1-3 1-2-1 0 1-1-1-2 0-2 1-2-1-1 1-1-1 0 1 0 0-2-2-2 1-1 1 1 1-2-1 0 0-1 0-2-3 0-1-1 0-1 0-1 2 1 0 1 0-1 2-1 0-1 1 0 0-1-1-1 2-1 0-1 0-1-2 0 1-1 0-1 0-1z",175,119,[122,114,122,126,120,124,123]],["lubuskie","M17 113l0-2 0-1-1-1-1-1-2 0-1-1 0-1 1-1 0-2-2-2-1-2-1-1 1-1 1-2 1-1 0-2 0-1 1-1-2-2 0-1 1-1-1 0 1-2-1 0-2-1 0-1-1-3 0-1 1 0 1-2 0-1 0-2-1-1 1-1 1 0 1 0 1-2 0-1 2-2 0-2 0 1 1-1-1 0 1-1 1 1 0 1 1-1 1 1 5-2-1-1 0-1 2 0 1-1 2-1 1 1 1 0 1 0 1 0 1 0 0-2 1 0-1 0 1-1 1-1-1 0 2 0 1 0 0 1 0 1 0 1 0 3 0 2-1 0 0 1-1 0 0 1 1 0 0 2 0 1-3 0 1 1-1 0 0 1 0 1 2 2-1 1 1 1 0 1-1 1 0-1 0 1 0 1 1 0 0 1 0 1 0 1-1 1 1 3 0 1 0 1-1 0 1 1 1 1 0-1 1 1 1 0-1 1 1 2 1 0 1-1 0 2 0 1 1 1 1 0 0-1 2 1 1 1 0 2 1 0-1 0-1 2-1 1-1-1-1 0 0-1-2-1-2-1 0 1 0 1-1 1-1 0-1 2 1 0-1 2 0 1-2 0 0 2-1 0 0 1-1 0-1 1 0-1-2-2 0 1-1-1-1 0 0 1 0 1-1 0 0 2-1 0 0-1-1 0-1-1-2 2-1 1 0 1-1 0z",24,88,[120,130,139,149,158,168,178]],["łódzkie","M117 120l0 2 1 0 0 3 0 1-2-1 0-1-1-1-1 2 0 1 0 1-1 0-1 2-1 0 0-1-1 0-1-1-2 1 0-1-1-2-1 0-1 0 1-1-1 0 0-1-1 0-1 0 0 1 0 1-1 0-1-1-1-1-1 0-1-1-1-1-1 1-4 1-1-1-1 0-1-2 0 1-1 0 0-1-1 1-1-1-2 0 0-1-2 0 0-3-1 0-1 0 1-2-1-1 1 0 0-1 1 0 1-1-1-1 1 0 2 1 1-2 0-2 0-2-1 0 1-1-1 0 1-1-1 0 1-1 1 0 0-2 0-1 0-1 1 0 0-1 1 0 1 0 1 0 1 1 0-2 1 0 1-2-1-1 0-1 0-1 0-1 0-1 1 1 1 0 1-1 1 0 0-1 0-3 2 0 1 0 0-1 0-1-1 0 0-2 1 0 1 0 1-1 1 0 1-1 0 1 1 0 0 1 2 0 1 0 0 1 1 0 2 1 0 1 1 0 0-1 1 1 2-1 1-1 1 0 1 1 1 1 1 0 0 2 0 1 1 0 1 1 1 0 1 1-1 0 0 1-1 1 2 2-1 1 1 0 0 1 1 0 1-1 1 0 1 0 0 1 0 1 2 0 0 2 1 0-1 0-1 0 1 0 0 1 0 1 1 1 0 1 0 1-2 0 0-1-1 0-2 1 0 1 1 0 0 2 1 0-1 2 1 0 1 0 0 1-1 1 0 1-1 0 0 3-1 0 0 2 0 1-1-1-1 0-1 0 1 1-1 1-1 0-1 0-2 0-1 0 1 1-1 1z",106,107,[103,105,103,106,99,104,99]],["małopolskie","M129 150l0 1 1-1 1 0 2-3 1 1 1-1 1 0 2-1 2-1 1 1 0-1 1 2-1 0-1 1 1 1-1 0 1 1-1 2 1 0-1 1 1 0 0 1-1 0 1 0-1 1 1 1-1 1 0 1 1 1 2 0 0 1-1 1 0 1 2 0 0 1-1 0-1 1 0 1 1 0 1 1 0 1 0 1 0 1 0 1 1 1-1 1 1 0 1 1-1 0 0 1 0 1-2-1-2 2-1-1-1 0-1 1 1 1-1 0-1 2-1 0-1 0-1-1-1-1-1-1-2 0-1 0 0 1-2-1-1 0-1 0 0 1 0-1-1 0 0 2-2 0-1 1-1 0-1 4-2-1-1 0-1 0-1 1-1-1 0-2 1 0-1-1 0-3-1 0-2 0 0-2 0 1-1-1-1-2 0-1-1-1 0-2-1-1-1 0 1-2 0-1-1 0-1 0-1-3-2 0 0 1-1-1 1-1 0-2-1 1-1-1 1 0 0-2 0-1 1 0 1 0 0-1 0-1 1 0 0-1 1 0 0-1 1-1 1-1-2-1 1 0 1-2 1 0 0-1 0-1 1-1 2 1 1-1 0-1 3 1 0-1 1 0 0-1 1 0 0-1 1 0 1 1 1-1 1 1 1 0 2 1 0 1 1 2-1 1 1 0 0 1 0 1 1 1 0 1 1 1 3-1z",123,163,[101,100,90,90,91,101,94]],["mazowieckie","M157 63l0 1 1-1 0 1 1 1 0-1 1 1 1-1 0-1 2 0 0 2-1 0 1 2 0 1 1 0 0-1 1 0 0-1 1 0 0 3 0 1 1 1-1 1-1 0 1 1 2 2-1 1 1 1 0 1 1 1 2 0 1 1 0-1 2 1 2 0 1 1 1 0 0 2 1 0 0-1 1 1-1 1-1 1 0 1-1 0 0 1-1 1 1 0-1 1-1-1 0 2-1 0 0-1-1 1-2-2-1 1 0 1 0 1-1 0-1-1-1 0-1 1-2 1-1-1 1 0-1 0-1 1-2-1 0 1-1 0-1-1-1 1-1 0-1 1 0 1 0 2-1 1 2 0 0 1 0 1-1 0-1 1 1 1 0 1-1 1-2 1 0 1 0-1-2-1 0 1 0 1 1 1 3 0 0 2 0 1 1 0-1 2-1-1-1 1 2 2 0 2-1 0 1 0-1 1 1 1-1 2 0 3-1 1-1 0 0-1-1 0-2 1-1 0-1 1-1-1-1-1-4 0 0-2-1-1 1-1-1 0-1 1-1 1 0-1-1-1-1 1-1 0-1 1 0-1 0 1-1-1-1 1 0-1 0-1-2-2-1 1 0-1-1-1 0-1 1 0-1 0-1-1 0-2 1 0 0-1 1-1 0-1-1 0-1 0 1-2-1 0 0-2-1 0 0-1 2-1 1 0 0 1 2 0 0-1 0-2-1 0 0-1 0-1-1 0 2 0-1 0 0-2-2 0 0-1 0-1-1 0-1 0-1 1-1 0 0-1-1 0 1-1-2-2 1-1 0-1 1 0-1-1-1 0-1-1-1 0 0-1 0-2-1 0-1-1-1-1-1 0-1 1-2 1-1-1 0 1-1 0 0-1-2-1-1 0 0-1-1 0-2 0 0-1-1 0 0-2-1 0 2-1 0-1 1-1-1 0 0-1 1-1 1-1-1 0 1-2 0-1 2 0-1 0 1-1-1 0 0-1-1-2 1-1-1-1 0-1 2 0 1-1 0-1 2 1 0-2-1-1 0-2 1 0 1-1 1 0 1 0 0-1 1-1 1 0-1 1 2 1 2-1 1 1 1-1 2 1 1 0 0-1 1 0 1-2 2 0 1 0 0-1 1 0 1-1 1 0 1-1 1 1 1-1 1 0 0-1 1 0 1 1 4-3 3 0 1-1 3-1 0 1 1 2 1 1-1 0 2 1-1 1 0-1-1 1 0 1 1 3 0 1 1 1 1 0 2 2 1-1 0 1-1 0 0 1 1 1 1 0 1 2-1 0 0 1z",139,83,[87,83,85,84,83,86,86]],["opolskie","M74 120l0 1 1 0 1 0 2-1 1 0 0-1 1 0 1 0 2 0 0 1 2 0 1 1 1-1 0 1 1 0 0-1 1 2 2 1 0 1-1 0 1 1-1 1 0 1 0 2-2 1 1 1-1 0 0 1 1 0-1 0 0 1-1 1 1 2 1 1 0 1 1 0-1 1-2 0-1 0 1 3-1 0 0-1-1 0 0 2 0 1-1 1 2 1-1 1 1 2-1-1 0 1-3 1 0 1-2 0-1 0-1 1 1 1-1 2-1 0 1 1-1 0-1 1-1 1-1-1 0-1-1 0-1-2-1-1-1 0-1-1 2-1 1-1 1 0 0-1-1-1 0-1 0-1-1 0 0 1-1 1-1 0-2 0-1 1 0-1-1 0-1 0 0-2-1 0-1 0-1-1 0-1-1 0-2 0-1-1-1-1 1-1 1 0 0 1 1-2 0-1 1-2 2 0 0-2 1-1-1 0 1-2 0-1 1 0 0-1 0-1 1 0 0-1-1 0 1-1 1 0 0-2 2 0 0-1 0-2 1 0 0-1 0-1-1-1 1 0 1-1 1 1 1-1 2 0 0 1 0 1z",75,138,[116,113,117,115,118,113,105]],["podkarpackie","M168 145l1 0 2 0 0 1-1 0-1 1 2 0 1 0 2 0 3 0 4-3 1 1 2-2 1 1-1 0 1 0 0 1 1 1-1 1 2 0 0 1 1 1-1 1-4 4-2 1 0 1-4 6-1 1-1 2-2 2-2 4-1 1 0 1 1 0 1 5 0 3-1 1 1 0-1 2 1-1 0 1 1 0 0 1 2 1-1 1 1 2-1 0-2-2 0 1-1 0-2-2-2 0-1 0-1-2-1 0 0 1-2-1 0-1-1 1-1-1-2-1 0-2-1-1-1-1-1-1-1 0 0-1-1 1 0 1-1-2-2 0 0-1-1 0-1 0-1 1 0-1 0 1-1 0-1-1 0-1 0-1 1 0-1-1-1 0 1-1-1-1 0-1 0-1 0-1 0-1-1-1-1 0 0-1 1-1 1 0 0-1-2 0 0-1 1-1 0-1-2 0-1-1 0-1 1-1-1-1 1-1-1 0 1 0 0-1-1 0 1-1-1 0 1-2-1-1 1 0-1-1 1-1 1 0-1-2 2-2 3-1 0-1 2-1 1 0 3-4 1 0 0-1 1-1 0-3 1 1 1 0 1-1 1-1 2 1 0 1 1 0-1 3 2 0 0 2 2 0 1 1 1 0 1 0 1 0 0 1-1 0 1 0 0 1 1 0-2 1 2 0-1 1-1 0-1 0 0 1-1 0 0 1 1 0 0 1 1 0 0 1 1-1z",161,160,[121,122,122,116,118,110,120]],["podlaskie","M156 57l-1 1-2-2-1 0-1-1 0-1-1-3 0-1 1-1 0 1 1-1-2-1 1 0-1-1 0-1-1-2 2 0 3 1 1-1 1-1 1 0 1 0 3-2 2-2 3-2 0 1 1 0-1-1 3-1 1-1 1 0 1-2 1-2 0-1-2-2 0-2-2-1 0-1 1 0-1-1-1 0-1-2 1-1 0-1 1 0 1-1 1 0 1-1 1 1 0-1 0-1 0-1 1-1 1 0 2 1 1 1 0 1 1 0 1 0 1 1 1 1 2 0 1 1 1 1 1 1 1 3 0 1-1 1 0 2 1 3 0 3 1 0 1 8 3 8 2 3 0 3 0 1 1 3-1 1 1 7-4 3-2 0-4 2-2 3-3 6-1 0-1-1 0 1-1 0 0-2-1 0-1-1-2 0-2-1 0 1-1-1-2 0-1-1 0-1-1-1 1-1-2-2-1-1 1 0 1-1-1-1 0-1 0-3-1 0 0 1-1 0 0 1-1 0 0-1-1-2 1 0 0-1 0-1-1 1-1-1 0 1-1 1-1-1 0 1-1-1 0-1-1 1 0-2 1 0-1-2-2-1 0-1 1 0 0-1z",176,53,[101,97,94,105,107,94,104]],["pomorskie","M110 12l0 2-8 4 1 1 1 1 0 1-2 1 0 1 0 1 0 1 1 0-1 1 1 1 1-1 1 1 1 0-1 1 0 1 1 1 0-1 2 0 1 0-1 1 0 1-1 2 0 1-2-1-1 0-1 2-1 2 0 1-1 1-1 1-3 0-1 0 0 1-1-1-2 0-1-1 1-2-1 0-1 0-1 0 0 1-1 0-1 0 0-1-2 0-3 0-1-1 1 0-1-1-1 1 0-1-1 0-1-1-1 2-1 0-1-1-1 0 0 2-1 1-1-1-1 2 0 1-1 0 0 1-2-1 0 1-1 0 0-1-2 0 0 1 0 1-1 2-1 0-1-1 1 0-1-1-2 0-2 0-1 1-1-1-1 0 0-1-1-2 0-4 1-1 0-1-1 0 0-1 0-1 2 0 0-1-2-1 0-1-1 0 0-1-1 0 0-1 1-1-1 0 1-2-1 0 0-1-1-1 0-1 1-1 2 0-1-2 0-1 0-1 1 0-1-1 0-1 0-1-1-1-1-1-1-1 4-1 3-3 4-2 2 0 6-1 7-2 7 0 8 5 2 2 0 1-3-3-5-3-1 1 2 2 0 1 1 1 0 1 1 5 1 1 2 0-1 0 1 1 4 1 0-1 1 1 1 0 4 0 5-2 3-2z",77,24,[79,46,78,83,84,75,81]],["śląskie","M107 127l0 1 2-1 1 1 1 0 0 1 1 0 2 1 0 1-1-1 0 1-1 1-1 0 1 1 0 1 1-1 0 1 2 0-1 2 2 0-1 1-2 2 1 0 1 0 1 1 0 1-1 0 0 1-1 0 0 1-3-1 0 1-1 1-2-1-1 1 0 1 0 1-1 0-1 2-1 0 2 1-1 1-1 1 0 1-1 0 0 1-1 0 0 1 0 1-1 0-1 0 0 1 0 2-1 0 1 1 1-1 0 2-1 1 1 1 0-1 2 0 1 3 1 0 1 0 0 1-1 2 1 0 1 2-2 2 0 1-2 0-1 1 0 1-1 1 0 1-1 0-1 0-1 0-1 0 0-1 0-1 0-1-1-1-2 0 1-1-1 0-1-4-1 0-1-1-1 0 0-1-1-3 0-1 0-1-1-1 0 1-1 0-1-1-2 0-1 0 0-1-1 0-1-1-1 0-1-2-1 0 1-2-1-1 1-1 1 0 2 0 0-1 3-1 0-1 1 1-1-2 1-1-2-1 1-1 0-1 0-2 1 0 0 1 1 0-1-3 1 0 2 0 1-1-1 0 0-1-1-1-1-2 1-1 0-1 1 0-1 0 0-1 1 0-1-1 2-1 0-2 0-1 1-1-1-1 1 0 0-1 4-1 1-1 1 1 1 1 1 0 1 1 1 1 1 0 0-1 0-1 1 0 1 0 0 1 1 0-1 1 1 0 2 2z",97,148,[84,93,88,95,96,90,96]],["świętokrzyskie","M112 129l2-3 0-1 1-2 1 1 0 1 2 1 0-1 0-3-1 0 0-2 1-1-1-1 1 0 2 0 1 0 1 0 1-1-1-1 1 0 1 0 1 1 0-1 0-2 1 0 0-1 1 1 1 0-1 0 0 1 1 1 0 1 1-1 2 2 0 1 0 1 1-1 1 1 0-1 0 1 1-1 1 0 1-1 1 1 0 1 1-1 1-1 1 0-1 1 1 1 0 2 4 0 1 1 1 1 2-2 0 1 3-1 0 1 1 0 1-1 1 1-1 1 1 0-1 2 1 3 1 1-1 4-1 1 0 1-1 0-3 4-1 0-2 1 0 1-3 2-2 1 0 1-1-1-1 1-1 0-2 1-1 0-1 1-1-1-2 3-1 0-1 1 0-1-3 1-1-1 0-1-1-1 0-1 0-1-1 0 1-1-1-2 0-1-1-1-2 0-1-1-1 1-1-1-1 0-1-1-1 0-1 0 2-2 1-1-2 0 1-2-2 0 0-1-1 1 0-1-1-1 1 0 1-1 0-1 0 1 1-1-2-1z",133,134,[68,66,135,124,67,69,71]],["warmińsko-mazurskie","M173 15l0 1 0 1 0 1-1-1-1 1-1 0-1 1-1 0 0 1-1 1 1 2 1 0 1 1-1 0 0 1 2 1 0 2 2 2 0 1-1 2-1 2-1 0-1 1-3 1 1 1-1 0 0-1-3 2-2 2-3 2-1 0-1 0-1 2-4-1-5 1-1 1-3 0-4 3-1-1-1 0 0 1-1 0-1 1-1-1-2 1-1 1-1 0 0 1-1 0-2 0-1 2-1 0 0 1-1 0-2-1-1 1-1-1-2 1-2-1 1-1-1 0-1 1 0 1-1 0-1-3-1 0 0-1 1-1-1 0 0-1-1-1-2 1 0-1-1 0-1 0 0-1-1-1-2 0 0 1-1 0 0-1 0-1 0-1-1-1 1-1-1 0 0-1-1-1 1-1 1-1 0-1 1-2 1-2 1 0 2 1 0-1 1-2 0-1 1-1-1 0-2 0 0 1-1-1 0-1 1-1-1 0-1-1-1 1-1-1 1-1-1 0 0-1 0-1 0-1 2-1 0-1-1-1-1-1 8-4 0-2 14 2 6 1 2 0 11 1 2 0 1 1 27-2z",134,34,[119,117,131,122,133,132,123]],["wielkopolskie","M54 39l1-1 0 1 1 2 0 1 1 0 1 1 1 0 0-1 2 0 2 0 1 1-1 0 1 1 1 0-2 2-1 1 1 1 1 0 1 2 1 1 0 1-2 1 0 1 1 1-1 0 1 2-1 0 0 2-1 1 1 0 1 0 3 2 0 2 0 2-1 0-1 0 0 1 0 1 1 0 0 2 1 0 1-1 1 0 0 2 1 0 0 1 1-1 1 0 1 1 1 0 1 0-1 1 2 1 0-1 0 1 2 0 0 1 2 1 1 0 1 0 1-1 0-1 1 1 0 1 2 0 2 0 0 1 1 0 1 2 1 0 0 1 0 1 4-1 0-1 1 2 1 0 0 2 1 0 0 2-1 0-2 0 0 1 0 2 0 1-1 0-1 1-1 0-1-1 0 1 0 1 0 1 0 1 1 1-1 2-1 0 0 2-1-1-1 0-1 0-1 0 0 1-1 0 0 1 0 1 0 2-1 0-1 1 1 0-1 1 1 0-1 1 1 0 0 2 0 2-1 2-2-1-1 0 1 1-1 1-1 0 0 1-1 0 1 1 0 2 1 0 0 1 0 2-1 0-1 0 0 1-1 0-2 1-1 0-1 0 0-1 0-1 0-1-1 0-1-1 0-1 1-2-2-2 1-1-1 0-1 0-1 0-1 0 0-1 0-1 0-1 1-1 0-2-1 0-1-1-3-1-2 1 0 2-2 0-1 0-2 1-2-1-1 0-1-2-2-1-1 0 0-1 1-1-1 0 0-1-1 0 0-1-1 1 0-1-3 0 0-2-1-1-2-1 0 1-1 0-1-1 0-1 0-2-1 1-1 0-1-2 1-1-1 0-1-1 0 1-1-1-1-1 1 0 0-1 0-1-1-3 1-1 0-1 0-1 0-1-1 0 0-1 0-1 0 1 1-1 0-1-1-1 1-1-2-2 0-1 0-1 1 0-1-1 3 0 0-1 0-2-1 0 0-1 1 0 0-1 1 0 0-2 0-1 0-3 3 1 3-1 1 0 1-1-1-1 1-1 0-1 1 1 1-1 1-1 1-1 1 1 0-1 0-1 2-1-2-2-1 0-1-1 0 1-1-1-1-2 1-1 3 0 2-2 1-3 1 0z",62,83,[94,95,97,96,96,97,101]],["zachodniopomorskie","M45 13l3-3 3-1 1 1 1 1 1 1 0 1 0 1 1 1-1 0 0 1 0 1 1 2-2 0-1 1 0 1 1 1 0 1 1 0-1 2 1 0-1 1 0 1 1 0 0 1 1 0 0 1 2 1 0 1-2 0 0 1 0 1 1 0 0 1-1 1 0 3-1 1-1 0-1 3-2 2-3 0-1 1 1 2 1 1 0-1 1 1 1 0 2 2-2 1 0 1 0 1-1-1-1 1-1 1-1 1-1-1 0 1-1 1 1 1-1 1-1 0-3 1-1 0-2-1 0-1 0-1-2 0-1 0 1 0-1 1-1 1 1 0-1 0 0 2-1 0-1 0-1 0-1 0-1-1-2 1-1 1-2 0 0 1 1 1-5 2-1-1-1 1 0-1-1-1-1 1 1 0-1 1 0-1 0 2-2 2 0 1-1 2-1 0-1 0-1 1-1-1-2-1-1-2-2-1-1-2-2 0 1-2-1-2 3-2 2-1 0-3 0-1 0-1 1 0 1-2-1 0 0-1 0-1-1-1 0-3-1-3 0-3-1 0 0-2 0-2 0-1-1-3 0-1 0-1 1 1 0-1 1 1 2 0 1-2 5-2 11-4 4 0 7-3 5-1 4-2 2-3z",28,43,[105,104,108,101,102,112,105]]],"providers":[{"n":"Szpital Wojewódzki, Rzeszów","v":[489,399,511,551,485,516,524],"d":7.3,"r":"podkarpackie","u":82.2},{"n":"Instytut Kardiologii, Warszawa","v":[513,413,471,481,477,518,524],"d":2.9,"r":"mazowieckie","u":85.1},{"n":"Szpital Uniwersytecki, Kraków","v":[432,349,437,455,463,439,420],"d":4.5,"r":"małopolskie","u":95.0},{"n":"Centrum Medyczne, Zielona Góra","v":[233,217,310,348,386,424,462],"d":2.3,"r":"lubuskie","u":82.6},{"n":"Szpital Specjalistyczny, Kielce","v":[417,328,748,739,385,386,367],"d":5.8,"r":"świętokrzyskie","u":83.7},{"n":"Szpital Miejski, Gdańsk","v":[335,268,343,341,351,334,331],"d":2.9,"r":"pomorskie","u":85.9},{"n":"Klinika Kardiologii, Lublin","v":[307,257,303,348,334,310,315],"d":4.1,"r":"lubelskie","u":75.0},{"n":"Szpital Powiatowy, Nowa Sól","v":[290,223,313,319,147,148,138],"d":2.6,"r":"lubuskie","u":83.8},{"n":"Centrum Serca, Łódź","v":[257,203,278,250,244,283,265],"d":2.9,"r":"łódzkie","u":87.0},{"n":"Szpital Wojewódzki, Olsztyn","v":[234,172,233,250,245,239,223],"d":4.2,"r":"warmińsko-mazurskie","u":91.4},{"n":"Szpital Kliniczny, Poznań","v":[189,167,201,209,195,191,210],"d":7.9,"r":"wielkopolskie","u":72.5},{"n":"Szpital Regionalny, Opole","v":[177,141,177,174,161,168,164],"d":2.2,"r":"opolskie","u":78.2}],"adm":[[3.4,84.3],[3.7,85.6],[4.5,84.8],[4.5,86.5],[4.5,84.6],[3.7,84.2],[3.6,84.1]],"pln":[52.2,39.1,40.6,50.3,60.3,62.1,66.9],"mort":[4.78,5.54,4.86,4.61,4.84,4.79,4.65],"family":[["E10",31.3],["E11",37.2],["E15",9.8],["E16",21.6]],"points":4161,"cities":{"Rzeszów":[157.3,155.4],"Warszawa":[137.5,84.5],"Kraków":[116.2,154.7],"Zielona Góra":[27.6,94.0],"Kielce":[129.8,128.7],"Gdańsk":[90.3,15.7],"Lublin":[168.5,116.4],"Nowa Sól":[31.8,98.3],"Łódź":[106.4,99.8],"Olsztyn":[126.9,34.3],"Poznań":[55.9,78.8],"Opole":[75.9,134.9]}};
+const Y = DATA.years, N = Y.length;
+const R = DATA.regions, P = DATA.providers;
+let year = N - 1, tab = "przeglad", area = null, provider = null;
+const NS = "http://www.w3.org/2000/svg";
+const fmt = (v) => Math.round(v).toLocaleString("pl-PL");
+const dec = (v, n = 1) => v.toFixed(n).replace(".", ",");
+const STOPS = [[-1, [225, 233, 245]], [0, [110, 145, 204]], [1, [16, 42, 92]]];
+function rgb(v) { const p = Math.max(-1, Math.min(1, Math.log2(v / 100))); const [a, b] = p <= 0 ? [STOPS[0], STOPS[1]] : [STOPS[1], STOPS[2]]; const k = (p - a[0]) / (b[0] - a[0]); return a[1].map((c, i) => Math.round(c + (b[1][i] - c) * k)); }
+const fill = (v) => `rgb(${rgb(v).join(",")})`;
+const ink = (v) => { const c = rgb(v); return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2] > 150 ? "#172033" : "#ffffff"; };
+const el = (tag, attrs = {}, text) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (text !== undefined) e.textContent = text; return e; };
+const pct = (a, b) => b ? (a / b - 1) * 100 : null;
+const signed = (v) => v === null ? "—" : `${v > 0 ? "+" : ""}${dec(v)}%`;
+const trendCls = (v) => v === null ? "" : v < 0 ? "down" : "up";
+function spark(values, w, h, at) {
+  const lo = Math.min(...values), hi = Math.max(...values), r = hi - lo || 1;
+  const pts = values.map((v, i) => [2 + (i * (w - 4)) / (values.length - 1), h - 3 - ((v - lo) / r) * (h - 6)]);
+  return `<svg viewBox="0 0 ${w} ${h}" aria-hidden="true"><path d="M${pts.map((p) => p.map((n) => n.toFixed(1)).join(" ")).join(" L")}" fill="none" stroke="var(--chart)" stroke-width="1.6"/><circle cx="${pts[at][0].toFixed(1)}" cy="${pts[at][1].toFixed(1)}" r="3" fill="var(--year)" stroke="var(--panel)" stroke-width="1"/></svg>`;
+}
+// Udział obszaru w kraju (przykład): z udziału ośrodków w danym województwie, minimum 4%.
+const areaShare = () => { if (!area) return 1; const tot = P.reduce((s, p) => s + p.v[N - 1], 0); const a = P.filter((p) => p.r === area).reduce((s, p) => s + p.v[N - 1], 0); return Math.max(0.04, a / tot); };
+const monthly = () => DATA.monthly.map((v) => v * areaShare());
+const yearly = () => Y.map((_, i) => monthly().slice(i * 12, i * 12 + 12).reduce((s, v) => s + v, 0));
+// Kody w adresie jak w aplikacji: OW NFZ (regiony w pliku mapy są w kolejności kodów 01–16) i fikcyjny NIP.
+const owCode = (name) => String(R.findIndex((r) => r[0] === name) + 1).padStart(2, "0");
+const provKey = (name) => { const p = P.find((x) => x.n === name); return `${owCode(p.r)}|${String(5250000000 + P.indexOf(p) * 1117)}`; };
+const pool = () => P.filter((p) => !area || p.r === area);
+
+const pick = document.getElementById("yearpick");
+Y.forEach((y, i) => { const b = document.createElement("button"); b.type = "button"; b.id = `rok-${y}`; b.textContent = y; b.addEventListener("click", () => { year = i; draw(); }); pick.appendChild(b); });
+document.getElementById("maplegend").innerHTML = "½×" + [50, 71, 100, 141, 200].map((v) => `<span style="display:inline-block;width:24px;height:10px;background:${fill(v)}"></span>`).join("") + "2× średniej Polski";
+document.getElementById("tab-przeglad").addEventListener("click", () => { tab = "przeglad"; draw(); });
+document.getElementById("tab-osrodki").addEventListener("click", () => { tab = "osrodki"; draw(); });
+document.getElementById("to-providers").addEventListener("click", () => { tab = "osrodki"; draw(); });
+
+function drawHead() {
+  pick.querySelectorAll("button").forEach((b, i) => b.setAttribute("aria-pressed", String(i === year)));
+  document.querySelectorAll(".yr").forEach((e) => { e.textContent = Y[year]; });
+  const params = [tab === "osrodki" && !provider ? "widok=osrodki" : null, provider ? `osrodek=${provKey(provider)}` : null, year !== N - 1 ? `rok=${Y[year]}` : null, area ? `ow=${owCode(area)}` : null].filter(Boolean);
+  document.getElementById("url").textContent = `/jgp/E10${params.length ? "?" + params.join("&") : ""}`;
+  const areaEl = document.getElementById("area");
+  areaEl.innerHTML = area ? `<button type="button" class="area-chip" id="area-clear" aria-label="Usuń filtr obszaru">${area} ×</button>` : `<span class="area-none">cała Polska · kliknij województwo na mapie</span>`;
+  if (area) document.getElementById("area-clear").addEventListener("click", () => { area = null; draw(); });
+  const ys = yearly(), mort = DATA.mort;
+  const centers = Y.map((_, i) => Math.round((118 + i * 2) * (area ? areaShare() * 1.6 : 1)));
+  const items = [
+    [`Hospitalizacje${area ? " · " + area : ""}`, fmt(ys[year]), pct(ys[year], ys[year - 1]), ys],
+    [`Kwota świadczeń NFZ ${Y[year]}`, `${dec(DATA.pln[year] * areaShare())} mln zł`, pct(DATA.pln[year], DATA.pln[year - 1]), DATA.pln],
+    ["Wycena (katalog 2025)", `${fmt(DATA.points)} pkt`, "katalog", null],
+    ["Śmiertelność", `${dec(mort[year])}%`, null, mort],
+    ["Ośrodki", fmt(centers[year]), pct(centers[year], centers[year - 1]), centers],
+  ];
+  document.getElementById("kpis").innerHTML = items.map(([label, value, ch, series]) => `<div class="kpi"><dt>${label}</dt><dd>${value}</dd><span class="sub">${ch === "katalog" ? "<span>za hospitalizację</span>" : `<span class="${trendCls(ch)}">${year ? (ch === null ? "w kraju" : signed(ch) + " r/r") : "pierwszy rok"}</span>${spark(series, 64, 20, year)}`}</span></div>`).join("");
+  document.getElementById("tab-count").textContent = `${pool().length}`;
+  document.getElementById("tab-przeglad").setAttribute("aria-selected", String(tab === "przeglad"));
+  document.getElementById("tab-osrodki").setAttribute("aria-selected", String(tab === "osrodki"));
+  document.getElementById("panel-przeglad").hidden = tab !== "przeglad";
+  document.getElementById("panel-osrodki").hidden = tab !== "osrodki";
+}
+
+function yearAxis(svg, x, H, B, label) {
+  Y.forEach((yy, i) => svg.appendChild(el("text", { x: x(i), y: H - B + 18, "text-anchor": "middle", "font-size": 11.5, fill: i === year ? "var(--year)" : "var(--ink-3)", "font-weight": i === year ? 700 : 400 }, label ? label(yy) : yy)));
+}
+
+function drawTrend() {
+  const svg = document.getElementById("trend"); svg.innerHTML = "";
+  document.getElementById("trend-label").textContent = area ? area : "kraj";
+  const m = monthly(), W = 960, H = 230, L = 46, Rr = 12, T = 12, B = 30, n = m.length;
+  const x = (i) => L + (i * (W - L - Rr)) / (n - 1), max = Math.max(...m) * 1.15, y = (v) => T + (H - T - B) * (1 - v / max);
+  svg.appendChild(el("rect", { x: x(year * 12) - 4, y: T, width: x(year * 12 + 11) - x(year * 12) + 8, height: H - T - B, fill: "var(--year-band)", rx: 4 }));
+  [0, 0.33, 0.66, 1].forEach((f) => { const g = max * f; svg.appendChild(el("line", { x1: L, x2: W - Rr, y1: y(g), y2: y(g), stroke: "var(--line)" })); svg.appendChild(el("text", { x: L - 8, y: y(g) + 4, "text-anchor": "end", "font-size": 11, fill: "var(--ink-3)" }, fmt(g))); });
+  Y.forEach((yy, i) => svg.appendChild(el("text", { x: x(i * 12 + 5.5), y: H - 9, "text-anchor": "middle", "font-size": 11.5, fill: i === year ? "var(--year)" : "var(--ink-3)", "font-weight": i === year ? 700 : 400 }, yy)));
+  const ma = m.map((_, i) => { const s = m.slice(Math.max(0, i - 2), i + 1); return s.reduce((a, b) => a + b, 0) / s.length; });
+  m.forEach((v, i) => svg.appendChild(el("circle", { cx: x(i), cy: y(v), r: 2.4, fill: "var(--chart)", opacity: 0.45 })));
+  svg.appendChild(el("path", { d: "M" + ma.map((v, i) => `${x(i).toFixed(1)} ${y(v).toFixed(1)}`).join(" L"), fill: "none", stroke: "var(--chart)", "stroke-width": 2.2, "stroke-linejoin": "round" }));
+}
+
+function drawGeo() {
+  const map = document.getElementById("map"); map.innerHTML = "";
+  let selPath = null;
+  R.forEach(([name, d, lx, ly, r]) => {
+    const on = name === area;
+    const p = el("path", { d, fill: fill(r[year]), stroke: on ? "#C65D2E" : "#ffffff", "stroke-width": on ? 1.4 : 0.5 });
+    p.style.cursor = "pointer"; p.addEventListener("click", () => { area = on ? null : name; draw(); });
+    p.appendChild(el("title", {}, `${name} ${Y[year]}: ${r[year]}% średniej Polski`)); map.appendChild(p);
+    if (on) selPath = p;
+    map.appendChild(el("text", { x: lx, y: ly, "text-anchor": "middle", "font-size": 7, fill: ink(r[year]), "pointer-events": "none" }, r[year]));
+  });
+  if (selPath) map.appendChild(selPath);
+  const s = R.find((r) => r[0] === area);
+  document.getElementById("mapinfo").innerHTML = s ? `<b style="color:var(--chart-2)">${s[0]}</b> · ${Y[year]}: ${s[4][year]}% średniej Polski` : "Kliknij województwo, żeby ustawić filtr obszaru.";
+  const link = document.getElementById("to-providers");
+  link.hidden = !s; link.textContent = s ? `Ośrodki w województwie ${s[0]} →` : "";
+  let h = `<colgroup><col style="width:122px">${"<col>".repeat(N)}<col style="width:46px"></colgroup><tr><th></th>${Y.map((y, i) => `<th class="${i === year ? "on" : ""}">${String(y).slice(2)}</th>`).join("")}<th style="text-align:right">${String(Y[0]).slice(2)}→${String(Y[N - 1]).slice(2)}</th></tr>`;
+  [...R.keys()].sort((a, b) => R[a][0].localeCompare(R[b][0], "pl")).forEach((i) => {
+    const r = R[i][4], ch = Math.round((r[N - 1] / r[0] - 1) * 100);
+    h += `<tr class="${R[i][0] === area ? "sel" : ""}" data-r="${R[i][0]}"><td class="name">${R[i][0]}</td>${r.map((v, j) => `<td tabindex="0" data-y="${j}" title="${R[i][0]} ${Y[j]}: ${v}% średniej Polski" style="background:${fill(v)};color:${ink(v)};${j === year ? "outline:2px solid var(--year);outline-offset:-2px" : ""}">${v}</td>`).join("")}<td class="ch">${ch > 0 ? "+" : ""}${ch}%</td></tr>`;
+  });
+  const hm = document.getElementById("hm"); hm.innerHTML = h;
+  hm.querySelectorAll("tr[data-r]").forEach((tr) => tr.addEventListener("click", (e) => { area = tr.dataset.r; const y = e.target.dataset.y; if (y !== undefined) year = +y; draw(); }));
+  hm.querySelectorAll("td[data-y]").forEach((td) => td.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); td.click(); } }));
+}
+
+function drawYearBars(id, values, fmtv, max) {
+  const svg = document.getElementById(id); svg.innerHTML = "";
+  const W = 440, H = 190, L = 8, B = 24, T = 18, bw = (W - L * 2) / N;
+  values.forEach((v, i) => { const h = ((H - T - B) * v) / max, xx = L + i * bw + 8, w = bw - 16; svg.appendChild(el("rect", { x: xx, y: H - B - h, width: w, height: h, rx: 4, fill: i === year ? "var(--year)" : "var(--chart)", opacity: i === year ? 1 : 0.55 })); svg.appendChild(el("text", { x: xx + w / 2, y: H - B - h - 5, "text-anchor": "middle", "font-size": 11, fill: "var(--ink-2)" }, fmtv(v))); svg.appendChild(el("text", { x: xx + w / 2, y: H - 7, "text-anchor": "middle", "font-size": 11, fill: i === year ? "var(--year)" : "var(--ink-3)", "font-weight": i === year ? 700 : 400 }, Y[i])); });
+}
+
+function drawOverviewYears() {
+  document.getElementById("adm").innerHTML = `<tr><th>Rok</th><th>Planowe</th><th>Nagłe</th><th>Pozostałe</th></tr>` + Y.map((y, i) => { const [p, u] = DATA.adm[i]; return `<tr class="${i === year ? "on" : ""}"><td>${y}</td><td>${dec(p)}%</td><td>${dec(u)}%</td><td>${dec(100 - p - u)}%</td></tr>`; }).join("");
+  const amount = DATA.pln[year] * areaShare() * 1e6, hosp = yearly()[year];
+  document.getElementById("value-facts").innerHTML = [
+    ["Wycena (katalog 2025)", `${fmt(DATA.points)} pkt`, "za hospitalizację"],
+    [`Kwota świadczeń ${Y[year]}`, `${dec(amount / 1e6)} mln zł`, area ? area : "cała Polska"],
+    [`Średnio na hospitalizację ${Y[year]}`, `${fmt(amount / hosp)} zł`, "kwota ÷ liczba hospitalizacji"],
+  ].map(([l, v, s]) => `<div class="kpi"><dt>${l}</dt><dd>${v}</dd><span class="sub"><span>${s}</span></span></div>`).join("");
+  drawYearBars("pln", DATA.pln.map((v) => v * areaShare()), (v) => dec(v), Math.max(...DATA.pln) * areaShare() * 1.2);
+  const svg = document.getElementById("mort"); svg.innerHTML = "";
+  const W = 440, H = 190, L = 40, Rr = 16, T = 14, B = 26, x = (i) => L + (i * (W - L - Rr)) / (N - 1), y = (v) => T + (H - T - B) * (1 - v / 7);
+  [0, 3.5, 7].forEach((g) => { svg.appendChild(el("line", { x1: L, x2: W - Rr, y1: y(g), y2: y(g), stroke: "var(--line)" })); svg.appendChild(el("text", { x: L - 6, y: y(g) + 4, "text-anchor": "end", "font-size": 11, fill: "var(--ink-3)" }, `${dec(g)}%`)); });
+  yearAxis(svg, x, H, B, (yy) => String(yy).slice(2));
+  svg.appendChild(el("path", { d: "M" + DATA.mort.map((v, i) => `${x(i).toFixed(1)} ${y(v).toFixed(1)}`).join(" L"), fill: "none", stroke: "var(--chart)", "stroke-width": 2 }));
+  DATA.mort.forEach((v, i) => { const c = el("circle", { cx: x(i), cy: y(v), r: i === year ? 5.5 : 3.5, fill: i === year ? "var(--year)" : "var(--chart)", stroke: "var(--panel)", "stroke-width": 1.5 }); c.appendChild(el("title", {}, `${Y[i]}: ${dec(v, 2)}%`)); svg.appendChild(c); });
+  const shift = (year - (N - 1)) * 0.6;
+  const fam = DATA.family.map(([k, v], i) => [k, Math.max(4, v + (i === 0 ? shift : i === 1 ? -shift : 0))]);
+  const tot = fam.reduce((s, [, v]) => s + v, 0);
+  document.getElementById("fam").innerHTML = fam.map(([k, v], i) => `<span class="${i === 3 ? "light" : ""}" style="flex:${v};background:var(--fam-${i + 1})" title="${k}: ${dec((v / tot) * 100)}%">${k} ${dec((v / tot) * 100)}%</span>`).join("");
+}
+
+function drawProviders() {
+  const list = pool().map((p) => ({ ...p, key: p.n, cur: p.v[year], prev: year ? p.v[year - 1] : null })).sort((a, b) => b.cur - a.cur);
+  const total = list.reduce((s, r) => s + r.cur, 0) || 1;
+  const top3 = list.slice(0, 3).reduce((s, r) => s + r.cur, 0);
+  const shareSeries = Y.map((_, i) => { const l = pool().map((p) => p.v[i]).sort((a, b) => b - a); const t = l.reduce((s, v) => s + v, 0) || 1; return (l.slice(0, 3).reduce((s, v) => s + v, 0) / t) * 100; });
+  const med = (arr) => { const s = [...arr].sort((a, b) => a - b); return s.length ? s[Math.floor(s.length / 2)] : 0; };
+  const medSeries = Y.map((_, i) => med(pool().map((p) => p.v[i])));
+  const conc = [
+    ["Ośrodki z hospitalizacjami", fmt(list.length), Y.map(() => list.length)],
+    ["Udział 3 największych", `${dec((top3 / total) * 100)}%`, shareSeries],
+    ["Mediana na ośrodek", fmt(medSeries[year]), medSeries],
+  ];
+  document.getElementById("conc").innerHTML = conc.map(([l, v, s]) => `<div class="kpi"><dt>${l}</dt><dd>${v}</dd><span class="sub"><span>${Y[0]}–${Y[N - 1]}</span>${spark(s, 64, 20, year)}</span></div>`).join("");
+
+  const sel = provider ? P.find((p) => p.n === provider) : null;
+  const focus = document.getElementById("focus");
+  if (sel) {
+    const rank = list.findIndex((r) => r.n === sel.n) + 1;
+    const avgMort = list.reduce((s, r) => s + r.d, 0) / (list.length || 1);
+    const avgUrg = list.reduce((s, r) => s + r.u, 0) / (list.length || 1);
+    focus.innerHTML = `<div class="sec-head"><h4>Wybrany ośrodek · ${sel.n} · ${Y[year]}</h4><button type="button" class="link" id="focus-clear">Usuń wybór</button></div>
+      <dl class="cmp">
+        <div><dt>Hospitalizacje</dt><dd>${fmt(sel.v[year])}</dd><span>${rank ? `miejsce ${rank} z ${list.length}` : "poza filtrem obszaru"}</span></div>
+        <div><dt>Śmiertelność</dt><dd>${dec(sel.d)}%</dd><span>średnio w grupie ${dec(avgMort)}%</span></div>
+        <div><dt>Przyjęcia nagłe</dt><dd>${dec(sel.u)}%</dd><span>średnio w grupie ${dec(avgUrg)}%</span></div>
+        <div><dt>${Y[0]}–${Y[N - 1]}</dt><dd style="font-size:0">${spark(sel.v, 120, 30, year)}</dd><span>mini-trend lat</span></div>
+      </dl>
+      <span class="note">Porównanie: grupa albo podobne szpitale (przełącznik jak dziś). Link „Karta szpitala →” prowadzi do <code>/szpitale/[id]</code> (etap 4).</span>`;
+    document.getElementById("focus-clear").addEventListener("click", () => { provider = null; draw(); });
+  }
+  focus.hidden = !sel;
+
+  let h = `<thead><tr><th>#</th><th>Ośrodek</th><th>Województwo</th><th class="num">${year ? Y[year - 1] : ""}</th><th class="num on">${Y[year]}</th><th class="num">r/r</th><th class="num">Udział</th><th>${Y[0]}–${Y[N - 1]}</th></tr></thead><tbody>`;
+  list.forEach((r, i) => { const ch = r.prev ? pct(r.cur, r.prev) : null; h += `<tr tabindex="0" data-p="${r.n}" class="${r.n === provider ? "sel" : ""}"><td>${i + 1}</td><td>${r.n}</td><td>${r.r}</td><td class="num">${r.prev ? fmt(r.prev) : "—"}</td><td class="num"><b>${fmt(r.cur)}</b></td><td class="num ${trendCls(ch)}">${signed(ch)}</td><td class="num">${dec((r.cur / total) * 100)}%</td><td>${spark(r.v, 110, 26, year)}</td></tr>`; });
+  const rankEl = document.getElementById("rank"); rankEl.innerHTML = h + "</tbody>";
+  rankEl.querySelectorAll("tr[data-p]").forEach((tr) => {
+    const go = () => { provider = tr.dataset.p === provider ? null : tr.dataset.p; draw(); };
+    tr.addEventListener("click", go);
+    tr.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } });
+    tr.addEventListener("mouseenter", () => { hoverCity = cityOf(tr.dataset.p); drawCityMap(); });
+    tr.addEventListener("mouseleave", () => { hoverCity = null; drawCityMap(); });
+  });
+  drawCityMap();
+
+  const svg = document.getElementById("plines"); svg.innerHTML = "";
+  const W = 960, H = 240, L = 46, Rr = 210, T = 12, B = 30, max = Math.max(...pool().flatMap((p) => p.v), 1) * 1.1;
+  const x = (i) => L + (i * (W - L - Rr)) / (N - 1), y = (v) => T + (H - T - B) * (1 - v / max);
+  svg.appendChild(el("rect", { x: x(year) - 18, y: T, width: 36, height: H - T - B, fill: "var(--year-band)", rx: 4 }));
+  [0, 0.5, 1].forEach((f) => { const g = max * f; svg.appendChild(el("line", { x1: L, x2: W - Rr, y1: y(g), y2: y(g), stroke: "var(--line)" })); svg.appendChild(el("text", { x: L - 8, y: y(g) + 4, "text-anchor": "end", "font-size": 11, fill: "var(--ink-3)" }, fmt(g))); });
+  yearAxis(svg, x, H, B - 6);
+  const order = [...pool()].sort((a, b) => (a.n === provider) - (b.n === provider));
+  order.forEach((p) => {
+    const on = p.n === provider;
+    const path = el("path", { d: "M" + p.v.map((v, i) => `${x(i).toFixed(1)} ${y(v).toFixed(1)}`).join(" L"), fill: "none", stroke: on ? "#C65D2E" : "var(--ink-3)", "stroke-width": on ? 3 : 1.4, opacity: on || !provider ? 0.9 : 0.35 });
+    path.style.cursor = "pointer"; path.addEventListener("click", () => { provider = on ? null : p.n; draw(); });
+    path.appendChild(el("title", {}, p.n)); svg.appendChild(path);
+  });
+  const lab = sel && pool().includes(sel) ? sel : [...pool()].sort((a, b) => b.v[N - 1] - a.v[N - 1])[0];
+  if (lab) svg.appendChild(el("text", { x: x(N - 1) + 8, y: y(lab.v[N - 1]) + 4, "font-size": 12, fill: sel ? "#C65D2E" : "var(--ink-2)" }, lab.n.length > 30 ? lab.n.slice(0, 30) + "…" : lab.n));
+
+  scatter("scatter", (p) => p.d + Math.sin(p.n.length + year) * 0.6, 10, (v) => `${v}%`, "Śmiertelność");
+  scatter("scatter2", (p) => Math.min(100, p.u + Math.cos(p.n.length + year) * 2), 100, (v) => `${v}%`, "Nagłe");
+}
+
+// Mapa miast: jedno kółko na miasto (suma ośrodków), pole kółka proporcjonalne do liczby hospitalizacji.
+let hoverCity = null;
+const cityOf = (name) => name.split(", ")[1];
+function drawCityMap() {
+  const svg = document.getElementById("citymap"); svg.innerHTML = "";
+  R.forEach(([name, d]) => svg.appendChild(el("path", { d, fill: area && name !== area ? "var(--surface)" : "var(--chart-soft)", stroke: "var(--line)", "stroke-width": 0.6 })));
+  const byCity = {};
+  P.forEach((p) => { const c = cityOf(p.n); (byCity[c] ||= { name: c, region: p.r, total: 0, list: [] }); byCity[c].total += p.v[year]; byCity[c].list.push(p); });
+  const max = Math.max(...Object.values(byCity).map((c) => c.total), 1);
+  const selCity = provider ? cityOf(provider) : null;
+  Object.values(byCity).sort((a, b) => b.total - a.total).forEach((c) => {
+    const [x, y] = DATA.cities[c.name], r = 2 + 9 * Math.sqrt(c.total / max);
+    const dim = area && c.region !== area, on = c.name === selCity, hov = c.name === hoverCity;
+    const dot = el("circle", { cx: x, cy: y, r: hov || on ? r + 1.5 : r, fill: on ? "#C65D2E" : "var(--chart)", opacity: dim ? 0.2 : on || hov ? 1 : 0.7, stroke: hov ? "var(--ink)" : "var(--panel)", "stroke-width": hov ? 1.2 : 0.8 });
+    dot.style.cursor = "pointer";
+    dot.addEventListener("click", () => { const top = [...c.list].sort((a, b) => b.v[year] - a.v[year])[0]; provider = provider === top.n ? null : top.n; draw(); });
+    dot.addEventListener("mouseenter", () => { hoverCity = c.name; document.getElementById("cityinfo").textContent = `${c.name}: ${fmt(c.total)} hospitalizacji w ${Y[year]} r., ośrodki: ${c.list.length}`; document.querySelectorAll("#rank tr[data-p]").forEach((tr) => tr.classList.toggle("hov", cityOf(tr.dataset.p) === c.name)); });
+    dot.addEventListener("mouseleave", () => { hoverCity = null; document.querySelectorAll("#rank tr.hov").forEach((tr) => tr.classList.remove("hov")); });
+    dot.appendChild(el("title", {}, `${c.name}: ${fmt(c.total)} hosp. (${c.list.length} ${c.list.length === 1 ? "ośrodek" : "ośrodki"})`));
+    svg.appendChild(dot);
+    if (on || hov || c.total / max > 0.75) svg.appendChild(el("text", { x: x + r + 2, y: y + 3, "font-size": 7, fill: "var(--ink)", "pointer-events": "none" }, c.name));
+  });
+  const info = document.getElementById("cityinfo");
+  if (!hoverCity) info.textContent = `${Object.keys(byCity).length} miast z ośrodkami w makiecie. Najedź na kółko albo wiersz.`;
+}
+
+function scatter(id, yv, ymax, yfmt) {
+  const svg = document.getElementById(id); svg.innerHTML = "";
+  const W = 460, H = 250, L = 44, Rr = 14, T = 12, B = 38, xmax = 800;
+  const x = (v) => L + ((v + 24) / (xmax + 24)) * (W - L - Rr), y = (v) => T + (H - T - B) * (1 - (v + ymax * 0.05) / (ymax * 1.05));
+  [0, 400, 800].forEach((g) => { svg.appendChild(el("line", { x1: x(g), x2: x(g), y1: T, y2: H - B, stroke: "var(--line)" })); svg.appendChild(el("text", { x: x(g), y: H - B + 16, "text-anchor": "middle", "font-size": 11, fill: "var(--ink-3)" }, fmt(g))); });
+  [0, ymax / 2, ymax].forEach((g) => { svg.appendChild(el("line", { x1: L, x2: W - Rr, y1: y(g), y2: y(g), stroke: "var(--line)" })); svg.appendChild(el("text", { x: L - 6, y: y(g) + 4, "text-anchor": "end", "font-size": 11, fill: "var(--ink-3)" }, yfmt(g))); });
+  svg.appendChild(el("text", { x: (W + L) / 2, y: H - 4, "text-anchor": "middle", "font-size": 11.5, fill: "var(--ink-2)" }, `Hospitalizacje ${Y[year]}`));
+  const pts = [...pool()].sort((a, b) => (a.n === provider) - (b.n === provider));
+  pts.forEach((p) => { const on = p.n === provider; const v = Math.max(0, yv(p)); const c = el("circle", { cx: x(p.v[year]), cy: y(v), r: on ? 8 : 6, fill: on ? "#C65D2E" : "var(--chart)", opacity: on ? 1 : 0.7, stroke: "var(--panel)", "stroke-width": 1.5 }); c.style.cursor = "pointer"; c.addEventListener("click", () => { provider = on ? null : p.n; draw(); }); c.appendChild(el("title", {}, `${p.n}: ${fmt(p.v[year])} hosp., ${dec(v)}%`)); svg.appendChild(c); });
+}
+
+function draw() {
+  drawHead();
+  if (tab === "przeglad") { drawTrend(); drawGeo(); drawOverviewYears(); } else { drawProviders(); }
+}
+draw();
+</script>

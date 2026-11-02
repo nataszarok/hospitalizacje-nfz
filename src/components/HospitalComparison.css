@@ -140,7 +140,7 @@
 }
 
 .hospital-peer-item>strong{
-  color:#2856A3;
+  color:var(--primary);
   font-size:11px;
 }
 

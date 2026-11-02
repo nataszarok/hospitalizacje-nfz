@@ -1,5 +1,6 @@
 "use client";
 
+import { decodeValuations, VALUATIONS_PATH, type JgpValuation, type ValuationsFile } from "@/lib/valuations";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type * as React from "react";
 import type { HospitalPeerBenchmark, ProductOption } from "@/lib/types";
@@ -20,25 +21,14 @@ export async function parseMaybeGzip(r: Response) {
   return JSON.parse(await new Response(stream).text());
 }
 
-export type JgpValuation = {
-  kod_jgp: string;
-  kod_produktu: string;
-  nazwa: string;
-  pkt_hospitalizacja: number | null;
-  pkt_hospitalizacja_planowa: number | null;
-  pkt_jeden_dzien: number | null;
-  pkt_hospitalizacja_1_dniowa: number | null;
-  pkt_hospitalizacja_2_dniowa: number | null;
-};
-
-type JgpValuationPayload = { jgp: JgpValuation[] };
+export type { JgpValuation } from "@/lib/valuations";
 
 let valuationPromise: Promise<JgpValuation[]> | null = null;
 export function loadJgpValuations() {
   if (!valuationPromise) {
-    valuationPromise = fetch("/data/wyceny_jgp_2025.json.gz", { cache: "force-cache" })
+    valuationPromise = fetch(VALUATIONS_PATH, { cache: "force-cache" })
       .then(parseMaybeGzip)
-      .then((x: JgpValuationPayload) => x.jgp)
+      .then((file: ValuationsFile) => decodeValuations(file))
       .catch((e) => {
         valuationPromise = null;
         throw e;

@@ -5,6 +5,7 @@ import { SITE_NAME } from "@/lib/site";
 import { formatCompactCount, formatYearRange } from "@/lib/formatters";
 import type { DatasetHighlights } from "@/lib/staticData";
 import { PortalIcon } from "@/components/portal/PortalIcon";
+import { SearchBox } from "@/components/search/SearchBox";
 import styles from "./HomePage.module.css";
 
 // Kafel bez href jest pokazywany jako „Planowane”.
@@ -17,10 +18,10 @@ type Topic = {
 };
 
 const topics: readonly Topic[] = [
-  { title: "Hospitalizacje", description: "Ile było hospitalizacji, w jakich grupach JGP i z jaką śmiertelnością.", icon: "bed", href: DASHBOARD_HREFS.mortality, label: "Analizuj hospitalizacje" },
-  { title: "Tryb przyjęcia", description: "Przyjęcia planowe i nagłe w szpitalach i regionach.", icon: "heart", href: DASHBOARD_HREFS.admissions, label: "Analizuj tryb przyjęcia" },
+  { title: "Grupy JGP", description: "Karta każdej grupy: hospitalizacje w czasie, ośrodki, województwa, tryb przyjęcia i wycena.", icon: "bed", href: "/jgp", label: "Przeglądaj grupy JGP" },
   { title: "Szpitale publiczne", description: "Profil szpitala: oddziały, łóżka, świadczenia i wyniki finansowe.", icon: "hospital", href: DASHBOARD_HREFS.hospital, label: "Znajdź szpital" },
   { title: "Porównanie szpitali", description: "Porównaj szpital z grupą podobnych placówek dobranych przez model.", icon: "compare", href: DASHBOARD_HREFS.comparison, label: "Porównaj szpitale" },
+  { title: "Analizy", description: "Eksplorator dla analityków: kilka grup naraz, obszary, filtry i tryb przyjęcia.", icon: "heart", href: DASHBOARD_HREFS.trend, label: "Otwórz eksplorator" },
   { title: "Wyceny JGP", description: "Jak wygląda system wycen JGP i jak zmieniają się wyceny.", icon: "chart", label: "Wyceny JGP" },
   { title: "Artykuły", description: "Analizy i komentarze, m.in. o rozliczeniach i kontrolach NFZ.", icon: "book", label: "Artykuły" },
 ];
@@ -37,8 +38,9 @@ export function HomePage({ highlights }: { highlights: DatasetHighlights }) {
             <span className={styles.eyebrow}><span className={styles.eyebrowLine} /> Publiczna ochrona zdrowia · Dane NFZ</span>
             <h1 id="hero-title">Publiczna ochrona<br />zdrowia w liczbach.</h1>
             <p>Sprawdź, jak wyglądały hospitalizacje, porównuj publiczne szpitale i poznaj system wycen JGP. Czytaj analizy i artykuły, m.in. o kontrolach NFZ.</p>
-            <div className={styles.heroActions}>
-              <Link className={styles.primaryButton} href="#odkrywaj">Odkrywaj dane <PortalIcon name="arrow" size={18} /></Link>
+            <div className={styles.heroSearch}>
+              <SearchBox variant="hero" />
+              <p className={styles.searchHint}>Np. <b>E10</b>, <b>ozw</b>, <b>Nowa Sól</b> albo <b>E10 Nowa Sól na tle innych</b>. <Link href="#odkrywaj">Albo wybierz temat ↓</Link></p>
             </div>
           </div>
         </div>
@@ -79,7 +81,7 @@ export function HomePage({ highlights }: { highlights: DatasetHighlights }) {
           <h2 id="workbench-title">Potrzebujesz szczegółowej analizy?</h2>
           <p>Otwórz dashboard. Ustaw grupy JGP, filtry i parametry analizy. Udostępnij link do wybranego widoku.</p>
         </div>
-        <Link className={styles.primaryButton} href={DASHBOARD_HREFS.mortality}>Przejdź do analiz <PortalIcon name="arrow" size={18} /></Link>
+        <Link className={styles.primaryButton} href={DASHBOARD_HREFS.trend}>Przejdź do analiz <PortalIcon name="arrow" size={18} /></Link>
       </section>
 
       <section className={`${styles.container} ${styles.lower}`} aria-label="Informacje o portalu">

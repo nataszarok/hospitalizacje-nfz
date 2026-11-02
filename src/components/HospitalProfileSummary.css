@@ -253,8 +253,8 @@
   align-items:center;
   justify-content:center;
   border-radius:8px;
-  background:#EEF4FF;
-  color:#2563EB;
+  background:#E9F6F2;
+  color:var(--primary);
   font-size:13px;
 }
 
