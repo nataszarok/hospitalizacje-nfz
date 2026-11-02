@@ -17,7 +17,8 @@ vi.mock("@/components/jgp/GroupLineChart", () => ({
   </ul>,
 }));
 vi.mock("@/components/jgp/ProviderScatter", () => ({
-  STAR_COLOR: "#172033",
+  STAR_COLOR: "#D92D20",
+  STAR_OUTLINE: "#F2C94C",
   ProviderScatter: ({ points, ariaLabel, curves }: { points: { key: string; name: string; color?: string; label?: string }[]; ariaLabel: string; curves?: unknown[] }) => <div role="group" aria-label={ariaLabel} data-curves={curves?.length ?? 0}>
     {points.map((point) => <span key={point.key} data-color={point.color ?? ""} data-label={point.label ?? ""}>{point.name}</span>)}
   </div>,
@@ -131,7 +132,7 @@ describe("Karta w zakładkach — Ośrodki", () => {
     open("?widok=osrodki&ow=07");
     renderCard();
     const urgent = screen.getByRole("group", { name: /udział przyjęć nagłych/ });
-    expect(within(urgent).getByText("Szpital Alfa")).toHaveAttribute("data-color", "#C65D2E");
+    expect(within(urgent).getByText("Szpital Alfa")).toHaveAttribute("data-color", "#7656A8");
     expect(within(urgent).getByText("Szpital Beta").getAttribute("data-color")).toMatch(/^rgba\(152/);
     expect(screen.getByRole("list", { name: "Legenda województw" })).toHaveTextContent("mazowieckiepozostałe ośrodki");
   });
@@ -216,7 +217,7 @@ describe("Karta w zakładkach — wybrany ośrodek przy wybranych województwach
 });
 
 describe("Karta w zakładkach — zmiana województw a wybrany ośrodek", () => {
-  it("wybór innego województwa odznacza ośrodek spoza niego; wyczyszczenie województw go zostawia", () => {
+  it("ośrodek przestaje być wybrany, gdy jego województwo przestaje być aktywne", () => {
     open("?osrodek=07%7C111&ow=07");
     renderCard();
     fireEvent.click(screen.getByRole("tab", { name: /Przegląd/ }));
@@ -229,6 +230,31 @@ describe("Karta w zakładkach — zmiana województw a wybrany ośrodek", () => 
     renderCard();
     fireEvent.click(screen.getByRole("tab", { name: /Przegląd/ }));
     fireEvent.click(screen.getByRole("button", { name: "Wyczyść wybór (1)" }));
-    expect(window.location.search).toBe("?osrodek=07%7C111");
+    expect(window.location.search).toBe("");
+    cleanup();
+    // Odznaczenie województwa ośrodka (bez wyboru innego) też go odznacza.
+    open("?osrodek=07%7C111&ow=07");
+    renderCard();
+    fireEvent.click(screen.getByRole("tab", { name: /Przegląd/ }));
+    fireEvent.click(within(screen.getByRole("region", { name: "Mapa ciepła: województwa w latach" })).getByRole("button", { name: "Mazowieckie" }));
+    expect(window.location.search).toBe("");
+    cleanup();
+    // Ośrodek wybrany bez filtra województw zostaje, gdy dodajemy jego województwo.
+    open("?osrodek=07%7C111");
+    renderCard();
+    fireEvent.click(screen.getByRole("tab", { name: /Przegląd/ }));
+    fireEvent.click(within(screen.getByRole("region", { name: "Mapa ciepła: województwa w latach" })).getByRole("button", { name: "Mazowieckie" }));
+    expect(window.location.search).toBe("?osrodek=07%7C111&ow=07");
+  });
+});
+
+describe("Karta w zakładkach — linie województw w „Ile?”", () => {
+  it("nie zmieniają się po zmianie roku (wszystkie lata, ośrodki ze wszystkich lat)", () => {
+    open("?ow=07");
+    renderCard();
+    const before = screen.getByRole("list", { name: "Linie wykresu" }).textContent;
+    fireEvent.click(within(screen.getByRole("group", { name: "Rok karty" })).getByRole("button", { name: "2024" }));
+    expect(screen.getByRole("list", { name: "Linie wykresu" }).textContent).toBe(before);
+    expect(before).toBe("Mazowieckie: 17");
   });
 });

@@ -34,7 +34,7 @@ export interface ChartLine {
  * Wszystkie serie są typu `scattergl` (jak w eksploratorze): `restyle` serii SVG w trakcie najechania
  * przerysowuje dymek podpowiedzi, wywołuje kolejne najechanie i przepełnia stos.
  */
-export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = false, onSelect, onHover, height = 400, selectedColor = SELECTED, selectedLabel }: {
+export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = false, onSelect, onHover, height = 400, selectedColor = SELECTED, selectedLabel, selectedOutline }: {
   /** Miesiące jako „RRRR-MM”. */
   months: string[];
   lines: ChartLine[];
@@ -51,6 +51,8 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
   selectedColor?: string;
   /** Podpis na końcu linii wybranego ośrodka, np. „★ nazwa”. */
   selectedLabel?: string;
+  /** Obwódka linii i kropek wybranego ośrodka (szersza linia pod spodem), np. jasne złoto. */
+  selectedOutline?: string;
 }) {
   const chartRef = useRef<HTMLDivElement>(null);
   // Funkcje z rodzica trzymamy w refach: nowa funkcja po rerenderze nie przerysowuje wykresu.
@@ -73,7 +75,10 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
       const opacity = (line: ChartLine) => emphasized(line) ? 1 : 0.5;
       const width = (line: ChartLine) => emphasized(line) ? 2.5 : 1.5;
       const markerSize = (line: ChartLine) => emphasized(line) ? 7 : 5;
-      // Dwie serie na linię: kropki (wartości) i średnia 3M. Indeks serii = indeks śladu / 2.
+      // Obwódka wybranej linii: szersza linia pod spodem (pierwszy ślad, poza mapowaniem serii).
+      const outlined = selectedOutline ? ordered.find((line) => line.tone === "selected") : undefined;
+      const offset = outlined ? 1 : 0;
+      // Dwie serie na linię: kropki (wartości) i średnia 3M. Indeks serii = (indeks śladu − offset) / 2.
       const traces = ordered.flatMap((line) => {
         const average = movingAverage(line.values);
         const custom = labels.map((label, i) => [label, line.name, line.detail ?? "", average[i] === null ? "—" : Math.round(average[i] as number).toLocaleString("pl-PL")]);
@@ -82,7 +87,7 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
           {
             type: "scattergl", mode: "markers", name: line.name, legendgroup: line.key, showlegend: legend,
             x, y: line.values, customdata: custom,
-            marker: { color: color(line), size: markerSize(line), line: { color: "#FFFFFF", width: 1 } },
+            marker: { color: color(line), size: markerSize(line), line: { color: line === outlined ? selectedOutline : "#FFFFFF", width: line === outlined ? 1.5 : 1 } },
             opacity: opacity(line),
             hovertemplate: `${head}: %{y:,.0f} ${valueLabel}<br>średnia 3M: %{customdata[3]}<extra></extra>`,
           },
@@ -95,6 +100,10 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
           },
         ];
       });
+      if (outlined) traces.unshift({
+        type: "scattergl", mode: "lines", x, y: movingAverage(outlined.values), hoverinfo: "skip", showlegend: false, connectgaps: false,
+        line: { color: selectedOutline, width: width(outlined) + 3 },
+      } as never);
       // Nakładka: wyróżniona seria (kropki + średnia) i znacznik wskazanego punktu. Na start puste.
       const overlayStart = traces.length;
       const empty = { x: [null], y: [null] };
@@ -132,14 +141,14 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
       plot.removeAllListeners("plotly_click");
       plot.on("plotly_click", (event) => {
         const point = event?.points?.[0];
-        if (!point || point.curveNumber >= overlayStart) return;
-        selectRef.current?.(ordered[Math.floor(point.curveNumber / 2)].key);
+        if (!point || point.curveNumber >= overlayStart || point.curveNumber < offset) return;
+        selectRef.current?.(ordered[Math.floor((point.curveNumber - offset) / 2)].key);
       });
       let restyleInProgress = false;
       plot.on("plotly_hover", (event) => {
         const point = event?.points?.[0];
-        if (restyleInProgress || !point || point.curveNumber >= overlayStart) return;
-        const line = ordered[Math.floor(point.curveNumber / 2)];
+        if (restyleInProgress || !point || point.curveNumber >= overlayStart || point.curveNumber < offset) return;
+        const line = ordered[Math.floor((point.curveNumber - offset) / 2)];
         hoverRef.current?.(line.key);
         const highlight = line.tone === "selected" ? selectedColor : line.color ?? line.accent ?? PRIMARY;
         // Kropka wskazanego miesiąca (także przy najechaniu na linię średniej).
@@ -163,7 +172,7 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
     };
     void render();
     return () => { cancelled = true; };
-  }, [months, lines, valueLabel, legend, height, selectedColor, selectedLabel]);
+  }, [months, lines, valueLabel, legend, height, selectedColor, selectedLabel, selectedOutline]);
 
   // Wysokość zarezerwowana od razu: wykres rysuje się asynchronicznie i nie przesuwa treści pod nim.
   return <div ref={chartRef} role="img" aria-label={ariaLabel} style={{ minHeight: height }} />;

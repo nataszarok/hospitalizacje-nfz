@@ -52,12 +52,6 @@
   cursor: pointer;
 }
 
-.explorer {
-  justify-self: start;
-  color: var(--color-primary);
-  font-size: 13.5px;
-  font-weight: 600;
-}
 
 .kpis {
   display: grid;
@@ -683,9 +677,6 @@
     font-size: 14px;
   }
 
-  .tabNote {
-    display: none;
-  }
 
   .years > span {
     display: none;
@@ -699,8 +690,11 @@
 /* Wybrany ośrodek: gwiazdka (ten sam znak na wykresach, w tabeli, pasku i legendzie). */
 .star {
   color: #d92d20;
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1;
+  /* Jasnozłota obwódka jak na wykresach. */
+  -webkit-text-stroke: 0.8px #f2c94c;
+  paint-order: stroke fill;
 }
 
 .nameCell .star,

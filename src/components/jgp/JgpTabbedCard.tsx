@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { GroupLineChart, type ChartLine } from "@/components/jgp/GroupLineChart";
 import { RegionMap, SELECTED_PROVIDER_PARAM, regionTitle } from "@/components/jgp/JgpCard";
-import { ProviderScatter, STAR_COLOR, type ScatterCurve, type ScatterPoint } from "@/components/jgp/ProviderScatter";
+import { ProviderScatter, STAR_COLOR, STAR_OUTLINE, type ScatterCurve, type ScatterPoint } from "@/components/jgp/ProviderScatter";
 import { ProviderLink } from "@/components/TableLinks";
 import { formatCityName } from "@/lib/formatters";
 import {
@@ -32,8 +32,9 @@ const TOP_LINES = 15;
 const SERVER_ROWS = 30;
 const subscribeNothing = () => () => {};
 // Kolory lejka: poza granicą 95% i 99,8% (w górę i w dół).
-// Kolory wybranych województw (mapa i linie „Ile?”): kontrastowe wobec niebieskiej skali mapy, pierwszy pomarańczowy.
-const REGION_PICK_COLORS = ["#C65D2E", "#2E7D5B", "#7656A8", "#A06A17", "#0F7C8C", "#B4366B"];
+// Kolory wybranych województw (mapa, wykresy punktowe, tabela): kontrastowe wobec niebieskiej skali mapy
+// i bez czerwieni ani pomarańczu, zarezerwowanych dla wybranego ośrodka (czerwona gwiazdka).
+const REGION_PICK_COLORS = ["#7656A8", "#2E7D5B", "#0F7C8C", "#B4366B", "#5B6B1F", "#3F51B5"];
 // Ośrodki spoza wybranych województw na wykresach „Jak leczą?”.
 const OTHER_POINT = "rgba(152, 162, 179, 0.5)";
 /** Kolor każdego wybranego województwa (kolejność wyboru), ten sam na mapie, wykresach i w tabeli. */
@@ -71,9 +72,12 @@ function useTabbedState(data: JgpPageData) {
   const current = useRef(state);
   useEffect(() => { current.current = state; }, [state]);
   const write = useCallback((patch: Partial<CardState>) => {
-    const next = { ...current.current, ...patch };
-    // Ośrodek spoza nowo wybranych województw przestaje być wybrany (inaczej zostawałby na wykresach).
-    if (patch.regions && next.selectedKey && next.regions.length && !next.regions.includes(next.selectedKey.split("|")[0])) next.selectedKey = null;
+    const previous = current.current;
+    const next = { ...previous, ...patch };
+    // Ośrodek przestaje być wybrany, gdy jego województwo przestaje być aktywne (odznaczone albo „Wyczyść wybór”)
+    // albo gdy wybrane są tylko inne województwa — inaczej zostawałby na wykresach.
+    const ow = next.selectedKey?.split("|")[0];
+    if (patch.regions && ow && !next.regions.includes(ow) && (previous.regions.includes(ow) || next.regions.length > 0)) next.selectedKey = null;
     if (!next.selectedKey) next.scope = "all";
     current.current = next;
     const url = new URL(window.location.href);
@@ -102,6 +106,8 @@ export function JgpTabbedCard({ packed, map = null }: { packed: PackedJgpPageDat
   const scope: CompareScope = selectedRow && selectedRow.peers.length ? state.scope : "all";
   const pool = useMemo(() => providerPool(data, { selectedKey: state.selectedKey, scope, regions: state.regions }), [data, state.selectedKey, scope, state.regions]);
   const comparison = useMemo(() => providerPool(data, { selectedKey: state.selectedKey, scope, regions: [] }), [data, state.selectedKey, scope]);
+  // Linie województw w „Ile?” pokazują wszystkie lata, więc liczymy je z ośrodków wszystkich lat (nie zależą od wybranego roku).
+  const linePool = useMemo(() => providerPool(all, { selectedKey: state.selectedKey, scope, regions: state.regions }), [all, state.selectedKey, scope, state.regions]);
   // Czy nagłówek karty zniknął pod nagłówkiem portalu (75 px): wtedy pasek pokazuje kod i nazwę grupy.
   const sentinel = useRef<HTMLDivElement>(null);
   const [stuck, setStuck] = useState(false);
@@ -142,7 +148,7 @@ export function JgpTabbedCard({ packed, map = null }: { packed: PackedJgpPageDat
       <span className={styles.barTitle} aria-hidden={!stuck}><b>{all.jgpCode}</b> {all.name}</span>
       <div className={styles.tabs} role="tablist" aria-label="Zakładki karty">
         <button type="button" role="tab" id="tab-przeglad" aria-controls="panel-przeglad" aria-selected={state.tab === "przeglad"} onClick={() => write({ tab: "przeglad" })}>
-          Przegląd<small className={styles.tabNote}>grupa w systemie</small>
+          Przegląd
         </button>
         <button type="button" role="tab" id="tab-osrodki" aria-controls="panel-osrodki" aria-selected={state.tab === "osrodki"} onClick={() => write({ tab: "osrodki" })}>
           Ośrodki<small>{integer(pool.length)}</small>
@@ -163,6 +169,7 @@ export function JgpTabbedCard({ packed, map = null }: { packed: PackedJgpPageDat
         <OverviewTab
           data={data}
           pool={pool}
+          linePool={linePool}
           map={map}
           regions={state.regions}
           onToggleRegion={toggleRegion}
@@ -222,7 +229,6 @@ function CardHeader({ data, regions, onClearRegion }: { data: JgpPageData; regio
           ? regions.map((ow) => <button key={ow} type="button" className={styles.chip} onClick={() => onClearRegion(ow)}>woj. {regionName(ow).toLocaleLowerCase("pl-PL")} ✕</button>)
           : <span>cała Polska · kliknij województwo na mapie</span>}
       </p>
-      <Link className={styles.explorer} href={`/analizy?jgp=${encodeURIComponent(data.jgpCode)}`}>Pokaż w eksploratorze →</Link>
     </div>
     <dl className={styles.kpis} aria-label="Liczby grupy">
       <div><dt>Hospitalizacje {data.year}</dt><dd>{integer(data.hospitalizations)}</dd><span>{change === null ? "pierwszy rok" : `${signedPct(change)} r/r`}</span></div>
@@ -244,20 +250,20 @@ function SectionHead({ id, question, context, tag }: { id: string; question: str
 
 type Metric = "hospitalizations" | "deaths" | "urgent";
 
-function OverviewTab({ data, pool, map, regions, onToggleRegion, onYear, onRegionYear, onClearRegions, onShowProviders }: {
-  data: JgpPageData; pool: JgpProviderRow[]; map: RegionsMap | null; regions: string[]; onToggleRegion: (ow: string) => void; onYear: (year: string) => void;
+function OverviewTab({ data, pool, linePool, map, regions, onToggleRegion, onYear, onRegionYear, onClearRegions, onShowProviders }: {
+  data: JgpPageData; pool: JgpProviderRow[]; linePool: JgpProviderRow[]; map: RegionsMap | null; regions: string[]; onToggleRegion: (ow: string) => void; onYear: (year: string) => void;
   onRegionYear: (ow: string, year: string) => void; onClearRegions: () => void; onShowProviders: () => void;
 }) {
   const [metric, setMetric] = useState<Metric>("hospitalizations");
   const lines = useMemo((): ChartLine[] => {
     if (regions.length) return regions.map((ow, i) => {
-      const rows = pool.filter((row) => row.owNfz === ow);
+      const rows = linePool.filter((row) => row.owNfz === ow);
       const name = data.regions.find((row) => row.owNfz === ow)?.name ?? ow;
-      return { key: ow, name: `${name} (${rows.length})`, values: sumSeries(rows, data.months.length), color: REGION_PICK_COLORS[i % REGION_PICK_COLORS.length] };
+      return { key: ow, name, values: sumSeries(rows, data.months.length), color: REGION_PICK_COLORS[i % REGION_PICK_COLORS.length] };
     });
     const values = metric === "deaths" ? data.national.deaths : metric === "urgent" ? data.national.urgent : data.national.hospitalizations;
     return [{ key: "pl", name: "Cała Polska", values, tone: "primary" }];
-  }, [data, pool, regions, metric]);
+  }, [data, linePool, regions, metric]);
   const label = !regions.length && metric === "deaths" ? "zgonów" : !regions.length && metric === "urgent" ? "przyjęć nagłych" : "hosp.";
   return <>
     <section className={styles.sec} aria-labelledby="s-ile">
@@ -484,6 +490,7 @@ function ProvidersTab({ data, pool, comparison, regions, selectedRow, scope, fil
         onSelect={onSelect}
         onHover={setHoverKey}
         selectedColor={STAR_COLOR}
+        selectedOutline={STAR_OUTLINE}
         selectedLabel={selectedRow ? `★ ${selectedRow.name.length > 40 ? `${selectedRow.name.slice(0, 39)}…` : selectedRow.name}` : undefined}
         ariaLabel={`Wykres liniowy: hospitalizacje miesięcznie w ${lines.length} ośrodkach`}
       />

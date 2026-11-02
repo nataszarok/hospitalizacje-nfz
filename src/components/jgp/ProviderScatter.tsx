@@ -18,6 +18,8 @@ export interface ScatterPoint {
 
 /** Kolor wybranego ośrodka w trybie gwiazdki: spoza palety województw i lejka. */
 export const STAR_COLOR = "#D92D20";
+/** Obwódka gwiazdki: jasne złoto (także obwódka ★ w tabeli i linii wybranego ośrodka). */
+export const STAR_OUTLINE = "#F2C94C";
 
 /** Linia tła wykresu, np. granica lejka. */
 export interface ScatterCurve { x: number[]; y: number[]; color: string; dash?: "dot" | "dash" | "solid" }
@@ -64,7 +66,7 @@ export function ProviderScatter({ points, xTitle, yTitle, ySuffix, reference, on
         marker: i < groups.length - 1
           ? { color: colors[i] || "rgba(40, 86, 163, 0.55)", size: colors[i] ? 9 : 8, line: { color: "#FFFFFF", width: 1 } }
           : marker === "star"
-            ? { color: STAR_COLOR, size: 18, symbol: "star", line: { color: "#FFFFFF", width: 1.5 } }
+            ? { color: STAR_COLOR, size: 18, symbol: "star", line: { color: STAR_OUTLINE, width: 1.5 } }
             : { color: "#C65D2E", size: 13, line: { color: "#FFFFFF", width: 2 } },
         hovertemplate: "%{customdata[1]}<extra></extra>",
       }))];
