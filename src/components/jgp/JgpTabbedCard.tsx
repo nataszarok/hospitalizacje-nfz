@@ -8,7 +8,7 @@ import { ProviderScatter, type ScatterCurve, type ScatterPoint } from "@/compone
 import { ProviderLink } from "@/components/TableLinks";
 import { formatCityName } from "@/lib/formatters";
 import {
-  cartogramCells, funnelCurves, funnelStatus, MAX_REGIONS, MIN_FUNNEL_DEATHS, poolStats, providerPool, providerYearTotals, scaleColor, selectedIndex,
+  cartogramCells, dataForYear, funnelCurves, funnelStatus, MAX_REGIONS, MIN_FUNNEL_DEATHS, poolStats, providerPool, providerYearTotals, scaleColor, selectedIndex,
   structureShares, sumSeries, unpackPageData, yearChangePct, type CompareScope, type PackedJgpPageData, type RegionsMap,
 } from "@/lib/jgpCard";
 import type { JgpPageData, JgpProviderRow } from "@/lib/jgpPage";
@@ -27,6 +27,7 @@ const millions = (value: number) => `${decimal(value / 1_000_000)} mln zł`;
 const TAB_PARAM = "widok";
 const SCOPE_PARAM = "porownanie";
 const REGION_PARAM = "ow";
+const YEAR_PARAM = "rok";
 const TOP_LINES = 15;
 const SERVER_ROWS = 30;
 const subscribeNothing = () => () => {};
@@ -35,11 +36,12 @@ const FUNNEL_COLORS = { up95: "#E3A27F", up998: "#B4441B", down95: "#8FB0DD", do
 
 export type CardTab = "przeglad" | "osrodki";
 
-interface CardState { tab: CardTab; selectedKey: string | null; scope: CompareScope; regions: string[] }
+/** `year`: rok danych karty; `null` = najnowszy (bez parametru w adresie). */
+interface CardState { tab: CardTab; selectedKey: string | null; scope: CompareScope; regions: string[]; year: string | null }
 
 // Strona jest statyczna: stan czytamy i zapisujemy w adresie w przeglądarce.
 function useTabbedState(data: JgpPageData) {
-  const [state, setState] = useState<CardState>({ tab: "przeglad", selectedKey: null, scope: "all", regions: [] });
+  const [state, setState] = useState<CardState>({ tab: "przeglad", selectedKey: null, scope: "all", regions: [], year: null });
   useEffect(() => {
     const read = () => {
       const params = new URLSearchParams(window.location.search);
@@ -51,12 +53,13 @@ function useTabbedState(data: JgpPageData) {
         selectedKey,
         scope: params.get(SCOPE_PARAM) === "podobne" ? "peers" : "all",
         regions: [...new Set(params.getAll(REGION_PARAM).filter((ow) => known.has(ow)))].slice(0, MAX_REGIONS),
+        year: data.admissionYears.includes(params.get(YEAR_PARAM) ?? "") && params.get(YEAR_PARAM) !== data.year ? params.get(YEAR_PARAM) : null,
       });
     };
     read();
     window.addEventListener("popstate", read);
     return () => window.removeEventListener("popstate", read);
-  }, [data.regions]);
+  }, [data.regions, data.admissionYears, data.year]);
 
   // Aktualny stan w refie: adres zapisujemy poza funkcją aktualizującą stan (zapis adresu odświeża router Next).
   const current = useRef(state);
@@ -72,6 +75,7 @@ function useTabbedState(data: JgpPageData) {
     set(SCOPE_PARAM, next.selectedKey && next.scope === "peers" ? "podobne" : null);
     url.searchParams.delete(REGION_PARAM);
     for (const ow of next.regions) url.searchParams.append(REGION_PARAM, ow);
+    set(YEAR_PARAM, next.year);
     window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
     setState(next);
   }, []);
@@ -80,13 +84,26 @@ function useTabbedState(data: JgpPageData) {
 
 /** Karta grupy JGP w zakładkach „Przegląd” i „Ośrodki” (układ z docs/karta-jgp-pytania.html). */
 export function JgpTabbedCard({ packed, map = null }: { packed: PackedJgpPageData; map?: RegionsMap | null }) {
-  const data = useMemo(() => unpackPageData(packed), [packed]);
-  const { state, write } = useTabbedState(data);
+  const all = useMemo(() => unpackPageData(packed), [packed]);
+  const { state, write } = useTabbedState(all);
+  // Dane wybranego roku: ranking, liczby i województwa; wykresy „w czasie” pokazują wszystkie lata.
+  const yearIndex = all.admissionYears.indexOf(state.year ?? all.year);
+  const data = useMemo(() => dataForYear(all, yearIndex), [all, yearIndex]);
   const selected = selectedIndex(data, state.selectedKey);
   const selectedRow = selected >= 0 ? data.providers[selected] : null;
   const scope: CompareScope = selectedRow && selectedRow.peers.length ? state.scope : "all";
   const pool = useMemo(() => providerPool(data, { selectedKey: state.selectedKey, scope, regions: state.regions }), [data, state.selectedKey, scope, state.regions]);
   const comparison = useMemo(() => providerPool(data, { selectedKey: state.selectedKey, scope, regions: [] }), [data, state.selectedKey, scope]);
+  // Czy nagłówek karty zniknął pod nagłówkiem portalu (75 px): wtedy pasek pokazuje kod i nazwę grupy.
+  const sentinel = useRef<HTMLDivElement>(null);
+  const [stuck, setStuck] = useState(false);
+  useEffect(() => {
+    const node = sentinel.current;
+    if (!node || typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver(([entry]) => setStuck(!entry.isIntersecting && entry.boundingClientRect.top < 76), { rootMargin: "-76px 0px 0px 0px" });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
   const toggleRegion = useCallback((ow: string) => {
     const regions = state.regions.includes(ow) ? state.regions.filter((item) => item !== ow) : state.regions.length < MAX_REGIONS ? [...state.regions, ow] : state.regions;
     write({ regions });
@@ -94,20 +111,31 @@ export function JgpTabbedCard({ packed, map = null }: { packed: PackedJgpPageDat
 
   return <>
     <CardHeader data={data} regions={state.regions} onClearRegion={(ow) => write({ regions: state.regions.filter((item) => item !== ow) })} />
-    <div className={styles.tabbar}>
+    <div ref={sentinel} aria-hidden />
+    <div className={`${styles.tabbar} ${stuck ? styles.tabbarStuck : ""}`}>
+      {/* Po przewinięciu nagłówka karty kod i nazwa grupy zostają na pasku (jeden pasek pod nagłówkiem portalu). */}
+      <span className={styles.barTitle} aria-hidden={!stuck}><b>{all.jgpCode}</b> {all.name}</span>
       <div className={styles.tabs} role="tablist" aria-label="Zakładki karty">
         <button type="button" role="tab" id="tab-przeglad" aria-controls="panel-przeglad" aria-selected={state.tab === "przeglad"} onClick={() => write({ tab: "przeglad" })}>
-          Przegląd<small>grupa w systemie</small>
+          Przegląd<small className={styles.tabNote}>grupa w systemie</small>
         </button>
         <button type="button" role="tab" id="tab-osrodki" aria-controls="panel-osrodki" aria-selected={state.tab === "osrodki"} onClick={() => write({ tab: "osrodki" })}>
           Ośrodki<small>{integer(pool.length)}</small>
         </button>
       </div>
-      <span className={styles.tabMeta}>Dane {data.year}; wykresy w czasie: {data.months[0]?.slice(0, 4) ?? data.year}–{data.year}</span>
+      <div className={styles.years} role="group" aria-label="Rok karty">
+        <span>Rok</span>
+        {(all.admissionYears.length ? all.admissionYears : [all.year]).map((year) => <button
+          key={year}
+          type="button"
+          aria-pressed={year === data.year}
+          onClick={() => write({ year: year === all.year ? null : year })}
+        >{year}</button>)}
+      </div>
     </div>
     {state.tab === "przeglad"
       ? <div role="tabpanel" id="panel-przeglad" aria-labelledby="tab-przeglad" className={styles.panel}>
-        <OverviewTab data={data} pool={pool} map={map} regions={state.regions} onToggleRegion={toggleRegion} />
+        <OverviewTab data={data} pool={pool} map={map} regions={state.regions} onToggleRegion={toggleRegion} onYear={(year) => write({ year: year === all.year ? null : year })} />
       </div>
       : <div role="tabpanel" id="panel-osrodki" aria-labelledby="tab-osrodki" className={styles.panel}>
         <ProvidersTab
@@ -127,13 +155,15 @@ export function JgpTabbedCard({ packed, map = null }: { packed: PackedJgpPageDat
 
 function CardHeader({ data, regions, onClearRegion }: { data: JgpPageData; regions: string[]; onClearRegion: (ow: string) => void }) {
   const years = data.admissions;
-  const latest = years.at(-1);
-  const previous = years.at(-2);
+  const at = years.findIndex((row) => row.year === data.year);
+  const latest = at >= 0 ? years[at] : undefined;
+  const previous = at > 0 ? years[at - 1] : undefined;
   const rate = (point?: { total: number; deaths?: number }) => point && point.total && point.deaths !== undefined ? (point.deaths / point.total) * 100 : null;
   const latestRate = rate(latest);
   const previousRate = rate(previous);
-  const value = data.valuePln.at(-1);
-  const valuePrevious = data.valuePln.at(-2);
+  const valueAt = data.valuePln.findIndex((item) => item.year === data.year);
+  const value = valueAt >= 0 ? data.valuePln[valueAt] : undefined;
+  const valuePrevious = valueAt > 0 ? data.valuePln[valueAt - 1] : undefined;
   const yearIndex = data.admissionYears.indexOf(data.year);
   const previousProviders = yearIndex > 0 ? data.providers.filter((row) => (providerYearTotals(row)[yearIndex - 1] ?? 0) > 0).length : null;
   const change = yearChangePct(data.hospitalizations, data.previousHospitalizations);
@@ -144,6 +174,7 @@ function CardHeader({ data, regions, onClearRegion }: { data: JgpPageData; regio
       <nav className={base.breadcrumbs} aria-label="Ścieżka"><Link href="/jgp">Grupy JGP</Link> <span aria-hidden>›</span> <span>{data.jgpCode}</span></nav>
       <div className={base.eyebrow}>Grupa JGP · {data.procedural ? "zabiegowa" : "zachowawcza"}</div>
       <h1 className={styles.title}><span className={base.code}>{data.jgpCode}</span> {data.name}</h1>
+      {data.description ? <p className={styles.desc}>{data.description} <small>(opis redakcyjny; słownik NFZ podaje tylko nazwę grupy)</small></p> : null}
       <p className={styles.meta}>
         {data.valuation?.points ? <span>Wycena <b>{integer(data.valuation.points)} pkt</b> (katalog {data.valuation.year})</span> : null}
         <span>Produkt {data.productCodes.join(", ")}</span>
@@ -159,7 +190,7 @@ function CardHeader({ data, regions, onClearRegion }: { data: JgpPageData; regio
     </div>
     <dl className={styles.kpis} aria-label="Liczby grupy">
       <div><dt>Hospitalizacje {data.year}</dt><dd>{integer(data.hospitalizations)}</dd><span>{change === null ? "pierwszy rok" : `${signedPct(change)} r/r`}</span></div>
-      <div><dt>Kwota świadczeń NFZ {value?.year ?? ""}</dt><dd>{value ? millions(value.value) : "—"}</dd><span>{value && valuePrevious ? `${signedPct(((value.value - valuePrevious.value) / valuePrevious.value) * 100)} r/r` : "brak poprzedniego roku"}</span></div>
+      <div><dt>Kwota świadczeń NFZ {data.year}</dt><dd>{value ? millions(value.value) : "—"}</dd><span>{value && valuePrevious ? `${signedPct(((value.value - valuePrevious.value) / valuePrevious.value) * 100)} r/r` : "brak poprzedniego roku"}</span></div>
       <div><dt>Śmiertelność</dt><dd>{latestRate === null ? "—" : pct(latestRate, latestRate < 1 ? 2 : 1)}</dd><span>{latestRate !== null && previousRate !== null ? `${signedPp(latestRate - previousRate, latestRate < 1 ? 2 : 1)} r/r` : "zgony w szpitalu"}</span></div>
       <div><dt>Ośrodki</dt><dd>{integer(data.providerCount)}</dd><span>{previousProviders === null ? "w roku danych" : `${data.providerCount - previousProviders >= 0 ? "+" : ""}${data.providerCount - previousProviders} r/r`}</span></div>
     </dl>
@@ -177,7 +208,7 @@ function SectionHead({ id, question, context, tag }: { id: string; question: str
 
 type Metric = "hospitalizations" | "deaths" | "urgent";
 
-function OverviewTab({ data, pool, map, regions, onToggleRegion }: { data: JgpPageData; pool: JgpProviderRow[]; map: RegionsMap | null; regions: string[]; onToggleRegion: (ow: string) => void }) {
+function OverviewTab({ data, pool, map, regions, onToggleRegion, onYear }: { data: JgpPageData; pool: JgpProviderRow[]; map: RegionsMap | null; regions: string[]; onToggleRegion: (ow: string) => void; onYear: (year: string) => void }) {
   const [metric, setMetric] = useState<Metric>("hospitalizations");
   const lines = useMemo((): ChartLine[] => {
     if (regions.length) return regions.map((ow, i) => {
@@ -201,8 +232,9 @@ function OverviewTab({ data, pool, map, regions, onToggleRegion }: { data: JgpPa
       <p className={base.note}>Kropka = miesiąc, linia = średnia z 3 miesięcy. Miesiące według daty wypisu. Wartości &lt;5 liczone jako 1.</p>
     </section>
     <RegionsSection data={data} map={map} regions={regions} onToggle={onToggleRegion} />
-    <CostSection data={data} />
+    <CostSection data={data} onYear={onYear} />
     <ProfileSection data={data} />
+    {data.family ? <FamilySection data={data} /> : null}
   </>;
 }
 
@@ -231,7 +263,7 @@ function RegionsSection({ data, map, regions, onToggle }: { data: JgpPageData; m
       </div>
       <div className={styles.heatWrap} role="region" aria-label="Mapa ciepła: województwa w latach" tabIndex={0}>
         <table className={styles.heat}>
-          <thead><tr><th>Województwo</th>{heat.map((year) => <th key={year.year} className={base.num}>{year.year}</th>)}</tr></thead>
+          <thead><tr><th>Województwo</th>{heat.map((year) => <th key={year.year} className={`${base.num} ${year.year === data.year ? styles.heatOn : ""}`}>{year.year}</th>)}</tr></thead>
           <tbody>
             {data.regions.map((row) => <tr key={row.owNfz} className={regions.includes(row.owNfz) ? base.rowSelected : undefined}>
               <td><button type="button" className={styles.linkCell} aria-pressed={regions.includes(row.owNfz)} onClick={() => onToggle(row.owNfz)} title={titles.get(row.owNfz)}>{names.get(row.owNfz)}</button></td>
@@ -249,18 +281,19 @@ function RegionsSection({ data, map, regions, onToggle }: { data: JgpPageData; m
   </section>;
 }
 
-function CostSection({ data }: { data: JgpPageData }) {
+function CostSection({ data, onYear }: { data: JgpPageData; onYear: (year: string) => void }) {
   const totals = new Map(data.admissions.map((row) => [row.year, row.total]));
   const bars = data.valuePln.map((item) => ({ ...item, perStay: totals.get(item.year) ? item.value / (totals.get(item.year) as number) : null }));
   const max = Math.max(...bars.map((item) => item.value), 1);
-  const latest = bars.at(-1);
-  const previous = bars.at(-2);
+  const at = bars.findIndex((item) => item.year === data.year);
+  const latest = at >= 0 ? bars[at] : bars.at(-1);
+  const previous = at > 0 ? bars[at - 1] : undefined;
   const perChange = latest?.perStay && previous?.perStay ? ((latest.perStay - previous.perStay) / previous.perStay) * 100 : null;
   return <section className={styles.sec} aria-labelledby="s-koszt">
     <SectionHead id="s-koszt" question="Za ile?" context="Wycena i kwota świadczeń NFZ, wszystkie lata" tag="Lata" />
     <div className={styles.cost}>
       {bars.length ? <div className={styles.costBars} role="img" aria-label={`Kwota świadczeń NFZ za ${data.jgpCode}: ${bars.map((item) => `${item.year} ${millions(item.value)}`).join(", ")}`}>
-        {bars.map((item) => <div key={item.year} className={styles.costBar}>
+        {bars.map((item) => <div key={item.year} className={`${styles.costBar} ${item.perStay ? styles.costBarPick : ""}`} onClick={item.perStay ? () => onYear(item.year) : undefined} title={item.perStay ? `Pokaż kartę za ${item.year} r.` : undefined}>
           <span className={styles.costValue}>{decimal(item.value / 1_000_000)} mln</span>
           <span className={styles.costTrack}><span className={`${styles.costFill} ${item.year === data.year ? styles.costFillOn : ""}`} style={{ height: `${(item.value / max) * 100}%` }} /></span>
           <span className={styles.costYear}>{item.year}</span>
@@ -289,7 +322,7 @@ function ProfileSection({ data }: { data: JgpPageData }) {
     <table className={base.table}>
       <thead><tr><th>Rok</th><th>Struktura przyjęć</th><th className={base.num}>Nagłe</th><th className={base.num}>Planowe</th><th className={base.num}>Śmiertelność</th></tr></thead>
       <tbody>
-        {data.admissions.map((row) => <tr key={row.year}>
+        {data.admissions.map((row) => <tr key={row.year} className={row.year === data.year ? base.rowSelected : undefined}>
           <td>{row.year}</td>
           <td><div className={base.stack} role="img" aria-label={`nagłe ${pct(share(row.urgent, row.total))}, planowe ${pct(share(row.planned, row.total))}, pozostałe ${pct(share(row.other, row.total))}`}>
             {row.urgent ? <span className={`${base.segment} ${base.segmentUrgent}`} style={{ width: `${share(row.urgent, row.total)}%` }} /> : null}
@@ -303,6 +336,44 @@ function ProfileSection({ data }: { data: JgpPageData }) {
       </tbody>
     </table>
     <p className={base.note}>Nagłe: tryb przyjęcia 2 i 3; planowe: tryb 6. Śmiertelność surowa: zgony w szpitalu podczas hospitalizacji, bez uwzględnienia wieku, stanu pacjentów i zgonów po wypisie.</p>
+  </section>;
+}
+
+/** Rodzina wariantów: udział każdego wariantu w hospitalizacjach rodziny w każdym roku; ta grupa w ramce. */
+function FamilySection({ data }: { data: JgpPageData }) {
+  const family = data.family!;
+  const years = data.catalogYears;
+  const palette = ["#2856A3", "#6F8FC9", "#A9BCE0", "#5B8C7A", "#A3C4B5", "#C9A86A", "#E2CFA3"];
+  const color = new Map(family.variants.map((variant, i) => [variant.code, palette[i % palette.length]]));
+  const totals = years.map((_, j) => family.variants.reduce((sum, variant) => sum + (variant.values[j] ?? 0), 0));
+  const own = family.variants.find((variant) => variant.code === data.jgpCode);
+  const share = (value: number | null, j: number) => totals[j] ? ((value ?? 0) / totals[j]) * 100 : 0;
+  const first = own ? share(own.values[0], 0) : 0;
+  const last = own ? share(own.values.at(-1) ?? null, years.length - 1) : 0;
+  return <section className={styles.sec} aria-labelledby="s-rodzina">
+    <SectionHead id="s-rodzina" question="Jak wygląda rodzina?" context={`Udziały wariantów: ${family.name.toLocaleLowerCase("pl-PL")}, wszystkie lata`} tag="Lata" />
+    {own ? <p className={styles.lead}>{data.jgpCode} to <b>{pct(last, 0)}</b> hospitalizacji rodziny w {years.at(-1)} r.{years.length > 1 ? ` (w ${years[0]} r.: ${pct(first, 0)})` : ""}.</p> : null}
+    <ul className={base.legend} aria-label="Warianty rodziny">
+      {family.variants.map((variant) => <li key={variant.code} title={variant.name}><span className={base.swatch} style={{ background: color.get(variant.code) }} aria-hidden /><b>{variant.code}</b>&nbsp;{variant.name.toLocaleLowerCase("pl-PL")}</li>)}
+    </ul>
+    <div className={styles.famRows}>
+      {years.map((year, j) => <div key={year} className={styles.famRow}>
+        <span className={styles.famYear}>{year}</span>
+        <div className={styles.famBar} role="img" aria-label={`${year}: ${family.variants.map((variant) => `${variant.code} ${pct(share(variant.values[j], j))}`).join(", ")}`}>
+          {family.variants.map((variant) => {
+            const value = share(variant.values[j], j);
+            return value > 0 ? <span
+              key={variant.code}
+              className={variant.code === data.jgpCode ? styles.famOwn : undefined}
+              style={{ flex: value, background: color.get(variant.code) }}
+              title={`${variant.code} ${variant.name}: ${pct(value)} (${integer(variant.values[j] ?? 0)} hosp.)`}
+            >{value >= 9 ? `${variant.code} ${pct(value, 0)}` : ""}</span> : null;
+          })}
+        </div>
+        <span className={styles.famTotal}>{integer(totals[j])}</span>
+      </div>)}
+    </div>
+    <p className={base.note}>Ramka: ta grupa ({data.jgpCode}). Liczba po prawej: hospitalizacje całej rodziny. {family.note ?? ""} Przesunięcie udziałów może wynikać z praktyki leczenia, zmiany katalogu albo sposobu kodowania. Rodziny to lista redakcyjna (na razie dla E10, H52 i H55).</p>
   </section>;
 }
 
@@ -414,7 +485,8 @@ function RankingSection({ data, pool, selectedRow, filtered, onSelect, onHover }
   const total = pool.reduce((sum, row) => sum + row.hospitalizations, 0);
   const shares = structureShares(pool);
   const colors = ["#2856A3", "#6F8FC9", "#A9BCE0"];
-  const previousYear = data.admissionYears.at(-2);
+  const yearAt = data.admissionYears.indexOf(data.year);
+  const previousYear = yearAt > 0 ? data.admissionYears[yearAt - 1] : undefined;
   const scrollRef = useRef<HTMLDivElement>(null);
   const selectedRef = useRef<HTMLTableRowElement>(null);
   useEffect(() => {

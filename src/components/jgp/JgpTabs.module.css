@@ -103,11 +103,38 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
   gap: 6px 16px;
-  margin: 0 0 16px;
+  /* Na całą szerokość okna: treść znika pod paskiem równo, a pasek łączy się z nagłówkiem portalu. */
+  margin: 0 calc(50% - 50vw) 16px;
+  padding: 0 calc(50vw - 50%);
   border-bottom: 1px solid #e4e7ec;
-  background: #fff;
+  background: rgba(255, 255, 255, 0.97);
+  backdrop-filter: blur(14px);
+}
+
+.tabbarStuck {
+  box-shadow: 0 8px 16px -12px rgba(16, 24, 40, 0.35);
+}
+
+.barTitle {
+  display: none;
+  min-width: 0;
+  max-width: 420px;
+  overflow: hidden;
+  color: #172033;
+  font-size: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.barTitle b {
+  color: var(--color-primary);
+}
+
+.tabbarStuck .barTitle {
+  display: block;
+  padding-right: 12px;
+  border-right: 1px solid #e4e7ec;
 }
 
 .tabs {
@@ -141,9 +168,111 @@
   color: var(--color-primary);
 }
 
-.tabMeta {
+.years {
+  margin-left: auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding-block: 6px;
+}
+
+.years > span {
+  margin-right: 2px;
   color: #667085;
+  font-size: 12px;
+}
+
+.years button {
+  padding: 3px 12px;
+  border: 1px solid #d0d5dd;
+  border-radius: 999px;
+  background: #fff;
+  color: #344054;
+  font: inherit;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.years button[aria-pressed="true"] {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: #fff;
+  font-weight: 650;
+}
+
+.desc {
+  max-width: 78ch;
+  margin: 0;
+  color: #344054;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.desc small {
+  color: #667085;
+  font-size: 12px;
+}
+
+.lead {
+  margin: 0;
+  font-size: 14px;
+}
+
+.heatOn {
+  color: var(--color-primary) !important;
+  font-weight: 750 !important;
+}
+
+.costBarPick {
+  cursor: pointer;
+}
+
+.famRows {
+  display: grid;
+  gap: 6px;
+}
+
+.famRow {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 64px;
+  align-items: center;
+  gap: 10px;
+}
+
+.famYear,
+.famTotal {
+  color: #475467;
   font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.famTotal {
+  text-align: right;
+}
+
+.famBar {
+  display: flex;
+  gap: 2px;
+  height: 28px;
+  overflow: hidden;
+  border-radius: 6px;
+}
+
+.famBar span {
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  color: #fff;
+  font-size: 11.5px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+/* Ta grupa: wyraźna ramka w środku segmentu. */
+.famOwn {
+  box-shadow: inset 0 0 0 2.5px #172033;
 }
 
 .panel {
@@ -451,5 +580,38 @@
 @media (max-width: 700px) {
   .tabbar {
     top: 67px;
+  }
+
+  .barTitle {
+    max-width: 100%;
+    flex-basis: 100%;
+    padding-top: 6px;
+  }
+
+  .tabbarStuck .barTitle {
+    border-right: 0;
+  }
+
+  /* Na telefonie jeden rząd: zakładki bez dopisku i rok obok. */
+  .tabbar {
+    flex-wrap: wrap;
+    gap: 0 8px;
+  }
+
+  .tabs button {
+    padding: 10px 8px 8px;
+    font-size: 14px;
+  }
+
+  .tabNote {
+    display: none;
+  }
+
+  .years > span {
+    display: none;
+  }
+
+  .years button {
+    padding: 2px 8px;
   }
 }

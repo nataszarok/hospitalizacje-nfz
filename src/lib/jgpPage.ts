@@ -1,6 +1,7 @@
 import { isProceduralJgpName, productTrend, type StaticDataset, type TrendsDataset } from "@/lib/staticData";
 import { regionalBreakdown, type RegionRow } from "@/lib/regions";
 import { productCodesForJgp } from "@/lib/trends";
+import { familyFor, JGP_DESCRIPTIONS } from "@/lib/jgpGroupInfo";
 import type { EstimationMethod } from "@/lib/types";
 
 /** Model par A/B: pary klasy A z dystansem do tej wartości (jak domyślnie w widoku „Porównanie”). */
@@ -41,6 +42,21 @@ export interface JgpPageExtras {
   valuationYear?: string;
   valuations?: JgpValuation[];
   peerPairs?: JgpPeerPair[];
+  /**
+   * Ośrodki ze wszystkich lat pliku grupy, także bez hospitalizacji w najnowszym roku (wybór roku na nowej karcie).
+   * Bez tej opcji ranking ma tylko ośrodki z najnowszego roku.
+   */
+  allYearProviders?: boolean;
+  /** Nazwy ośrodków z wcześniejszych lat (słowniki starszych plików roku). */
+  facilities?: StaticDataset["facilities"];
+}
+
+/** Rodzina grupy: udziały wariantów w latach (hospitalizacje z trendów, w kolejności `catalogYears`). */
+export interface JgpFamilyData {
+  id: string;
+  name: string;
+  note?: string;
+  variants: { code: string; name: string; values: (number | null)[] }[];
 }
 
 export interface JgpProviderRow {
@@ -64,6 +80,8 @@ export interface JgpProviderRow {
   peers: number[];
   /** Tryb przyjęcia [planowe, nagłe, pozostałe] w latach `JgpPageData.admissionYears` (krotki — mniejsza strona); puste bez pliku. */
   yearly: [number, number, number][];
+  /** Zgony w latach `JgpPageData.admissionYears`; puste bez pliku. */
+  yearlyDeaths: number[];
 }
 
 /** Struktura trybu przyjęcia w jednym roku (p = planowe, u = nagłe, o = pozostałe). */
@@ -112,6 +130,10 @@ export interface JgpPageData {
   valuation: { year: string; points: number | null; daysFinanced: number | null; extraDayPoints: number | null } | null;
   /** Rozliczenia NFZ za grupę w kraju w kolejnych pełnych latach (zł). */
   valuePln: { year: string; value: number }[];
+  /** Rodzina wariantów (lista ręczna w `jgpGroupInfo.ts`) albo `null`. */
+  family: JgpFamilyData | null;
+  /** Opis redakcyjny grupy albo `null`. */
+  description: string | null;
 }
 
 const round2 = (value: number) => Math.round(value * 100) / 100;
@@ -126,7 +148,7 @@ export function buildJgpPageData(trends: TrendsDataset, latest: StaticDataset, j
   const name = products.at(-1)?.[2]?.trim() ?? jgpCode;
 
   const selected = new Set(productCodes);
-  const facilities = new Map(latest.facilities.map(([ow, nip, facilityName, city]) => [`${ow}|${nip}`, { name: facilityName, city }]));
+  const facilities = new Map([...(extras.facilities ?? []), ...latest.facilities].map(([ow, nip, facilityName, city]) => [`${ow}|${nip}`, { name: facilityName, city }]));
   const regions = new Map(latest.regions);
   const grouped = new Map<string, { ow: string; nip: string; h: number; d: number; urgent: number }>();
   for (const [ow, nip, product, , admission, hSim, hMin, dSim, dMin] of latest.facts) {
@@ -147,6 +169,7 @@ export function buildJgpPageData(trends: TrendsDataset, latest: StaticDataset, j
   const series = new Map<string, number[]>();
   const previous = new Map<string, number>();
   const yearly = new Map<string, [number, number, number][]>();
+  const yearlyDeaths = new Map<string, number[]>();
   const national = { hospitalizations: months.map(() => 0), deaths: months.map(() => 0), urgent: months.map(() => 0) };
   for (const [providerIndex, monthIndexInFile, admissionGroup, h, d] of file?.rows ?? []) {
     const year = file!.years[Math.floor(monthIndexInFile / 12)];
@@ -160,11 +183,22 @@ export function buildJgpPageData(trends: TrendsDataset, latest: StaticDataset, j
     const years = yearly.get(key) ?? file!.years.map((): [number, number, number] => [0, 0, 0]);
     years[Math.floor(monthIndexInFile / 12)][Math.min(admissionGroup, 2)] += h;
     yearly.set(key, years);
+    const deaths = yearlyDeaths.get(key) ?? file!.years.map(() => 0);
+    deaths[Math.floor(monthIndexInFile / 12)] += d;
+    yearlyDeaths.set(key, deaths);
     national.hospitalizations[i] += h;
     national.deaths[i] += d;
     if (admissionGroup === 1) national.urgent[i] += h;
   }
   const value = new Map(file?.valuePln?.year === latest.analysisYear ? file.valuePln.providers : []);
+  // Ośrodki z wcześniejszych lat bez hospitalizacji w najnowszym roku: na końcu rankingu, z zerem w najnowszym roku.
+  if (file && extras.allYearProviders) {
+    for (const key of file.providers) {
+      if (grouped.has(key) || !series.has(key)) continue;
+      const [ow, nip] = key.split("|");
+      grouped.set(key, { ow, nip, h: 0, d: 0, urgent: 0 });
+    }
+  }
 
   const rows = [...grouped.entries()].map(([key, row]): JgpProviderRow => ({
     key,
@@ -183,6 +217,7 @@ export function buildJgpPageData(trends: TrendsDataset, latest: StaticDataset, j
     valuePln: value.get(key) ?? null,
     peers: [],
     yearly: file ? yearly.get(key) ?? file.years.map((): [number, number, number] => [0, 0, 0]) : [],
+    yearlyDeaths: file ? yearlyDeaths.get(key) ?? file.years.map(() => 0) : [],
   })).sort((a, b) => b.hospitalizations - a.hospitalizations || a.name.localeCompare(b.name, "pl"));
 
   // Podobne szpitale: pary klasy A z modelu, ograniczone do świadczeniodawców tej grupy.
@@ -212,6 +247,19 @@ export function buildJgpPageData(trends: TrendsDataset, latest: StaticDataset, j
     other: point.hospitalizations - point.planned - point.urgent,
     deaths: point.deaths,
   }] : []);
+  const familyDefinition = familyFor(jgpCode);
+  const family: JgpFamilyData | null = familyDefinition ? {
+    id: familyDefinition.id,
+    name: familyDefinition.name,
+    note: familyDefinition.note,
+    variants: familyDefinition.codes.flatMap((code) => {
+      const codes = productCodesForJgp(trends, code);
+      if (!codes.length) return [];
+      const variant = productTrend(trends, codes, method);
+      const variantName = trends.products.filter(([product]) => codes.includes(product)).at(-1)?.[2]?.replace(/\s*\*\s*$/, "").trim() ?? code;
+      return [{ code, name: variantName, values: catalogYears.map((year) => variant.yearly[trends.years.indexOf(year)]?.hospitalizations ?? null) }];
+    }),
+  } : null;
   const regionYears = catalogYears.map((year): JgpRegionYear => ({
     year,
     rows: regionalBreakdown(trends, productCodes, year, method, latest.regions, latest.populations)
@@ -225,9 +273,9 @@ export function buildJgpPageData(trends: TrendsDataset, latest: StaticDataset, j
     productCodes,
     catalogYears,
     year: latest.analysisYear,
-    providerCount: rows.length,
+    providerCount: rows.filter((row) => row.hospitalizations > 0).length,
     hospitalizations: rows.reduce((sum, row) => sum + row.hospitalizations, 0),
-    topProviders: rows.slice(0, limit),
+    topProviders: rows.filter((row) => row.hospitalizations > 0).slice(0, limit),
     providers: rows,
     regions: regionalBreakdown(trends, productCodes, latest.analysisYear, method, latest.regions, latest.populations),
     regionYears,
@@ -243,5 +291,7 @@ export function buildJgpPageData(trends: TrendsDataset, latest: StaticDataset, j
       extraDayPoints: valuationRow.pkt_osobodzien_ponad_ryczalt ?? null,
     } : null,
     valuePln: Object.entries(file?.valuePln?.national ?? {}).sort(([a], [b]) => a.localeCompare(b)).map(([year, pln]) => ({ year, value: pln })),
+    family,
+    description: JGP_DESCRIPTIONS[jgpCode] ?? null,
   };
 }

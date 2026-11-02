@@ -4,7 +4,7 @@ import type { JgpProviderRow } from "@/lib/jgpPage";
 
 const row = (hospitalizations: number, yearly: [number, number, number][] = []): JgpProviderRow => ({
   key: `07|${hospitalizations}`, owNfz: "07", nip: String(hospitalizations), name: `S${hospitalizations}`, city: "", voivodeship: "07",
-  hospitalizations, deaths: 0, mortalityPct: 0, urgentPct: 0, series: [], previousHospitalizations: null, valuePln: null, peers: [], yearly,
+  hospitalizations, deaths: 0, mortalityPct: 0, urgentPct: 0, series: [], previousHospitalizations: null, valuePln: null, peers: [], yearly, yearlyDeaths: [],
 });
 
 describe("structureShares — struktura ośrodków nad rankingiem", () => {
@@ -48,5 +48,65 @@ describe("lejek śmiertelności", () => {
     expect(c.inner[0]).toHaveLength(21);
     expect(Math.min(...c.outer[1])).toBeGreaterThanOrEqual(0);
     expect(c.outer[0][0]).toBeGreaterThan(c.inner[0][0]);
+  });
+});
+
+import { dataForYear } from "@/lib/jgpCard";
+import { familyFor, JGP_DESCRIPTIONS } from "@/lib/jgpGroupInfo";
+import { buildJgpPageData } from "@/lib/jgpPage";
+import { extrasFixture, groupFileFixture } from "@/lib/__tests__/fixtures/jgpCardFixture";
+import { latestDatasetFixture, trendsFixture } from "@/lib/__tests__/fixtures/trendsFixture";
+
+describe("rodziny i opisy grup (E10, H52, H55)", () => {
+  it("każda grupa z nową kartą ma rodzinę i opis", () => {
+    for (const code of ["E10", "H52", "H55"]) {
+      expect(familyFor(code)?.codes).toContain(code);
+      expect(JGP_DESCRIPTIONS[code]?.length).toBeGreaterThan(40);
+    }
+    expect(familyFor("H52")?.id).toBe(familyFor("H55")?.id);
+    expect(familyFor("A01")).toBeNull();
+  });
+
+  it("dane strony liczą udziały wariantów rodziny w latach z trendów", () => {
+    // Te same dane co A01, ale produkty nazwane jak warianty OZW.
+    const trends = { ...trendsFixture, products: trendsFixture.products.map((p, i) => i === 0 ? ["P1", "E10", "OZW - DIAGNOSTYKA INWAZYJNA *", p[3]] : i === 1 ? ["P2", "E11", "OZW - LECZENIE INWAZYJNE DWUETAPOWE > 3 DNI *", p[3]] : p) as typeof trendsFixture.products };
+    const latest = { ...latestDatasetFixture, products: [["P1", "E10", "OZW - DIAGNOSTYKA INWAZYJNA *"]] as typeof latestDatasetFixture.products };
+    const data = buildJgpPageData(trends, latest, "E10")!;
+    expect(data.description).toBe(JGP_DESCRIPTIONS.E10);
+    expect(data.family?.name).toBe("Ostry zespół wieńcowy (OZW)");
+    expect(data.family?.variants.map((variant) => [variant.code, variant.values])).toEqual([["E10", [8, 8, 9]], ["E11", [0, 4, null]]]);
+    expect(data.family?.variants[1].name).toBe("OZW - LECZENIE INWAZYJNE DWUETAPOWE > 3 DNI");
+  });
+});
+
+describe("dataForYear — karta dla wcześniejszego roku", () => {
+  const data = buildJgpPageData(trendsFixture, latestDatasetFixture, "A01", "min", 15, extrasFixture)!;
+
+  it("najnowszy rok zwraca dane bez zmian", () => {
+    expect(dataForYear(data, 1)).toBe(data);
+  });
+
+  it("2024: ranking, zgony i tryb z pliku grupy, bez rozliczeń ośrodków", () => {
+    const year = dataForYear(data, 0);
+    expect(year.year).toBe("2024");
+    expect(year.providers.map((row) => [row.name, row.hospitalizations, row.deaths, row.urgentPct, row.valuePln])).toEqual([
+      ["Szpital Beta", 10, 1, 100, null],
+      ["Szpital Alfa", 5, 0, 0, null],
+    ]);
+    expect(year.hospitalizations).toBe(15);
+    expect(year.previousHospitalizations).toBeNull();
+    expect(year.regions.find((row) => row.owNfz === "07")?.hospitalizations).toBe(8);
+  });
+
+  it("ośrodek tylko z wcześniejszego roku jest w rankingu tego roku, a nie w najnowszym", () => {
+    const groupFile = { ...groupFileFixture, providers: [...groupFileFixture.providers, "12|333"], rows: [...groupFileFixture.rows, [2, 3, 0, 7, 0]] as typeof groupFileFixture.rows };
+    const withFormer = buildJgpPageData(trendsFixture, latestDatasetFixture, "A01", "min", 15, { ...extrasFixture, groupFile, allYearProviders: true })!;
+    expect(withFormer.providerCount).toBe(2);
+    expect(withFormer.topProviders.map((row) => row.name)).toEqual(["Szpital Beta", "Szpital Alfa"]);
+    // Najnowszy rok na karcie: bez ośrodka, który miał hospitalizacje tylko wcześniej.
+    expect(dataForYear(withFormer, 1).providers.map((row) => row.name)).toEqual(["Szpital Beta", "Szpital Alfa"]);
+    expect(dataForYear(withFormer, 0).providers.map((row) => [row.name, row.hospitalizations])).toEqual([["Szpital Beta", 10], ["Szpital Gamma", 7], ["Szpital Alfa", 5]]);
+    const without = buildJgpPageData(trendsFixture, latestDatasetFixture, "A01", "min", 15, { ...extrasFixture, groupFile })!;
+    expect(without.providers.map((row) => row.name)).not.toContain("Szpital Gamma");
   });
 });

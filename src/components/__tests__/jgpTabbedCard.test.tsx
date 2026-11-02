@@ -36,6 +36,13 @@ describe("Karta w zakładkach — wybór grup", () => {
 });
 
 describe("Karta w zakładkach — nagłówek i Przegląd", () => {
+  it("pasek zakładek ma kod i nazwę grupy (widoczne po przewinięciu nagłówka karty)", () => {
+    const { container } = renderCard();
+    const title = container.querySelector('[role="tablist"]')!.previousElementSibling!;
+    expect(title).toHaveTextContent(`A01 ${data.name}`);
+    expect(title).toHaveAttribute("aria-hidden", "true");
+  });
+
   it("nagłówek ma cztery liczby 2×2 i obszar", () => {
     const { container } = renderCard();
     const kpis = container.querySelector('dl[aria-label="Liczby grupy"]')!;
@@ -114,5 +121,41 @@ describe("Karta w zakładkach — Ośrodki", () => {
     expect(screen.getByRole("group", { name: /udział przyjęć nagłych/ })).toBeInTheDocument();
     expect(screen.queryByRole("group", { name: /Wykres lejkowy/ })).not.toBeInTheDocument();
     expect(screen.getByText(/mniej niż 30 zgonów/)).toBeInTheDocument();
+  });
+});
+
+describe("Karta w zakładkach — wybór roku, opis i rodzina", () => {
+  it("rok na pasku zmienia liczby i ranking oraz trafia do adresu", () => {
+    const { container } = renderCard();
+    fireEvent.click(within(screen.getByRole("group", { name: "Rok karty" })).getByRole("button", { name: "2024" }));
+    expect(window.location.search).toBe("?rok=2024");
+    expect(container.querySelector('dl[aria-label="Liczby grupy"]')).toHaveTextContent("Hospitalizacje 202415");
+    fireEvent.click(screen.getByRole("tab", { name: /Ośrodki/ }));
+    const rows = within(screen.getByRole("region", { name: /^Lista ośrodków/ })).getAllByRole("row").slice(1);
+    expect(rows.map((row) => within(row).getAllByRole("cell")[2].textContent)).toEqual(["10", "5"]);
+    fireEvent.click(within(screen.getByRole("group", { name: "Rok karty" })).getByRole("button", { name: "2025" }));
+    expect(window.location.search).toBe("?widok=osrodki");
+  });
+
+  it("odczytuje rok z adresu i ignoruje rok spoza danych", () => {
+    open("?rok=2024");
+    renderCard();
+    expect(within(screen.getByRole("group", { name: "Rok karty" })).getByRole("button", { name: "2024" })).toHaveAttribute("aria-pressed", "true");
+    cleanup();
+    open("?rok=1999");
+    renderCard();
+    expect(within(screen.getByRole("group", { name: "Rok karty" })).getByRole("button", { name: "2025" })).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("opis redakcyjny i sekcja rodziny z udziałami w latach", () => {
+    const withFamily = { ...data, description: "Opis grupy testowej.", family: { id: "t", name: "Rodzina testowa", variants: [
+      { code: "A01", name: "STAŁY PRODUKT", values: [8, 8, 9] },
+      { code: "A02", name: "INNY WARIANT", values: [2, 8, 1] },
+    ] } };
+    render(<JgpPage data={withFamily} tabbed />);
+    expect(screen.getByText(/Opis grupy testowej\./)).toHaveTextContent("opis redakcyjny");
+    const section = screen.getByRole("region", { name: /Jak wygląda rodzina\?/ });
+    expect(section).toHaveTextContent("A01 to 90% hospitalizacji rodziny w 2025 r. (w 2023 r.: 80%)");
+    expect(within(section).getByRole("img", { name: "2024: A01 50,0%, A02 50,0%" })).toBeInTheDocument();
   });
 });
