@@ -18,8 +18,8 @@ export interface ScatterPoint {
 
 /** Kolor wybranego ośrodka w trybie gwiazdki: spoza palety województw i lejka. */
 export const STAR_COLOR = "#D92D20";
-/** Obwódka gwiazdki: jasne złoto (także obwódka ★ w tabeli i linii wybranego ośrodka). */
-export const STAR_OUTLINE = "#F2C94C";
+/** Obwódka gwiazdki: cienka biała. */
+const STAR_OUTLINE = "#FFFFFF";
 
 /** Linia tła wykresu, np. granica lejka. */
 export interface ScatterCurve { x: number[]; y: number[]; color: string; dash?: "dot" | "dash" | "solid" }

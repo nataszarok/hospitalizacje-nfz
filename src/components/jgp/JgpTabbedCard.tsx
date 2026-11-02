@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { GroupLineChart, type ChartLine } from "@/components/jgp/GroupLineChart";
 import { RegionMap, SELECTED_PROVIDER_PARAM, regionTitle } from "@/components/jgp/JgpCard";
-import { ProviderScatter, STAR_COLOR, STAR_OUTLINE, type ScatterCurve, type ScatterPoint } from "@/components/jgp/ProviderScatter";
+import { ProviderScatter, STAR_COLOR, type ScatterCurve, type ScatterPoint } from "@/components/jgp/ProviderScatter";
 import { ProviderLink } from "@/components/TableLinks";
 import { formatCityName } from "@/lib/formatters";
 import {
@@ -273,7 +273,7 @@ function OverviewTab({ data, pool, linePool, map, regions, onToggleRegion, onYea
         <button type="button" aria-pressed={metric === "deaths"} onClick={() => setMetric("deaths")}>Zgony</button>
         <button type="button" aria-pressed={metric === "urgent"} onClick={() => setMetric("urgent")}>Nagłe</button>
       </div> : null}
-      <GroupLineChart months={data.months} lines={lines} valueLabel={label} legend={regions.length > 0} height={300} ariaLabel={`Wykres liniowy: ${label} miesięcznie we wszystkich latach`} />
+      <GroupLineChart months={data.months} lines={lines} valueLabel={label} legend={regions.length > 0} height={300} highlightYear={data.year} ariaLabel={`Wykres liniowy: ${label} miesięcznie we wszystkich latach`} />
       <p className={base.note}>Kropka = miesiąc, linia = średnia z 3 miesięcy. Miesiące według daty wypisu. Wartości &lt;5 liczone jako 1.</p>
     </section>
     <RegionsSection data={data} pool={pool} map={map} regions={regions} onToggle={onToggleRegion} onYear={onYear} onRegionYear={onRegionYear} onClear={onClearRegions} onShowProviders={onShowProviders} />
@@ -490,7 +490,7 @@ function ProvidersTab({ data, pool, comparison, regions, selectedRow, scope, fil
         onSelect={onSelect}
         onHover={setHoverKey}
         selectedColor={STAR_COLOR}
-        selectedOutline={STAR_OUTLINE}
+        highlightYear={data.year}
         selectedLabel={selectedRow ? `★ ${selectedRow.name.length > 40 ? `${selectedRow.name.slice(0, 39)}…` : selectedRow.name}` : undefined}
         ariaLabel={`Wykres liniowy: hospitalizacje miesięcznie w ${lines.length} ośrodkach`}
       />

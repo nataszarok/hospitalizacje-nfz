@@ -18,7 +18,6 @@ vi.mock("@/components/jgp/GroupLineChart", () => ({
 }));
 vi.mock("@/components/jgp/ProviderScatter", () => ({
   STAR_COLOR: "#D92D20",
-  STAR_OUTLINE: "#F2C94C",
   ProviderScatter: ({ points, ariaLabel, curves }: { points: { key: string; name: string; color?: string; label?: string }[]; ariaLabel: string; curves?: unknown[] }) => <div role="group" aria-label={ariaLabel} data-curves={curves?.length ?? 0}>
     {points.map((point) => <span key={point.key} data-color={point.color ?? ""} data-label={point.label ?? ""}>{point.name}</span>)}
   </div>,

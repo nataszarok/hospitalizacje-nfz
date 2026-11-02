@@ -690,11 +690,8 @@
 /* Wybrany ośrodek: gwiazdka (ten sam znak na wykresach, w tabeli, pasku i legendzie). */
 .star {
   color: #d92d20;
-  font-size: 16px;
+  font-size: 15px;
   line-height: 1;
-  /* Jasnozłota obwódka jak na wykresach. */
-  -webkit-text-stroke: 0.8px #f2c94c;
-  paint-order: stroke fill;
 }
 
 .nameCell .star,
