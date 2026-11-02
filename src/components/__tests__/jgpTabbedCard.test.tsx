@@ -10,8 +10,8 @@ import { latestDatasetFixture, trendsFixture } from "@/lib/__tests__/fixtures/tr
 
 // Wykresy Plotly zastępujemy przyciskami: test sprawdza linie i wybór ośrodka.
 vi.mock("@/components/jgp/GroupLineChart", () => ({
-  GroupLineChart: ({ lines, onSelect, onHover }: { lines: { key: string; name: string; values: number[]; tone?: string }[]; onSelect?: (key: string) => void; onHover?: (key: string | null) => void }) => <ul aria-label="Linie wykresu">
-    {lines.map((line) => <li key={line.key} data-tone={line.tone ?? ""}>
+  GroupLineChart: ({ lines, onSelect, onHover, note }: { lines: { key: string; name: string; values: number[]; base?: number[]; tone?: string }[]; onSelect?: (key: string) => void; onHover?: (key: string | null) => void; note?: string }) => <ul aria-label="Linie wykresu" data-note={note ?? ""}>
+    {lines.map((line) => <li key={line.key} data-tone={line.tone ?? ""} data-base={line.base ? "tak" : ""}>
       <button type="button" onClick={() => onSelect?.(line.key)} onMouseEnter={() => onHover?.(line.key)} onMouseLeave={() => onHover?.(null)}>{line.name}: {line.values.reduce((a, b) => a + b, 0)}</button>
     </li>)}
   </ul>,
@@ -244,6 +244,24 @@ describe("Karta w zakładkach — zmiana województw a wybrany ośrodek", () => 
     fireEvent.click(screen.getByRole("tab", { name: /Przegląd/ }));
     fireEvent.click(within(screen.getByRole("region", { name: "Mapa ciepła: województwa w latach" })).getByRole("button", { name: "Mazowieckie" }));
     expect(window.location.search).toBe("?osrodek=07%7C111&ow=07");
+  });
+});
+
+describe("Karta w zakładkach — miary w „Ile?”", () => {
+  it("przycisk miary zmienia tytuł sekcji; śmiertelność i % nagłych to udziały (mianownik = hospitalizacje)", () => {
+    renderCard();
+    const heading = () => screen.getByRole("heading", { level: 2, name: /^Ile\?/ });
+    const chart = () => screen.getByRole("list", { name: "Linie wykresu" });
+    expect(heading()).toHaveTextContent("Ile? Hospitalizacje miesięcznie, wszystkie lata");
+    expect(chart().querySelector("li")).toHaveAttribute("data-base", "");
+    const group = screen.getByRole("group", { name: "Miara" });
+    fireEvent.click(within(group).getByRole("button", { name: "Śmiertelność" }));
+    expect(heading()).toHaveTextContent("Ile? Śmiertelność miesięcznie, wszystkie lata");
+    expect(chart().querySelector("li")).toHaveAttribute("data-base", "tak");
+    expect(chart()).toHaveAttribute("data-note", expect.stringContaining("Zgony w szpitalu / hospitalizacje"));
+    fireEvent.click(within(group).getByRole("button", { name: "% nagłych" }));
+    expect(heading()).toHaveTextContent("Ile? Udział przyjęć nagłych miesięcznie, wszystkie lata");
+    expect(screen.getByRole("button", { name: "% nagłych" })).toHaveAttribute("aria-pressed", "true");
   });
 });
 

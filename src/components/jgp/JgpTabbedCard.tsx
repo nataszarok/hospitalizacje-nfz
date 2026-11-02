@@ -249,7 +249,14 @@ function SectionHead({ id, question, context, tag }: { id: string; question: str
 
 // ——— Przegląd ———
 
-type Metric = "hospitalizations" | "deaths" | "urgent";
+type Metric = "hospitalizations" | "mortality" | "urgent";
+
+// Miary wykresu „Ile?”: przycisk, tytuł sekcji, jednostka w podpowiedzi i objaśnienie pod osią.
+const METRICS: Record<Metric, { button: string; title: string; unit: string; note: string }> = {
+  hospitalizations: { button: "Hospitalizacje", title: "Hospitalizacje miesięcznie", unit: "hosp.", note: "Kropka = miesiąc, linia = średnia z 3 miesięcy. Miesiące według daty wypisu, wartości <5 liczone jako 1." },
+  mortality: { button: "Śmiertelność", title: "Śmiertelność miesięcznie", unit: "zgonów", note: "Zgony w szpitalu / hospitalizacje. Linia = udział z 3 miesięcy, miesiące według daty wypisu." },
+  urgent: { button: "% nagłych", title: "Udział przyjęć nagłych miesięcznie", unit: "nagłych", note: "Przyjęcia nagłe (tryb 2 i 3) / hospitalizacje. Linia = udział z 3 miesięcy, miesiące według daty wypisu." },
+};
 
 function OverviewTab({ data, pool, linePool, map, regions, onToggleRegion, onYear, onRegionYear, onClearRegions, onShowProviders }: {
   data: JgpPageData; pool: JgpProviderRow[]; linePool: JgpProviderRow[]; map: RegionsMap | null; regions: string[]; onToggleRegion: (ow: string) => void; onYear: (year: string) => void;
@@ -262,20 +269,19 @@ function OverviewTab({ data, pool, linePool, map, regions, onToggleRegion, onYea
       const name = data.regions.find((row) => row.owNfz === ow)?.name ?? ow;
       return { key: ow, name, values: sumSeries(rows, data.months.length), color: REGION_PICK_COLORS[i % REGION_PICK_COLORS.length] };
     });
-    const values = metric === "deaths" ? data.national.deaths : metric === "urgent" ? data.national.urgent : data.national.hospitalizations;
-    return [{ key: "pl", name: "Cała Polska", values, tone: "primary" }];
+    const { hospitalizations, deaths, urgent } = data.national;
+    if (metric === "hospitalizations") return [{ key: "pl", name: "Cała Polska", values: hospitalizations, tone: "primary" }];
+    return [{ key: "pl", name: "Cała Polska", values: metric === "mortality" ? deaths : urgent, base: hospitalizations, tone: "primary" }];
   }, [data, linePool, regions, metric]);
-  const label = !regions.length && metric === "deaths" ? "zgonów" : !regions.length && metric === "urgent" ? "przyjęć nagłych" : "hosp.";
+  // Województwa mają tylko liczby hospitalizacji miesięcznie, więc przy wybranych województwach wykres pokazuje liczby.
+  const shown = METRICS[regions.length ? "hospitalizations" : metric];
   return <>
     <section className={styles.sec} aria-labelledby="s-ile">
-      <SectionHead id="s-ile" question="Ile?" context={`${regions.length ? "Hospitalizacje w wybranych województwach" : "Hospitalizacje"} miesięcznie, wszystkie lata`} tag="Lata" />
+      <SectionHead id="s-ile" question="Ile?" context={`${regions.length ? "Hospitalizacje w wybranych województwach miesięcznie" : shown.title}, wszystkie lata`} tag="Lata" />
       {!regions.length ? <div className={base.segmented} role="group" aria-label="Miara">
-        <button type="button" aria-pressed={metric === "hospitalizations"} onClick={() => setMetric("hospitalizations")}>Hospitalizacje</button>
-        <button type="button" aria-pressed={metric === "deaths"} onClick={() => setMetric("deaths")}>Zgony</button>
-        <button type="button" aria-pressed={metric === "urgent"} onClick={() => setMetric("urgent")}>Nagłe</button>
+        {(Object.keys(METRICS) as Metric[]).map((key) => <button key={key} type="button" aria-pressed={metric === key} onClick={() => setMetric(key)}>{METRICS[key].button}</button>)}
       </div> : null}
-      <GroupLineChart months={data.months} lines={lines} valueLabel={label} legend={regions.length > 0} height={300} highlightYear={data.year} ariaLabel={`Wykres liniowy: ${label} miesięcznie we wszystkich latach`} />
-      <p className={base.note}>Kropka = miesiąc, linia = średnia z 3 miesięcy. Miesiące według daty wypisu. Wartości &lt;5 liczone jako 1.</p>
+      <GroupLineChart months={data.months} lines={lines} valueLabel={shown.unit} legend={regions.length > 0} height={420} highlightYear={data.year} note={shown.note} ariaLabel={`Wykres liniowy: ${shown.title.toLowerCase()} we wszystkich latach`} />
     </section>
     <RegionsSection data={data} pool={pool} map={map} regions={regions} onToggle={onToggleRegion} onYear={onYear} onRegionYear={onRegionYear} onClear={onClearRegions} onShowProviders={onShowProviders} />
     <CostSection data={data} onYear={onYear} />

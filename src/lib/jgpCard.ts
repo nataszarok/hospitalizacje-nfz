@@ -57,6 +57,24 @@ export function movingAverage(values: number[], window = 3, minPeriods = 1): (nu
   });
 }
 
+/** Udział w procentach w każdym miesiącu (np. zgony / hospitalizacje); `null`, gdy mianownik to 0. */
+export function ratioSeries(numerator: number[], denominator: number[]): (number | null)[] {
+  return numerator.map((value, i) => denominator[i] ? (value / denominator[i]) * 100 : null);
+}
+
+/**
+ * Udział w procentach z `window` ostatnich miesięcy: suma licznika / suma mianownika (nie średnia udziałów,
+ * żeby miesiąc z kilkoma hospitalizacjami nie ważył tyle co duży). `null`, gdy w oknie nie ma hospitalizacji.
+ */
+export function movingRatio(numerator: number[], denominator: number[], window = 3): (number | null)[] {
+  return numerator.map((_, i) => {
+    const from = Math.max(0, i + 1 - window);
+    const top = numerator.slice(from, i + 1).reduce((sum, value) => sum + value, 0);
+    const bottom = denominator.slice(from, i + 1).reduce((sum, value) => sum + value, 0);
+    return bottom ? (top / bottom) * 100 : null;
+  });
+}
+
 /** Tryb przyjęcia w latach dla grupy świadczeniodawców (suma ich krotek [planowe, nagłe, pozostałe]). */
 export function poolAdmissions(rows: JgpProviderRow[], years: string[]): JgpAdmissionYear[] {
   return years.map((year, i) => {

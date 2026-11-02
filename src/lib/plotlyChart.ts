@@ -217,3 +217,17 @@ export function countAxis(values: (number | null | undefined)[]) {
   const dtick = top <= 5 ? 1 : top <= 10 ? 2 : undefined;
   return { range: [-top * 0.06, Math.max(top, dtick ?? 0)], ...(dtick ? { dtick } : {}), tickformat: ",.0f" };
 }
+
+/**
+ * Oś Y dla udziałów w procentach: od zera (z marginesem), z „%” przy etykietach.
+ * Krok podziałki 1, 2 albo 5 × 10^k (ok. 5 etykiet), a liczba miejsc po przecinku wynika z kroku,
+ * więc bardzo małe udziały (np. 0,07%) nie dają powtórzonych etykiet „0%”.
+ */
+export function percentAxis(values: (number | null | undefined)[]) {
+  const max = Math.max(0, ...values.filter((value): value is number => typeof value === "number" && Number.isFinite(value)));
+  const top = max > 0 ? max * 1.1 : 1;
+  const magnitude = 10 ** Math.floor(Math.log10(top / 5));
+  const dtick = [1, 2, 5, 10].map((factor) => factor * magnitude).find((step) => top / step <= 6)!;
+  const decimals = Math.max(0, -Math.floor(Math.log10(dtick) + 1e-9));
+  return { range: [-top * 0.06, top], dtick, ticksuffix: "%", tickformat: `,.${decimals}f` };
+}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { funnelCurves, funnelHalfWidth, funnelStatus, providerYearTotals, structureShares } from "@/lib/jgpCard";
+import { funnelCurves, funnelHalfWidth, funnelStatus, movingRatio, providerYearTotals, ratioSeries, structureShares } from "@/lib/jgpCard";
 import type { JgpProviderRow } from "@/lib/jgpPage";
 
 const row = (hospitalizations: number, yearly: [number, number, number][] = []): JgpProviderRow => ({
@@ -108,5 +108,19 @@ describe("dataForYear — karta dla wcześniejszego roku", () => {
     expect(dataForYear(withFormer, 0).providers.map((row) => [row.name, row.hospitalizations])).toEqual([["Szpital Beta", 10], ["Szpital Gamma", 7], ["Szpital Alfa", 5]]);
     const without = buildJgpPageData(trendsFixture, latestDatasetFixture, "A01", "min", 15, { ...extrasFixture, groupFile })!;
     expect(without.providers.map((row) => row.name)).not.toContain("Szpital Gamma");
+  });
+});
+
+describe("ratioSeries i movingRatio — udziały miesięczne w „Ile?”", () => {
+  it("udział miesiąca w procentach; brak hospitalizacji = brak punktu", () => {
+    expect(ratioSeries([1, 0, 2], [10, 0, 4])).toEqual([10, null, 50]);
+  });
+
+  it("udział 3M to suma licznika / suma mianownika, nie średnia udziałów", () => {
+    const shares = movingRatio([1, 0, 2, 0], [10, 0, 4, 2]);
+    expect(shares[0]).toBe(10);
+    expect(shares[2]).toBeCloseTo((3 / 14) * 100);
+    expect(shares[3]).toBeCloseTo((2 / 6) * 100);
+    expect(movingRatio([0], [0])).toEqual([null]);
   });
 });

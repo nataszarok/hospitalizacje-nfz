@@ -25,7 +25,7 @@ describe("attachHoverMarker", () => {
   });
 });
 
-import { countAxis } from "@/lib/plotlyChart";
+import { countAxis, percentAxis } from "@/lib/plotlyChart";
 
 describe("countAxis — oś Y dla liczb", () => {
   it("małe liczby: podziałka co 1, margines pod zerem", () => {
@@ -43,5 +43,21 @@ describe("countAxis — oś Y dla liczb", () => {
     expect(countAxis([3, 8]).dtick).toBe(2);
     expect(countAxis([120, 880])).not.toHaveProperty("dtick");
     expect(countAxis([120, 880]).range[1]).toBeCloseTo(968);
+  });
+});
+
+describe("percentAxis — oś Y dla udziałów", () => {
+  it("ma „%” przy etykietach i margines pod zerem", () => {
+    const axis = percentAxis([0.4, 1.2, null]);
+    expect(axis.ticksuffix).toBe("%");
+    expect(axis.range[0]).toBeLessThan(0);
+    expect(percentAxis([]).range[1]).toBe(1);
+  });
+
+  it("miejsca po przecinku wynikają z kroku: bardzo małe udziały nie dają powtórzonych „0%”", () => {
+    expect(percentAxis([0.07])).toMatchObject({ dtick: 0.02, tickformat: ",.2f" });
+    expect(percentAxis([1.2])).toMatchObject({ dtick: 0.5, tickformat: ",.1f" });
+    expect(percentAxis([5.4])).toMatchObject({ dtick: 1, tickformat: ",.0f" });
+    expect(percentAxis([40])).toMatchObject({ dtick: 10, tickformat: ",.0f" });
   });
 });
