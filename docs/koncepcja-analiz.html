@@ -224,12 +224,12 @@ li { margin: 3px 0; }
   <div class="phase now">
     <div class="mark"><span class="num">3a</span><span class="state">Teraz</span></div>
     <div>
-      <h3>Scalenie łańcucha do <code>main</code></h3>
-      <p class="goal">Sześć branchy (od <code>feature/homepage</code> do <code>feature/jgp-scatter-linear-axis</code>) nie jest jeszcze w <code>main</code>. Opis zależności: <a href="branche.md">docs/branche.md</a>.</p>
+      <h3>Scalenie łańcucha do <code>feature/homepage</code></h3>
+      <p class="goal">Łańcuch od <code>feature/analizy-redesign</code> do <code>feature/jgp-scatter-linear-axis</code> trafia do otwartego branchu <code>feature/homepage</code>, a nie do <code>main</code>. Do <code>main</code> idzie później <code>feature/homepage</code> w całości. Opis zależności: <a href="branche.md">docs/branche.md</a>.</p>
       <ul>
         <li><b>Zrobione (2.11):</b> <code>main</code> z PR #18 (suwak par) dołączony do łańcucha. Konflikty: <code>Dashboard.tsx</code> i test stanu szpitala w eksploratorze usunięte (łańcuch przeniósł profil pod <code>/szpitale</code>); parametr <code>pd</code> (dystans par) przeniesiony do <code>hospitalUrlState.ts</code>, <code>HospitalsPage</code> i przekierowania dawnych adresów <code>/analizy?t=h</code>.</li>
         <li><b>Zrobione (2.11):</b> typecheck, lint, testy (45 plików, 358 testów) i build (statyczny eksport, ponad 700 kart grup) przechodzą po scaleniu.</li>
-        <li><b>Do zrobienia:</b> jeden PR z <code>feature/jgp-scatter-linear-axis</code> do <code>main</code> (squash merge), sprawdzenie podglądu Cloudflare, scalenie przez właściciela repozytorium.</li>
+        <li><b>Do zrobienia:</b> PR z <code>feature/jgp-scatter-linear-axis</code> do <code>feature/homepage</code> (22 commity; <code>feature/homepage</code> jest przodkiem, więc scalenie jest czyste), sprawdzenie podglądu Cloudflare. Scalenie z #18 zostaje (decyzja 2.11): <code>feature/homepage</code> i tak trafi do <code>main</code>, a konflikty z #18 są już rozwiązane.</li>
       </ul>
     </div>
   </div>

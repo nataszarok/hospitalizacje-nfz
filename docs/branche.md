@@ -75,9 +75,9 @@ Każdy branch zawiera wszystkie wcześniejsze. `feature/jgp-scatter-linear-axis`
 |---|---|---|---|
 | `feature/peer-distance-slider` | `main` (a28cbcd) | suwak odległości par w porównaniu szpitali | w `main` jako PR #18 (9c5ca4d); dołączony do łańcucha 2.11 |
 
-## Co z tego wynika przy scalaniu do `main`
+## Co z tego wynika przy scalaniu
 
-1. **Najprościej: jeden PR z `feature/jgp-scatter-linear-axis`.** Zawiera cały łańcuch. Osobne PR-y dla każdego branchu z kolejnym squash merge powodują konflikty w następnych branchach, bo squash zmienia historię.
+1. **Cel: `feature/homepage`, nie `main`.** Jeden PR z `feature/jgp-scatter-linear-axis` do `feature/homepage` wnosi cały łańcuch (22 commity, scalenie czyste, bo `feature/homepage` jest przodkiem). Do `main` trafia później `feature/homepage` w całości. Osobne PR-y dla każdego branchu z kolejnym squash merge powodują konflikty w następnych branchach, bo squash zmienia historię.
 2. **`main` z #18 jest już dołączony** (2.11). Konflikty rozwiązane: `Dashboard.tsx` usunięty, parametr `pd` przeniesiony do stanu strony `/szpitale` (`hospitalUrlState.ts`).
 3. **Lokalny `main` jest nieaktualny** (1f5c602, bez #16 i #18). Przed pracą z `main` trzeba go zaktualizować z `origin/main`.
 4. **Push do `main` = wdrożenie na Cloudflare Pages.** Do `main` tylko przez PR (squash merge).
