@@ -1,0 +1,455 @@
+/* Karta grupy JGP w zakładkach (E10, H52, H55): nagłówek 2×2, przyklejony pasek zakładek, sekcje-pytania. */
+
+.head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 420px);
+  gap: 16px 28px;
+  align-items: center;
+  margin: 12px 0 18px;
+}
+
+.headText {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.title {
+  margin: 2px 0 0;
+  font-size: 28px;
+  line-height: 1.25;
+}
+
+.meta,
+.area {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 16px;
+  margin: 0;
+  color: #475467;
+  font-size: 13.5px;
+}
+
+.meta b {
+  color: #172033;
+}
+
+.areaLabel {
+  color: #667085;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.chip {
+  padding: 2px 10px;
+  border: 1px solid var(--color-primary-outline, #b7d3c8);
+  border-radius: 999px;
+  background: var(--color-primary-soft, #eaf5f0);
+  color: #172033;
+  font: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+
+.explorer {
+  justify-self: start;
+  color: var(--color-primary);
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+
+.kpis > div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid #e4e7ec;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.kpis dt {
+  color: #667085;
+  font-size: 12px;
+}
+
+.kpis dd {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.kpis span {
+  color: #667085;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Pasek zakładek zostaje pod nagłówkiem portalu (75 px) przy przewijaniu. */
+.tabbar {
+  position: sticky;
+  top: 75px;
+  z-index: 20;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 16px;
+  margin: 0 0 16px;
+  border-bottom: 1px solid #e4e7ec;
+  background: #fff;
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+}
+
+.tabs button {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 12px 14px 10px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: #475467;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.tabs button small {
+  color: #667085;
+  font-size: 12.5px;
+  font-weight: 500;
+}
+
+.tabs button[aria-selected="true"] {
+  border-bottom-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.tabMeta {
+  color: #667085;
+  font-size: 12.5px;
+}
+
+.panel {
+  display: grid;
+  gap: 16px;
+}
+
+/* Skok do sekcji nie chowa tytułu pod paskiem zakładek. */
+.sec {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  padding: 16px 18px;
+  border: 1px solid #e4e7ec;
+  border-radius: 12px;
+  background: #fff;
+  scroll-margin-top: 140px;
+}
+
+.secHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px 12px;
+}
+
+.secTitle {
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.35;
+}
+
+.q {
+  color: #172033;
+  font-weight: 750;
+}
+
+.ctx {
+  color: #667085;
+  font-weight: 500;
+}
+
+.tag {
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: #eef1f6;
+  color: #475467;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.callout {
+  margin: 0;
+  padding: 10px 14px;
+  border-left: 3px solid #d39a3a;
+  background: #fbf3e4;
+  color: #5c4310;
+  font-size: 13.5px;
+}
+
+.geo {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.heatWrap {
+  overflow-x: auto;
+}
+
+.heat {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 2px;
+  font-size: 12.5px;
+}
+
+.heat th {
+  color: #667085;
+  font-weight: 600;
+  text-align: left;
+}
+
+.heatCell {
+  min-width: 52px;
+  padding: 4px 6px;
+  border-radius: 4px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.linkCell {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #172033;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.linkCell[aria-pressed="true"] {
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+.cost {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 240px;
+  gap: 20px;
+  align-items: center;
+}
+
+.costBars {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+  height: 230px;
+}
+
+.costBar {
+  flex: 1 1 0;
+  display: grid;
+  grid-template-rows: auto 1fr auto auto;
+  justify-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.costTrack {
+  display: flex;
+  align-items: flex-end;
+  width: 100%;
+  height: 100%;
+}
+
+.costFill {
+  width: 100%;
+  border-radius: 4px 4px 0 0;
+  background: #8ea6d3;
+}
+
+.costFillOn {
+  background: var(--color-primary);
+}
+
+.costValue,
+.costPer {
+  color: #475467;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.costYear {
+  color: #667085;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.costFacts {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+.costFacts > div {
+  display: grid;
+  gap: 2px;
+  padding: 8px 12px;
+  border: 1px solid #e4e7ec;
+  border-radius: 10px;
+}
+
+.costFacts dt,
+.costFacts span {
+  color: #667085;
+  font-size: 12px;
+}
+
+.costFacts dd {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Zwarty pasek ośrodka pod wykresem linii: jedna linia, bez przesuwania strony. */
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  min-height: 38px;
+  margin: 0;
+  padding: 6px 12px;
+  border: 1px solid #e4e7ec;
+  border-radius: 8px;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.barPreview {
+  border-style: dashed;
+}
+
+.dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.hint,
+.bar small {
+  color: #667085;
+}
+
+.barChip {
+  color: #475467;
+  white-space: nowrap;
+}
+
+.details {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid #e4e7ec;
+  border-radius: 10px;
+  background: #fafbfc;
+}
+
+.struct {
+  display: grid;
+  gap: 6px;
+}
+
+.structBar {
+  display: flex;
+  gap: 2px;
+  height: 26px;
+  overflow: hidden;
+  border-radius: 6px;
+}
+
+.structBar span {
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  color: #fff;
+  font-size: 11.5px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.structText {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin: 0;
+  color: #475467;
+  font-size: 13px;
+}
+
+.rankRow {
+  cursor: pointer;
+}
+
+.rankRow:hover {
+  background: #f5f8fc;
+}
+
+.nameCell small {
+  display: block;
+  color: #667085;
+  font-size: 12px;
+}
+
+.spark {
+  display: block;
+  width: 80px;
+  height: 22px;
+}
+
+.two {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+@media (max-width: 900px) {
+  .head,
+  .geo,
+  .cost,
+  .two {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Nagłówek portalu ma 67 px poniżej 700 px szerokości. */
+@media (max-width: 700px) {
+  .tabbar {
+    top: 67px;
+  }
+}

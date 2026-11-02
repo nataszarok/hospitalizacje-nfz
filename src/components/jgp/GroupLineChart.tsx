@@ -32,7 +32,7 @@ export interface ChartLine {
  * Wszystkie serie są typu `scattergl` (jak w eksploratorze): `restyle` serii SVG w trakcie najechania
  * przerysowuje dymek podpowiedzi, wywołuje kolejne najechanie i przepełnia stos.
  */
-export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = false }: {
+export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = false, onSelect, onHover, height = 400 }: {
   /** Miesiące jako „RRRR-MM”. */
   months: string[];
   lines: ChartLine[];
@@ -40,8 +40,17 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
   ariaLabel: string;
   /** Legenda z nazwami serii (np. województwa). */
   legend?: boolean;
+  /** Kliknięcie linii albo kropki: klucz serii (np. wybór ośrodka). */
+  onSelect?: (key: string) => void;
+  /** Najechanie na serię i zjechanie z wykresu (`null`). */
+  onHover?: (key: string | null) => void;
+  height?: number;
 }) {
   const chartRef = useRef<HTMLDivElement>(null);
+  // Funkcje z rodzica trzymamy w refach: nowa funkcja po rerenderze nie przerysowuje wykresu.
+  const selectRef = useRef(onSelect);
+  const hoverRef = useRef(onHover);
+  useEffect(() => { selectRef.current = onSelect; hoverRef.current = onHover; });
 
   useEffect(() => {
     let cancelled = false;
@@ -90,7 +99,7 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
       );
       const plot = chartRef.current as PlotElement;
       await Plotly.react(plot, traces, {
-        height: 400,
+        height,
         autosize: true,
         margin: { l: 56, r: 16, t: legend ? 36 : 12, b: 44 },
         paper_bgcolor: "#FFFFFF",
@@ -108,11 +117,18 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
       const overlay = [overlayStart, overlayStart + 1, overlayStart + 2];
       plot.removeAllListeners("plotly_hover");
       plot.removeAllListeners("plotly_unhover");
+      plot.removeAllListeners("plotly_click");
+      plot.on("plotly_click", (event) => {
+        const point = event?.points?.[0];
+        if (!point || point.curveNumber >= overlayStart) return;
+        selectRef.current?.(ordered[Math.floor(point.curveNumber / 2)].key);
+      });
       let restyleInProgress = false;
       plot.on("plotly_hover", (event) => {
         const point = event?.points?.[0];
         if (restyleInProgress || !point || point.curveNumber >= overlayStart) return;
         const line = ordered[Math.floor(point.curveNumber / 2)];
+        hoverRef.current?.(line.key);
         const highlight = line.color ?? (line.tone === "selected" ? SELECTED : line.accent ?? PRIMARY);
         // Kropka wskazanego miesiąca (także przy najechaniu na linię średniej).
         const y = line.values[point.pointNumber] ?? null;
@@ -127,6 +143,7 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
       });
       plot.on("plotly_unhover", () => {
         if (restyleInProgress) return;
+        hoverRef.current?.(null);
         restyleInProgress = true;
         void Plotly.restyle(plot, { x: [[null], [null], [null]], y: [[null], [null], [null]] }, overlay);
         restyleInProgress = false;
@@ -134,7 +151,7 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
     };
     void render();
     return () => { cancelled = true; };
-  }, [months, lines, valueLabel, legend]);
+  }, [months, lines, valueLabel, legend, height]);
 
   return <div ref={chartRef} role="img" aria-label={ariaLabel} />;
 }

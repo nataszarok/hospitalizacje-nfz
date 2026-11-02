@@ -7,6 +7,10 @@ import type { EstimationMethod } from "@/lib/types";
 export const PEER_GRADE = "A";
 export const PEER_MAX_DISTANCE = 10.01;
 
+/** Grupy z nową kartą w zakładkach (Przegląd, Ośrodki); pozostałe mają dotychczasową kartę. */
+export const JGP_TABBED_CODES = ["E10", "H52", "H55"];
+export const hasTabbedCard = (jgpCode: string) => JGP_TABBED_CODES.includes(jgpCode);
+
 /**
  * Plik grupy z `scripts/build_jgp_pages.py` (`public/data/jgp/<KOD>.json.gz`, format v2).
  * Liczby metodą konserwatywną (`<5` = 1), tą samą co na stronach grup.
@@ -69,7 +73,12 @@ export interface JgpAdmissionYear {
   planned: number;
   urgent: number;
   other: number;
+  /** Zgony w szpitalu (z trendów kraju); brak w strukturze liczonej z pliku grupy. */
+  deaths?: number;
 }
+
+/** Województwa w jednym roku: [OW NFZ, hospitalizacje na 100 tys. (1 miejsce po przecinku), hospitalizacje]. */
+export interface JgpRegionYear { year: string; rows: [string, number, number][] }
 
 export interface JgpPageData {
   jgpCode: string;
@@ -88,6 +97,8 @@ export interface JgpPageData {
   providers: JgpProviderRow[];
   /** Województwa w najnowszym roku, od największej liczby na 100 tys. mieszkańców. */
   regions: RegionRow[];
+  /** Województwa w każdym roku danych (mapa ciepła lat); ludność z najnowszego roku. */
+  regionYears: JgpRegionYear[];
   /** Tryb przyjęcia w latach, w których grupa występuje w danych. */
   admissions: JgpAdmissionYear[];
   /** Lata pliku grupy (kolejność krotek `JgpProviderRow.yearly`). */
@@ -199,7 +210,13 @@ export function buildJgpPageData(trends: TrendsDataset, latest: StaticDataset, j
     planned: point.planned,
     urgent: point.urgent,
     other: point.hospitalizations - point.planned - point.urgent,
+    deaths: point.deaths,
   }] : []);
+  const regionYears = catalogYears.map((year): JgpRegionYear => ({
+    year,
+    rows: regionalBreakdown(trends, productCodes, year, method, latest.regions, latest.populations)
+      .map((row): [string, number, number] => [row.owNfz, Math.round(row.per100k * 10) / 10, row.hospitalizations]),
+  }));
 
   return {
     jgpCode,
@@ -213,6 +230,7 @@ export function buildJgpPageData(trends: TrendsDataset, latest: StaticDataset, j
     topProviders: rows.slice(0, limit),
     providers: rows,
     regions: regionalBreakdown(trends, productCodes, latest.analysisYear, method, latest.regions, latest.populations),
+    regionYears,
     admissions,
     admissionYears: file?.years ?? [],
     months,

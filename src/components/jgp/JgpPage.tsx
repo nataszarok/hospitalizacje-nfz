@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { JgpCardSections } from "@/components/jgp/JgpCard";
+import { JgpTabbedCard } from "@/components/jgp/JgpTabbedCard";
 import { packPageData, topShare, yearChangePct, type RegionsMap } from "@/lib/jgpCard";
-import type { JgpPageData } from "@/lib/jgpPage";
+import { hasTabbedCard, type JgpPageData } from "@/lib/jgpPage";
 import styles from "./JgpPage.module.css";
 
 const integer = (value: number) => Math.round(value).toLocaleString("pl-PL");
@@ -13,7 +14,9 @@ function yearRange(years: string[]) {
 }
 
 /** Strona grupy JGP: liczby grupy, trend, ośrodki, województwa, tryb przyjęcia i wycena. */
-export function JgpPage({ data, map = null }: { data: JgpPageData; map?: RegionsMap | null }) {
+export function JgpPage({ data, map = null, tabbed = hasTabbedCard(data.jgpCode) }: { data: JgpPageData; map?: RegionsMap | null; tabbed?: boolean }) {
+  // Nowa karta w zakładkach (docs/karta-jgp-pytania.html), na razie dla grup z `JGP_TABBED_CODES`.
+  if (tabbed) return <main className={styles.page}><JgpTabbedCard packed={packPageData(data)} map={map} /></main>;
   const explorerHref = `/analizy?jgp=${encodeURIComponent(data.jgpCode)}`;
   const deaths = data.providers.reduce((sum, row) => sum + row.deaths, 0);
   const urgent = data.providers.reduce((sum, row) => sum + (row.urgentPct / 100) * row.hospitalizations, 0);

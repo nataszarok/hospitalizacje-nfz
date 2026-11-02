@@ -229,7 +229,7 @@ li { margin: 3px 0; }
       <ul>
         <li><b>Zrobione (2.11):</b> <code>main</code> z PR #18 (suwak par) dołączony do łańcucha. Konflikty: <code>Dashboard.tsx</code> i test stanu szpitala w eksploratorze usunięte (łańcuch przeniósł profil pod <code>/szpitale</code>); parametr <code>pd</code> (dystans par) przeniesiony do <code>hospitalUrlState.ts</code>, <code>HospitalsPage</code> i przekierowania dawnych adresów <code>/analizy?t=h</code>.</li>
         <li><b>Zrobione (2.11):</b> typecheck, lint, testy (45 plików, 358 testów) i build (statyczny eksport, ponad 700 kart grup) przechodzą po scaleniu.</li>
-        <li><b>Do zrobienia:</b> PR z <code>feature/jgp-scatter-linear-axis</code> do <code>feature/homepage</code> (22 commity; <code>feature/homepage</code> jest przodkiem, więc scalenie jest czyste), sprawdzenie podglądu Cloudflare. Scalenie z #18 zostaje (decyzja 2.11): <code>feature/homepage</code> i tak trafi do <code>main</code>, a konflikty z #18 są już rozwiązane.</li>
+        <li><b>Do zrobienia:</b> PR z <code>feature/jgp-scatter-linear-axis</code> do <code>feature/homepage</code> (<code>feature/homepage</code> jest przodkiem, więc scalenie jest czyste), sprawdzenie podglądu Cloudflare. Scalenie z #18 zostaje (decyzja 2.11): <code>feature/homepage</code> i tak trafi do <code>main</code>, a konflikty z #18 są już rozwiązane.</li>
       </ul>
     </div>
   </div>
@@ -238,7 +238,15 @@ li { margin: 3px 0; }
     <div class="mark"><span class="num">4</span><span class="state">Teraz</span></div>
     <div>
       <h3>Przebudowa karty grupy według dokumentu 3</h3>
-      <p class="goal">Karta z obecnej długiej strony zmienia się w układ z <a href="karta-jgp-pytania.html">karta-jgp-pytania.html</a>, na razie z dwiema zakładkami: Przegląd i Ośrodki. Zakładka „Sygnały” to osobny etap 7. Do przerobienia:</p>
+      <p class="goal">Karta z obecnej długiej strony zmienia się w układ z <a href="karta-jgp-pytania.html">karta-jgp-pytania.html</a>, na razie z dwiema zakładkami: Przegląd i Ośrodki. Zakładka „Sygnały” to osobny etap 7.</p>
+      <p class="goal"><b>Stan (2.11, branch <code>feature/jgp-card-tabs</code>):</b> nowa karta działa dla E10, H52 i H55 (<code>JGP_TABBED_CODES</code> w <code>src/lib/jgpPage.ts</code>, komponent <code>JgpTabbedCard</code>); pozostałe grupy mają dotychczasową kartę.</p>
+      <ul>
+        <li><b>Zrobione:</b> nagłówek 2×2 (hospitalizacje, kwota NFZ, śmiertelność, ośrodki z r/r) i obszar; przyklejony pasek zakładek; zakładka w adresie <code>widok=osrodki</code>; link z <code>?osrodek=</code> otwiera „Ośrodki”.</li>
+        <li><b>Zrobione, Przegląd:</b> Ile? (miesiące, miary hospitalizacje / zgony / nagłe) → Gdzie? (mapa roku i mapa ciepła lat, opis „podaż, nie potrzeby”) → Za ile? (kwota NFZ w latach, średnio na hospitalizację, liczby po prawej) → Jak przyjmowani są pacjenci? (tryb i śmiertelność w latach).</li>
+        <li><b>Zrobione, Ośrodki:</b> linie 15 największych ośrodków z najechaniem i wyborem kliknięciem, zwarty pasek ośrodka ze „Szczegółami”; pasek struktury i pełny ranking z r/r, udziałem i mini-trendem; „Jak leczą?” (tryb w ośrodkach, lejek śmiertelności przy co najmniej 30 zgonach).</li>
+        <li><b>Zostało:</b> „Jak wygląda rodzina?” (potrzebne definicje rodzin, etap 8), opis grupy (decyzja 6), wybór roku na pasku (po etapie 5), przeniesienie wszystkich grup na nową kartę i usunięcie starej karty.</li>
+      </ul>
+      <p class="goal">Pierwotny zakres:</p>
       <ul>
         <li><b>Nagłówek:</b> opis grupy, wycena, obszar po lewej; cztery liczby 2×2 po prawej. Pasek zakładek i lat przyklejony przy przewijaniu; miejsce na trzecią zakładkę.</li>
         <li><b>Zakładka „Przegląd”:</b> tytuły-pytania; kolejność Ile? → Gdzie? (mapa roku i heatmapa lat z opisem „podaż, nie potrzeby”) → Za ile? (wykres po lewej, liczby po prawej) → Jak przyjmowani są pacjenci? (tryb i śmiertelność w jednej tabeli) → Jak wygląda rodzina? (udziały w latach).</li>

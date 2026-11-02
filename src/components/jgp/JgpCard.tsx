@@ -11,7 +11,7 @@ import {
   cartogramCells, cellColor, darkLabel, scaleColor, MAX_REGIONS, unpackPageData, type PackedJgpPageData, poolAdmissions, poolStats, providerPool, selectedIndex, sumSeries, yearChangePct,
   type CartogramCell, type CompareScope, type RegionsMap,
 } from "@/lib/jgpCard";
-import type { JgpAdmissionYear, JgpPageData, JgpProviderRow } from "@/lib/jgpPage";
+import type { JgpPageData, JgpProviderRow } from "@/lib/jgpPage";
 import { hospitalHref } from "@/lib/portalLinks";
 import styles from "./JgpPage.module.css";
 
@@ -30,7 +30,7 @@ const SERVER_ROWS = 30;
 // Pusta subskrypcja: `useSyncExternalStore` daje `false` podczas renderu statycznego i `true` w przeglądarce.
 const subscribeNothing = () => () => {};
 // Kolory linii województw (kolejność stała, nie zależy od pozycji w rankingu).
-const REGION_COLORS = ["#2856A3", "#C65D2E", "#2E7D5B", "#7656A8", "#A06A17", "#0F7C8C"];
+export const REGION_COLORS = ["#2856A3", "#C65D2E", "#2E7D5B", "#7656A8", "#A06A17", "#0F7C8C"];
 // Kolory ośrodków po najechaniu: przypisane według miejsca w kraju, więc ośrodek ma ten sam kolor po zmianie filtrów.
 const PROVIDER_ACCENTS = ["#2856A3", "#2E7D5B", "#7656A8", "#A06A17", "#0F7C8C", "#B4366B", "#5B6B1F", "#3F51B5", "#8C4A2F", "#1D7A50"];
 
@@ -324,7 +324,7 @@ function RegionsSection({ data, map, regions, onRegions }: { data: JgpPageData; 
 }
 
 /** Mapa województw z prawdziwymi granicami (SVG). Kliknięcie albo Enter zaznacza województwo. */
-function RegionMap({ map, cells, regions, onToggle }: { map: RegionsMap; cells: CartogramCell[]; regions: string[]; onToggle: (ow: string) => void }) {
+export function RegionMap({ map, cells, regions, onToggle }: { map: RegionsMap; cells: CartogramCell[]; regions: string[]; onToggle: (ow: string) => void }) {
   const byCode = new Map(cells.map((cell) => [cell.owNfz, cell]));
   const [width, height] = map.viewBox;
   const shapes = map.regions.flatMap(([code, , path, label]) => {
@@ -360,7 +360,7 @@ function RegionMap({ map, cells, regions, onToggle }: { map: RegionsMap; cells: 
 }
 
 /** Opis województwa: wskaźnik, liczba hospitalizacji i odchylenie od średniej Polski. */
-function regionTitle(cell: CartogramCell) {
+export function regionTitle(cell: CartogramCell) {
   const relation = Math.abs(cell.ratio - 1) < 0.05 ? "blisko średniej Polski" : `${decimal(cell.ratio)} × średniej Polski`;
   return `${cell.name}: ${decimal(cell.per100k)} na 100 tys. (${relation}), ${integer(cell.hospitalizations)} hospitalizacji`;
 }
@@ -441,7 +441,7 @@ function ProvidersSection({ data, pool, selectedRow, filtered, onSelect }: {
   </section>;
 }
 
-const ADMISSION_PARTS: { key: keyof Omit<JgpAdmissionYear, "year" | "total">; label: string; className: string }[] = [
+const ADMISSION_PARTS: { key: "planned" | "urgent" | "other"; label: string; className: string }[] = [
   { key: "planned", label: "Planowe", className: styles.segmentPlanned },
   { key: "urgent", label: "Nagłe", className: styles.segmentUrgent },
   { key: "other", label: "Pozostałe", className: styles.segmentOther },

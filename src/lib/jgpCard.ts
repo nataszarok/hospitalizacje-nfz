@@ -216,3 +216,48 @@ export function unpackPageData(packed: PackedJgpPageData): JgpPageData {
   });
   return { ...rest, providers, topProviders: providers.slice(0, topCount) };
 }
+
+/** Struktura ośrodków nad rankingiem: udział 3 największych, miejsc 4–10 i pozostałych (%). */
+export function structureShares(rows: JgpProviderRow[]): { label: string; count: number; share: number }[] {
+  const total = rows.reduce((sum, row) => sum + row.hospitalizations, 0);
+  const part = (from: number, to: number) => rows.slice(from, to).reduce((sum, row) => sum + row.hospitalizations, 0);
+  const parts = [
+    { label: "3 największe", count: Math.min(3, rows.length), value: part(0, 3) },
+    { label: "miejsca 4–10", count: Math.max(0, Math.min(10, rows.length) - 3), value: part(3, 10) },
+    { label: `pozostałe ${Math.max(0, rows.length - 10)}`, count: Math.max(0, rows.length - 10), value: part(10, rows.length) },
+  ];
+  return parts.filter((item) => item.count > 0).map(({ label, count, value }) => ({ label, count, share: total ? (value / total) * 100 : 0 }));
+}
+
+/** Hospitalizacje ośrodka w kolejnych latach pliku grupy (suma krotek trybu przyjęcia). */
+export function providerYearTotals(row: JgpProviderRow): number[] {
+  return row.yearly.map(([planned, urgent, other]) => planned + urgent + other);
+}
+
+/** Lejek śmiertelności pokazujemy tylko, gdy grupa ma co najmniej tyle zgonów w roku. */
+export const MIN_FUNNEL_DEATHS = 30;
+/** Granice lejka: 95% (z = 1,96) i 99,8% (z = 3,09). */
+export const FUNNEL_Z = { inner: 1.96, outer: 3.09 };
+
+export type FunnelStatus = "w granicach" | "powyżej 95%" | "powyżej 99,8%" | "poniżej 95%" | "poniżej 99,8%";
+
+/** Odchylenie, przy którym ośrodek z `n` hospitalizacjami wychodzi poza granicę (w punktach procentowych). */
+export function funnelHalfWidth(mortalityPct: number, n: number, z: number): number {
+  const p = mortalityPct / 100;
+  return n > 0 ? z * Math.sqrt((p * (1 - p)) / n) * 100 : Infinity;
+}
+
+/** Położenie ośrodka na lejku względem śmiertelności grupy (`groupPct`). */
+export function funnelStatus(ratePct: number, groupPct: number, n: number): FunnelStatus {
+  const diff = ratePct - groupPct;
+  if (Math.abs(diff) > funnelHalfWidth(groupPct, n, FUNNEL_Z.outer)) return diff > 0 ? "powyżej 99,8%" : "poniżej 99,8%";
+  if (Math.abs(diff) > funnelHalfWidth(groupPct, n, FUNNEL_Z.inner)) return diff > 0 ? "powyżej 95%" : "poniżej 95%";
+  return "w granicach";
+}
+
+/** Linie granic lejka od `nMin` do `nMax` hospitalizacji (do wykresu). */
+export function funnelCurves(groupPct: number, nMin: number, nMax: number, steps = 60) {
+  const xs = Array.from({ length: steps + 1 }, (_, i) => Math.round(nMin + ((nMax - nMin) * i) / steps));
+  const at = (z: number, sign: 1 | -1) => xs.map((n) => Math.max(0, groupPct + sign * funnelHalfWidth(groupPct, Math.max(n, 1), z)));
+  return { x: xs, inner: [at(FUNNEL_Z.inner, 1), at(FUNNEL_Z.inner, -1)], outer: [at(FUNNEL_Z.outer, 1), at(FUNNEL_Z.outer, -1)] };
+}
