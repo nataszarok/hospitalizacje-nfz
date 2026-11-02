@@ -160,6 +160,8 @@ export function legacyAnalysisRedirect(search: string): string | null {
   const view = params.get("hv");
   if (view === "c" || view === "s") target.set("hv", "c");
   if (params.get("m") === "sim") target.set("m", "sim");
+  const peerDistance = params.get("pd");
+  if (peerDistance) target.set("pd", peerDistance);
   const query = target.toString();
   return `/szpitale${query ? `?${query}` : ""}`;
 }

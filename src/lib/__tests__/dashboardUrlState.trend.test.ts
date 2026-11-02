@@ -51,6 +51,10 @@ describe("legacyAnalysisRedirect", () => {
     expect(legacyAnalysisRedirect("?t=h")).toBe("/szpitale");
   });
 
+  it("przenosi dystans par (pd) z dawnego adresu porównania", () => {
+    expect(legacyAnalysisRedirect("?t=h&hospital=07%7C111&hv=c&pd=13.51")).toBe("/szpitale?hospital=07%7C111&hv=c&pd=13.51");
+  });
+
   it("przenosi metodologię na /o-danych", () => {
     expect(legacyAnalysisRedirect("?t=m")).toBe("/o-danych");
   });

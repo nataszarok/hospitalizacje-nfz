@@ -227,8 +227,9 @@ li { margin: 3px 0; }
       <h3>Scalenie łańcucha do <code>main</code></h3>
       <p class="goal">Sześć branchy (od <code>feature/homepage</code> do <code>feature/jgp-scatter-linear-axis</code>) nie jest jeszcze w <code>main</code>. Opis zależności: <a href="branche.md">docs/branche.md</a>.</p>
       <ul>
-        <li>Dołączyć <code>main</code> z PR #18 (suwak par); możliwe konflikty w <code>Dashboard.tsx</code>, <code>HospitalAnalysisBase.css</code>, <code>dashboardUrlState.ts</code>.</li>
-        <li>Jeden PR z <code>feature/jgp-scatter-linear-axis</code> (squash merge); testy, lint, typecheck i build przed PR.</li>
+        <li><b>Zrobione (2.11):</b> <code>main</code> z PR #18 (suwak par) dołączony do łańcucha. Konflikty: <code>Dashboard.tsx</code> i test stanu szpitala w eksploratorze usunięte (łańcuch przeniósł profil pod <code>/szpitale</code>); parametr <code>pd</code> (dystans par) przeniesiony do <code>hospitalUrlState.ts</code>, <code>HospitalsPage</code> i przekierowania dawnych adresów <code>/analizy?t=h</code>.</li>
+        <li><b>Zrobione (2.11):</b> typecheck, lint, testy (45 plików, 358 testów) i build (statyczny eksport, ponad 700 kart grup) przechodzą po scaleniu.</li>
+        <li><b>Do zrobienia:</b> jeden PR z <code>feature/jgp-scatter-linear-axis</code> do <code>main</code> (squash merge), sprawdzenie podglądu Cloudflare, scalenie przez właściciela repozytorium.</li>
       </ul>
     </div>
   </div>

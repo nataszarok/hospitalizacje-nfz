@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { HospitalAnalysisTab } from "@/components/HospitalAnalysisTab";
 import { HOSPITAL_VIEW_CHANGED_EVENT, HOSPITAL_VIEW_NAVIGATE_EVENT, type HospitalNavigation } from "@/lib/dashboardNavigation";
 import { hospitalUrlSearch, readHospitalUrlState, type HospitalView } from "@/lib/hospitalUrlState";
+import { PEER_DISTANCE_A_LIMIT } from "@/lib/peerDistance";
 import { loadStaticDataset, referenceFromDataset } from "@/lib/staticData";
 import type { EstimationMethod, ProductOption } from "@/lib/types";
 
@@ -21,6 +22,7 @@ export function HospitalsPage() {
   const [hospitalKey, setHospitalKey] = useState("");
   const [view, setView] = useState<HospitalView>("summary");
   const [method, setMethod] = useState<EstimationMethod>("min");
+  const [peerDistance, setPeerDistance] = useState(PEER_DISTANCE_A_LIMIT);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -33,6 +35,7 @@ export function HospitalsPage() {
         setHospitalKey(state.hospitalKey);
         setView(state.view);
         setMethod(state.method);
+        setPeerDistance(state.peerDistance);
         setReady(true);
       })
       .catch((err: unknown) => setError(err instanceof Error ? err.message : "Błąd pobierania danych."));
@@ -47,9 +50,9 @@ export function HospitalsPage() {
 
   useEffect(() => {
     if (!ready) return;
-    window.history.replaceState(window.history.state, "", `${window.location.pathname}${hospitalUrlSearch({ hospitalKey, view, method })}${window.location.hash}`);
+    window.history.replaceState(window.history.state, "", `${window.location.pathname}${hospitalUrlSearch({ hospitalKey, view, method, peerDistance })}${window.location.hash}`);
     window.dispatchEvent(new CustomEvent<HospitalNavigation>(HOSPITAL_VIEW_CHANGED_EVENT, { detail: { view } }));
-  }, [ready, hospitalKey, view, method]);
+  }, [ready, hospitalKey, view, method, peerDistance]);
 
   if (error) return <main className="center-state error">{error}</main>;
   if (!ready) return <main className="center-state">Ładowanie profili szpitali…</main>;
@@ -101,6 +104,8 @@ export function HospitalsPage() {
         setHospitalSubtab={setView}
         peerThreshold={75}
         setPeerThreshold={noop}
+        peerDistance={peerDistance}
+        setPeerDistance={setPeerDistance}
       />
     </main>
   </div>;

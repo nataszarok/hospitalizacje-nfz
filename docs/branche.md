@@ -6,7 +6,7 @@ Stan na 2 listopada 2026 r. Opis obejmuje branche od rozpoczęcia przebudowy str
 
 - Główna praca to **łańcuch sześciu branchy**. Każdy następny zaczyna się od końca poprzedniego. Najnowszy, `feature/jgp-scatter-linear-axis`, zawiera wszystko z wcześniejszych.
 - **Żaden branch z łańcucha nie jest jeszcze w `main`.**
-- Obok łańcucha jest jeden ważny **branch boczny**: suwak odległości par, już w `main` jako PR #18. Łańcuch go nie ma.
+- Obok łańcucha jest jeden ważny **branch boczny**: suwak odległości par, w `main` jako PR #18. Od 2 listopada 2026 r. łańcuch go zawiera (merge `origin/main` do `feature/jgp-scatter-linear-axis`).
 
 ## Schemat
 
@@ -73,11 +73,11 @@ Każdy branch zawiera wszystkie wcześniejsze. `feature/jgp-scatter-linear-axis`
 
 | Branch | Wychodzi z | Co wnosi | Stan |
 |---|---|---|---|
-| `feature/peer-distance-slider` | `main` (a28cbcd) | suwak odległości par w porównaniu szpitali | w `main` jako PR #18 (9c5ca4d); **łańcuch tej zmiany nie ma** |
+| `feature/peer-distance-slider` | `main` (a28cbcd) | suwak odległości par w porównaniu szpitali | w `main` jako PR #18 (9c5ca4d); dołączony do łańcucha 2.11 |
 
 ## Co z tego wynika przy scalaniu do `main`
 
 1. **Najprościej: jeden PR z `feature/jgp-scatter-linear-axis`.** Zawiera cały łańcuch. Osobne PR-y dla każdego branchu z kolejnym squash merge powodują konflikty w następnych branchach, bo squash zmienia historię.
-2. **Przed PR trzeba dołączyć `main` z #18** (suwak par). #18 i łańcuch zmieniają te same pliki: `src/components/Dashboard.tsx`, `src/components/HospitalAnalysisBase.css`, `src/lib/dashboardUrlState.ts` i jego testy. Możliwe są konflikty.
+2. **`main` z #18 jest już dołączony** (2.11). Konflikty rozwiązane: `Dashboard.tsx` usunięty, parametr `pd` przeniesiony do stanu strony `/szpitale` (`hospitalUrlState.ts`).
 3. **Lokalny `main` jest nieaktualny** (1f5c602, bez #16 i #18). Przed pracą z `main` trzeba go zaktualizować z `origin/main`.
 4. **Push do `main` = wdrożenie na Cloudflare Pages.** Do `main` tylko przez PR (squash merge).
