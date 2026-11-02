@@ -1,0 +1,45 @@
+.header { position: sticky; top: 0; z-index: 100; background: rgba(255,255,255,.97); border-bottom: 1px solid var(--color-border); backdrop-filter: blur(14px); }
+.inner { width: min(calc(100% - var(--atlas-page-gutter) - var(--atlas-page-gutter)), var(--atlas-page-max)); min-height: 74px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 30px; }
+.brand { display: inline-flex; gap: 11px; align-items: center; min-width: 220px; text-decoration: none; color: var(--color-text); }
+.brandSymbol { width: 39px; height: 39px; display: grid; place-items: center; color: #fff; background: var(--color-primary); border-radius: 10px; flex: none; }
+.brandText { display: flex; flex-direction: column; gap: 2px; }
+.brandText strong { font-size: 16px; font-weight: 750; letter-spacing: -.025em; line-height: 1.12; }
+.brandText span { font-size: 11px; font-weight: 650; color: var(--color-text-secondary); letter-spacing: .075em; text-transform: uppercase; }
+.nav { display: flex; align-items: center; gap: 9px; align-self: stretch; }
+.link { display: inline-flex; align-items: center; justify-content: center; gap: 6px; color: var(--color-text-secondary); text-decoration: none; font-size: 14px; font-weight: 650; padding: 7px 14px; border-bottom: 2px solid transparent; transition: color .15s, border-color .15s; }
+.link:hover { color: var(--color-primary); }
+.linkActive { color: var(--color-primary); border-bottom-color: var(--color-primary); }
+.end { display: flex; align-items: center; justify-content: flex-end; min-width: 115px; }
+.menuButton { display: none; border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text); align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 9px; }
+@media(max-width: 900px) { .inner { gap: 12px; } .nav { gap: 0; } .link { padding: 7px 9px; } .end { min-width: 0; } }
+@media(max-width: 700px) {
+ .inner { min-height: 66px; }
+ .brand { min-width: 0; }
+ .brandText strong { font-size: 14px; }
+ .brandText span { font-size: 10px; }
+ .brandSymbol { width: 36px; height: 36px; }
+ .end { gap: 10px; }
+ .menuButton { display: inline-flex; }
+ .nav { display: none; position: absolute; left: 0; right: 0; top: 100%; background: #fff; border-bottom: 1px solid var(--color-border); padding: 12px 16px 18px; box-shadow: 0 16px 24px rgba(20,60,50,.09); }
+ .navOpen { display: flex; flex-direction: column; align-items: stretch; }
+ .link { justify-content: flex-start; padding: 14px; border-bottom: 0; border-left: 3px solid transparent; border-radius: 5px; }
+ .linkActive { background: var(--color-primary-soft); border-left-color: var(--color-primary); }
+}
+
+/* Drop-down navigation belongs to the portal shell, not the dashboard. */
+.analysisMenu { position: relative; display: flex; align-items: stretch; }
+.analysisTrigger { border-top: 0; border-right: 0; border-left: 0; border-radius: 0; background: transparent; white-space: nowrap; }
+.chevron { width: 8px; height: 8px; margin: -4px 0 0 4px; border-right: 1.8px solid currentColor; border-bottom: 1.8px solid currentColor; transform: rotate(45deg); transition: transform .15s; }
+.chevronOpen { margin-top: 3px; transform: rotate(225deg); }
+.analysisDropdown { position: absolute; top: calc(100% - 1px); left: 0; min-width: 315px; padding: 9px; border: 1px solid var(--color-border); border-radius: 0 0 12px 12px; background: var(--color-surface); box-shadow: 0 14px 36px rgba(18,58,50,.12); z-index: 120; }
+.analysisOption { display: flex; align-items: center; gap: 12px; color: var(--color-text); text-decoration: none; font-size: 14px; font-weight: 580; line-height: 1.35; padding: 13px 12px; border-radius: 8px; }
+.analysisOption svg { flex: none; color: var(--color-primary); }
+.analysisOption:hover, .analysisOption:focus-visible, .analysisOptionActive { background: var(--color-primary-soft); color: var(--color-primary-hover); }
+.analysisTrigger:focus-visible, .analysisOption:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+@media(max-width:700px) {
+  .analysisMenu { display: block; width: 100%; }
+  .analysisTrigger { width: 100%; justify-content: flex-start; border-left: 3px solid transparent; border-bottom: 0; border-radius: 5px; padding: 14px; }
+  .analysisTrigger.linkActive { border-left-color: var(--color-primary); }
+  .analysisDropdown { position: static; min-width: 0; width: 100%; border: 0; border-radius: 8px; padding: 2px 0 4px 12px; box-shadow: none; background: var(--color-background-soft); }
+  .analysisOption { font-size: 14px; padding: 13px 10px; }
+}

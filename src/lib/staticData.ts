@@ -7,7 +7,7 @@ type FacilityTuple = [string, string, string, string];
 type PopulationTuple = [string, number];
 type FactTuple = [string, string, string, string, string, number, number, number, number];
 
-interface StaticDataset {
+export interface StaticDataset {
   version: number;
   analysisYear: string;
   defaultProductCode: string;
@@ -34,6 +34,28 @@ export function loadStaticDataset(): Promise<StaticDataset> {
     return new Response(decompressed).json() as Promise<StaticDataset>;
   })();
   return datasetPromise;
+}
+
+export interface DatasetHighlights {
+  /** Zakres lat w zbiorze. POC ma jeden rok; docelowo zbiór obejmie całą dostępną historię. */
+  yearFrom: string;
+  yearTo: string;
+  /** Szacunek metodą symulacyjną (wartości <5 losowane z rozkładu). */
+  hospitalizations: number;
+  providers: number;
+  jgpGroups: number;
+}
+
+// Liczby do paska faktów na stronie głównej.
+export function datasetHighlights(d: StaticDataset): DatasetHighlights {
+  const providers = new Set<string>();
+  let hospitalizations = 0;
+  for (const [ow, nip, , , , hSim] of d.facts) {
+    providers.add(`${ow}|${nip}`);
+    hospitalizations += hSim;
+  }
+  const jgpGroups = new Set(d.products.map(([, jgp]) => jgp?.trim()).filter(Boolean)).size;
+  return { yearFrom: d.analysisYear, yearTo: d.analysisYear, hospitalizations, providers: providers.size, jgpGroups };
 }
 
 function label(code: string, jgp: string | null, name: string | null) {

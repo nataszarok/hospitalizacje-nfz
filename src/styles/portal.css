@@ -1,0 +1,52 @@
+/* Portal-only design tokens. No dashboard/chart/style overrides. */
+.atlas-portal {
+
+  /* Shared page gutters. The home page is the alignment reference. */
+  --atlas-page-gutter: 40px;
+  --atlas-page-max: 1240px;
+  /* Reports keep a wider canvas, so the original charts remain readable. */
+  --atlas-workspace-max: 1680px;
+  --atlas-workspace-gap: 24px;
+  --color-primary: #087F75;
+  --color-primary-hover: #076B63;
+  --color-primary-active: #055850;
+  --color-primary-soft: #E9F6F2;
+  --color-primary-outline: #B9DDD4;
+  --color-focus-ring: rgba(8, 127, 117, .22);
+  --color-text: #253B3A;
+  --color-text-secondary: #536C68;
+  --color-text-tertiary: #6C827E;
+  --color-border: #D9E6E3;
+  --color-border-strong: #B9CEC9;
+  --color-background: #FFFFFF;
+  --color-background-soft: #F3F8F7;
+  --color-background-muted: #EDF4F1;
+  --color-sidebar: #F3F8F7;
+  --color-surface: #FFFFFF;
+  --color-error: #B42318;
+  --color-error-soft: #FFF4F2;
+  --color-chart-grid: #E6EFEC;
+  --color-chart-secondary: #A0B4AF;
+  --shadow-soft: 0 2px 8px rgba(22, 58, 52, .055);
+  --radius-card: 12px;
+  --radius-control: 9px;
+}
+
+
+/* Layout only: do not modify existing chart, filter, table or sidebar rules. */
+.atlas-portal .app-shell {
+  width: min(calc(100% - var(--atlas-page-gutter) - var(--atlas-page-gutter)), var(--atlas-workspace-max));
+  margin-inline: auto;
+}
+.atlas-portal .app-shell > .main {
+  padding-inline: var(--atlas-workspace-gap) 0;
+}
+@media (max-width: 1100px) {
+  .atlas-portal { --atlas-page-gutter: 26px; }
+}
+@media (max-width: 1000px) {
+  .atlas-portal .app-shell > .main { padding-inline: 0; }
+}
+@media (max-width: 550px) {
+  .atlas-portal { --atlas-page-gutter: 16px; }
+}
