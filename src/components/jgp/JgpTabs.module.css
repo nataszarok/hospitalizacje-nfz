@@ -101,7 +101,9 @@
   top: 75px;
   z-index: 20;
   display: flex;
-  flex-wrap: wrap;
+  /* Jedna linia i stała wysokość: pojawienie się nazwy grupy nie przesuwa treści. */
+  flex-wrap: nowrap;
+  min-height: 48px;
   align-items: center;
   gap: 6px 16px;
   /* Na całą szerokość okna: treść znika pod paskiem równo, a pasek łączy się z nagłówkiem portalu. */
@@ -118,6 +120,7 @@
 
 .barTitle {
   display: none;
+  flex: 0 1 auto;
   min-width: 0;
   max-width: 420px;
   overflow: hidden;
@@ -139,6 +142,7 @@
 
 .tabs {
   display: flex;
+  flex: none;
   gap: 4px;
 }
 
@@ -171,7 +175,8 @@
 .years {
   margin-left: auto;
   display: flex;
-  flex-wrap: wrap;
+  flex: none;
+  flex-wrap: nowrap;
   align-items: center;
   gap: 6px;
   padding-block: 6px;
@@ -362,10 +367,71 @@
 
 .heatCell {
   min-width: 52px;
-  padding: 4px 6px;
+  padding: 0;
   border-radius: 4px;
   text-align: right;
   font-variant-numeric: tabular-nums;
+}
+
+/* Kolumna roku karty: obwódka jak w makiecie (rok mapy). */
+.heatCellOn {
+  box-shadow: inset 0 0 0 2px var(--color-primary);
+}
+
+.heatButton {
+  width: 100%;
+  padding: 4px 6px;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: right;
+  cursor: pointer;
+}
+
+.yearHead {
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: #667085;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.heatChange {
+  color: #475467;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.mapCol {
+  display: grid;
+  gap: 8px;
+}
+
+.mapInfo {
+  display: grid;
+  gap: 6px;
+  color: #475467;
+  font-size: 13px;
+}
+
+.mapActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  align-items: center;
+}
+
+.primaryLink {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-primary);
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
 }
 
 .linkCell {
@@ -465,12 +531,15 @@
 }
 
 /* Zwarty pasek ośrodka pod wykresem linii: jedna linia, bez przesuwania strony. */
+/* Stała wysokość (jedna linia): zmiana treści przy najechaniu nie przesuwa tabeli pod kursorem. */
 .bar {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   gap: 4px 12px;
-  min-height: 38px;
+  height: 40px;
+  overflow: hidden;
+  white-space: nowrap;
   margin: 0;
   padding: 6px 12px;
   border: 1px solid #e4e7ec;
@@ -481,6 +550,16 @@
 
 .barPreview {
   border-style: dashed;
+}
+
+.bar > b {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bar > *:not(b) {
+  flex: none;
 }
 
 .dot {
@@ -582,19 +661,20 @@
     top: 67px;
   }
 
-  .barTitle {
-    max-width: 100%;
-    flex-basis: 100%;
-    padding-top: 6px;
-  }
-
   .tabbarStuck .barTitle {
-    border-right: 0;
+    display: none;
   }
 
-  /* Na telefonie jeden rząd: zakładki bez dopisku i rok obok. */
-  .tabbar {
+  /* Na telefonie pasek ośrodka ma stałe dwie linie. */
+  .bar {
     flex-wrap: wrap;
+    align-content: center;
+    height: 64px;
+    white-space: normal;
+  }
+
+  /* Na telefonie jeden rząd: zakładki bez dopisku i rok obok; bez nazwy grupy (stała wysokość paska). */
+  .tabbar {
     gap: 0 8px;
   }
 

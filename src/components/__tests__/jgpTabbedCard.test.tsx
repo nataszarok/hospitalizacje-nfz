@@ -18,7 +18,7 @@ vi.mock("@/components/jgp/GroupLineChart", () => ({
 }));
 vi.mock("@/components/jgp/ProviderScatter", () => ({
   ProviderScatter: ({ points, ariaLabel, curves }: { points: { key: string; name: string; color?: string }[]; ariaLabel: string; curves?: unknown[] }) => <div role="group" aria-label={ariaLabel} data-curves={curves?.length ?? 0}>
-    {points.map((point) => <span key={point.key}>{point.name}</span>)}
+    {points.map((point) => <span key={point.key} data-color={point.color ?? ""}>{point.name}</span>)}
   </div>,
 }));
 
@@ -115,12 +115,24 @@ describe("Karta w zakładkach — Ośrodki", () => {
     expect(rows[1]).toHaveAttribute("aria-selected", "true");
   });
 
-  it("Jak leczą?: wykres nagłych zawsze, lejek tylko przy co najmniej 30 zgonach", () => {
+  it("Jak leczą?: przy mniej niż 30 zgonach śmiertelność jako punkty bez granic lejka", () => {
     open("?widok=osrodki");
     renderCard();
     expect(screen.getByRole("group", { name: /udział przyjęć nagłych/ })).toBeInTheDocument();
+    const mortality = screen.getByRole("group", { name: /Wykres punktowy: 2 ośrodków, śmiertelność/ });
+    expect(mortality).toHaveAttribute("data-curves", "0");
+    expect(within(mortality).getAllByText(/Szpital/)).toHaveLength(2);
     expect(screen.queryByRole("group", { name: /Wykres lejkowy/ })).not.toBeInTheDocument();
-    expect(screen.getByText(/mniej niż 30 zgonów/)).toBeInTheDocument();
+    expect(screen.getByText(/Bez granic lejka/)).toBeInTheDocument();
+  });
+
+  it("Jak leczą? przy wybranym województwie: wszystkie ośrodki, wybrane w kolorze, reszta szara", () => {
+    open("?widok=osrodki&ow=07");
+    renderCard();
+    const urgent = screen.getByRole("group", { name: /udział przyjęć nagłych/ });
+    expect(within(urgent).getByText("Szpital Alfa")).toHaveAttribute("data-color", "#C65D2E");
+    expect(within(urgent).getByText("Szpital Beta").getAttribute("data-color")).toMatch(/^rgba\(152/);
+    expect(screen.getByRole("list", { name: "Legenda województw" })).toHaveTextContent("mazowieckiepozostałe ośrodki");
   });
 });
 
@@ -157,5 +169,31 @@ describe("Karta w zakładkach — wybór roku, opis i rodzina", () => {
     const section = screen.getByRole("region", { name: /Jak wygląda rodzina\?/ });
     expect(section).toHaveTextContent("A01 to 90% hospitalizacji rodziny w 2025 r. (w 2023 r.: 80%)");
     expect(within(section).getByRole("img", { name: "2024: A01 50,0%, A02 50,0%" })).toBeInTheDocument();
+  });
+});
+
+describe("Karta w zakładkach — Gdzie?", () => {
+  const heat = () => screen.getByRole("region", { name: "Mapa ciepła: województwa w latach" });
+
+  it("kliknięcie roku w mapie ciepła zmienia rok mapy i karty", () => {
+    renderCard();
+    fireEvent.click(within(heat()).getByRole("button", { name: "2024" }));
+    expect(window.location.search).toBe("?rok=2024");
+    expect(within(heat()).getByRole("button", { name: "2024" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("heading", { name: /Gdzie\?.*mapa 2024/ })).toBeInTheDocument();
+  });
+
+  it("kliknięcie komórki wybiera rok i województwo; przycisk prowadzi do Ośrodków, drugi czyści wybór", () => {
+    renderCard();
+    const row = within(heat()).getByRole("button", { name: "Mazowieckie" }).closest("tr")!;
+    fireEvent.click(within(row).getAllByRole("button")[1]);
+    expect(window.location.search).toBe("?ow=07&rok=2024");
+    expect(screen.getByText(/Wybrane:/)).toHaveTextContent("Wybrane: mazowieckie · 1 ośrodków");
+    fireEvent.click(screen.getByRole("button", { name: "Wyczyść wybór (1)" }));
+    expect(window.location.search).toBe("?rok=2024");
+    fireEvent.click(within(row).getAllByRole("button")[2]);
+    fireEvent.click(screen.getByRole("button", { name: "Ośrodki w województwie mazowieckie →" }));
+    expect(screen.getByRole("tab", { name: /Ośrodki/ })).toHaveAttribute("aria-selected", "true");
+    expect(window.location.search).toBe("?widok=osrodki&ow=07");
   });
 });

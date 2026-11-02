@@ -324,7 +324,7 @@ function RegionsSection({ data, map, regions, onRegions }: { data: JgpPageData; 
 }
 
 /** Mapa województw z prawdziwymi granicami (SVG). Kliknięcie albo Enter zaznacza województwo. */
-export function RegionMap({ map, cells, regions, onToggle }: { map: RegionsMap; cells: CartogramCell[]; regions: string[]; onToggle: (ow: string) => void }) {
+export function RegionMap({ map, cells, regions, onToggle, colors = REGION_COLORS }: { map: RegionsMap; cells: CartogramCell[]; regions: string[]; onToggle: (ow: string) => void; colors?: string[] }) {
   const byCode = new Map(cells.map((cell) => [cell.owNfz, cell]));
   const [width, height] = map.viewBox;
   const shapes = map.regions.flatMap(([code, , path, label]) => {
@@ -347,7 +347,7 @@ export function RegionMap({ map, cells, regions, onToggle }: { map: RegionsMap; 
     {/* Obwódki zaznaczonych województw w kolorach linii wykresu, nad pozostałymi granicami. */}
     {regions.map((code, i) => {
       const shape = shapes.find((item) => item.code === code);
-      return shape ? <path key={`sel-${code}`} d={shape.path} className={styles.regionSelected} stroke={REGION_COLORS[i % REGION_COLORS.length]} aria-hidden /> : null;
+      return shape ? <path key={`sel-${code}`} d={shape.path} className={styles.regionSelected} stroke={colors[i % colors.length]} aria-hidden /> : null;
     })}
     {shapes.map(({ code, label, cell }) => <text
       key={`label-${code}`}

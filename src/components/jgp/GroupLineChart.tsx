@@ -153,5 +153,6 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
     return () => { cancelled = true; };
   }, [months, lines, valueLabel, legend, height]);
 
-  return <div ref={chartRef} role="img" aria-label={ariaLabel} />;
+  // Wysokość zarezerwowana od razu: wykres rysuje się asynchronicznie i nie przesuwa treści pod nim.
+  return <div ref={chartRef} role="img" aria-label={ariaLabel} style={{ minHeight: height }} />;
 }

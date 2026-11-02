@@ -99,5 +99,6 @@ export function ProviderScatter({ points, xTitle, yTitle, ySuffix, reference, on
     return () => { cancelled = true; };
   }, [points, xTitle, yTitle, ySuffix, reference, onSelect, curves, height]);
 
-  return <div ref={chartRef} role="img" aria-label={ariaLabel} />;
+  // Wysokość zarezerwowana od razu (wykres rysuje się asynchronicznie).
+  return <div ref={chartRef} role="img" aria-label={ariaLabel} style={{ minHeight: height }} />;
 }

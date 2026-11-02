@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { GroupLineChart, type ChartLine } from "@/components/jgp/GroupLineChart";
-import { REGION_COLORS, RegionMap, SELECTED_PROVIDER_PARAM, regionTitle } from "@/components/jgp/JgpCard";
+import { RegionMap, SELECTED_PROVIDER_PARAM, regionTitle } from "@/components/jgp/JgpCard";
 import { ProviderScatter, type ScatterCurve, type ScatterPoint } from "@/components/jgp/ProviderScatter";
 import { ProviderLink } from "@/components/TableLinks";
 import { formatCityName } from "@/lib/formatters";
@@ -32,6 +32,10 @@ const TOP_LINES = 15;
 const SERVER_ROWS = 30;
 const subscribeNothing = () => () => {};
 // Kolory lejka: poza granicą 95% i 99,8% (w górę i w dół).
+// Kolory wybranych województw (mapa i linie „Ile?”): kontrastowe wobec niebieskiej skali mapy, pierwszy pomarańczowy.
+const REGION_PICK_COLORS = ["#C65D2E", "#2E7D5B", "#7656A8", "#A06A17", "#0F7C8C", "#B4366B"];
+// Ośrodki spoza wybranych województw na wykresach „Jak leczą?”.
+const OTHER_POINT = "rgba(152, 162, 179, 0.5)";
 const FUNNEL_COLORS = { up95: "#E3A27F", up998: "#B4441B", down95: "#8FB0DD", down998: "#2856A3" };
 
 export type CardTab = "przeglad" | "osrodki";
@@ -104,6 +108,23 @@ export function JgpTabbedCard({ packed, map = null }: { packed: PackedJgpPageDat
     observer.observe(node);
     return () => observer.disconnect();
   }, []);
+  // „Ośrodki w wybranych województwach”: zakładka Ośrodki i przewinięcie do tabeli „Kto leczy?”.
+  const scrollPending = useRef(false);
+  const showProviders = useCallback(() => {
+    scrollPending.current = true;
+    write({ tab: "osrodki" });
+  }, [write]);
+  // Przewijamy po zmianie zakładki do sekcji „Kto leczy?” (tabela ośrodków), tuż pod paskiem zakładek.
+  // useLayoutEffect: przewinięcie przed narysowaniem klatki, bez mignięcia zakładki w starym miejscu.
+  useLayoutEffect(() => {
+    if (!scrollPending.current) return;
+    scrollPending.current = false;
+    const target = document.getElementById("s-kto")?.closest("section");
+    if (!target) return;
+    const header = window.matchMedia?.("(max-width: 700px)").matches ? 67 : 75;
+    const bar = document.querySelector('[role="tablist"]')?.parentElement?.getBoundingClientRect().height ?? 0;
+    window.scrollTo({ top: Math.max(0, target.getBoundingClientRect().top + window.scrollY - header - bar - 12) });
+  }, [state.tab]);
   const toggleRegion = useCallback((ow: string) => {
     const regions = state.regions.includes(ow) ? state.regions.filter((item) => item !== ow) : state.regions.length < MAX_REGIONS ? [...state.regions, ow] : state.regions;
     write({ regions });
@@ -135,13 +156,24 @@ export function JgpTabbedCard({ packed, map = null }: { packed: PackedJgpPageDat
     </div>
     {state.tab === "przeglad"
       ? <div role="tabpanel" id="panel-przeglad" aria-labelledby="tab-przeglad" className={styles.panel}>
-        <OverviewTab data={data} pool={pool} map={map} regions={state.regions} onToggleRegion={toggleRegion} onYear={(year) => write({ year: year === all.year ? null : year })} />
+        <OverviewTab
+          data={data}
+          pool={pool}
+          map={map}
+          regions={state.regions}
+          onToggleRegion={toggleRegion}
+          onYear={(year) => write({ year: year === all.year ? null : year })}
+          onRegionYear={(ow, year) => write({ year: year === all.year ? null : year, regions: state.regions.includes(ow) || state.regions.length >= MAX_REGIONS ? state.regions : [...state.regions, ow] })}
+          onClearRegions={() => write({ regions: [] })}
+          onShowProviders={showProviders}
+        />
       </div>
       : <div role="tabpanel" id="panel-osrodki" aria-labelledby="tab-osrodki" className={styles.panel}>
         <ProvidersTab
           data={data}
           pool={pool}
           comparison={comparison}
+          regions={state.regions}
           selectedRow={selectedRow}
           scope={scope}
           filtered={scope === "peers" || state.regions.length > 0}
@@ -208,13 +240,16 @@ function SectionHead({ id, question, context, tag }: { id: string; question: str
 
 type Metric = "hospitalizations" | "deaths" | "urgent";
 
-function OverviewTab({ data, pool, map, regions, onToggleRegion, onYear }: { data: JgpPageData; pool: JgpProviderRow[]; map: RegionsMap | null; regions: string[]; onToggleRegion: (ow: string) => void; onYear: (year: string) => void }) {
+function OverviewTab({ data, pool, map, regions, onToggleRegion, onYear, onRegionYear, onClearRegions, onShowProviders }: {
+  data: JgpPageData; pool: JgpProviderRow[]; map: RegionsMap | null; regions: string[]; onToggleRegion: (ow: string) => void; onYear: (year: string) => void;
+  onRegionYear: (ow: string, year: string) => void; onClearRegions: () => void; onShowProviders: () => void;
+}) {
   const [metric, setMetric] = useState<Metric>("hospitalizations");
   const lines = useMemo((): ChartLine[] => {
     if (regions.length) return regions.map((ow, i) => {
       const rows = pool.filter((row) => row.owNfz === ow);
       const name = data.regions.find((row) => row.owNfz === ow)?.name ?? ow;
-      return { key: ow, name: `${name} (${rows.length})`, values: sumSeries(rows, data.months.length), color: REGION_COLORS[i % REGION_COLORS.length] };
+      return { key: ow, name: `${name} (${rows.length})`, values: sumSeries(rows, data.months.length), color: REGION_PICK_COLORS[i % REGION_PICK_COLORS.length] };
     });
     const values = metric === "deaths" ? data.national.deaths : metric === "urgent" ? data.national.urgent : data.national.hospitalizations;
     return [{ key: "pl", name: "Cała Polska", values, tone: "primary" }];
@@ -231,53 +266,87 @@ function OverviewTab({ data, pool, map, regions, onToggleRegion, onYear }: { dat
       <GroupLineChart months={data.months} lines={lines} valueLabel={label} legend={regions.length > 0} height={300} ariaLabel={`Wykres liniowy: ${label} miesięcznie we wszystkich latach`} />
       <p className={base.note}>Kropka = miesiąc, linia = średnia z 3 miesięcy. Miesiące według daty wypisu. Wartości &lt;5 liczone jako 1.</p>
     </section>
-    <RegionsSection data={data} map={map} regions={regions} onToggle={onToggleRegion} />
+    <RegionsSection data={data} pool={pool} map={map} regions={regions} onToggle={onToggleRegion} onYear={onYear} onRegionYear={onRegionYear} onClear={onClearRegions} onShowProviders={onShowProviders} />
     <CostSection data={data} onYear={onYear} />
     <ProfileSection data={data} />
     {data.family ? <FamilySection data={data} /> : null}
   </>;
 }
 
-function RegionsSection({ data, map, regions, onToggle }: { data: JgpPageData; map: RegionsMap | null; regions: string[]; onToggle: (ow: string) => void }) {
+function RegionsSection({ data, pool, map, regions, onToggle, onYear, onRegionYear, onClear, onShowProviders }: {
+  data: JgpPageData; pool: JgpProviderRow[]; map: RegionsMap | null; regions: string[]; onToggle: (ow: string) => void; onYear: (year: string) => void;
+  onRegionYear: (ow: string, year: string) => void; onClear: () => void; onShowProviders: () => void;
+}) {
   const { cells, scale } = cartogramCells(data.regions);
   const names = new Map(data.regions.map((row) => [row.owNfz, row.name]));
   const titles = new Map(cells.map((cell) => [cell.owNfz, regionTitle(cell)]));
   // Mapa ciepła: wskaźnik województwa jako wielokrotność średniej Polski w danym roku (ta sama skala co mapa).
-  const heat = data.regionYears.map((year) => {
-    const people = data.regions.reduce((sum, row) => sum + row.population, 0);
+  const people = data.regions.reduce((sum, row) => sum + row.population, 0);
+  // Tylko lata, które karta umie pokazać (rok z pliku grupy); bez pliku – wszystkie lata trendów.
+  const cardYears = new Set(data.admissionYears.length ? data.admissionYears : data.regionYears.map((year) => year.year));
+  const heat = data.regionYears.filter((year) => cardYears.has(year.year)).map((year) => {
     const national = people ? (year.rows.reduce((sum, row) => sum + row[2], 0) / people) * 100_000 : 0;
     return { year: year.year, national, values: new Map(year.rows.map(([ow, per100k]) => [ow, per100k])) };
   });
   const position = (value: number, national: number) => value > 0 && national > 0 ? Math.max(-1, Math.min(1, Math.log2(value / national))) : -1;
+  const first = heat[0];
+  const last = heat.at(-1);
+  // Wiersze alfabetycznie (łatwiej znaleźć województwo); kolor pokazuje kolejność.
+  const rows = [...data.regions].sort((a, b) => a.name.localeCompare(b.name, "pl"));
   return <section className={styles.sec} aria-labelledby="s-gdzie">
     <SectionHead id="s-gdzie" question="Gdzie?" context={`Szpitale w województwie na 100 tys. mieszkańców: mapa ${data.year}, mapa ciepła lat`} tag="Mapa: rok · tabela: lata" />
-    <p className={styles.callout}><b>To podaż, nie potrzeby.</b> Województwo to oddział NFZ, z którym szpital ma umowę, a nie miejsce zamieszkania pacjenta. Wysoki wskaźnik znaczy: szpitale w tym województwie wykonują dużo tej grupy w stosunku do liczby mieszkańców.</p>
+    <p className={styles.callout}><b>To podaż, nie potrzeby.</b> Województwo to oddział NFZ, z którym szpital ma umowę, a nie miejsce zamieszkania pacjenta. Wysoki wskaźnik znaczy: szpitale w tym województwie wykonują dużo tej grupy w stosunku do liczby mieszkańców. Część pacjentów może przyjeżdżać z innych województw.</p>
     <div className={styles.geo}>
-      <div>
-        {map ? <RegionMap map={map} cells={cells} regions={regions} onToggle={onToggle} /> : null}
+      <div className={styles.mapCol}>
+        {map ? <RegionMap map={map} cells={cells} regions={regions} onToggle={onToggle} colors={REGION_PICK_COLORS} /> : null}
         <div className={base.scale}>
           <span>½ × średniej</span>
           <i className={base.scaleGradient} style={{ background: `linear-gradient(90deg, ${scaleColor(-1)}, ${scaleColor(0)}, ${scaleColor(1)})` }} aria-hidden />
           <span>2 × średniej</span>
         </div>
+        <div className={styles.mapInfo} aria-live="polite">
+          {regions.length
+            ? <>
+              <span>Wybrane: <b>{regions.map((ow) => (names.get(ow) ?? ow).toLocaleLowerCase("pl-PL")).join(", ")}</b> · {integer(pool.length)} ośrodków</span>
+              <span className={styles.mapActions}>
+                <button type="button" className={styles.primaryLink} onClick={onShowProviders}>Ośrodki w {regions.length > 1 ? "wybranych województwach" : `województwie ${(names.get(regions[0]) ?? "").toLocaleLowerCase("pl-PL")}`} →</button>
+                <button type="button" className={base.linkButton} onClick={onClear}>Wyczyść wybór ({regions.length})</button>
+              </span>
+            </>
+            : <span>Kliknij województwo na mapie albo w tabeli, żeby zawęzić kartę (do {MAX_REGIONS} naraz).</span>}
+        </div>
       </div>
       <div className={styles.heatWrap} role="region" aria-label="Mapa ciepła: województwa w latach" tabIndex={0}>
         <table className={styles.heat}>
-          <thead><tr><th>Województwo</th>{heat.map((year) => <th key={year.year} className={`${base.num} ${year.year === data.year ? styles.heatOn : ""}`}>{year.year}</th>)}</tr></thead>
+          <thead><tr>
+            <th>Województwo</th>
+            {heat.map((year) => <th key={year.year} className={base.num}>
+              <button type="button" className={`${styles.yearHead} ${year.year === data.year ? styles.heatOn : ""}`} aria-pressed={year.year === data.year} onClick={() => onYear(year.year)} title={`Pokaż mapę za ${year.year} r.`}>{year.year}</button>
+            </th>)}
+            {heat.length > 1 ? <th className={base.num}>{first?.year.slice(2)}→{last?.year.slice(2)}</th> : null}
+          </tr></thead>
           <tbody>
-            {data.regions.map((row) => <tr key={row.owNfz} className={regions.includes(row.owNfz) ? base.rowSelected : undefined}>
-              <td><button type="button" className={styles.linkCell} aria-pressed={regions.includes(row.owNfz)} onClick={() => onToggle(row.owNfz)} title={titles.get(row.owNfz)}>{names.get(row.owNfz)}</button></td>
-              {heat.map((year) => {
-                const value = year.values.get(row.owNfz) ?? 0;
-                const pos = position(value, year.national);
-                return <td key={year.year} className={styles.heatCell} style={{ background: scaleColor(pos), color: pos > 0.15 ? "#fff" : "#172033" }}>{decimal(value)}</td>;
-              })}
-            </tr>)}
+            {rows.map((row) => {
+              const a = first?.values.get(row.owNfz) ?? 0;
+              const b = last?.values.get(row.owNfz) ?? 0;
+              const change = a ? ((b - a) / a) * 100 : null;
+              return <tr key={row.owNfz} className={regions.includes(row.owNfz) ? base.rowSelected : undefined}>
+                <td><button type="button" className={styles.linkCell} aria-pressed={regions.includes(row.owNfz)} onClick={() => onToggle(row.owNfz)} title={titles.get(row.owNfz)}>{names.get(row.owNfz)}</button></td>
+                {heat.map((year) => {
+                  const value = year.values.get(row.owNfz) ?? 0;
+                  const pos = position(value, year.national);
+                  return <td key={year.year} className={`${styles.heatCell} ${year.year === data.year ? styles.heatCellOn : ""}`} style={{ background: scaleColor(pos), color: pos > 0.15 ? "#fff" : "#172033" }}>
+                    <button type="button" className={styles.heatButton} onClick={() => onRegionYear(row.owNfz, year.year)} title={`${names.get(row.owNfz)} ${year.year}: ${decimal(value)} na 100 tys. — kliknij, żeby pokazać ten rok i województwo`}>{decimal(value)}</button>
+                  </td>;
+                })}
+                {heat.length > 1 ? <td className={`${base.num} ${styles.heatChange}`}>{change === null ? "—" : signedPct(change)}</td> : null}
+              </tr>;
+            })}
           </tbody>
         </table>
       </div>
     </div>
-    <p className={base.note}>Średnia Polski w {data.year} r.: {decimal(scale.national)} na 100 tys. Kolor: ile razy więcej albo mniej niż średnia Polski w danym roku. Kliknij województwo na mapie albo w tabeli (do {MAX_REGIONS}), aby zawęzić kartę; obszar obowiązuje też w zakładce „Ośrodki”.</p>
+    <p className={base.note}>Liczba: hospitalizacje na 100 tys. mieszkańców; kolor: ile razy więcej albo mniej niż średnia Polski w danym roku (średnia w {data.year} r.: {decimal(scale.national)}). Kliknięcie roku w tabeli zmienia rok mapy i całej karty; kliknięcie komórki dodatkowo wybiera województwo.</p>
   </section>;
 }
 
@@ -379,13 +448,14 @@ function FamilySection({ data }: { data: JgpPageData }) {
 
 // ——— Ośrodki ———
 
-function ProvidersTab({ data, pool, comparison, selectedRow, scope, filtered, onSelect, onScope, onClear }: {
-  data: JgpPageData; pool: JgpProviderRow[]; comparison: JgpProviderRow[]; selectedRow: JgpProviderRow | null; scope: CompareScope; filtered: boolean;
+function ProvidersTab({ data, pool, comparison, regions, selectedRow, scope, filtered, onSelect, onScope, onClear }: {
+  data: JgpPageData; pool: JgpProviderRow[]; comparison: JgpProviderRow[]; regions: string[]; selectedRow: JgpProviderRow | null; scope: CompareScope; filtered: boolean;
   onSelect: (key: string) => void; onScope: (scope: CompareScope) => void; onClear: () => void;
 }) {
   const [hoverKey, setHoverKey] = useState<string | null>(null);
   const [details, setDetails] = useState(false);
-  const top = pool.slice(0, TOP_LINES);
+  // Stała lista linii przy najechaniu (nowa tablica przerysowywałaby wykres przy każdym ruchu myszy).
+  const top = useMemo(() => pool.slice(0, TOP_LINES), [pool]);
   const lines = useMemo((): ChartLine[] => {
     const shown = selectedRow && !top.includes(selectedRow) ? [...top, selectedRow] : top;
     return shown.map((row) => ({
@@ -422,7 +492,7 @@ function ProvidersTab({ data, pool, comparison, selectedRow, scope, filtered, on
       {selectedRow && details ? <ProviderDetails data={data} row={selectedRow} comparison={comparison} scope={scope} onScope={onScope} /> : null}
     </section>
     <RankingSection data={data} pool={pool} selectedRow={selectedRow} filtered={filtered} onSelect={onSelect} onHover={setHoverKey} />
-    <HowSection data={data} pool={pool} selectedRow={selectedRow} filtered={filtered} onSelect={onSelect} />
+    <HowSection data={data} rows={comparison} regions={regions} selectedRow={selectedRow} onSelect={onSelect} />
   </>;
 }
 
@@ -544,50 +614,63 @@ function RankingSection({ data, pool, selectedRow, filtered, onSelect, onHover }
   </section>;
 }
 
-function HowSection({ data, pool, selectedRow, filtered, onSelect }: { data: JgpPageData; pool: JgpProviderRow[]; selectedRow: JgpProviderRow | null; filtered: boolean; onSelect: (key: string) => void }) {
-  const stats = poolStats(pool);
-  const point = (row: JgpProviderRow, y: number, line: string, color?: string): ScatterPoint => ({
+/**
+ * „Jak leczą?”: zawsze wszystkie ośrodki (po porównaniu z podobnymi, bez filtra województw).
+ * Przy wybranych województwach ich ośrodki mają kolory z mapy, pozostałe są szare.
+ * Lejek śmiertelności (granice 95% i 99,8%) rysujemy, gdy grupa ma co najmniej 30 zgonów; przy mniejszej liczbie same punkty.
+ */
+function HowSection({ data, rows, regions, selectedRow, onSelect }: { data: JgpPageData; rows: JgpProviderRow[]; regions: string[]; selectedRow: JgpProviderRow | null; onSelect: (key: string) => void }) {
+  const stats = poolStats(rows);
+  const regionColor = useMemo(() => new Map(regions.map((ow, i) => [ow, REGION_PICK_COLORS[i % REGION_PICK_COLORS.length]])), [regions]);
+  const highlight = regions.length > 0;
+  const colorOf = useCallback((row: JgpProviderRow, fallback?: string) => highlight ? regionColor.get(row.owNfz) ?? OTHER_POINT : fallback, [highlight, regionColor]);
+  const point = useCallback((row: JgpProviderRow, y: number, line: string, color?: string): ScatterPoint => ({
     key: row.key, name: row.name, lines: [`${formatCityName(row.city)} · OW ${row.voivodeship}`, line], x: row.hospitalizations, y, selected: row === selectedRow, color,
-  });
-  const urgency = useMemo(() => pool.map((row) => point(row, row.urgentPct, `${integer(row.hospitalizations)} hosp. · nagłe ${pct(row.urgentPct)}`)), [pool, selectedRow]); // eslint-disable-line react-hooks/exhaustive-deps
+  }), [selectedRow]);
+  const urgency = useMemo(() => rows.map((row) => point(row, row.urgentPct, `${integer(row.hospitalizations)} hosp. · nagłe ${pct(row.urgentPct)}`, colorOf(row))), [rows, point, colorOf]);
   const showFunnel = stats.deaths >= MIN_FUNNEL_DEATHS;
-  const funnel = useMemo(() => {
-    if (!showFunnel) return { points: [], curves: [] as ScatterCurve[] };
-    const points = pool.map((row) => {
-      const status = funnelStatus(row.mortalityPct, stats.mortalityPct, row.hospitalizations);
-      const color = status === "powyżej 99,8%" ? FUNNEL_COLORS.up998 : status === "powyżej 95%" ? FUNNEL_COLORS.up95 : status === "poniżej 99,8%" ? FUNNEL_COLORS.down998 : status === "poniżej 95%" ? FUNNEL_COLORS.down95 : undefined;
-      return point(row, row.mortalityPct, `${integer(row.deaths)} zgonów · ${pct(row.mortalityPct)} · ${status}`, color);
+  const mortality = useMemo(() => {
+    const points = rows.map((row) => {
+      const status = showFunnel ? funnelStatus(row.mortalityPct, stats.mortalityPct, row.hospitalizations) : null;
+      const funnelColor = status === "powyżej 99,8%" ? FUNNEL_COLORS.up998 : status === "powyżej 95%" ? FUNNEL_COLORS.up95 : status === "poniżej 99,8%" ? FUNNEL_COLORS.down998 : status === "poniżej 95%" ? FUNNEL_COLORS.down95 : undefined;
+      return point(row, row.mortalityPct, `${integer(row.deaths)} zgonów · ${pct(row.mortalityPct)}${status ? ` · ${status}` : ""}`, colorOf(row, funnelColor));
     });
-    const xMax = Math.max(...pool.map((row) => row.hospitalizations), 10);
+    if (!showFunnel) return { points, curves: [] as ScatterCurve[] };
+    const xMax = Math.max(...rows.map((row) => row.hospitalizations), 10);
     const c = funnelCurves(stats.mortalityPct, Math.max(5, Math.round(xMax * 0.01)), Math.round(xMax * 1.05));
     const curves: ScatterCurve[] = [
       { x: c.x, y: c.inner[0], color: "#98A2B3", dash: "dot" }, { x: c.x, y: c.inner[1], color: "#98A2B3", dash: "dot" },
       { x: c.x, y: c.outer[0], color: "#667085", dash: "dash" }, { x: c.x, y: c.outer[1], color: "#667085", dash: "dash" },
     ];
     return { points, curves };
-  }, [pool, selectedRow, showFunnel, stats.mortalityPct]); // eslint-disable-line react-hooks/exhaustive-deps
-  const referenceUrgent = useMemo(() => ({ y: stats.urgentPct, label: `${filtered ? "wybrane" : "grupa"}: ${pct(stats.urgentPct)}` }), [stats.urgentPct, filtered]);
-  const referenceMortality = useMemo(() => ({ y: stats.mortalityPct, label: `${filtered ? "wybrane" : "grupa"}: ${pct(stats.mortalityPct)}` }), [stats.mortalityPct, filtered]);
+  }, [rows, point, colorOf, showFunnel, stats.mortalityPct]);
+  const referenceUrgent = useMemo(() => ({ y: stats.urgentPct, label: `grupa: ${pct(stats.urgentPct)}` }), [stats.urgentPct]);
+  const referenceMortality = useMemo(() => ({ y: stats.mortalityPct, label: `grupa: ${pct(stats.mortalityPct, stats.mortalityPct < 1 ? 2 : 1)}` }), [stats.mortalityPct]);
+  const names = new Map(data.regions.map((row) => [row.owNfz, row.name]));
+  const regionLegend = highlight ? <ul className={base.legend} aria-label="Legenda województw">
+    {regions.map((ow) => <li key={ow}><span className={base.swatch} style={{ background: regionColor.get(ow) }} aria-hidden />{(names.get(ow) ?? ow).toLocaleLowerCase("pl-PL")}</li>)}
+    <li><span className={base.swatch} style={{ background: OTHER_POINT }} aria-hidden />pozostałe ośrodki</li>
+  </ul> : null;
   return <section className={styles.sec} aria-labelledby="s-jak">
-    <SectionHead id="s-jak" question="Jak leczą?" context={`Ośrodki w ${data.year} r.`} tag="Rok" />
+    <SectionHead id="s-jak" question="Jak leczą?" context={`Wszystkie ośrodki w ${data.year} r.${highlight ? "; wybrane województwa w kolorach" : ""}`} tag="Rok" />
+    {regionLegend}
     <div className={styles.two}>
       <div>
         <h3 className={base.chartTitle}>Udział przyjęć nagłych</h3>
-        <ProviderScatter points={urgency} xTitle="Hospitalizacje" yTitle="Nagłe" ySuffix="%" reference={referenceUrgent} onSelect={onSelect} height={300} ariaLabel={`Wykres punktowy: ${pool.length} ośrodków, liczba hospitalizacji i udział przyjęć nagłych`} />
+        <ProviderScatter points={urgency} xTitle="Hospitalizacje" yTitle="Nagłe" ySuffix="%" reference={referenceUrgent} onSelect={onSelect} height={300} ariaLabel={`Wykres punktowy: ${rows.length} ośrodków, liczba hospitalizacji i udział przyjęć nagłych`} />
       </div>
       <div>
-        <h3 className={base.chartTitle}>Śmiertelność: wykres lejkowy</h3>
-        {showFunnel
-          ? <ProviderScatter points={funnel.points} curves={funnel.curves} xTitle="Hospitalizacje" yTitle="Śmiertelność" ySuffix="%" reference={referenceMortality} onSelect={onSelect} height={300} ariaLabel={`Wykres lejkowy: ${pool.length} ośrodków, śmiertelność względem liczby hospitalizacji`} />
-          : <p className={base.note}>Grupa ma mniej niż {MIN_FUNNEL_DEATHS} zgonów w {data.year} r. ({integer(stats.deaths)}), więc lejka nie pokazujemy: przy tak rzadkich zgonach różnice między ośrodkami są głównie przypadkowe.</p>}
-        {showFunnel ? <ul className={base.legend} aria-label="Legenda lejka">
+        <h3 className={base.chartTitle}>{showFunnel ? "Śmiertelność: wykres lejkowy" : "Śmiertelność"}</h3>
+        <ProviderScatter points={mortality.points} curves={mortality.curves} xTitle="Hospitalizacje" yTitle="Śmiertelność" ySuffix="%" reference={referenceMortality} onSelect={onSelect} height={300} ariaLabel={`${showFunnel ? "Wykres lejkowy" : "Wykres punktowy"}: ${rows.length} ośrodków, śmiertelność względem liczby hospitalizacji`} />
+        {showFunnel && !highlight ? <ul className={base.legend} aria-label="Legenda lejka">
           <li><span className={base.swatch} style={{ background: "rgba(40, 86, 163, 0.55)" }} aria-hidden />w granicach</li>
           <li><span className={base.swatch} style={{ background: FUNNEL_COLORS.up95 }} aria-hidden />powyżej 95%</li>
           <li><span className={base.swatch} style={{ background: FUNNEL_COLORS.up998 }} aria-hidden />powyżej 99,8%</li>
           <li><span className={base.swatch} style={{ background: FUNNEL_COLORS.down998 }} aria-hidden />poniżej granic</li>
         </ul> : null}
+        {!showFunnel ? <p className={base.note}>Bez granic lejka: {integer(stats.deaths)} {stats.deaths === 1 ? "zgon" : "zgonów"} w grupie w {data.year} r. to za mało, żeby odróżnić różnice między ośrodkami od przypadku (granice rysujemy od {MIN_FUNNEL_DEATHS} zgonów).</p> : null}
       </div>
     </div>
-    <p className={base.note}>Lejek: linia środkowa to śmiertelność grupy, linie przerywane to granice 95% i 99,8% dla danej liczby hospitalizacji. Mały ośrodek ma szersze granice. Punkt poza granicą to sygnał do sprawdzenia, nie ocena jakości: śmiertelność jest surowa, a wartości &lt;5 są szacowane. Kliknięcie punktu wybiera ośrodek.</p>
+    <p className={base.note}>{showFunnel ? "Lejek: linia środkowa to śmiertelność grupy, linie przerywane to granice 95% i 99,8% dla danej liczby hospitalizacji. Mały ośrodek ma szersze granice. Punkt poza granicą to sygnał do sprawdzenia, nie ocena jakości: śmiertelność jest surowa, a wartości <5 są szacowane. " : "Śmiertelność surowa: zgony w szpitalu podczas hospitalizacji. "}Kliknięcie punktu wybiera ośrodek.</p>
   </section>;
 }
