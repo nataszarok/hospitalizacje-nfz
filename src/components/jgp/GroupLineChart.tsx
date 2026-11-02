@@ -22,6 +22,8 @@ export interface ChartLine {
   color?: string;
   /** Kolor linii ośrodka po najechaniu (każdy ośrodek inny); domyślnie niebieski. */
   accent?: string;
+  /** Cienka, półprzezroczysta linia w kolorze `color` (np. ośrodki wybranych województw). */
+  thin?: boolean;
 }
 
 /**
@@ -32,7 +34,7 @@ export interface ChartLine {
  * Wszystkie serie są typu `scattergl` (jak w eksploratorze): `restyle` serii SVG w trakcie najechania
  * przerysowuje dymek podpowiedzi, wywołuje kolejne najechanie i przepełnia stos.
  */
-export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = false, onSelect, onHover, height = 400 }: {
+export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = false, onSelect, onHover, height = 400, selectedColor = SELECTED, selectedLabel }: {
   /** Miesiące jako „RRRR-MM”. */
   months: string[];
   lines: ChartLine[];
@@ -45,6 +47,10 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
   /** Najechanie na serię i zjechanie z wykresu (`null`). */
   onHover?: (key: string | null) => void;
   height?: number;
+  /** Kolor linii wybranego ośrodka (domyślnie pomarańczowy). */
+  selectedColor?: string;
+  /** Podpis na końcu linii wybranego ośrodka, np. „★ nazwa”. */
+  selectedLabel?: string;
 }) {
   const chartRef = useRef<HTMLDivElement>(null);
   // Funkcje z rodzica trzymamy w refach: nowa funkcja po rerenderze nie przerysowuje wykresu.
@@ -62,8 +68,8 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
       const x = months.map((month) => `${month}-01`);
       // Wybrany szpital rysujemy na końcu, żeby był nad innymi seriami.
       const ordered = [...lines.filter((line) => line.tone !== "selected"), ...lines.filter((line) => line.tone === "selected")];
-      const emphasized = (line: ChartLine) => Boolean(line.tone || line.color);
-      const color = (line: ChartLine) => line.color ?? (line.tone === "primary" ? PRIMARY : line.tone === "selected" ? SELECTED : BASE);
+      const emphasized = (line: ChartLine) => Boolean(line.tone || line.color) && !line.thin;
+      const color = (line: ChartLine) => line.tone === "selected" ? selectedColor : line.color ?? (line.tone === "primary" ? PRIMARY : BASE);
       const opacity = (line: ChartLine) => emphasized(line) ? 1 : 0.5;
       const width = (line: ChartLine) => emphasized(line) ? 2.5 : 1.5;
       const markerSize = (line: ChartLine) => emphasized(line) ? 7 : 5;
@@ -109,6 +115,12 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
         hovermode: "closest",
         showlegend: legend,
         legend: { orientation: "h", x: 0, y: 1.1, font: { size: 12 } },
+        // Podpis wybranego ośrodka przy ostatnim punkcie jego średniej 3M.
+        annotations: (() => {
+          const line = selectedLabel ? ordered.find((item) => item.tone === "selected") : undefined;
+          const last = line ? movingAverage(line.values).at(-1) : null;
+          return line && last !== null && last !== undefined ? [{ x: x.at(-1), y: last, text: selectedLabel, xanchor: "right", yanchor: "bottom", showarrow: false, font: { size: 12, color: selectedColor }, bgcolor: "rgba(255,255,255,0.85)" }] : [];
+        })(),
         hoverlabel: { bgcolor: "#344054", font: { color: "#FFFFFF", size: 13 } },
         xaxis: { type: "date", tickformat: "%m.%Y", dtick: "M3", gridcolor: "#EEF1F5" },
         yaxis: { rangemode: "tozero", gridcolor: "#EEF1F5", zerolinecolor: "#D0D5DD", tickformat: ",.0f" },
@@ -129,7 +141,7 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
         if (restyleInProgress || !point || point.curveNumber >= overlayStart) return;
         const line = ordered[Math.floor(point.curveNumber / 2)];
         hoverRef.current?.(line.key);
-        const highlight = line.color ?? (line.tone === "selected" ? SELECTED : line.accent ?? PRIMARY);
+        const highlight = line.tone === "selected" ? selectedColor : line.color ?? line.accent ?? PRIMARY;
         // Kropka wskazanego miesiąca (także przy najechaniu na linię średniej).
         const y = line.values[point.pointNumber] ?? null;
         restyleInProgress = true;
@@ -151,7 +163,7 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
     };
     void render();
     return () => { cancelled = true; };
-  }, [months, lines, valueLabel, legend, height]);
+  }, [months, lines, valueLabel, legend, height, selectedColor, selectedLabel]);
 
   // Wysokość zarezerwowana od razu: wykres rysuje się asynchronicznie i nie przesuwa treści pod nim.
   return <div ref={chartRef} role="img" aria-label={ariaLabel} style={{ minHeight: height }} />;

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { GroupLineChart, type ChartLine } from "@/components/jgp/GroupLineChart";
 import { RegionMap, SELECTED_PROVIDER_PARAM, regionTitle } from "@/components/jgp/JgpCard";
-import { ProviderScatter, type ScatterCurve, type ScatterPoint } from "@/components/jgp/ProviderScatter";
+import { ProviderScatter, STAR_COLOR, type ScatterCurve, type ScatterPoint } from "@/components/jgp/ProviderScatter";
 import { ProviderLink } from "@/components/TableLinks";
 import { formatCityName } from "@/lib/formatters";
 import {
@@ -36,6 +36,8 @@ const subscribeNothing = () => () => {};
 const REGION_PICK_COLORS = ["#C65D2E", "#2E7D5B", "#7656A8", "#A06A17", "#0F7C8C", "#B4366B"];
 // Ośrodki spoza wybranych województw na wykresach „Jak leczą?”.
 const OTHER_POINT = "rgba(152, 162, 179, 0.5)";
+/** Kolor każdego wybranego województwa (kolejność wyboru), ten sam na mapie, wykresach i w tabeli. */
+const regionColors = (regions: string[]) => new Map(regions.map((ow, i) => [ow, REGION_PICK_COLORS[i % REGION_PICK_COLORS.length]]));
 const FUNNEL_COLORS = { up95: "#E3A27F", up998: "#B4441B", down95: "#8FB0DD", down998: "#2856A3" };
 
 export type CardTab = "przeglad" | "osrodki";
@@ -70,6 +72,8 @@ function useTabbedState(data: JgpPageData) {
   useEffect(() => { current.current = state; }, [state]);
   const write = useCallback((patch: Partial<CardState>) => {
     const next = { ...current.current, ...patch };
+    // Ośrodek spoza nowo wybranych województw przestaje być wybrany (inaczej zostawałby na wykresach).
+    if (patch.regions && next.selectedKey && next.regions.length && !next.regions.includes(next.selectedKey.split("|")[0])) next.selectedKey = null;
     if (!next.selectedKey) next.scope = "all";
     current.current = next;
     const url = new URL(window.location.href);
@@ -456,8 +460,10 @@ function ProvidersTab({ data, pool, comparison, regions, selectedRow, scope, fil
   const [details, setDetails] = useState(false);
   // Stała lista linii przy najechaniu (nowa tablica przerysowywałaby wykres przy każdym ruchu myszy).
   const top = useMemo(() => pool.slice(0, TOP_LINES), [pool]);
+  const regionColor = useMemo(() => regionColors(regions), [regions]);
   const lines = useMemo((): ChartLine[] => {
     const shown = selectedRow && !top.includes(selectedRow) ? [...top, selectedRow] : top;
+    // Linie ośrodków szare; wybrany ośrodek – czerwona linia z podpisem „★ nazwa”.
     return shown.map((row) => ({
       key: row.key,
       name: `${data.providers.indexOf(row) + 1}. ${row.name}`,
@@ -477,11 +483,14 @@ function ProvidersTab({ data, pool, comparison, regions, selectedRow, scope, fil
         height={300}
         onSelect={onSelect}
         onHover={setHoverKey}
+        selectedColor={STAR_COLOR}
+        selectedLabel={selectedRow ? `★ ${selectedRow.name.length > 40 ? `${selectedRow.name.slice(0, 39)}…` : selectedRow.name}` : undefined}
         ariaLabel={`Wykres liniowy: hospitalizacje miesięcznie w ${lines.length} ośrodkach`}
       />
       <ProviderBar
         data={data}
         pool={pool}
+        regionColor={regionColor}
         row={hoverRow ?? selectedRow}
         preview={Boolean(hoverRow && hoverRow !== selectedRow)}
         selected={Boolean(selectedRow && (!hoverRow || hoverRow === selectedRow))}
@@ -491,21 +500,21 @@ function ProvidersTab({ data, pool, comparison, regions, selectedRow, scope, fil
       />
       {selectedRow && details ? <ProviderDetails data={data} row={selectedRow} comparison={comparison} scope={scope} onScope={onScope} /> : null}
     </section>
-    <RankingSection data={data} pool={pool} selectedRow={selectedRow} filtered={filtered} onSelect={onSelect} onHover={setHoverKey} />
+    <RankingSection data={data} pool={pool} selectedRow={selectedRow} filtered={filtered} regionColor={regionColor} onSelect={onSelect} onHover={setHoverKey} />
     <HowSection data={data} rows={comparison} regions={regions} selectedRow={selectedRow} onSelect={onSelect} />
   </>;
 }
 
 /** Zwarty pasek ośrodka (jedna linia): najechany albo wybrany; pełne porównanie po „Szczegóły”. */
-function ProviderBar({ data, pool, row, preview, selected, details, onDetails, onClear }: {
-  data: JgpPageData; pool: JgpProviderRow[]; row: JgpProviderRow | null; preview: boolean; selected: boolean; details: boolean; onDetails: () => void; onClear: () => void;
+function ProviderBar({ data, pool, regionColor, row, preview, selected, details, onDetails, onClear }: {
+  data: JgpPageData; pool: JgpProviderRow[]; regionColor: Map<string, string>; row: JgpProviderRow | null; preview: boolean; selected: boolean; details: boolean; onDetails: () => void; onClear: () => void;
 }) {
   if (!row) return <p className={styles.bar} aria-live="polite"><span className={styles.hint}>Najedź na linię albo wiersz rankingu, żeby zobaczyć ośrodek. Kliknij, żeby go wybrać.</span></p>;
   const group = poolStats(pool);
   const rank = pool.indexOf(row) + 1;
   const change = yearChangePct(row.hospitalizations, row.previousHospitalizations);
   return <p className={`${styles.bar} ${preview ? styles.barPreview : ""}`} aria-live="polite">
-    <i className={styles.dot} style={{ background: selected ? "#C65D2E" : "#172033" }} aria-hidden />
+    {selected ? <span className={styles.star} aria-hidden>★</span> : <i className={styles.dot} style={{ background: regionColor.get(row.owNfz) ?? "#98A2B3" }} aria-hidden />}
     <b>{row.name}</b>
     <span className={styles.hint}>{formatCityName(row.city)} · {row.voivodeship}</span>
     <span className={styles.barChip}><b>{integer(row.hospitalizations)}</b> hosp. {data.year}</span>
@@ -547,8 +556,8 @@ function Spark({ values }: { values: number[] }) {
   return <svg className={styles.spark} viewBox="0 0 80 22" aria-hidden><polyline points={points} fill="none" stroke="#2856A3" strokeWidth="1.4" /></svg>;
 }
 
-function RankingSection({ data, pool, selectedRow, filtered, onSelect, onHover }: {
-  data: JgpPageData; pool: JgpProviderRow[]; selectedRow: JgpProviderRow | null; filtered: boolean; onSelect: (key: string) => void; onHover: (key: string | null) => void;
+function RankingSection({ data, pool, selectedRow, filtered, regionColor, onSelect, onHover }: {
+  data: JgpPageData; pool: JgpProviderRow[]; selectedRow: JgpProviderRow | null; filtered: boolean; regionColor: Map<string, string>; onSelect: (key: string) => void; onHover: (key: string | null) => void;
 }) {
   const mounted = useSyncExternalStore(subscribeNothing, () => true, () => false);
   const visible = mounted ? pool : pool.slice(0, SERVER_ROWS);
@@ -589,7 +598,7 @@ function RankingSection({ data, pool, selectedRow, filtered, onSelect, onHover }
             return <tr
               key={row.key}
               ref={isSelected ? selectedRef : undefined}
-              className={`${styles.rankRow} ${isSelected ? base.rowSelected : ""}`}
+              className={`${styles.rankRow} ${isSelected ? `${base.rowSelected} ${styles.rankSelected}` : ""}`}
               aria-selected={isSelected}
               tabIndex={0}
               onClick={() => onSelect(row.key)}
@@ -597,7 +606,11 @@ function RankingSection({ data, pool, selectedRow, filtered, onSelect, onHover }
               onMouseEnter={() => onHover(row.key)}
             >
               <td>{data.providers.indexOf(row) + 1}</td>
-              <td className={styles.nameCell}><ProviderLink owNfz={row.owNfz} nip={row.nip} name={row.name} /><small>{formatCityName(row.city)} · {row.voivodeship}</small></td>
+              <td className={styles.nameCell}>
+                {/* Znak jak na wykresach: gwiazdka = wybrany ośrodek, kropka = kolor województwa. */}
+                {isSelected ? <span className={styles.star} aria-label="wybrany ośrodek">★</span> : regionColor.has(row.owNfz) ? <i className={styles.dot} style={{ background: regionColor.get(row.owNfz) }} aria-hidden /> : null}
+                <ProviderLink owNfz={row.owNfz} nip={row.nip} name={row.name} /><small>{formatCityName(row.city)} · {row.voivodeship}</small>
+              </td>
               {previousYear ? <td className={base.num}>{row.previousHospitalizations === null ? "—" : integer(row.previousHospitalizations)}</td> : null}
               <td className={base.num}>{integer(row.hospitalizations)}</td>
               <td className={base.num}>{row.previousHospitalizations === 0 ? "nowy" : change === null ? "—" : signedPct(change)}</td>
@@ -621,9 +634,10 @@ function RankingSection({ data, pool, selectedRow, filtered, onSelect, onHover }
  */
 function HowSection({ data, rows, regions, selectedRow, onSelect }: { data: JgpPageData; rows: JgpProviderRow[]; regions: string[]; selectedRow: JgpProviderRow | null; onSelect: (key: string) => void }) {
   const stats = poolStats(rows);
-  const regionColor = useMemo(() => new Map(regions.map((ow, i) => [ow, REGION_PICK_COLORS[i % REGION_PICK_COLORS.length]])), [regions]);
+  const regionColor = useMemo(() => regionColors(regions), [regions]);
   const highlight = regions.length > 0;
   const colorOf = useCallback((row: JgpProviderRow, fallback?: string) => highlight ? regionColor.get(row.owNfz) ?? OTHER_POINT : fallback, [highlight, regionColor]);
+  // Wybrany ośrodek: czerwona gwiazdka; nazwa i liczby tylko w podpowiedzi, jak przy innych punktach.
   const point = useCallback((row: JgpProviderRow, y: number, line: string, color?: string): ScatterPoint => ({
     key: row.key, name: row.name, lines: [`${formatCityName(row.city)} · OW ${row.voivodeship}`, line], x: row.hospitalizations, y, selected: row === selectedRow, color,
   }), [selectedRow]);
@@ -647,9 +661,10 @@ function HowSection({ data, rows, regions, selectedRow, onSelect }: { data: JgpP
   const referenceUrgent = useMemo(() => ({ y: stats.urgentPct, label: `grupa: ${pct(stats.urgentPct)}` }), [stats.urgentPct]);
   const referenceMortality = useMemo(() => ({ y: stats.mortalityPct, label: `grupa: ${pct(stats.mortalityPct, stats.mortalityPct < 1 ? 2 : 1)}` }), [stats.mortalityPct]);
   const names = new Map(data.regions.map((row) => [row.owNfz, row.name]));
-  const regionLegend = highlight ? <ul className={base.legend} aria-label="Legenda województw">
+  const regionLegend = highlight || selectedRow ? <ul className={base.legend} aria-label="Legenda województw">
+    {selectedRow ? <li><span className={styles.star} aria-hidden>★</span>wybrany ośrodek: {selectedRow.name}</li> : null}
     {regions.map((ow) => <li key={ow}><span className={base.swatch} style={{ background: regionColor.get(ow) }} aria-hidden />{(names.get(ow) ?? ow).toLocaleLowerCase("pl-PL")}</li>)}
-    <li><span className={base.swatch} style={{ background: OTHER_POINT }} aria-hidden />pozostałe ośrodki</li>
+    {highlight ? <li><span className={base.swatch} style={{ background: OTHER_POINT }} aria-hidden />pozostałe ośrodki</li> : null}
   </ul> : null;
   return <section className={styles.sec} aria-labelledby="s-jak">
     <SectionHead id="s-jak" question="Jak leczą?" context={`Wszystkie ośrodki w ${data.year} r.${highlight ? "; wybrane województwa w kolorach" : ""}`} tag="Rok" />
@@ -657,11 +672,11 @@ function HowSection({ data, rows, regions, selectedRow, onSelect }: { data: JgpP
     <div className={styles.two}>
       <div>
         <h3 className={base.chartTitle}>Udział przyjęć nagłych</h3>
-        <ProviderScatter points={urgency} xTitle="Hospitalizacje" yTitle="Nagłe" ySuffix="%" reference={referenceUrgent} onSelect={onSelect} height={300} ariaLabel={`Wykres punktowy: ${rows.length} ośrodków, liczba hospitalizacji i udział przyjęć nagłych`} />
+        <ProviderScatter points={urgency} xTitle="Hospitalizacje" yTitle="Nagłe" ySuffix="%" reference={referenceUrgent} onSelect={onSelect} height={300} marker="star" ariaLabel={`Wykres punktowy: ${rows.length} ośrodków, liczba hospitalizacji i udział przyjęć nagłych`} />
       </div>
       <div>
         <h3 className={base.chartTitle}>{showFunnel ? "Śmiertelność: wykres lejkowy" : "Śmiertelność"}</h3>
-        <ProviderScatter points={mortality.points} curves={mortality.curves} xTitle="Hospitalizacje" yTitle="Śmiertelność" ySuffix="%" reference={referenceMortality} onSelect={onSelect} height={300} ariaLabel={`${showFunnel ? "Wykres lejkowy" : "Wykres punktowy"}: ${rows.length} ośrodków, śmiertelność względem liczby hospitalizacji`} />
+        <ProviderScatter points={mortality.points} curves={mortality.curves} xTitle="Hospitalizacje" yTitle="Śmiertelność" ySuffix="%" reference={referenceMortality} onSelect={onSelect} height={300} marker="star" ariaLabel={`${showFunnel ? "Wykres lejkowy" : "Wykres punktowy"}: ${rows.length} ośrodków, śmiertelność względem liczby hospitalizacji`} />
         {showFunnel && !highlight ? <ul className={base.legend} aria-label="Legenda lejka">
           <li><span className={base.swatch} style={{ background: "rgba(40, 86, 163, 0.55)" }} aria-hidden />w granicach</li>
           <li><span className={base.swatch} style={{ background: FUNNEL_COLORS.up95 }} aria-hidden />powyżej 95%</li>

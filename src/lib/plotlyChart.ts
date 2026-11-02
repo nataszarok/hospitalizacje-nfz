@@ -175,18 +175,22 @@ export function attachHoverMarker({
     if (hoverRestyleInProgress || !point || point.curveNumber === hoverTraceIndex) return;
 
     const sourceTrace = traces[point.curveNumber] as {
-      marker?: { symbol?: string | string[] };
+      marker?: { symbol?: string | string[]; size?: number | number[] };
     };
     const sourceSymbol = sourceTrace.marker?.symbol;
     const symbol = Array.isArray(sourceSymbol)
       ? (sourceSymbol[point.pointNumber] ?? "circle")
       : (sourceSymbol ?? "circle");
 
+    // Znacznik najechanego punktu jest zawsze trochę większy od punktu (także od dużej gwiazdki wybranego ośrodka).
+    const sourceSize = sourceTrace.marker?.size;
+    const size = Array.isArray(sourceSize) ? (sourceSize[point.pointNumber] ?? 0) : (sourceSize ?? 0);
     hoverRestyleInProgress = true;
     void Plotly.restyle(plot, {
       x: [[point.x]],
       y: [[point.y]],
       "marker.symbol": [symbol],
+      "marker.size": [Math.max(13, size + 4)],
     }, [hoverTraceIndex]);
     hoverRestyleInProgress = false;
   });

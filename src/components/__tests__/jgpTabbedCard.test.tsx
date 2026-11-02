@@ -17,8 +17,9 @@ vi.mock("@/components/jgp/GroupLineChart", () => ({
   </ul>,
 }));
 vi.mock("@/components/jgp/ProviderScatter", () => ({
-  ProviderScatter: ({ points, ariaLabel, curves }: { points: { key: string; name: string; color?: string }[]; ariaLabel: string; curves?: unknown[] }) => <div role="group" aria-label={ariaLabel} data-curves={curves?.length ?? 0}>
-    {points.map((point) => <span key={point.key} data-color={point.color ?? ""}>{point.name}</span>)}
+  STAR_COLOR: "#172033",
+  ProviderScatter: ({ points, ariaLabel, curves }: { points: { key: string; name: string; color?: string; label?: string }[]; ariaLabel: string; curves?: unknown[] }) => <div role="group" aria-label={ariaLabel} data-curves={curves?.length ?? 0}>
+    {points.map((point) => <span key={point.key} data-color={point.color ?? ""} data-label={point.label ?? ""}>{point.name}</span>)}
   </div>,
 }));
 
@@ -195,5 +196,39 @@ describe("Karta w zakładkach — Gdzie?", () => {
     fireEvent.click(screen.getByRole("button", { name: "Ośrodki w województwie mazowieckie →" }));
     expect(screen.getByRole("tab", { name: /Ośrodki/ })).toHaveAttribute("aria-selected", "true");
     expect(window.location.search).toBe("?widok=osrodki&ow=07");
+  });
+});
+
+describe("Karta w zakładkach — wybrany ośrodek przy wybranych województwach", () => {
+  it("gwiazdka w tabeli i legendzie, bez podpisu na wykresie; województwa w kolorach mapy", () => {
+    open("?osrodek=07%7C111&ow=07&ow=12");
+    renderCard();
+    const rows = within(screen.getByRole("region", { name: /^Lista ośrodków/ })).getAllByRole("row").slice(1);
+    const alfa = rows.find((row) => row.textContent?.includes("Szpital Alfa"))!;
+    expect(within(alfa).getByLabelText("wybrany ośrodek")).toHaveTextContent("★");
+    expect(screen.getByRole("list", { name: "Legenda województw" })).toHaveTextContent("★wybrany ośrodek: Szpital Alfa");
+    const urgent = screen.getByRole("group", { name: /udział przyjęć nagłych/ });
+    expect(within(urgent).getByText("Szpital Alfa")).toHaveAttribute("data-label", "");
+    expect(within(urgent).getByText("Szpital Beta")).toHaveAttribute("data-color", "#2E7D5B");
+    const lines = screen.getByRole("list", { name: "Linie wykresu" });
+    expect(lines.querySelector('[data-tone="selected"]')).toHaveTextContent("Szpital Alfa");
+  });
+});
+
+describe("Karta w zakładkach — zmiana województw a wybrany ośrodek", () => {
+  it("wybór innego województwa odznacza ośrodek spoza niego; wyczyszczenie województw go zostawia", () => {
+    open("?osrodek=07%7C111&ow=07");
+    renderCard();
+    fireEvent.click(screen.getByRole("tab", { name: /Przegląd/ }));
+    const heat = screen.getByRole("region", { name: "Mapa ciepła: województwa w latach" });
+    fireEvent.click(within(heat).getByRole("button", { name: "Mazowieckie" }));
+    fireEvent.click(within(heat).getByRole("button", { name: "Śląskie" }));
+    expect(window.location.search).toBe("?ow=12");
+    cleanup();
+    open("?osrodek=07%7C111&ow=07");
+    renderCard();
+    fireEvent.click(screen.getByRole("tab", { name: /Przegląd/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Wyczyść wybór (1)" }));
+    expect(window.location.search).toBe("?osrodek=07%7C111");
   });
 });

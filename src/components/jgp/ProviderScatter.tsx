@@ -16,6 +16,9 @@ export interface ScatterPoint {
   color?: string;
 }
 
+/** Kolor wybranego ośrodka w trybie gwiazdki: spoza palety województw i lejka. */
+export const STAR_COLOR = "#D92D20";
+
 /** Linia tła wykresu, np. granica lejka. */
 export interface ScatterCurve { x: number[]; y: number[]; color: string; dash?: "dot" | "dash" | "solid" }
 
@@ -23,7 +26,7 @@ export interface ScatterCurve { x: number[]; y: number[]; color: string; dash?: 
  * Wykres punktowy świadczeniodawców: punkt = ośrodek. Najechanie powiększa i podświetla punkt
  * (`attachHoverMarker`) i pokazuje nazwę i liczby; kliknięcie wybiera ośrodek na całej karcie.
  */
-export function ProviderScatter({ points, xTitle, yTitle, ySuffix, reference, onSelect, ariaLabel, curves = [], height = 360 }: {
+export function ProviderScatter({ points, xTitle, yTitle, ySuffix, reference, onSelect, ariaLabel, curves = [], height = 360, marker = "dot" }: {
   points: ScatterPoint[];
   xTitle: string;
   yTitle: string;
@@ -33,6 +36,8 @@ export function ProviderScatter({ points, xTitle, yTitle, ySuffix, reference, on
   ariaLabel: string;
   curves?: ScatterCurve[];
   height?: number;
+  /** Znacznik wybranego ośrodka: „dot” (większa pomarańczowa kropka) albo „star” (czerwona gwiazdka; opis tylko w podpowiedzi). */
+  marker?: "dot" | "star";
 }) {
   const chartRef = useRef<HTMLDivElement>(null);
 
@@ -58,7 +63,9 @@ export function ProviderScatter({ points, xTitle, yTitle, ySuffix, reference, on
         customdata: group.map((p) => [p.key, `<b>${p.name}</b><br>${p.lines.join("<br>")}`]),
         marker: i < groups.length - 1
           ? { color: colors[i] || "rgba(40, 86, 163, 0.55)", size: colors[i] ? 9 : 8, line: { color: "#FFFFFF", width: 1 } }
-          : { color: "#C65D2E", size: 13, line: { color: "#FFFFFF", width: 2 } },
+          : marker === "star"
+            ? { color: STAR_COLOR, size: 18, symbol: "star", line: { color: "#FFFFFF", width: 1.5 } }
+            : { color: "#C65D2E", size: 13, line: { color: "#FFFFFF", width: 2 } },
         hovertemplate: "%{customdata[1]}<extra></extra>",
       }))];
       // Znacznik najechanego punktu: ta sama seria i mechanizm co na wykresach eksploratora.
@@ -97,7 +104,7 @@ export function ProviderScatter({ points, xTitle, yTitle, ySuffix, reference, on
     };
     void render();
     return () => { cancelled = true; };
-  }, [points, xTitle, yTitle, ySuffix, reference, onSelect, curves, height]);
+  }, [points, xTitle, yTitle, ySuffix, reference, onSelect, curves, height, marker]);
 
   // Wysokość zarezerwowana od razu (wykres rysuje się asynchronicznie).
   return <div ref={chartRef} role="img" aria-label={ariaLabel} style={{ minHeight: height }} />;
