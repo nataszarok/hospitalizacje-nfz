@@ -327,7 +327,9 @@ function RegionsSection({ data, pool, map, regions, onToggle, onYear, onRegionYe
     measure();
     if (typeof ResizeObserver === "undefined") return;
     const observer = new ResizeObserver(measure);
+    // Także nagłówki lat: zmiana szerokości kolumny nie zawsze zmienia rozmiar tabeli.
     observer.observe(table);
+    table.querySelectorAll("th[data-year]").forEach((cell) => observer.observe(cell));
     return () => observer.disconnect();
   }, [data.year, data.regions]);
   // Wiersze alfabetycznie (łatwiej znaleźć województwo); kolor pokazuje kolejność.
@@ -360,10 +362,10 @@ function RegionsSection({ data, pool, map, regions, onToggle, onYear, onRegionYe
         <table ref={heatRef} className={styles.heat}>
           <thead><tr>
             <th>Województwo</th>
-            {heat.map((year) => <th key={year.year} className={base.num} data-year={year.year}>
+            {heat.map((year) => <th key={year.year} className={`${base.num} ${styles.yearCell}`} data-year={year.year}>
               <button type="button" className={`${styles.yearHead} ${year.year === data.year ? styles.heatOn : ""}`} aria-pressed={year.year === data.year} onClick={() => onYear(year.year)} title={`Pokaż mapę za ${year.year} r.`}>{year.year}</button>
             </th>)}
-            {heat.length > 1 ? <th className={base.num}>{first?.year.slice(2)}→{last?.year.slice(2)}</th> : null}
+            {heat.length > 1 ? <th className={`${base.num} ${styles.heatChange}`}>{first?.year.slice(2)}→{last?.year.slice(2)}</th> : null}
           </tr></thead>
           <tbody>
             {rows.map((row) => {
@@ -428,7 +430,7 @@ function ProfileSection({ data }: { data: JgpPageData }) {
       <li><span className={`${base.swatch} ${base.segmentPlanned}`} aria-hidden />planowe</li>
       <li><span className={`${base.swatch} ${base.segmentOther}`} aria-hidden />pozostałe</li>
     </ul>
-    <table className={base.table}>
+    <div className={styles.scrollX}><table className={base.table}>
       <thead><tr><th>Rok</th><th>Struktura przyjęć</th><th className={base.num}>Nagłe</th><th className={base.num}>Planowe</th><th className={base.num}>Śmiertelność</th></tr></thead>
       <tbody>
         {data.admissions.map((row) => <tr key={row.year} className={row.year === data.year ? base.rowSelected : undefined}>
@@ -443,7 +445,7 @@ function ProfileSection({ data }: { data: JgpPageData }) {
           <td className={base.num}>{row.deaths === undefined ? "—" : pct(share(row.deaths, row.total), 2)}</td>
         </tr>)}
       </tbody>
-    </table>
+    </table></div>
     <p className={base.note}>Nagłe: tryb przyjęcia 2 i 3; planowe: tryb 6. Śmiertelność surowa: zgony w szpitalu podczas hospitalizacji, bez uwzględnienia wieku, stanu pacjentów i zgonów po wypisie.</p>
   </section>;
 }

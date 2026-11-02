@@ -100,16 +100,17 @@
   min-height: 48px;
   align-items: center;
   gap: 6px 16px;
-  /* Na całą szerokość okna: treść znika pod paskiem równo, a pasek łączy się z nagłówkiem portalu. */
-  margin: 0 calc(50% - 50vw) 16px;
-  padding: 0 calc(50vw - 50%);
-  border-bottom: 1px solid #e4e7ec;
-  background: rgba(255, 255, 255, 0.97);
+  margin: 0 0 16px;
+  /* Tło i dolna linia na całą szerokość okna: treść znika pod paskiem równo, a pasek łączy się z nagłówkiem portalu.
+     border-image z wysunięciem (outset) maluje poza paskiem, ale nie poszerza strony; 100vw dawało poziomy
+     pasek przewijania, bo obejmuje pionowy pasek przewijania. */
+  border-image: linear-gradient(to top, #e4e7ec 1px, rgba(255, 255, 255, 0.97) 1px) fill 0 / 0 / 0 100vmax;
   backdrop-filter: blur(14px);
 }
 
+/* Po przyklejeniu: miękki cień pod linią (8 px pod paskiem), też na całą szerokość. */
 .tabbarStuck {
-  box-shadow: 0 8px 16px -12px rgba(16, 24, 40, 0.35);
+  border-image: linear-gradient(to top, rgba(16, 24, 40, 0), rgba(16, 24, 40, 0.08) 8px, #e4e7ec 8px, #e4e7ec 9px, rgba(255, 255, 255, 0.97) 9px) fill 0 / 0 / 0 100vmax 8px;
 }
 
 .barTitle {
@@ -282,6 +283,8 @@
 /* Skok do sekcji nie chowa tytułu pod paskiem zakładek. */
 .sec {
   display: grid;
+  /* Kolumna nie rośnie ponad szerokość sekcji (szeroka tabela przewija się w .scrollX zamiast poszerzać stronę). */
+  grid-template-columns: minmax(0, 1fr);
   gap: 12px;
   min-width: 0;
   padding: 16px 18px;
@@ -333,6 +336,11 @@
   align-items: start;
 }
 
+.scrollX {
+  min-width: 0;
+  overflow-x: auto;
+}
+
 .heatWrap {
   position: relative;
   overflow-x: auto;
@@ -344,8 +352,9 @@
    bez obramowania i zaokrągleń. Leży pod komórkami: widać je w odstępach i w marginesie wokół kolumny. */
 .heatBand {
   position: absolute;
-  margin: -6px 0 0 -6px;
-  padding: 6px;
+  /* Wystaje w bok o 4 px: mniej niż połowa odstępu między kolumnami (10 px), więc nie sięga sąsiedniej kolumny. */
+  margin: -6px 0 0 -4px;
+  padding: 6px 4px;
   box-sizing: content-box;
   background: rgba(31, 138, 112, 0.1);
   pointer-events: none;
@@ -355,12 +364,21 @@
   position: relative;
   width: 100%;
   border-collapse: separate;
-  border-spacing: 2px;
+  border-spacing: 10px 2px;
   font-size: 12.5px;
+}
+
+/* Nazwy województw dzielone według reguł języka (globalne overflow-wrap: anywhere łamało w dowolnym miejscu). */
+.heat th,
+.heat td {
+  overflow-wrap: normal;
+  hyphens: auto;
 }
 
 .heat th {
   position: static;
+  /* Bez szerokości z globalnego stylu tabel: kolumna województw bierze resztę miejsca. */
+  width: auto;
   /* Przezroczyste nagłówki (globalny styl tabel daje białe tło), żeby pas roku był widoczny także za nagłówkiem. */
   background: transparent;
   color: #667085;
@@ -388,17 +406,30 @@
   cursor: pointer;
 }
 
+/* Cały nagłówek roku jest przyciskiem (nie tylko tekst roku). */
+.heat th.yearCell {
+  /* Równa, wąska szerokość kolumn lat. */
+  width: 68px;
+  padding: 0;
+}
+
 .yearHead {
-  padding: 0 4px;
+  display: block;
+  width: 100%;
+  padding: 6px 6px;
   border: 0;
   background: none;
   color: #667085;
   font: inherit;
   font-weight: 600;
+  text-align: right;
   cursor: pointer;
 }
 
-.heatChange {
+
+.heat .heatChange {
+  /* Wąska kolumna zmiany: wolne miejsce bierze kolumna województw. */
+  width: 64px;
   color: #475467;
   font-size: 12px;
   white-space: nowrap;
@@ -656,6 +687,24 @@
 
 /* Nagłówek portalu ma 67 px poniżej 700 px szerokości. */
 @media (max-width: 700px) {
+  /* Mapa ciepła na telefonie: węższe odstępy i kolumny, żeby kolumna województw miała miejsce na nazwy. */
+  .heat {
+    border-spacing: 6px 2px;
+  }
+
+  .heatBand {
+    margin-left: -2px;
+    padding: 6px 2px;
+  }
+
+  .heat th.yearCell {
+    width: 56px;
+  }
+
+  .heat .heatChange {
+    width: 52px;
+  }
+
   .tabbar {
     top: 67px;
   }
