@@ -440,24 +440,37 @@
   gap: 8px;
 }
 
-/* Wiele lat: mapa ciepła pod mapą na całą szerokość; obok mapy legenda i opis wyboru. */
-.geoLong {
-  grid-template-columns: minmax(0, 1fr);
+/* Wiele lat: mapa obok ścieśnionej mapy ciepła (więcej miejsca dla tabeli). */
+.geoCompact {
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
 }
 
-.geoLong .mapCol {
-  grid-template-columns: minmax(0, 460px) minmax(0, 1fr);
-  grid-template-rows: auto 1fr;
-  column-gap: 24px;
-  align-items: start;
+.heatCompact {
+  border-spacing: 3px 2px;
+  font-size: 11.5px;
 }
 
-.geoLong .mapCol > :first-child {
-  grid-row: span 2;
+.heat.heatCompact th.yearCell {
+  width: 40px;
 }
 
-.geoLong .heat td:first-child {
-  min-width: 150px;
+.heatCompact .heatCell {
+  min-width: 38px;
+}
+
+.heatCompact .heatButton {
+  padding: 3px 3px;
+}
+
+/* Tło roku wystaje tylko o 1 px: odstęp między kolumnami ma 3 px. */
+.geoCompact .heatBand {
+  margin-left: -1px;
+  padding: 6px 1px;
+}
+
+.heat.heatCompact .heatChange {
+  width: 44px;
+  font-size: 11px;
 }
 
 .mapInfo {
@@ -702,14 +715,6 @@
   .cost,
   .two {
     grid-template-columns: minmax(0, 1fr);
-  }
-
-  .geoLong .mapCol {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .geoLong .mapCol > :first-child {
-    grid-row: auto;
   }
 }
 

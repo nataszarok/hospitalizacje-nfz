@@ -62,6 +62,24 @@ describe("percentAxis — oś Y dla udziałów", () => {
   });
 });
 
+describe("percentAxis z fit — oś dopasowana do danych", () => {
+  it("nie zaczyna się od zera, gdy udziały są wysokie", () => {
+    const axis = percentAxis([82, 86.5, 91, null], { fit: true });
+    expect(axis.range[0]).toBeGreaterThan(75);
+    expect(axis.range[0]).toBeLessThan(82);
+    expect(axis.range[1]).toBeGreaterThan(91);
+    expect(axis.range[1]).toBeLessThanOrEqual(100);
+    expect(axis.dtick).toBe(2);
+  });
+
+  it("nie wychodzi poza 0–100% i ma minimalny margines przy stałych wartościach", () => {
+    expect(percentAxis([99.8, 99.9], { fit: true }).range[1]).toBe(100);
+    expect(percentAxis([0.1, 0.2], { fit: true }).range[0]).toBe(0);
+    const flat = percentAxis([50, 50], { fit: true });
+    expect(flat.range).toEqual([49.5, 50.5]);
+  });
+});
+
 describe("monthAxis — oś X miesięcy", () => {
   it("dla 2 lat podpisuje kwartały", () => {
     expect(monthAxis(24)).toMatchObject({ dtick: "M3", tickformat: "%m.%Y" });

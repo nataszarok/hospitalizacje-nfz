@@ -229,15 +229,31 @@ export function countAxis(values: (number | null | undefined)[]) {
 }
 
 /**
- * Oś Y dla udziałów w procentach: od zera (z marginesem), z „%” przy etykietach.
+ * Oś Y dla udziałów w procentach: od zera (z marginesem) albo, z `fit`, dopasowana do danych; z „%” przy etykietach.
  * Krok podziałki 1, 2 albo 5 × 10^k (ok. 5 etykiet), a liczba miejsc po przecinku wynika z kroku,
  * więc bardzo małe udziały (np. 0,07%) nie dają powtórzonych etykiet „0%”.
  */
-export function percentAxis(values: (number | null | undefined)[]) {
-  const max = Math.max(0, ...values.filter((value): value is number => typeof value === "number" && Number.isFinite(value)));
+export function percentAxis(values: (number | null | undefined)[], { fit = false }: { fit?: boolean } = {}) {
+  const finite = values.filter((value): value is number => typeof value === "number" && Number.isFinite(value));
+  const max = Math.max(0, ...finite);
+  // Dopasowanie do danych (np. % nagłych 80–95%): oś od minimum, nie od zera, z marginesem 15% rozpiętości.
+  if (fit && finite.length) {
+    const min = Math.min(...finite);
+    const pad = Math.max((max - min) * 0.15, 0.5);
+    const bottom = Math.max(0, min - pad);
+    const top = Math.min(100, max + pad);
+    const dtick = percentStep(top - bottom);
+    return { range: [bottom, top], dtick, ticksuffix: "%", tickformat: `,.${stepDecimals(dtick)}f` };
+  }
   const top = max > 0 ? max * 1.1 : 1;
-  const magnitude = 10 ** Math.floor(Math.log10(top / 5));
-  const dtick = [1, 2, 5, 10].map((factor) => factor * magnitude).find((step) => top / step <= 6)!;
-  const decimals = Math.max(0, -Math.floor(Math.log10(dtick) + 1e-9));
-  return { range: [-top * 0.06, top], dtick, ticksuffix: "%", tickformat: `,.${decimals}f` };
+  const dtick = percentStep(top);
+  return { range: [-top * 0.06, top], dtick, ticksuffix: "%", tickformat: `,.${stepDecimals(dtick)}f` };
 }
+
+/** Krok podziałki 1, 2 albo 5 × 10^k: ok. 5 etykiet na rozpiętości osi. */
+function percentStep(span: number) {
+  const magnitude = 10 ** Math.floor(Math.log10(span / 5));
+  return [1, 2, 5, 10].map((factor) => factor * magnitude).find((step) => span / step <= 6)!;
+}
+
+const stepDecimals = (step: number) => Math.max(0, -Math.floor(Math.log10(step) + 1e-9));

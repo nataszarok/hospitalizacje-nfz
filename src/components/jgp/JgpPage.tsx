@@ -15,7 +15,7 @@ function yearRange(years: string[]) {
 
 /** Strona grupy JGP: liczby grupy, trend, ośrodki, województwa, tryb przyjęcia i wycena. */
 export function JgpPage({ data, map = null, tabbed = hasTabbedCard(data.jgpCode) }: { data: JgpPageData; map?: RegionsMap | null; tabbed?: boolean }) {
-  // Nowa karta w zakładkach (docs/karta-jgp-pytania.html), na razie dla grup z `JGP_TABBED_CODES`.
+  // Nowa karta w zakładkach (docs/karta-jgp-pytania.html), na razie dla sekcji z `JGP_TABBED_SECTIONS` (E, H).
   if (tabbed) return <main className={styles.page}><JgpTabbedCard packed={packPageData(data)} map={map} /></main>;
   const explorerHref = `/analizy?jgp=${encodeURIComponent(data.jgpCode)}`;
   const deaths = data.providers.reduce((sum, row) => sum + row.deaths, 0);

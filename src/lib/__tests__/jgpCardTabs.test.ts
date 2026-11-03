@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { funnelCurves, funnelHalfWidth, funnelStatus, movingRatio, providerYearTotals, ratioSeries, structureShares } from "@/lib/jgpCard";
-import type { JgpProviderRow } from "@/lib/jgpPage";
+import { defaultCardYear, funnelCurves, funnelHalfWidth, limitToCatalogYears, funnelStatus, movingRatio, providerYearTotals, ratioSeries, structureShares } from "@/lib/jgpCard";
+import type { JgpPageData, JgpProviderRow } from "@/lib/jgpPage";
 
 const row = (hospitalizations: number, yearly: [number, number, number][] = []): JgpProviderRow => ({
   key: `07|${hospitalizations}`, owNfz: "07", nip: String(hospitalizations), name: `S${hospitalizations}`, city: "", voivodeship: "07",
@@ -122,5 +122,47 @@ describe("ratioSeries i movingRatio — udziały miesięczne w „Ile?”", () =
     expect(shares[2]).toBeCloseTo((3 / 14) * 100);
     expect(shares[3]).toBeCloseTo((2 / 6) * 100);
     expect(movingRatio([0], [0])).toEqual([null]);
+  });
+});
+
+describe("limitToCatalogYears — lata grupy w katalogu", () => {
+  // Grupa wycofana po 2018 r.: plik grupy ma lata 2017–2020, katalog tylko 2017–2018.
+  const months = ["2017", "2018", "2019", "2020"].flatMap((year) => Array.from({ length: 12 }, (_, i) => `${year}-${String(i + 1).padStart(2, "0")}`));
+  const provider: JgpProviderRow = {
+    ...row(0, [[1, 4, 0], [2, 3, 0], [0, 0, 0], [0, 0, 0]]),
+    series: months.map((month) => month < "2019" ? 1 : 0),
+    yearlyDeaths: [1, 0, 0, 0],
+  };
+  const data = {
+    jgpCode: "E03", name: "", procedural: true, productCodes: ["P"], catalogYears: ["2017", "2018"], year: "2020",
+    providerCount: 0, hospitalizations: 0, topProviders: [provider], providers: [provider], regions: [], regionYears: [],
+    admissions: [], admissionYears: ["2017", "2018", "2019", "2020"], months,
+    national: { hospitalizations: months.map(() => 1), deaths: months.map(() => 0), urgent: months.map(() => 0) },
+    previousHospitalizations: null, valuation: null, valuePln: [], family: null, description: null,
+  } as JgpPageData;
+
+  it("obcina lata, miesiące i serie do lat grupy", () => {
+    const limited = limitToCatalogYears(data);
+    expect(limited.admissionYears).toEqual(["2017", "2018"]);
+    expect(limited.months).toHaveLength(24);
+    expect(limited.national.hospitalizations).toHaveLength(24);
+    expect(limited.providers[0].series).toHaveLength(24);
+    expect(limited.providers[0].yearly).toEqual([[1, 4, 0], [2, 3, 0]]);
+    expect(limited.topProviders[0]).toBe(limited.providers[0]);
+    expect(limited.year).toBe("2020");
+  });
+
+  it("rok domyślny to ostatni rok grupy, a jego liczby pochodzą z lat ośrodka", () => {
+    const limited = limitToCatalogYears(data);
+    expect(defaultCardYear(limited)).toBe("2018");
+    const year = dataForYear(limited, limited.admissionYears.indexOf(defaultCardYear(limited)));
+    expect(year.hospitalizations).toBe(5);
+    expect(year.previousHospitalizations).toBe(5);
+  });
+
+  it("grupa obecna we wszystkich latach zostaje bez zmian", () => {
+    const full = { ...data, catalogYears: data.admissionYears, year: "2020" };
+    expect(limitToCatalogYears(full)).toBe(full);
+    expect(defaultCardYear(full)).toBe("2020");
   });
 });

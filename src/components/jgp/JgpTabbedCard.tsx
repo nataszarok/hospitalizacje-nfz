@@ -8,7 +8,7 @@ import { ProviderScatter, STAR_COLOR, type ScatterCurve, type ScatterPoint } fro
 import { ProviderLink } from "@/components/TableLinks";
 import { formatCityName } from "@/lib/formatters";
 import {
-  cartogramCells, dataForYear, funnelCurves, funnelStatus, MAX_REGIONS, MIN_FUNNEL_DEATHS, poolStats, providerPool, providerYearTotals, scaleColor, selectedIndex,
+  cartogramCells, dataForYear, defaultCardYear, funnelCurves, funnelStatus, limitToCatalogYears, MAX_REGIONS, MIN_FUNNEL_DEATHS, poolStats, providerPool, providerYearTotals, scaleColor, selectedIndex,
   structureShares, sumSeries, unpackPageData, yearChangePct, type CompareScope, type PackedJgpPageData, type RegionsMap,
 } from "@/lib/jgpCard";
 import type { JgpPageData, JgpProviderRow } from "@/lib/jgpPage";
@@ -44,11 +44,11 @@ const FUNNEL_COLORS = { up95: "#E3A27F", up998: "#B4441B", down95: "#8FB0DD", do
 
 export type CardTab = "przeglad" | "osrodki";
 
-/** `year`: rok danych karty; `null` = najnowszy (bez parametru w adresie). */
+/** `year`: rok danych karty; `null` = rok domyślny (najnowszy rok grupy, bez parametru w adresie). */
 interface CardState { tab: CardTab; selectedKey: string | null; scope: CompareScope; regions: string[]; year: string | null }
 
 // Strona jest statyczna: stan czytamy i zapisujemy w adresie w przeglądarce.
-function useTabbedState(data: JgpPageData) {
+function useTabbedState(data: JgpPageData, defaultYear: string) {
   const [state, setState] = useState<CardState>({ tab: "przeglad", selectedKey: null, scope: "all", regions: [], year: null });
   useEffect(() => {
     const read = () => {
@@ -61,13 +61,13 @@ function useTabbedState(data: JgpPageData) {
         selectedKey,
         scope: params.get(SCOPE_PARAM) === "podobne" ? "peers" : "all",
         regions: [...new Set(params.getAll(REGION_PARAM).filter((ow) => known.has(ow)))].slice(0, MAX_REGIONS),
-        year: data.admissionYears.includes(params.get(YEAR_PARAM) ?? "") && params.get(YEAR_PARAM) !== data.year ? params.get(YEAR_PARAM) : null,
+        year: data.admissionYears.includes(params.get(YEAR_PARAM) ?? "") && params.get(YEAR_PARAM) !== defaultYear ? params.get(YEAR_PARAM) : null,
       });
     };
     read();
     window.addEventListener("popstate", read);
     return () => window.removeEventListener("popstate", read);
-  }, [data.regions, data.admissionYears, data.year]);
+  }, [data.regions, data.admissionYears, defaultYear]);
 
   // Aktualny stan w refie: adres zapisujemy poza funkcją aktualizującą stan (zapis adresu odświeża router Next).
   const current = useRef(state);
@@ -97,10 +97,11 @@ function useTabbedState(data: JgpPageData) {
 
 /** Karta grupy JGP w zakładkach „Przegląd” i „Ośrodki” (układ z docs/karta-jgp-pytania.html). */
 export function JgpTabbedCard({ packed, map = null }: { packed: PackedJgpPageData; map?: RegionsMap | null }) {
-  const all = useMemo(() => unpackPageData(packed), [packed]);
-  const { state, write } = useTabbedState(all);
+  const all = useMemo(() => limitToCatalogYears(unpackPageData(packed)), [packed]);
+  const defaultYear = defaultCardYear(all);
+  const { state, write } = useTabbedState(all, defaultYear);
   // Dane wybranego roku: ranking, liczby i województwa; wykresy „w czasie” pokazują wszystkie lata.
-  const yearIndex = all.admissionYears.indexOf(state.year ?? all.year);
+  const yearIndex = all.admissionYears.indexOf(state.year ?? defaultYear);
   const data = useMemo(() => dataForYear(all, yearIndex), [all, yearIndex]);
   const selected = selectedIndex(data, state.selectedKey);
   const selectedRow = selected >= 0 ? data.providers[selected] : null;
@@ -161,7 +162,7 @@ export function JgpTabbedCard({ packed, map = null }: { packed: PackedJgpPageDat
           key={year}
           type="button"
           aria-pressed={year === data.year}
-          onClick={() => write({ year: year === all.year ? null : year })}
+          onClick={() => write({ year: year === defaultYear ? null : year })}
         >{year}</button>)}
       </div>
     </div>
@@ -281,7 +282,7 @@ function OverviewTab({ data, pool, linePool, map, regions, onToggleRegion, onYea
       {!regions.length ? <div className={base.segmented} role="group" aria-label="Miara">
         {(Object.keys(METRICS) as Metric[]).map((key) => <button key={key} type="button" aria-pressed={metric === key} onClick={() => setMetric(key)}>{METRICS[key].button}</button>)}
       </div> : null}
-      <GroupLineChart months={data.months} lines={lines} valueLabel={shown.unit} legend={regions.length > 0} height={420} highlightYear={data.year} note={shown.note} ariaLabel={`Wykres liniowy: ${shown.title.toLowerCase()} we wszystkich latach`} />
+      <GroupLineChart months={data.months} lines={lines} valueLabel={shown.unit} legend={regions.length > 0} height={420} highlightYear={data.year} fitAxis={!regions.length && metric === "urgent"} note={shown.note} ariaLabel={`Wykres liniowy: ${shown.title.toLowerCase()} we wszystkich latach`} />
     </section>
     <RegionsSection data={data} pool={pool} map={map} regions={regions} onToggle={onToggleRegion} onYear={onYear} onRegionYear={onRegionYear} onClear={onClearRegions} onShowProviders={onShowProviders} />
     <CostSection data={data} onYear={onYear} />
@@ -290,7 +291,8 @@ function OverviewTab({ data, pool, linePool, map, regions, onToggleRegion, onYea
   </>;
 }
 
-const HEAT_SIDE_BY_SIDE_YEARS = 4;
+/** Od tylu lat mapa ciepła ma wąskie kolumny i krótkie lata. */
+const HEAT_COMPACT_YEARS = 5;
 
 function RegionsSection({ data, pool, map, regions, onToggle, onYear, onRegionYear, onClear, onShowProviders }: {
   data: JgpPageData; pool: JgpProviderRow[]; map: RegionsMap | null; regions: string[]; onToggle: (ow: string) => void; onYear: (year: string) => void;
@@ -336,10 +338,11 @@ function RegionsSection({ data, pool, map, regions, onToggle, onYear, onRegionYe
   }, [data.year, data.regions]);
   // Wiersze alfabetycznie (łatwiej znaleźć województwo); kolor pokazuje kolejność.
   const rows = [...data.regions].sort((a, b) => a.name.localeCompare(b.name, "pl"));
+  const compact = heat.length >= HEAT_COMPACT_YEARS;
   return <section className={styles.sec} aria-labelledby="s-gdzie">
     <SectionHead id="s-gdzie" question="Gdzie?" context={`Szpitale w województwie na 100 tys. mieszkańców: mapa ${data.year}, mapa ciepła lat`} tag="Mapa: rok · tabela: lata" />
-    {/* Przy wielu latach mapa ciepła nie mieści się obok mapy: idzie pod mapę, na całą szerokość. */}
-    <div className={`${styles.geo} ${heat.length > HEAT_SIDE_BY_SIDE_YEARS ? styles.geoLong : ""}`}>
+    {/* Przy wielu latach mapa ciepła jest ścieśniona (wąskie kolumny, rok jako „’17”), żeby mieściła się obok mapy. */}
+    <div className={`${styles.geo} ${compact ? styles.geoCompact : ""}`}>
       <div className={styles.mapCol}>
         {map ? <RegionMap map={map} cells={cells} regions={regions} onToggle={onToggle} colors={REGION_PICK_COLORS} /> : null}
         <div className={base.scale}>
@@ -362,11 +365,11 @@ function RegionsSection({ data, pool, map, regions, onToggle, onYear, onRegionYe
       <div className={styles.heatWrap} role="region" aria-label="Mapa ciepła: województwa w latach" tabIndex={0}>
         {/* Jedno tło całej kolumny wybranego roku (od nagłówka do ostatniego wiersza), jak „wybrany rok” na wykresie liniowym. */}
         {band ? <div className={styles.heatBand} style={band} aria-hidden /> : null}
-        <table ref={heatRef} className={styles.heat}>
+        <table ref={heatRef} className={`${styles.heat} ${compact ? styles.heatCompact : ""}`}>
           <thead><tr>
             <th>Województwo</th>
             {heat.map((year) => <th key={year.year} className={`${base.num} ${styles.yearCell}`} data-year={year.year}>
-              <button type="button" className={`${styles.yearHead} ${year.year === data.year ? styles.heatOn : ""}`} aria-pressed={year.year === data.year} onClick={() => onYear(year.year)} title={`Pokaż mapę za ${year.year} r.`}>{year.year}</button>
+              <button type="button" className={`${styles.yearHead} ${year.year === data.year ? styles.heatOn : ""}`} aria-pressed={year.year === data.year} onClick={() => onYear(year.year)} title={`Pokaż mapę za ${year.year} r.`}>{compact ? `’${year.year.slice(2)}` : year.year}</button>
             </th>)}
             {heat.length > 1 ? <th className={`${base.num} ${styles.heatChange}`}>{first?.year.slice(2)}→{last?.year.slice(2)}</th> : null}
           </tr></thead>

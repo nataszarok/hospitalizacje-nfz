@@ -46,9 +46,11 @@ function seriesOf(line: ChartLine) {
  * Wszystkie serie są typu `scattergl` (jak w eksploratorze): `restyle` serii SVG w trakcie najechania
  * przerysowuje dymek podpowiedzi, wywołuje kolejne najechanie i przepełnia stos.
  */
-export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = false, onSelect, onHover, height = 400, selectedColor = SELECTED, selectedLabel, highlightYear, note }: {
+export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = false, onSelect, onHover, height = 400, selectedColor = SELECTED, selectedLabel, highlightYear, note, fitAxis = false }: {
   /** Miesiące jako „RRRR-MM”. */
   months: string[];
+  /** Oś udziału dopasowana do danych, nie od zera (np. % nagłych w okolicy 85–95%). */
+  fitAxis?: boolean;
   lines: ChartLine[];
   valueLabel: string;
   ariaLabel: string;
@@ -156,7 +158,7 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
         hoverlabel: { bgcolor: "#344054", font: { color: "#FFFFFF", size: 13 } },
         xaxis: { ...monthAxis(x.length), gridcolor: "#EEF1F5" },
         // Margines pod zerem i całkowita podziałka także przy bardzo małych liczbach (np. pojedyncze zgony).
-        yaxis: { ...(percent ? percentAxis : countAxis)(ordered.flatMap((line) => series.get(line.key)!.points)), gridcolor: "#EEF1F5", zerolinecolor: "#D0D5DD" },
+        yaxis: { ...(percent ? percentAxis(ordered.flatMap((line) => series.get(line.key)!.points), { fit: fitAxis }) : countAxis(ordered.flatMap((line) => series.get(line.key)!.points))), gridcolor: "#EEF1F5", zerolinecolor: "#D0D5DD" },
       }, PLOTLY_CONFIG);
       if (cancelled) return;
       const overlay = [overlayStart, overlayStart + 1, overlayStart + 2];
@@ -197,7 +199,7 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
     };
     void render();
     return () => { cancelled = true; };
-  }, [months, lines, valueLabel, legend, height, selectedColor, selectedLabel, highlightYear, note]);
+  }, [months, lines, valueLabel, legend, height, selectedColor, selectedLabel, highlightYear, note, fitAxis]);
 
   // Wysokość zarezerwowana od razu: wykres rysuje się asynchronicznie i nie przesuwa treści pod nim.
   return <div ref={chartRef} role="img" aria-label={ariaLabel} style={{ minHeight: height }} />;

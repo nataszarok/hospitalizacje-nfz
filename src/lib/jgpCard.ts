@@ -283,6 +283,34 @@ export function funnelCurves(groupPct: number, nMin: number, nMax: number, steps
 const sumTuple = (tuple?: [number, number, number]) => tuple ? tuple[0] + tuple[1] + tuple[2] : 0;
 
 /**
+ * Karta pokazuje tylko lata, w których grupa jest w katalogu (od pierwszego do ostatniego): grupa wycofana
+ * (np. E03 w latach 2017–2018) albo nowa (HK11 od 2025 r.) nie ma pustych lat na pasku i zer na wykresach.
+ * `year` (najnowszy rok danych) zostaje bez zmian; rok domyślny karty daje `defaultCardYear`.
+ */
+export function limitToCatalogYears(data: JgpPageData): JgpPageData {
+  const kept = data.admissionYears.filter((year) => data.catalogYears.includes(year));
+  if (!kept.length || kept.length === data.admissionYears.length) return data;
+  const from = data.admissionYears.indexOf(kept[0]);
+  const to = data.admissionYears.indexOf(kept.at(-1) as string) + 1;
+  const months = (values: number[]) => values.slice(from * 12, to * 12);
+  const providers = data.providers.map((row) => ({ ...row, series: months(row.series), yearly: row.yearly.slice(from, to), yearlyDeaths: row.yearlyDeaths.slice(from, to) }));
+  const byKey = new Map(providers.map((row) => [row.key, row]));
+  return {
+    ...data,
+    admissionYears: data.admissionYears.slice(from, to),
+    months: data.months.slice(from * 12, to * 12),
+    national: { hospitalizations: months(data.national.hospitalizations), deaths: months(data.national.deaths), urgent: months(data.national.urgent) },
+    providers,
+    topProviders: data.topProviders.map((row) => byKey.get(row.key) ?? row),
+  };
+}
+
+/** Rok domyślny karty: najnowszy rok danych albo, gdy grupy już nie ma w katalogu, ostatni rok grupy. */
+export function defaultCardYear(data: JgpPageData): string {
+  return data.admissionYears.length && !data.admissionYears.includes(data.year) ? data.admissionYears.at(-1) as string : data.year;
+}
+
+/**
  * Dane karty dla wybranego roku pliku grupy (indeks w `admissionYears`): ranking, liczby i województwa z tego roku.
  * Najnowszy rok: liczby ze szczegółów roku, bez ośrodków z zerem (są w danych tylko dla wcześniejszych lat). Wcześniejszy rok liczymy z krotek pliku grupy
  * (metoda konserwatywna); rozliczeń NFZ ośrodków nie ma, a pary podobnych szpitali przenumerowujemy po nowym rankingu.

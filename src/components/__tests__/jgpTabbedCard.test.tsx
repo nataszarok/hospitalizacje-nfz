@@ -31,8 +31,8 @@ beforeEach(() => open());
 afterEach(cleanup);
 
 describe("Karta w zakładkach — wybór grup", () => {
-  it("nowa karta jest dla E10, H52 i H55", () => {
-    expect(["E10", "H52", "H55", "A01"].map(hasTabbedCard)).toEqual([true, true, true, false]);
+  it("nowa karta jest dla grup z sekcji E i H", () => {
+    expect(["E10", "H52", "H55", "E03", "HK11", "A01", "F04"].map(hasTabbedCard)).toEqual([true, true, true, true, true, false, false]);
   });
 });
 
