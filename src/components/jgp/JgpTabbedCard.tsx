@@ -30,6 +30,8 @@ const TAB_PARAM = "widok";
 const SCOPE_PARAM = "porownanie";
 const REGION_PARAM = "ow";
 const YEAR_PARAM = "rok";
+/** Okres wykresów „Ile?”: `okres=lata`; bez parametru miesiące. */
+const PERIOD_PARAM = "okres";
 const TOP_LINES = 15;
 const SERVER_ROWS = 30;
 const subscribeNothing = () => () => {};
@@ -46,12 +48,15 @@ const FUNNEL_COLORS = { up95: "#E3A27F", up998: "#B4441B", down95: "#8FB0DD", do
 
 export type CardTab = "przeglad" | "osrodki";
 
-/** `year`: rok danych karty; `null` = rok domyślny (najnowszy rok grupy, bez parametru w adresie). */
-interface CardState { tab: CardTab; selectedKey: string | null; scope: CompareScope; regions: string[]; year: string | null }
+/**
+ * `year`: rok danych karty; `null` = rok domyślny (najnowszy rok grupy, bez parametru w adresie).
+ * `period`: okres wykresów „Ile?”, wspólny dla obu zakładek.
+ */
+interface CardState { tab: CardTab; selectedKey: string | null; scope: CompareScope; regions: string[]; year: string | null; period: ChartPeriod }
 
 // Strona jest statyczna: stan czytamy i zapisujemy w adresie w przeglądarce.
 function useTabbedState(data: JgpPageData, defaultYear: string) {
-  const [state, setState] = useState<CardState>({ tab: "przeglad", selectedKey: null, scope: "all", regions: [], year: null });
+  const [state, setState] = useState<CardState>({ tab: "przeglad", selectedKey: null, scope: "all", regions: [], year: null, period: "month" });
   useEffect(() => {
     const read = () => {
       const params = new URLSearchParams(window.location.search);
@@ -64,6 +69,7 @@ function useTabbedState(data: JgpPageData, defaultYear: string) {
         scope: params.get(SCOPE_PARAM) === "podobne" ? "peers" : "all",
         regions: [...new Set(params.getAll(REGION_PARAM).filter((ow) => known.has(ow)))].slice(0, MAX_REGIONS),
         year: data.admissionYears.includes(params.get(YEAR_PARAM) ?? "") && params.get(YEAR_PARAM) !== defaultYear ? params.get(YEAR_PARAM) : null,
+        period: params.get(PERIOD_PARAM) === "lata" ? "year" : "month",
       });
     };
     read();
@@ -91,6 +97,7 @@ function useTabbedState(data: JgpPageData, defaultYear: string) {
     url.searchParams.delete(REGION_PARAM);
     for (const ow of next.regions) url.searchParams.append(REGION_PARAM, ow);
     set(YEAR_PARAM, next.year);
+    set(PERIOD_PARAM, next.period === "year" ? "lata" : null);
     window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
     setState(next);
   }, []);
@@ -102,8 +109,8 @@ export function JgpTabbedCard({ packed, map = null }: { packed: PackedJgpPageDat
   const all = useMemo(() => limitToCatalogYears(unpackPageData(packed)), [packed]);
   const defaultYear = defaultCardYear(all);
   const { state, write } = useTabbedState(all, defaultYear);
-  // Okres wykresów „Ile?” (miesiące albo lata), wspólny dla obu zakładek.
-  const [period, setPeriod] = useState<ChartPeriod>("month");
+  const period = state.period;
+  const setPeriod = useCallback((next: ChartPeriod) => write({ period: next }), [write]);
   // Dane wybranego roku: ranking, liczby i województwa; wykresy „w czasie” pokazują wszystkie lata.
   const yearIndex = all.admissionYears.indexOf(state.year ?? defaultYear);
   const data = useMemo(() => dataForYear(all, yearIndex), [all, yearIndex]);

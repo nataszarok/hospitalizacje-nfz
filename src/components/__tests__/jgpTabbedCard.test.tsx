@@ -271,6 +271,7 @@ describe("Karta w zakładkach — okres w „Ile?” (miesiące albo lata)", () 
     expect(heading().parentElement).toContainElement(toggle());
     fireEvent.click(within(toggle()).getByRole("button", { name: "Lata" }));
     expect(chart()).toHaveAttribute("data-period", "year");
+    expect(window.location.search).toBe("?okres=lata");
     expect(heading()).toHaveTextContent("Ile? Hospitalizacje rocznie, wszystkie lata");
     expect(chart()).toHaveAttribute("data-note", expect.stringContaining("Kropka = suma roku"));
     fireEvent.click(screen.getByRole("tab", { name: /Ośrodki/ }));
@@ -278,6 +279,17 @@ describe("Karta w zakładkach — okres w „Ile?” (miesiące albo lata)", () 
     expect(heading()).toHaveTextContent(/^Ile\? Hospitalizacje rocznie, \d+ największych ośrodków/);
     fireEvent.click(within(toggle()).getByRole("button", { name: "Miesiące" }));
     expect(chart()).toHaveAttribute("data-period", "month");
+    expect(window.location.search).toBe("?widok=osrodki");
+  });
+
+  it("odczytuje okres z adresu (`okres=lata`) i ignoruje nieznaną wartość", () => {
+    open("?okres=lata");
+    renderCard();
+    expect(screen.getByRole("list", { name: "Linie wykresu" })).toHaveAttribute("data-period", "year");
+    cleanup();
+    open("?okres=tygodnie");
+    renderCard();
+    expect(screen.getByRole("list", { name: "Linie wykresu" })).toHaveAttribute("data-period", "month");
   });
 });
 
