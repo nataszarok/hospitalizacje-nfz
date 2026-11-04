@@ -18,6 +18,8 @@ describe("stan katalogu JGP w adresie", () => {
     expect(jgpCatalogUrlSearch({ ...DEFAULT_CATALOG_STATE, sort: { key: "code", desc: false } })).toBe("?sort=kod");
     expect(readJgpCatalogUrlState("?sort=kod").sort).toEqual({ key: "code", desc: false });
     expect(readJgpCatalogUrlState("?sort=smiertelnosc").sort).toEqual({ key: "mortality", desc: true });
+    expect(readJgpCatalogUrlState("?sort=kwota").sort).toEqual({ key: "value", desc: true });
+    expect(jgpCatalogUrlSearch({ ...DEFAULT_CATALOG_STATE, sort: { key: "valueChange", desc: false } })).toBe("?sort=zmiana-kwoty&kier=rosnaco");
   });
 
   it("odrzuca nieznane wartości", () => {

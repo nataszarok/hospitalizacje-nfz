@@ -22,6 +22,10 @@ export interface JgpCatalogRow {
   ranges: [string, string][];
   /** Hospitalizacje w ostatnim roku obecności kodu (dla grup wycofanych: rok wycofania). */
   lastYearTotal: number;
+  /** Rozliczenia NFZ (zł) w roku `JgpCatalog.settlements.year`; `null` bez kwot. */
+  valuePln: number | null;
+  /** Zmiana rozliczeń od roku `settlements.firstYear` (%); `null`, gdy w którymś z lat nie było kwot. */
+  valueChangePct: number | null;
 }
 
 export interface JgpCatalog {
@@ -29,6 +33,8 @@ export interface JgpCatalog {
   latestYear: string;
   previousYear: string | null;
   rows: JgpCatalogRow[];
+  /** Lata kwot NFZ (pierwszy i ostatni rok z rozliczeniami w zakresie danych); `null` bez kwot. */
+  settlements: { firstYear: string; year: string } | null;
   totals: { all: number; groups: number; latest: number; previous: number; added: number; discontinued: number };
 }
 
@@ -88,8 +94,19 @@ export function limitSeriesToActiveYears(series: number[], years: string[], acti
   return result;
 }
 
-/** Katalog grup: jeden wiersz na kod JGP, od największej liczby hospitalizacji w najnowszym roku. */
-export function buildJgpCatalog(trends: TrendsDataset): JgpCatalog {
+/** Rozliczenia NFZ w zł: kod JGP → rok → kwota (`valuePln.national` z plików grup). */
+export type JgpSettlements = Record<string, Record<string, number>>;
+
+/** Pierwszy i ostatni rok z kwotami, ograniczone do lat danych o hospitalizacjach. */
+export function settlementYears(settlements: JgpSettlements | null, years: string[]): { firstYear: string; year: string } | null {
+  if (!settlements) return null;
+  const present = new Set(Object.values(settlements).flatMap((values) => Object.keys(values)));
+  const settled = years.filter((year) => present.has(year));
+  return settled.length ? { firstYear: settled[0], year: settled.at(-1)! } : null;
+}
+
+/** Katalog grup: jeden wiersz na kod JGP, od największej liczby hospitalizacji w najnowszym roku. `settlements`: kwoty NFZ (opcjonalne). */
+export function buildJgpCatalog(trends: TrendsDataset, settlements: JgpSettlements | null = null): JgpCatalog {
   const years = trends.years;
   const latestYear = years.at(-1) ?? "";
   const previousYear = years.length > 1 ? years[years.length - 2] : null;
@@ -114,8 +131,12 @@ export function buildJgpCatalog(trends: TrendsDataset): JgpCatalog {
     const i = year ? years.indexOf(year) : -1;
     return i < 0 ? 0 : series.slice(i * 12, i * 12 + 12).reduce((sum, value) => sum + value, 0);
   };
+  const valueYears = settlementYears(settlements, years);
   const rows = [...byCode.entries()].map(([code, entry]): JgpCatalogRow => {
     const latest = sumYear(entry.series, latestYear);
+    const values = valueYears ? settlements?.[code] : undefined;
+    const valuePln = values?.[valueYears!.year] || null;
+    const firstValue = values?.[valueYears!.firstYear] || null;
     const previous = sumYear(entry.series, previousYear);
     const ranges = activeRanges(years, entry.years);
     return {
@@ -131,6 +152,8 @@ export function buildJgpCatalog(trends: TrendsDataset): JgpCatalog {
       added: Boolean(previousYear) && entry.years.has(latestYear) && !entry.years.has(previousYear!),
       ranges,
       lastYearTotal: sumYear(entry.series, ranges.at(-1)?.[1] ?? null),
+      valuePln,
+      valueChangePct: valuePln && firstValue ? ((valuePln - firstValue) / firstValue) * 100 : null,
     };
   }).sort((a, b) => b.latest - a.latest || a.code.localeCompare(b.code));
   return {
@@ -138,6 +161,7 @@ export function buildJgpCatalog(trends: TrendsDataset): JgpCatalog {
     latestYear,
     previousYear,
     rows,
+    settlements: valueYears,
     totals: {
       all: rows.length,
       groups: rows.filter((row) => !row.discontinued).length,

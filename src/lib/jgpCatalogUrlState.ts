@@ -1,9 +1,9 @@
-export type CatalogSortKey = "latest" | "change" | "mortality" | "code";
+export type CatalogSortKey = "latest" | "change" | "mortality" | "value" | "valueChange" | "code";
 export type CatalogKind = "all" | "procedural" | "conservative";
 
 /**
  * Stan katalogu `/jgp` w adresie: `q` (szukaj), `rodzaj=zabiegowe|zachowawcze`, `min` (próg hospitalizacji),
- * `wycofane=1`, `sort=zmiana|smiertelnosc|kod` i `kier=rosnaco|malejaco` (tylko gdy inny niż domyślny dla kolumny).
+ * `wycofane=1`, `sort=zmiana|smiertelnosc|kwota|zmiana-kwoty|kod` i `kier=rosnaco|malejaco` (tylko gdy inny niż domyślny dla kolumny).
  */
 export interface JgpCatalogUrlState {
   query: string;
@@ -27,7 +27,7 @@ export const DEFAULT_CATALOG_STATE: JgpCatalogUrlState = {
 };
 
 const KIND_PARAM: Record<Exclude<CatalogKind, "all">, string> = { procedural: "zabiegowe", conservative: "zachowawcze" };
-const SORT_PARAM: Record<Exclude<CatalogSortKey, "latest">, string> = { change: "zmiana", mortality: "smiertelnosc", code: "kod" };
+const SORT_PARAM: Record<Exclude<CatalogSortKey, "latest">, string> = { change: "zmiana", mortality: "smiertelnosc", value: "kwota", valueChange: "zmiana-kwoty", code: "kod" };
 
 const fromParam = <T extends string>(map: Record<T, string>, value: string | null) =>
   (Object.entries(map) as [T, string][]).find(([, param]) => param === value)?.[0];

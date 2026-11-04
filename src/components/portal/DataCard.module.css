@@ -8,6 +8,9 @@
 .lead { margin: 0 0 14px; font-size: 14px; line-height: 1.55; color: var(--color-text-secondary); }
 .lead strong { color: #1B3D78; font-size: 16px; }
 .chart { flex: 1; display: flex; flex-direction: column; justify-content: center; min-width: 0; }
+.chartStart { justify-content: flex-start; }
+/* Karty obok siebie z listami od góry: wstęp zajmuje zawsze dwie linie, więc listy zaczynają się na tej samej wysokości. */
+.alignStart .lead { min-height: calc(2 * 1.55em + 4px); }
 .description { margin: 14px 0 0; font-size: 13.5px; line-height: 1.6; color: var(--color-text-secondary); }
 .description p { margin: 0 0 6px; }
 .description b { color: var(--color-text); }

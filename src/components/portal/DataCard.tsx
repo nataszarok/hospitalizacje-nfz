@@ -19,17 +19,19 @@ export interface DataCardProps {
   /** Dane z estymacją wartości „<5” (znacznik „Szacunek”). */
   estimate?: boolean;
   wide?: boolean;
+  /** `start`: wykres od góry (karty obok siebie z listami mają wiersze na tej samej wysokości). */
+  chartAlign?: "center" | "start";
   headingLevel?: 2 | 3;
 }
 
 /** Karta z wykresem: pytanie, liczba, wykres, opis i stopka ze źródłem oraz linkiem do pełnego widoku. */
-export function DataCard({ id, kicker, title, lead, children, description, href, cta, source = HOSPITALIZATION_SOURCE, estimate = true, wide = false, headingLevel = 3 }: DataCardProps) {
+export function DataCard({ id, kicker, title, lead, children, description, href, cta, source = HOSPITALIZATION_SOURCE, estimate = true, wide = false, chartAlign = "center", headingLevel = 3 }: DataCardProps) {
   const Heading = headingLevel === 2 ? "h2" : "h3";
-  return <article className={`${styles.card} ${wide ? styles.wide : ""}`} aria-labelledby={id}>
+  return <article className={`${styles.card} ${wide ? styles.wide : ""} ${chartAlign === "start" ? styles.alignStart : ""}`} aria-labelledby={id}>
     <span className={styles.kicker}>{kicker}</span>
     <Heading id={id} className={styles.title}>{title}</Heading>
     {lead ? <p className={styles.lead}>{lead}</p> : null}
-    <div className={styles.chart}>{children}</div>
+    <div className={`${styles.chart} ${chartAlign === "start" ? styles.chartStart : ""}`}>{children}</div>
     {description ? <div className={styles.description}>{description}</div> : null}
     <footer className={styles.footer}>
       {estimate ? <span className={styles.badge} title="Wartości „<5” w danych NFZ liczone jako 1 (metoda konserwatywna).">Szacunek</span> : null}
