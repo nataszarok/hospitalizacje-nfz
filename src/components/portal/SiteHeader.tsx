@@ -62,6 +62,18 @@ export function SiteHeader() {
   const [currentAnalysisTab, setCurrentAnalysisTab] = useState<DashboardActiveTab | null>(null);
   const analysisMenuRef = useRef<HTMLDivElement>(null);
   const analysisTriggerRef = useRef<HTMLButtonElement>(null);
+  const headerRef = useRef<HTMLElement>(null);
+
+  // Wysokość nagłówka w `--atlas-header-height`: przypięte elementy stron (np. nagłówek tabeli) stają pod nim.
+  useEffect(() => {
+    const header = headerRef.current;
+    if (!header || typeof ResizeObserver === "undefined") return;
+    const sync = () => document.documentElement.style.setProperty("--atlas-header-height", `${Math.round(header.getBoundingClientRect().height)}px`);
+    sync();
+    const observer = new ResizeObserver(sync);
+    observer.observe(header);
+    return () => observer.disconnect();
+  }, []);
 
   // Strony są właścicielami swojego stanu; nagłówek tylko odzwierciedla aktywną sekcję i widok.
   useEffect(() => {
@@ -115,7 +127,7 @@ export function SiteHeader() {
   // Strona główna ma duże pole wyszukiwania w hero, więc nagłówek go nie powtarza.
   const showSearch = pathname !== "/";
 
-  return <header className={styles.header}>
+  return <header ref={headerRef} className={styles.header}>
     <div className={styles.inner}>
       <Link className={styles.brand} href="/" onClick={() => { setIsOpen(false); setAnalysisOpen(false); setCurrentSection("start"); }} aria-label={`${SITE_NAME} — strona główna`}>
         <span className={styles.brandSymbol}><BrandMark /></span>

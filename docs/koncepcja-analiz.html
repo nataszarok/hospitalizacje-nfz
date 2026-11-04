@@ -221,6 +221,12 @@ li.ok::before { content: "✓"; position: absolute; left: -1.25em; color: var(--
       <h3>Cały katalog</h3>
       <p class="goal">Karty wszystkich ok. 700 grup i katalog <code>/jgp</code>.</p>
       <div class="facts"><div>Commity: <code>d123c6d</code>, <code>20d590b</code> (oś liniowa na wykresach punktowych). Dokumenty koncepcyjne kart: <code>7729234</code>, <code>743b25a</code>.</div></div>
+      <ul>
+        <li class="ok"><b>Zrobione (3.11): mini-wykresy w katalogu tylko w okresie istnienia kodu.</b> Lata bez kodu w katalogu (286 z 780 grup) są przerwą, a nie zerem; w roku wejścia i wycofania kodu linia zaczyna się od pierwszej i kończy na ostatniej hospitalizacji (<code>limitSeriesToActiveYears</code>). Oś zostaje wspólna dla wszystkich wierszy 2017–2025, bez przerywanej linii w środku.</li>
+        <li class="ok"><b>Zrobione (3.11): lata kodu i grupy wycofane w katalogu.</b> Przy nazwie badge „od 2019”, „do 2018”, „2019–2022” (<code>availabilityLabel</code>); kod obecny przez cały okres nie ma badge. „Pokaż grupy wycofane” pokazuje je na górze listy (od największej liczby hospitalizacji w roku wycofania). Zakładka „Grupy” podaje liczbę wszystkich grup (780), a nie tylko aktywnych w ostatnim roku.</li>
+        <li class="ok"><b>Zrobione (3.11): czytelność katalogu.</b> Cztery KPI (aktywne, hospitalizacje, nowe, wycofane osobno); „—” = grupy nie było w katalogu w danym roku, 0 = była bez hospitalizacji; filtry i sortowanie w adresie (<code>jgpCatalogUrlState.ts</code>: <code>q</code>, <code>rodzaj</code>, <code>min</code>, <code>wycofane</code>, <code>sort</code>, <code>kier</code>); „Wyczyść filtry” (zawsze na miejscu, nieaktywny bez filtrów); licznik wyników; listy zmian z latami i progiem; podświetlenie wiersza; nagłówek tabeli przypięty pod nagłówkiem strony (<code>--atlas-header-height</code> z <code>SiteHeader</code>); na telefonie tylko kod i nazwa.</li>
+        <li><b>Do decyzji:</b> przywracanie pozycji przewijania i liczby wczytanych wierszy po powrocie z karty; klikalny cały wiersz (odradzone).</li>
+      </ul>
     </div>
   </div>
 
