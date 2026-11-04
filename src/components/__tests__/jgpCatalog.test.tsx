@@ -14,7 +14,7 @@ afterEach(() => {
 });
 
 const catalog = buildJgpCatalog(trendsFixture);
-const codes = () => within(screen.getByRole("region", { name: "Grupy JGP" })).getAllByRole("row").slice(1)
+const codes = () => within(screen.getByRole("region", { name: "Grupy JGP" })).getAllByRole("row").slice(2)
   .map((row) => within(row).getAllByRole("cell")[0].textContent);
 
 describe("Katalog grup JGP", () => {
@@ -83,6 +83,14 @@ describe("Katalog grup JGP", () => {
     render(<JgpCatalogPage catalog={catalog} />);
     expect(screen.getByRole("heading", { name: "Największe wzrosty 2024 → 2025" })).toBeInTheDocument();
     expect(screen.getByText(/co najmniej 1\s?000 hospitalizacji w 2024 r\./)).toBeInTheDocument();
+  });
+
+  it("przypięty nagłówek tabeli ma tytuł i liczbę grup", () => {
+    render(<JgpCatalogPage catalog={catalog} />);
+    const title = within(screen.getByRole("table")).getAllByRole("row")[0];
+    expect(title).toHaveTextContent("Grupy JGP2 grup");
+    fireEvent.change(screen.getByRole("searchbox"), { target: { value: "staly" } });
+    expect(title).toHaveTextContent("Grupy JGP1 pasujących");
   });
 
   it("mini-wykres nie ma przerywanej linii w środku", () => {
