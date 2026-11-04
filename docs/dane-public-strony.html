@@ -38,6 +38,7 @@ li { margin: 3px 0; }
 .browser { background: var(--brand-bg); color: var(--brand); }
 .none { background: var(--warn-bg); color: var(--warn); }
 .muted { color: var(--ink-3); font-size: 13px; }
+td.urls code { display: inline-block; margin: 0 2px 3px 0; white-space: nowrap; }
 </style>
 <body>
 <main>
@@ -45,9 +46,9 @@ li { margin: 3px 0; }
 <header>
   <span class="kicker">Atlas Publicznej Ochrony Zdrowia · dokument roboczy</span>
   <h1>Dane w <code>public/</code>: kto ich używa i gdzie</h1>
-  <p class="lead">Stan na 4 listopada 2026 r. (branch <code>feature/jgp-tabbed-card-all</code>). Dokument opisuje, czego potrzebuje build strony, które pliki z <code>public/data/</code> czyta build, a które pobiera przeglądarka, i na której podstronie. Rozmiary to pliki na dysku (gzip).</p>
+  <p class="lead">Stan na 4 listopada 2026 r. (branch <code>feature/jgp-tabbed-card-all</code>). Dokument opisuje, czego potrzebuje build strony, które pliki z <code>public/data/</code> czyta build, a które pobiera przeglądarka, i na której podstronie. Rozmiary to pliki na dysku (gzip), po zmianie formatu plików hospitalizacji na słowniki i kolumny (sekcja 6).</p>
   <nav class="toc" aria-label="Spis treści">
-    <a href="#build">Jak powstaje strona</a><a href="#public">Dlaczego public/ ma znaczenie</a><a href="#pliki">Pliki i podstrony</a><a href="#strony">Podstrony i ich dane</a><a href="#dist">Co jest w dist/</a><a href="#dalej">Co dalej</a>
+    <a href="#build">Jak powstaje strona</a><a href="#public">Dlaczego public/ ma znaczenie</a><a href="#pliki">Pliki i podstrony</a><a href="#strony">Podstrony i ich dane</a><a href="#dist">Co jest w dist/</a><a href="#jeden-plik">Jeden plik jgp?</a><a href="#dalej">Co dalej</a>
   </nav>
 </header>
 
@@ -88,23 +89,24 @@ li { margin: 3px 0; }
   <h2 id="h-pliki">Każdy plik z <code>public/</code>: build i przeglądarka</h2>
   <div class="scroll-x">
   <table>
-    <thead><tr><th>Plik</th><th>Rozmiar</th><th>Czyta build (strona)</th><th>Pobiera przeglądarka (strona, kiedy)</th><th>Skrypt</th></tr></thead>
+    <thead><tr><th>Plik</th><th>Rozmiar</th><th>Czyta build (strona)</th><th>Pobiera przeglądarka (strona, kiedy)</th><th>Podstrony (adresy)</th><th>Skrypt</th></tr></thead>
     <tbody>
-      <tr><td><code>data/hospitalizations/index.json</code></td><td class="num">0,2 KB</td><td><code>/jgp/[kod]</code>, <code>/o-danych</code>, <code>/szukaj.json</code></td><td><code>/analizy</code>: przy otwarciu (lista lat)</td><td><code>build_hospitalizations.py</code></td></tr>
-      <tr><td><code>data/hospitalizations/&lt;rok&gt;.json.gz</code><br><span class="muted">9 plików, 2017–2025</span></td><td class="num">2,6–2,9 MB<br>razem 25 MB</td><td><code>/</code> (wszystkie lata: liczby na stronie głównej)<br><code>/jgp/[kod]</code> (wszystkie lata: ośrodki i nazwy)<br><code>/szukaj.json</code> (najnowszy rok)</td><td><code>/analizy</code>: wybrany rok, zawsze przy otwarciu; widoki Kto leczy, Tryb przyjęcia, Gdzie<br><code>/szpitale</code>: najnowszy rok (Profil i Porównanie)</td><td><code>build_hospitalizations.py</code></td></tr>
-      <tr><td><code>data/hospitalizations/trends.json.gz</code></td><td class="num">2,5 MB</td><td><code>/jgp</code> (katalog), <code>/jgp/[kod]</code></td><td><code>/analizy</code>: widoki W czasie i Gdzie</td><td><code>build_hospitalizations.py</code></td></tr>
-      <tr><td><code>data/hospitalizations/trends-regions/&lt;OW&gt;.json.gz</code><br><span class="muted">16 plików</span></td><td class="num">0,4–1 MB<br>razem 8,5 MB</td><td><span class="pill none">nie</span></td><td><code>/analizy</code>: W czasie, tylko z filtrem województwa (jeden plik)</td><td><code>build_hospitalizations.py</code></td></tr>
-      <tr><td><code>data/jgp/index.json</code>, <code>data/jgp/&lt;KOD&gt;.json.gz</code><br><span class="muted">781 plików</span></td><td class="num">34 MB<br>do 361 KB</td><td><code>/jgp/[kod]</code> (lista stron i dane karty)</td><td><span class="pill none">nie</span> dane są w HTML strony</td><td><code>build_jgp_pages.py</code></td></tr>
-      <tr><td><code>data/regions-map.json.gz</code></td><td class="num">5 KB</td><td><code>/jgp/[kod]</code> (mapa województw)</td><td><span class="pill none">nie</span></td><td><code>build_regions_map.py</code></td></tr>
-      <tr><td><code>data/wyceny_jgp_2025.json.gz</code></td><td class="num">11 KB</td><td><code>/jgp/[kod]</code> (wycena w nagłówku)</td><td><code>/szpitale</code>: widok Porównanie</td><td><code>build_valuations.py</code></td></tr>
-      <tr><td><code>data/peer_pairs_ab.json.gz</code></td><td class="num">3,6 MB</td><td><code>/jgp/[kod]</code> (podobne szpitale)</td><td><code>/szpitale</code>: widok Porównanie</td><td><code>build_peer_pairs.py</code></td></tr>
-      <tr><td><code>data/financial_results.json.gz</code></td><td class="num">80 KB</td><td><span class="pill none">nie</span></td><td><code>/szpitale</code>: widok Profil (finanse)</td><td><code>build_financial_results.py</code></td></tr>
-      <tr><td><code>data/rpwdl_summary_profiles.json.gz</code></td><td class="num">196 KB</td><td><span class="pill none">nie</span></td><td><code>/szpitale</code>: widok Profil (oddziały, łóżka)</td><td><code>build_rpwdl_summary_profiles.py</code></td></tr>
-      <tr><td><code>data/rpwdl_profile.json.gz</code><br><span class="muted">tylko lokalnie, nie w repo</span></td><td class="num">4,8 MB</td><td><span class="pill none">nie</span></td><td><span class="pill none">nie</span> tylko odłączona zakładka <code>HospitalComparisonLegacyTab</code></td><td>—</td></tr>
-      <tr><td><code>images/hero-illustration.svg</code></td><td class="num">—</td><td><span class="pill none">nie</span></td><td><code>/</code>: ilustracja na stronie głównej</td><td>ręcznie</td></tr>
+      <tr><td><code>data/hospitalizations/index.json</code></td><td class="num">0,2 KB</td><td><code>/jgp/[kod]</code>, <code>/o-danych</code>, <code>/szukaj.json</code></td><td><code>/analizy</code>: przy otwarciu (lista lat)</td><td class="urls"><code>/analizy</code> <code>/analizy?t=k</code> <code>/analizy?t=a</code> <code>/analizy?t=g</code> <code>/jgp/[kod]</code> <code>/o-danych</code> <code>/szukaj.json</code></td><td><code>build_hospitalizations.py</code></td></tr>
+      <tr><td><code>data/hospitalizations/&lt;rok&gt;.json.gz</code><br><span class="muted">9 plików, 2017–2025</span></td><td class="num">1,2–1,4 MB<br>razem ok. 12 MB</td><td><code>/</code> (wszystkie lata: liczby na stronie głównej)<br><code>/jgp/[kod]</code> (wszystkie lata: ośrodki i nazwy)<br><code>/szukaj.json</code> (najnowszy rok)</td><td><code>/analizy</code>: wybrany rok, zawsze przy otwarciu<br><code>/szpitale</code>: najnowszy rok (Profil i Porównanie)</td><td class="urls"><code>/</code> <code>/analizy</code> <code>/analizy?t=k</code> <code>/analizy?t=a</code> <code>/analizy?t=g</code> <code>/szpitale</code> <code>/szpitale?hv=c</code> <code>/jgp/[kod]</code> <code>/szukaj.json</code></td><td><code>build_hospitalizations.py</code></td></tr>
+      <tr><td><code>data/hospitalizations/trends.json.gz</code></td><td class="num">ok. 1,4 MB</td><td><code>/jgp</code> (katalog), <code>/jgp/[kod]</code></td><td><code>/analizy</code>: widoki W czasie i Gdzie</td><td class="urls"><code>/analizy</code> <code>/analizy?t=g</code> <code>/jgp</code> <code>/jgp/[kod]</code></td><td><code>build_hospitalizations.py</code></td></tr>
+      <tr><td><code>data/hospitalizations/trends-regions/&lt;OW&gt;.json.gz</code><br><span class="muted">16 plików</span></td><td class="num">0,2–0,4 MB<br>razem 4,5 MB</td><td><span class="pill none">nie</span></td><td><code>/analizy</code>: W czasie, tylko z filtrem województwa (jeden plik)</td><td class="urls"><code>/analizy?ow=&lt;OW&gt;</code></td><td><code>build_hospitalizations.py</code></td></tr>
+      <tr><td><code>data/jgp/index.json</code>, <code>data/jgp/&lt;KOD&gt;.json.gz</code><br><span class="muted">781 plików</span></td><td class="num">34 MB<br>do 361 KB</td><td><code>/jgp/[kod]</code> (lista stron i dane karty)</td><td><span class="pill none">nie</span> dane są w HTML strony</td><td class="urls"><code>/jgp/[kod]</code></td><td><code>build_jgp_pages.py</code></td></tr>
+      <tr><td><code>data/regions-map.json.gz</code></td><td class="num">5 KB</td><td><code>/jgp/[kod]</code> (mapa województw)</td><td><span class="pill none">nie</span></td><td class="urls"><code>/jgp/[kod]</code></td><td><code>build_regions_map.py</code></td></tr>
+      <tr><td><code>data/wyceny_jgp_2025.json.gz</code></td><td class="num">11 KB</td><td><code>/jgp/[kod]</code> (wycena w nagłówku)</td><td><code>/szpitale</code>: widok Porównanie</td><td class="urls"><code>/szpitale?hv=c</code> <code>/jgp/[kod]</code></td><td><code>build_valuations.py</code></td></tr>
+      <tr><td><code>data/peer_pairs_ab.json.gz</code></td><td class="num">3,6 MB</td><td><code>/jgp/[kod]</code> (podobne szpitale)</td><td><code>/szpitale</code>: widok Porównanie</td><td class="urls"><code>/szpitale?hv=c</code> <code>/jgp/[kod]</code></td><td><code>build_peer_pairs.py</code></td></tr>
+      <tr><td><code>data/financial_results.json.gz</code></td><td class="num">80 KB</td><td><span class="pill none">nie</span></td><td><code>/szpitale</code>: widok Profil (finanse)</td><td class="urls"><code>/szpitale</code></td><td><code>build_financial_results.py</code></td></tr>
+      <tr><td><code>data/rpwdl_summary_profiles.json.gz</code></td><td class="num">196 KB</td><td><span class="pill none">nie</span></td><td><code>/szpitale</code>: widok Profil (oddziały, łóżka)</td><td class="urls"><code>/szpitale</code></td><td><code>build_rpwdl_summary_profiles.py</code></td></tr>
+      <tr><td><code>data/rpwdl_profile.json.gz</code><br><span class="muted">tylko lokalnie, nie w repo</span></td><td class="num">4,8 MB</td><td><span class="pill none">nie</span></td><td><span class="pill none">nie</span> tylko odłączona zakładka <code>HospitalComparisonLegacyTab</code></td><td class="urls">—</td><td>—</td></tr>
+      <tr><td><code>images/hero-illustration.svg</code></td><td class="num">—</td><td><span class="pill none">nie</span></td><td><code>/</code>: ilustracja na stronie głównej</td><td class="urls"><code>/</code></td><td>ręcznie</td></tr>
     </tbody>
   </table>
   </div>
+  <p class="muted">Adresy widoków: <code>/analizy</code> = W czasie, <code>?t=k</code> = Kto leczy, <code>?t=a</code> = Tryb przyjęcia, <code>?t=g</code> = Gdzie, <code>?ow=</code> = filtr województwa; <code>/szpitale</code> = Profil, <code>?hv=c</code> = Porównanie. Kolumna „Podstrony” łączy strony z obu ról: build i przeglądarka.</p>
   <p class="muted">Poza <code>public/</code>: indeks wyszukiwarki <code>/szukaj.json</code> (122 KB, 36 KB po kompresji) powstaje podczas buildu z najnowszego pliku roku. Przeglądarka pobiera go z wyszukiwarki w nagłówku, na każdej stronie.</p>
 </section>
 
@@ -128,7 +130,7 @@ li { margin: 3px 0; }
     </tbody>
   </table>
   </div>
-  <p>Najwięcej danych pobiera <code>/analizy</code>: plik roku (2,8 MB) i <code>trends.json.gz</code> (2,5 MB), razem ok. 5,3 MB przy widoku Gdzie. Katalog <code>/jgp</code> ma ciężki HTML (687 KB bez kompresji).</p>
+  <p>Najwięcej danych pobiera <code>/analizy</code>: plik roku (1,3 MB) i <code>trends.json.gz</code> (1,4 MB), razem ok. 2,7 MB przy widoku Gdzie (przed zmianą formatu: 5,3 MB). Katalog <code>/jgp</code> ma ciężki HTML (687 KB bez kompresji).</p>
 </section>
 
 <section id="dist" aria-labelledby="h-dist">
@@ -139,13 +141,28 @@ li { margin: 3px 0; }
     <thead><tr><th>Katalog w <code>dist/</code></th><th>Rozmiar</th><th>Co to jest</th></tr></thead>
     <tbody>
       <tr><td><code>dist/jgp/</code></td><td class="num">598 MB</td><td>780 stron grup: HTML i 3–4 pliki RSC (<code>.txt</code>) na stronę. Te same dane karty są w HTML i w plikach RSC (RSC służy do przejść między stronami bez przeładowania).</td></tr>
-      <tr><td><code>dist/data/</code></td><td class="num">ok. 80 MB</td><td>kopia <code>public/data/</code>; z tego 39 MB to <code>data/jgp/</code>, którego nikt nie pobiera</td></tr>
+      <tr><td><code>dist/data/</code></td><td class="num">ok. 70 MB</td><td>kopia <code>public/data/</code>; z tego 39 MB to <code>data/jgp/</code>, którego nikt nie pobiera</td></tr>
       <tr><td><code>dist/_next/</code></td><td class="num">7 MB</td><td>JavaScript i CSS aplikacji</td></tr>
     </tbody>
   </table>
   </div>
   <div class="callout warn">
-    <p>Większość <code>dist/</code> to strony grup, nie pliki danych. Przeniesienie <code>public/data/jgp/</code> zmniejsza <code>dist/</code> o ok. 6% i usuwa 781 zbędnych plików z serwera. Większy zysk dla użytkownika dają lżejsze pliki lat i trendów, bo te pobiera przeglądarka.</p>
+    <p>Większość <code>dist/</code> to strony grup, nie pliki danych. Przeniesienie <code>public/data/jgp/</code> zmniejsza <code>dist/</code> o ok. 5% i usuwa 781 zbędnych plików z serwera. Większy zysk dla użytkownika dały lżejsze pliki lat i trendów (sekcja 6), bo te pobiera przeglądarka.</p>
+  </div>
+</section>
+
+<section id="jeden-plik" aria-labelledby="h-jeden-plik">
+  <span class="kicker">6a · Pytanie</span>
+  <h2 id="h-jeden-plik">Czy <code>jgp/</code> jako jeden plik byłby lepszy?</h2>
+  <p>Pomysł: w repo jeden plik ze wszystkimi grupami, a <code>npm run build</code> dzieli go na pliki grup. Ocena:</p>
+  <ul>
+    <li><b>Dla użytkownika strony: bez różnicy.</b> Przeglądarka nie pobiera plików <code>jgp/</code>. Waga strony grupy to jej HTML (54–141 KB po kompresji) i nie zależy od tego, jak dane leżą w repo.</li>
+    <li><b>Limit 25 MB Cloudflare dotyczy pojedynczego pliku w <code>dist/</code>.</b> Jeden plik w <code>public/</code> miałby ok. 33 MB i przekroczyłby limit (deploy by się nie udał). Poza <code>public/</code> limit go nie dotyczy, bo plik nie trafia na serwer. Drugi limit Cloudflare: 20 000 plików na wdrożenie; teraz <code>dist/</code> ma ok. 4 800 plików, z tego 781 to <code>data/jgp/</code>.</li>
+    <li><b>Dla buildu: osobne pliki są lepsze.</b> Next buduje 780 stron w kilku procesach naraz. Z osobnymi plikami każdy proces czyta tylko grupy, które buduje. Z jednym plikiem każdy proces musiałby wczytać i rozpakować całość (setki MB w pamięci na proces). Krok „podziel przy buildzie” dodaje pracę bez zysku: wynik jest taki sam jak dziś.</li>
+    <li><b>Dla gita: osobne pliki są lepsze.</b> Zmiana jednej grupy zmienia jeden mały plik. Jeden duży plik zmienia się w całości przy każdej przebudowie.</li>
+  </ul>
+  <div class="callout">
+    <p><b>Wniosek.</b> Zostawić osobne pliki grup, ale (1) przenieść <code>jgp/</code> poza <code>public/</code> (nie trafia na serwer) i (2) zapisać wiersze grup kolumnami jak pliki lat: 34 → ok. 17 MB w repo. Kiedy karty grup zastąpią <code>/analizy</code>, pliki lat i trendów nadal będą potrzebne: build stron grup, strona główna i <code>/szpitale</code> z nich korzystają.</p>
   </div>
 </section>
 
@@ -154,7 +171,7 @@ li { margin: 3px 0; }
   <h2 id="h-dalej">Możliwe kroki</h2>
   <ol>
     <li><b>Dane tylko dla buildu poza <code>public/</code>.</b> <code>jgp/</code> i <code>regions-map.json.gz</code> do np. <code>build-data/</code> w repo. Zmiana ścieżek w <code>staticDataServer.ts</code>, <code>build_jgp_pages.py</code>, <code>build_regions_map.py</code> i <code>verify-static.mjs</code>. Efekt: mniej plików na serwerze; strona działa tak samo.</li>
-    <li><b>Lżejsze pliki dla przeglądarki.</b> Plik roku: indeksy zamiast tekstów (OW, NIP, kod produktu, czas pobytu, tryb) i zapis kolumnowy: 2,84 → 1,35 MB. <code>trends.json.gz</code>: 2,5 → ok. 1,4 MB. Efekt: szybsze <code>/analizy</code> i <code>/szpitale</code>.</li>
+    <li><b>Zrobione (4.11): lżejsze pliki dla przeglądarki.</b> Słowniki zamiast powtarzanych tekstów (świadczeniodawca, kod produktu, czas pobytu, tryb, rok, OW, grupa trybu) i zapis kolumnowy (<code>src/lib/hospitalizationCodec.ts</code> odtwarza wiersze). Plik roku: 2,6–2,9 → 1,2–1,3 MB; <code>trends.json.gz</code>: 2,5 → 1,4 MB; <code>trends-regions/</code>: 8,5 → 4,5 MB; razem <code>hospitalizations/</code>: 34,7 → 17,5 MB. Dane po dekodowaniu są identyczne z poprzednimi (sprawdzone dla wszystkich 26 plików).</li>
     <li><b>Dane w historii gita.</b> Pliki danych w historii zajmują ok. 117 MB; każda przebudowa dodaje kilkadziesiąt MB. Opcje: Git LFS albo budowanie danych w CI z plików źródłowych (wymaga dostępu CI do <code>data/</code>, np. z zewnętrznego magazynu).</li>
   </ol>
 </section>

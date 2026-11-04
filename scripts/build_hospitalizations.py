@@ -11,6 +11,12 @@ multi-year export data/hospitalizacje_2019_2021.csv, read in place) and writes:
   public/data/hospitalizations/trends-regions/<OW>.json.gz  JGP x year x month for one NFZ
                                                branch, loaded only when the explorer filters by area
 
+Compact format (year file v2, trends v2, trends-regions v3): repeated texts (provider, product,
+length of stay, admission mode, year, NFZ branch, admission group) are stored once in a
+dictionary list and rows point to them by index; rows are stored as columns (one list per
+field), which gzip compresses about twice as well as row tuples. src/lib/hospitalizationCodec.ts
+decodes the files back into row tuples.
+
 Values "<5" are estimated per year in file order with a fixed seed (method "sim":
 draw 1-4 with weights exp(-x); method "min": 1), exactly like the former db_build
 pipeline, so the 2025 output matches the previous dashboard.json.gz.
@@ -66,6 +72,10 @@ RAW_COLUMNS = [
 ]
 FACT_KEYS = ["ow", "nip", "product", "duration", "admission"]
 VALUE_COLS = ["h_sim", "h_min", "d_sim", "d_min"]
+# Nazwy kolumn wartości w plikach dla przeglądarki (kolejność jak VALUE_COLS).
+VALUE_KEYS = ["hSim", "hMin", "dSim", "dMin"]
+# Grupy trybu przyjęcia w trendach: indeks w tej liście zamiast litery w każdym wierszu.
+ADMISSION_GROUPS = ["p", "u", "o"]
 ALL_YEARS = "2017,2018,2019,2020,2021,2022,2023,2024,2025"
 # Eksport wieloletni: bez nagłówka, wartości dopełnione spacjami, Windows-1250. Czytany na miejscu
 # (pliki w data/ zostają bez zmian), wiersze jednego roku wybiera iter_frames.
@@ -270,6 +280,17 @@ def read_reference(exports: Path) -> tuple[list[list[str]], list[list[Any]]]:
     )
 
 
+def dictionary(values: list[str]) -> tuple[list[str], dict[str, int]]:
+    """Słownik wartości (posortowany) i indeks wartości w słowniku."""
+    items = sorted(set(values))
+    return items, {value: i for i, value in enumerate(items)}
+
+
+def columns(rows: list[list[Any]], keys: list[str]) -> dict[str, list[Any]]:
+    """Wiersze jako kolumny: {klucz: lista wartości}; kolejność wierszy bez zmian."""
+    return {key: [row[i] for row in rows] for i, key in enumerate(keys)}
+
+
 def write_json_gz(path: Path, payload: dict[str, Any]) -> int:
     path.parent.mkdir(parents=True, exist_ok=True)
     data = json.dumps(payload, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
@@ -332,6 +353,7 @@ def main() -> None:
                              "albo dopisz kody do scripts/jgp_kody_uzupelnienie.csv.")
 
         facility_keys = sorted(set(facts["ow"] + "|" + facts["nip"]))
+        facility_index = {key: i for i, key in enumerate(facility_keys)}
         facilities = []
         for key in facility_keys:
             ow, nip = key.split("|")
@@ -342,15 +364,25 @@ def main() -> None:
                 name = f"Świadczeniodawca NIP {nip}"
             facilities.append([ow, nip, name, city])
 
+        product_index = {code: i for i, (code, *_rest) in enumerate(products)}
+        durations, duration_index = dictionary(facts["duration"].tolist())
+        admissions, admission_index = dictionary(facts["admission"].tolist())
         dataset = {
-            "version": 1,
+            "version": 2,
             "analysisYear": year,
             "defaultProductCode": DEFAULT_PRODUCT_CODE,
             "products": products,
             "regions": regions,
             "facilities": facilities,
             "populations": populations,
-            "facts": facts[FACT_KEYS + VALUE_COLS].values.tolist(),
+            # Fakty jako kolumny indeksów: świadczeniodawca (facilities), produkt (products),
+            # czas pobytu (durations), tryb przyjęcia (admissions) i cztery kolumny wartości.
+            "durations": durations,
+            "admissions": admissions,
+            "facts": columns([
+                [facility_index[f"{ow}|{nip}"], product_index[product], duration_index[duration], admission_index[admission], *values]
+                for ow, nip, product, duration, admission, *values in facts[FACT_KEYS + VALUE_COLS].values.tolist()
+            ], ["facility", "product", "duration", "admission", *VALUE_KEYS]),
         }
         size = write_json_gz(args.output_dir / f"{year}.json.gz", dataset)
         print(f"{year}: {raw_rows:,} source rows -> {len(facts):,} facts, {len(products)} products, "
@@ -363,15 +395,22 @@ def main() -> None:
     # Trendy: produkty ze wszystkich lat, wiersze odwołują się do indeksu produktu.
     codes = sorted(product_info)
     index = {code: i for i, code in enumerate(codes)}
+    year_index = {year: i for i, year in enumerate(years)}
+    group_index = {group: i for i, group in enumerate(ADMISSION_GROUPS)}
+    branches, branch_index = dictionary([ow for _, ow, *_ in regional_rows])
+    month_keys = ["year", "month", "product", "group", *VALUE_KEYS]
     trends = {
-        "version": 1,
+        "version": 2,
         "years": years,
+        "groups": ADMISSION_GROUPS,
+        "branches": branches,
         "products": [[code, product_info[code][0] or None, product_info[code][1] or None, product_years[code]] for code in codes],
-        "monthly": [[y, m, index[p], g, *v] for y, m, p, g, *v in monthly_rows],
-        "regional": [[y, ow, index[p], g, *v] for y, ow, p, g, *v in regional_rows],
+        "monthly": columns([[year_index[y], m, index[p], group_index[g], *v] for y, m, p, g, *v in monthly_rows], month_keys),
+        "regional": columns([[year_index[y], branch_index[ow], index[p], group_index[g], *v] for y, ow, p, g, *v in regional_rows],
+                            ["year", "branch", "product", "group", *VALUE_KEYS]),
     }
     size = write_json_gz(args.output_dir / "trends.json.gz", trends)
-    print(f"trends: {len(trends['monthly']):,} monthly + {len(trends['regional']):,} regional rows, {size / 1024:.0f} KiB")
+    print(f"trends: {len(monthly_rows):,} monthly + {len(regional_rows):,} regional rows, {size / 1024:.0f} KiB")
 
     # Trend miesięczny według OW NFZ: plik na każdy OW, bo eksplorator potrzebuje go tylko przy filtrze obszaru
     # i tylko dla wybranego województwa. Indeksy produktów są te same co w trends.json.gz.
@@ -381,10 +420,10 @@ def main() -> None:
         stale.unlink(missing_ok=True)
     by_ow: dict[str, list[list[Any]]] = defaultdict(list)
     for y, m, ow, p, g, *v in regional_monthly_rows:
-        by_ow[ow].append([y, m, index[p], g, *v])
+        by_ow[ow].append([year_index[y], m, index[p], group_index[g], *v])
     total = 0
     for ow, rows in sorted(by_ow.items()):
-        total += write_json_gz(regional_dir / f"{ow}.json.gz", {"version": 2, "years": years, "owNfz": ow, "rows": rows})
+        total += write_json_gz(regional_dir / f"{ow}.json.gz", {"version": 3, "years": years, "groups": ADMISSION_GROUPS, "owNfz": ow, "rows": columns(rows, month_keys)})
     print(f"trends-regions: {len(by_ow)} plików OW, {len(regional_monthly_rows):,} rows, {total / 1024:.0f} KiB")
 
     index_payload = {"version": 1, "years": years, "latestYear": years[-1], "defaultProductCode": DEFAULT_PRODUCT_CODE}

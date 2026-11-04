@@ -1,5 +1,6 @@
 import type { AdmissionPayload, AdmissionRow, EstimationMethod, MortalityPayload, MortalityRow, ReferencePayload } from "@/lib/types";
 import { areaMatcher, type AnalysisArea } from "@/lib/area";
+import { decodeRegionalTrends, decodeStaticDataset, decodeTrends, type RegionalTrendsFile, type StaticDatasetFile, type TrendsFile } from "@/lib/hospitalizationCodec";
 import { summarize, summarizeAdmissionGeographies, summarizeGeographies } from "@/lib/query";
 
 type ProductTuple = [string, string | null, string | null];
@@ -89,7 +90,7 @@ export async function loadStaticDataset(year?: string): Promise<StaticDataset> {
   const selectedYear = year ?? (await loadHospitalizationIndex()).latestYear;
   let promise = datasetPromises.get(selectedYear);
   if (!promise) {
-    promise = fetchGzipJson<StaticDataset>(`${HOSPITALIZATIONS_DATA_PATH}/${selectedYear}.json.gz`);
+    promise = fetchGzipJson<StaticDatasetFile>(`${HOSPITALIZATIONS_DATA_PATH}/${selectedYear}.json.gz`).then(decodeStaticDataset);
     datasetPromises.set(selectedYear, promise);
     promise.catch(() => datasetPromises.delete(selectedYear));
   }
@@ -98,7 +99,7 @@ export async function loadStaticDataset(year?: string): Promise<StaticDataset> {
 
 let trendsPromise: Promise<TrendsDataset> | null = null;
 export function loadTrends(): Promise<TrendsDataset> {
-  trendsPromise ??= fetchGzipJson<TrendsDataset>(`${HOSPITALIZATIONS_DATA_PATH}/trends.json.gz`);
+  trendsPromise ??= fetchGzipJson<TrendsFile>(`${HOSPITALIZATIONS_DATA_PATH}/trends.json.gz`).then(decodeTrends);
   trendsPromise.catch(() => { trendsPromise = null; });
   return trendsPromise;
 }
@@ -108,7 +109,7 @@ const regionalTrendsPromises = new Map<string, Promise<RegionalTrendsDataset>>()
 export function loadRegionalTrends(owNfz: string): Promise<RegionalTrendsDataset> {
   let promise = regionalTrendsPromises.get(owNfz);
   if (!promise) {
-    promise = fetchGzipJson<RegionalTrendsDataset>(`${HOSPITALIZATIONS_DATA_PATH}/trends-regions/${owNfz}.json.gz`);
+    promise = fetchGzipJson<RegionalTrendsFile>(`${HOSPITALIZATIONS_DATA_PATH}/trends-regions/${owNfz}.json.gz`).then(decodeRegionalTrends);
     regionalTrendsPromises.set(owNfz, promise);
     promise.catch(() => regionalTrendsPromises.delete(owNfz));
   }

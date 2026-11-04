@@ -28,6 +28,26 @@ async function readGzipJson(file) {
   return { size, data: JSON.parse(gunzipSync(await readFile(file)).toString("utf8")) };
 }
 
+// Pliki w formacie słownikowo-kolumnowym (src/lib/hospitalizationCodec.ts): sprawdzamy indeksy i odtwarzamy wiersze.
+function rowsFromColumns(columns, keys, name) {
+  if (!columns || Array.isArray(columns)) throw new Error(`${name}: expected columns, got ${Array.isArray(columns) ? "rows" : "nothing"}.`);
+  const length = columns[keys[0]]?.length ?? 0;
+  for (const key of keys) if (columns[key]?.length !== length) throw new Error(`${name}: column ${key} has ${columns[key]?.length} values instead of ${length}.`);
+  return Array.from({ length }, (_, i) => keys.map((key) => columns[key][i]));
+}
+
+function lookup(list, i, name) {
+  if (list[i] === undefined) throw new Error(`${name}: index ${i} outside the dictionary.`);
+  return list[i];
+}
+
+const VALUE_KEYS = ["hSim", "hMin", "dSim", "dMin"];
+const MONTH_KEYS = ["year", "month", "product", "group", ...VALUE_KEYS];
+
+function monthlyRows(columns, years, groups, name) {
+  return rowsFromColumns(columns, MONTH_KEYS, name).map(([year, month, product, group, ...values]) => [lookup(years, year, name), month, product, lookup(groups, group, name), ...values]);
+}
+
 const index = JSON.parse(await readFile(path.join(DIR, "index.json"), "utf8"));
 if (!Array.isArray(index.years) || index.years.length === 0) throw new Error("index.json has no years.");
 if (index.latestYear !== [...index.years].sort().at(-1)) throw new Error("index.json latestYear is not the newest year.");
@@ -37,7 +57,13 @@ for (const year of index.years) {
   const { size, data } = await readGzipJson(path.join(DIR, `${year}.json.gz`));
   totalSize += size;
   if (data.analysisYear !== year) throw new Error(`${year}.json.gz has analysisYear ${data.analysisYear}.`);
-  if (!Array.isArray(data.facts) || data.facts.length === 0) throw new Error(`${year}: static dataset has no facts.`);
+  if (data.version !== 2) throw new Error(`${year}.json.gz has version ${data.version} instead of 2.`);
+  data.facts = rowsFromColumns(data.facts, ["facility", "product", "duration", "admission", ...VALUE_KEYS], `${year}.json.gz`)
+    .map(([facility, product, duration, admission, ...values]) => {
+      const [ow, nip] = lookup(data.facilities, facility, `${year}.json.gz`);
+      return [ow, nip, lookup(data.products, product, `${year}.json.gz`)[0], lookup(data.durations, duration, `${year}.json.gz`), lookup(data.admissions, admission, `${year}.json.gz`), ...values];
+    });
+  if (data.facts.length === 0) throw new Error(`${year}: static dataset has no facts.`);
   if (!Array.isArray(data.products) || data.products.length === 0) throw new Error(`${year}: static dataset has no products.`);
 
   const productCodes = new Set(data.products.map(([code]) => code));
@@ -61,6 +87,10 @@ for (const year of index.years) {
 }
 
 const { size: trendsSize, data: trends } = await readGzipJson(path.join(DIR, "trends.json.gz"));
+if (trends.version !== 2) throw new Error(`trends.json.gz has version ${trends.version} instead of 2.`);
+trends.monthly = monthlyRows(trends.monthly, trends.years, trends.groups, "trends.json.gz");
+trends.regional = rowsFromColumns(trends.regional, ["year", "branch", "product", "group", ...VALUE_KEYS], "trends.json.gz")
+  .map(([year, branch, product, group, ...values]) => [lookup(trends.years, year, "trends.json.gz"), lookup(trends.branches, branch, "trends.json.gz"), product, lookup(trends.groups, group, "trends.json.gz"), ...values]);
 if (JSON.stringify(trends.years) !== JSON.stringify(index.years)) throw new Error("trends.json.gz years differ from index.json.");
 if (!trends.monthly?.length || !trends.regional?.length) throw new Error("trends.json.gz has no rows.");
 
@@ -76,7 +106,8 @@ if (regionCodes.length !== 16) throw new Error(`trends-regions/ has ${regionCode
 for (const name of regionCodes) {
   const { size, data: regional } = await readGzipJson(path.join(regionalDir, name));
   regionalSize += size;
-  if (regional.version !== 2 || `${regional.owNfz}.json.gz` !== name) throw new Error(`trends-regions/${name} has a wrong header.`);
+  if (regional.version !== 3 || `${regional.owNfz}.json.gz` !== name) throw new Error(`trends-regions/${name} has a wrong header.`);
+  regional.rows = monthlyRows(regional.rows, regional.years, regional.groups, `trends-regions/${name}`);
   if (JSON.stringify(regional.years) !== JSON.stringify(index.years)) throw new Error(`trends-regions/${name} years differ from index.json.`);
   regionalRows += regional.rows.length;
   for (const [year, month, product, group, hSim, hMin] of regional.rows) {
