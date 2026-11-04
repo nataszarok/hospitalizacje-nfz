@@ -2,7 +2,7 @@
 .inner { width: min(calc(100% - var(--atlas-page-gutter) - var(--atlas-page-gutter)), var(--atlas-page-max)); min-height: 74px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 30px; }
 .brand { display: inline-flex; gap: 10px; align-items: center; text-decoration: none; color: var(--color-text); }
 .brandSymbol { width: 39px; height: 39px; display: grid; place-items: center; color: #fff; background: var(--color-primary); border-radius: 10px; flex: none; }
-.brandText { font-size: 17px; font-weight: 750; letter-spacing: -.025em; line-height: 1.12; white-space: nowrap; }
+.brandText { font-size: 18px; font-weight: 400; letter-spacing: -.01em; line-height: 1.12; white-space: nowrap; }
 .nav { display: flex; align-items: center; gap: 9px; align-self: stretch; }
 .link { display: inline-flex; align-items: center; justify-content: center; gap: 6px; color: var(--color-text-secondary); text-decoration: none; font-size: 14px; font-weight: 650; white-space: nowrap; padding: 7px 12px; border-bottom: 2px solid transparent; transition: color .15s, border-color .15s; }
 .link:hover { color: var(--color-primary); }
@@ -18,7 +18,7 @@
 @media(max-width: 1060px) {
  .inner { min-height: 66px; }
  .brand { min-width: 0; }
- .brandText { font-size: 15px; }
+ .brandText { font-size: 16px; }
  .brandSymbol { width: 36px; height: 36px; }
  .end { gap: 10px; }
  .menuButton { display: inline-flex; }
