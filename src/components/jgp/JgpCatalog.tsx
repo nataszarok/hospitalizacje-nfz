@@ -146,7 +146,7 @@ export function JgpCatalogView({ catalog }: { catalog: Catalog }) {
             <tr className={styles.titleRow}>
               <th colSpan={catalog.previousYear ? 7 : 6}>
                 <span className={styles.tableTitle}>Grupy JGP</span>
-                <span className={styles.tableCount}>{integer(rows.length)} {hasActiveFilters(state) ? "pasujących" : "grup"}</span>
+                <span className={styles.tableCount}>{integer(rows.length)} z {integer(catalog.totals.all)}</span>
               </th>
             </tr>
             <tr>

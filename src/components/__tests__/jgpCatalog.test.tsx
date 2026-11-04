@@ -85,12 +85,12 @@ describe("Katalog grup JGP", () => {
     expect(screen.getByText(/co najmniej 1\s?000 hospitalizacji w 2024 r\./)).toBeInTheDocument();
   });
 
-  it("przypięty nagłówek tabeli ma tytuł i liczbę grup", () => {
+  it("przypięty nagłówek tabeli ma tytuł i liczbę wyników na tle wszystkich grup", () => {
     render(<JgpCatalogPage catalog={catalog} />);
     const title = within(screen.getByRole("table")).getAllByRole("row")[0];
-    expect(title).toHaveTextContent("Grupy JGP2 grup");
+    expect(title).toHaveTextContent("Grupy JGP2 z 3");
     fireEvent.change(screen.getByRole("searchbox"), { target: { value: "staly" } });
-    expect(title).toHaveTextContent("Grupy JGP1 pasujących");
+    expect(title).toHaveTextContent("Grupy JGP1 z 3");
   });
 
   it("mini-wykres nie ma przerywanej linii w środku", () => {

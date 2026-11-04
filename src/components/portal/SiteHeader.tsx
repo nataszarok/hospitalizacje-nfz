@@ -68,7 +68,7 @@ export function SiteHeader() {
   useEffect(() => {
     const header = headerRef.current;
     if (!header || typeof ResizeObserver === "undefined") return;
-    const sync = () => document.documentElement.style.setProperty("--atlas-header-height", `${Math.round(header.getBoundingClientRect().height)}px`);
+    const sync = () => document.documentElement.style.setProperty("--atlas-header-height", `${Math.floor(header.getBoundingClientRect().height)}px`);
     sync();
     const observer = new ResizeObserver(sync);
     observer.observe(header);
