@@ -9,11 +9,12 @@ export const PEER_GRADE = "A";
 export const PEER_MAX_DISTANCE = 10.01;
 
 /**
- * Plik grupy z `scripts/build_jgp_pages.py` (`public/data/jgp/<KOD>.json.gz`, format v2).
+ * Plik grupy z `scripts/build_jgp_pages.py` (`public/data/jgp/<KOD>.json.gz`) po odczycie:
+ * wiersze jako krotki (na dysku format v3 zapisuje je kolumnami, `decodeJgpGroupFile`).
  * Liczby metodą konserwatywną (`<5` = 1), tą samą co na stronach grup.
  */
 export interface JgpGroupFile {
-  version: 2;
+  version: number;
   jgp: string;
   years: string[];
   /** Klucze świadczeniodawców „OW|NIP”; wiersze wskazują indeks w tej liście. */

@@ -4,7 +4,7 @@ import { gunzipSync } from "node:zlib";
 import type { RegionsMap } from "@/lib/jgpCard";
 import type { JgpGroupFile, JgpPagesIndex, JgpPeerPair } from "@/lib/jgpPage";
 import { decodeValuations, type JgpValuation, type ValuationsFile } from "@/lib/valuations";
-import { decodeStaticDataset, decodeTrends, type StaticDatasetFile, type TrendsFile } from "@/lib/hospitalizationCodec";
+import { decodeJgpGroupFile, decodeStaticDataset, decodeTrends, type JgpGroupFileColumns, type StaticDatasetFile, type TrendsFile } from "@/lib/hospitalizationCodec";
 import type { HospitalizationIndex, StaticDataset, TrendsDataset } from "@/lib/staticData";
 
 // Odczyt danych podczas budowania strony (statyczny eksport). Tylko dla komponentów serwerowych.
@@ -60,7 +60,7 @@ export async function readJgpGroupFileFromDisk(jgpCode: string, dir = join(DATA_
   } catch {
     return null;
   }
-  return readGzipJson<JgpGroupFile>(file);
+  return readGzipJson(file, (raw: JgpGroupFileColumns) => decodeJgpGroupFile(raw));
 }
 
 /** Katalog wycen JGP (punkty) z rokiem katalogu. */

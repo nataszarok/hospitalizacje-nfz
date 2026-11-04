@@ -2,10 +2,12 @@
 """Build per-group data for JGP group pages (/jgp/[kod]) — one file per JGP group.
 
 Writes public/data/jgp/index.json (list of groups with a page) and, for every JGP group in
-trends.json.gz, public/data/jgp/<KOD>.json.gz in a compact format (version 2):
+trends.json.gz, public/data/jgp/<KOD>.json.gz in a compact format (version 3):
   providers  ["OW|NIP", ...] — row references point into this list
-  rows       [provider, month index (year index * 12 + month - 1), admission group
-             (0 planned, 1 urgent, 2 other), hospitalizations, deaths] — conservative
+  rows       columns {provider, month, admission, hospitalizations, deaths}: provider index,
+             month index (year index * 12 + month - 1), admission group (0 planned, 1 urgent,
+             2 other), hospitalizations, deaths (one list per field; gzip compresses columns
+             about twice as well as row tuples) — conservative
              estimation of "<5" (= 1), the method used by the pages; same file order and seed
              as scripts/build_hospitalizations.py (shared iter_frames)
   valuePln   NFZ settlements in PLN: national total by year and per provider for the latest
@@ -28,7 +30,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from build_hospitalizations import ALL_YEARS, ROOT, VALUE_COLS, iter_frames, source_path, write_json_gz
+from build_hospitalizations import ALL_YEARS, ROOT, VALUE_COLS, columns, iter_frames, source_path, write_json_gz
 
 SETTLEMENTS_FILE = "zestawienie_swiadczen_2019_2026.csv"
 PROVIDERS_FILE = "nfz_swiadczeniodawcy_2025.csv"
@@ -102,7 +104,7 @@ def read_settlements(data_dir: Path, groups: set[str], provider_year: str) -> di
 
 
 def compact(group: str, years: list[str], rows: list[list], settlements: dict | None) -> dict:
-    """Plik grupy w formacie v2: lista świadczeniodawców i krótkie wiersze z indeksami."""
+    """Plik grupy w formacie v3: lista świadczeniodawców i wiersze z indeksami zapisane kolumnami."""
     keys = sorted({f"{ow}|{nip}" for _, _, ow, nip, *_ in rows})
     index = {key: i for i, key in enumerate(keys)}
     year_index = {year: i for i, year in enumerate(years)}
@@ -111,7 +113,8 @@ def compact(group: str, years: list[str], rows: list[list], settlements: dict | 
         for year, month, ow, nip, admission, _h_sim, h_min, _d_sim, d_min in rows
         if h_min or d_min
     ]
-    payload = {"version": 2, "jgp": group, "years": years, "providers": keys, "rows": packed}
+    payload = {"version": 3, "jgp": group, "years": years, "providers": keys,
+               "rows": columns(packed, ["provider", "month", "admission", "hospitalizations", "deaths"])}
     if settlements:
         payload["valuePln"] = settlements
     return payload

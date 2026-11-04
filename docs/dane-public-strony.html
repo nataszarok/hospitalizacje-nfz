@@ -48,7 +48,7 @@ td.urls code { display: inline-block; margin: 0 2px 3px 0; white-space: nowrap; 
   <h1>Dane w <code>public/</code>: kto ich używa i gdzie</h1>
   <p class="lead">Stan na 4 listopada 2026 r. (branch <code>feature/jgp-tabbed-card-all</code>). Dokument opisuje, czego potrzebuje build strony, które pliki z <code>public/data/</code> czyta build, a które pobiera przeglądarka, i na której podstronie. Rozmiary to pliki na dysku (gzip), po zmianie formatu plików hospitalizacji na słowniki i kolumny (sekcja 6).</p>
   <nav class="toc" aria-label="Spis treści">
-    <a href="#build">Jak powstaje strona</a><a href="#public">Dlaczego public/ ma znaczenie</a><a href="#pliki">Pliki i podstrony</a><a href="#strony">Podstrony i ich dane</a><a href="#dist">Co jest w dist/</a><a href="#jeden-plik">Jeden plik jgp?</a><a href="#dalej">Co dalej</a>
+    <a href="#build">Jak powstaje strona</a><a href="#public">Dlaczego public/ ma znaczenie</a><a href="#cloudflare">Cloudflare</a><a href="#pliki">Pliki i podstrony</a><a href="#strony">Podstrony i ich dane</a><a href="#dist">Co jest w dist/</a><a href="#jeden-plik">Jeden plik jgp?</a><a href="#dalej">Co dalej</a>
   </nav>
 </header>
 
@@ -79,9 +79,29 @@ td.urls code { display: inline-block; margin: 0 2px 3px 0; white-space: nowrap; 
   <h2 id="h-public">Dlaczego miejsce pliku ma znaczenie</h2>
   <p>Next.js w trybie <code>output: "export"</code> kopiuje <b>cały</b> katalog <code>public/</code> do <code>out/</code>, a <code>finalize-static-build.mjs</code> zmienia go w <code>dist/</code>. Wrangler wysyła cały <code>dist/</code> na Cloudflare Pages. Każdy plik w <code>public/</code> trafia więc na serwer, także wtedy, gdy przeglądarka nigdy go nie pobiera.</p>
   <div class="callout">
-    <p><b>Odpowiedź na pytanie 2.</b> <code>public/data/jgp/</code> (781 plików, 34 MB) jest potrzebny w repo, bo build czyta go przy tworzeniu 780 stron <code>/jgp/[kod]</code>. Na serwerze nie jest potrzebny: dane każdej grupy są już w HTML jej strony, a żaden kod w przeglądarce nie pobiera <code>/data/jgp/…</code>. Teraz ten katalog jest w <code>public/</code>, więc i tak trafia do <code>dist/data/jgp/</code> i na Cloudflare.</p>
+    <p><b>Odpowiedź na pytanie 2.</b> <code>public/data/jgp/</code> (781 plików, 16 MB) jest potrzebny w repo, bo build czyta go przy tworzeniu 780 stron <code>/jgp/[kod]</code>. Na serwerze nie jest potrzebny: dane każdej grupy są już w HTML jej strony, a żaden kod w przeglądarce nie pobiera <code>/data/jgp/…</code>. Teraz ten katalog jest w <code>public/</code>, więc i tak trafia do <code>dist/data/jgp/</code> i na Cloudflare.</p>
     <p>„Poza <code>public/</code>” znaczy: ten sam katalog w repo, ale w innym miejscu (np. <code>build-data/jgp/</code>). Build w CI dalej go ma, bo jest w repo. Do <code>dist/</code> i na serwer już nie trafia. Rozmiar repo się nie zmienia. To samo dotyczy <code>regions-map.json.gz</code> (5 KB), który też czyta tylko build.</p>
   </div>
+</section>
+
+<section id="cloudflare" aria-labelledby="h-cloudflare">
+  <span class="kicker">2a · Cloudflare</span>
+  <h2 id="h-cloudflare">Co serwuje Cloudflare i jakie ma limity</h2>
+  <p><b>Cloudflare nie widzi repo ani <code>public/</code>.</b> Ostatni krok Action (<code>wrangler pages deploy dist</code>) wysyła na Cloudflare tylko zawartość katalogu <code>dist/</code>, zbudowanego na maszynie GitHuba. Produkcja odpowiada wyłącznie plikami z tej wysyłki: adres <code>/data/hospitalizations/2025.json.gz</code> to plik <code>dist/data/hospitalizations/2025.json.gz</code>. <code>public/</code> jest tylko źródłem, z którego build kopiuje pliki do <code>dist/</code>.</p>
+  <p>Stąd „poza <code>public/</code>”: plik zostaje w repo (build w CI go ma i czyta), ale build go nie kopiuje do <code>dist/</code>, więc wrangler go nie wysyła i nie ma go pod żadnym adresem strony.</p>
+  <div class="scroll-x">
+  <table>
+    <thead><tr><th>Limit Cloudflare Pages</th><th>Wartość</th><th>Atlas teraz</th></tr></thead>
+    <tbody>
+      <tr><td>Rozmiar jednego pliku</td><td>25 MiB</td><td>największy plik w <code>dist/</code>: ok. 1,4 MB (<code>trends.json.gz</code>); największa strona: ok. 0,5 MB HTML</td></tr>
+      <tr><td>Liczba plików w witrynie</td><td>20 000 (plan Free); 100 000 (plany płatne, ze zmienną <code>PAGES_WRANGLER_MAJOR_VERSION=4</code>)</td><td>ok. 4 800 plików; z tego ok. 3 900 to strony grup JGP (HTML i pliki RSC), 781 to <code>data/jgp/</code></td></tr>
+      <tr><td>Łączny rozmiar witryny</td><td>brak limitu w dokumentacji</td><td>ok. 700 MB</td></tr>
+      <tr><td>Czas buildu</td><td>20 minut, ale tylko dla buildów Cloudflare; Atlas buduje w GitHub Actions i wysyła gotowy <code>dist/</code></td><td>Action ma własny limit <code>timeout-minutes: 20</code> na cały job</td></tr>
+      <tr><td><code>_headers</code> / <code>_redirects</code></td><td>100 reguł / 2 100 przekierowań</td><td>nie używamy</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="muted">Źródło: <a href="https://developers.cloudflare.com/pages/platform/limits/">developers.cloudflare.com/pages/platform/limits</a> (strona z 5 września 2026 r.). Każda nowa karta grupy to kilka plików w <code>dist/</code>; przy 780 grupach zapas do 20 000 plików jest duży, ale kolejne typy kart (np. 800 kart szpitali) też go zużywają.</p>
 </section>
 
 <section id="pliki" aria-labelledby="h-pliki">
@@ -95,7 +115,7 @@ td.urls code { display: inline-block; margin: 0 2px 3px 0; white-space: nowrap; 
       <tr><td><code>data/hospitalizations/&lt;rok&gt;.json.gz</code><br><span class="muted">9 plików, 2017–2025</span></td><td class="num">1,2–1,4 MB<br>razem ok. 12 MB</td><td><code>/</code> (wszystkie lata: liczby na stronie głównej)<br><code>/jgp/[kod]</code> (wszystkie lata: ośrodki i nazwy)<br><code>/szukaj.json</code> (najnowszy rok)</td><td><code>/analizy</code>: wybrany rok, zawsze przy otwarciu<br><code>/szpitale</code>: najnowszy rok (Profil i Porównanie)</td><td class="urls"><code>/</code> <code>/analizy</code> <code>/analizy?t=k</code> <code>/analizy?t=a</code> <code>/analizy?t=g</code> <code>/szpitale</code> <code>/szpitale?hv=c</code> <code>/jgp/[kod]</code> <code>/szukaj.json</code></td><td><code>build_hospitalizations.py</code></td></tr>
       <tr><td><code>data/hospitalizations/trends.json.gz</code></td><td class="num">ok. 1,4 MB</td><td><code>/jgp</code> (katalog), <code>/jgp/[kod]</code></td><td><code>/analizy</code>: widoki W czasie i Gdzie</td><td class="urls"><code>/analizy</code> <code>/analizy?t=g</code> <code>/jgp</code> <code>/jgp/[kod]</code></td><td><code>build_hospitalizations.py</code></td></tr>
       <tr><td><code>data/hospitalizations/trends-regions/&lt;OW&gt;.json.gz</code><br><span class="muted">16 plików</span></td><td class="num">0,2–0,4 MB<br>razem 4,5 MB</td><td><span class="pill none">nie</span></td><td><code>/analizy</code>: W czasie, tylko z filtrem województwa (jeden plik)</td><td class="urls"><code>/analizy?ow=&lt;OW&gt;</code></td><td><code>build_hospitalizations.py</code></td></tr>
-      <tr><td><code>data/jgp/index.json</code>, <code>data/jgp/&lt;KOD&gt;.json.gz</code><br><span class="muted">781 plików</span></td><td class="num">34 MB<br>do 361 KB</td><td><code>/jgp/[kod]</code> (lista stron i dane karty)</td><td><span class="pill none">nie</span> dane są w HTML strony</td><td class="urls"><code>/jgp/[kod]</code></td><td><code>build_jgp_pages.py</code></td></tr>
+      <tr><td><code>data/jgp/index.json</code>, <code>data/jgp/&lt;KOD&gt;.json.gz</code><br><span class="muted">781 plików</span></td><td class="num">16 MB<br>do 163 KB</td><td><code>/jgp/[kod]</code> (lista stron i dane karty)</td><td><span class="pill none">nie</span> dane są w HTML strony</td><td class="urls"><code>/jgp/[kod]</code></td><td><code>build_jgp_pages.py</code></td></tr>
       <tr><td><code>data/regions-map.json.gz</code></td><td class="num">5 KB</td><td><code>/jgp/[kod]</code> (mapa województw)</td><td><span class="pill none">nie</span></td><td class="urls"><code>/jgp/[kod]</code></td><td><code>build_regions_map.py</code></td></tr>
       <tr><td><code>data/wyceny_jgp_2025.json.gz</code></td><td class="num">11 KB</td><td><code>/jgp/[kod]</code> (wycena w nagłówku)</td><td><code>/szpitale</code>: widok Porównanie</td><td class="urls"><code>/szpitale?hv=c</code> <code>/jgp/[kod]</code></td><td><code>build_valuations.py</code></td></tr>
       <tr><td><code>data/peer_pairs_ab.json.gz</code></td><td class="num">3,6 MB</td><td><code>/jgp/[kod]</code> (podobne szpitale)</td><td><code>/szpitale</code>: widok Porównanie</td><td class="urls"><code>/szpitale?hv=c</code> <code>/jgp/[kod]</code></td><td><code>build_peer_pairs.py</code></td></tr>
@@ -141,13 +161,13 @@ td.urls code { display: inline-block; margin: 0 2px 3px 0; white-space: nowrap; 
     <thead><tr><th>Katalog w <code>dist/</code></th><th>Rozmiar</th><th>Co to jest</th></tr></thead>
     <tbody>
       <tr><td><code>dist/jgp/</code></td><td class="num">598 MB</td><td>780 stron grup: HTML i 3–4 pliki RSC (<code>.txt</code>) na stronę. Te same dane karty są w HTML i w plikach RSC (RSC służy do przejść między stronami bez przeładowania).</td></tr>
-      <tr><td><code>dist/data/</code></td><td class="num">ok. 70 MB</td><td>kopia <code>public/data/</code>; z tego 39 MB to <code>data/jgp/</code>, którego nikt nie pobiera</td></tr>
+      <tr><td><code>dist/data/</code></td><td class="num">ok. 50 MB</td><td>kopia <code>public/data/</code>; z tego 17 MB to <code>data/jgp/</code>, którego nikt nie pobiera</td></tr>
       <tr><td><code>dist/_next/</code></td><td class="num">7 MB</td><td>JavaScript i CSS aplikacji</td></tr>
     </tbody>
   </table>
   </div>
   <div class="callout warn">
-    <p>Większość <code>dist/</code> to strony grup, nie pliki danych. Przeniesienie <code>public/data/jgp/</code> zmniejsza <code>dist/</code> o ok. 5% i usuwa 781 zbędnych plików z serwera. Większy zysk dla użytkownika dały lżejsze pliki lat i trendów (sekcja 6), bo te pobiera przeglądarka.</p>
+    <p>Większość <code>dist/</code> to strony grup, nie pliki danych. Przeniesienie <code>public/data/jgp/</code> zmniejsza <code>dist/</code> o ok. 2,5% i usuwa 781 zbędnych plików z serwera. Większy zysk dla użytkownika dały lżejsze pliki lat i trendów (sekcja 6), bo te pobiera przeglądarka.</p>
   </div>
 </section>
 
@@ -157,12 +177,12 @@ td.urls code { display: inline-block; margin: 0 2px 3px 0; white-space: nowrap; 
   <p>Pomysł: w repo jeden plik ze wszystkimi grupami, a <code>npm run build</code> dzieli go na pliki grup. Ocena:</p>
   <ul>
     <li><b>Dla użytkownika strony: bez różnicy.</b> Przeglądarka nie pobiera plików <code>jgp/</code>. Waga strony grupy to jej HTML (54–141 KB po kompresji) i nie zależy od tego, jak dane leżą w repo.</li>
-    <li><b>Limit 25 MB Cloudflare dotyczy pojedynczego pliku w <code>dist/</code>.</b> Jeden plik w <code>public/</code> miałby ok. 33 MB i przekroczyłby limit (deploy by się nie udał). Poza <code>public/</code> limit go nie dotyczy, bo plik nie trafia na serwer. Drugi limit Cloudflare: 20 000 plików na wdrożenie; teraz <code>dist/</code> ma ok. 4 800 plików, z tego 781 to <code>data/jgp/</code>.</li>
+    <li><b>Limit 25 MB Cloudflare dotyczy pojedynczego pliku w <code>dist/</code>.</b> Jeden plik w <code>public/</code> miałby ok. 16 MB po zapisie kolumnowym (wcześniej ok. 33 MB, ponad limit); przy kolejnych latach i grupach zbliżałby się do limitu. Poza <code>public/</code> limit go nie dotyczy, bo plik nie trafia na serwer. Drugi limit Cloudflare: 20 000 plików na wdrożenie; teraz <code>dist/</code> ma ok. 4 800 plików, z tego 781 to <code>data/jgp/</code>.</li>
     <li><b>Dla buildu: osobne pliki są lepsze.</b> Next buduje 780 stron w kilku procesach naraz. Z osobnymi plikami każdy proces czyta tylko grupy, które buduje. Z jednym plikiem każdy proces musiałby wczytać i rozpakować całość (setki MB w pamięci na proces). Krok „podziel przy buildzie” dodaje pracę bez zysku: wynik jest taki sam jak dziś.</li>
     <li><b>Dla gita: osobne pliki są lepsze.</b> Zmiana jednej grupy zmienia jeden mały plik. Jeden duży plik zmienia się w całości przy każdej przebudowie.</li>
   </ul>
   <div class="callout">
-    <p><b>Wniosek.</b> Zostawić osobne pliki grup, ale (1) przenieść <code>jgp/</code> poza <code>public/</code> (nie trafia na serwer) i (2) zapisać wiersze grup kolumnami jak pliki lat: 34 → ok. 17 MB w repo. Kiedy karty grup zastąpią <code>/analizy</code>, pliki lat i trendów nadal będą potrzebne: build stron grup, strona główna i <code>/szpitale</code> z nich korzystają.</p>
+    <p><b>Wniosek.</b> Zostawić osobne pliki grup, ale (1) przenieść <code>jgp/</code> poza <code>public/</code> (nie trafia na serwer) i (2) zapisać wiersze grup kolumnami jak pliki lat (zrobione 4.11: 32,7 → 15,9 MB, format v3). 17 MB w repo. Kiedy karty grup zastąpią <code>/analizy</code>, pliki lat i trendów nadal będą potrzebne: build stron grup, strona główna i <code>/szpitale</code> z nich korzystają.</p>
   </div>
 </section>
 

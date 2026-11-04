@@ -126,7 +126,7 @@ for (const [key, [hSim, hMin]] of nationalSums) {
 console.log(`Regional trends OK: ${regionCodes.length} files, ${regionalRows.toLocaleString("en-US")} rows, ${(regionalSize / 1024).toFixed(0)} KiB.`);
 console.log(`Hospitalization data OK: ${index.years.join(", ")}; ${((totalSize + trendsSize + regionalSize) / 1024 / 1024).toFixed(2)} MiB in total.`);
 
-// Pliki stron grup (scripts/build_jgp_pages.py, format v2): jeden na każdą grupę JGP z trendów,
+// Pliki stron grup (scripts/build_jgp_pages.py, format v3: wiersze kolumnami): jeden na każdą grupę JGP z trendów,
 // a ich hospitalizacje (metoda min) sumują się do trendu krajowego grupy w każdym miesiącu i trybie.
 {
   const pagesIndex = JSON.parse(await readFile("public/data/jgp/index.json", "utf8"));
@@ -146,8 +146,9 @@ console.log(`Hospitalization data OK: ${index.years.join(", ")}; ${((totalSize +
     const { size, data: group } = await readGzipJson(file);
     totalSize += size;
     if (size > largest[0]) largest = [size, code];
-    if (group.version !== 2 || group.jgp !== code || JSON.stringify(group.years) !== JSON.stringify(index.years)) throw new Error(`${file} has a wrong header.`);
+    if (group.version !== 3 || group.jgp !== code || JSON.stringify(group.years) !== JSON.stringify(index.years)) throw new Error(`${file} has a wrong header.`);
     const actual = new Map();
+    group.rows = rowsFromColumns(group.rows, ["provider", "month", "admission", "hospitalizations", "deaths"], file);
     for (const [provider, month, admission, h] of group.rows) {
       if (!group.providers[provider]) throw new Error(`${file}: row points to a missing provider ${provider}.`);
       const key = `${code}|${month}|${admission}`;

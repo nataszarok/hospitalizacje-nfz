@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { decodeRegionalTrends, decodeStaticDataset, decodeTrends, type RegionalTrendsFile, type StaticDatasetFile, type TrendsFile } from "@/lib/hospitalizationCodec";
+import { decodeJgpGroupFile, decodeRegionalTrends, decodeStaticDataset, decodeTrends, type JgpGroupFileColumns, type RegionalTrendsFile, type StaticDatasetFile, type TrendsFile } from "@/lib/hospitalizationCodec";
 import type { StaticDataset } from "@/lib/staticData";
 
 // Mały plik roku w formacie v2: dwóch świadczeniodawców, dwa produkty, słowniki czasu pobytu i trybu.
@@ -66,5 +66,21 @@ describe("decodeTrends i decodeRegionalTrends", () => {
     const decoded = decodeRegionalTrends(file);
     expect(decoded).toEqual({ version: 3, years: ["2024", "2025"], owNfz: "07", rows: decodeTrends(trends).monthly });
     expect(decodeRegionalTrends(decoded)).toBe(decoded);
+  });
+});
+
+describe("decodeJgpGroupFile", () => {
+  const file: JgpGroupFileColumns = {
+    version: 3, jgp: "A01", years: ["2024", "2025"], providers: ["07|111", "12|222"],
+    rows: { provider: [1, 0], month: [12, 3], admission: [1, 0], hospitalizations: [4, 2], deaths: [1, 0] },
+    valuePln: { national: { "2025": 1000 }, year: "2025", providers: [["07|111", 400]] },
+  };
+
+  it("odtwarza wiersze grupy z kolumn, reszta pliku bez zmian", () => {
+    const decoded = decodeJgpGroupFile(file);
+    expect(decoded.rows).toEqual([[1, 12, 1, 4, 1], [0, 3, 0, 2, 0]]);
+    expect(decoded.providers).toBe(file.providers);
+    expect(decoded.valuePln).toBe(file.valuePln);
+    expect(decodeJgpGroupFile(decoded)).toBe(decoded);
   });
 });

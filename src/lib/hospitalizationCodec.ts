@@ -1,3 +1,4 @@
+import type { JgpGroupFile } from "@/lib/jgpPage";
 import type { AdmissionGroup, RegionalTrendsDataset, StaticDataset, TrendsDataset } from "@/lib/staticData";
 
 /**
@@ -5,7 +6,8 @@ import type { AdmissionGroup, RegionalTrendsDataset, StaticDataset, TrendsDatase
  * powtarzające się teksty (świadczeniodawca, produkt, czas pobytu, tryb, rok, OW, grupa trybu) są raz
  * w słowniku, a wiersze wskazują je indeksem; wiersze są zapisane kolumnami (lista na pole).
  * Taki plik po kompresji gzip jest ok. dwa razy mniejszy niż wiersze-krotki z tekstami.
- * Funkcje poniżej odtwarzają krotki, których używa reszta aplikacji (`StaticDataset`, `TrendsDataset`).
+ * Funkcje poniżej odtwarzają krotki, których używa reszta aplikacji (`StaticDataset`, `TrendsDataset`,
+ * `JgpGroupFile` z `public/data/jgp/`).
  * Plik w dawnym formacie (krotki) zwracają bez zmian.
  */
 
@@ -64,4 +66,19 @@ export function decodeRegionalTrends(file: RegionalTrendsFile | RegionalTrendsDa
   if (!isColumns(file.rows)) return file as RegionalTrendsDataset;
   const { groups, rows, ...rest } = file as RegionalTrendsFile;
   return { ...rest, rows: monthlyRows(rows, rest.years, groups) };
+}
+
+/** Wiersze pliku grupy JGP (format v3): indeks świadczeniodawcy, indeks miesiąca, tryb 0/1/2, hospitalizacje, zgony. */
+export interface JgpRowColumns { provider: number[]; month: number[]; admission: number[]; hospitalizations: number[]; deaths: number[] }
+
+/** Plik grupy JGP w formacie v3. */
+export interface JgpGroupFileColumns extends Omit<JgpGroupFile, "rows"> { rows: JgpRowColumns }
+
+export function decodeJgpGroupFile(file: JgpGroupFileColumns | JgpGroupFile): JgpGroupFile {
+  if (!isColumns(file.rows)) return file as JgpGroupFile;
+  const { rows: columns, ...rest } = file as JgpGroupFileColumns;
+  const { provider, month, admission, hospitalizations, deaths } = columns;
+  const rows: JgpGroupFile["rows"] = new Array(provider.length);
+  for (let i = 0; i < provider.length; i++) rows[i] = [provider[i], month[i], admission[i], hospitalizations[i], deaths[i]];
+  return { ...rest, rows };
 }
