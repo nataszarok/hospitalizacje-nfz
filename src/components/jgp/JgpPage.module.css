@@ -568,9 +568,14 @@
 }
 
 /* Pełna lista ośrodków: przewijanie w obrębie tabeli, ok. 10 wierszy na ekranie. */
+/*
+ * `overflow-anchor: none`: wiersz tabeli nie może być kotwicą przewijania strony. Zmiana roku albo filtra
+ * przestawia wiersze, a przeglądarka przesuwała wtedy całą stronę za wierszem-kotwicą (skok i drżenie ekranu).
+ */
 .scrollTable {
   max-height: 440px;
   overflow: auto;
+  overflow-anchor: none;
   overscroll-behavior: contain;
 }
 
