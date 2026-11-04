@@ -4,13 +4,13 @@ import "@testing-library/jest-dom/vitest";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { JgpPage } from "@/components/jgp/JgpPage";
-import { buildJgpPageData, hasTabbedCard } from "@/lib/jgpPage";
+import { buildJgpPageData } from "@/lib/jgpPage";
 import { extrasFixture } from "@/lib/__tests__/fixtures/jgpCardFixture";
 import { latestDatasetFixture, trendsFixture } from "@/lib/__tests__/fixtures/trendsFixture";
 
 // Wykresy Plotly zastępujemy przyciskami: test sprawdza linie i wybór ośrodka.
 vi.mock("@/components/jgp/GroupLineChart", () => ({
-  GroupLineChart: ({ lines, onSelect, onHover, note }: { lines: { key: string; name: string; values: number[]; base?: number[]; tone?: string }[]; onSelect?: (key: string) => void; onHover?: (key: string | null) => void; note?: string }) => <ul aria-label="Linie wykresu" data-note={note ?? ""}>
+  GroupLineChart: ({ lines, onSelect, onHover, note, period }: { lines: { key: string; name: string; values: number[]; base?: number[]; tone?: string }[]; onSelect?: (key: string) => void; onHover?: (key: string | null) => void; note?: string; period?: string }) => <ul aria-label="Linie wykresu" data-note={note ?? ""} data-period={period ?? "month"}>
     {lines.map((line) => <li key={line.key} data-tone={line.tone ?? ""} data-base={line.base ? "tak" : ""}>
       <button type="button" onClick={() => onSelect?.(line.key)} onMouseEnter={() => onHover?.(line.key)} onMouseLeave={() => onHover?.(null)}>{line.name}: {line.values.reduce((a, b) => a + b, 0)}</button>
     </li>)}
@@ -25,16 +25,10 @@ vi.mock("@/components/jgp/ProviderScatter", () => ({
 
 const data = buildJgpPageData(trendsFixture, latestDatasetFixture, "A01", "min", 15, extrasFixture)!;
 const open = (search = "") => window.history.replaceState(null, "", `/jgp/A01${search}`);
-const renderCard = () => render(<JgpPage data={data} tabbed />);
+const renderCard = () => render(<JgpPage data={data} />);
 
 beforeEach(() => open());
 afterEach(cleanup);
-
-describe("Karta w zakładkach — wybór grup", () => {
-  it("nowa karta jest dla grup z sekcji E i H", () => {
-    expect(["E10", "H52", "H55", "E03", "HK11", "A01", "F04"].map(hasTabbedCard)).toEqual([true, true, true, true, true, false, false]);
-  });
-});
 
 describe("Karta w zakładkach — nagłówek i Przegląd", () => {
   it("pasek zakładek ma kod i nazwę grupy (widoczne po przewinięciu nagłówka karty)", () => {
@@ -165,7 +159,7 @@ describe("Karta w zakładkach — wybór roku, opis i rodzina", () => {
       { code: "A01", name: "STAŁY PRODUKT", values: [8, 8, 9] },
       { code: "A02", name: "INNY WARIANT", values: [2, 8, 1] },
     ] } };
-    render(<JgpPage data={withFamily} tabbed />);
+    render(<JgpPage data={withFamily} />);
     expect(screen.getByText(/Opis grupy testowej\./)).toHaveTextContent("opis redakcyjny");
     const section = screen.getByRole("region", { name: /Jak wygląda rodzina\?/ });
     expect(section).toHaveTextContent("A01 to 90% hospitalizacji rodziny w 2025 r. (w 2023 r.: 80%)");
@@ -262,6 +256,28 @@ describe("Karta w zakładkach — miary w „Ile?”", () => {
     fireEvent.click(within(group).getByRole("button", { name: "% nagłych" }));
     expect(heading()).toHaveTextContent("Ile? Udział przyjęć nagłych miesięcznie, wszystkie lata");
     expect(screen.getByRole("button", { name: "% nagłych" })).toHaveAttribute("aria-pressed", "true");
+  });
+});
+
+describe("Karta w zakładkach — okres w „Ile?” (miesiące albo lata)", () => {
+  it("przełącznik w nagłówku sekcji zmienia okres wykresu, tytuł i objaśnienie; okres zostaje po zmianie zakładki", () => {
+    renderCard();
+    const heading = () => screen.getByRole("heading", { level: 2, name: /^Ile\?/ });
+    const chart = () => screen.getByRole("list", { name: "Linie wykresu" });
+    const toggle = () => screen.getByRole("group", { name: "Okres na wykresie" });
+    expect(chart()).toHaveAttribute("data-period", "month");
+    expect(within(toggle()).getByRole("button", { name: "Miesiące" })).toHaveAttribute("aria-pressed", "true");
+    // Przełącznik stoi w nagłówku sekcji, w miejscu etykiety zakresu (bez dodatkowego wiersza nad wykresem).
+    expect(heading().parentElement).toContainElement(toggle());
+    fireEvent.click(within(toggle()).getByRole("button", { name: "Lata" }));
+    expect(chart()).toHaveAttribute("data-period", "year");
+    expect(heading()).toHaveTextContent("Ile? Hospitalizacje rocznie, wszystkie lata");
+    expect(chart()).toHaveAttribute("data-note", expect.stringContaining("Kropka = suma roku"));
+    fireEvent.click(screen.getByRole("tab", { name: /Ośrodki/ }));
+    expect(chart()).toHaveAttribute("data-period", "year");
+    expect(heading()).toHaveTextContent(/^Ile\? Hospitalizacje rocznie, \d+ największych ośrodków/);
+    fireEvent.click(within(toggle()).getByRole("button", { name: "Miesiące" }));
+    expect(chart()).toHaveAttribute("data-period", "month");
   });
 });
 

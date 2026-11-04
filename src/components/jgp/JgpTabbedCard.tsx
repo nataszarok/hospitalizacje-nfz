@@ -1,15 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { GroupLineChart, type ChartLine } from "@/components/jgp/GroupLineChart";
-import { RegionMap, SELECTED_PROVIDER_PARAM, regionTitle } from "@/components/jgp/JgpCard";
+import { RegionMap, regionTitle } from "@/components/jgp/RegionMap";
 import { ProviderScatter, STAR_COLOR, type ScatterCurve, type ScatterPoint } from "@/components/jgp/ProviderScatter";
 import { ProviderLink } from "@/components/TableLinks";
 import { formatCityName } from "@/lib/formatters";
 import {
   cartogramCells, dataForYear, defaultCardYear, funnelCurves, funnelStatus, limitToCatalogYears, MAX_REGIONS, MIN_FUNNEL_DEATHS, poolStats, providerPool, providerYearTotals, scaleColor, selectedIndex,
-  structureShares, sumSeries, unpackPageData, yearChangePct, type CompareScope, type PackedJgpPageData, type RegionsMap,
+  structureShares, sumSeries, unpackPageData, yearChangePct, type ChartPeriod, type CompareScope, type PackedJgpPageData, type RegionsMap,
 } from "@/lib/jgpCard";
 import type { JgpPageData, JgpProviderRow } from "@/lib/jgpPage";
 import { hospitalHref } from "@/lib/portalLinks";
@@ -23,7 +23,9 @@ const signedPct = (value: number) => `${value > 0 ? "+" : ""}${decimal(value)}%`
 const signedPp = (value: number, digits = 1) => `${value > 0 ? "+" : ""}${decimal(value, digits)} pp`;
 const millions = (value: number) => `${decimal(value / 1_000_000)} mln zł`;
 
-/** Parametry adresu: zakładka (`widok=osrodki`), wybrany ośrodek, porównanie z podobnymi, województwa. */
+/** Parametry adresu: zakładka (`widok=osrodki`), wybrany ośrodek, porównanie z podobnymi, województwa, rok. */
+/** Wybrany ośrodek (`?osrodek=OW|NIP`), np. z linku na profilu szpitala. */
+export const SELECTED_PROVIDER_PARAM = "osrodek";
 const TAB_PARAM = "widok";
 const SCOPE_PARAM = "porownanie";
 const REGION_PARAM = "ow";
@@ -100,6 +102,8 @@ export function JgpTabbedCard({ packed, map = null }: { packed: PackedJgpPageDat
   const all = useMemo(() => limitToCatalogYears(unpackPageData(packed)), [packed]);
   const defaultYear = defaultCardYear(all);
   const { state, write } = useTabbedState(all, defaultYear);
+  // Okres wykresów „Ile?” (miesiące albo lata), wspólny dla obu zakładek.
+  const [period, setPeriod] = useState<ChartPeriod>("month");
   // Dane wybranego roku: ranking, liczby i województwa; wykresy „w czasie” pokazują wszystkie lata.
   const yearIndex = all.admissionYears.indexOf(state.year ?? defaultYear);
   const data = useMemo(() => dataForYear(all, yearIndex), [all, yearIndex]);
@@ -179,6 +183,8 @@ export function JgpTabbedCard({ packed, map = null }: { packed: PackedJgpPageDat
           onRegionYear={(ow, year) => write({ year: year === all.year ? null : year, regions: state.regions.includes(ow) || state.regions.length >= MAX_REGIONS ? state.regions : [...state.regions, ow] })}
           onClearRegions={() => write({ regions: [] })}
           onShowProviders={showProviders}
+          period={period}
+          onPeriod={setPeriod}
         />
       </div>
       : <div role="tabpanel" id="panel-osrodki" aria-labelledby="tab-osrodki" className={styles.panel}>
@@ -193,6 +199,8 @@ export function JgpTabbedCard({ packed, map = null }: { packed: PackedJgpPageDat
           onSelect={(key) => write({ selectedKey: key === state.selectedKey ? null : key })}
           onScope={(next) => write({ scope: next })}
           onClear={() => write({ selectedKey: null })}
+          period={period}
+          onPeriod={setPeriod}
         />
       </div>}
   </>;
@@ -241,27 +249,49 @@ function CardHeader({ data, regions, onClearRegion }: { data: JgpPageData; regio
   </header>;
 }
 
-function SectionHead({ id, question, context, tag }: { id: string; question: string; context: string; tag: string }) {
+/** Nagłówek sekcji: pytanie, kontekst i etykieta zakresu (`tag`) albo przełącznik w tym samym miejscu (`tools`). */
+function SectionHead({ id, question, context, tag, tools }: { id: string; question: string; context: string; tag?: string; tools?: ReactNode }) {
   return <div className={styles.secHead}>
     <h2 id={id} className={styles.secTitle}><span className={styles.q}>{question}</span> <span className={styles.ctx}>{context}</span></h2>
-    <span className={styles.tag}>{tag}</span>
+    {tools ?? <span className={styles.tag}>{tag}</span>}
   </div>;
 }
+
+/** Przełącznik okresu wykresu: w miejscu etykiety sekcji, więc nie zajmuje dodatkowego miejsca. */
+function PeriodToggle({ period, onPeriod }: { period: ChartPeriod; onPeriod: (period: ChartPeriod) => void }) {
+  return <div className={styles.periodToggle} role="group" aria-label="Okres na wykresie">
+    <button type="button" aria-pressed={period === "month"} onClick={() => onPeriod("month")}>Miesiące</button>
+    <button type="button" aria-pressed={period === "year"} onClick={() => onPeriod("year")}>Lata</button>
+  </div>;
+}
+
+/** „miesięcznie” albo „rocznie” w tytułach sekcji. */
+const periodWord = (period: ChartPeriod) => period === "year" ? "rocznie" : "miesięcznie";
 
 // ——— Przegląd ———
 
 type Metric = "hospitalizations" | "mortality" | "urgent";
 
-// Miary wykresu „Ile?”: przycisk, tytuł sekcji, jednostka w podpowiedzi i objaśnienie pod osią.
-const METRICS: Record<Metric, { button: string; title: string; unit: string; note: string }> = {
-  hospitalizations: { button: "Hospitalizacje", title: "Hospitalizacje miesięcznie", unit: "hosp.", note: "Kropka = miesiąc, linia = średnia z 3 miesięcy. Miesiące według daty wypisu, wartości <5 liczone jako 1." },
-  mortality: { button: "Śmiertelność", title: "Śmiertelność miesięcznie", unit: "zgonów", note: "Zgony w szpitalu / hospitalizacje. Linia = udział z 3 miesięcy, miesiące według daty wypisu." },
-  urgent: { button: "% nagłych", title: "Udział przyjęć nagłych miesięcznie", unit: "nagłych", note: "Przyjęcia nagłe (tryb 2 i 3) / hospitalizacje. Linia = udział z 3 miesięcy, miesiące według daty wypisu." },
+// Miary wykresu „Ile?”: przycisk, tytuł sekcji (bez okresu), jednostka w podpowiedzi i objaśnienie pod osią w obu okresach.
+// Objaśnienie roczne ma tyle samo zdań co miesięczne: wykres ma tę samą wysokość w obu okresach.
+const METRICS: Record<Metric, { button: string; title: string; unit: string; note: Record<ChartPeriod, string> }> = {
+  hospitalizations: { button: "Hospitalizacje", title: "Hospitalizacje", unit: "hosp.", note: {
+    month: "Kropka = miesiąc, linia = średnia z 3 miesięcy. Miesiące według daty wypisu, wartości <5 liczone jako 1.",
+    year: "Kropka = suma roku. Lata według daty wypisu, wartości <5 liczone jako 1.",
+  } },
+  mortality: { button: "Śmiertelność", title: "Śmiertelność", unit: "zgonów", note: {
+    month: "Zgony w szpitalu / hospitalizacje. Linia = udział z 3 miesięcy, miesiące według daty wypisu.",
+    year: "Zgony w szpitalu / hospitalizacje w roku. Lata według daty wypisu.",
+  } },
+  urgent: { button: "% nagłych", title: "Udział przyjęć nagłych", unit: "nagłych", note: {
+    month: "Przyjęcia nagłe (tryb 2 i 3) / hospitalizacje. Linia = udział z 3 miesięcy, miesiące według daty wypisu.",
+    year: "Przyjęcia nagłe (tryb 2 i 3) / hospitalizacje w roku. Lata według daty wypisu.",
+  } },
 };
 
-function OverviewTab({ data, pool, linePool, map, regions, onToggleRegion, onYear, onRegionYear, onClearRegions, onShowProviders }: {
+function OverviewTab({ data, pool, linePool, map, regions, onToggleRegion, onYear, onRegionYear, onClearRegions, onShowProviders, period, onPeriod }: {
   data: JgpPageData; pool: JgpProviderRow[]; linePool: JgpProviderRow[]; map: RegionsMap | null; regions: string[]; onToggleRegion: (ow: string) => void; onYear: (year: string) => void;
-  onRegionYear: (ow: string, year: string) => void; onClearRegions: () => void; onShowProviders: () => void;
+  onRegionYear: (ow: string, year: string) => void; onClearRegions: () => void; onShowProviders: () => void; period: ChartPeriod; onPeriod: (period: ChartPeriod) => void;
 }) {
   const [metric, setMetric] = useState<Metric>("hospitalizations");
   const lines = useMemo((): ChartLine[] => {
@@ -278,11 +308,11 @@ function OverviewTab({ data, pool, linePool, map, regions, onToggleRegion, onYea
   const shown = METRICS[regions.length ? "hospitalizations" : metric];
   return <>
     <section className={styles.sec} aria-labelledby="s-ile">
-      <SectionHead id="s-ile" question="Ile?" context={`${regions.length ? "Hospitalizacje w wybranych województwach miesięcznie" : shown.title}, wszystkie lata`} tag="Lata" />
+      <SectionHead id="s-ile" question="Ile?" context={`${regions.length ? "Hospitalizacje w wybranych województwach" : shown.title} ${periodWord(period)}, wszystkie lata`} tools={<PeriodToggle period={period} onPeriod={onPeriod} />} />
       {!regions.length ? <div className={base.segmented} role="group" aria-label="Miara">
         {(Object.keys(METRICS) as Metric[]).map((key) => <button key={key} type="button" aria-pressed={metric === key} onClick={() => setMetric(key)}>{METRICS[key].button}</button>)}
       </div> : null}
-      <GroupLineChart months={data.months} lines={lines} valueLabel={shown.unit} legend={regions.length > 0} height={420} highlightYear={data.year} fitAxis={!regions.length && metric === "urgent"} note={shown.note} ariaLabel={`Wykres liniowy: ${shown.title.toLowerCase()} we wszystkich latach`} />
+      <GroupLineChart months={data.months} lines={lines} valueLabel={shown.unit} legend={regions.length > 0} height={420} highlightYear={data.year} fitAxis={!regions.length && metric === "urgent"} note={shown.note[period]} period={period} ariaLabel={`Wykres liniowy: ${shown.title.toLowerCase()} ${periodWord(period)} we wszystkich latach`} />
     </section>
     <RegionsSection data={data} pool={pool} map={map} regions={regions} onToggle={onToggleRegion} onYear={onYear} onRegionYear={onRegionYear} onClear={onClearRegions} onShowProviders={onShowProviders} />
     <CostSection data={data} onYear={onYear} />
@@ -496,9 +526,9 @@ function FamilySection({ data }: { data: JgpPageData }) {
 
 // ——— Ośrodki ———
 
-function ProvidersTab({ data, pool, comparison, regions, selectedRow, scope, filtered, onSelect, onScope, onClear }: {
+function ProvidersTab({ data, pool, comparison, regions, selectedRow, scope, filtered, onSelect, onScope, onClear, period, onPeriod }: {
   data: JgpPageData; pool: JgpProviderRow[]; comparison: JgpProviderRow[]; regions: string[]; selectedRow: JgpProviderRow | null; scope: CompareScope; filtered: boolean;
-  onSelect: (key: string) => void; onScope: (scope: CompareScope) => void; onClear: () => void;
+  onSelect: (key: string) => void; onScope: (scope: CompareScope) => void; onClear: () => void; period: ChartPeriod; onPeriod: (period: ChartPeriod) => void;
 }) {
   const [hoverKey, setHoverKey] = useState<string | null>(null);
   const [details, setDetails] = useState(false);
@@ -519,7 +549,7 @@ function ProvidersTab({ data, pool, comparison, regions, selectedRow, scope, fil
   const hoverRow = hoverKey ? data.providers.find((row) => row.key === hoverKey) ?? null : null;
   return <>
     <section className={styles.sec} aria-labelledby="s-czas">
-      <SectionHead id="s-czas" question="Ile?" context={`Hospitalizacje miesięcznie, ${Math.min(TOP_LINES, pool.length)} największych ośrodków w ${data.year} r.`} tag="Lata" />
+      <SectionHead id="s-czas" question="Ile?" context={`Hospitalizacje ${periodWord(period)}, ${Math.min(TOP_LINES, pool.length)} największych ośrodków w ${data.year} r.`} tools={<PeriodToggle period={period} onPeriod={onPeriod} />} />
       <GroupLineChart
         months={data.months}
         lines={lines}
@@ -529,8 +559,9 @@ function ProvidersTab({ data, pool, comparison, regions, selectedRow, scope, fil
         onHover={setHoverKey}
         selectedColor={STAR_COLOR}
         highlightYear={data.year}
+        period={period}
         selectedLabel={selectedRow ? `★ ${selectedRow.name.length > 40 ? `${selectedRow.name.slice(0, 39)}…` : selectedRow.name}` : undefined}
-        ariaLabel={`Wykres liniowy: hospitalizacje miesięcznie w ${lines.length} ośrodkach`}
+        ariaLabel={`Wykres liniowy: hospitalizacje ${periodWord(period)} w ${lines.length} ośrodkach`}
       />
       <ProviderBar
         data={data}

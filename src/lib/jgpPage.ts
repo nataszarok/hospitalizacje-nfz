@@ -8,11 +8,6 @@ import type { EstimationMethod } from "@/lib/types";
 export const PEER_GRADE = "A";
 export const PEER_MAX_DISTANCE = 10.01;
 
-/** Grupy z nową kartą w zakładkach (Przegląd, Ośrodki); pozostałe mają dotychczasową kartę. */
-/** Sekcje katalogu (pierwsza litera kodu) z nową kartą w zakładkach; pozostałe grupy mają dotychczasową kartę. */
-export const JGP_TABBED_SECTIONS = ["E", "H"];
-export const hasTabbedCard = (jgpCode: string) => JGP_TABBED_SECTIONS.includes(jgpCode.charAt(0).toUpperCase());
-
 /**
  * Plik grupy z `scripts/build_jgp_pages.py` (`public/data/jgp/<KOD>.json.gz`, format v2).
  * Liczby metodą konserwatywną (`<5` = 1), tą samą co na stronach grup.

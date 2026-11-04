@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cartogramCells, cellColor, darkLabel, scaleColor, movingAverage, packPageData, unpackPageData, poolAdmissions, poolStats, providerPool, selectedIndex, sumSeries, topShare, yearChangePct } from "@/lib/jgpCard";
+import { cartogramCells, cellColor, darkLabel, scaleColor, monthYears, movingAverage, sumByYear, packPageData, unpackPageData, poolStats, providerPool, selectedIndex, sumSeries, yearChangePct } from "@/lib/jgpCard";
 import { buildJgpPageData } from "@/lib/jgpPage";
 import type { RegionRow } from "@/lib/regions";
 import { extrasFixture } from "./fixtures/jgpCardFixture";
@@ -41,8 +41,7 @@ describe("liczby grupy", () => {
     expect(poolStats(data.providers)).toMatchObject({ providers: 2, hospitalizations: 30, deaths: 3, mortalityPct: 10 });
   });
 
-  it("liczy udział czołówki i zmianę r/r", () => {
-    expect(topShare(data.providers, 1)).toBe(60);
+  it("liczy zmianę r/r", () => {
     expect(yearChangePct(30, 15)).toBe(100);
     expect(yearChangePct(30, null)).toBeNull();
     expect(yearChangePct(30, 0)).toBeNull();
@@ -56,22 +55,11 @@ describe("providerPool — kilka województw", () => {
   });
 });
 
-describe("movingAverage i poolAdmissions", () => {
+describe("movingAverage", () => {
   it("liczy średnią kroczącą z 3 miesięcy; na początku z dostępnych miesięcy", () => {
     expect(movingAverage([3, 6, 9, 12])).toEqual([3, 4.5, 6, 9]);
     expect(movingAverage([3, 6, 9, 12], 3, 3)).toEqual([null, null, 6, 9]);
     expect(movingAverage([])).toEqual([]);
-  });
-
-  it("sumuje tryb przyjęcia w latach dla wybranych ośrodków", () => {
-    expect(poolAdmissions(data.providers, data.admissionYears)).toEqual([
-      { year: "2024", total: 15, planned: 5, urgent: 10, other: 0 },
-      { year: "2025", total: 30, planned: 8, urgent: 22, other: 0 },
-    ]);
-    expect(poolAdmissions(data.providers.filter((row) => row.owNfz === "07"), data.admissionYears)).toEqual([
-      { year: "2024", total: 5, planned: 5, urgent: 0, other: 0 },
-      { year: "2025", total: 12, planned: 8, urgent: 4, other: 0 },
-    ]);
   });
 });
 
@@ -128,5 +116,19 @@ describe("packPageData / unpackPageData", () => {
     expect(packed).not.toHaveProperty("providers");
     expect(packed.providerRows[0]).toEqual(["12|222", "Szpital Beta", "KATOWICE", 18, 2, 11.11, 100, withPeers.providers[0].series, 10, 700_000, [1], [[0, 10, 0], [0, 18, 0]], [1, 2]]);
     expect(unpackPageData(packed)).toEqual(withPeers);
+  });
+});
+
+describe("monthYears i sumByYear (wykres „Ile?” w latach)", () => {
+  const months = ["2023-11", "2023-12", "2024-01", "2024-02", "2024-03"];
+
+  it("zwraca lata w kolejności i liczbę miesięcy danych w roku", () => {
+    expect(monthYears(months)).toEqual({ years: ["2023", "2024"], monthCounts: [2, 3] });
+    expect(monthYears([])).toEqual({ years: [], monthCounts: [] });
+  });
+
+  it("sumuje miesiące w latach", () => {
+    expect(sumByYear(months, [1, 2, 3, 4, 5])).toEqual([3, 12]);
+    expect(sumByYear([], [])).toEqual([]);
   });
 });

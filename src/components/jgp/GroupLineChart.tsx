@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { movingAverage, movingRatio, ratioSeries } from "@/lib/jgpCard";
+import { monthYears, movingAverage, movingRatio, ratioSeries, sumByYear, type ChartPeriod } from "@/lib/jgpCard";
 import { countAxis, getAppFontFamily, makeHoverTrace, monthAxis, percentAxis, PLOTLY_CONFIG, type PlotElement } from "@/lib/plotlyChart";
 import { loadPlotly } from "@/lib/plotlyLoader";
 
@@ -31,12 +31,18 @@ export interface ChartLine {
   base?: number[];
 }
 
-/** Punkty (wartość miesiąca) i linia (średnia 3M) serii; dla udziału: procent miesiąca i procent z 3 miesięcy. */
-function seriesOf(line: ChartLine) {
-  return line.base
-    ? { points: ratioSeries(line.values, line.base), average: movingRatio(line.values, line.base) }
-    : { points: line.values as (number | null)[], average: movingAverage(line.values) };
+/**
+ * Punkty (wartość miesiąca) i linia (średnia 3M) serii; dla udziału: procent miesiąca i procent z 3 miesięcy.
+ * Lata: punkt = suma roku (udział z sum roku), linia łączy punkty.
+ */
+function seriesOf(line: ChartLine, period: ChartPeriod) {
+  const points = line.base ? ratioSeries(line.values, line.base) : line.values as (number | null)[];
+  if (period === "year") return { points, average: points };
+  return { points, average: line.base ? movingRatio(line.values, line.base) : movingAverage(line.values) };
 }
+
+/** Seria zsumowana w latach (wartości i mianownik). */
+const yearlyLine = (line: ChartLine, months: string[]): ChartLine => ({ ...line, values: sumByYear(months, line.values), base: line.base ? sumByYear(months, line.base) : undefined });
 
 /**
  * Wykres miesięcy: kropka = wartość w miesiącu, linia = średnia krocząca z 3 miesięcy (3M MA;
@@ -46,9 +52,11 @@ function seriesOf(line: ChartLine) {
  * Wszystkie serie są typu `scattergl` (jak w eksploratorze): `restyle` serii SVG w trakcie najechania
  * przerysowuje dymek podpowiedzi, wywołuje kolejne najechanie i przepełnia stos.
  */
-export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = false, onSelect, onHover, height = 400, selectedColor = SELECTED, selectedLabel, highlightYear, note, fitAxis = false }: {
+export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = false, onSelect, onHover, height = 400, selectedColor = SELECTED, selectedLabel, highlightYear, note, fitAxis = false, period = "month" }: {
   /** Miesiące jako „RRRR-MM”. */
   months: string[];
+  /** „year”: suma każdego roku zamiast miesięcy (te same wymiary wykresu). */
+  period?: ChartPeriod;
   /** Oś udziału dopasowana do danych, nie od zera (np. % nagłych w okolicy 85–95%). */
   fitAxis?: boolean;
   lines: ChartLine[];
@@ -82,17 +90,23 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
       if (!chartRef.current) return;
       const Plotly = await loadPlotly();
       if (cancelled || !chartRef.current) return;
-      const labels = months.map((month) => `${MONTHS[Number(month.slice(5)) - 1]} ${month.slice(0, 4)}`);
-      const x = months.map((month) => `${month}-01`);
+      const yearly = period === "year";
+      const { years, monthCounts } = monthYears(months);
+      // Rok niepełny (np. pierwszy rok kodu w katalogu) ma w podpowiedzi liczbę miesięcy.
+      const labels = yearly
+        ? years.map((year, i) => monthCounts[i] < 12 ? `${year} (${monthCounts[i]} mies.)` : year)
+        : months.map((month) => `${MONTHS[Number(month.slice(5)) - 1]} ${month.slice(0, 4)}`);
+      // Punkt roku w połowie roku: tło wybranego roku i podpisy osi są te same co w trybie miesięcy.
+      const x = yearly ? years.map((year) => `${year}-07-01`) : months.map((month) => `${month}-01`);
       // Wybrany szpital rysujemy na końcu, żeby był nad innymi seriami.
-      const ordered = [...lines.filter((line) => line.tone !== "selected"), ...lines.filter((line) => line.tone === "selected")];
+      const ordered = [...lines.filter((line) => line.tone !== "selected"), ...lines.filter((line) => line.tone === "selected")].map((line) => yearly ? yearlyLine(line, months) : line);
       const emphasized = (line: ChartLine) => Boolean(line.tone || line.color) && !line.thin;
       const color = (line: ChartLine) => line.tone === "selected" ? selectedColor : line.color ?? (line.tone === "primary" ? PRIMARY : BASE);
       const opacity = (line: ChartLine) => emphasized(line) ? 1 : 0.5;
       const width = (line: ChartLine) => emphasized(line) ? 2.5 : 1.5;
-      const markerSize = (line: ChartLine) => emphasized(line) ? 7 : 5;
+      const markerSize = (line: ChartLine) => (emphasized(line) ? 7 : 5) + (yearly ? 2 : 0);
       const percent = ordered.some((line) => line.base);
-      const series = new Map(ordered.map((line) => [line.key, seriesOf(line)]));
+      const series = new Map(ordered.map((line) => [line.key, seriesOf(line, period)]));
       const shown = (value: number | null) => value === null ? "—" : percent ? `${value.toLocaleString("pl-PL", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%` : Math.round(value).toLocaleString("pl-PL");
       // Dwie serie na linię: kropki (wartości) i średnia 3M. Indeks serii = indeks śladu / 2.
       const traces = ordered.flatMap((line) => {
@@ -107,14 +121,14 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
             x, y: points, customdata: custom,
             marker: { color: color(line), size: markerSize(line), line: { color: "#FFFFFF", width: 1 } },
             opacity: opacity(line),
-            hovertemplate: `${head}: ${value}<br>średnia 3M: %{customdata[3]}<extra></extra>`,
+            hovertemplate: `${head}: ${value}${yearly ? "" : "<br>średnia 3M: %{customdata[3]}"}<extra></extra>`,
           },
           {
-            type: "scattergl", mode: "lines", name: `${line.name} · średnia 3M`, legendgroup: line.key, showlegend: false,
+            type: "scattergl", mode: "lines", name: yearly ? line.name : `${line.name} · średnia 3M`, legendgroup: line.key, showlegend: false,
             x, y: average, customdata: custom, connectgaps: false,
             line: { color: color(line), width: width(line) },
             opacity: opacity(line),
-            hovertemplate: `${head}<br>średnia 3M: %{customdata[3]}${percent ? "" : ` ${valueLabel}`}<extra></extra>`,
+            hovertemplate: yearly ? `${head}: ${value}<extra></extra>` : `${head}<br>średnia 3M: %{customdata[3]}${percent ? "" : ` ${valueLabel}`}<extra></extra>`,
           },
         ];
       });
@@ -156,7 +170,10 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
           return [...label, ...explain];
         })(),
         hoverlabel: { bgcolor: "#344054", font: { color: "#FFFFFF", size: 13 } },
-        xaxis: { ...monthAxis(x.length), gridcolor: "#EEF1F5" },
+        // Lata: podpis roku na środku roku (pod punktem), zakres od stycznia pierwszego do grudnia ostatniego roku.
+        xaxis: yearly
+          ? { type: "date", tickformat: "%Y", dtick: "M12", tick0: "2000-01-01", ticklabelmode: "period", range: [`${years[0]}-01-01`, `${years.at(-1)}-12-31`], gridcolor: "#EEF1F5" }
+          : { ...monthAxis(x.length), gridcolor: "#EEF1F5" },
         // Margines pod zerem i całkowita podziałka także przy bardzo małych liczbach (np. pojedyncze zgony).
         yaxis: { ...(percent ? percentAxis(ordered.flatMap((line) => series.get(line.key)!.points), { fit: fitAxis }) : countAxis(ordered.flatMap((line) => series.get(line.key)!.points))), gridcolor: "#EEF1F5", zerolinecolor: "#D0D5DD" },
       }, PLOTLY_CONFIG);
@@ -199,7 +216,7 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
     };
     void render();
     return () => { cancelled = true; };
-  }, [months, lines, valueLabel, legend, height, selectedColor, selectedLabel, highlightYear, note, fitAxis]);
+  }, [months, lines, valueLabel, legend, height, selectedColor, selectedLabel, highlightYear, note, fitAxis, period]);
 
   // Wysokość zarezerwowana od razu: wykres rysuje się asynchronicznie i nie przesuwa treści pod nim.
   return <div ref={chartRef} role="img" aria-label={ariaLabel} style={{ minHeight: height }} />;

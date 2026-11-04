@@ -1,4 +1,4 @@
-import type { JgpAdmissionYear, JgpPageData, JgpProviderRow } from "@/lib/jgpPage";
+import type { JgpPageData, JgpProviderRow } from "@/lib/jgpPage";
 import type { RegionRow } from "@/lib/regions";
 
 /** Mapa województw z `scripts/build_regions_map.py`: ścieżki SVG gotowe do narysowania. */
@@ -57,6 +57,32 @@ export function movingAverage(values: number[], window = 3, minPeriods = 1): (nu
   });
 }
 
+/** Okres na wykresach „w czasie”: miesiące (domyślnie) albo lata. */
+export type ChartPeriod = "month" | "year";
+
+/** Lata z listy miesięcy „RRRR-MM” (w kolejności) i liczba miesięcy danych w każdym roku. */
+export function monthYears(months: string[]): { years: string[]; monthCounts: number[] } {
+  const years: string[] = [];
+  const monthCounts: number[] = [];
+  for (const month of months) {
+    const year = month.slice(0, 4);
+    if (years.at(-1) !== year) { years.push(year); monthCounts.push(0); }
+    monthCounts[monthCounts.length - 1] += 1;
+  }
+  return { years, monthCounts };
+}
+
+/** Suma wartości miesięcznych w latach (kolejność jak w `monthYears`). */
+export function sumByYear(months: string[], values: number[]): number[] {
+  const out: number[] = [];
+  let year = "";
+  months.forEach((month, i) => {
+    if (month.slice(0, 4) !== year) { year = month.slice(0, 4); out.push(0); }
+    out[out.length - 1] += values[i] ?? 0;
+  });
+  return out;
+}
+
 /** Udział w procentach w każdym miesiącu (np. zgony / hospitalizacje); `null`, gdy mianownik to 0. */
 export function ratioSeries(numerator: number[], denominator: number[]): (number | null)[] {
   return numerator.map((value, i) => denominator[i] ? (value / denominator[i]) * 100 : null);
@@ -73,23 +99,6 @@ export function movingRatio(numerator: number[], denominator: number[], window =
     const bottom = denominator.slice(from, i + 1).reduce((sum, value) => sum + value, 0);
     return bottom ? (top / bottom) * 100 : null;
   });
-}
-
-/** Tryb przyjęcia w latach dla grupy świadczeniodawców (suma ich krotek [planowe, nagłe, pozostałe]). */
-export function poolAdmissions(rows: JgpProviderRow[], years: string[]): JgpAdmissionYear[] {
-  return years.map((year, i) => {
-    let planned = 0;
-    let urgent = 0;
-    let other = 0;
-    for (const row of rows) {
-      const point = row.yearly[i];
-      if (!point) continue;
-      planned += point[0];
-      urgent += point[1];
-      other += point[2];
-    }
-    return { year, total: planned + urgent + other, planned, urgent, other };
-  }).filter((point) => point.total > 0);
 }
 
 /** Suma hospitalizacji miesięcznie dla grupy świadczeniodawców. */
@@ -111,13 +120,6 @@ export function poolStats(rows: JgpProviderRow[]) {
     mortalityPct: hospitalizations ? (deaths / hospitalizations) * 100 : 0,
     urgentPct: hospitalizations ? (urgent / hospitalizations) * 100 : 0,
   };
-}
-
-/** Udział `top` największych świadczeniodawców w hospitalizacjach grupy (%). */
-export function topShare(rows: JgpProviderRow[], top = 25): number {
-  const total = rows.reduce((sum, row) => sum + row.hospitalizations, 0);
-  const head = rows.slice(0, top).reduce((sum, row) => sum + row.hospitalizations, 0);
-  return total ? (head / total) * 100 : 0;
 }
 
 /** Zmiana rok do roku (%) albo `null`, gdy brak poprzedniego roku. */
