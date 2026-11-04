@@ -39,21 +39,6 @@
 
 /* Karty z wykresami „Liczby, które warto znać” */
 .dataGrid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 16px; }
-.dataCard { min-width: 0; display: flex; flex-direction: column; padding: 22px 24px 18px; border: 1px solid var(--color-border); border-radius: var(--radius-card); background: var(--color-surface); box-shadow: var(--shadow-soft); }
-.dataKicker { font-size: 11px; font-weight: 750; letter-spacing: .1em; text-transform: uppercase; color: var(--color-text-tertiary); }
-.dataCard h3 { font-size: 19px; letter-spacing: -.02em; line-height: 1.25; margin: 6px 0 6px; }
-.dataLead { margin: 0 0 14px; font-size: 14px; line-height: 1.55; color: var(--color-text-secondary); }
-.dataLead strong { color: #1B3D78; font-size: 16px; }
-.dataChart { flex: 1; display: flex; flex-direction: column; justify-content: center; min-width: 0; }
-.dataFooter { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--color-border); }
-.badge { font-size: 10.5px; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; padding: 3px 7px; border-radius: 4px; background: #FFF4E0; color: #8A5300; cursor: help; }
-.dataSource { font-size: 12.5px; color: var(--color-text-tertiary); }
-.dataFooter .textLink { margin-left: auto; }
-.legend { display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; margin-top: 8px; font-size: 12px; color: var(--color-text-secondary); }
-.legend span { display: inline-flex; align-items: center; gap: 6px; }
-.legend i { width: 12px; height: 12px; border-radius: 2px; display: inline-block; }
-.swatchUrgent { background: #2856A3; }
-.swatchLoss { background: #C65D2E; }
 .compare { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 32px; align-items: start; padding-block: 48px 8px; }
 .compareText h2 { font-size: clamp(26px,3vw,32px); margin: 9px 0 6px; letter-spacing: -.035em; line-height: 1.15; }
 .compareText > p { font-size: 16px; color: var(--color-text-secondary); margin: 0 0 18px; line-height: 1.6; }
@@ -109,9 +94,7 @@ a.sectionRow:hover strong { color: var(--color-primary-hover); }
  .fact span:not(.factIcon) { font-size: 12px; }
  .paths, .data, .sections { padding-top: 43px; }
  .sectionIntro h2 { font-size: 27px; }
- .dataCard { padding: 18px 16px 14px; }
 
- .dataFooter .textLink { margin-left: 0; }
  .lower { padding-top: 18px; padding-bottom: 35px; }
  .lowerCard { padding: 16px; }
  .lowerCard .textLink { margin-left: 56px; }

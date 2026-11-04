@@ -38,8 +38,9 @@ const hospitals: HospitalHomeStats = {
   withBeds: 712,
   medianBeds: 116.5,
   withSor: 243,
-  beds: [{ label: "<100", count: 310 }, { label: "100–199", count: 189 }],
-  finance: { year: 2025, reported: 631, loss: 286, netResult: -1_155_728_180, margins: [{ label: "−5…0", count: 137, negative: true }, { label: "0…5", count: 218, negative: false }] },
+  sorUnits: 249,
+  beds: [{ label: "bez łóżek", count: 121 }, { label: "1–99", count: 310 }],
+  finance: { year: 2025, reported: 631, loss: 286, netResult: -1_155_728_180, margins: [{ label: "−2,5…0", count: 137, negative: true, from: -2.5, to: 0 }, { label: "0…2,5", count: 218, negative: false, from: 0, to: 2.5 }] },
   comparison: {
     pairsA: 5056,
     hospitalsWithPeers: 452,
@@ -60,7 +61,7 @@ describe("Strona główna", () => {
     expect(within(hero).getByRole("search")).toBeInTheDocument();
     expect(within(hero).getByRole("combobox", { name: "Szukaj grupy JGP albo szpitala" })).toBeInTheDocument();
     expect(within(hero).getAllByRole("link").map((link) => link.getAttribute("href"))).toEqual(["#odkrywaj"]);
-    expect(screen.getByRole("img", { name: /szpital, rozliczenie z NFZ, kontrola/ })).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: /karetka, szpital, łóżko z kroplówką/ })).toBeInTheDocument();
     expect(document.getElementById("odkrywaj")).toContainElement(screen.getByRole("heading", { name: "Trzy ścieżki przez dane." }));
   });
 
@@ -100,7 +101,7 @@ describe("Strona główna", () => {
     const years = within(data).getByRole("article", { name: "Ile hospitalizacji rozlicza NFZ w roku?" });
     expect(years).toHaveTextContent("6,0 mln w 2025 r. (+1,7% r/r)");
     expect(within(years).getByRole("img", { name: /2024 — 5,9 mln, 2025 — 6,0 mln/ })).toBeInTheDocument();
-    expect(within(years).getByRole("link", { name: /W czasie/ })).toHaveAttribute("href", "/analizy");
+    expect(within(years).getByRole("link", { name: /Hospitalizacje w Polsce/ })).toHaveAttribute("href", "/hospitalizacje");
     for (const card of within(data).getAllByRole("article")) expect(card).toHaveTextContent("Szacunek");
   });
 
@@ -117,13 +118,16 @@ describe("Strona główna", () => {
     renderHome();
     const section = screen.getByRole("region", { name: "Jak wyglądają szpitale." });
     const beds = within(section).getByRole("article", { name: "Jakiej wielkości są szpitale?" });
-    expect(beds).toHaveTextContent("Mediana: 117 łóżek. 243 z 833 ma szpitalny oddział ratunkowy (SOR).");
-    expect(within(beds).getByRole("img", { name: /<100 łóżek — 310/ })).toBeInTheDocument();
+    expect(beds).toHaveTextContent("833 świadczeniodawców");
+    expect(beds).toHaveTextContent("Mediana szpitali z łóżkami: 117. 121 placówek nie ma łóżek w RPWDL");
+    expect(beds).toHaveTextContent("249 oddziałów ratunkowych (SOR) działa w 243 podmiotach.");
+    expect(within(beds).getByRole("img", { name: /Placówki według liczby łóżek: bez łóżek — 121, 1–99 — 310/ })).toBeInTheDocument();
     expect(within(beds).getByRole("link", { name: /Znajdź szpital/ })).toHaveAttribute("href", "/szpitale");
     expect(beds).not.toHaveTextContent("Szacunek");
 
     const finance = within(section).getByRole("article", { name: "Ile szpitali kończy rok ze stratą?" });
     expect(finance).toHaveTextContent("286 z 631 podmiotów (45%) miało stratę netto w 2025 r. Łączny wynik: −1,2 mld zł.");
+    expect(within(finance).getByRole("img", { name: /−2,5…0 % — 137, 0…2,5 % — 218/ })).toBeInTheDocument();
     expect(within(finance).getByRole("link", { name: /Przykładowy profil/ })).toHaveAttribute("href", "/szpitale?hospital=04%7C9251723350");
   });
 
@@ -147,6 +151,7 @@ describe("Strona główna", () => {
   it("pokazuje działy portalu; wyceny JGP i artykuły jako planowane, bez linków", () => {
     renderHome();
     const sections = screen.getByRole("region", { name: "Wszystkie działy." });
+    expect(within(sections).getByRole("link", { name: "Hospitalizacje w Polsce" })).toHaveAttribute("href", "/hospitalizacje");
     expect(within(sections).getByRole("link", { name: "Przeglądaj grupy JGP" })).toHaveAttribute("href", "/jgp");
     expect(within(sections).getByRole("link", { name: "Otwórz eksplorator" })).toHaveAttribute("href", "/analizy");
     expect(within(sections).getByRole("link", { name: "Znajdź szpital" })).toHaveAttribute("href", "/szpitale");

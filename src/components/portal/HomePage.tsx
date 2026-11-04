@@ -1,5 +1,4 @@
 import Link from "next/link";
-import type { ReactNode } from "react";
 import { LegacyDashboardRedirect } from "@/components/portal/LegacyDashboardRedirect";
 import { DASHBOARD_HREFS } from "@/lib/dashboardNavigation";
 import { SITE_NAME } from "@/lib/site";
@@ -8,7 +7,8 @@ import type { DatasetHighlights } from "@/lib/staticData";
 import type { HomeStats } from "@/lib/homeStats";
 import type { HospitalHomeStats } from "@/lib/hospitalHomeStats";
 import { hospitalHref } from "@/lib/portalLinks";
-import { GroupBars, Histogram, PeerDistances, YearBars } from "@/components/portal/HomeCharts";
+import { ContinuousHistogram, GroupBars, Histogram, PeerDistances, YearBars } from "@/components/portal/HomeCharts";
+import { DataCard, Legend } from "@/components/portal/DataCard";
 import { PortalIcon } from "@/components/portal/PortalIcon";
 import { SearchBox } from "@/components/search/SearchBox";
 import styles from "./HomePage.module.css";
@@ -23,10 +23,11 @@ type Topic = {
 };
 
 const topics: readonly Topic[] = [
+  { title: "Hospitalizacje w Polsce", description: "Podsumowanie wszystkich lat: liczba, tryb przyjęcia, województwa, obszary leczenia, zgony i świadczeniodawcy.", icon: "chart", href: DASHBOARD_HREFS.summary, label: "Hospitalizacje w Polsce" },
   { title: "Grupy JGP", description: "Karta każdej grupy: hospitalizacje w czasie, ośrodki, województwa, tryb przyjęcia i wycena.", icon: "bed", href: "/jgp", label: "Przeglądaj grupy JGP" },
   { title: "Szpitale publiczne", description: "Profil szpitala: oddziały, łóżka, świadczenia i wyniki finansowe.", icon: "hospital", href: DASHBOARD_HREFS.hospital, label: "Znajdź szpital" },
   { title: "Porównanie szpitali", description: "Porównaj szpital z grupą podobnych placówek dobranych przez model.", icon: "compare", href: DASHBOARD_HREFS.comparison, label: "Porównaj szpitale" },
-  { title: "Analizy", description: "Eksplorator dla analityków: kilka grup naraz, obszary, filtry i tryb przyjęcia.", icon: "heart", href: DASHBOARD_HREFS.trend, label: "Otwórz eksplorator" },
+  { title: "Eksplorator danych", description: "Narzędzie dla analityków: kilka grup naraz, obszary, filtry i tryb przyjęcia.", icon: "heart", href: DASHBOARD_HREFS.trend, label: "Otwórz eksplorator" },
   { title: "Wyceny JGP", description: "Jak wygląda system wycen JGP i jak zmieniają się wyceny.", icon: "chart", label: "Wyceny JGP" },
   { title: "Artykuły", description: "Analizy i komentarze, m.in. o rozliczeniach i kontrolach NFZ.", icon: "book", label: "Artykuły" },
 ];
@@ -77,22 +78,6 @@ const integer = (value: number) => Math.round(value).toLocaleString("pl-PL");
 const decimal = (value: number) => value.toLocaleString("pl-PL", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 const signedPct = (value: number) => `${value > 0 ? "+" : value < 0 ? "−" : ""}${decimal(Math.abs(value))}%`;
 const billions = (value: number) => `${value < 0 ? "−" : ""}${decimal(Math.abs(value) / 1_000_000_000)} mld zł`;
-const HOSPITALIZATION_SOURCE = "Dane NFZ o hospitalizacjach";
-
-/** Karta z wykresem: pytanie, liczba, wykres i stopka ze źródłem oraz linkiem do pełnego widoku. `estimate`: dane z estymacją „<5”. */
-function DataCard({ id, kicker, title, lead, children, href, cta, source = HOSPITALIZATION_SOURCE, estimate = true }: { id: string; kicker: string; title: string; lead?: ReactNode; children: ReactNode; href: string; cta: string; source?: string; estimate?: boolean }) {
-  return <article className={styles.dataCard} aria-labelledby={id}>
-    <span className={styles.dataKicker}>{kicker}</span>
-    <h3 id={id}>{title}</h3>
-    {lead ? <p className={styles.dataLead}>{lead}</p> : null}
-    <div className={styles.dataChart}>{children}</div>
-    <footer className={styles.dataFooter}>
-      {estimate ? <span className={styles.badge} title="Wartości „<5” w danych NFZ liczone jako 1 (metoda konserwatywna).">Szacunek</span> : null}
-      <span className={styles.dataSource}>{source}</span>
-      <Link className={styles.textLink} href={href}>{cta} <PortalIcon name="arrow" size={16} /></Link>
-    </footer>
-  </article>;
-}
 
 export function HomePage({ highlights, stats, hospitals }: { highlights: DatasetHighlights; stats: HomeStats; hospitals: HospitalHomeStats }) {
   const latest = stats.years.at(-1);
@@ -106,7 +91,7 @@ export function HomePage({ highlights, stats, hospitals }: { highlights: Dataset
     <LegacyDashboardRedirect />
     <main id="main-content" className={styles.home}>
       <section className={styles.hero} aria-labelledby="hero-title">
-        <div className={styles.heroPhoto} role="img" aria-label="Ilustracja: szpital, rozliczenie z NFZ, kontrola i dane" />
+        <div className={styles.heroPhoto} role="img" aria-label="Ilustracja: droga pacjenta przez szpital — karetka, szpital, łóżko z kroplówką, monitor EKG i dni pobytu" />
         <div className={styles.heroShade} aria-hidden="true" />
         <div className={styles.container}>
           <div className={styles.heroContent}>
@@ -160,8 +145,8 @@ export function HomePage({ highlights, stats, hospitals }: { highlights: Dataset
             kicker={`Hospitalizacje · ${range}`}
             title="Ile hospitalizacji rozlicza NFZ w roku?"
             lead={latest ? <><strong>{decimal(latest.hospitalizations / 1_000_000)} mln</strong> w {latest.year} r.{yearChange !== null ? <> ({signedPct(yearChange)} r/r)</> : null}. Liczby w milionach.</> : null}
-            href={DASHBOARD_HREFS.trend}
-            cta="W czasie"
+            href={DASHBOARD_HREFS.summary}
+            cta="Hospitalizacje w Polsce"
           >
             <YearBars years={stats.years} />
           </DataCard>
@@ -189,32 +174,29 @@ export function HomePage({ highlights, stats, hospitals }: { highlights: Dataset
         <div className={styles.dataGrid}>
           <DataCard
             id="hospitals-beds"
-            kicker={`Łóżka · ${integer(hospitals.withBeds)} szpitali`}
+            kicker={`Łóżka · ${integer(hospitals.profiles)} świadczeniodawców`}
             title="Jakiej wielkości są szpitale?"
-            lead={<>Mediana: <strong>{integer(hospitals.medianBeds)}</strong> łóżek. <strong>{integer(hospitals.withSor)}</strong> z {integer(hospitals.profiles)} ma szpitalny oddział ratunkowy (SOR).</>}
+            lead={<>Mediana szpitali z łóżkami: <strong>{integer(hospitals.medianBeds)}</strong>. {integer(hospitals.profiles - hospitals.withBeds)} placówek nie ma łóżek w RPWDL: to głównie kliniki zabiegów jednego dnia (np. zaćmy). <strong>{integer(hospitals.sorUnits)}</strong> oddziałów ratunkowych (SOR) działa w {integer(hospitals.withSor)} podmiotach.</>}
             href={DASHBOARD_HREFS.hospital}
             cta="Znajdź szpital"
             source="Rejestr RPWDL"
             estimate={false}
           >
-            <Histogram bins={hospitals.beds} label="Szpitale według liczby łóżek" unit="łóżek" />
+            <Histogram bins={hospitals.beds} label="Placówki według liczby łóżek" unit="" />
           </DataCard>
 
           {finance ? <DataCard
             id="hospitals-finance"
             kicker={`Finanse · ${finance.year}`}
             title="Ile szpitali kończy rok ze stratą?"
-            lead={<><strong>{integer(finance.loss)} z {integer(finance.reported)}</strong> podmiotów ({Math.round((finance.loss / finance.reported) * 100)}%) miało stratę netto w {finance.year} r. Łączny wynik: <strong>{billions(finance.netResult)}</strong>. Oś: marża netto w %.</>}
+            lead={<><strong>{integer(finance.loss)} z {integer(finance.reported)}</strong> podmiotów ({Math.round((finance.loss / finance.reported) * 100)}%) miało stratę netto w {finance.year} r. Łączny wynik: <strong>{billions(finance.netResult)}</strong>. Oś: marża netto w % (przedziały po 2,5 p.p.).</>}
             href={exampleHref}
             cta="Przykładowy profil"
             source="Sprawozdania finansowe podmiotów (NIP)"
             estimate={false}
           >
-            <Histogram bins={finance.margins} label="Podmioty według marży netto" unit="%" />
-            <div className={styles.legend} aria-hidden="true">
-              <span><i className={styles.swatchLoss} />Strata</span>
-              <span><i className={styles.swatchUrgent} />Zysk</span>
-            </div>
+            <ContinuousHistogram bins={finance.margins} label="Podmioty według marży netto" unit="%" />
+            <Legend items={[{ label: "Strata", color: "#C65D2E" }, { label: "Zysk", color: "#2856A3" }]} />
           </DataCard> : null}
         </div>
       </section>

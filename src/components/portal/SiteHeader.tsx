@@ -16,8 +16,9 @@ import styles from "./SiteHeader.module.css";
 
 const links = [
   { label: "Start", href: "/", active: "start" },
+  { label: "Hospitalizacje", href: DASHBOARD_HREFS.summary, active: "summary" },
   { label: "Grupy JGP", href: "/jgp", active: "groups" },
-  { label: "Analizy", href: DASHBOARD_HREFS.trend, active: "analyses" },
+  { label: "Eksplorator danych", href: DASHBOARD_HREFS.trend, active: "analyses" },
   { label: "Szpitale", href: DASHBOARD_HREFS.hospital, active: "hospitals" },
   { label: "Porównania", href: DASHBOARD_HREFS.comparison, active: "compare" },
   { label: "O danych", href: DASHBOARD_HREFS.methodology, active: "about" },
@@ -32,6 +33,7 @@ const analysisOptions = [
 
 function sectionForPath(pathname: string, search: string) {
   if (pathname === "/") return "start";
+  if (pathname.startsWith("/hospitalizacje")) return "summary";
   if (pathname.startsWith("/jgp")) return "groups";
   if (pathname.startsWith("/analizy")) return "analyses";
   if (pathname.startsWith("/szpitale")) return hospitalNavigationFromHref(`/szpitale${search}`)?.view === "comparison" ? "compare" : "hospitals";
@@ -145,7 +147,7 @@ export function SiteHeader() {
               aria-haspopup="true"
               onClick={() => setAnalysisOpen((open) => !open)}
             >
-              Analizy <span className={`${styles.chevron} ${analysisOpen ? styles.chevronOpen : ""}`} aria-hidden="true" />
+              Eksplorator danych <span className={`${styles.chevron} ${analysisOpen ? styles.chevronOpen : ""}`} aria-hidden="true" />
             </button>
             {analysisOpen && <div id="analysis-navigation-menu" className={styles.analysisDropdown} aria-label="Wybierz rodzaj analizy">
               {analysisOptions.map((option) => <Link

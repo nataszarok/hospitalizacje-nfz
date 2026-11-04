@@ -20,16 +20,25 @@ const facilities = [["04", "1", "SZPITAL A", "NOWA SÓL"], ["04", "2", "SZPITAL 
 describe("buildHospitalHomeStats", () => {
   const stats = buildHospitalHomeStats(profiles, financial, pairs, facilities, "04|1");
 
-  it("liczy szpitale według łóżek, medianę i szpitale z SOR (bez profili bez łóżek)", () => {
-    expect(stats).toMatchObject({ profiles: 5, withBeds: 4, medianBeds: 200, withSor: 2 });
-    expect(stats.beds.map((bin) => [bin.label, bin.count])).toEqual([["<100", 1], ["100–199", 1], ["200–299", 1], ["300–499", 0], ["500–799", 0], ["800+", 1]]);
+  it("liczy placówki według łóżek (osobno bez łóżek), medianę szpitali z łóżkami i oddziały SOR", () => {
+    expect(stats).toMatchObject({ profiles: 5, withBeds: 4, medianBeds: 200, withSor: 2, sorUnits: 2 });
+    expect(stats.beds.map((bin) => [bin.label, bin.count])).toEqual([["bez łóżek", 1], ["1–99", 1], ["100–199", 1], ["200–299", 1], ["300–499", 0], ["500–799", 0], ["800+", 1]]);
+    const twoSor = buildHospitalHomeStats([...profiles, profile("08", "6", 300, 2)], financial, pairs, facilities);
+    expect(twoSor).toMatchObject({ withSor: 3, sorUnits: 4 });
   });
 
   it("bierze rok z największą liczbą wyników netto i liczy straty oraz marże", () => {
     expect(stats.finance).toMatchObject({ year: 2025, reported: 4, loss: 2, netResult: -7 });
-    expect(stats.finance!.margins.map((bin) => [bin.label, bin.count, bin.negative])).toEqual([
-      ["< −15", 1, true], ["−15…−10", 0, true], ["−10…−5", 0, true], ["−5…0", 1, true], ["0…5", 1, false], ["5…10", 0, false], ["≥ 10", 1, false],
-    ]);
+    const margins = stats.finance!.margins;
+    // Przedziały po 2,5 p.p. od −20 do 15 i dwa skrajne: < −20 i ≥ 15.
+    expect(margins).toHaveLength(16);
+    expect(margins[0]).toMatchObject({ label: "< −20", to: -20, negative: true });
+    expect(margins.at(-1)).toMatchObject({ label: "≥ 15", from: 15, negative: false });
+    const counts = Object.fromEntries(margins.filter((bin) => bin.count).map((bin) => [bin.label, bin.count]));
+    // Marże: −20%, −3%, 4%, 12%.
+    expect(counts).toEqual({ "−20…−17,5": 1, "−5…−2,5": 1, "2,5…5": 1, "10…12,5": 1 });
+    expect(margins.find((bin) => bin.label === "−2,5…0")?.negative).toBe(true);
+    expect(margins.find((bin) => bin.label === "0…2,5")?.negative).toBe(false);
     expect(buildHospitalHomeStats(profiles, [], pairs, facilities).finance).toBeNull();
   });
 
