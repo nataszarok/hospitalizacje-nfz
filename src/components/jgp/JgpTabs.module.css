@@ -16,8 +16,8 @@
 
 .title {
   margin: 2px 0 0;
-  font-size: 28px;
-  line-height: 1.25;
+  font-size: var(--fs-title);
+  line-height: 1.15;
 }
 
 .meta,
@@ -28,7 +28,7 @@
   gap: 4px 16px;
   margin: 0;
   color: #475467;
-  font-size: 13.5px;
+  font-size: var(--fs-base);
 }
 
 .meta b {
@@ -37,8 +37,8 @@
 
 .areaLabel {
   color: #667085;
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
 }
 
 .chip {
@@ -48,7 +48,7 @@
   background: var(--color-primary-soft, #eaf5f0);
   color: #172033;
   font: inherit;
-  font-size: 12.5px;
+  font-size: var(--fs-md);
   cursor: pointer;
 }
 
@@ -72,20 +72,20 @@
 
 .kpis dt {
   color: #667085;
-  font-size: 12px;
+  font-size: var(--fs-sm);
 }
 
 .kpis dd {
   margin: 0;
-  font-size: 20px;
-  font-weight: 750;
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-bold);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
 .kpis span {
   color: #667085;
-  font-size: 12px;
+  font-size: var(--fs-sm);
   font-variant-numeric: tabular-nums;
 }
 
@@ -120,7 +120,7 @@
   max-width: 420px;
   overflow: hidden;
   color: #172033;
-  font-size: 14px;
+  font-size: var(--fs-base);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -151,15 +151,15 @@
   background: none;
   color: #475467;
   font: inherit;
-  font-size: 15px;
-  font-weight: 650;
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-semibold);
   cursor: pointer;
 }
 
 .tabs button small {
   color: #667085;
-  font-size: 12.5px;
-  font-weight: 500;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-medium);
 }
 
 .tabs button[aria-selected="true"] {
@@ -180,7 +180,7 @@
 .years > span {
   margin-right: 2px;
   color: #667085;
-  font-size: 12px;
+  font-size: var(--fs-sm);
 }
 
 .years button {
@@ -190,7 +190,7 @@
   background: #fff;
   color: #344054;
   font: inherit;
-  font-size: 13px;
+  font-size: var(--fs-md);
   font-variant-numeric: tabular-nums;
   cursor: pointer;
 }
@@ -199,30 +199,30 @@
   border-color: var(--color-primary);
   background: var(--color-primary);
   color: #fff;
-  font-weight: 650;
+  font-weight: var(--fw-semibold);
 }
 
 .desc {
   max-width: 78ch;
   margin: 0;
   color: #344054;
-  font-size: 14px;
+  font-size: var(--fs-base);
   line-height: 1.5;
 }
 
 .desc small {
   color: #667085;
-  font-size: 12px;
+  font-size: var(--fs-sm);
 }
 
 .lead {
   margin: 0;
-  font-size: 14px;
+  font-size: var(--fs-base);
 }
 
 .heatOn {
   color: var(--color-primary) !important;
-  font-weight: 750 !important;
+  font-weight: var(--fw-bold) !important;
 }
 
 .costBarPick {
@@ -244,7 +244,7 @@
 .famYear,
 .famTotal {
   color: #475467;
-  font-size: 12.5px;
+  font-size: var(--fs-md);
   font-variant-numeric: tabular-nums;
 }
 
@@ -265,8 +265,8 @@
   place-items: center;
   overflow: hidden;
   color: #fff;
-  font-size: 11.5px;
-  font-weight: 650;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
   white-space: nowrap;
 }
 
@@ -304,18 +304,18 @@
 
 .secTitle {
   margin: 0;
-  font-size: 17px;
+  font-size: var(--fs-xl);
   line-height: 1.35;
 }
 
 .q {
   color: #172033;
-  font-weight: 750;
+  font-weight: var(--fw-bold);
 }
 
 .ctx {
   color: #667085;
-  font-weight: 500;
+  font-weight: var(--fw-medium);
 }
 
 .tag {
@@ -323,8 +323,8 @@
   border-radius: 6px;
   background: #eef1f6;
   color: #475467;
-  font-size: 11.5px;
-  font-weight: 700;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
@@ -365,7 +365,7 @@
   width: 100%;
   border-collapse: separate;
   border-spacing: 10px 2px;
-  font-size: 12.5px;
+  font-size: var(--fs-md);
 }
 
 /* Nazwy województw dzielone według reguł języka (globalne overflow-wrap: anywhere łamało w dowolnym miejscu). */
@@ -382,7 +382,7 @@
   /* Przezroczyste nagłówki (globalny styl tabel daje białe tło), żeby pas roku był widoczny także za nagłówkiem. */
   background: transparent;
   color: #667085;
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
   text-align: left;
 }
 
@@ -421,7 +421,7 @@
   background: none;
   color: #667085;
   font: inherit;
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
   text-align: right;
   cursor: pointer;
 }
@@ -431,7 +431,7 @@
   /* Wąska kolumna zmiany: wolne miejsce bierze kolumna województw. */
   width: 64px;
   color: #475467;
-  font-size: 12px;
+  font-size: var(--fs-sm);
   white-space: nowrap;
 }
 
@@ -447,7 +447,7 @@
 
 .heatCompact {
   border-spacing: 3px 2px;
-  font-size: 11.5px;
+  font-size: var(--fs-sm);
 }
 
 .heat.heatCompact th.yearCell {
@@ -470,14 +470,14 @@
 
 .heat.heatCompact .heatChange {
   width: 44px;
-  font-size: 11px;
+  font-size: var(--fs-xs);
 }
 
 .mapInfo {
   display: grid;
   gap: 6px;
   color: #475467;
-  font-size: 13px;
+  font-size: var(--fs-md);
 }
 
 .mapActions {
@@ -493,7 +493,7 @@
   background: none;
   color: var(--color-primary);
   font: inherit;
-  font-weight: 650;
+  font-weight: var(--fw-semibold);
   cursor: pointer;
 }
 
@@ -508,7 +508,7 @@
 }
 
 .linkCell[aria-pressed="true"] {
-  font-weight: 700;
+  font-weight: var(--fw-bold);
   text-decoration: underline;
 }
 
@@ -555,15 +555,15 @@
 .costValue,
 .costPer {
   color: #475467;
-  font-size: 12px;
+  font-size: var(--fs-sm);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
 .costYear {
   color: #667085;
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
 }
 
 .costFacts {
@@ -583,13 +583,13 @@
 .costFacts dt,
 .costFacts span {
   color: #667085;
-  font-size: 12px;
+  font-size: var(--fs-sm);
 }
 
 .costFacts dd {
   margin: 0;
-  font-size: 19px;
-  font-weight: 750;
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-bold);
   font-variant-numeric: tabular-nums;
 }
 
@@ -607,7 +607,7 @@
   padding: 6px 12px;
   border: 1px solid #e4e7ec;
   border-radius: 8px;
-  font-size: 13px;
+  font-size: var(--fs-md);
   font-variant-numeric: tabular-nums;
 }
 
@@ -669,8 +669,8 @@
   place-items: center;
   overflow: hidden;
   color: #fff;
-  font-size: 11.5px;
-  font-weight: 650;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
   white-space: nowrap;
 }
 
@@ -680,7 +680,7 @@
   gap: 4px 16px;
   margin: 0;
   color: #475467;
-  font-size: 13px;
+  font-size: var(--fs-md);
 }
 
 .rankRow {
@@ -694,7 +694,7 @@
 .nameCell small {
   display: block;
   color: #667085;
-  font-size: 12px;
+  font-size: var(--fs-sm);
 }
 
 .spark {
@@ -761,7 +761,7 @@
 
   .tabs button {
     padding: 10px 8px 8px;
-    font-size: 14px;
+    font-size: var(--fs-base);
   }
 
 
@@ -777,7 +777,7 @@
 /* Wybrany ośrodek: gwiazdka (ten sam znak na wykresach, w tabeli, pasku i legendzie). */
 .star {
   color: #d92d20;
-  font-size: 15px;
+  font-size: var(--fs-lg);
   line-height: 1;
 }
 
@@ -808,8 +808,8 @@
   background: transparent;
   color: #475467;
   font: inherit;
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
   line-height: 18px;
   cursor: pointer;
 }

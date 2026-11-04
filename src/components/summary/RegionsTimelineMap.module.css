@@ -7,20 +7,20 @@
 .play svg { width: 14px; height: 14px; fill: currentColor; }
 .track { min-width: 0; }
 .slider { display: block; width: 100%; margin: 0; accent-color: #2856A3; }
-.year { font-size: 22px; font-weight: 800; color: #1B3D78; font-variant-numeric: tabular-nums; min-width: 54px; text-align: right; }
+.year { font-size: var(--fs-2xl); font-weight: var(--fw-bold); color: #1B3D78; font-variant-numeric: tabular-nums; min-width: 54px; text-align: right; }
 /* Podziałka: środek pierwszej i ostatniej etykiety pod końcami suwaka (uchwyt ok. 16 px). */
-.ticks { display: flex; justify-content: space-between; margin: 2px -4px 0; font-size: 11px; color: var(--color-text-tertiary); font-variant-numeric: tabular-nums; }
-.tickActive { color: #1B3D78; font-weight: 800; }
+.ticks { display: flex; justify-content: space-between; margin: 2px -4px 0; font-size: var(--fs-xs); color: var(--color-text-tertiary); font-variant-numeric: tabular-nums; }
+.tickActive { color: #1B3D78; font-weight: var(--fw-bold); }
 .map { display: block; width: 100%; max-width: 420px; height: auto; margin: 4px auto 0; }
 .mapLink { cursor: pointer; }
 .mapShape { stroke: #fff; stroke-width: 2; stroke-linejoin: round; transition: fill .35s, filter .15s; }
 .mapLink:hover .mapShape, .mapLink:focus-visible .mapShape { filter: brightness(.88); }
 .mapLink:focus { outline: none; }
 .mapLink:focus-visible .mapShape { stroke: #172033; stroke-width: 4; }
-.mapLabel { fill: #fff; font-size: 22px; font-weight: 750; text-anchor: middle; dominant-baseline: middle; pointer-events: none; font-variant-numeric: tabular-nums; }
+.mapLabel { fill: #fff; font-size: var(--fs-2xl); font-weight: var(--fw-bold); text-anchor: middle; dominant-baseline: middle; pointer-events: none; font-variant-numeric: tabular-nums; }
 .mapLabelDark { fill: #172033; }
-.legend { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 12px; color: var(--color-text-tertiary); font-variant-numeric: tabular-nums; }
+.legend { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: var(--fs-sm); color: var(--color-text-tertiary); font-variant-numeric: tabular-nums; }
 .scale { width: 140px; height: 8px; border-radius: 4px; }
-.national { margin: 0; text-align: center; font-size: 13.5px; color: var(--color-text-secondary); }
+.national { margin: 0; text-align: center; font-size: var(--fs-base); color: var(--color-text-secondary); }
 .national strong { color: #1B3D78; }
 @media (max-width: 550px) { .ticks span:nth-child(even) { visibility: hidden; } }

@@ -1,14 +1,14 @@
 /* Karta „Hospitalizacje w Polsce”: spis treści, sekcje-pytania z kartami wykresów (nagłówek: portal/PageHeader). */
 .page { color: var(--color-text); padding-bottom: 64px; }
 .toc { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
-.toc a { font-size: 13.5px; font-weight: 650; color: var(--color-primary-hover); background: #fff; border: 1px solid var(--color-border); border-radius: 999px; padding: 5px 12px; text-decoration: none; }
+.toc a { font-size: var(--fs-base); font-weight: var(--fw-semibold); color: var(--color-primary-hover); background: #fff; border: 1px solid var(--color-border); border-radius: 999px; padding: 5px 12px; text-decoration: none; }
 .toc a:hover { border-color: var(--color-primary); }
-.method { margin: 0; font-size: 13px; color: var(--color-text-secondary); display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
-.method a { color: var(--color-primary-hover); font-weight: 650; }
-.badge { font-size: 10.5px; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; padding: 3px 7px; border-radius: 4px; background: #FFF4E0; color: #8A5300; }
+.method { margin: 0; font-size: var(--fs-md); color: var(--color-text-secondary); display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.method a { color: var(--color-primary-hover); font-weight: var(--fw-semibold); }
+.badge { font-size: var(--fs-xs); font-weight: var(--fw-bold); letter-spacing: .08em; text-transform: uppercase; padding: 3px 7px; border-radius: 4px; background: #FFF4E0; color: #8A5300; }
 .section { padding-top: 48px; scroll-margin-top: 92px; }
-.sectionTitle { font-family: var(--font-display), Inter, sans-serif; font-weight: 400; font-size: clamp(26px, 2.8vw, 32px); margin: 0 0 16px; letter-spacing: -.035em; line-height: 1.05; }
+.sectionTitle { font-family: var(--font-display), var(--font-body), sans-serif; font-weight: var(--fw-regular); font-size: var(--fs-section); margin: 0 0 16px; letter-spacing: -.035em; line-height: 1.05; }
 .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
-.footerNote { margin: 48px 0 0; font-size: 13px; color: var(--color-text-secondary); }
-.footerNote a { color: var(--color-primary-hover); font-weight: 650; display: inline-flex; gap: 4px; align-items: center; }
+.footerNote { margin: 48px 0 0; font-size: var(--fs-md); color: var(--color-text-secondary); }
+.footerNote a { color: var(--color-primary-hover); font-weight: var(--fw-semibold); display: inline-flex; gap: 4px; align-items: center; }
 @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
