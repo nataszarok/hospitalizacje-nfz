@@ -10,7 +10,7 @@ export function AboutDataPage({ yearFrom, yearTo }: { yearFrom: string; yearTo: 
   return <main className={styles.page}>
     <header className={styles.header}>
       <h1>O danych</h1>
-      <p>Skąd pochodzą liczby w Atlasie i jak je czytać.</p>
+      <p>Skąd pochodzą liczby w serwisie FunduszDanych i jak je czytać.</p>
     </header>
 
     <section className={styles.card}>
@@ -52,7 +52,7 @@ export function AboutDataPage({ yearFrom, yearTo }: { yearFrom: string; yearTo: 
     <section className={styles.card}>
       <h2>Jak czytać analizy</h2>
       <p>
-        Atlas pokazuje dane zagregowane. Różnice między świadczeniodawcami wynikają też z profilu pacjentów, zakresu działalności
+        FunduszDanych pokazuje dane zagregowane. Różnice między świadczeniodawcami wynikają też z profilu pacjentów, zakresu działalności
         i sposobu rozliczania, dlatego jedna liczba nie wystarcza do oceny jakości leczenia.
       </p>
       <p className={styles.links}>

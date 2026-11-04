@@ -46,7 +46,7 @@ export interface HospitalHomeStats {
 
 /** Szpital pokazany w przykładzie porównania (ten sam co w podpowiedzi wyszukiwarki: Nowa Sól). */
 export const FEATURED_HOSPITAL_KEY = "04|9251723350";
-const EXAMPLE_PEERS = 8;
+const EXAMPLE_PEERS = 5;
 
 const BED_BINS: { label: string; max: number }[] = [
   { label: "bez łóżek", max: 1 },
@@ -80,7 +80,9 @@ function median(values: number[]) {
   return sorted.length % 2 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2;
 }
 
-function financeStats(records: FinancialRecordSummary[]): HospitalHomeStats["finance"] {
+function financeStats(allRecords: FinancialRecordSummary[], pszNips: ReadonlySet<string>): HospitalHomeStats["finance"] {
+  // Tylko szpitale z sieci PSZ (wykaz NFZ).
+  const records = allRecords.filter((record) => pszNips.has(record.nip));
   // Rok z największą liczbą wyników netto (najczęściej najnowszy rok sprawozdań).
   const counts = new Map<number, number>();
   for (const record of records) for (const y of record.years) if (y.net_result !== null) counts.set(y.year, (counts.get(y.year) ?? 0) + 1);
@@ -127,7 +129,7 @@ function peerExample(pairs: JgpPeerPair[], facilities: Map<string, [string, stri
 }
 
 /**
- * Liczby sekcji szpitali: wielkość (łóżka), SOR, wyniki finansowe i model par A/B.
+ * Liczby sekcji szpitali: wielkość (łóżka), SOR, wyniki finansowe szpitali PSZ i model par A/B.
  * `facilities`: krotki `[OW, NIP, nazwa, miasto]` z najnowszego roku (nazwy w przykładzie porównania).
  */
 export function buildHospitalHomeStats(
@@ -135,6 +137,7 @@ export function buildHospitalHomeStats(
   financial: FinancialRecordSummary[],
   pairs: JgpPeerPair[],
   facilities: readonly (readonly [string, string, string, string])[],
+  pszNips: ReadonlySet<string>,
   featuredKey = FEATURED_HOSPITAL_KEY,
 ): HospitalHomeStats {
   const allBeds = profiles.map((profile) => profile.core?.beds ?? 0);
@@ -151,7 +154,7 @@ export function buildHospitalHomeStats(
     withSor: profiles.filter((profile) => (profile.capabilities?.sor?.count ?? 0) > 0).length,
     sorUnits: profiles.reduce((sum, profile) => sum + (profile.capabilities?.sor?.count ?? 0), 0),
     beds: bins,
-    finance: financeStats(financial),
+    finance: financeStats(financial, pszNips),
     comparison: { pairsA: pairsA.length, hospitalsWithPeers: withPeers.size, example: peerExample(pairs, names, featuredKey) },
   };
 }

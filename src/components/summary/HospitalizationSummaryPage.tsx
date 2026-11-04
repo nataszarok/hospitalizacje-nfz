@@ -16,7 +16,7 @@ const signedPct = (value: number) => `${value > 0 ? "+" : value < 0 ? "−" : ""
 
 // Spis treści: kotwice sekcji karty.
 const TOC = [
-  { id: "ile", label: "Ile?" },
+  { id: "ile", label: "Ile hospitalizacji JGP?" },
   { id: "tryb", label: "Tryb przyjęcia" },
   { id: "gdzie", label: "Gdzie?" },
   { id: "co", label: "Co leczą?" },
@@ -48,7 +48,7 @@ export function HospitalizationSummaryPage({ summary }: { summary: Hospitalizati
         <h1>Hospitalizacje w Polsce</h1>
         <p className={styles.lead}>Podsumowanie wszystkich hospitalizacji rozliczonych przez NFZ w grupach JGP. Każda część odpowiada na jedno pytanie, opisuje, jak czytać wykres, i prowadzi do szczegółów.</p>
         {latest && latestMetrics ? <dl className={styles.kpis}>
-          <div><dt>Hospitalizacje {latestYear}</dt><dd>{millions(latest.hospitalizations)}</dd>{yearChange !== null ? <span>{signedPct(yearChange)} r/r</span> : null}</div>
+          <div><dt>Hospitalizacje JGP {latestYear}</dt><dd>{millions(latest.hospitalizations)}</dd>{yearChange !== null ? <span>{signedPct(yearChange)} r/r</span> : null}</div>
           <div><dt>Przyjęcia nagłe</dt><dd>{pct(latest.urgentPct)}</dd><span>{pct(first.urgentPct)} w {first.year} r.</span></div>
           <div><dt>Zgony w szpitalu</dt><dd>{pct(latestMetrics.mortalityPct)}</dd><span>hospitalizacji w {latestYear} r.</span></div>
           <div><dt>Świadczeniodawcy</dt><dd>{integer(latestMetrics.providers)}</dd><span>rozliczających hospitalizacje</span></div>
@@ -62,15 +62,16 @@ export function HospitalizationSummaryPage({ summary }: { summary: Hospitalizati
 
     <div className={styles.container}>
       <section id="ile" className={styles.section} aria-labelledby="ile-title">
-        <h2 id="ile-title" className={styles.sectionTitle}>Ile hospitalizacji?</h2>
+        <h2 id="ile-title" className={styles.sectionTitle}>Ile hospitalizacji JGP?</h2>
         <div className={styles.grid}>
           <DataCard
             id="summary-years"
             kicker={`Hospitalizacje · ${range}`}
-            title="Hospitalizacje w kolejnych latach"
+            title="Hospitalizacje JGP w kolejnych latach"
             lead={latest ? <><strong>{millions(latest.hospitalizations)}</strong> w {latestYear} r.{yearChange !== null ? <> ({signedPct(yearChange)} r/r)</> : null}. Liczby w milionach.</> : null}
             description={<>
-              <p>Hospitalizacja to jeden pobyt w szpitalu rozliczony przez NFZ w grupie JGP. Ten sam pacjent może mieć kilka hospitalizacji w roku.</p>
+              <p>Hospitalizacja JGP to jeden pobyt w szpitalu rozliczony przez NFZ w grupie JGP. Ten sam pacjent może mieć kilka hospitalizacji w roku.</p>
+              <p>NFZ rozlicza też pobyty poza JGP, np. w psychiatrii, rehabilitacji i opiece długoterminowej. Tych pobytów nie ma w tych danych.</p>
               <p>Najmniej hospitalizacji było w {label(lowest.year)} ({millions(lowest.hospitalizations)}).{lowest.year === "2020" ? " To rok pandemii COVID-19: szpitale ograniczyły przyjęcia planowe." : null}</p>
             </>}
             href={DASHBOARD_HREFS.trend}

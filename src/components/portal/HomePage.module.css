@@ -8,7 +8,8 @@
 .heroContent { max-width: 575px; padding: 45px 0 53px; }
 .eyebrow { display: inline-flex; align-items: center; gap: 9px; color: var(--color-primary-hover); text-transform: uppercase; font-weight: 750; letter-spacing: .10em; font-size: 12px; }
 .eyebrowLine { width: 20px; height: 2px; background: var(--color-primary); }
-.hero h1 { font-size: clamp(38px, 3.8vw, 57px); line-height: 1.1; margin: 20px 0 18px; font-weight: 780; letter-spacing: -.045em; color: #1c3534; }
+/* Tytuły: Inter Tight 400, ciasny odstęp liter (styl jak zarobkilekarzy.pl). */
+.hero h1 { font-family: var(--font-display), Inter, sans-serif; font-size: clamp(38px, 3.8vw, 56px); line-height: 1.02; margin: 20px 0 18px; font-weight: 400; letter-spacing: -.04em; color: #1c3534; }
 .hero p { max-width: 490px; font-size: 16px; line-height: 1.7; color: #455d59; margin: 0 0 26px; }
 .heroSearch { display: grid; gap: 10px; max-width: 540px; }
 .hero .searchHint { margin: 0; font-size: 13px; line-height: 1.5; color: #455d59; }
@@ -20,7 +21,7 @@
 .fact span:not(.factIcon) { font-size: 13px; color: var(--color-text-secondary); line-height: 1.4; }
 .paths, .data, .sections { padding-top: 64px; scroll-margin-top: 92px; }
 .sectionEyebrow { font-size: 12px; font-weight: 750; color: var(--color-primary); letter-spacing: .12em; }
-.sectionIntro h2 { font-size: clamp(26px,3vw,32px); margin: 9px 0 6px; letter-spacing: -.035em; line-height: 1.15; }
+.sectionIntro h2, .compareText h2 { font-family: var(--font-display), Inter, sans-serif; font-weight: 400; font-size: clamp(26px,3vw,32px); margin: 9px 0 6px; letter-spacing: -.035em; line-height: 1.05; }
 .sectionIntro p { font-size: 16px; color: var(--color-text-secondary); margin: 0 0 24px; max-width: 680px; line-height: 1.6; }
 
 /* Ścieżki „Od czego zacząć” */
@@ -39,8 +40,7 @@
 
 /* Karty z wykresami „Liczby, które warto znać” */
 .dataGrid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 16px; }
-.compare { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 32px; align-items: start; padding-block: 48px 8px; }
-.compareText h2 { font-size: clamp(26px,3vw,32px); margin: 9px 0 6px; letter-spacing: -.035em; line-height: 1.15; }
+.compare { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 32px; align-items: stretch; padding-block: 48px 8px; }
 .compareText > p { font-size: 16px; color: var(--color-text-secondary); margin: 0 0 18px; line-height: 1.6; }
 .compareSteps { margin: 0 0 20px; padding: 0; list-style: none; counter-reset: step; display: grid; gap: 10px; }
 .compareSteps li { counter-increment: step; display: grid; grid-template-columns: 28px 1fr; gap: 10px; font-size: 15px; color: var(--color-text-secondary); line-height: 1.5; }

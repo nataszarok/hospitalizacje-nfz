@@ -15,15 +15,17 @@ const financial = [finance("1", 2025, -20), finance("2", 2025, -3), finance("3",
 const pair = (a: string, b: string, distance: number): JgpPeerPair => ({ a, b, peer_grade_pred: distance <= 10.01 ? "A" : "B", distance_score: distance });
 const pairs = [pair("04|1", "04|2", 4), pair("04|1", "07|3", 2.5), pair("04|1", "07|4", 15), pair("07|3", "07|4", 9)];
 
+const psz = new Set(["1", "2", "3", "4", "5", "6"]);
+
 const facilities = [["04", "1", "SZPITAL A", "NOWA SÓL"], ["04", "2", "SZPITAL B", "ZIELONA GÓRA"], ["07", "3", "SZPITAL C", "WARSZAWA"]] as const;
 
 describe("buildHospitalHomeStats", () => {
-  const stats = buildHospitalHomeStats(profiles, financial, pairs, facilities, "04|1");
+  const stats = buildHospitalHomeStats(profiles, financial, pairs, facilities, psz, "04|1");
 
   it("liczy placówki według łóżek (osobno bez łóżek), medianę szpitali z łóżkami i oddziały SOR", () => {
     expect(stats).toMatchObject({ profiles: 5, withBeds: 4, medianBeds: 200, withSor: 2, sorUnits: 2 });
     expect(stats.beds.map((bin) => [bin.label, bin.count])).toEqual([["bez łóżek", 1], ["1–99", 1], ["100–199", 1], ["200–299", 1], ["300–499", 0], ["500–799", 0], ["800+", 1]]);
-    const twoSor = buildHospitalHomeStats([...profiles, profile("08", "6", 300, 2)], financial, pairs, facilities);
+    const twoSor = buildHospitalHomeStats([...profiles, profile("08", "6", 300, 2)], financial, pairs, facilities, psz);
     expect(twoSor).toMatchObject({ withSor: 3, sorUnits: 4 });
   });
 
@@ -39,7 +41,14 @@ describe("buildHospitalHomeStats", () => {
     expect(counts).toEqual({ "−20…−17,5": 1, "−5…−2,5": 1, "2,5…5": 1, "10…12,5": 1 });
     expect(margins.find((bin) => bin.label === "−2,5…0")?.negative).toBe(true);
     expect(margins.find((bin) => bin.label === "0…2,5")?.negative).toBe(false);
-    expect(buildHospitalHomeStats(profiles, [], pairs, facilities).finance).toBeNull();
+    expect(buildHospitalHomeStats(profiles, [], pairs, facilities, psz).finance).toBeNull();
+  });
+
+  it("liczy finanse tylko dla szpitali z sieci PSZ", () => {
+    const onlyPsz = buildHospitalHomeStats(profiles, financial, pairs, facilities, new Set(["1", "4"])).finance;
+    // NIP 1: −20, NIP 4: +12; pozostałe poza PSZ.
+    expect(onlyPsz).toMatchObject({ reported: 2, loss: 1, netResult: -8 });
+    expect(buildHospitalHomeStats(profiles, financial, pairs, facilities, new Set()).finance).toBeNull();
   });
 
   it("liczy pary klasy A i pokazuje przykład z najbliższymi szpitalami", () => {
@@ -51,8 +60,8 @@ describe("buildHospitalHomeStats", () => {
   });
 
   it("bez wybranego szpitala w parach bierze szpital z największą liczbą par A", () => {
-    const example = buildHospitalHomeStats(profiles, financial, pairs, facilities, "99|0").comparison.example!;
+    const example = buildHospitalHomeStats(profiles, financial, pairs, facilities, psz, "99|0").comparison.example!;
     expect(example.key).toBe("04|1");
-    expect(buildHospitalHomeStats(profiles, financial, [], facilities).comparison.example).toBeNull();
+    expect(buildHospitalHomeStats(profiles, financial, [], facilities, psz).comparison.example).toBeNull();
   });
 });

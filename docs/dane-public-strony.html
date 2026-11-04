@@ -44,7 +44,7 @@ td.urls code { display: inline-block; margin: 0 2px 3px 0; white-space: nowrap; 
 <main>
 
 <header>
-  <span class="kicker">Atlas Publicznej Ochrony Zdrowia · dokument roboczy</span>
+  <span class="kicker">FunduszDanych · dokument roboczy</span>
   <h1>Dane w <code>public/</code>: kto ich używa i gdzie</h1>
   <p class="lead">Stan na 4 listopada 2026 r. (branch <code>feature/jgp-tabbed-card-all</code>). Dokument opisuje, czego potrzebuje build strony, które pliki z <code>public/data/</code> czyta build, a które pobiera przeglądarka, i na której podstronie. Rozmiary to pliki na dysku (gzip), po zmianie formatu plików hospitalizacji na słowniki i kolumny (sekcja 6).</p>
   <nav class="toc" aria-label="Spis treści">
@@ -91,12 +91,12 @@ td.urls code { display: inline-block; margin: 0 2px 3px 0; white-space: nowrap; 
   <p>Stąd „poza <code>public/</code>”: plik zostaje w repo (build w CI go ma i czyta), ale build go nie kopiuje do <code>dist/</code>, więc wrangler go nie wysyła i nie ma go pod żadnym adresem strony.</p>
   <div class="scroll-x">
   <table>
-    <thead><tr><th>Limit Cloudflare Pages</th><th>Wartość</th><th>Atlas teraz</th></tr></thead>
+    <thead><tr><th>Limit Cloudflare Pages</th><th>Wartość</th><th>FunduszDanych teraz</th></tr></thead>
     <tbody>
       <tr><td>Rozmiar jednego pliku</td><td>25 MiB</td><td>największy plik w <code>dist/</code>: ok. 1,4 MB (<code>trends.json.gz</code>); największa strona: ok. 0,5 MB HTML</td></tr>
       <tr><td>Liczba plików w witrynie</td><td>20 000 (plan Free); 100 000 (plany płatne, ze zmienną <code>PAGES_WRANGLER_MAJOR_VERSION=4</code>)</td><td>ok. 4 000 plików (przed przeniesieniem <code>jgp/</code> do <code>build-data/</code>: ok. 4 800); z tego ok. 3 900 to strony grup JGP (HTML i pliki RSC)</td></tr>
       <tr><td>Łączny rozmiar witryny</td><td>brak limitu w dokumentacji</td><td>ok. 700 MB</td></tr>
-      <tr><td>Czas buildu</td><td>20 minut, ale tylko dla buildów Cloudflare; Atlas buduje w GitHub Actions i wysyła gotowy <code>dist/</code></td><td>Action ma własny limit <code>timeout-minutes: 20</code> na cały job</td></tr>
+      <tr><td>Czas buildu</td><td>20 minut, ale tylko dla buildów Cloudflare; FunduszDanych buduje w GitHub Actions i wysyła gotowy <code>dist/</code></td><td>Action ma własny limit <code>timeout-minutes: 20</code> na cały job</td></tr>
       <tr><td><code>_headers</code> / <code>_redirects</code></td><td>100 reguł / 2 100 przekierowań</td><td>nie używamy</td></tr>
     </tbody>
   </table>

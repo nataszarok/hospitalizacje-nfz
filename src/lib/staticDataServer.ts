@@ -100,6 +100,12 @@ export async function readHospitalProfilesFromDisk(file = join(DATA_DIR, "rpwdl_
   return data.records.map(({ oz_nfz, nip, core, capabilities }) => ({ oz_nfz, nip, core: core ? { beds: core.beds } : null, capabilities: capabilities?.sor ? { sor: capabilities.sor } : null }));
 }
 
+/** NIP-y szpitali z sieci PSZ (`scripts/build_psz.py`). */
+export async function readPszNipsFromDisk(file = join(DATA_DIR, "psz.json.gz")): Promise<Set<string>> {
+  const data = await readGzipJson<{ rows: [string, number][] }>(file);
+  return new Set(data.rows.map(([nip]) => nip));
+}
+
 /** Wyniki finansowe podmiotów (NIP): przychód, wynik netto, marża. */
 export async function readFinancialResultsFromDisk(file = join(DATA_DIR, "financial_results.json.gz")): Promise<FinancialRecordSummary[]> {
   const data = await readGzipJson<{ records: FinancialRecordSummary[] }>(file);

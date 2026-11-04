@@ -108,7 +108,7 @@ export function HomePage({ highlights, stats, hospitals }: { highlights: Dataset
 
       <section className={`${styles.container} ${styles.facts}`} aria-label="Informacje o danych">
         <div className={styles.fact}><span className={styles.factIcon}><PortalIcon name="calendar" /></span><div><strong>{formatYearRange(highlights.yearFrom, highlights.yearTo)}</strong><span>Zakres danych NFZ</span></div></div>
-        <div className={styles.fact}><span className={styles.factIcon}><PortalIcon name="bed" /></span><div><strong>{formatCompactCount(highlights.hospitalizations)}</strong><span>Hospitalizacji (szacunek)</span></div></div>
+        <div className={styles.fact}><span className={styles.factIcon}><PortalIcon name="bed" /></span><div><strong>{formatCompactCount(highlights.hospitalizations)}</strong><span>Hospitalizacji JGP (szacunek)</span></div></div>
         <div className={styles.fact}><span className={styles.factIcon}><PortalIcon name="hospital" /></span><div><strong>{formatCompactCount(highlights.providers)}</strong><span>Świadczeniodawców</span></div></div>
         <div className={styles.fact}><span className={styles.factIcon}><PortalIcon name="chart" /></span><div><strong>{formatCompactCount(highlights.jgpGroups)}</strong><span>Grup JGP</span></div></div>
       </section>
@@ -143,7 +143,7 @@ export function HomePage({ highlights, stats, hospitals }: { highlights: Dataset
           <DataCard
             id="data-years"
             kicker={`Hospitalizacje · ${range}`}
-            title="Ile hospitalizacji rozlicza NFZ w roku?"
+            title="Ile hospitalizacji JGP rozlicza NFZ w roku?"
             lead={latest ? <><strong>{decimal(latest.hospitalizations / 1_000_000)} mln</strong> w {latest.year} r.{yearChange !== null ? <> ({signedPct(yearChange)} r/r)</> : null}. Liczby w milionach.</> : null}
             href={DASHBOARD_HREFS.summary}
             cta="Hospitalizacje w Polsce"
@@ -187,12 +187,12 @@ export function HomePage({ highlights, stats, hospitals }: { highlights: Dataset
 
           {finance ? <DataCard
             id="hospitals-finance"
-            kicker={`Finanse · ${finance.year}`}
-            title="Ile szpitali kończy rok ze stratą?"
-            lead={<><strong>{integer(finance.loss)} z {integer(finance.reported)}</strong> podmiotów ({Math.round((finance.loss / finance.reported) * 100)}%) miało stratę netto w {finance.year} r. Łączny wynik: <strong>{billions(finance.netResult)}</strong>. Oś: marża netto w % (przedziały po 2,5 p.p.).</>}
+            kicker={`Finanse · ${finance.year} · szpitale PSZ`}
+            title="Ile szpitali PSZ kończy rok ze stratą?"
+            lead={<><strong>{integer(finance.loss)} z {integer(finance.reported)}</strong> szpitali z sieci PSZ ({Math.round((finance.loss / finance.reported) * 100)}%) miało stratę netto w {finance.year} r. Łączny wynik: <strong>{billions(finance.netResult)}</strong>. Oś: marża netto w % (przedziały po 2,5 p.p.).</>}
             href={exampleHref}
             cta="Przykładowy profil"
-            source="Sprawozdania finansowe podmiotów (NIP)"
+            source="Sprawozdania finansowe; wykaz PSZ (NFZ)"
             estimate={false}
           >
             <ContinuousHistogram bins={finance.margins} label="Podmioty według marży netto" unit="%" />

@@ -69,7 +69,7 @@ describe("Strona główna", () => {
     renderHome();
     const facts = screen.getByRole("region", { name: "Informacje o danych" });
     expect(facts).toHaveTextContent("2024–2025Zakres danych NFZ");
-    expect(facts).toHaveTextContent("7,8 mlnHospitalizacji (szacunek)");
+    expect(facts).toHaveTextContent("7,8 mlnHospitalizacji JGP (szacunek)");
     expect(facts).toHaveTextContent("833Świadczeniodawców");
     expect(facts).toHaveTextContent("693Grup JGP");
   });
@@ -95,10 +95,10 @@ describe("Strona główna", () => {
     renderHome();
     const data = screen.getByRole("region", { name: "Liczby, które warto znać." });
     expect(within(data).getAllByRole("article").map((card) => card.querySelector("h3")?.textContent)).toEqual([
-      "Ile hospitalizacji rozlicza NFZ w roku?",
+      "Ile hospitalizacji JGP rozlicza NFZ w roku?",
       "Które grupy JGP są najczęstsze?",
     ]);
-    const years = within(data).getByRole("article", { name: "Ile hospitalizacji rozlicza NFZ w roku?" });
+    const years = within(data).getByRole("article", { name: "Ile hospitalizacji JGP rozlicza NFZ w roku?" });
     expect(years).toHaveTextContent("6,0 mln w 2025 r. (+1,7% r/r)");
     expect(within(years).getByRole("img", { name: /2024 — 5,9 mln, 2025 — 6,0 mln/ })).toBeInTheDocument();
     expect(within(years).getByRole("link", { name: /Hospitalizacje w Polsce/ })).toHaveAttribute("href", "/hospitalizacje");
@@ -125,8 +125,8 @@ describe("Strona główna", () => {
     expect(within(beds).getByRole("link", { name: /Znajdź szpital/ })).toHaveAttribute("href", "/szpitale");
     expect(beds).not.toHaveTextContent("Szacunek");
 
-    const finance = within(section).getByRole("article", { name: "Ile szpitali kończy rok ze stratą?" });
-    expect(finance).toHaveTextContent("286 z 631 podmiotów (45%) miało stratę netto w 2025 r. Łączny wynik: −1,2 mld zł.");
+    const finance = within(section).getByRole("article", { name: "Ile szpitali PSZ kończy rok ze stratą?" });
+    expect(finance).toHaveTextContent("286 z 631 szpitali z sieci PSZ (45%) miało stratę netto w 2025 r. Łączny wynik: −1,2 mld zł.");
     expect(within(finance).getByRole("img", { name: /−2,5…0 % — 137, 0…2,5 % — 218/ })).toBeInTheDocument();
     expect(within(finance).getByRole("link", { name: /Przykładowy profil/ })).toHaveAttribute("href", "/szpitale?hospital=04%7C9251723350");
   });
@@ -144,7 +144,7 @@ describe("Strona główna", () => {
 
   it("pomija wykres finansów i przykład porównania bez danych", () => {
     renderHome({}, { finance: null, comparison: { pairsA: 0, hospitalsWithPeers: 0, example: null } });
-    expect(screen.queryByRole("article", { name: "Ile szpitali kończy rok ze stratą?" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("article", { name: "Ile szpitali PSZ kończy rok ze stratą?" })).not.toBeInTheDocument();
     expect(screen.queryByRole("region", { name: "Szpital na tle podobnych." })).not.toBeInTheDocument();
   });
 

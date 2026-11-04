@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Inter_Tight } from "next/font/google";
 import "@mantine/core/styles.css";
 import "./globals.css";
 import "../styles/portal.css";
@@ -12,6 +12,14 @@ const inter = Inter({
   display: "swap",
 });
 
+// Krój tytułów portalu (lekki, ciasny): zmienna --font-display.
+const interTight = Inter_Tight({
+  subsets: ["latin", "latin-ext"],
+  weight: ["400", "500"],
+  display: "swap",
+  variable: "--font-display",
+});
+
 export const metadata: Metadata = {
   title: SITE_NAME,
   description: "Portal o publicznej ochronie zdrowia: hospitalizacje, szpitale publiczne, wyceny JGP i artykuły na podstawie danych NFZ.",
@@ -21,7 +29,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="pl" {...mantineHtmlProps}>
       <head><ColorSchemeScript defaultColorScheme="light" /></head>
-      <body className={inter.className} suppressHydrationWarning>
+      <body className={`${inter.className} ${interTight.variable}`} suppressHydrationWarning>
         <MantineProvider
           defaultColorScheme="light"
           theme={{

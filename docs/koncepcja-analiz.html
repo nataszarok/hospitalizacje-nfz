@@ -56,7 +56,7 @@ li.ok::before { content: "✓"; position: absolute; left: -1.25em; color: var(--
 <main>
 
 <header>
-  <span class="kicker">Atlas Publicznej Ochrony Zdrowia · dokument roboczy</span>
+  <span class="kicker">FunduszDanych · dokument roboczy</span>
   <h1>Koncepcja modułu Analizy i kart grup JGP</h1>
   <p class="lead">Stan na 2 listopada 2026 r. Dokument opisuje, na jakie pytania odpowiada moduł, jak są ułożone strony i dane oraz co jest zrobione, a co czeka na przebudowę. Zastępuje plik <code>docs/koncepcja-analiz.md</code>.</p>
   <nav class="toc" aria-label="Spis treści">
@@ -93,7 +93,7 @@ li.ok::before { content: "✓"; position: absolute; left: -1.25em; color: var(--
 <section id="architektura" aria-labelledby="h-arch">
   <span class="kicker">2 · Architektura</span>
   <h2 id="h-arch">Architektura informacji</h2>
-<pre>Atlas
+<pre>FunduszDanych
 ├─ /                        Strona główna: wyszukiwarka, pasek faktów, ścieżki, wykresy, działy
 ├─ /analizy                 Eksplorator: wspólny kontekst + widoki-pytania
 │   ├─ W czasie             t=w (domyślny)
@@ -219,6 +219,7 @@ li.ok::before { content: "✓"; position: absolute; left: -1.25em; color: var(--
         <li class="ok"><b>Karta „Hospitalizacje w Polsce” (4.11):</b> <code>/hospitalizacje</code> według układu z <code>docs/karta-hospitalizacje-podsumowanie.html</code>: nagłówek z czterema liczbami i spisem treści, sekcje Ile? (lata, miesiące), Tryb przyjęcia, Gdzie?, Co leczą? (sekcje katalogu, najczęstsze grupy), Co rośnie, co maleje? (rodziny ręczne <code>SUMMARY_FAMILIES</code>, zmiany r/r), Zgony, Kto leczy? (świadczeniodawcy, udział 10% największych). Każdy wykres ma opis „jak czytać” i link w głąb. Logika: <code>src/lib/hospitalizationSummary.ts</code>; wykres lat na stronie głównej prowadzi do karty.</li>
         <li class="ok"><b>Nawigacja (4.11):</b> nowa pozycja „Hospitalizacje”; „Analizy” → „Eksplorator danych”. Menu pod przyciskiem od 1060 px.</li>
         <li class="ok"><b>Poprawki strony głównej (4.11):</b> nowa ilustracja hero (droga pacjenta: karetka, szpital, łóżko z kroplówką, monitor EKG, dni pobytu); łóżka liczone dla 833 świadczeniodawców (121 bez łóżek w RPWDL, głównie kliniki jednego dnia); SOR jako liczba oddziałów (249) w podmiotach (243); marża netto jako histogram po 2,5 p.p.; ekran ładowania <code>.center-state</code> niższy niż okno, więc link z połowy strony otwiera <code>/szpitale</code> od góry.</li>
+        <li class="ok"><b>Poprawki (4.11, wieczór):</b> nazwa serwisu „FunduszDanych” (<code>SITE_NAME</code>); finanse na stronie głównej tylko dla szpitali z sieci PSZ (nowy plik <code>psz.json.gz</code> ← <code>scripts/build_psz.py</code> z wykazu NFZ, 557 NIP); tytuły w kroju Inter Tight 400 (<code>--font-display</code>); przykład porównania z 5 parami (równa wysokość kolumn); „hospitalizacje JGP” w tytułach, bo NFZ rozlicza też pobyty poza JGP.</li>
         <li><b>Dalej:</b> więcej rodzin w <code>SUMMARY_FAMILIES</code> (przegląd katalogu NFZ); weryfikacja nazw sekcji JGP.</li>
       </ul>
     </div>

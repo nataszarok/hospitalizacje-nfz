@@ -22,7 +22,7 @@ describe("Karta „Hospitalizacje w Polsce”", () => {
   it("pokazuje w nagłówku zakres lat, cztery liczby i spis treści z kotwicami sekcji", () => {
     renderPage();
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Hospitalizacje w Polsce");
-    const kpis = screen.getByText("Hospitalizacje 2025").closest("dl")!;
+    const kpis = screen.getByText("Hospitalizacje JGP 2025").closest("dl")!;
     expect(kpis).toHaveTextContent("Zgony w szpitalu10,0%");
     expect(kpis).toHaveTextContent("Świadczeniodawcy3");
     const toc = screen.getByRole("navigation", { name: "Części karty" });
@@ -34,7 +34,7 @@ describe("Karta „Hospitalizacje w Polsce”", () => {
   it("ma sekcje-pytania; każda karta ma opis i link do szczegółów", () => {
     renderPage();
     expect(screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent)).toEqual([
-      "Ile hospitalizacji?", "Jak przyjmowani są pacjenci?", "Co leczą szpitale?", "Co rośnie, co maleje?", "Ilu pacjentów umiera w szpitalu?", "Kto leczy?",
+      "Ile hospitalizacji JGP?", "Jak przyjmowani są pacjenci?", "Co leczą szpitale?", "Co rośnie, co maleje?", "Ilu pacjentów umiera w szpitalu?", "Kto leczy?",
     ]);
     for (const card of screen.getAllByRole("article")) {
       expect(card.querySelector("footer a")).not.toBeNull();
