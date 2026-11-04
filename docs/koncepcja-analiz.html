@@ -100,6 +100,7 @@ li.ok::before { content: "✓"; position: absolute; left: -1.25em; color: var(--
 │   ├─ Kto leczy            t=k
 │   ├─ Tryb przyjęcia       t=a
 │   └─ Gdzie                t=g
+├─ /hospitalizacje          Karta „Hospitalizacje ogółem” (planowana, docs/karta-hospitalizacje-podsumowanie.html)
 ├─ /jgp                     Katalog grup JGP
 ├─ /jgp/[kod]               Karta grupy (ok. 700 stron statycznych)
 ├─ /szpitale                Profil szpitala + Porównanie (hv=c); docelowo /szpitale/[id]
@@ -214,6 +215,8 @@ li.ok::before { content: "✓"; position: absolute; left: -1.25em; color: var(--
       <ul>
         <li class="ok"><b>Zrobione (4.11, branch <code>feature/homepage-navigation</code>):</b> „Od czego zacząć”: trzy numerowane ścieżki (leczenie → katalog i karty JGP, szpital → profil i porównanie, analiza → eksplorator), każda z odnośnikami na skróty. „Liczby, które warto znać”: karty z wykresem, liczbą, źródłem z oznaczeniem „Szacunek” i linkiem do pełnego widoku: hospitalizacje w latach (→ W czasie), najczęstsze grupy JGP (→ karty grup), mapa województw na 100 tys. wobec średniej Polski (województwo → Gdzie z filtrem <code>ow</code>), tryb przyjęcia w latach (→ Tryb przyjęcia), największe zmiany r/r (→ karty grup, katalog z <code>sort=zmiana</code>). „Wszystkie działy”: lista modułów zamiast kafli; sekcja „Dla analityków” usunięta (jest w ścieżce 03).</li>
         <li class="ok"><b>Dane:</b> liczone podczas budowania (<code>src/lib/homeStats.ts</code>, metoda konserwatywna jak w eksploratorze); wykresy jako SVG bez Plotly i bez JavaScriptu w przeglądarce (<code>HomeCharts.tsx</code>). Nazwy grup w formie zdania: <code>formatJgpName</code>.</li>
+        <li class="ok"><b>Poprawki (4.11):</b> „Liczby, które warto znać” zawężone do dwóch wykresów: hospitalizacje w latach i najczęstsze grupy JGP. Mapa, tryb przyjęcia i zmiany r/r nie prowadziły do konkretnej podstrony; komponenty zostają w <code>HomeCharts.tsx</code> dla przyszłej karty. Nowe sekcje: „Szpitale publiczne” (histogram łóżek z RPWDL, odsetek SOR, marża netto i liczba podmiotów ze stratą → <code>/szpitale</code> i przykładowy profil) oraz „Porównanie placówek” (trzy kroki, liczba par klasy A, najbliższe szpitale przykładu Nowa Sól → profil i <code>hv=c</code>). Dane: <code>src/lib/hospitalHomeStats.ts</code>.</li>
+        <li><b>Dalej:</b> karta „Hospitalizacje ogółem” (adres roboczy <code>/hospitalizacje</code>) jako cel wykresu lat; projekt i analiza sekcji oraz rodzin JGP 2017–2025: <code>docs/karta-hospitalizacje-podsumowanie.html</code>. Ilustracja hero: wybór jednego z trzech wariantów zamiast monet „zł”.</li>
       </ul>
     </div>
   </div>

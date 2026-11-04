@@ -6,7 +6,9 @@ import { SITE_NAME } from "@/lib/site";
 import { formatCompactCount, formatYearRange } from "@/lib/formatters";
 import type { DatasetHighlights } from "@/lib/staticData";
 import type { HomeStats } from "@/lib/homeStats";
-import { AdmissionBars, ChangeList, GroupBars, MapLegend, RegionsMiniMap, YearBars } from "@/components/portal/HomeCharts";
+import type { HospitalHomeStats } from "@/lib/hospitalHomeStats";
+import { hospitalHref } from "@/lib/portalLinks";
+import { GroupBars, Histogram, PeerDistances, YearBars } from "@/components/portal/HomeCharts";
 import { PortalIcon } from "@/components/portal/PortalIcon";
 import { SearchBox } from "@/components/search/SearchBox";
 import styles from "./HomePage.module.css";
@@ -74,26 +76,30 @@ const paths: readonly Path[] = [
 const integer = (value: number) => Math.round(value).toLocaleString("pl-PL");
 const decimal = (value: number) => value.toLocaleString("pl-PL", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 const signedPct = (value: number) => `${value > 0 ? "+" : value < 0 ? "−" : ""}${decimal(Math.abs(value))}%`;
+const billions = (value: number) => `${value < 0 ? "−" : ""}${decimal(Math.abs(value) / 1_000_000_000)} mld zł`;
+const HOSPITALIZATION_SOURCE = "Dane NFZ o hospitalizacjach";
 
-/** Karta z wykresem: pytanie, liczba, wykres i stopka ze źródłem oraz linkiem do pełnego widoku. */
-function DataCard({ id, kicker, title, lead, children, href, cta, wide = false }: { id: string; kicker: string; title: string; lead?: ReactNode; children: ReactNode; href: string; cta: string; wide?: boolean }) {
-  return <article className={`${styles.dataCard} ${wide ? styles.dataCardWide : ""}`} aria-labelledby={id}>
+/** Karta z wykresem: pytanie, liczba, wykres i stopka ze źródłem oraz linkiem do pełnego widoku. `estimate`: dane z estymacją „<5”. */
+function DataCard({ id, kicker, title, lead, children, href, cta, source = HOSPITALIZATION_SOURCE, estimate = true }: { id: string; kicker: string; title: string; lead?: ReactNode; children: ReactNode; href: string; cta: string; source?: string; estimate?: boolean }) {
+  return <article className={styles.dataCard} aria-labelledby={id}>
     <span className={styles.dataKicker}>{kicker}</span>
     <h3 id={id}>{title}</h3>
     {lead ? <p className={styles.dataLead}>{lead}</p> : null}
     <div className={styles.dataChart}>{children}</div>
     <footer className={styles.dataFooter}>
-      <span className={styles.badge} title="Wartości „<5” w danych NFZ liczone jako 1 (metoda konserwatywna).">Szacunek</span>
-      <span className={styles.dataSource}>Dane NFZ o hospitalizacjach</span>
+      {estimate ? <span className={styles.badge} title="Wartości „<5” w danych NFZ liczone jako 1 (metoda konserwatywna).">Szacunek</span> : null}
+      <span className={styles.dataSource}>{source}</span>
       <Link className={styles.textLink} href={href}>{cta} <PortalIcon name="arrow" size={16} /></Link>
     </footer>
   </article>;
 }
 
-export function HomePage({ highlights, stats }: { highlights: DatasetHighlights; stats: HomeStats }) {
+export function HomePage({ highlights, stats, hospitals }: { highlights: DatasetHighlights; stats: HomeStats; hospitals: HospitalHomeStats }) {
   const latest = stats.years.at(-1);
   const previous = stats.years.length > 1 ? stats.years[stats.years.length - 2] : null;
-  const first = stats.years[0];
+  const { finance, comparison } = hospitals;
+  const example = comparison.example;
+  const exampleHref = example ? hospitalHref(...(example.key.split("|") as [string, string])) : DASHBOARD_HREFS.hospital;
   const yearChange = latest && previous?.hospitalizations ? ((latest.hospitalizations - previous.hospitalizations) / previous.hospitalizations) * 100 : null;
   const range = formatYearRange(highlights.yearFrom, highlights.yearTo);
   return <>
@@ -171,50 +177,77 @@ export function HomePage({ highlights, stats }: { highlights: DatasetHighlights;
             <GroupBars groups={stats.topGroups} />
           </DataCard>
 
-          {stats.regions ? <DataCard
-            id="data-regions"
-            kicker={`Województwa · ${stats.latestYear}`}
-            title="Gdzie szpitale leczą najwięcej?"
-            lead={<>Hospitalizacje na 100 tys. mieszkańców wobec średniej Polski (<strong>{integer(stats.regions.national)}</strong>). Województwo = siedziba świadczeniodawcy, nie pacjenta.</>}
-            href={DASHBOARD_HREFS.regions}
-            cta="Gdzie"
-          >
-            <RegionsMiniMap regions={stats.regions} />
-            <MapLegend />
-          </DataCard> : null}
+        </div>
+      </section>
 
+      <section id="szpitale" className={`${styles.container} ${styles.data}`} aria-labelledby="hospitals-title">
+        <div className={styles.sectionIntro}>
+          <span className={styles.sectionEyebrow}>SZPITALE PUBLICZNE</span>
+          <h2 id="hospitals-title">Jak wyglądają szpitale.</h2>
+          <p>Profil każdego szpitala: oddziały, łóżka, SOR, grupy JGP i wynik finansowy. Wpisz nazwę albo miasto w wyszukiwarce.</p>
+        </div>
+        <div className={styles.dataGrid}>
           <DataCard
-            id="data-admissions"
-            kicker={`Tryb przyjęcia · ${range}`}
-            title="Jak przyjmowani są pacjenci?"
-            lead={latest && first ? <>Przyjęcia nagłe: <strong>{Math.round(latest.urgentPct)}%</strong> w {latest.year} r., {Math.round(first.urgentPct)}% w {first.year} r.</> : null}
-            href={DASHBOARD_HREFS.admissions}
-            cta="Tryb przyjęcia"
+            id="hospitals-beds"
+            kicker={`Łóżka · ${integer(hospitals.withBeds)} szpitali`}
+            title="Jakiej wielkości są szpitale?"
+            lead={<>Mediana: <strong>{integer(hospitals.medianBeds)}</strong> łóżek. <strong>{integer(hospitals.withSor)}</strong> z {integer(hospitals.profiles)} ma szpitalny oddział ratunkowy (SOR).</>}
+            href={DASHBOARD_HREFS.hospital}
+            cta="Znajdź szpital"
+            source="Rejestr RPWDL"
+            estimate={false}
           >
-            <AdmissionBars years={stats.years} />
-            <div className={styles.legend} aria-hidden="true">
-              <span><i className={styles.swatchUrgent} />Nagłe (%)</span>
-              <span><i className={styles.swatchPlanned} />Planowe</span>
-              <span><i className={styles.swatchOther} />Pozostałe</span>
-            </div>
+            <Histogram bins={hospitals.beds} label="Szpitale według liczby łóżek" unit="łóżek" />
           </DataCard>
 
-          {stats.previousYear && (stats.changes.up.length || stats.changes.down.length) ? <DataCard
-            id="data-changes"
-            kicker={`Zmiana r/r · ${stats.previousYear}–${stats.latestYear}`}
-            title={`Co zmieniło się w ${stats.latestYear} r.?`}
-            lead={<>Grupy z co najmniej 1000 hospitalizacji w {stats.previousYear} r. Zmiana liczby hospitalizacji rok do roku.</>}
-            href="/jgp?sort=zmiana"
-            cta="Wszystkie zmiany"
-            wide
+          {finance ? <DataCard
+            id="hospitals-finance"
+            kicker={`Finanse · ${finance.year}`}
+            title="Ile szpitali kończy rok ze stratą?"
+            lead={<><strong>{integer(finance.loss)} z {integer(finance.reported)}</strong> podmiotów ({Math.round((finance.loss / finance.reported) * 100)}%) miało stratę netto w {finance.year} r. Łączny wynik: <strong>{billions(finance.netResult)}</strong>. Oś: marża netto w %.</>}
+            href={exampleHref}
+            cta="Przykładowy profil"
+            source="Sprawozdania finansowe podmiotów (NIP)"
+            estimate={false}
           >
-            <div className={styles.changes}>
-              <ChangeList title="Największe wzrosty" groups={stats.changes.up} direction="up" />
-              <ChangeList title="Największe spadki" groups={stats.changes.down} direction="down" />
+            <Histogram bins={finance.margins} label="Podmioty według marży netto" unit="%" />
+            <div className={styles.legend} aria-hidden="true">
+              <span><i className={styles.swatchLoss} />Strata</span>
+              <span><i className={styles.swatchUrgent} />Zysk</span>
             </div>
           </DataCard> : null}
         </div>
       </section>
+
+      {example ? <section id="porownanie" className={`${styles.container} ${styles.compare}`} aria-labelledby="compare-title">
+        <div className={styles.compareText}>
+          <span className={styles.sectionEyebrow}>PORÓWNANIE PLACÓWEK</span>
+          <h2 id="compare-title">Szpital na tle podobnych.</h2>
+          <p>Model dobiera szpitale o podobnym profilu: oddziały, łóżka, grupy JGP i skala leczenia. Porównanie pokazuje różnice w hospitalizacjach, śmiertelności i finansach.</p>
+          <ol className={styles.compareSteps}>
+            <li><span><b>Wybierz szpital.</b> Wpisz nazwę albo miasto.</span></li>
+            <li><span><b>Zobacz podobne placówki.</b> Klasa A (dystans do 10) to profil najbardziej zbliżony.</span></li>
+            <li><span><b>Porównaj wskaźniki.</b> Grupy JGP, tryb przyjęcia, zgony i wynik finansowy.</span></li>
+          </ol>
+          <dl className={styles.compareFacts}>
+            <div><dt>Pary klasy A</dt><dd>{integer(comparison.pairsA)}</dd></div>
+            <div><dt>Szpitale z parą A</dt><dd>{integer(comparison.hospitalsWithPeers)}</dd></div>
+          </dl>
+          <Link className={styles.pathCta} href={`${exampleHref}&hv=c`}>Porównaj przykładowy szpital <PortalIcon name="arrow" size={17} /></Link>
+        </div>
+        <DataCard
+          id="compare-example"
+          kicker={`Przykład · ${example.city}`}
+          title="Które szpitale są najbardziej podobne?"
+          lead={<><strong>{example.name}</strong>: {integer(example.peerCount)} par klasy A. Poniżej {example.peers.length} najbliższych. Mniejszy dystans = bardziej podobny profil.</>}
+          href={`${exampleHref}&hv=c`}
+          cta="Pełne porównanie"
+          source="Model par A/B (RPWDL, dane NFZ)"
+          estimate={false}
+        >
+          <PeerDistances example={example} />
+        </DataCard>
+      </section> : null}
 
       <section className={`${styles.container} ${styles.sections}`} aria-labelledby="sections-title">
         <div className={styles.sectionIntro}>

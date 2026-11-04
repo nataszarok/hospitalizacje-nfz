@@ -40,7 +40,6 @@
 /* Karty z wykresami „Liczby, które warto znać” */
 .dataGrid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 16px; }
 .dataCard { min-width: 0; display: flex; flex-direction: column; padding: 22px 24px 18px; border: 1px solid var(--color-border); border-radius: var(--radius-card); background: var(--color-surface); box-shadow: var(--shadow-soft); }
-.dataCardWide { grid-column: 1 / -1; }
 .dataKicker { font-size: 11px; font-weight: 750; letter-spacing: .1em; text-transform: uppercase; color: var(--color-text-tertiary); }
 .dataCard h3 { font-size: 19px; letter-spacing: -.02em; line-height: 1.25; margin: 6px 0 6px; }
 .dataLead { margin: 0 0 14px; font-size: 14px; line-height: 1.55; color: var(--color-text-secondary); }
@@ -54,9 +53,17 @@
 .legend span { display: inline-flex; align-items: center; gap: 6px; }
 .legend i { width: 12px; height: 12px; border-radius: 2px; display: inline-block; }
 .swatchUrgent { background: #2856A3; }
-.swatchPlanned { background: #B5C7E6; }
-.swatchOther { background: #E4EAF4; border: 1px solid #D3DCEA; }
-.changes { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 40px; }
+.swatchLoss { background: #C65D2E; }
+.compare { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 32px; align-items: start; padding-block: 48px 8px; }
+.compareText h2 { font-size: clamp(26px,3vw,32px); margin: 9px 0 6px; letter-spacing: -.035em; line-height: 1.15; }
+.compareText > p { font-size: 16px; color: var(--color-text-secondary); margin: 0 0 18px; line-height: 1.6; }
+.compareSteps { margin: 0 0 20px; padding: 0; list-style: none; counter-reset: step; display: grid; gap: 10px; }
+.compareSteps li { counter-increment: step; display: grid; grid-template-columns: 28px 1fr; gap: 10px; font-size: 15px; color: var(--color-text-secondary); line-height: 1.5; }
+.compareSteps li::before { content: counter(step); width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; font-weight: 750; color: var(--color-primary); background: var(--color-primary-soft); }
+.compareSteps b { color: var(--color-text); }
+.compareFacts { display: flex; gap: 32px; margin: 0 0 20px; }
+.compareFacts dt { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-tertiary); }
+.compareFacts dd { margin: 2px 0 0; font-size: 26px; font-weight: 800; letter-spacing: -.03em; color: #1B3D78; font-variant-numeric: tabular-nums; }
 
 /* Działy portalu: lista zamiast kafli */
 .sectionList { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 0 32px; border-top: 1px solid var(--color-border); }
@@ -84,7 +91,7 @@ a.sectionRow:hover strong { color: var(--color-primary-hover); }
 .footer .container { display: flex; justify-content: space-between; align-items: center; gap: 20px; min-height: 72px; }
 .footer a { color: var(--color-primary-hover); }
 @media (max-width: 1100px) { .fact { padding: 12px; gap: 10px; } .factIcon { width: 42px; height: 42px; } .fact strong { font-size: 18px; } .lowerCard { flex-wrap: wrap; } .lowerCard .textLink { margin-left: 56px; } }
-@media (max-width: 800px) { .hero { height: 440px; } .heroPhoto { left: 25%; } .heroShade { background: linear-gradient(90deg, #f3f9f8 0%,rgba(243,249,248,.94) 38%,rgba(243,249,248,.36) 79%,rgba(243,249,248,.1) 100%); } .hero h1 { font-size: 38px; } .heroContent { max-width: 470px; } .facts { grid-template-columns: 1fr 1fr; } .pathList { grid-template-columns: 1fr; } .path, .path + .path { padding: 22px 0; border-left: 0; } .path + .path { border-top: 1px solid var(--color-border); } .dataGrid { grid-template-columns: 1fr; } .sectionList { grid-template-columns: 1fr; } .lower { grid-template-columns: 1fr; } }
+@media (max-width: 800px) { .hero { height: 440px; } .heroPhoto { left: 25%; } .heroShade { background: linear-gradient(90deg, #f3f9f8 0%,rgba(243,249,248,.94) 38%,rgba(243,249,248,.36) 79%,rgba(243,249,248,.1) 100%); } .hero h1 { font-size: 38px; } .heroContent { max-width: 470px; } .facts { grid-template-columns: 1fr 1fr; } .pathList { grid-template-columns: 1fr; } .path, .path + .path { padding: 22px 0; border-left: 0; } .path + .path { border-top: 1px solid var(--color-border); } .dataGrid { grid-template-columns: 1fr; } .compare { grid-template-columns: 1fr; gap: 20px; } .sectionList { grid-template-columns: 1fr; } .lower { grid-template-columns: 1fr; } }
 @media (max-width: 550px) {
  .hero { min-height: 560px; height: auto; align-items: flex-start; }
  .heroPhoto { inset: 0 0 auto 0; height: 245px; background-position: center 54%; -webkit-mask-image: none; mask-image: none; }
@@ -103,7 +110,7 @@ a.sectionRow:hover strong { color: var(--color-primary-hover); }
  .paths, .data, .sections { padding-top: 43px; }
  .sectionIntro h2 { font-size: 27px; }
  .dataCard { padding: 18px 16px 14px; }
- .changes { grid-template-columns: 1fr; }
+
  .dataFooter .textLink { margin-left: 0; }
  .lower { padding-top: 18px; padding-bottom: 35px; }
  .lowerCard { padding: 16px; }

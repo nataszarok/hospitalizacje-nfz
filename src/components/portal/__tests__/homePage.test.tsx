@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { HomePage } from "@/components/portal/HomePage";
 import type { HomeStats } from "@/lib/homeStats";
+import type { HospitalHomeStats } from "@/lib/hospitalHomeStats";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
 
@@ -32,7 +33,22 @@ const stats: HomeStats = {
   },
 };
 
-const renderHome = (overrides: Partial<HomeStats> = {}) => render(<HomePage highlights={highlights} stats={{ ...stats, ...overrides }} />);
+const hospitals: HospitalHomeStats = {
+  profiles: 833,
+  withBeds: 712,
+  medianBeds: 116.5,
+  withSor: 243,
+  beds: [{ label: "<100", count: 310 }, { label: "100–199", count: 189 }],
+  finance: { year: 2025, reported: 631, loss: 286, netResult: -1_155_728_180, margins: [{ label: "−5…0", count: 137, negative: true }, { label: "0…5", count: 218, negative: false }] },
+  comparison: {
+    pairsA: 5056,
+    hospitalsWithPeers: 452,
+    example: { key: "04|9251723350", name: "SZPITAL W NOWEJ SOLI", city: "NOWA SÓL", peerCount: 40, peers: [{ key: "07|1111111111", name: "SZPITAL W OSTROŁĘCE", city: "OSTROŁĘKA", distance: 5.5 }] },
+  },
+};
+
+const renderHome = (overrides: Partial<HomeStats> = {}, hospitalOverrides: Partial<HospitalHomeStats> = {}) =>
+  render(<HomePage highlights={highlights} stats={{ ...stats, ...overrides }} hospitals={{ ...hospitals, ...hospitalOverrides }} />);
 
 afterEach(cleanup);
 
@@ -74,47 +90,58 @@ describe("Strona główna", () => {
     expect(within(paths).getByRole("link", { name: "Gdzie" })).toHaveAttribute("href", "/analizy?t=g");
   });
 
-  it("pokazuje karty z wykresami i liczbami z danych; każda prowadzi do pełnego widoku", () => {
+  it("pokazuje w „Liczbach” dwa wykresy: hospitalizacje w latach i najczęstsze grupy", () => {
     renderHome();
     const data = screen.getByRole("region", { name: "Liczby, które warto znać." });
+    expect(within(data).getAllByRole("article").map((card) => card.querySelector("h3")?.textContent)).toEqual([
+      "Ile hospitalizacji rozlicza NFZ w roku?",
+      "Które grupy JGP są najczęstsze?",
+    ]);
     const years = within(data).getByRole("article", { name: "Ile hospitalizacji rozlicza NFZ w roku?" });
     expect(years).toHaveTextContent("6,0 mln w 2025 r. (+1,7% r/r)");
     expect(within(years).getByRole("img", { name: /2024 — 5,9 mln, 2025 — 6,0 mln/ })).toBeInTheDocument();
     expect(within(years).getByRole("link", { name: /W czasie/ })).toHaveAttribute("href", "/analizy");
-
-    const admissions = within(data).getByRole("article", { name: "Jak przyjmowani są pacjenci?" });
-    expect(admissions).toHaveTextContent("Przyjęcia nagłe: 38% w 2025 r., 39% w 2024 r.");
-    expect(within(admissions).getByRole("link", { name: /Tryb przyjęcia/ })).toHaveAttribute("href", "/analizy?t=a");
-
     for (const card of within(data).getAllByRole("article")) expect(card).toHaveTextContent("Szacunek");
   });
 
-  it("linkuje najczęstsze grupy i największe zmiany do kart grup, z nazwami w formie zdania", () => {
+  it("linkuje najczęstsze grupy do kart grup, z nazwami w formie zdania", () => {
     renderHome();
     const groups = screen.getByRole("article", { name: "Które grupy JGP są najczęstsze?" });
     const b19g = within(groups).getByRole("link", { name: /B19G/ });
     expect(b19g).toHaveAttribute("href", "/jgp/B19G");
     expect(b19g).toHaveTextContent("B19G Usunięcie zaćmy - kategoria II341 910");
     expect(within(groups).getByRole("link", { name: /Katalog grup JGP/ })).toHaveAttribute("href", "/jgp");
-
-    const changes = screen.getByRole("article", { name: "Co zmieniło się w 2025 r.?" });
-    expect(within(changes).getByRole("link", { name: /A66/ })).toHaveAttribute("href", "/jgp/A66");
-    expect(within(changes).getByRole("link", { name: /A66/ })).toHaveTextContent("+175%");
-    expect(within(changes).getByRole("link", { name: /G36/ })).toHaveTextContent("−43%");
   });
 
-  it("rysuje mapę województw z linkami do widoku „Gdzie” z wybranym obszarem", () => {
+  it("wprowadza do szpitali publicznych wykresem łóżek i wyników finansowych", () => {
     renderHome();
-    const map = screen.getByRole("group", { name: /Mapa województw/ });
-    const mazowieckie = within(map).getByRole("link", { name: /Mazowieckie: 20 na 100 tys\. \(\+10% wobec średniej Polski\)/ });
-    expect(mazowieckie).toHaveAttribute("href", "/analizy?t=g&ow=07");
-    expect(map).toHaveTextContent("−10%");
+    const section = screen.getByRole("region", { name: "Jak wyglądają szpitale." });
+    const beds = within(section).getByRole("article", { name: "Jakiej wielkości są szpitale?" });
+    expect(beds).toHaveTextContent("Mediana: 117 łóżek. 243 z 833 ma szpitalny oddział ratunkowy (SOR).");
+    expect(within(beds).getByRole("img", { name: /<100 łóżek — 310/ })).toBeInTheDocument();
+    expect(within(beds).getByRole("link", { name: /Znajdź szpital/ })).toHaveAttribute("href", "/szpitale");
+    expect(beds).not.toHaveTextContent("Szacunek");
+
+    const finance = within(section).getByRole("article", { name: "Ile szpitali kończy rok ze stratą?" });
+    expect(finance).toHaveTextContent("286 z 631 podmiotów (45%) miało stratę netto w 2025 r. Łączny wynik: −1,2 mld zł.");
+    expect(within(finance).getByRole("link", { name: /Przykładowy profil/ })).toHaveAttribute("href", "/szpitale?hospital=04%7C9251723350");
   });
 
-  it("pomija mapę bez danych i zmiany r/r bez poprzedniego roku", () => {
-    renderHome({ regions: null, previousYear: null });
-    expect(screen.queryByRole("article", { name: "Gdzie szpitale leczą najwięcej?" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("article", { name: /Co zmieniło się/ })).not.toBeInTheDocument();
+  it("pokazuje porównanie placówek na przykładzie szpitala i jego par klasy A", () => {
+    renderHome();
+    const section = screen.getByRole("region", { name: "Szpital na tle podobnych." });
+    expect(section).toHaveTextContent("Pary klasy A5056");
+    expect(section).toHaveTextContent("Szpitale z parą A452");
+    const card = within(section).getByRole("article", { name: "Które szpitale są najbardziej podobne?" });
+    expect(card).toHaveTextContent("SZPITAL W NOWEJ SOLI: 40 par klasy A. Poniżej 1 najbliższych.");
+    expect(within(card).getByRole("link", { name: /SZPITAL W OSTROŁĘCE/ })).toHaveAttribute("href", "/szpitale?hospital=07%7C1111111111");
+    expect(within(section).getByRole("link", { name: /Porównaj przykładowy szpital/ })).toHaveAttribute("href", "/szpitale?hospital=04%7C9251723350&hv=c");
+  });
+
+  it("pomija wykres finansów i przykład porównania bez danych", () => {
+    renderHome({}, { finance: null, comparison: { pairsA: 0, hospitalsWithPeers: 0, example: null } });
+    expect(screen.queryByRole("article", { name: "Ile szpitali kończy rok ze stratą?" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Szpital na tle podobnych." })).not.toBeInTheDocument();
   });
 
   it("pokazuje działy portalu; wyceny JGP i artykuły jako planowane, bez linków", () => {

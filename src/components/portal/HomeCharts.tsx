@@ -1,12 +1,15 @@
 import Link from "next/link";
 import { DASHBOARD_HREFS } from "@/lib/dashboardNavigation";
 import { formatJgpName } from "@/lib/formatters";
+import type { HistogramBin, PeerExample } from "@/lib/hospitalHomeStats";
 import type { HomeGroup, HomeStats, HomeYear } from "@/lib/homeStats";
 import { scaleColor } from "@/lib/jgpCard";
-import { jgpHref } from "@/lib/portalLinks";
+import { PEER_DISTANCE_A_LIMIT } from "@/lib/peerDistance";
+import { hospitalHref, jgpHref } from "@/lib/portalLinks";
 import styles from "./HomeCharts.module.css";
 
 // Lekkie wykresy SVG strony głównej (bez Plotly): rysowane podczas budowania, bez JavaScriptu w przeglądarce.
+// Mapa, tryb przyjęcia i zmiany r/r czekają na kartę podsumowania hospitalizacji (docs/karta-hospitalizacje-podsumowanie.html).
 const integer = (value: number) => Math.round(value).toLocaleString("pl-PL");
 const decimal = (value: number) => value.toLocaleString("pl-PL", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 const millions = (value: number) => `${decimal(value / 1_000_000)} mln`;
@@ -35,6 +38,45 @@ export function YearBars({ years }: { years: HomeYear[] }) {
       </g>;
     })}
   </svg>;
+}
+
+/** Histogram szpitali (np. według liczby łóżek albo marży); przedziały straty na pomarańczowo. */
+export function Histogram({ bins, label, unit }: { bins: HistogramBin[]; label: string; unit: string }) {
+  const width = 520;
+  const height = 190;
+  const top = 26;
+  const bottom = 24;
+  const max = Math.max(...bins.map((bin) => bin.count), 1);
+  const step = width / Math.max(bins.length, 1);
+  const barWidth = Math.min(54, step * 0.7);
+  return <svg className={styles.chart} viewBox={`0 0 ${width} ${height}`} role="img" aria-label={`${label}: ${bins.map((bin) => `${bin.label} ${unit} — ${bin.count}`).join(", ")}`}>
+    <line x1="0" x2={width} y1={height - bottom} y2={height - bottom} className={styles.axis} />
+    {bins.map((bin, i) => {
+      const barHeight = ((height - top - bottom) * bin.count) / max;
+      const x = i * step + (step - barWidth) / 2;
+      return <g key={bin.label}>
+        <rect x={x} y={height - bottom - barHeight} width={barWidth} height={barHeight} rx="3" className={bin.negative ? styles.barLoss : styles.barLatest} />
+        <text x={x + barWidth / 2} y={height - bottom - barHeight - 7} className={styles.value}>{integer(bin.count)}</text>
+        <text x={x + barWidth / 2} y={height - 6} className={styles.tick}>{bin.label}</text>
+      </g>;
+    })}
+  </svg>;
+}
+
+/** Podobne szpitale: dystans od wybranego szpitala na skali 0–granica klasy A; wiersz prowadzi do profilu. */
+export function PeerDistances({ example }: { example: PeerExample }) {
+  return <ol className={styles.peerList} aria-label={`Najbardziej podobne szpitale: ${example.name}`}>
+    {example.peers.map((peer) => {
+      const [ow, nip] = peer.key.split("|");
+      return <li key={peer.key}>
+        <Link href={hospitalHref(ow, nip)} className={styles.peerRow} title={`${peer.name} (${peer.city}): dystans ${decimal(peer.distance)}`}>
+          <span className={styles.peerName}><span>{peer.name}</span><small>{peer.city}</small></span>
+          <span className={styles.peerTrack} aria-hidden="true"><span className={styles.peerDot} style={{ left: `${Math.min(peer.distance / PEER_DISTANCE_A_LIMIT, 1) * 100}%` }} /></span>
+          <span className={styles.peerValue}>{decimal(peer.distance)}</span>
+        </Link>
+      </li>;
+    })}
+  </ol>;
 }
 
 /** Udział trybów przyjęcia w latach: słupki 100% (nagłe, planowe, pozostałe). */
