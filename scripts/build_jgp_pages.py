@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Build per-group data for JGP group pages (/jgp/[kod]) — one file per JGP group.
 
-Writes public/data/jgp/index.json (list of groups with a page) and, for every JGP group in
-trends.json.gz, public/data/jgp/<KOD>.json.gz in a compact format (version 3):
+Writes build-data/jgp/index.json (list of groups with a page) and, for every JGP group in
+trends.json.gz, build-data/jgp/<KOD>.json.gz in a compact format (version 3):
   providers  ["OW|NIP", ...] — row references point into this list
   rows       columns {provider, month, admission, hospitalizations, deaths}: provider index,
              month index (year index * 12 + month - 1), admission group (0 planned, 1 urgent,
@@ -13,6 +13,10 @@ trends.json.gz, public/data/jgp/<KOD>.json.gz in a compact format (version 3):
   valuePln   NFZ settlements in PLN: national total by year and per provider for the latest
              data year, from data/zestawienie_swiadczen_2019_2026.csv; omitted when the file is
              missing. The last year in the settlements file is incomplete and skipped.
+
+The files are read only by the Next build (src/lib/staticDataServer.ts), which puts the card
+data into the HTML of /jgp/[kod]; they live outside public/, so the export does not copy them
+to dist/ and the site does not serve them.
 
 Provider codes in the settlements file are NFZ provider codes; they are mapped to NIP with
 data/nfz_swiadczeniodawcy_2025.csv (OW + code -> NIP).
@@ -125,7 +129,7 @@ def main() -> None:
     parser.add_argument("--years", default=ALL_YEARS, help="lata oddzielone przecinkami")
     parser.add_argument("--data-dir", type=Path, default=ROOT / "data")
     parser.add_argument("--trends", type=Path, default=ROOT / "public" / "data" / "hospitalizations" / "trends.json.gz")
-    parser.add_argument("--output-dir", type=Path, default=ROOT / "public" / "data" / "jgp")
+    parser.add_argument("--output-dir", type=Path, default=ROOT / "build-data" / "jgp")
     args = parser.parse_args()
 
     years = sorted({y.strip() for y in args.years.split(",") if y.strip()})

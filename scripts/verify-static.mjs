@@ -129,9 +129,9 @@ console.log(`Hospitalization data OK: ${index.years.join(", ")}; ${((totalSize +
 // Pliki stron grup (scripts/build_jgp_pages.py, format v3: wiersze kolumnami): jeden na każdą grupę JGP z trendów,
 // a ich hospitalizacje (metoda min) sumują się do trendu krajowego grupy w każdym miesiącu i trybie.
 {
-  const pagesIndex = JSON.parse(await readFile("public/data/jgp/index.json", "utf8"));
+  const pagesIndex = JSON.parse(await readFile("build-data/jgp/index.json", "utf8"));
   const trendGroups = [...new Set(trends.products.map(([, jgp]) => jgp).filter(Boolean))].sort();
-  if (JSON.stringify(pagesIndex.groups) !== JSON.stringify(trendGroups)) throw new Error("public/data/jgp/index.json groups differ from trends.json.gz.");
+  if (JSON.stringify(pagesIndex.groups) !== JSON.stringify(trendGroups)) throw new Error("build-data/jgp/index.json groups differ from trends.json.gz.");
   const ADMISSION = { p: 0, u: 1, o: 2 };
   const expected = new Map();
   for (const [year, month, product, admission, , hMin] of trends.monthly) {
@@ -142,7 +142,7 @@ console.log(`Hospitalization data OK: ${index.years.join(", ")}; ${((totalSize +
   let totalSize = 0;
   let largest = [0, ""];
   for (const code of pagesIndex.groups) {
-    const file = path.join("public/data/jgp", `${code}.json.gz`);
+    const file = path.join("build-data/jgp", `${code}.json.gz`);
     const { size, data: group } = await readGzipJson(file);
     totalSize += size;
     if (size > largest[0]) largest = [size, code];

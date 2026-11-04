@@ -7,7 +7,7 @@ import type { AdmissionGroup, RegionalTrendsDataset, StaticDataset, TrendsDatase
  * w słowniku, a wiersze wskazują je indeksem; wiersze są zapisane kolumnami (lista na pole).
  * Taki plik po kompresji gzip jest ok. dwa razy mniejszy niż wiersze-krotki z tekstami.
  * Funkcje poniżej odtwarzają krotki, których używa reszta aplikacji (`StaticDataset`, `TrendsDataset`,
- * `JgpGroupFile` z `public/data/jgp/`).
+ * `JgpGroupFile` z `build-data/jgp/`).
  * Plik w dawnym formacie (krotki) zwracają bez zmian.
  */
 

@@ -9,7 +9,7 @@ export const PEER_GRADE = "A";
 export const PEER_MAX_DISTANCE = 10.01;
 
 /**
- * Plik grupy z `scripts/build_jgp_pages.py` (`public/data/jgp/<KOD>.json.gz`) po odczycie:
+ * Plik grupy z `scripts/build_jgp_pages.py` (`build-data/jgp/<KOD>.json.gz`, tylko dla buildu) po odczycie:
  * wiersze jako krotki (na dysku format v3 zapisuje je kolumnami, `decodeJgpGroupFile`).
  * Liczby metodą konserwatywną (`<5` = 1), tą samą co na stronach grup.
  */
@@ -25,7 +25,7 @@ export interface JgpGroupFile {
   valuePln?: { national: Record<string, number>; year: string; providers: [string, number][] };
 }
 
-/** Lista grup ze stroną (`public/data/jgp/index.json`). */
+/** Lista grup ze stroną (`build-data/jgp/index.json`). */
 export interface JgpPagesIndex { version: 2; years: string[]; groups: string[] }
 
 export type { JgpValuation } from "@/lib/valuations";

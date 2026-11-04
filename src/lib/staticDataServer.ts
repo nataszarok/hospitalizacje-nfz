@@ -9,6 +9,8 @@ import type { HospitalizationIndex, StaticDataset, TrendsDataset } from "@/lib/s
 
 // Odczyt danych podczas budowania strony (statyczny eksport). Tylko dla komponentów serwerowych.
 const DATA_DIR = join(process.cwd(), "public", "data");
+// Dane czytane tylko podczas buildu (nie trafiają do `dist/`, bo leżą poza `public/`).
+const BUILD_DATA_DIR = join(process.cwd(), "build-data");
 const DEFAULT_DIR = join(DATA_DIR, "hospitalizations");
 
 export async function readHospitalizationIndexFromDisk(dir = DEFAULT_DIR): Promise<HospitalizationIndex> {
@@ -48,12 +50,12 @@ export function clearDiskCache() {
 }
 
 /** Grupy JGP ze stroną (`scripts/build_jgp_pages.py`). */
-export async function readJgpPagesIndexFromDisk(file = join(DATA_DIR, "jgp", "index.json")): Promise<JgpPagesIndex> {
+export async function readJgpPagesIndexFromDisk(file = join(BUILD_DATA_DIR, "jgp", "index.json")): Promise<JgpPagesIndex> {
   return JSON.parse(await readFile(file, "utf8")) as JgpPagesIndex;
 }
 
 /** Plik strony grupy (`scripts/build_jgp_pages.py`) albo `null`, gdy go jeszcze nie zbudowano. */
-export async function readJgpGroupFileFromDisk(jgpCode: string, dir = join(DATA_DIR, "jgp")): Promise<JgpGroupFile | null> {
+export async function readJgpGroupFileFromDisk(jgpCode: string, dir = join(BUILD_DATA_DIR, "jgp")): Promise<JgpGroupFile | null> {
   const file = join(dir, `${jgpCode}.json.gz`);
   try {
     await access(file);
