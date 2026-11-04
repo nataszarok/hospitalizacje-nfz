@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatCityName, formatCompactCount, formatYearRange } from "@/lib/formatters";
+import { formatCityName, formatCompactCount, formatJgpName, formatYearRange } from "@/lib/formatters";
 
 describe("formatCityName", () => {
   it("formats city names for display without changing stored values", () => {
@@ -30,5 +30,16 @@ describe("formatYearRange", () => {
 
   it("pokazuje zakres wielu lat z półpauzą", () => {
     expect(formatYearRange("2019", "2025")).toBe("2019–2025");
+  });
+});
+
+describe("formatJgpName", () => {
+  it("zamienia nazwę z katalogu NFZ na zdanie i zostawia liczby rzymskie", () => {
+    expect(formatJgpName("USUNIĘCIE ZAĆMY - KATEGORIA II")).toBe("Usunięcie zaćmy - kategoria II");
+    expect(formatJgpName("ŚREDNIE ZABIEGI GÓRNEGO ODCINKA *")).toBe("Średnie zabiegi górnego odcinka");
+    expect(formatJgpName("PORÓD")).toBe("Poród");
+    expect(formatJgpName("KORONAROGRAFIA I INNE ZABIEGI")).toBe("Koronarografia i inne zabiegi");
+    expect(formatJgpName("USUNIĘCIE ZAĆMY - KATEGORIA I")).toBe("Usunięcie zaćmy - kategoria I");
+    expect(formatJgpName("ZABIEGI (III STOPIEŃ)")).toBe("Zabiegi (III stopień)");
   });
 });

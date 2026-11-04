@@ -94,7 +94,7 @@ li.ok::before { content: "✓"; position: absolute; left: -1.25em; color: var(--
   <span class="kicker">2 · Architektura</span>
   <h2 id="h-arch">Architektura informacji</h2>
 <pre>Atlas
-├─ /                        Strona główna: moduły, pasek faktów, wyszukiwarka
+├─ /                        Strona główna: wyszukiwarka, pasek faktów, ścieżki, wykresy, działy
 ├─ /analizy                 Eksplorator: wspólny kontekst + widoki-pytania
 │   ├─ W czasie             t=w (domyślny)
 │   ├─ Kto leczy            t=k
@@ -203,6 +203,18 @@ li.ok::before { content: "✓"; position: absolute; left: -1.25em; color: var(--
       <h3>Wyszukiwarka</h3>
       <p class="goal">Jedno pole na stronie głównej i w nagłówku prowadzi do karty grupy albo szpitala.</p>
       <div class="facts"><div>Commit: <code>89da7a4</code> (<code>feature/portal-search</code>). Indeks <code>/szukaj.json</code>, logika <code>src/lib/search.ts</code>.</div></div>
+    </div>
+  </div>
+
+  <div class="phase done">
+    <div class="mark"><span class="num">1a</span><span class="state">Zrobione</span></div>
+    <div>
+      <h3>Strona główna: nawigacja po danych</h3>
+      <p class="goal">Część pod hero i paskiem faktów prowadzi od pytania do danych (wzór nawigacji: zarobkilekarzy.pl). Bez nowych modułów: tylko to, co działa, plus dotychczasowe kafle „Planowane”.</p>
+      <ul>
+        <li class="ok"><b>Zrobione (4.11, branch <code>feature/homepage-navigation</code>):</b> „Od czego zacząć”: trzy numerowane ścieżki (leczenie → katalog i karty JGP, szpital → profil i porównanie, analiza → eksplorator), każda z odnośnikami na skróty. „Liczby, które warto znać”: karty z wykresem, liczbą, źródłem z oznaczeniem „Szacunek” i linkiem do pełnego widoku: hospitalizacje w latach (→ W czasie), najczęstsze grupy JGP (→ karty grup), mapa województw na 100 tys. wobec średniej Polski (województwo → Gdzie z filtrem <code>ow</code>), tryb przyjęcia w latach (→ Tryb przyjęcia), największe zmiany r/r (→ karty grup, katalog z <code>sort=zmiana</code>). „Wszystkie działy”: lista modułów zamiast kafli; sekcja „Dla analityków” usunięta (jest w ścieżce 03).</li>
+        <li class="ok"><b>Dane:</b> liczone podczas budowania (<code>src/lib/homeStats.ts</code>, metoda konserwatywna jak w eksploratorze); wykresy jako SVG bez Plotly i bez JavaScriptu w przeglądarce (<code>HomeCharts.tsx</code>). Nazwy grup w formie zdania: <code>formatJgpName</code>.</li>
+      </ul>
     </div>
   </div>
 

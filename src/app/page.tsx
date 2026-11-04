@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { HomePage } from "@/components/portal/HomePage";
+import { buildHomeStats } from "@/lib/homeStats";
 import { SITE_NAME } from "@/lib/site";
 import { datasetHighlights } from "@/lib/staticData";
-import { readAllStaticDatasetsFromDisk } from "@/lib/staticDataServer";
+import { readAllStaticDatasetsFromDisk, readRegionsMapFromDisk, readTrendsFromDisk } from "@/lib/staticDataServer";
 
 export const metadata: Metadata = {
   title: `${SITE_NAME} | Hospitalizacje, szpitale publiczne, wyceny JGP`,
@@ -10,5 +11,6 @@ export const metadata: Metadata = {
 };
 
 export default async function Home() {
-  return <HomePage highlights={datasetHighlights(await readAllStaticDatasetsFromDisk())} />;
+  const [datasets, trends, map] = await Promise.all([readAllStaticDatasetsFromDisk(), readTrendsFromDisk(), readRegionsMapFromDisk()]);
+  return <HomePage highlights={datasetHighlights(datasets)} stats={buildHomeStats(trends, datasets.at(-1)!, map)} />;
 }
