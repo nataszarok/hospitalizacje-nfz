@@ -1,6 +1,7 @@
 import { access, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { gunzipSync } from "node:zlib";
+import type { FinancialRecordSummary, HospitalProfileSummary } from "@/lib/hospitalHomeStats";
 import type { RegionsMap } from "@/lib/jgpCard";
 import type { JgpGroupFile, JgpPagesIndex, JgpPeerPair } from "@/lib/jgpPage";
 import { decodeValuations, type JgpValuation, type ValuationsFile } from "@/lib/valuations";
@@ -91,4 +92,22 @@ export async function readRegionsMapFromDisk(file = join(DATA_DIR, "regions-map.
     return null;
   }
   return readGzipJson<RegionsMap>(file);
+}
+
+/** Profile szpitali z RPWDL (pola dla strony głównej: łóżka, SOR). */
+export async function readHospitalProfilesFromDisk(file = join(DATA_DIR, "rpwdl_summary_profiles.json.gz")): Promise<HospitalProfileSummary[]> {
+  const data = await readGzipJson<{ records: HospitalProfileSummary[] }>(file);
+  return data.records.map(({ oz_nfz, nip, core, capabilities }) => ({ oz_nfz, nip, core: core ? { beds: core.beds } : null, capabilities: capabilities?.sor ? { sor: capabilities.sor } : null }));
+}
+
+/** NIP-y szpitali z sieci PSZ (`scripts/build_psz.py`). */
+export async function readPszNipsFromDisk(file = join(DATA_DIR, "psz.json.gz")): Promise<Set<string>> {
+  const data = await readGzipJson<{ rows: [string, number][] }>(file);
+  return new Set(data.rows.map(([nip]) => nip));
+}
+
+/** Wyniki finansowe podmiotów (NIP): przychód, wynik netto, marża. */
+export async function readFinancialResultsFromDisk(file = join(DATA_DIR, "financial_results.json.gz")): Promise<FinancialRecordSummary[]> {
+  const data = await readGzipJson<{ records: FinancialRecordSummary[] }>(file);
+  return data.records.map(({ nip, years }) => ({ nip, years: years.map(({ year, revenue, net_result, net_margin }) => ({ year, revenue, net_result, net_margin })) }));
 }

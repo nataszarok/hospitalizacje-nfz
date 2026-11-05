@@ -1,0 +1,57 @@
+/* Wykresy strony głównej: dane na niebiesko (#2856A3, jak na kartach JGP), interfejs na zielono. */
+.chart { display: block; width: 100%; height: auto; overflow: visible; }
+.axis { stroke: var(--color-border-strong); stroke-width: 1; }
+.bar { fill: #9DB4DB; }
+.barLatest { fill: #2856A3; }
+.value { fill: var(--color-text-secondary); font-size: 12px; font-weight: 650; text-anchor: middle; font-variant-numeric: tabular-nums; }
+.valueStrong { fill: #1B3D78; font-weight: 800; }
+.tick { fill: var(--color-text-tertiary); font-size: 12px; text-anchor: middle; }
+.urgent { fill: #2856A3; }
+.planned { fill: #B5C7E6; }
+.other { fill: #E4EAF4; }
+.inBar { fill: #fff; font-size: 12px; font-weight: 750; text-anchor: middle; dominant-baseline: middle; font-variant-numeric: tabular-nums; }
+
+.groupList { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.groupRow { display: grid; grid-template-columns: minmax(0, 1fr) 64px; align-items: center; gap: 4px 12px; padding: 6px 8px; margin-inline: -8px; border-radius: 7px; color: var(--color-text); text-decoration: none; }
+.groupRow:hover, .changeRow:hover { background: var(--color-primary-soft); }
+.groupRow:hover .groupLabel, .changeRow:hover .changeName { color: var(--color-primary-hover); text-decoration: underline; }
+.groupLabel { grid-column: 1 / -1; font-size: 14px; line-height: 1.35; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.groupLabel b { display: inline-block; min-width: 42px; font-weight: 750; color: #1B3D78; }
+.groupTrack { height: 8px; background: #EEF2F8; border-radius: 3px; overflow: hidden; }
+.groupBar { display: block; height: 100%; background: #2856A3; border-radius: 3px; }
+.groupValue { font-size: 13px; text-align: right; font-variant-numeric: tabular-nums; color: var(--color-text-secondary); }
+
+.changeColumn h4 { margin: 0 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: .09em; }
+.changeList { list-style: none; padding: 0; margin: 0; display: grid; gap: 2px; }
+.changeRow { display: grid; grid-template-columns: 46px minmax(0, 1fr) auto; gap: 8px; align-items: baseline; padding: 6px 8px; margin-inline: -8px; border-radius: 7px; text-decoration: none; color: var(--color-text); font-size: 14px; }
+.changeCode { font-weight: 750; color: #1B3D78; }
+.changeName { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.changeUp, .changeDown { font-weight: 750; font-variant-numeric: tabular-nums; }
+.changeUp { color: #1D6B3A; }
+.changeDown { color: #A23B16; }
+
+.map { display: block; width: 100%; max-width: 360px; height: auto; margin-inline: auto; }
+.mapLink { cursor: pointer; }
+.mapShape { stroke: #fff; stroke-width: 2; stroke-linejoin: round; transition: filter .15s; }
+.mapLink:hover .mapShape, .mapLink:focus-visible .mapShape { filter: brightness(.88); }
+.mapLink:focus { outline: none; }
+.mapLink:focus-visible .mapShape { stroke: #172033; stroke-width: 4; }
+.mapLabel { fill: #fff; font-size: 24px; font-weight: 750; text-anchor: middle; dominant-baseline: middle; pointer-events: none; font-variant-numeric: tabular-nums; }
+.mapLabelDark { fill: #172033; }
+.mapLegend { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 12px; color: var(--color-text-tertiary); margin-top: 8px; }
+.mapScale { width: 120px; height: 8px; border-radius: 4px; }
+
+.barLoss { fill: #C65D2E; }
+
+.peerList { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.peerRow { display: grid; grid-template-columns: minmax(0, 2fr) minmax(70px, 1fr) 32px; align-items: center; gap: 12px; padding: 6px 8px; margin-inline: -8px; border-radius: 7px; color: var(--color-text); text-decoration: none; font-size: 14px; }
+.peerRow:hover { background: var(--color-primary-soft); }
+.peerRow:hover .peerName { color: var(--color-primary-hover); text-decoration: underline; }
+.peerName { min-width: 0; font-size: 13px; line-height: 1.3; }
+.peerName span { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.peerName small { display: block; font-size: 12px; color: var(--color-text-tertiary); }
+.peerTrack { position: relative; height: 8px; border-radius: 4px; background: linear-gradient(90deg, rgba(40,86,163,.4) 0%, rgba(40,86,163,.08) 100%); }
+.peerDot { position: absolute; top: 50%; width: 12px; height: 12px; margin: -6px 0 0 -6px; border-radius: 50%; background: #1B3D78; border: 2px solid #fff; box-shadow: 0 0 0 1px #1B3D78; }
+.peerValue { text-align: right; font-variant-numeric: tabular-nums; color: var(--color-text-secondary); font-size: 13px; }
+.valueSmall { fill: var(--color-text-secondary); font-size: 10.5px; font-weight: 650; text-anchor: middle; font-variant-numeric: tabular-nums; }
+.axisZero { stroke: var(--color-text); stroke-width: 1.5; }

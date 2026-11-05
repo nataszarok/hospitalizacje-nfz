@@ -126,7 +126,8 @@ th:nth-child(7) { width:8%; }
 th:nth-child(8) { width:12%; }
 td:nth-child(6), td:nth-child(7), td:nth-child(8) { white-space:nowrap; }
 .table-note { color:#667085; font-size:11px; }
-.center-state { min-height:100vh; display:grid; place-items:center; color:#667085; }
+/* Niższa niż ekran: strona w trakcie ładowania nie przewija się, więc po załadowaniu przeglądarka nie przesuwa jej w dół (scroll anchoring). */
+.center-state { min-height:60vh; display:grid; place-items:center; color:#667085; }
 .center-state.error { color:#B42318; }
 @media (max-width:1250px) { .analysis-grid { grid-template-columns:1fr; } .area-stats-panel { height:auto; max-height:430px; } }
 @media (max-width:1000px) { .app-shell { grid-template-columns:1fr; } .sidebar { position:relative; height:auto; border-right:0; border-bottom:1px solid var(--border); } .chart-header { align-items:stretch; flex-direction:column; } .axis-control { width:100%; } }

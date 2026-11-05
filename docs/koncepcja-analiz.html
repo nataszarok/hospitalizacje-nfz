@@ -56,7 +56,7 @@ li.ok::before { content: "✓"; position: absolute; left: -1.25em; color: var(--
 <main>
 
 <header>
-  <span class="kicker">Atlas Publicznej Ochrony Zdrowia · dokument roboczy</span>
+  <span class="kicker">FunduszDanych · dokument roboczy</span>
   <h1>Koncepcja modułu Analizy i kart grup JGP</h1>
   <p class="lead">Stan na 2 listopada 2026 r. Dokument opisuje, na jakie pytania odpowiada moduł, jak są ułożone strony i dane oraz co jest zrobione, a co czeka na przebudowę. Zastępuje plik <code>docs/koncepcja-analiz.md</code>.</p>
   <nav class="toc" aria-label="Spis treści">
@@ -93,13 +93,14 @@ li.ok::before { content: "✓"; position: absolute; left: -1.25em; color: var(--
 <section id="architektura" aria-labelledby="h-arch">
   <span class="kicker">2 · Architektura</span>
   <h2 id="h-arch">Architektura informacji</h2>
-<pre>Atlas
-├─ /                        Strona główna: moduły, pasek faktów, wyszukiwarka
+<pre>FunduszDanych
+├─ /                        Strona główna: wyszukiwarka, pasek faktów, ścieżki, wykresy, działy
 ├─ /analizy                 Eksplorator: wspólny kontekst + widoki-pytania
 │   ├─ W czasie             t=w (domyślny)
 │   ├─ Kto leczy            t=k
 │   ├─ Tryb przyjęcia       t=a
 │   └─ Gdzie                t=g
+├─ /hospitalizacje          Karta „Hospitalizacje w Polsce”: podsumowanie wszystkich grup i lat
 ├─ /jgp                     Katalog grup JGP
 ├─ /jgp/[kod]               Karta grupy (ok. 700 stron statycznych)
 ├─ /szpitale                Profil szpitala + Porównanie (hv=c); docelowo /szpitale/[id]
@@ -203,6 +204,24 @@ li.ok::before { content: "✓"; position: absolute; left: -1.25em; color: var(--
       <h3>Wyszukiwarka</h3>
       <p class="goal">Jedno pole na stronie głównej i w nagłówku prowadzi do karty grupy albo szpitala.</p>
       <div class="facts"><div>Commit: <code>89da7a4</code> (<code>feature/portal-search</code>). Indeks <code>/szukaj.json</code>, logika <code>src/lib/search.ts</code>.</div></div>
+    </div>
+  </div>
+
+  <div class="phase done">
+    <div class="mark"><span class="num">1a</span><span class="state">Zrobione</span></div>
+    <div>
+      <h3>Strona główna: nawigacja po danych</h3>
+      <p class="goal">Część pod hero i paskiem faktów prowadzi od pytania do danych (wzór nawigacji: zarobkilekarzy.pl). Bez nowych modułów: tylko to, co działa, plus dotychczasowe kafle „Planowane”.</p>
+      <ul>
+        <li class="ok"><b>Zrobione (4.11, branch <code>feature/homepage-navigation</code>):</b> „Od czego zacząć”: trzy numerowane ścieżki (leczenie → katalog i karty JGP, szpital → profil i porównanie, analiza → eksplorator), każda z odnośnikami na skróty. „Liczby, które warto znać”: karty z wykresem, liczbą, źródłem z oznaczeniem „Szacunek” i linkiem do pełnego widoku: hospitalizacje w latach (→ W czasie), najczęstsze grupy JGP (→ karty grup), mapa województw na 100 tys. wobec średniej Polski (województwo → Gdzie z filtrem <code>ow</code>), tryb przyjęcia w latach (→ Tryb przyjęcia), największe zmiany r/r (→ karty grup, katalog z <code>sort=zmiana</code>). „Wszystkie działy”: lista modułów zamiast kafli; sekcja „Dla analityków” usunięta (jest w ścieżce 03).</li>
+        <li class="ok"><b>Dane:</b> liczone podczas budowania (<code>src/lib/homeStats.ts</code>, metoda konserwatywna jak w eksploratorze); wykresy jako SVG bez Plotly i bez JavaScriptu w przeglądarce (<code>HomeCharts.tsx</code>). Nazwy grup w formie zdania: <code>formatJgpName</code>.</li>
+        <li class="ok"><b>Poprawki (4.11):</b> „Liczby, które warto znać” zawężone do dwóch wykresów: hospitalizacje w latach i najczęstsze grupy JGP. Mapa, tryb przyjęcia i zmiany r/r nie prowadziły do konkretnej podstrony; komponenty zostają w <code>HomeCharts.tsx</code> dla przyszłej karty. Nowe sekcje: „Szpitale publiczne” (histogram łóżek z RPWDL, odsetek SOR, marża netto i liczba podmiotów ze stratą → <code>/szpitale</code> i przykładowy profil) oraz „Porównanie placówek” (trzy kroki, liczba par klasy A, najbliższe szpitale przykładu Nowa Sól → profil i <code>hv=c</code>). Dane: <code>src/lib/hospitalHomeStats.ts</code>.</li>
+        <li class="ok"><b>Karta „Hospitalizacje w Polsce” (4.11):</b> <code>/hospitalizacje</code> według układu z <code>docs/karta-hospitalizacje-podsumowanie.html</code>: nagłówek z czterema liczbami i spisem treści, sekcje Ile? (lata, miesiące), Tryb przyjęcia, Gdzie?, Co leczą? (sekcje katalogu, najczęstsze grupy), Co rośnie, co maleje? (rodziny ręczne <code>SUMMARY_FAMILIES</code>, zmiany r/r), Zgony, Kto leczy? (świadczeniodawcy, udział 10% największych). Każdy wykres ma opis „jak czytać” i link w głąb. Logika: <code>src/lib/hospitalizationSummary.ts</code>; wykres lat na stronie głównej prowadzi do karty.</li>
+        <li class="ok"><b>Nawigacja (4.11):</b> nowa pozycja „Hospitalizacje”; „Analizy” → „Eksplorator danych”. Menu pod przyciskiem od 1060 px.</li>
+        <li class="ok"><b>Poprawki strony głównej (4.11):</b> nowa ilustracja hero (droga pacjenta: karetka, szpital, łóżko z kroplówką, monitor EKG, dni pobytu); łóżka liczone dla 833 świadczeniodawców (121 bez łóżek w RPWDL, głównie kliniki jednego dnia); SOR jako liczba oddziałów (249) w podmiotach (243); marża netto jako histogram po 2,5 p.p.; ekran ładowania <code>.center-state</code> niższy niż okno, więc link z połowy strony otwiera <code>/szpitale</code> od góry.</li>
+        <li class="ok"><b>Poprawki (4.11, wieczór):</b> nazwa serwisu „FunduszDanych” (<code>SITE_NAME</code>); finanse na stronie głównej tylko dla szpitali z sieci PSZ (nowy plik <code>psz.json.gz</code> ← <code>scripts/build_psz.py</code> z wykazu NFZ, 557 NIP); tytuły w kroju Inter Tight 400 (<code>--font-display</code>); przykład porównania z 5 parami (równa wysokość kolumn); „hospitalizacje JGP” w tytułach, bo NFZ rozlicza też pobyty poza JGP.</li>
+        <li><b>Dalej:</b> więcej rodzin w <code>SUMMARY_FAMILIES</code> (przegląd katalogu NFZ); weryfikacja nazw sekcji JGP.</li>
+      </ul>
     </div>
   </div>
 

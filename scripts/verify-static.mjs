@@ -183,3 +183,12 @@ console.log(`Hospitalization data OK: ${index.years.join(", ")}; ${((totalSize +
   if (!codes.length || new Set(codes).size !== codes.length) throw new Error("wyceny_jgp_2025.json.gz has no rows or duplicate group codes.");
   console.log(`Valuations OK: ${codes.length} groups, ${(size / 1024).toFixed(1)} KiB.`);
 }
+
+// Sieć szpitali PSZ (scripts/build_psz.py): unikalne NIP-y, poziomy z listy.
+{
+  const { size, data: psz } = await readGzipJson("public/data/psz.json.gz");
+  const nips = psz.rows.map(([nip]) => nip);
+  if (psz.version !== 1 || nips.length < 400 || new Set(nips).size !== nips.length) throw new Error("psz.json.gz is not version 1, has too few rows or duplicate NIPs.");
+  if (psz.rows.some(([nip, level]) => !/^\d{10}$/.test(nip) || !psz.levels[level])) throw new Error("psz.json.gz has an invalid NIP or level.");
+  console.log(`PSZ OK: ${nips.length} providers (list ${psz.listDate}), ${(size / 1024).toFixed(1)} KiB.`);
+}
