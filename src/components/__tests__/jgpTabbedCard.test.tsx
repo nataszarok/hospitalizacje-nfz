@@ -63,7 +63,13 @@ describe("Karta w zakładkach — nagłówek i Przegląd", () => {
     expect(cost).not.toHaveTextContent("Średnio na hospitalizację");
     expect(cost).not.toHaveTextContent(/\d zł(?! )/);
     expect(cost.parentElement).toBe(profile.parentElement);
-    expect(within(profile).getAllByRole("columnheader").map((th) => th.textContent)).toEqual(["Rok", "Struktura przyjęć", "Nagłe", "Planowe"]);
+    // Tryb przyjęcia: same słupki bez tabeli; wartości w podpowiedzi i w etykiecie wiersza (fokus klawiaturą).
+    expect(within(profile).queryByRole("table")).toBeNull();
+    const rows = within(profile).getAllByRole("listitem");
+    expect(rows.length).toBeGreaterThan(0);
+    expect(rows.at(-1)).toHaveAttribute("tabindex", "0");
+    expect(rows.at(-1)!.getAttribute("aria-label")).toMatch(/^2025: nagłe [\d,]+%, planowe [\d,]+%, pozostałe [\d,]+%$/);
+    expect(within(rows.at(-1)!).getByRole("tooltip", { hidden: true })).toHaveTextContent(/2025nagłe/);
   });
 
   it("mapa ciepła podaje liczby na 100 tys. bez miejsc dziesiętnych", () => {

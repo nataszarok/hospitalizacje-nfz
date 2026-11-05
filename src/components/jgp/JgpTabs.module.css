@@ -515,9 +515,94 @@
 /* „Za ile?” i „Jak przyjmowani są pacjenci?” obok siebie; na wąskim ekranie jedna pod drugą (.two w @media). */
 .pair {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  /* Tryb przyjęcia (same słupki) potrzebuje mniej miejsca niż „Za ile?”. Obie karty mają tę samą wysokość (stretch). */
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
   gap: 16px;
-  align-items: start;
+  align-items: stretch;
+}
+
+/* Rozkład trybu przyjęcia: rok i słupek 100% w wierszu, podpowiedź z udziałami nad słupkiem. */
+.admRows {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admRow {
+  position: relative;
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  padding: 3px 6px;
+  border-radius: 6px;
+  outline: none;
+  cursor: default;
+}
+
+.admRow:hover,
+.admRow:focus-visible {
+  background: #f2f4f7;
+}
+
+.admRow:focus-visible {
+  box-shadow: 0 0 0 2px var(--color-focus-ring);
+}
+
+.admRowOn {
+  background: var(--color-primary-soft);
+}
+
+.admYear {
+  color: #667085;
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.admRowOn .admYear {
+  color: var(--color-primary);
+  font-weight: var(--fw-bold);
+}
+
+.admBar {
+  display: flex;
+  gap: 2px;
+  height: 14px;
+}
+
+.admTip {
+  position: absolute;
+  z-index: 5;
+  bottom: calc(100% + 4px);
+  left: 56px;
+  display: none;
+  gap: 4px 12px;
+  flex-wrap: wrap;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: #344054;
+  color: #fff;
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: var(--shadow-soft);
+}
+
+.admTip i {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 5px;
+  border-radius: 2px;
+}
+
+.admRow:hover .admTip,
+.admRow:focus-visible .admTip {
+  display: flex;
 }
 
 .costBars {

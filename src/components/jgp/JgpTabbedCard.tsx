@@ -484,22 +484,27 @@ function ProfileSection({ data }: { data: JgpPageData }) {
       <li><span className={`${base.swatch} ${base.segmentPlanned}`} aria-hidden />planowe</li>
       <li><span className={`${base.swatch} ${base.segmentOther}`} aria-hidden />pozostałe</li>
     </ul>
-    <div className={styles.scrollX}><table className={base.table}>
-      <thead><tr><th>Rok</th><th>Struktura przyjęć</th><th className={base.num}>Nagłe</th><th className={base.num}>Planowe</th></tr></thead>
-      <tbody>
-        {data.admissions.map((row) => <tr key={row.year} className={row.year === data.year ? base.rowSelected : undefined}>
-          <td>{row.year}</td>
-          <td><div className={base.stack} role="img" aria-label={`nagłe ${pct(share(row.urgent, row.total))}, planowe ${pct(share(row.planned, row.total))}, pozostałe ${pct(share(row.other, row.total))}`}>
+    {/* Same słupki 100%; wartości roku w podpowiedzi po najechaniu albo fokusie klawiatury (Tab). */}
+    <ul className={styles.admRows} aria-label="Tryb przyjęcia w latach">
+      {data.admissions.map((row) => {
+        const label = `${row.year}: nagłe ${pct(share(row.urgent, row.total))}, planowe ${pct(share(row.planned, row.total))}, pozostałe ${pct(share(row.other, row.total))}`;
+        return <li key={row.year} className={`${styles.admRow} ${row.year === data.year ? styles.admRowOn : ""}`} tabIndex={0} aria-label={label}>
+          <span className={styles.admYear} aria-hidden>{row.year}</span>
+          <span className={styles.admBar} aria-hidden>
             {row.urgent ? <span className={`${base.segment} ${base.segmentUrgent}`} style={{ width: `${share(row.urgent, row.total)}%` }} /> : null}
             {row.planned ? <span className={`${base.segment} ${base.segmentPlanned}`} style={{ width: `${share(row.planned, row.total)}%` }} /> : null}
             {row.other ? <span className={`${base.segment} ${base.segmentOther}`} style={{ width: `${share(row.other, row.total)}%` }} /> : null}
-          </div></td>
-          <td className={base.num}>{pct(share(row.urgent, row.total))}</td>
-          <td className={base.num}>{pct(share(row.planned, row.total))}</td>
-        </tr>)}
-      </tbody>
-    </table></div>
-    <p className={base.note}>Nagłe: tryb przyjęcia 2 i 3; planowe: tryb 6. Śmiertelność jest miarą w sekcji „Ile?”.</p>
+          </span>
+          <span className={styles.admTip} role="tooltip" aria-hidden>
+            <b>{row.year}</b>
+            <span><i className={base.segmentUrgent} />nagłe {pct(share(row.urgent, row.total))}</span>
+            <span><i className={base.segmentPlanned} />planowe {pct(share(row.planned, row.total))}</span>
+            <span><i className={base.segmentOther} />pozostałe {pct(share(row.other, row.total))}</span>
+          </span>
+        </li>;
+      })}
+    </ul>
+    <p className={base.note}>Najedź na rok, żeby zobaczyć udziały. Nagłe: tryb przyjęcia 2 i 3; planowe: tryb 6. Śmiertelność jest miarą w sekcji „Ile?”.</p>
   </section>;
 }
 
