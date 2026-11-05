@@ -769,7 +769,24 @@
     display: none;
   }
 
+  /* Wszystkie lata nie mieszczą się obok zakładek: rząd przewija się poziomo, zamiast poszerzać stronę. */
+  .years {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+    overscroll-behavior-x: contain;
+    /* Zanikające brzegi pokazują, że lat jest więcej; odstęp sprawia, że skrajny rok po przewinięciu nie zanika. */
+    padding-inline: 14px;
+    mask-image: linear-gradient(90deg, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%);
+  }
+
+  .years::-webkit-scrollbar {
+    display: none;
+  }
+
   .years button {
+    flex: none;
     padding: 2px 8px;
   }
 }
