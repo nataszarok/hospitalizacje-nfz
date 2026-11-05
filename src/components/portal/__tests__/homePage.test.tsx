@@ -61,7 +61,7 @@ describe("Strona główna", () => {
     expect(within(hero).getByRole("search")).toBeInTheDocument();
     expect(within(hero).getByRole("combobox", { name: "Szukaj grupy JGP albo szpitala" })).toBeInTheDocument();
     expect(within(hero).getAllByRole("link").map((link) => link.getAttribute("href"))).toEqual(["#odkrywaj"]);
-    expect(screen.getByRole("img", { name: /karetka, szpital, łóżko z kroplówką/ })).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: /sala operacyjna/ })).toBeInTheDocument();
     expect(document.getElementById("odkrywaj")).toContainElement(screen.getByRole("heading", { name: "Trzy ścieżki przez dane." }));
   });
 
