@@ -111,7 +111,7 @@ export function SearchBox({ variant = "hero", autoFocus = false, onNavigate }: S
         aria-controls={listId}
         aria-autocomplete="list"
         aria-activedescendant={activeOption ? `${listId}-${activeOption.id}` : undefined}
-        placeholder={variant === "header" ? "Szukaj: E10, ozw, szpital…" : "Kod JGP, nazwa grupy, szpital albo miasto"}
+        placeholder={variant === "header" ? "Szukaj" : "Kod JGP, nazwa grupy, szpital albo miasto"}
         value={query}
         onFocus={() => { ensureIndex(); setOpen(true); }}
         onBlur={() => setOpen(false)}

@@ -38,12 +38,12 @@ describe("SiteHeader", () => {
   it("ma siedem pozycji w kolejności od podsumowania do szczegółów", () => {
     render(<SiteHeader />);
     const items = [...nav().querySelectorAll(":scope > a, :scope > div > button")].map((item) => item.textContent?.trim());
-    expect(items).toEqual(["Start", "Hospitalizacje", "Grupy JGP", "Eksplorator danych", "Szpitale", "Porównania", "O danych"]);
-    expect(screen.getByRole("link", { name: "Hospitalizacje" })).toHaveAttribute("href", "/hospitalizacje");
+    expect(items).toEqual(["Start", "Przegląd", "Grupy JGP", "Eksplorator danych", "Szpitale", "Porównania", "O danych"]);
+    expect(screen.getByRole("link", { name: "Przegląd" })).toHaveAttribute("href", "/hospitalizacje");
   });
 
   it.each([
-    ["/hospitalizacje", "", "Hospitalizacje"],
+    ["/hospitalizacje", "", "Przegląd"],
     ["/szpitale", "", "Szpitale"],
     ["/szpitale", "?hv=c", "Porównania"],
     ["/o-danych", "", "O danych"],

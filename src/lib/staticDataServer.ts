@@ -66,6 +66,20 @@ export async function readJgpGroupFileFromDisk(jgpCode: string, dir = join(BUILD
   return readGzipJson(file, (raw: JgpGroupFileColumns) => decodeJgpGroupFile(raw));
 }
 
+/** Rozliczenia NFZ w zł (kraj w latach) ze wszystkich plików grup; `null`, gdy plików grup nie zbudowano. */
+export async function readJgpSettlementsFromDisk(dir = join(BUILD_DATA_DIR, "jgp")): Promise<Record<string, Record<string, number>> | null> {
+  let groups: string[];
+  try {
+    groups = (await readJgpPagesIndexFromDisk(join(dir, "index.json"))).groups;
+  } catch {
+    return null;
+  }
+  const files = await Promise.all(groups.map((code) => readJgpGroupFileFromDisk(code, dir)));
+  const out: Record<string, Record<string, number>> = {};
+  for (const file of files) if (file?.valuePln) out[file.jgp] = file.valuePln.national;
+  return Object.keys(out).length ? out : null;
+}
+
 /** Katalog wycen JGP (punkty) z rokiem katalogu. */
 export async function readValuationsFromDisk(file = join(DATA_DIR, "wyceny_jgp_2025.json.gz")): Promise<{ year: string; rows: JgpValuation[] }> {
   const data = await readGzipJson<ValuationsFile>(file);

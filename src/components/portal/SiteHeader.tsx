@@ -16,7 +16,7 @@ import styles from "./SiteHeader.module.css";
 
 const links = [
   { label: "Start", href: "/", active: "start" },
-  { label: "Hospitalizacje", href: DASHBOARD_HREFS.summary, active: "summary" },
+  { label: "Przegląd", href: DASHBOARD_HREFS.summary, active: "summary" },
   { label: "Grupy JGP", href: "/jgp", active: "groups" },
   { label: "Eksplorator danych", href: DASHBOARD_HREFS.trend, active: "analyses" },
   { label: "Szpitale", href: DASHBOARD_HREFS.hospital, active: "hospitals" },
@@ -133,7 +133,7 @@ export function SiteHeader() {
     <div className={styles.inner}>
       <Link className={styles.brand} href="/" onClick={() => { setIsOpen(false); setAnalysisOpen(false); setCurrentSection("start"); }} aria-label={`${SITE_NAME} — strona główna`}>
         <span className={styles.brandSymbol}><BrandMark /></span>
-        <span className={styles.brandText}><strong>{SITE_NAME}</strong><span>Hospitalizacje · Szpitale · JGP</span></span>
+        <span className={styles.brandText}>{SITE_NAME}</span>
       </Link>
       <nav id="portal-navigation" className={`${styles.nav} ${isOpen ? styles.navOpen : ""}`} aria-label="Nawigacja portalu">
         {links.map(({ href, label, active }) => active === "analyses" ? (

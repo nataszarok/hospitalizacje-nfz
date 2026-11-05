@@ -27,7 +27,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="pl" {...mantineHtmlProps}>
+    // `data-scroll-behavior`: płynne przewijanie tylko do kotwic na stronie, zmiana strony bez animacji.
+    <html lang="pl" data-scroll-behavior="smooth" {...mantineHtmlProps}>
       <head><ColorSchemeScript defaultColorScheme="light" /></head>
       <body className={`${inter.className} ${interTight.variable}`} suppressHydrationWarning>
         <MantineProvider
