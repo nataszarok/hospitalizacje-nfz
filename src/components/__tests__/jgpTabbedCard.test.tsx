@@ -51,8 +51,27 @@ describe("Karta w zakładkach — nagłówek i Przegląd", () => {
     renderCard();
     const panel = screen.getByRole("tabpanel");
     expect(within(panel).getAllByRole("heading", { level: 2 }).map((h) => h.textContent?.split(" ")[0])).toEqual(["Ile?", "Gdzie?", "Za", "Jak"]);
-    expect(within(panel).getByRole("region", { name: /Za ile\?/ })).toHaveTextContent("Średnio na hospitalizację 2025");
     expect(within(panel).getByRole("region", { name: "Mapa ciepła: województwa w latach" })).toBeInTheDocument();
+  });
+
+  it("„Za ile?” ma wycenę i kwotę, bez średniej na hospitalizację; obok tryb przyjęcia bez śmiertelności", () => {
+    renderCard();
+    const panel = screen.getByRole("tabpanel");
+    const cost = within(panel).getByRole("region", { name: /Za ile\?/ });
+    const profile = within(panel).getByRole("region", { name: /Jak przyjmowani/ });
+    expect(cost).toHaveTextContent("Kwota świadczeń 2025");
+    expect(cost).not.toHaveTextContent("Średnio na hospitalizację");
+    expect(cost).not.toHaveTextContent(/\d zł(?! )/);
+    expect(cost.parentElement).toBe(profile.parentElement);
+    expect(within(profile).getAllByRole("columnheader").map((th) => th.textContent)).toEqual(["Rok", "Struktura przyjęć", "Nagłe", "Planowe"]);
+  });
+
+  it("mapa ciepła podaje liczby na 100 tys. bez miejsc dziesiętnych", () => {
+    renderCard();
+    const heat = screen.getByRole("region", { name: "Mapa ciepła: województwa w latach" });
+    const cells = within(heat).getAllByRole("button", { name: /^\d[\d\s\u00a0]*$/ });
+    expect(cells.length).toBeGreaterThan(0);
+    expect(within(heat).queryAllByRole("button", { name: /\d,\d/ })).toEqual([]);
   });
 
   it("kliknięcie województwa w tabeli lat zawęża kartę i trafia do adresu", () => {

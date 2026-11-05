@@ -512,24 +512,25 @@
   text-decoration: underline;
 }
 
-.cost {
+/* „Za ile?” i „Jak przyjmowani są pacjenci?” obok siebie; na wąskim ekranie jedna pod drugą (.two w @media). */
+.pair {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 240px;
-  gap: 20px;
-  align-items: center;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  align-items: start;
 }
 
 .costBars {
   display: flex;
   align-items: stretch;
-  gap: 10px;
-  height: 230px;
+  gap: 6px;
+  height: 200px;
 }
 
 .costBar {
   flex: 1 1 0;
   display: grid;
-  grid-template-rows: auto 1fr auto auto;
+  grid-template-rows: auto 1fr auto;
   justify-items: center;
   gap: 4px;
   min-width: 0;
@@ -552,8 +553,7 @@
   background: var(--color-primary);
 }
 
-.costValue,
-.costPer {
+.costValue {
   color: #475467;
   font-size: var(--fs-sm);
   font-variant-numeric: tabular-nums;
@@ -566,8 +566,14 @@
   font-weight: var(--fw-semibold);
 }
 
+.costYearOn {
+  color: var(--color-primary);
+  font-weight: var(--fw-bold);
+}
+
 .costFacts {
   display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
   margin: 0;
 }
@@ -712,7 +718,7 @@
 @media (max-width: 900px) {
   .head,
   .geo,
-  .cost,
+  .pair,
   .two {
     grid-template-columns: minmax(0, 1fr);
   }

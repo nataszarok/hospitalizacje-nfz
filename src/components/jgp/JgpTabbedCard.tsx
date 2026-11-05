@@ -330,8 +330,11 @@ function OverviewTab({ data, pool, linePool, map, regions, onToggleRegion, onYea
       <GroupLineChart months={data.months} lines={lines} valueLabel={shown.unit} legend={regions.length > 0} height={420} highlightYear={data.year} fitAxis={!regions.length && metric === "urgent"} note={shown.note[period]} period={period} ariaLabel={`Wykres liniowy: ${shown.title.toLowerCase()} ${periodWord(period)} we wszystkich latach`} />
     </section>
     <RegionsSection data={data} pool={pool} map={map} regions={regions} onToggle={onToggleRegion} onYear={onYear} onRegionYear={onRegionYear} onClear={onClearRegions} onShowProviders={onShowProviders} />
-    <CostSection data={data} onYear={onYear} />
-    <ProfileSection data={data} />
+    {/* „Za ile?” i „Jak przyjmowani są pacjenci?” w jednym wierszu (2 kolumny, na wąskim ekranie jedna pod drugą). */}
+    <div className={styles.pair}>
+      <CostSection data={data} onYear={onYear} />
+      <ProfileSection data={data} />
+    </div>
     {data.family ? <FamilySection data={data} /> : null}
   </>;
 }
@@ -429,7 +432,7 @@ function RegionsSection({ data, pool, map, regions, onToggle, onYear, onRegionYe
                   const value = year.values.get(row.owNfz) ?? 0;
                   const pos = position(value, year.national);
                   return <td key={year.year} data-year={year.year} className={styles.heatCell} style={{ background: scaleColor(pos), color: pos > 0.15 ? "#fff" : "#172033" }}>
-                    <button type="button" className={styles.heatButton} onClick={() => onRegionYear(row.owNfz, year.year)} title={`${names.get(row.owNfz)} ${year.year}: ${decimal(value)} na 100 tys. — kliknij, żeby pokazać ten rok i województwo`}>{decimal(value)}</button>
+                    <button type="button" className={styles.heatButton} onClick={() => onRegionYear(row.owNfz, year.year)} title={`${names.get(row.owNfz)} ${year.year}: ${integer(value)} na 100 tys. — kliknij, żeby pokazać ten rok i województwo`}>{integer(value)}</button>
                   </td>;
                 })}
                 {heat.length > 1 ? <td className={`${base.num} ${styles.heatChange}`}>{change === null ? "—" : signedPct(change)}</td> : null}
@@ -439,50 +442,50 @@ function RegionsSection({ data, pool, map, regions, onToggle, onYear, onRegionYe
         </table>
       </div>
     </div>
-    <p className={base.note}>Liczba: hospitalizacje na 100 tys. mieszkańców; kolor: ile razy więcej albo mniej niż średnia Polski w danym roku (średnia w {data.year} r.: {decimal(scale.national)}). Kliknięcie roku w tabeli zmienia rok mapy i całej karty; kliknięcie komórki dodatkowo wybiera województwo.</p>
+    <p className={base.note}>Liczba: hospitalizacje na 100 tys. mieszkańców; kolor: ile razy więcej albo mniej niż średnia Polski w danym roku (średnia w {data.year} r.: {integer(scale.national)}). Kliknięcie roku w tabeli zmienia rok mapy i całej karty; kliknięcie komórki dodatkowo wybiera województwo.</p>
   </section>;
 }
 
 function CostSection({ data, onYear }: { data: JgpPageData; onYear: (year: string) => void }) {
-  const totals = new Map(data.admissions.map((row) => [row.year, row.total]));
-  const bars = data.valuePln.map((item) => ({ ...item, perStay: totals.get(item.year) ? item.value / (totals.get(item.year) as number) : null }));
+  // Bez średniej na hospitalizację: zestawienie NFZ liczy kwoty na pacjenta, a pacjent może mieć kilka hospitalizacji.
+  const cardYears = new Set(data.admissions.map((row) => row.year));
+  const bars = data.valuePln;
   const max = Math.max(...bars.map((item) => item.value), 1);
   const at = bars.findIndex((item) => item.year === data.year);
   const latest = at >= 0 ? bars[at] : bars.at(-1);
   const previous = at > 0 ? bars[at - 1] : undefined;
-  const perChange = latest?.perStay && previous?.perStay ? ((latest.perStay - previous.perStay) / previous.perStay) * 100 : null;
+  const change = latest && previous?.value ? ((latest.value - previous.value) / previous.value) * 100 : null;
   return <section className={styles.sec} aria-labelledby="s-koszt">
     <SectionHead id="s-koszt" question="Za ile?" context="Wycena i kwota świadczeń NFZ, wszystkie lata" tag="Lata" />
-    <div className={styles.cost}>
-      {bars.length ? <div className={styles.costBars} role="img" aria-label={`Kwota świadczeń NFZ za ${data.jgpCode}: ${bars.map((item) => `${item.year} ${millions(item.value)}`).join(", ")}`}>
-        {bars.map((item) => <div key={item.year} className={`${styles.costBar} ${item.perStay ? styles.costBarPick : ""}`} onClick={item.perStay ? () => onYear(item.year) : undefined} title={item.perStay ? `Pokaż kartę za ${item.year} r.` : undefined}>
-          <span className={styles.costValue}>{decimal(item.value / 1_000_000)} mln</span>
+    <dl className={styles.costFacts}>
+      <div><dt>Wycena (katalog {data.valuation?.year ?? ""})</dt><dd>{data.valuation?.points ? `${integer(data.valuation.points)} pkt` : "—"}</dd><span>za hospitalizację</span></div>
+      <div><dt>Kwota świadczeń {latest?.year ?? ""}</dt><dd>{latest ? millions(latest.value) : "—"}</dd><span>{change === null ? "brak poprzedniego roku" : `${signedPct(change)} r/r`}</span></div>
+    </dl>
+    {bars.length ? <div className={styles.costBars} role="img" aria-label={`Kwota świadczeń NFZ za ${data.jgpCode}: ${bars.map((item) => `${item.year} ${millions(item.value)}`).join(", ")}`}>
+      {bars.map((item) => {
+        const pick = cardYears.has(item.year);
+        return <div key={item.year} className={`${styles.costBar} ${pick ? styles.costBarPick : ""}`} onClick={pick ? () => onYear(item.year) : undefined} title={`${item.year}: ${millions(item.value)}${pick ? " · kliknij, żeby pokazać ten rok" : ""}`}>
+          <span className={styles.costValue}>{decimal(item.value / 1_000_000)}</span>
           <span className={styles.costTrack}><span className={`${styles.costFill} ${item.year === data.year ? styles.costFillOn : ""}`} style={{ height: `${(item.value / max) * 100}%` }} /></span>
-          <span className={styles.costYear}>{item.year}</span>
-          <span className={styles.costPer}>{item.perStay ? `${integer(item.perStay)} zł` : ""}</span>
-        </div>)}
-      </div> : <p className={base.note}>Brak danych o rozliczeniach w złotych.</p>}
-      <dl className={styles.costFacts}>
-        <div><dt>Wycena (katalog {data.valuation?.year ?? ""})</dt><dd>{data.valuation?.points ? `${integer(data.valuation.points)} pkt` : "—"}</dd><span>za hospitalizację</span></div>
-        <div><dt>Kwota świadczeń {latest?.year ?? ""}</dt><dd>{latest ? millions(latest.value) : "—"}</dd><span>cała Polska</span></div>
-        <div><dt>Średnio na hospitalizację {latest?.year ?? ""}</dt><dd>{latest?.perStay ? `${integer(latest.perStay)} zł` : "—"}</dd><span>{perChange === null ? "brak poprzedniego roku" : `${signedPct(perChange)} r/r`}</span></div>
-      </dl>
-    </div>
-    <p className={base.note}>Słupki: kwota świadczeń rozliczonych przez NFZ (zestawienie produktów JGP). Pod słupkiem: średnio na hospitalizację (tylko lata z danymi o hospitalizacjach). Średnia rośnie szybciej niż wycena, gdy rośnie udział droższych świadczeń dodatkowych albo zmienia się wartość punktu.</p>
+          <span className={`${styles.costYear} ${item.year === data.year ? styles.costYearOn : ""}`}>{item.year}</span>
+        </div>;
+      })}
+    </div> : <p className={base.note}>Brak danych o rozliczeniach w złotych.</p>}
+    <p className={base.note}>Słupki: kwota świadczeń rozliczonych przez NFZ w mln zł (zestawienie produktów JGP). Kliknięcie słupka zmienia rok karty. Karta nie dzieli kwoty przez liczbę hospitalizacji: zestawienie NFZ liczy pacjentów, a pacjent może mieć kilka hospitalizacji.</p>
   </section>;
 }
 
 function ProfileSection({ data }: { data: JgpPageData }) {
   const share = (part: number, total: number) => total ? (part / total) * 100 : 0;
   return <section className={styles.sec} aria-labelledby="s-profil">
-    <SectionHead id="s-profil" question="Jak przyjmowani są pacjenci?" context="Tryb przyjęcia i śmiertelność w kraju, wszystkie lata" tag="Lata" />
+    <SectionHead id="s-profil" question="Jak przyjmowani są pacjenci?" context="Tryb przyjęcia w kraju, wszystkie lata" tag="Lata" />
     <ul className={base.legend} aria-label="Legenda">
       <li><span className={`${base.swatch} ${base.segmentUrgent}`} aria-hidden />nagłe</li>
       <li><span className={`${base.swatch} ${base.segmentPlanned}`} aria-hidden />planowe</li>
       <li><span className={`${base.swatch} ${base.segmentOther}`} aria-hidden />pozostałe</li>
     </ul>
     <div className={styles.scrollX}><table className={base.table}>
-      <thead><tr><th>Rok</th><th>Struktura przyjęć</th><th className={base.num}>Nagłe</th><th className={base.num}>Planowe</th><th className={base.num}>Śmiertelność</th></tr></thead>
+      <thead><tr><th>Rok</th><th>Struktura przyjęć</th><th className={base.num}>Nagłe</th><th className={base.num}>Planowe</th></tr></thead>
       <tbody>
         {data.admissions.map((row) => <tr key={row.year} className={row.year === data.year ? base.rowSelected : undefined}>
           <td>{row.year}</td>
@@ -493,11 +496,10 @@ function ProfileSection({ data }: { data: JgpPageData }) {
           </div></td>
           <td className={base.num}>{pct(share(row.urgent, row.total))}</td>
           <td className={base.num}>{pct(share(row.planned, row.total))}</td>
-          <td className={base.num}>{row.deaths === undefined ? "—" : pct(share(row.deaths, row.total), 2)}</td>
         </tr>)}
       </tbody>
     </table></div>
-    <p className={base.note}>Nagłe: tryb przyjęcia 2 i 3; planowe: tryb 6. Śmiertelność surowa: zgony w szpitalu podczas hospitalizacji, bez uwzględnienia wieku, stanu pacjentów i zgonów po wypisie.</p>
+    <p className={base.note}>Nagłe: tryb przyjęcia 2 i 3; planowe: tryb 6. Śmiertelność jest miarą w sekcji „Ile?”.</p>
   </section>;
 }
 
