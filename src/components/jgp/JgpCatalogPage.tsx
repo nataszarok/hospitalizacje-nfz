@@ -9,7 +9,10 @@ export function JgpCatalogPage({ catalog }: { catalog: JgpCatalog }) {
     <header className={styles.header}>
       <div className={styles.eyebrow}>Hospitalizacje · grupy JGP · {range}</div>
       <h1>Grupy JGP</h1>
-      <p>Wszystkie grupy JGP z danych NFZ. Kod albo nazwa otwiera kartę grupy: trend, ośrodki, województwa, tryb przyjęcia i wycena.</p>
+      <p><b>J</b>ednorodne <b>G</b>rupy <b>P</b>acjentów (JGP) to system klasyfikacji hospitalizacji stosowany przez NFZ, 
+      który grupuje przypadki o podobnym charakterze klinicznym i kosztach leczenia. Jest wykorzystywany do sprawozdawania
+      świadczeń szpitalnych oraz, w zależności od sposobu finansowania, ich rozliczania.</p>
+      <p>Przeglądaj wszystkie grupy JGP. Kliknij kod lub nazwę grupy, aby zobaczyć trendy hospitalizacji, realizujące je szpitale, rozkład regionalny, tryby przyjęcia oraz wycenę świadczeń.</p>
     </header>
     <JgpCatalogView catalog={catalog} />
   </main>;

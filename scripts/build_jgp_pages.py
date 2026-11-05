@@ -1,16 +1,22 @@
 #!/usr/bin/env python3
 """Build per-group data for JGP group pages (/jgp/[kod]) — one file per JGP group.
 
-Writes public/data/jgp/index.json (list of groups with a page) and, for every JGP group in
-trends.json.gz, public/data/jgp/<KOD>.json.gz in a compact format (version 2):
+Writes build-data/jgp/index.json (list of groups with a page) and, for every JGP group in
+trends.json.gz, build-data/jgp/<KOD>.json.gz in a compact format (version 3):
   providers  ["OW|NIP", ...] — row references point into this list
-  rows       [provider, month index (year index * 12 + month - 1), admission group
-             (0 planned, 1 urgent, 2 other), hospitalizations, deaths] — conservative
+  rows       columns {provider, month, admission, hospitalizations, deaths}: provider index,
+             month index (year index * 12 + month - 1), admission group (0 planned, 1 urgent,
+             2 other), hospitalizations, deaths (one list per field; gzip compresses columns
+             about twice as well as row tuples) — conservative
              estimation of "<5" (= 1), the method used by the pages; same file order and seed
              as scripts/build_hospitalizations.py (shared iter_frames)
   valuePln   NFZ settlements in PLN: national total by year and per provider for the latest
              data year, from data/zestawienie_swiadczen_2019_2026.csv; omitted when the file is
              missing. The last year in the settlements file is incomplete and skipped.
+
+The files are read only by the Next build (src/lib/staticDataServer.ts), which puts the card
+data into the HTML of /jgp/[kod]; they live outside public/, so the export does not copy them
+to dist/ and the site does not serve them.
 
 Provider codes in the settlements file are NFZ provider codes; they are mapped to NIP with
 data/nfz_swiadczeniodawcy_2025.csv (OW + code -> NIP).
@@ -28,7 +34,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from build_hospitalizations import ROOT, VALUE_COLS, iter_frames, write_json_gz
+from build_hospitalizations import ALL_YEARS, ROOT, VALUE_COLS, columns, iter_frames, source_path, write_json_gz
 
 SETTLEMENTS_FILE = "zestawienie_swiadczen_2019_2026.csv"
 PROVIDERS_FILE = "nfz_swiadczeniodawcy_2025.csv"
@@ -52,7 +58,7 @@ def read_monthly(data_dir: Path, years: list[str], product_to_group: dict[str, s
     rows: dict[str, list[list]] = defaultdict(list)
     for year in years:
         parts = []
-        for frame, _ in iter_frames(data_dir / f"hospitalizacje_{year}.csv", year):
+        for frame, _ in iter_frames(source_path(data_dir, year), year):
             frame = frame[frame["product"].isin(product_to_group)]
             if len(frame):
                 frame = frame.assign(jgp=frame["product"].map(product_to_group))
@@ -102,7 +108,7 @@ def read_settlements(data_dir: Path, groups: set[str], provider_year: str) -> di
 
 
 def compact(group: str, years: list[str], rows: list[list], settlements: dict | None) -> dict:
-    """Plik grupy w formacie v2: lista świadczeniodawców i krótkie wiersze z indeksami."""
+    """Plik grupy w formacie v3: lista świadczeniodawców i wiersze z indeksami zapisane kolumnami."""
     keys = sorted({f"{ow}|{nip}" for _, _, ow, nip, *_ in rows})
     index = {key: i for i, key in enumerate(keys)}
     year_index = {year: i for i, year in enumerate(years)}
@@ -111,7 +117,8 @@ def compact(group: str, years: list[str], rows: list[list], settlements: dict | 
         for year, month, ow, nip, admission, _h_sim, h_min, _d_sim, d_min in rows
         if h_min or d_min
     ]
-    payload = {"version": 2, "jgp": group, "years": years, "providers": keys, "rows": packed}
+    payload = {"version": 3, "jgp": group, "years": years, "providers": keys,
+               "rows": columns(packed, ["provider", "month", "admission", "hospitalizations", "deaths"])}
     if settlements:
         payload["valuePln"] = settlements
     return payload
@@ -119,10 +126,10 @@ def compact(group: str, years: list[str], rows: list[list], settlements: dict | 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--years", default="2024,2025", help="lata oddzielone przecinkami")
+    parser.add_argument("--years", default=ALL_YEARS, help="lata oddzielone przecinkami")
     parser.add_argument("--data-dir", type=Path, default=ROOT / "data")
     parser.add_argument("--trends", type=Path, default=ROOT / "public" / "data" / "hospitalizations" / "trends.json.gz")
-    parser.add_argument("--output-dir", type=Path, default=ROOT / "public" / "data" / "jgp")
+    parser.add_argument("--output-dir", type=Path, default=ROOT / "build-data" / "jgp")
     args = parser.parse_args()
 
     years = sorted({y.strip() for y in args.years.split(",") if y.strip()})

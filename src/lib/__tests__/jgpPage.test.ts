@@ -44,10 +44,18 @@ describe("buildJgpPageData — tryb przyjęcia i typ grupy", () => {
     const data = buildJgpPageData(trendsFixture, latestDatasetFixture, "A01")!;
     expect(data.procedural).toBe(false);
     expect(data.admissions).toEqual([
-      { year: "2023", total: 8, planned: 8, urgent: 0, other: 0 },
-      { year: "2024", total: 8, planned: 0, urgent: 5, other: 3 },
-      { year: "2025", total: 9, planned: 9, urgent: 0, other: 0 },
+      { year: "2023", total: 8, planned: 8, urgent: 0, other: 0, deaths: 1 },
+      { year: "2024", total: 8, planned: 0, urgent: 5, other: 3, deaths: 1 },
+      { year: "2025", total: 9, planned: 9, urgent: 0, other: 0, deaths: 0 },
     ]);
+  });
+
+  it("liczy województwa w każdym roku danych (mapa ciepła lat)", () => {
+    const data = buildJgpPageData(trendsFixture, latestDatasetFixture, "A01")!;
+    expect(data.regionYears.map((year) => year.year)).toEqual(data.catalogYears);
+    const latest = data.regionYears.at(-1)!;
+    expect(latest.rows.map(([ow]) => ow).sort()).toEqual(data.regions.map((row) => row.owNfz).sort());
+    expect(latest.rows.reduce((sum, row) => sum + row[2], 0)).toBe(data.regions.reduce((sum, row) => sum + row.hospitalizations, 0));
   });
 });
 

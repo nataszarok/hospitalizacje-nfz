@@ -1,23 +1,33 @@
 #!/usr/bin/env python3
 """Build static hospitalization data (one file per year + trends) for the browser.
 
-Reads the raw NFZ exports (one CSV per year) and writes:
+Reads the raw NFZ exports (data/hospitalizacje_<year>.csv; years 2017-2021 come from the
+multi-year export data/hospitalizacje_2019_2021.csv, read in place) and writes:
   public/data/hospitalizations/index.json      list of years, latest year, default product
   public/data/hospitalizations/<year>.json.gz  full detail for one year (same shape as the
                                                former dashboard.json.gz; layer 2)
   public/data/hospitalizations/trends.json.gz  small aggregates for every year (layer 1):
                                                JGP x year x month and JGP x year x NFZ branch
-  public/data/hospitalizations/trends-regions.json.gz  JGP x year x month x NFZ branch, loaded
-                                               only when the explorer filters by area
+  public/data/hospitalizations/trends-regions/<OW>.json.gz  JGP x year x month for one NFZ
+                                               branch, loaded only when the explorer filters by area
+
+Compact format (year file v2, trends v2, trends-regions v3): repeated texts (provider, product,
+length of stay, admission mode, year, NFZ branch, admission group) are stored once in a
+dictionary list and rows point to them by index; rows are stored as columns (one list per
+field), which gzip compresses about twice as well as row tuples. src/lib/hospitalizationCodec.ts
+decodes the files back into row tuples.
 
 Values "<5" are estimated per year in file order with a fixed seed (method "sim":
 draw 1-4 with weights exp(-x); method "min": 1), exactly like the former db_build
 pipeline, so the 2025 output matches the previous dashboard.json.gz.
 
 JGP product names come from data/kody_produktu_jgp.csv (current catalog). Codes that
-no longer exist there (e.g. groups removed after 2024) are taken from the NFZ JGP
-statistics dictionary cached in data/jgp_benefits_nfz.json (--fetch-nfz-catalog
-downloads it from api.nfz.gov.pl). A code missing in both sources stops the build.
+no longer exist there (e.g. groups removed after 2024) are taken, in this order, from
+the NFZ JGP statistics dictionary cached in data/jgp_benefits_nfz.json
+(--fetch-nfz-catalog downloads it from api.nfz.gov.pl), from product names in the NFZ
+settlements file data/zestawienie_swiadczen_2019_2026.csv and from the manual list
+scripts/jgp_kody_uzupelnienie.csv (KOD_PRODUKTU_JEDNOSTKOWEGO, KOD_JGP, NAZWA; codes absent
+from every NFZ source). A code missing everywhere stops the build.
 
 Provider names: data_exports/supabase/facilities.csv, then
 data/nfz_swiadczeniodawcy_2025.csv, then data/szpitale_uzupelnienie.csv (by NIP).
@@ -25,6 +35,7 @@ Providers missing everywhere get a placeholder name and are listed in the report
 add them to data/szpitale_uzupelnienie.csv.
 
 Usage:
+  python3 scripts/build_hospitalizations.py                  # all years (2017-2025)
   python3 scripts/build_hospitalizations.py --years 2024,2025
 """
 from __future__ import annotations
@@ -61,6 +72,14 @@ RAW_COLUMNS = [
 ]
 FACT_KEYS = ["ow", "nip", "product", "duration", "admission"]
 VALUE_COLS = ["h_sim", "h_min", "d_sim", "d_min"]
+# Nazwy kolumn wartości w plikach dla przeglądarki (kolejność jak VALUE_COLS).
+VALUE_KEYS = ["hSim", "hMin", "dSim", "dMin"]
+# Grupy trybu przyjęcia w trendach: indeks w tej liście zamiast litery w każdym wierszu.
+ADMISSION_GROUPS = ["p", "u", "o"]
+ALL_YEARS = "2017,2018,2019,2020,2021,2022,2023,2024,2025"
+# Eksport wieloletni: bez nagłówka, wartości dopełnione spacjami, Windows-1250. Czytany na miejscu
+# (pliki w data/ zostają bez zmian), wiersze jednego roku wybiera iter_frames.
+MULTI_YEAR_SOURCES = {"hospitalizacje_2019_2021.csv": ({"2017", "2018", "2019", "2020", "2021"}, "cp1250")}
 
 
 def admission_group(code: str) -> str:
@@ -81,19 +100,36 @@ def normalize_nip(series: pd.Series) -> pd.Series:
     return series.astype("string").str.replace(r"\D", "", regex=True)
 
 
+def source_path(data_dir: Path, year: str) -> Path:
+    """Plik źródłowy roku: własny plik roczny albo eksport wieloletni, który zawiera ten rok."""
+    own = data_dir / f"hospitalizacje_{year}.csv"
+    if own.exists():
+        return own
+    for name, (years, _) in MULTI_YEAR_SOURCES.items():
+        if year in years and (data_dir / name).exists():
+            return data_dir / name
+    raise SystemExit(f"Brak danych źródłowych dla roku {year} w {data_dir}")
+
+
 def iter_frames(path: Path, year: str):
     """Kolejne fragmenty pliku źródłowego jako ramki z oszacowanymi wartościami „<5” (h_sim, h_min, d_sim, d_min).
 
-    Losowanie idzie po wszystkich wierszach w kolejności pliku, więc każdy skrypt, który czyta plik
-    tą funkcją, dostaje te same wartości co pliki z tego skryptu.
+    Losowanie idzie po wierszach danego roku w kolejności pliku, więc każdy skrypt, który czyta plik
+    tą funkcją, dostaje te same wartości co pliki z tego skryptu. Eksport wieloletni daje tylko wiersze roku.
     """
     rng = np.random.default_rng(SEED)
     values = np.array([1, 2, 3, 4])
     weights = np.exp(-values)
     p = weights / weights.sum()
 
-    for chunk in pd.read_csv(path, sep=";", dtype=str, chunksize=CHUNK_SIZE, keep_default_na=False):
+    multi = MULTI_YEAR_SOURCES.get(path.name)
+    options = {"header": None, "names": RAW_COLUMNS, "encoding": multi[1]} if multi else {}
+    for chunk in pd.read_csv(path, sep=";", dtype=str, chunksize=CHUNK_SIZE, keep_default_na=False, **options):
         chunk = chunk[RAW_COLUMNS]
+        if multi:
+            chunk = chunk[chunk["ROK"].str.strip() == year]
+            if chunk.empty:
+                continue
         years = set(chunk["ROK"].str.strip())
         if years != {year}:
             raise SystemExit(f"{path.name}: oczekiwano roku {year}, znaleziono {sorted(years)}")
@@ -174,7 +210,14 @@ def fetch_nfz_catalog(path: Path) -> None:
     print(f"NFZ catalog: {len(entries)} codes -> {path}")
 
 
-def load_product_catalog(local: Path, nfz: Path) -> tuple[dict[str, tuple[str, str]], dict[str, tuple[str, str]]]:
+def split_code_name(text: str) -> tuple[str, str]:
+    """„F04 DIAGNOSTYCZNE…” → („F04”, „DIAGNOSTYCZNE…”); nazwa ze znormalizowanymi spacjami."""
+    jgp, _, name = text.strip().partition(" ")
+    return jgp, re.sub(r"\s+", " ", name).strip()
+
+
+def load_product_catalog(local: Path, nfz: Path, settlements: Path | None = None, manual: Path | None = None) -> tuple[dict[str, tuple[str, str]], dict[str, tuple[str, str]]]:
+    """Bieżący katalog i nazwy kodów spoza niego (słownik NFZ → zestawienie świadczeń NFZ → lista ręczna)."""
     current: dict[str, tuple[str, str]] = {}
     with local.open(encoding="utf-8-sig", newline="") as fh:
         for row in csv.DictReader(fh):
@@ -185,8 +228,20 @@ def load_product_catalog(local: Path, nfz: Path) -> tuple[dict[str, tuple[str, s
     if nfz.exists():
         for entry in json.loads(nfz.read_text(encoding="utf-8")):
             # Nazwa w słowniku NFZ zaczyna się od kodu JGP, np. „F04 DIAGNOSTYCZNE…”.
-            jgp, _, name = entry["name"].strip().partition(" ")
-            historic[entry["code"].strip()] = (jgp, re.sub(r"\s+", " ", name).strip())
+            historic[entry["code"].strip()] = split_code_name(entry["name"])
+    if settlements and settlements.exists():
+        # Zestawienie świadczeń ma nazwy produktów z każdego roku rozliczeń (tylko produkty JGP, 5.51).
+        with settlements.open(encoding="utf-8-sig", newline="") as fh:
+            for row in csv.DictReader(fh, delimiter=";"):
+                code = (row.get("Kod_produktu_jednostkowego") or "").strip()
+                if code.startswith("5.51.") and code not in historic:
+                    historic[code] = split_code_name(row.get("Nazwa_produktu_jednostkowego") or "")
+    if manual and manual.exists():
+        with manual.open(encoding="utf-8-sig", newline="") as fh:
+            for row in csv.DictReader(fh):
+                code = (row.get("KOD_PRODUKTU_JEDNOSTKOWEGO") or "").strip()
+                if code:
+                    historic.setdefault(code, ((row.get("KOD_JGP") or "").strip(), (row.get("NAZWA") or "").strip()))
     return current, historic
 
 
@@ -225,6 +280,17 @@ def read_reference(exports: Path) -> tuple[list[list[str]], list[list[Any]]]:
     )
 
 
+def dictionary(values: list[str]) -> tuple[list[str], dict[str, int]]:
+    """Słownik wartości (posortowany) i indeks wartości w słowniku."""
+    items = sorted(set(values))
+    return items, {value: i for i, value in enumerate(items)}
+
+
+def columns(rows: list[list[Any]], keys: list[str]) -> dict[str, list[Any]]:
+    """Wiersze jako kolumny: {klucz: lista wartości}; kolejność wierszy bez zmian."""
+    return {key: [row[i] for row in rows] for i, key in enumerate(keys)}
+
+
 def write_json_gz(path: Path, payload: dict[str, Any]) -> int:
     path.parent.mkdir(parents=True, exist_ok=True)
     data = json.dumps(payload, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
@@ -236,7 +302,7 @@ def write_json_gz(path: Path, payload: dict[str, Any]) -> int:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--years", default="2024,2025", help="lata oddzielone przecinkami")
+    parser.add_argument("--years", default=ALL_YEARS, help="lata oddzielone przecinkami")
     parser.add_argument("--data-dir", type=Path, default=ROOT / "data")
     parser.add_argument("--exports-dir", type=Path, default=ROOT / "data_exports" / "supabase")
     parser.add_argument("--output-dir", type=Path, default=ROOT / "public" / "data" / "hospitalizations")
@@ -251,7 +317,10 @@ def main() -> None:
     if args.fetch_nfz_catalog or not nfz_catalog_path.exists():
         fetch_nfz_catalog(nfz_catalog_path)
 
-    current, historic = load_product_catalog(catalog_path, nfz_catalog_path)
+    current, historic = load_product_catalog(
+        catalog_path, nfz_catalog_path,
+        args.data_dir / "zestawienie_swiadczen_2019_2026.csv", ROOT / "scripts" / "jgp_kody_uzupelnienie.csv",
+    )
     curated, nfz_names, supplement = load_facility_names(args.exports_dir, args.data_dir)
     regions, populations = read_reference(args.exports_dir)
 
@@ -263,7 +332,7 @@ def main() -> None:
     report: list[str] = []
 
     for year in years:
-        source = args.data_dir / f"hospitalizacje_{year}.csv"
+        source = source_path(args.data_dir, year)
         facts, monthly, regional, regional_monthly, raw_rows = read_year(source, year)
 
         codes = sorted(facts["product"].unique())
@@ -275,14 +344,16 @@ def main() -> None:
                 missing.append(code)
                 continue
             if code not in current:
-                report.append(f"{year}: {code} {info[0]} spoza bieżącego katalogu (słownik NFZ)")
+                report.append(f"{year}: {code} {info[0]} spoza bieżącego katalogu")
             product_info.setdefault(code, info)
             product_years[code].append(year)
             products.append([code, info[0] or None, info[1] or None])
         if missing:
-            raise SystemExit(f"{year}: brak nazw dla kodów JGP {missing}. Uruchom z --fetch-nfz-catalog.")
+            raise SystemExit(f"{year}: brak nazw dla kodów JGP {missing}. Uruchom z --fetch-nfz-catalog "
+                             "albo dopisz kody do scripts/jgp_kody_uzupelnienie.csv.")
 
         facility_keys = sorted(set(facts["ow"] + "|" + facts["nip"]))
+        facility_index = {key: i for i, key in enumerate(facility_keys)}
         facilities = []
         for key in facility_keys:
             ow, nip = key.split("|")
@@ -293,15 +364,25 @@ def main() -> None:
                 name = f"Świadczeniodawca NIP {nip}"
             facilities.append([ow, nip, name, city])
 
+        product_index = {code: i for i, (code, *_rest) in enumerate(products)}
+        durations, duration_index = dictionary(facts["duration"].tolist())
+        admissions, admission_index = dictionary(facts["admission"].tolist())
         dataset = {
-            "version": 1,
+            "version": 2,
             "analysisYear": year,
             "defaultProductCode": DEFAULT_PRODUCT_CODE,
             "products": products,
             "regions": regions,
             "facilities": facilities,
             "populations": populations,
-            "facts": facts[FACT_KEYS + VALUE_COLS].values.tolist(),
+            # Fakty jako kolumny indeksów: świadczeniodawca (facilities), produkt (products),
+            # czas pobytu (durations), tryb przyjęcia (admissions) i cztery kolumny wartości.
+            "durations": durations,
+            "admissions": admissions,
+            "facts": columns([
+                [facility_index[f"{ow}|{nip}"], product_index[product], duration_index[duration], admission_index[admission], *values]
+                for ow, nip, product, duration, admission, *values in facts[FACT_KEYS + VALUE_COLS].values.tolist()
+            ], ["facility", "product", "duration", "admission", *VALUE_KEYS]),
         }
         size = write_json_gz(args.output_dir / f"{year}.json.gz", dataset)
         print(f"{year}: {raw_rows:,} source rows -> {len(facts):,} facts, {len(products)} products, "
@@ -314,25 +395,36 @@ def main() -> None:
     # Trendy: produkty ze wszystkich lat, wiersze odwołują się do indeksu produktu.
     codes = sorted(product_info)
     index = {code: i for i, code in enumerate(codes)}
+    year_index = {year: i for i, year in enumerate(years)}
+    group_index = {group: i for i, group in enumerate(ADMISSION_GROUPS)}
+    branches, branch_index = dictionary([ow for _, ow, *_ in regional_rows])
+    month_keys = ["year", "month", "product", "group", *VALUE_KEYS]
     trends = {
-        "version": 1,
+        "version": 2,
         "years": years,
+        "groups": ADMISSION_GROUPS,
+        "branches": branches,
         "products": [[code, product_info[code][0] or None, product_info[code][1] or None, product_years[code]] for code in codes],
-        "monthly": [[y, m, index[p], g, *v] for y, m, p, g, *v in monthly_rows],
-        "regional": [[y, ow, index[p], g, *v] for y, ow, p, g, *v in regional_rows],
+        "monthly": columns([[year_index[y], m, index[p], group_index[g], *v] for y, m, p, g, *v in monthly_rows], month_keys),
+        "regional": columns([[year_index[y], branch_index[ow], index[p], group_index[g], *v] for y, ow, p, g, *v in regional_rows],
+                            ["year", "branch", "product", "group", *VALUE_KEYS]),
     }
     size = write_json_gz(args.output_dir / "trends.json.gz", trends)
-    print(f"trends: {len(trends['monthly']):,} monthly + {len(trends['regional']):,} regional rows, {size / 1024:.0f} KiB")
+    print(f"trends: {len(monthly_rows):,} monthly + {len(regional_rows):,} regional rows, {size / 1024:.0f} KiB")
 
-    # Trend miesięczny według OW NFZ: osobny plik, bo eksplorator potrzebuje go tylko przy filtrze obszaru.
-    # Indeksy produktów są te same co w trends.json.gz.
-    regional_trends = {
-        "version": 1,
-        "years": years,
-        "rows": [[y, m, ow, index[p], g, *v] for y, m, ow, p, g, *v in regional_monthly_rows],
-    }
-    size = write_json_gz(args.output_dir / "trends-regions.json.gz", regional_trends)
-    print(f"trends-regions: {len(regional_trends['rows']):,} rows, {size / 1024:.0f} KiB")
+    # Trend miesięczny według OW NFZ: plik na każdy OW, bo eksplorator potrzebuje go tylko przy filtrze obszaru
+    # i tylko dla wybranego województwa. Indeksy produktów są te same co w trends.json.gz.
+    regional_dir = args.output_dir / "trends-regions"
+    regional_dir.mkdir(parents=True, exist_ok=True)
+    for stale in [*regional_dir.glob("*.json.gz"), args.output_dir / "trends-regions.json.gz"]:
+        stale.unlink(missing_ok=True)
+    by_ow: dict[str, list[list[Any]]] = defaultdict(list)
+    for y, m, ow, p, g, *v in regional_monthly_rows:
+        by_ow[ow].append([year_index[y], m, index[p], group_index[g], *v])
+    total = 0
+    for ow, rows in sorted(by_ow.items()):
+        total += write_json_gz(regional_dir / f"{ow}.json.gz", {"version": 3, "years": years, "groups": ADMISSION_GROUPS, "owNfz": ow, "rows": columns(rows, month_keys)})
+    print(f"trends-regions: {len(by_ow)} plików OW, {len(regional_monthly_rows):,} rows, {total / 1024:.0f} KiB")
 
     index_payload = {"version": 1, "years": years, "latestYear": years[-1], "defaultProductCode": DEFAULT_PRODUCT_CODE}
     (args.output_dir / "index.json").write_text(json.dumps(index_payload, ensure_ascii=False) + "\n", encoding="utf-8")

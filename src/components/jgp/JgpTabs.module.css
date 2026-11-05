@@ -1,0 +1,824 @@
+/* Karta grupy JGP w zakładkach (E10, H52, H55): nagłówek 2×2, przyklejony pasek zakładek, sekcje-pytania. */
+
+.head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 420px);
+  gap: 16px 28px;
+  align-items: center;
+  margin: 12px 0 18px;
+}
+
+.headText {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.title {
+  margin: 2px 0 0;
+  font-size: 28px;
+  line-height: 1.25;
+}
+
+.meta,
+.area {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 16px;
+  margin: 0;
+  color: #475467;
+  font-size: 13.5px;
+}
+
+.meta b {
+  color: #172033;
+}
+
+.areaLabel {
+  color: #667085;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.chip {
+  padding: 2px 10px;
+  border: 1px solid var(--color-primary-outline, #b7d3c8);
+  border-radius: 999px;
+  background: var(--color-primary-soft, #eaf5f0);
+  color: #172033;
+  font: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+
+
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+
+.kpis > div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid #e4e7ec;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.kpis dt {
+  color: #667085;
+  font-size: 12px;
+}
+
+.kpis dd {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.kpis span {
+  color: #667085;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Pasek zakładek zostaje pod nagłówkiem portalu (75 px) przy przewijaniu. */
+.tabbar {
+  position: sticky;
+  top: 75px;
+  z-index: 20;
+  display: flex;
+  /* Jedna linia i stała wysokość: pojawienie się nazwy grupy nie przesuwa treści. */
+  flex-wrap: nowrap;
+  min-height: 48px;
+  align-items: center;
+  gap: 6px 16px;
+  margin: 0 0 16px;
+  /* Tło i dolna linia na całą szerokość okna: treść znika pod paskiem równo, a pasek łączy się z nagłówkiem portalu.
+     border-image z wysunięciem (outset) maluje poza paskiem, ale nie poszerza strony; 100vw dawało poziomy
+     pasek przewijania, bo obejmuje pionowy pasek przewijania. */
+  border-image: linear-gradient(to top, #e4e7ec 1px, rgba(255, 255, 255, 0.97) 1px) fill 0 / 0 / 0 100vmax;
+  backdrop-filter: blur(14px);
+}
+
+/* Po przyklejeniu: miękki cień pod linią (8 px pod paskiem), też na całą szerokość. */
+.tabbarStuck {
+  border-image: linear-gradient(to top, rgba(16, 24, 40, 0), rgba(16, 24, 40, 0.08) 8px, #e4e7ec 8px, #e4e7ec 9px, rgba(255, 255, 255, 0.97) 9px) fill 0 / 0 / 0 100vmax 8px;
+}
+
+.barTitle {
+  display: none;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 420px;
+  overflow: hidden;
+  color: #172033;
+  font-size: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.barTitle b {
+  color: var(--color-primary);
+}
+
+.tabbarStuck .barTitle {
+  display: block;
+  padding-right: 12px;
+  border-right: 1px solid #e4e7ec;
+}
+
+.tabs {
+  display: flex;
+  flex: none;
+  gap: 4px;
+}
+
+.tabs button {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 12px 14px 10px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: #475467;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.tabs button small {
+  color: #667085;
+  font-size: 12.5px;
+  font-weight: 500;
+}
+
+.tabs button[aria-selected="true"] {
+  border-bottom-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.years {
+  margin-left: auto;
+  display: flex;
+  flex: none;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 6px;
+  padding-block: 6px;
+}
+
+.years > span {
+  margin-right: 2px;
+  color: #667085;
+  font-size: 12px;
+}
+
+.years button {
+  padding: 3px 12px;
+  border: 1px solid #d0d5dd;
+  border-radius: 999px;
+  background: #fff;
+  color: #344054;
+  font: inherit;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.years button[aria-pressed="true"] {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: #fff;
+  font-weight: 650;
+}
+
+.desc {
+  max-width: 78ch;
+  margin: 0;
+  color: #344054;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.desc small {
+  color: #667085;
+  font-size: 12px;
+}
+
+.lead {
+  margin: 0;
+  font-size: 14px;
+}
+
+.heatOn {
+  color: var(--color-primary) !important;
+  font-weight: 750 !important;
+}
+
+.costBarPick {
+  cursor: pointer;
+}
+
+.famRows {
+  display: grid;
+  gap: 6px;
+}
+
+.famRow {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 64px;
+  align-items: center;
+  gap: 10px;
+}
+
+.famYear,
+.famTotal {
+  color: #475467;
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.famTotal {
+  text-align: right;
+}
+
+.famBar {
+  display: flex;
+  gap: 2px;
+  height: 28px;
+  overflow: hidden;
+  border-radius: 6px;
+}
+
+.famBar span {
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  color: #fff;
+  font-size: 11.5px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+/* Ta grupa: wyraźna ramka w środku segmentu. */
+.famOwn {
+  box-shadow: inset 0 0 0 2.5px #172033;
+}
+
+.panel {
+  display: grid;
+  gap: 16px;
+}
+
+/* Skok do sekcji nie chowa tytułu pod paskiem zakładek. */
+.sec {
+  display: grid;
+  /* Kolumna nie rośnie ponad szerokość sekcji (szeroka tabela przewija się w .scrollX zamiast poszerzać stronę). */
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  min-width: 0;
+  padding: 16px 18px;
+  border: 1px solid #e4e7ec;
+  border-radius: 12px;
+  background: #fff;
+  scroll-margin-top: 140px;
+}
+
+.secHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px 12px;
+}
+
+.secTitle {
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.35;
+}
+
+.q {
+  color: #172033;
+  font-weight: 750;
+}
+
+.ctx {
+  color: #667085;
+  font-weight: 500;
+}
+
+.tag {
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: #eef1f6;
+  color: #475467;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.geo {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.scrollX {
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.heatWrap {
+  position: relative;
+  overflow-x: auto;
+  /* Miejsce na tło kolumny roku (wystaje 6 px poza komórki), żeby nie pojawiał się pasek przewijania. */
+  padding: 8px;
+}
+
+/* Tło kolumny wybranego roku: to samo co tło roku na wykresie liniowym (YEAR_BAND w GroupLineChart),
+   bez obramowania i zaokrągleń. Leży pod komórkami: widać je w odstępach i w marginesie wokół kolumny. */
+.heatBand {
+  position: absolute;
+  /* Wystaje w bok o 4 px: mniej niż połowa odstępu między kolumnami (10 px), więc nie sięga sąsiedniej kolumny. */
+  margin: -6px 0 0 -4px;
+  padding: 6px 4px;
+  box-sizing: content-box;
+  background: rgba(31, 138, 112, 0.1);
+  pointer-events: none;
+}
+
+.heat {
+  position: relative;
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 10px 2px;
+  font-size: 12.5px;
+}
+
+/* Nazwy województw dzielone według reguł języka (globalne overflow-wrap: anywhere łamało w dowolnym miejscu). */
+.heat th,
+.heat td {
+  overflow-wrap: normal;
+  hyphens: auto;
+}
+
+.heat th {
+  position: static;
+  /* Bez szerokości z globalnego stylu tabel: kolumna województw bierze resztę miejsca. */
+  width: auto;
+  /* Przezroczyste nagłówki (globalny styl tabel daje białe tło), żeby pas roku był widoczny także za nagłówkiem. */
+  background: transparent;
+  color: #667085;
+  font-weight: 600;
+  text-align: left;
+}
+
+.heatCell {
+  min-width: 52px;
+  padding: 0;
+  border-radius: 4px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+
+.heatButton {
+  width: 100%;
+  padding: 4px 6px;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: right;
+  cursor: pointer;
+}
+
+/* Cały nagłówek roku jest przyciskiem (nie tylko tekst roku). */
+.heat th.yearCell {
+  /* Równa, wąska szerokość kolumn lat. */
+  width: 68px;
+  padding: 0;
+}
+
+.yearHead {
+  display: block;
+  width: 100%;
+  padding: 6px 6px;
+  border: 0;
+  background: none;
+  color: #667085;
+  font: inherit;
+  font-weight: 600;
+  text-align: right;
+  cursor: pointer;
+}
+
+
+.heat .heatChange {
+  /* Wąska kolumna zmiany: wolne miejsce bierze kolumna województw. */
+  width: 64px;
+  color: #475467;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.mapCol {
+  display: grid;
+  gap: 8px;
+}
+
+/* Wiele lat: mapa obok ścieśnionej mapy ciepła (więcej miejsca dla tabeli). */
+.geoCompact {
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+}
+
+.heatCompact {
+  border-spacing: 3px 2px;
+  font-size: 11.5px;
+}
+
+.heat.heatCompact th.yearCell {
+  width: 40px;
+}
+
+.heatCompact .heatCell {
+  min-width: 38px;
+}
+
+.heatCompact .heatButton {
+  padding: 3px 3px;
+}
+
+/* Tło roku wystaje tylko o 1 px: odstęp między kolumnami ma 3 px. */
+.geoCompact .heatBand {
+  margin-left: -1px;
+  padding: 6px 1px;
+}
+
+.heat.heatCompact .heatChange {
+  width: 44px;
+  font-size: 11px;
+}
+
+.mapInfo {
+  display: grid;
+  gap: 6px;
+  color: #475467;
+  font-size: 13px;
+}
+
+.mapActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  align-items: center;
+}
+
+.primaryLink {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-primary);
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.linkCell {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #172033;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.linkCell[aria-pressed="true"] {
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+.cost {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 240px;
+  gap: 20px;
+  align-items: center;
+}
+
+.costBars {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+  height: 230px;
+}
+
+.costBar {
+  flex: 1 1 0;
+  display: grid;
+  grid-template-rows: auto 1fr auto auto;
+  justify-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.costTrack {
+  display: flex;
+  align-items: flex-end;
+  width: 100%;
+  height: 100%;
+}
+
+.costFill {
+  width: 100%;
+  border-radius: 4px 4px 0 0;
+  background: #8ea6d3;
+}
+
+.costFillOn {
+  background: var(--color-primary);
+}
+
+.costValue,
+.costPer {
+  color: #475467;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.costYear {
+  color: #667085;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.costFacts {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+.costFacts > div {
+  display: grid;
+  gap: 2px;
+  padding: 8px 12px;
+  border: 1px solid #e4e7ec;
+  border-radius: 10px;
+}
+
+.costFacts dt,
+.costFacts span {
+  color: #667085;
+  font-size: 12px;
+}
+
+.costFacts dd {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Zwarty pasek ośrodka pod wykresem linii: jedna linia, bez przesuwania strony. */
+/* Stała wysokość (jedna linia): zmiana treści przy najechaniu nie przesuwa tabeli pod kursorem. */
+.bar {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 4px 12px;
+  height: 40px;
+  overflow: hidden;
+  white-space: nowrap;
+  margin: 0;
+  padding: 6px 12px;
+  border: 1px solid #e4e7ec;
+  border-radius: 8px;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.barPreview {
+  border-style: dashed;
+}
+
+.bar > b {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bar > *:not(b) {
+  flex: none;
+}
+
+.dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.hint,
+.bar small {
+  color: #667085;
+}
+
+.barChip {
+  color: #475467;
+  white-space: nowrap;
+}
+
+.details {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid #e4e7ec;
+  border-radius: 10px;
+  background: #fafbfc;
+}
+
+.struct {
+  display: grid;
+  gap: 6px;
+}
+
+.structBar {
+  display: flex;
+  gap: 2px;
+  height: 26px;
+  overflow: hidden;
+  border-radius: 6px;
+}
+
+.structBar span {
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  color: #fff;
+  font-size: 11.5px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.structText {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin: 0;
+  color: #475467;
+  font-size: 13px;
+}
+
+.rankRow {
+  cursor: pointer;
+}
+
+.rankRow:hover {
+  background: #f5f8fc;
+}
+
+.nameCell small {
+  display: block;
+  color: #667085;
+  font-size: 12px;
+}
+
+.spark {
+  display: block;
+  width: 80px;
+  height: 22px;
+}
+
+.two {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+@media (max-width: 900px) {
+  .head,
+  .geo,
+  .cost,
+  .two {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Nagłówek portalu ma 67 px poniżej 700 px szerokości. */
+@media (max-width: 700px) {
+  /* Mapa ciepła na telefonie: węższe odstępy i kolumny, żeby kolumna województw miała miejsce na nazwy. */
+  .heat {
+    border-spacing: 6px 2px;
+  }
+
+  .heatBand {
+    margin-left: -2px;
+    padding: 6px 2px;
+  }
+
+  .heat th.yearCell {
+    width: 56px;
+  }
+
+  .heat .heatChange {
+    width: 52px;
+  }
+
+  .tabbar {
+    top: 67px;
+  }
+
+  .tabbarStuck .barTitle {
+    display: none;
+  }
+
+  /* Na telefonie pasek ośrodka ma stałe dwie linie. */
+  .bar {
+    flex-wrap: wrap;
+    align-content: center;
+    height: 64px;
+    white-space: normal;
+  }
+
+  /* Na telefonie jeden rząd: zakładki bez dopisku i rok obok; bez nazwy grupy (stała wysokość paska). */
+  .tabbar {
+    gap: 0 8px;
+  }
+
+  .tabs button {
+    padding: 10px 8px 8px;
+    font-size: 14px;
+  }
+
+
+  .years > span {
+    display: none;
+  }
+
+  .years button {
+    padding: 2px 8px;
+  }
+}
+
+/* Wybrany ośrodek: gwiazdka (ten sam znak na wykresach, w tabeli, pasku i legendzie). */
+.star {
+  color: #d92d20;
+  font-size: 15px;
+  line-height: 1;
+}
+
+.nameCell .star,
+.nameCell .dot {
+  margin-right: 6px;
+  vertical-align: 1px;
+}
+
+.rankSelected td:first-child {
+  box-shadow: inset 3px 0 0 #d92d20;
+}
+
+/* Przełącznik „Miesiące / Lata” w nagłówku sekcji „Ile?”: rozmiar etykiety `.tag`, więc nagłówek ma tę samą wysokość. */
+.periodToggle {
+  display: inline-flex;
+  flex: none;
+  overflow: hidden;
+  border: 1px solid #d0d5dd;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.periodToggle button {
+  padding: 1px 8px;
+  border: 0;
+  border-left: 1px solid #d0d5dd;
+  background: transparent;
+  color: #475467;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 18px;
+  cursor: pointer;
+}
+
+.periodToggle button:first-child {
+  border-left: 0;
+}
+
+.periodToggle button[aria-pressed="true"] {
+  background: var(--color-primary-soft);
+  color: var(--color-primary-hover);
+}

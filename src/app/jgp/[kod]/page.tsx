@@ -19,8 +19,11 @@ async function pageData(kod: string) {
   const [trends, index, groupFile, valuations, peerPairs] = await Promise.all([
     readTrendsFromDisk(), readHospitalizationIndexFromDisk(), readJgpGroupFileFromDisk(kod), readValuationsFromDisk(), readPeerPairsFromDisk(),
   ]);
+  // Karta ma wybór roku: ośrodki ze wszystkich lat i ich nazwy ze starszych plików roku.
+  const older = await Promise.all(index.years.filter((year) => year !== index.latestYear).map((year) => readStaticDatasetFromDisk(year)));
   return buildJgpPageData(trends, await readStaticDatasetFromDisk(index.latestYear), kod, "min", 15, {
     groupFile, valuations: valuations.rows, valuationYear: valuations.year, peerPairs,
+    allYearProviders: true, facilities: older.flatMap((dataset) => dataset.facilities),
   });
 }
 

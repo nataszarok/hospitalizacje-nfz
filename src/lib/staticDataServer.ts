@@ -4,10 +4,13 @@ import { gunzipSync } from "node:zlib";
 import type { RegionsMap } from "@/lib/jgpCard";
 import type { JgpGroupFile, JgpPagesIndex, JgpPeerPair } from "@/lib/jgpPage";
 import { decodeValuations, type JgpValuation, type ValuationsFile } from "@/lib/valuations";
+import { decodeJgpGroupFile, decodeStaticDataset, decodeTrends, type JgpGroupFileColumns, type StaticDatasetFile, type TrendsFile } from "@/lib/hospitalizationCodec";
 import type { HospitalizationIndex, StaticDataset, TrendsDataset } from "@/lib/staticData";
 
 // Odczyt danych podczas budowania strony (statyczny eksport). Tylko dla komponentów serwerowych.
 const DATA_DIR = join(process.cwd(), "public", "data");
+// Dane czytane tylko podczas buildu (nie trafiają do `dist/`, bo leżą poza `public/`).
+const BUILD_DATA_DIR = join(process.cwd(), "build-data");
 const DEFAULT_DIR = join(DATA_DIR, "hospitalizations");
 
 export async function readHospitalizationIndexFromDisk(dir = DEFAULT_DIR): Promise<HospitalizationIndex> {
@@ -15,7 +18,7 @@ export async function readHospitalizationIndexFromDisk(dir = DEFAULT_DIR): Promi
 }
 
 export async function readStaticDatasetFromDisk(year: string, dir = DEFAULT_DIR): Promise<StaticDataset> {
-  return readGzipJson<StaticDataset>(join(dir, `${year}.json.gz`));
+  return readGzipJson(join(dir, `${year}.json.gz`), (file: StaticDatasetFile) => decodeStaticDataset(file));
 }
 
 /** Zbiory za wszystkie lata z `index.json`, od najstarszego. */
@@ -25,15 +28,15 @@ export async function readAllStaticDatasetsFromDisk(dir = DEFAULT_DIR): Promise<
 }
 
 export async function readTrendsFromDisk(dir = DEFAULT_DIR): Promise<TrendsDataset> {
-  return readGzipJson<TrendsDataset>(join(dir, "trends.json.gz"));
+  return readGzipJson(join(dir, "trends.json.gz"), (file: TrendsFile) => decodeTrends(file));
 }
 
-// Podczas budowania ~700 stron grup czyta te same duże pliki; każdy plik parsujemy raz na proces.
+// Podczas budowania ~700 stron grup czyta te same duże pliki; każdy plik parsujemy (i dekodujemy) raz na proces.
 const gzipCache = new Map<string, Promise<unknown>>();
-async function readGzipJson<T>(file: string): Promise<T> {
+async function readGzipJson<T, F = T>(file: string, decode: (raw: F) => T = (raw) => raw as unknown as T): Promise<T> {
   let promise = gzipCache.get(file);
   if (!promise) {
-    promise = readFile(file).then((buffer) => JSON.parse(gunzipSync(buffer).toString("utf8")) as unknown);
+    promise = readFile(file).then((buffer) => decode(JSON.parse(gunzipSync(buffer).toString("utf8")) as F));
     gzipCache.set(file, promise);
     promise.catch(() => gzipCache.delete(file));
   }
@@ -47,19 +50,19 @@ export function clearDiskCache() {
 }
 
 /** Grupy JGP ze stroną (`scripts/build_jgp_pages.py`). */
-export async function readJgpPagesIndexFromDisk(file = join(DATA_DIR, "jgp", "index.json")): Promise<JgpPagesIndex> {
+export async function readJgpPagesIndexFromDisk(file = join(BUILD_DATA_DIR, "jgp", "index.json")): Promise<JgpPagesIndex> {
   return JSON.parse(await readFile(file, "utf8")) as JgpPagesIndex;
 }
 
 /** Plik strony grupy (`scripts/build_jgp_pages.py`) albo `null`, gdy go jeszcze nie zbudowano. */
-export async function readJgpGroupFileFromDisk(jgpCode: string, dir = join(DATA_DIR, "jgp")): Promise<JgpGroupFile | null> {
+export async function readJgpGroupFileFromDisk(jgpCode: string, dir = join(BUILD_DATA_DIR, "jgp")): Promise<JgpGroupFile | null> {
   const file = join(dir, `${jgpCode}.json.gz`);
   try {
     await access(file);
   } catch {
     return null;
   }
-  return readGzipJson<JgpGroupFile>(file);
+  return readGzipJson(file, (raw: JgpGroupFileColumns) => decodeJgpGroupFile(raw));
 }
 
 /** Katalog wycen JGP (punkty) z rokiem katalogu. */

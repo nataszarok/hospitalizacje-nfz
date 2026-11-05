@@ -47,34 +47,6 @@
   font-size: 14px;
 }
 
-.explorerLink {
-  padding: 8px 14px;
-  border: 1px solid #d0d5dd;
-  border-radius: 8px;
-  background: #fff;
-  color: #172033;
-  font-size: 14px;
-  font-weight: 600;
-  text-decoration: none;
-  white-space: nowrap;
-}
-
-.section {
-  margin-top: 28px;
-}
-
-.sectionTitle {
-  margin: 0 0 12px;
-  font-size: 18px;
-}
-
-.tableCard {
-  overflow-x: auto;
-  border: 1px solid #e4e7ec;
-  border-radius: 10px;
-  background: #fff;
-}
-
 .table {
   width: 100%;
   table-layout: auto;
@@ -119,31 +91,10 @@
   font-size: 12px;
 }
 
-.planned {
-  margin-top: 28px;
-  padding: 12px 16px;
-  border: 1px dashed #d0d5dd;
-  border-radius: 10px;
-  color: #475467;
-  font-size: 13px;
-}
-
-.barCell {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 220px;
-}
-
 .bar {
   height: 10px;
   border-radius: 0 4px 4px 0;
   background: var(--data);
-}
-
-.barValue {
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
 }
 
 .lead {
@@ -211,34 +162,6 @@
   background: #98a2b3;
 }
 
-.muted {
-  color: #667085;
-}
-
-/* Wybrany świadczeniodawca (?osrodek=) */
-.selected {
-  display: grid;
-  gap: 12px;
-  margin: 0 0 8px;
-  padding: 16px;
-  border: 2px solid #c65d2e;
-  border-radius: 12px;
-  background: #fff8f4;
-}
-
-.selected p {
-  margin: 0;
-}
-
-.selectedHead {
-  display: grid;
-  gap: 2px;
-}
-
-.selectedHead strong {
-  font-size: 18px;
-}
-
 .selectedMetrics {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -272,33 +195,6 @@
   font-size: 12px;
 }
 
-.selected .note {
-  padding: 0;
-}
-
-.selectedActions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 16px;
-  align-items: center;
-  font-size: 14px;
-}
-
-.selectedActions a {
-  color: var(--color-primary);
-  font-weight: 600;
-}
-
-.selectedActions button {
-  padding: 0;
-  border: 0;
-  background: none;
-  color: #475467;
-  font: inherit;
-  text-decoration: underline;
-  cursor: pointer;
-}
-
 .rowSelected td {
   background: #fff1e8;
   font-weight: 600;
@@ -308,74 +204,6 @@
   .selectedMetrics {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-}
-
-/* Pasek liczb grupy */
-.kpiBand {
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 10px;
-  margin: 0 0 20px;
-}
-
-.kpiBand > div {
-  display: grid;
-  gap: 2px;
-  align-content: start;
-  min-width: 0;
-  padding: 12px;
-  border: 1px solid #e4e7ec;
-  border-radius: 10px;
-  background: #fff;
-}
-
-.kpiBand dt {
-  color: #667085;
-  font-size: 12px;
-}
-
-.kpiBand dd {
-  margin: 0;
-  font-size: 20px;
-  font-weight: 750;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-
-.kpiBand span {
-  color: #667085;
-  font-size: 12px;
-}
-
-.kpiBand .kpiValue {
-  border-color: var(--color-primary-outline);
-  background: var(--color-primary-soft);
-}
-
-/* Spis sekcji i aktywne filtry */
-.sectionNav {
-  position: sticky;
-  top: 74px;
-  z-index: 5;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px 16px;
-  margin: 8px 0 0;
-  padding: 10px 0;
-  border-bottom: 1px solid #e4e7ec;
-  background: rgba(255, 255, 255, 0.96);
-  font-size: 14px;
-}
-
-.sectionNav a {
-  color: #344054;
-  font-weight: 600;
-  text-decoration: none;
-}
-
-.sectionNav a:hover {
-  color: var(--color-primary);
 }
 
 .filters {
@@ -395,29 +223,6 @@
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-}
-
-.section {
-  scroll-margin-top: 130px;
-}
-
-.sectionHead {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px 16px;
-  margin-bottom: 12px;
-}
-
-.sectionHead .sectionTitle {
-  margin: 0;
-}
-
-.controls {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
 }
 
 .segmented {
@@ -454,14 +259,6 @@
   cursor: not-allowed;
 }
 
-.selectedTop {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 10px 16px;
-}
-
 .selectedMetrics {
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
 }
@@ -472,87 +269,8 @@
   font-size: 15px;
 }
 
-.dataDetails {
-  border-top: 1px solid #eef1f5;
-}
-
-.dataDetails summary {
-  padding: 10px 12px;
-  color: #344054;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-/* Kartogram województw */
-.mapCard {
-  overflow: visible;
-}
-
-.mapLayout {
-  display: grid;
-  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
-  gap: 20px;
-  padding: 14px;
-}
-
-.cartogram {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  grid-template-rows: repeat(4, 58px);
-  gap: 4px;
-}
-
-.tile {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  min-width: 0;
-  padding: 6px 7px;
-  border: 0;
-  border-radius: 6px;
-  color: #fff;
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-
-.tile b {
-  font-size: 15px;
-  font-variant-numeric: tabular-nums;
-}
-
-
-.tile:focus-visible {
-  outline: 3px solid #172033;
-  outline-offset: 1px;
-}
-
-.tileName {
-  overflow: hidden;
-  font-size: 11px;
-  font-weight: 600;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.tileLight {
-  color: #172033;
-}
-
-.tile[aria-pressed="true"] {
-  outline-width: 3px;
-  outline-style: solid;
-  outline-offset: 1px;
-}
-
 .scaleGradient {
   width: 120px !important;
-}
-
-.scaleNote {
-  width: 100%;
-  color: #475467;
 }
 
 .linkButton {
@@ -568,9 +286,14 @@
 }
 
 /* Pełna lista ośrodków: przewijanie w obrębie tabeli, ok. 10 wierszy na ekranie. */
+/*
+ * `overflow-anchor: none`: wiersz tabeli nie może być kotwicą przewijania strony. Zmiana roku albo filtra
+ * przestawia wiersze, a przeglądarka przesuwała wtedy całą stronę za wierszem-kotwicą (skok i drżenie ekranu).
+ */
 .scrollTable {
   max-height: 440px;
   overflow: auto;
+  overflow-anchor: none;
   overscroll-behavior: contain;
 }
 
@@ -599,131 +322,6 @@
   border-radius: 2px;
 }
 
-.mapSide {
-  display: grid;
-  align-content: start;
-  gap: 8px;
-  font-size: 14px;
-  color: #344054;
-}
-
-.mapSide p {
-  margin: 0;
-}
-
-/* Wycena i wartość */
-.valuation {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr);
-  gap: 12px;
-}
-
-.valuationFacts {
-  display: grid;
-  align-content: start;
-  gap: 10px;
-  margin: 0;
-  padding: 12px;
-}
-
-.valuationFacts > div {
-  display: grid;
-  gap: 2px;
-  padding: 12px;
-  border: 1px solid #e4e7ec;
-  border-radius: 8px;
-}
-
-.valuationFacts dt,
-.valuationFacts span {
-  color: #667085;
-  font-size: 12px;
-}
-
-.valuationFacts dd {
-  margin: 0;
-  font-size: 22px;
-  font-weight: 750;
-}
-
-.valueBars {
-  display: flex;
-  align-items: stretch;
-  gap: 10px;
-  height: 200px;
-  padding: 24px 12px 0;
-}
-
-.valueBar {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
-}
-
-.valueBarTrack {
-  position: relative;
-  flex: 1;
-  border-bottom: 1px solid #d0d5dd;
-}
-
-.valueBarFill {
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  border-radius: 4px 4px 0 0;
-  background: var(--data);
-}
-
-.valueBarValue {
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  padding-bottom: 2px;
-  font-size: 11px;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-
-.valueBarYear {
-  color: #667085;
-  font-size: 11px;
-  text-align: center;
-}
-
-@media (max-width: 1000px) {
-  .kpiBand {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .mapLayout,
-  .valuation {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-
-@media (max-width: 560px) {
-  .kpiBand {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .cartogram {
-    grid-template-rows: repeat(4, 50px);
-  }
-
-  .tile b {
-    font-size: 13px;
-  }
-
-  .sectionNav {
-    top: 66px;
-  }
-}
-
 /* Mapa województw (SVG z granicami z PRG) */
 .regionMap {
   display: block;
@@ -742,6 +340,11 @@
 
 .regionShape:hover {
   filter: brightness(0.92);
+}
+
+/* Kliknięcie myszą nie rysuje prostokąta fokusu; klawiatura dostaje obwódkę (focus-visible). */
+.regionShape:focus {
+  outline: none;
 }
 
 .regionShape:focus-visible {
@@ -771,12 +374,3 @@
   fill: #172033;
 }
 
-.notice {
-  margin: 0 0 16px;
-  padding: 10px 14px;
-  border: 1px solid #fedf89;
-  border-radius: 10px;
-  background: #fffaeb;
-  color: #7a2e0e;
-  font-size: 14px;
-}

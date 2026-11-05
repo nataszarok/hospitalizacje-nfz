@@ -1,116 +1,61 @@
 /** @vitest-environment jsdom */
 
 import "@testing-library/jest-dom/vitest";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { JgpPage } from "@/components/jgp/JgpPage";
+import type { RegionsMap } from "@/lib/jgpCard";
 import { buildJgpPageData } from "@/lib/jgpPage";
+import { extrasFixture } from "@/lib/__tests__/fixtures/jgpCardFixture";
 import { latestDatasetFixture, trendsFixture } from "@/lib/__tests__/fixtures/trendsFixture";
 
-vi.mock("@/components/trends/TrendView", () => ({
-  TrendView: ({ productCodes, method }: { productCodes: string[]; method: string }) => <div>trend: {productCodes.join(",")}/{method}</div>,
+// Wykresy Plotly zastępujemy prostymi listami: test sprawdza układ strony, nie rysowanie.
+vi.mock("@/components/jgp/GroupLineChart", () => ({
+  GroupLineChart: ({ lines }: { lines: { key: string; name: string }[] }) => <ul aria-label="Linie wykresu">{lines.map((line) => <li key={line.key}>{line.name}</li>)}</ul>,
 }));
+vi.mock("@/components/jgp/ProviderScatter", () => ({
+  STAR_COLOR: "#D92D20",
+  ProviderScatter: ({ ariaLabel }: { ariaLabel: string }) => <div role="group" aria-label={ariaLabel} />,
+}));
+
+const open = (search = "") => window.history.replaceState(null, "", `/jgp/A01${search}`);
+
+beforeEach(() => open());
 afterEach(cleanup);
 
-/** Tabela w sekcji o danym nagłówku. */
-const tableIn = (heading: string) => within(screen.getByRole("region", { name: heading })).getByRole("table");
-
-describe("JgpPage", () => {
-  const data = buildJgpPageData(trendsFixture, latestDatasetFixture, "A01")!;
-
-  it("pokazuje nagłówek grupy, zakres lat i trend dla jej produktów", () => {
-    render(<JgpPage data={data} />);
+describe("Strona grupy JGP", () => {
+  it("każda sekcja katalogu ma kartę w zakładkach (A01 spoza dawnych sekcji E i H)", () => {
+    render(<JgpPage data={buildJgpPageData(trendsFixture, latestDatasetFixture, "A01", "min", 15, extrasFixture)!} />);
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("A01 Stały produkt");
-    expect(screen.getByText(/w danych: 2023–2025/)).toBeInTheDocument();
-    expect(screen.getByText("trend: P1/min")).toBeInTheDocument();
+    expect(screen.getAllByRole("tab").map((tab) => tab.textContent)).toEqual(["Przegląd", "Ośrodki2"]);
+    // Elementy dawnej karty usunięte razem z nią.
+    expect(screen.queryByText("Pokaż w eksploratorze →")).not.toBeInTheDocument();
+    expect(screen.queryByText(/Najważniejsze/)).not.toBeInTheDocument();
   });
 
-  it("pokazuje ranking świadczeniodawców z najnowszego roku", () => {
-    render(<JgpPage data={data} />);
-    expect(screen.getByRole("heading", { name: "Kto leczy najwięcej · 2025" })).toBeInTheDocument();
-    const rows = within(tableIn("Kto leczy najwięcej · 2025")).getAllByRole("row").slice(1);
-    expect(rows.map((row) => within(row).getAllByRole("cell")[1].textContent)).toEqual(["Szpital Beta", "Szpital Alfa"]);
-    expect(rows[0]).toHaveTextContent("Katowice");
-    expect(rows[0]).toHaveTextContent("11,1%");
-    expect(within(rows[0]).getByRole("link", { name: "Szpital Beta" })).toHaveAttribute("href", "/szpitale?hospital=12%7C222");
-  });
-
-  it("pokazuje województwa na 100 tys. mieszkańców", () => {
-    render(<JgpPage data={data} />);
-    expect(screen.getByRole("heading", { name: "Gdzie · 2025" })).toBeInTheDocument();
-    const rows = within(tableIn("Gdzie · 2025")).getAllByRole("row").slice(1);
-    expect(rows.map((row) => within(row).getAllByRole("cell")[0].textContent)).toEqual(["Śląskie", "Mazowieckie"]);
-    expect(rows[0]).toHaveTextContent("0,4");
-  });
-
-  it("pokazuje typ grupy i strukturę trybu przyjęcia w latach", () => {
-    render(<JgpPage data={data} />);
-    expect(screen.getByText("Grupa JGP · zachowawcza")).toBeInTheDocument();
-    const rows = within(tableIn("Planowo czy w trybie nagłym")).getAllByRole("row").slice(1);
-    // P1 (metoda min): 2023 — 8 planowych; 2024 — 5 nagłych i 3 pozostałe; 2025 — 9 planowych.
-    expect(rows.map((row) => within(row).getAllByRole("cell")[0].textContent)).toEqual(["2023", "2024", "2025"]);
-    expect(rows[1]).toHaveTextContent("5 (62,5%)");
-    expect(rows[1]).toHaveTextContent("3 (37,5%)");
-    expect(within(rows[1]).getByRole("img")).toHaveAccessibleName("Planowe 0,0%, Nagłe 62,5%, Pozostałe 37,5%");
-    expect(screen.getByText(/W 2025 r\. 0,0% hospitalizacji to przyjęcia nagłe/)).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Tryb przyjęcia u świadczeniodawców →" })).toHaveAttribute("href", "/analizy?t=a&jgp=A01");
-  });
-
-  it("oznacza grupę zabiegową i usuwa gwiazdkę z nazwy", () => {
-    const procedural = buildJgpPageData({
-      ...trendsFixture,
-      products: [["P1", "A01", "Zabieg *", ["2023", "2024", "2025"]], ...trendsFixture.products.slice(1)],
-    }, latestDatasetFixture, "A01")!;
-    render(<JgpPage data={procedural} />);
-    expect(screen.getByText("Grupa JGP · zabiegowa")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("A01 Zabieg");
-    expect(screen.getByRole("heading", { level: 1 }).textContent).not.toContain("*");
-  });
-
-  it("prowadzi do eksploratora z wybraną grupą", () => {
-    render(<JgpPage data={data} />);
-    expect(screen.getByRole("link", { name: "Pokaż w eksploratorze →" })).toHaveAttribute("href", "/analizy?jgp=A01");
+  it("działa bez pliku grupy (dane tylko z trendów)", () => {
+    render(<JgpPage data={buildJgpPageData(trendsFixture, latestDatasetFixture, "A01")!} />);
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("A01 Stały produkt");
+    expect(screen.getByRole("tabpanel")).toBeInTheDocument();
   });
 });
 
-describe("JgpPage z wyróżnionym świadczeniodawcą (?osrodek=)", () => {
-  const data = buildJgpPageData(trendsFixture, latestDatasetFixture, "A01", "min", 1)!;
-  const openWith = (key: string | null) => window.history.replaceState(null, "", key ? `/jgp/A01?osrodek=${encodeURIComponent(key)}` : "/jgp/A01");
-  afterEach(() => openWith(null));
+describe("Strona grupy JGP — mapa z granicami", () => {
+  const map: RegionsMap = {
+    version: 1, source: "test (MIT)", viewBox: [100, 100],
+    regions: [["07", "mazowieckie", "M10 10l20 0 0 20-20 0z", [20, 20]], ["12", "śląskie", "M50 50l20 0 0 20-20 0z", [60, 60]]],
+  };
 
-  it("bez parametru nie pokazuje opisu wybranego świadczeniodawcy", () => {
-    openWith(null);
-    render(<JgpPage data={data} />);
-    expect(screen.queryByRole("region", { name: "Wybrany świadczeniodawca" })).not.toBeInTheDocument();
-  });
-
-  it("pokazuje miejsce i wskaźniki na tle grupy oraz wyróżnia wiersz na pełnej liście", () => {
-    openWith("07|111");
-    render(<JgpPage data={data} />);
-    const banner = screen.getByRole("region", { name: "Wybrany świadczeniodawca" });
-    expect(banner).toHaveTextContent("Szpital Alfa");
-    // A01 (min): Beta 18 hosp., 2 zgony; Alfa 12 hosp., 1 zgon → miejsce 2 z 2, 40,0% grupy.
-    expect(banner).toHaveTextContent("2 / 2");
-    expect(banner).toHaveTextContent("40,0% grupy");
-    expect(banner).toHaveTextContent("grupa: 10,0%");
-    const rows = within(screen.getByRole("region", { name: /^Lista ośrodków/ })).getAllByRole("row").slice(1);
-    expect(rows).toHaveLength(2);
-    expect(rows[1]).toHaveAttribute("aria-current", "true");
-    expect(within(rows[1]).getAllByRole("cell")[0]).toHaveTextContent("2");
-  });
-
-  it("usuwa wyróżnienie z adresu", () => {
-    openWith("12|222");
-    render(<JgpPage data={data} />);
-    fireEvent.click(screen.getByRole("button", { name: "Usuń wyróżnienie" }));
-    expect(window.location.search).toBe("");
-    expect(screen.queryByRole("region", { name: "Wybrany świadczeniodawca" })).not.toBeInTheDocument();
-  });
-
-  it("mówi, gdy wybrany świadczeniodawca nie leczy w tej grupie", () => {
-    openWith("12|333");
-    render(<JgpPage data={data} />);
-    expect(screen.getByRole("region", { name: "Wybrany świadczeniodawca" })).toHaveTextContent("nie ma hospitalizacji w grupie A01 w 2025 r.");
-    expect(screen.getByRole("link", { name: "Profil szpitala →" })).toHaveAttribute("href", "/szpitale?hospital=12%7C333");
+  it("rysuje województwa jako przyciski i zaznacza je kliknięciem albo klawiszem", () => {
+    render(<JgpPage data={buildJgpPageData(trendsFixture, latestDatasetFixture, "A01", "min", 15, extrasFixture)!} map={map} />);
+    const shapes = within(screen.getByRole("group", { name: /Mapa województw/ })).getAllByRole("button");
+    expect(shapes.map((shape) => shape.getAttribute("aria-label"))).toEqual([
+      expect.stringMatching(/^Mazowieckie: /), expect.stringMatching(/^Śląskie: /),
+    ]);
+    fireEvent.click(shapes[0]);
+    expect(window.location.search).toBe("?ow=07");
+    expect(shapes[0]).toHaveAttribute("aria-pressed", "true");
+    fireEvent.keyDown(shapes[1], { key: "Enter" });
+    expect(window.location.search).toBe("?ow=07&ow=12");
   });
 });

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { latestDatasetFixture, regionalTrendsFixture, trendsFixture } from "@/lib/__tests__/fixtures/trendsFixture";
+import { latestDatasetFixture, regionalTrendsFixtures, trendsFixture } from "@/lib/__tests__/fixtures/trendsFixture";
 import { admissionsFromDataset, mortalityFromDataset, productTrend, trendsForRegion } from "@/lib/staticData";
 
 const query = { products: ["P1", "P3"], durations: [], method: "min" as const, minHosp: 0 };
@@ -25,14 +25,14 @@ describe("filtr obszaru", () => {
   });
 
   it("buduje trend miesięczny jednego województwa", () => {
-    const trend = productTrend(trendsForRegion(trendsFixture, regionalTrendsFixture, "12"), ["P1"], "min");
+    const trend = productTrend(trendsForRegion(trendsFixture, regionalTrendsFixtures["12"]), ["P1"], "min");
     expect(trend.yearly.map((point) => point?.hospitalizations ?? null)).toEqual([0, 5, 0]);
     expect(trend.monthly.map((point) => `${point.year}-${point.month}:${point.hospitalizations}`)).toEqual(["2024-1:2", "2024-2:3"]);
   });
 
   it("suma trendów województw równa się trendowi krajowemu", () => {
     const national = productTrend(trendsFixture, [], "sim").yearly.map((point) => point?.hospitalizations);
-    const sum = ["07", "12"].map((ow) => productTrend(trendsForRegion(trendsFixture, regionalTrendsFixture, ow), [], "sim").yearly.map((point) => point?.hospitalizations ?? 0));
+    const sum = ["07", "12"].map((ow) => productTrend(trendsForRegion(trendsFixture, regionalTrendsFixtures[ow]), [], "sim").yearly.map((point) => point?.hospitalizations ?? 0));
     expect(sum[0].map((value, i) => value + sum[1][i])).toEqual(national);
   });
 });

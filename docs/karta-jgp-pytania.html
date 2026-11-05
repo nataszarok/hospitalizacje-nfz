@@ -292,18 +292,28 @@ section h3 { margin-top: 6px; }
   .mock .card-head > .kpis { grid-column: 1; grid-row: auto; }
 }
 
-/* „Za ile?”: wykres po lewej, liczby w kolumnie po prawej (jak nagłówek karty); na wąskim ekranie liczby nad wykresem */
-#s-koszt { grid-template-columns: minmax(0, 1fr) 240px; column-gap: 24px; align-items: center; }
-#s-koszt > .sec-head, #s-koszt > .note { grid-column: 1 / -1; }
-#s-koszt > #pln { grid-column: 1; grid-row: 2; }
-#value-facts { grid-column: 2; grid-row: 2; grid-template-columns: minmax(0, 1fr); gap: 8px; padding: 0; margin: 0; }
+/* „Za ile?” i „Jak przyjmowani są pacjenci?” w jednym wierszu, 2 kolumny; na wąskim ekranie jedna pod drugą */
+.pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; align-items: start; }
+@media (max-width: 900px) { .pair { grid-template-columns: minmax(0, 1fr); } }
+#value-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; padding: 0; margin: 0; }
 #value-facts .kpi { padding: 8px 12px; }
 #value-facts .kpi dd { font-size: 19px; }
-@media (max-width: 760px) {
-  #s-koszt { grid-template-columns: minmax(0, 1fr); }
-  #s-koszt > #pln, #value-facts { grid-column: 1; grid-row: auto; }
-  #value-facts { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
-}
+#pln rect { cursor: pointer; }
+#s-profil .profile th.bar, #s-profil .profile td.bar { width: auto; min-width: 120px; }
+
+/* Przełącznik miary w „Ile?” */
+.seg { display: inline-flex; justify-self: start; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.seg button { font: inherit; font-size: 12.5px; border: 0; border-right: 1px solid var(--line); background: var(--panel); color: var(--ink-2); padding: 4px 12px; cursor: pointer; }
+.seg button:last-child { border-right: 0; }
+.seg button[aria-pressed="true"] { background: var(--chart); color: #ffffff; }
+
+/* „Jak wygląda rodzina?”: 2 wykresy obok siebie */
+.fam-lead { margin: 0; font-size: 14px; }
+.fam2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.fam2 figure { margin: 0; display: grid; gap: 6px; align-content: start; min-width: 0; }
+.fam2 figcaption { font-size: 12.5px; color: var(--ink-3); }
+.fam2 figcaption b { color: var(--ink); font-weight: 600; }
+@media (max-width: 760px) { .fam2 { grid-template-columns: minmax(0, 1fr); } }
 
 /* Sygnały kwartalne: klucz ramki przerywanej i wybór roku / kwartału lejka */
 .pt-flagkey .pt-qkey { display: inline-block; width: 12px; height: 9px; border: 1.3px dashed var(--ink); border-radius: 2px; background: transparent; vertical-align: -1px; margin-right: 4px; }
@@ -322,6 +332,28 @@ section h3 { margin-top: 6px; }
   <span class="badge">Wariant do porównania z dokumentem „Karta JGP: rok i historia”</span>
 </header>
 
+<section aria-labelledby="wdrozenie">
+  <span class="kicker">0 · Stan wdrożenia (2.11.2026)</span>
+  <h2 id="wdrozenie">Co już działa w aplikacji</h2>
+  <p>Karta z zakładkami działa dla wszystkich grup z sekcji E i H (<code>JGP_TABBED_SECTIONS</code>, komponent <code>JgpTabbedCard</code>), z danymi 2017–2025. Pozostałe grupy mają dawną kartę. Makieta niżej pokazuje stan aplikacji i nowe poprawki koncepcji (oznaczone „Nowe”).</p>
+  <div class="scroll-x">
+    <table class="doc">
+      <thead><tr><th>Element</th><th>W aplikacji</th><th>Nowe w koncepcji</th></tr></thead>
+      <tbody>
+        <tr><td>Nagłówek</td><td>opis grupy (redakcyjny, oznaczony), rodzina, 4 liczby 2×2 ze zmianą r/r, filtr obszaru; bez linku „Pokaż w eksploratorze”</td><td>—</td></tr>
+        <tr><td>Pasek zakładek</td><td>jeden przypięty pasek na całą szerokość; wybór roku (<code>rok=</code>); po przewinięciu kod i nazwa grupy</td><td>—</td></tr>
+        <tr><td>Ile?</td><td>miary: hospitalizacje, śmiertelność, % nagłych (udziały z 3 miesięcy); tytuł sekcji zmienia się z miarą; tło wybranego roku; przy wybranych województwach linia na województwo</td><td>—</td></tr>
+        <tr><td>Gdzie?</td><td>mapa roku i heatmapa lat; bez ramki „podaż, nie potrzeby” (opis w notce); kliknięcie roku w nagłówku zmienia rok karty, komórki – rok i województwo; kilka województw naraz, „Wyczyść wybór”, „Ośrodki w wybranych województwach”</td><td>—</td></tr>
+        <tr><td>Za ile?</td><td>słupki kwoty, pod słupkiem średnio na hospitalizację; liczby po prawej, w tym „Średnio na hospitalizację”</td><td><b>Nowe:</b> obok „Jak przyjmowani są pacjenci?” (2 kolumny); bez wartości pod słupkami; bez średniej na hospitalizację</td></tr>
+        <tr><td>Jak przyjmowani są pacjenci?</td><td>tryb przyjęcia i śmiertelność w jednej tabeli</td><td><b>Nowe:</b> tylko tryb przyjęcia; śmiertelność zostaje w „Ile?” i w nagłówku</td></tr>
+        <tr><td>Jak wygląda rodzina?</td><td>udziały wariantów w latach (paski 100%), lista redakcyjna w <code>jgpGroupInfo.ts</code></td><td><b>Nowe:</b> 2 wykresy: zmiana liczby hospitalizacji wariantów (nominalnie i w %) i zmiana udziału, oba od pierwszego do wybranego roku</td></tr>
+        <tr><td>Ośrodki</td><td>15 linii, wybrany ośrodek: czerwona gwiazdka i czerwona linia; kolory województw z mapy na wykresach i w rankingu; lejek śmiertelności od 30 zgonów</td><td>— (makieta ma jeszcze pomarańczowy kolor wyboru)</td></tr>
+        <tr><td>Sygnały</td><td>nie ma</td><td>bez zmian (sekcje 4–5)</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
 <section aria-labelledby="zmiany">
   <span class="kicker">1 · Co się zmienia</span>
   <h2 id="zmiany">Względem dokumentu 2</h2>
@@ -331,10 +363,10 @@ section h3 { margin-top: 6px; }
       <tbody>
         <tr><td>Opis grupy</td><td>tylko kod i nazwa</td><td>1–2 zdania: co grupa obejmuje i czym różni się od innych wariantów rodziny</td></tr>
         <tr><td>Tytuły sekcji</td><td>nazwy danych („Tryb przyjęcia · wszystkie lata”)</td><td>pytania („Ilu pacjentów przyjęto nagle?”)</td></tr>
-        <tr><td>Wycena</td><td>w pasku liczb i w sekcji</td><td>w nagłówku obok nazwy; w pasku liczb kwota roku</td></tr>
-        <tr><td>Tryb i śmiertelność w kraju</td><td>dwie sekcje</td><td>jedna sekcja „Profil przyjęć”: jeden wiersz na rok</td></tr>
-        <tr><td>Rodzina</td><td>udziały w jednym roku</td><td>udziały w każdym roku; przesunięcie między wariantami widać od razu</td></tr>
-        <tr><td>Mapa województw</td><td>„na mieszkańca”</td><td>to samo, z jasnym opisem: to podaż szpitali w województwie, nie potrzeby mieszkańców</td></tr>
+        <tr><td>Wycena</td><td>w pasku liczb i w sekcji</td><td>w nagłówku obok nazwy; w pasku liczb kwota roku; bez średniej na hospitalizację (kwoty NFZ są liczone na pacjenta, pacjent może mieć kilka hospitalizacji)</td></tr>
+        <tr><td>Tryb i śmiertelność w kraju</td><td>dwie sekcje</td><td>tryb: sekcja „Jak przyjmowani są pacjenci?” obok „Za ile?”, jeden wiersz na rok; śmiertelność: miara w „Ile?”</td></tr>
+        <tr><td>Rodzina</td><td>udziały w jednym roku</td><td>2 wykresy: zmiana liczby hospitalizacji wariantów (nominalnie i w %) i zmiana udziału; widać, co urosło znacząco w obu ujęciach</td></tr>
+        <tr><td>Mapa województw</td><td>„na mieszkańca”</td><td>to samo, z opisem w notce pod mapą: to podaż szpitali w województwie, nie potrzeby mieszkańców</td></tr>
         <tr><td>Ośrodki w czasie</td><td>12 szarych linii</td><td>usunięte; zmiany widać w rankingu (r/r, „nowy”, mini-trend)</td></tr>
         <tr><td>Koncentracja</td><td>3 kafelki z mini-trendem</td><td>jeden pasek struktury nad rankingiem: 3 największe / 4–10 / pozostałe</td></tr>
         <tr><td>Ranking</td><td>ściśnięty obok mapy miast</td><td>pełna szerokość, wszystkie ośrodki, przewijanie w tabeli, „miasto · województwo” pod nazwą</td></tr>
@@ -355,11 +387,11 @@ section h3 { margin-top: 6px; }
     <div class="box">
       <span class="tag t">Zakładka „Przegląd”: grupa w systemie</span>
       <ul>
-        <li><b>Ile?</b> Hospitalizacje miesięcznie we wszystkich latach.</li>
+        <li><b>Ile?</b> Miesięcznie we wszystkich latach: hospitalizacje, śmiertelność albo % nagłych.</li>
         <li><b>Gdzie?</b> Mapa roku i heatmapa lat: szpitale w województwie na 100 tys. mieszkańców.</li>
-        <li><b>Za ile?</b> Wycena, kwota świadczeń w latach, średnio na hospitalizację.</li>
-        <li><b>Jak przyjmowani są pacjenci?</b> Tryb przyjęcia i śmiertelność w kraju, rok po roku.</li>
-        <li><b>Jak wygląda rodzina?</b> Udziały wariantów w latach.</li>
+        <li><b>Za ile?</b> Wycena i kwota świadczeń w latach.</li>
+        <li><b>Jak przyjmowani są pacjenci?</b> Tryb przyjęcia w kraju, rok po roku (obok „Za ile?”).</li>
+        <li><b>Jak wygląda rodzina?</b> Co urosło, a co spadło: zmiana liczby hospitalizacji i zmiana udziału wariantów.</li>
       </ul>
     </div>
     <div class="box">
@@ -388,7 +420,7 @@ section h3 { margin-top: 6px; }
 <section aria-labelledby="makieta">
   <span class="kicker">3 · Makieta</span>
   <h2 id="makieta">Karta po zmianie</h2>
-  <p>Makieta działa. Przełącz zakładkę i rok. Kliknij województwo na mapie. W zakładce „Ośrodki” kliknij linię wykresu albo wiersz rankingu. Zakładka „Sygnały” zbiera wszystko, co porównuje ośrodki z grupą. Dane są przykładowe (lata 2019–2025, rząd wielkości jak w E10), nazwy ośrodków są zmyślone. Wycena i kwoty świadczeń to dane E10.</p>
+  <p>Makieta działa. Przełącz zakładkę, rok i miarę w „Ile?”. Kliknij województwo na mapie. W zakładce „Ośrodki” kliknij linię wykresu albo wiersz rankingu. Zakładka „Sygnały” zbiera wszystko, co porównuje ośrodki z grupą. Dane są przykładowe (lata 2019–2025, rząd wielkości jak w E10), nazwy ośrodków są zmyślone. Wycena i kwoty świadczeń to dane E10.</p>
 
   <div class="mock">
     <div class="mock-bar"><i></i><i></i><i></i><span class="url" id="url">/jgp/E10</span></div>
@@ -412,14 +444,15 @@ section h3 { margin-top: 6px; }
 
     <div class="card-body" id="panel-przeglad" role="tabpanel" aria-labelledby="tab-przeglad">
       <div class="sec" id="s-ile">
-        <div class="sec-head"><h4><span class="q">Ile?</span> <span class="ctx">Hospitalizacje miesięcznie, wszystkie lata</span></h4><span class="tag h">Lata</span></div>
-        <div class="legend"><span><i style="background:var(--chart)"></i><span id="trend-label">kraj</span>: średnia 3 miesięcy (punkty: miesiące)</span><span><i style="background:var(--year-band);height:10px;width:14px"></i>wybrany rok</span></div>
-        <div class="scroll-x"><svg id="trend" viewBox="0 0 960 230" style="width:100%;min-width:560px;height:auto" role="img" aria-label="Hospitalizacje miesięcznie we wszystkich latach, wybrany rok wyróżniony tłem"></svg></div>
+        <div class="sec-head"><h4><span class="q">Ile?</span> <span class="ctx"><span id="trend-title">Hospitalizacje miesięcznie</span>, wszystkie lata</span></h4><span class="tag h">Lata</span></div>
+        <div class="seg" id="metric" role="group" aria-label="Miara"><button type="button" data-m="hosp">Hospitalizacje</button><button type="button" data-m="mort">Śmiertelność</button><button type="button" data-m="urg">% nagłych</button></div>
+        <div class="legend"><span><i style="background:var(--chart)"></i><span id="trend-label">kraj</span>: <span id="trend-line">średnia 3 miesięcy</span> (punkty: miesiące)</span><span><i style="background:var(--year-band);height:10px;width:14px"></i>wybrany rok</span></div>
+        <div class="scroll-x"><svg id="trend" viewBox="0 0 960 230" style="width:100%;min-width:560px;height:auto" role="img" aria-label="Wybrana miara miesięcznie we wszystkich latach, wybrany rok wyróżniony tłem"></svg></div>
+        <p class="note" id="trend-note"></p>
       </div>
 
       <div class="sec" id="s-gdzie">
         <div class="sec-head"><h4><span class="q">Gdzie?</span> <span class="ctx">Szpitale w województwie na 100 tys. mieszkańców: mapa <span class="yr"></span>, heatmapa lat</span></h4><span class="chips-legend"><span class="tag y">Mapa: rok</span><span class="tag h">Heatmapa: lata</span></span></div>
-        <div class="callout"><b>To podaż, nie potrzeby.</b> Województwo to oddział NFZ, z którym szpital ma umowę, a nie miejsce zamieszkania pacjenta. Wysoki wskaźnik znaczy: szpitale w tym województwie wykonują dużo tej grupy w stosunku do liczby mieszkańców. Część pacjentów może przyjeżdżać z innych województw.</div>
         <div class="geo">
           <div style="display:grid;gap:6px">
             <svg id="map" viewBox="0 0 200 190" width="100%" role="img" aria-label="Mapa województw w wybranym roku"></svg>
@@ -429,27 +462,40 @@ section h3 { margin-top: 6px; }
           </div>
           <div style="min-width:0"><table class="hm" id="hm"></table></div>
         </div>
-        <p class="note">Liczba i kolor: wskaźnik jako % średniej Polski w danym roku (skala ½×–2×). Kliknięcie województwa ustawia filtr obszaru dla całej karty.</p>
+        <p class="note">Liczba i kolor: wskaźnik jako % średniej Polski w danym roku (skala ½×–2×). To podaż: województwo to oddział NFZ szpitala, nie miejsce zamieszkania pacjenta. Kliknięcie roku w nagłówku tabeli zmienia rok mapy i całej karty. Kliknięcie województwa albo komórki ustawia filtr obszaru dla całej karty.</p>
       </div>
 
-      <div class="sec" id="s-koszt">
-        <div class="sec-head"><h4><span class="q">Za ile?</span> <span class="ctx">Wycena i kwota świadczeń NFZ, wszystkie lata</span></h4><span class="tag h">Lata</span></div>
-        <dl class="conc" id="value-facts"></dl>
-        <svg id="pln" viewBox="0 0 640 240" width="100%" role="img" aria-label="Kwota świadczeń NFZ w milionach złotych w latach i średnia kwota na hospitalizację, wybrany rok wyróżniony"></svg>
-        <p class="note">Słupki: kwota świadczeń rozliczonych przez NFZ w mln zł (dane E10). Pod słupkiem: średnio na hospitalizację. Średnia rośnie szybciej niż wycena, gdy rośnie udział droższych świadczeń dodatkowych albo zmienia się wartość punktu.</p>
-      </div>
+      <div class="pair">
+        <div class="sec" id="s-koszt">
+          <div class="sec-head"><h4><span class="q">Za ile?</span> <span class="ctx">Wycena i kwota świadczeń NFZ, wszystkie lata</span></h4><span class="tag h">Lata</span></div>
+          <dl class="conc" id="value-facts"></dl>
+          <svg id="pln" viewBox="0 0 460 210" width="100%" role="img" aria-label="Kwota świadczeń NFZ w milionach złotych w latach, wybrany rok wyróżniony"></svg>
+          <p class="note">Słupki: kwota świadczeń rozliczonych przez NFZ w mln zł (dane E10). Kliknięcie słupka zmienia rok karty. Karta nie dzieli kwoty przez liczbę hospitalizacji: zestawienie NFZ liczy pacjentów, a pacjent może mieć kilka hospitalizacji.</p>
+        </div>
 
-      <div class="sec" id="s-profil">
-        <div class="sec-head"><h4><span class="q">Jak przyjmowani są pacjenci?</span> <span class="ctx">Tryb przyjęcia i śmiertelność w kraju, wszystkie lata</span></h4><span class="tag h">Lata</span></div>
-        <div class="legend"><span><i style="background:var(--chart);height:10px;width:12px"></i>nagłe</span><span><i style="background:var(--fam-3);height:10px;width:12px"></i>planowe</span><span><i style="background:var(--line);height:10px;width:12px"></i>pozostałe</span></div>
-        <table class="profile" id="profile"></table>
-        <p class="note">Śmiertelność surowa: zgony w szpitalu podczas hospitalizacji. Nie uwzględnia wieku ani stanu pacjentów i zgonów po wypisie.</p>
+        <div class="sec" id="s-profil">
+          <div class="sec-head"><h4><span class="q">Jak przyjmowani są pacjenci?</span> <span class="ctx">Tryb przyjęcia w kraju, wszystkie lata</span></h4><span class="tag h">Lata</span></div>
+          <div class="legend"><span><i style="background:var(--chart);height:10px;width:12px"></i>nagłe</span><span><i style="background:var(--fam-3);height:10px;width:12px"></i>planowe</span><span><i style="background:var(--line);height:10px;width:12px"></i>pozostałe</span></div>
+          <div class="scroll-x"><table class="profile" id="profile"></table></div>
+          <p class="note">Nagłe: tryb przyjęcia 2 i 3; planowe: tryb 6. Śmiertelność jest miarą w sekcji „Ile?”.</p>
+        </div>
       </div>
 
       <div class="sec" id="s-rodzina">
-        <div class="sec-head"><h4><span class="q">Jak wygląda rodzina?</span> <span class="ctx">Udziały wariantów OZW, wszystkie lata</span></h4><span class="tag h">Lata</span></div>
-        <div class="famrows" id="famrows"></div>
-        <p class="note">Ramka: ta grupa (E10). Przesunięcie udziałów między wariantami może wynikać z praktyki leczenia albo ze zmiany katalogu. Link „Karta rodziny →” prowadzi do <code>/jgp/rodziny/ozw</code> (etap 5).</p>
+        <div class="sec-head"><h4><span class="q">Jak wygląda rodzina?</span> <span class="ctx">Warianty OZW: liczby i udziały, wszystkie lata</span></h4><span class="tag h">Lata</span></div>
+        <p class="fam-lead" id="fam-lead"></p>
+        <div class="legend" id="fam-legend"></div>
+        <div class="fam2">
+          <figure>
+            <figcaption><b>Co urosło, a co spadło?</b> Zmiana liczby hospitalizacji od <span class="fam-from"></span> do <span class="yr"></span> r.: nominalnie i w %. „Razem” = cała rodzina.</figcaption>
+            <svg id="fam-count" viewBox="0 0 460 230" width="100%" role="img" aria-label="Zmiana liczby hospitalizacji wariantów rodziny od pierwszego do wybranego roku"></svg>
+          </figure>
+          <figure>
+            <figcaption><b>Kto zyskał udział?</b> Udział w rodzinie: <span id="fam-from"></span> (kółko) i <span class="yr"></span> (kropka). Pokazuje przesunięcie między wariantami.</figcaption>
+            <svg id="fam-shift" viewBox="0 0 460 230" width="100%" role="img" aria-label="Udział wariantów w rodzinie w pierwszym i w wybranym roku"></svg>
+          </figure>
+        </div>
+        <p class="note">Pogrubiony wiersz: ta grupa (E10). Lewy wykres pokazuje skalę zmiany, prawy jej wpływ na udziały: wariant może zyskać udział bez wzrostu liczby, gdy inne warianty spadają. Przesunięcie udziałów może wynikać z praktyki leczenia, zmiany katalogu albo sposobu kodowania. Link „Karta rodziny →” prowadzi do <code>/jgp/rodziny/ozw</code> (etap 5).</p>
       </div>
     </div>
 
@@ -789,12 +835,12 @@ section h3 { margin-top: 6px; }
       <thead><tr><th>Sekcja z dokumentu 2</th><th>Wartość</th><th>Decyzja</th><th>Dlaczego</th></tr></thead>
       <tbody>
         <tr><td>W czasie</td><td>wysoka</td><td>zostaje, pierwsza</td><td>pokazuje skalę, trend i sezonowość jednym wykresem</td></tr>
-        <tr><td>Wycena i kwota świadczeń</td><td>wysoka</td><td>zostaje, trzecia (po „Gdzie?”)</td><td>średnia kwota na hospitalizację w latach</td></tr>
-        <tr><td>Mapa + heatmapa</td><td>wysoka</td><td>zostaje z opisem</td><td>bez opisu prowadzi do złego wniosku o potrzebach mieszkańców</td></tr>
-        <tr><td>Rodzina</td><td>wysoka</td><td>zostaje, w latach</td><td>przesunięcie między wariantami to sygnał (praktyka, katalog, kodowanie)</td></tr>
+        <tr><td>Wycena i kwota świadczeń</td><td>wysoka</td><td>zostaje, trzecia (po „Gdzie?”), obok trybu przyjęcia</td><td>kwota NFZ w latach; bez średniej na hospitalizację (kwoty są liczone na pacjenta)</td></tr>
+        <tr><td>Mapa + heatmapa</td><td>wysoka</td><td>zostaje z opisem w notce</td><td>bez opisu prowadzi do złego wniosku o potrzebach mieszkańców</td></tr>
+        <tr><td>Rodzina</td><td>wysoka</td><td>zostaje, 2 wykresy w latach</td><td>przesunięcie między wariantami to sygnał (praktyka, katalog, kodowanie); liczby pokazują, czy to wzrost jednego wariantu, czy spadek innego</td></tr>
         <tr><td>Ranking z mini-trendem</td><td>wysoka</td><td>zostaje, pełna szerokość</td><td>rdzeń zakładki „Ośrodki”</td></tr>
-        <tr><td>Tryb przyjęcia (kraj)</td><td>średnia</td><td>łączy się ze śmiertelnością</td><td>obie sekcje opisują pacjentów grupy; jeden wiersz na rok</td></tr>
-        <tr><td>Śmiertelność w kraju</td><td>średnia</td><td>łączy się z trybem</td><td>sama zajmowała całą sekcję dla 7 liczb</td></tr>
+        <tr><td>Tryb przyjęcia (kraj)</td><td>średnia</td><td>zostaje, w połowie szerokości</td><td>jeden wiersz na rok; mała tabela nie potrzebuje całej szerokości</td></tr>
+        <tr><td>Śmiertelność w kraju</td><td>średnia</td><td>miara w „Ile?”</td><td>miesięcznie widać więcej niż 7 liczb rocznych; wartość roku jest w nagłówku</td></tr>
         <tr><td>Wybrany ośrodek</td><td>średnia</td><td>zostaje, z polem wyboru</td><td>szczegóły należą do karty szpitala</td></tr>
         <tr><td>Tryb w ośrodkach</td><td>średnia</td><td>zostaje, oś dopasowana, średnia</td><td>pokazuje ośrodki nietypowe (np. dużo przyjęć planowych)</td></tr>
         <tr><td>Wolumen a śmiertelność</td><td>ryzykowna</td><td>wykres lejkowy, warunkowo</td><td>zwykły wykres zachęca do rankingu śmiertelności, który byłby mylący</td></tr>
@@ -813,7 +859,7 @@ section h3 { margin-top: 6px; }
     <div class="box">
       <h3>Mapa pokazuje podaż</h3>
       <p>W danych województwo to oddział NFZ świadczeniodawcy. Nie znamy miejsca zamieszkania pacjenta. „Lubuskie 1,8× średniej” znaczy: szpitale w lubuskim wykonują dużo tej grupy. Nie znaczy: mieszkańcy lubuskiego chorują częściej albo mają lepszy dostęp.</p>
-      <p>Opis jest w ramce nad mapą i w tytule sekcji („szpitale w województwie”).</p>
+      <p>Opis jest w notce pod mapą i w tytule sekcji („szpitale w województwie”). Ramka nad mapą odpadła: zajmowała miejsce i odsuwała mapę.</p>
     </div>
     <div class="box">
       <h3>Śmiertelność jest surowa</h3>
@@ -822,7 +868,7 @@ section h3 { margin-top: 6px; }
         <li>obejmuje tylko zgony w szpitalu;</li>
         <li>w małych ośrodkach opiera się na wartościach szacowanych („&lt;5”).</li>
       </ul>
-      <p>Dlatego karta nie sortuje ośrodków według śmiertelności. Wykres lejkowy pokazuje tylko, czy wynik mieści się w granicach przypadku.</p>
+      <p>Dlatego karta nie sortuje ośrodków według śmiertelności. Wykres lejkowy pokazuje tylko, czy wynik mieści się w granicach przypadku. Opis jest pod wykresem „Ile?” przy mierze śmiertelności.</p>
     </div>
   </div>
 </section>
@@ -835,7 +881,7 @@ section h3 { margin-top: 6px; }
       <h3>Nowe elementy</h3>
       <ul>
         <li><b>Opis grupy:</b> do sprawdzenia, czy słownik API NFZ (<code>data/jgp_benefits_nfz.json</code>) ma opis albo warunki grupy. Jeśli nie: krótki opis ręczny dla największych grup (plik w <code>data/</code>, skrypt w <code>scripts/</code>); reszta bez opisu.</li>
-        <li><b>Rodzina w latach:</b> z <code>trends.json.gz</code> (grupa × rok); bez nowych plików.</li>
+        <li><b>Rodzina w latach:</b> z <code>trends.json.gz</code> (grupa × rok); bez nowych plików. Liczby wariantów są już w danych karty (<code>family.variants[].values</code>).</li>
         <li><b>Lejek:</b> hospitalizacje i zgony ośrodka są w pliku grupy. Granice liczy przeglądarka.</li>
       </ul>
     </div>
@@ -876,7 +922,12 @@ section h3 { margin-top: 6px; }
     <div class="box"><span class="tag t">Odrzucone</span><h3>Ośrodki w czasie (wszystkie linie)</h3><p>Przy kilkunastu ośrodkach linie się plączą. Mini-trend i kolumna r/r w rankingu niosą tę samą informację.</p></div>
     <div class="box"><span class="tag t">Odrzucone</span><h3>Koncentracja jako kafelki</h3><p>Liczba ośrodków powielała pasek liczb, mediana mało mówi. Zastąpiona paskiem struktury.</p></div>
     <div class="box"><span class="tag t">Odrzucone</span><h3>Zwykły wykres wolumen a śmiertelność</h3><p>Zachęca do porównań bez granic przypadku. Zastąpiony lejkiem.</p></div>
-    <div class="box"><span class="tag t">Odrzucone</span><h3>Dwie osobne sekcje: tryb i śmiertelność w kraju</h3><p>Dwie sekcje dla 7 wierszy liczb. Połączone w „Profil przyjęć”.</p></div>
+    <div class="box"><span class="tag t">Odrzucone</span><h3>Dwie osobne sekcje: tryb i śmiertelność w kraju</h3><p>Dwie sekcje dla 7 wierszy liczb. Tryb został w „Jak przyjmowani są pacjenci?”, śmiertelność przeszła do „Ile?”.</p></div>
+    <div class="box"><span class="tag t">Odrzucone</span><h3>Średnio na hospitalizację</h3><p>Zestawienie NFZ podaje kwoty na pacjenta. Pacjent może mieć kilka hospitalizacji, więc kwota ÷ hospitalizacje nie jest kwotą jednej hospitalizacji. Odpadają: liczba w „Za ile?” i wartości pod słupkami.</p></div>
+    <div class="box"><span class="tag t">Odrzucone</span><h3>Śmiertelność w tabeli trybu przyjęcia</h3><p>Dublowała miarę w „Ile?” i liczbę w nagłówku. Tabela trybu jest węższa i mieści się obok „Za ile?”.</p></div>
+    <div class="box"><span class="tag t">Odrzucone</span><h3>Rodzina tylko jako paski 100%</h3><p>Paski udziałów nie mówią, czy wariant rośnie, czy inne maleją. Zastąpione przez zmianę liczby hospitalizacji i zmianę udziału.</p></div>
+    <div class="box"><span class="tag t">Odrzucone</span><h3>Linie liczby wariantów w latach</h3><p>Linie prawie płaskie: skala całych wariantów ukrywa zmianę o kilkaset hospitalizacji. Zastąpione słupkami samej zmiany z podpisem nominalnie i w %.</p></div>
+    <div class="box"><span class="tag t">Odrzucone</span><h3>Ramka „To podaż, nie potrzeby” nad mapą</h3><p>Zajmowała miejsce nad mapą. Ta sama informacja jest w notce pod mapą.</p></div>
     <div class="box"><span class="tag t">Odrzucone</span><h3>Percentyle 10/90 jako reguła sygnału</h3><p>Z definicji oznaczają ok. 20% ośrodków w każdym wskaźniku i nie uwzględniają wielkości ośrodka. W H52 przy 3 wskaźnikach: 35–55 ośrodków rocznie ze ~125 (lejek: 4–16).</p></div>
     <div class="box"><span class="tag t">Odrzucone</span><h3>Wolumen względem wszystkich szpitali albo podobnej wielkości</h3><p>Sygnał dostają głównie szpitale ortopedyczne i rehabilitacyjne: to profil, nie anomalia. Grupą porównawczą są pary A/B (wielkość i profil).</p></div>
     <div class="box"><span class="tag t">Odrzucone</span><h3>Pobyty „6 i więcej dni”</h3><p>Długość pobytu po zabiegu zależy od stanu pacjenta, powikłań i organizacji opieki po wypisie. Odstawanie trudno zinterpretować i nie wskazuje, co sprawdzić.</p></div>
@@ -895,7 +946,7 @@ section h3 { margin-top: 6px; }
 const DATA = {"years":[2019,2020,2021,2022,2023,2024,2025],"monthly":[629,638,682,653,675,651,613,621,579,598,581,597,647,691,403,412,433,443,656,626,646,463,516,494,643,661,687,723,679,688,672,636,632,598,604,627,687,692,700,722,708,684,693,667,625,640,643,679,702,696,753,706,719,724,666,666,624,657,669,673,723,710,748,748,741,718,720,705,662,668,638,692,721,763,768,742,742,743,683,688,655,646,649,708],"regions":[["dolnośląskie","M46 99l2 0 0 1 1-1 0 1 1 0 0 1 1 0-1 1 0 1 3 1 1 2 1 0 2 1 2-1 1 0 2 0 0-2 1 0 1-1 3 1 2 2 0 1-1 1 0 3 2 0 1 0 1 0-1 1 2 2-1 2 0 1 1 1-2 1-1-1-1 1-1 0 1 1 0 1 0 1-1 0 0 2 0 1-2 0 0 2-1 0-1 1 1 0 0 1-1 0 0 1 0 1-1 0 0 1-1 2 1 0-1 1 0 2-2 0-1 2 0 1-1 2 0-1-1 0-1 1-1 0 0 1 1 1 0 2 1 1 1 1-1 0 1 1-1 1 0-1 0 1-1-1-1 1-1 0 0 1-1 1-1 0-1 2-2-2-1-3-2-3-1 0 0-2-2 0 0 1-1-2 0 1-1-1 1-1 1-1 1-1 1 1 0-1 0-1 1 0-1-1 1 0-2-3-2 0 0 1-1 0-1-1-1 1 0 1-1 0-1 0 1-1-1-1 0-1-2 1-1-3-2 1-3-1-1 0 0-1-2 0-1 1 0-2-1-1-1-1 0-1 0-1 0-1-1 0-1 0 0-1-1 0 0 1 0-1-1 0-1 0-1 0 0 1 1 0-1 2 1 2-1 0-2-1-1 1 0-1 1-2 2-6 0-1 1-3 0-1-1-1 0-1 1 0 0-1 1-1 2-2 1 1 1 0 0 1 1 0 0-2 1 0 0-1 0-1 1 0 1 1 0-1 2 2 0 1 1-1 1 0 0-1 1 0 0-2 2 0 0-1 1-2-1 0 1-2 1 0 1-1 0-1 0-1 2 1 2 1 0 1 1 0 1 1 1-1 1-2 1 0z",46,123,[87,91,88,91,92,85,84]],["kujawsko-pomorskie","M91 37l1 0 1 0-1 2 1 1 2 0 1 1 0-1 3 0 2 1 0 1 1 0-1 1 1 1 0 1 0 1 0 1 1 0 0-1 2 0 1 1 0 1 1 0 1 0 0 1 2-1 1 1 0 1 1 0-1 1 0 1 1 0 1 3-1 0-1 1-1 0 0 2 1 1 0 1 0 1-2-1 0 1-1 1-2 0 0 1 1 1-1 1 1 2 0 1 1 0-1 1 1 0-2 0 0 1-1 2 1 0 0 1-1 1-1 0 0 1 1 0-1 1 0 1-2 1 1 0 0 1-3 2-1 0-1 0-2-2 0 1-4 1 0-1 0-1-1 0-1-2-1 0 0-1-2 0-2 0 0-1-1-1 0 1-1 1-1 0-1 0-2-1 0-1-2 0 0-1 0 1-2-1 1-1-1 0-1 0-1-1-1 0-1 1 0-1-1 0 0-2-1 0-1 1-1 0 0-2-1-1 0-1 1 0 1 0 0-2 0-2-3-2-1 0-1 0 1-1 0-2 1 0-1-2 1 0-1-1 0-1 2-1 0-1-1-1-1-2-1 0-1-1 1-1 2-2 1-2 0-1 0-1 2 0 0 1 1 0 0-1 2 1 0-1 1 0 0-1 1-2 1 1 1-1 0-2 1 0 1 1 1 0 1-2 1 1 1 0 0 1 1-1 1 1-1 0 1 1 3 0 2 0 0 1 1 0 1 0 0-1 1 0z",87,59,[110,101,101,112,105,110,105]],["lubelskie","M155 94l0-1 1-1 1 0 1-1 1 1 1 0 0-1 2 1 1-1 1 0-1 0 1 1 1-1 1 0 1-1 1 0 1 1 1 0 0-1 0-1 1-1 2 2 1-1 0 1 1 0 0-2 1 1 1-1-1 0 1-1 0-1 1 0 0-1 1-1 1-1 1 0 0 1 3 1 2 1 1 0 0 1 1 1 1 0 1 2 1 2-1 1 0 1-1 1 1 0-1 1 0 1 1 0 0 1 0 1-1 1-1 0 0 1 0 1 0 1 0 2 1 1-1 1 1 0 1 1 1 1-1 1 1 0 0 1-1 3 0 1 1 0 1 2 2 2 1 1-1 0 0 1 1 1 0 2 1 0 0 1 0 1 2 2 2 1-1 1-2 0-1 0 0 2 2 0-1 1 2 0-1 2 1 0 0 2-1 3-1 3-4 1-1 0-1 1 0 1-1 0-2 3-1-1 0-1-2 0 1-1-1-1 0-1-1 0 1 0-1-1-2 2-1-1-4 3-3 0-2 0-1 0-1 0-1 0 0-1 2 0 0-1-2 0-1 0-1 1-1-1 0-1-1 0 0-1 1 0 0-1 1 0 1 0 1-1-2 0 2-1-1 0 0-1-1 0 1-1-2 0-1 0-1-1-2 0 0-2-2 0 1-3-1 0 0-1-2-1-1 1-1 1-1 0 0-2-1-1-1-3 1-2-1 0 1-1-1-2 0-2 1-2-1-1 1-1-1 0 1 0 0-2-2-2 1-1 1 1 1-2-1 0 0-1 0-2-3 0-1-1 0-1 0-1 2 1 0 1 0-1 2-1 0-1 1 0 0-1-1-1 2-1 0-1 0-1-2 0 1-1 0-1 0-1z",175,119,[122,114,122,126,120,124,123]],["lubuskie","M17 113l0-2 0-1-1-1-1-1-2 0-1-1 0-1 1-1 0-2-2-2-1-2-1-1 1-1 1-2 1-1 0-2 0-1 1-1-2-2 0-1 1-1-1 0 1-2-1 0-2-1 0-1-1-3 0-1 1 0 1-2 0-1 0-2-1-1 1-1 1 0 1 0 1-2 0-1 2-2 0-2 0 1 1-1-1 0 1-1 1 1 0 1 1-1 1 1 5-2-1-1 0-1 2 0 1-1 2-1 1 1 1 0 1 0 1 0 1 0 0-2 1 0-1 0 1-1 1-1-1 0 2 0 1 0 0 1 0 1 0 1 0 3 0 2-1 0 0 1-1 0 0 1 1 0 0 2 0 1-3 0 1 1-1 0 0 1 0 1 2 2-1 1 1 1 0 1-1 1 0-1 0 1 0 1 1 0 0 1 0 1 0 1-1 1 1 3 0 1 0 1-1 0 1 1 1 1 0-1 1 1 1 0-1 1 1 2 1 0 1-1 0 2 0 1 1 1 1 0 0-1 2 1 1 1 0 2 1 0-1 0-1 2-1 1-1-1-1 0 0-1-2-1-2-1 0 1 0 1-1 1-1 0-1 2 1 0-1 2 0 1-2 0 0 2-1 0 0 1-1 0-1 1 0-1-2-2 0 1-1-1-1 0 0 1 0 1-1 0 0 2-1 0 0-1-1 0-1-1-2 2-1 1 0 1-1 0z",24,88,[120,130,139,149,158,168,178]],["łódzkie","M117 120l0 2 1 0 0 3 0 1-2-1 0-1-1-1-1 2 0 1 0 1-1 0-1 2-1 0 0-1-1 0-1-1-2 1 0-1-1-2-1 0-1 0 1-1-1 0 0-1-1 0-1 0 0 1 0 1-1 0-1-1-1-1-1 0-1-1-1-1-1 1-4 1-1-1-1 0-1-2 0 1-1 0 0-1-1 1-1-1-2 0 0-1-2 0 0-3-1 0-1 0 1-2-1-1 1 0 0-1 1 0 1-1-1-1 1 0 2 1 1-2 0-2 0-2-1 0 1-1-1 0 1-1-1 0 1-1 1 0 0-2 0-1 0-1 1 0 0-1 1 0 1 0 1 0 1 1 0-2 1 0 1-2-1-1 0-1 0-1 0-1 0-1 1 1 1 0 1-1 1 0 0-1 0-3 2 0 1 0 0-1 0-1-1 0 0-2 1 0 1 0 1-1 1 0 1-1 0 1 1 0 0 1 2 0 1 0 0 1 1 0 2 1 0 1 1 0 0-1 1 1 2-1 1-1 1 0 1 1 1 1 1 0 0 2 0 1 1 0 1 1 1 0 1 1-1 0 0 1-1 1 2 2-1 1 1 0 0 1 1 0 1-1 1 0 1 0 0 1 0 1 2 0 0 2 1 0-1 0-1 0 1 0 0 1 0 1 1 1 0 1 0 1-2 0 0-1-1 0-2 1 0 1 1 0 0 2 1 0-1 2 1 0 1 0 0 1-1 1 0 1-1 0 0 3-1 0 0 2 0 1-1-1-1 0-1 0 1 1-1 1-1 0-1 0-2 0-1 0 1 1-1 1z",106,107,[103,105,103,106,99,104,99]],["małopolskie","M129 150l0 1 1-1 1 0 2-3 1 1 1-1 1 0 2-1 2-1 1 1 0-1 1 2-1 0-1 1 1 1-1 0 1 1-1 2 1 0-1 1 1 0 0 1-1 0 1 0-1 1 1 1-1 1 0 1 1 1 2 0 0 1-1 1 0 1 2 0 0 1-1 0-1 1 0 1 1 0 1 1 0 1 0 1 0 1 0 1 1 1-1 1 1 0 1 1-1 0 0 1 0 1-2-1-2 2-1-1-1 0-1 1 1 1-1 0-1 2-1 0-1 0-1-1-1-1-1-1-2 0-1 0 0 1-2-1-1 0-1 0 0 1 0-1-1 0 0 2-2 0-1 1-1 0-1 4-2-1-1 0-1 0-1 1-1-1 0-2 1 0-1-1 0-3-1 0-2 0 0-2 0 1-1-1-1-2 0-1-1-1 0-2-1-1-1 0 1-2 0-1-1 0-1 0-1-3-2 0 0 1-1-1 1-1 0-2-1 1-1-1 1 0 0-2 0-1 1 0 1 0 0-1 0-1 1 0 0-1 1 0 0-1 1-1 1-1-2-1 1 0 1-2 1 0 0-1 0-1 1-1 2 1 1-1 0-1 3 1 0-1 1 0 0-1 1 0 0-1 1 0 1 1 1-1 1 1 1 0 2 1 0 1 1 2-1 1 1 0 0 1 0 1 1 1 0 1 1 1 3-1z",123,163,[101,100,90,90,91,101,94]],["mazowieckie","M157 63l0 1 1-1 0 1 1 1 0-1 1 1 1-1 0-1 2 0 0 2-1 0 1 2 0 1 1 0 0-1 1 0 0-1 1 0 0 3 0 1 1 1-1 1-1 0 1 1 2 2-1 1 1 1 0 1 1 1 2 0 1 1 0-1 2 1 2 0 1 1 1 0 0 2 1 0 0-1 1 1-1 1-1 1 0 1-1 0 0 1-1 1 1 0-1 1-1-1 0 2-1 0 0-1-1 1-2-2-1 1 0 1 0 1-1 0-1-1-1 0-1 1-2 1-1-1 1 0-1 0-1 1-2-1 0 1-1 0-1-1-1 1-1 0-1 1 0 1 0 2-1 1 2 0 0 1 0 1-1 0-1 1 1 1 0 1-1 1-2 1 0 1 0-1-2-1 0 1 0 1 1 1 3 0 0 2 0 1 1 0-1 2-1-1-1 1 2 2 0 2-1 0 1 0-1 1 1 1-1 2 0 3-1 1-1 0 0-1-1 0-2 1-1 0-1 1-1-1-1-1-4 0 0-2-1-1 1-1-1 0-1 1-1 1 0-1-1-1-1 1-1 0-1 1 0-1 0 1-1-1-1 1 0-1 0-1-2-2-1 1 0-1-1-1 0-1 1 0-1 0-1-1 0-2 1 0 0-1 1-1 0-1-1 0-1 0 1-2-1 0 0-2-1 0 0-1 2-1 1 0 0 1 2 0 0-1 0-2-1 0 0-1 0-1-1 0 2 0-1 0 0-2-2 0 0-1 0-1-1 0-1 0-1 1-1 0 0-1-1 0 1-1-2-2 1-1 0-1 1 0-1-1-1 0-1-1-1 0 0-1 0-2-1 0-1-1-1-1-1 0-1 1-2 1-1-1 0 1-1 0 0-1-2-1-1 0 0-1-1 0-2 0 0-1-1 0 0-2-1 0 2-1 0-1 1-1-1 0 0-1 1-1 1-1-1 0 1-2 0-1 2 0-1 0 1-1-1 0 0-1-1-2 1-1-1-1 0-1 2 0 1-1 0-1 2 1 0-2-1-1 0-2 1 0 1-1 1 0 1 0 0-1 1-1 1 0-1 1 2 1 2-1 1 1 1-1 2 1 1 0 0-1 1 0 1-2 2 0 1 0 0-1 1 0 1-1 1 0 1-1 1 1 1-1 1 0 0-1 1 0 1 1 4-3 3 0 1-1 3-1 0 1 1 2 1 1-1 0 2 1-1 1 0-1-1 1 0 1 1 3 0 1 1 1 1 0 2 2 1-1 0 1-1 0 0 1 1 1 1 0 1 2-1 0 0 1z",139,83,[87,83,85,84,83,86,86]],["opolskie","M74 120l0 1 1 0 1 0 2-1 1 0 0-1 1 0 1 0 2 0 0 1 2 0 1 1 1-1 0 1 1 0 0-1 1 2 2 1 0 1-1 0 1 1-1 1 0 1 0 2-2 1 1 1-1 0 0 1 1 0-1 0 0 1-1 1 1 2 1 1 0 1 1 0-1 1-2 0-1 0 1 3-1 0 0-1-1 0 0 2 0 1-1 1 2 1-1 1 1 2-1-1 0 1-3 1 0 1-2 0-1 0-1 1 1 1-1 2-1 0 1 1-1 0-1 1-1 1-1-1 0-1-1 0-1-2-1-1-1 0-1-1 2-1 1-1 1 0 0-1-1-1 0-1 0-1-1 0 0 1-1 1-1 0-2 0-1 1 0-1-1 0-1 0 0-2-1 0-1 0-1-1 0-1-1 0-2 0-1-1-1-1 1-1 1 0 0 1 1-2 0-1 1-2 2 0 0-2 1-1-1 0 1-2 0-1 1 0 0-1 0-1 1 0 0-1-1 0 1-1 1 0 0-2 2 0 0-1 0-2 1 0 0-1 0-1-1-1 1 0 1-1 1 1 1-1 2 0 0 1 0 1z",75,138,[116,113,117,115,118,113,105]],["podkarpackie","M168 145l1 0 2 0 0 1-1 0-1 1 2 0 1 0 2 0 3 0 4-3 1 1 2-2 1 1-1 0 1 0 0 1 1 1-1 1 2 0 0 1 1 1-1 1-4 4-2 1 0 1-4 6-1 1-1 2-2 2-2 4-1 1 0 1 1 0 1 5 0 3-1 1 1 0-1 2 1-1 0 1 1 0 0 1 2 1-1 1 1 2-1 0-2-2 0 1-1 0-2-2-2 0-1 0-1-2-1 0 0 1-2-1 0-1-1 1-1-1-2-1 0-2-1-1-1-1-1-1-1 0 0-1-1 1 0 1-1-2-2 0 0-1-1 0-1 0-1 1 0-1 0 1-1 0-1-1 0-1 0-1 1 0-1-1-1 0 1-1-1-1 0-1 0-1 0-1 0-1-1-1-1 0 0-1 1-1 1 0 0-1-2 0 0-1 1-1 0-1-2 0-1-1 0-1 1-1-1-1 1-1-1 0 1 0 0-1-1 0 1-1-1 0 1-2-1-1 1 0-1-1 1-1 1 0-1-2 2-2 3-1 0-1 2-1 1 0 3-4 1 0 0-1 1-1 0-3 1 1 1 0 1-1 1-1 2 1 0 1 1 0-1 3 2 0 0 2 2 0 1 1 1 0 1 0 1 0 0 1-1 0 1 0 0 1 1 0-2 1 2 0-1 1-1 0-1 0 0 1-1 0 0 1 1 0 0 1 1 0 0 1 1-1z",161,160,[121,122,122,116,118,110,120]],["podlaskie","M156 57l-1 1-2-2-1 0-1-1 0-1-1-3 0-1 1-1 0 1 1-1-2-1 1 0-1-1 0-1-1-2 2 0 3 1 1-1 1-1 1 0 1 0 3-2 2-2 3-2 0 1 1 0-1-1 3-1 1-1 1 0 1-2 1-2 0-1-2-2 0-2-2-1 0-1 1 0-1-1-1 0-1-2 1-1 0-1 1 0 1-1 1 0 1-1 1 1 0-1 0-1 0-1 1-1 1 0 2 1 1 1 0 1 1 0 1 0 1 1 1 1 2 0 1 1 1 1 1 1 1 3 0 1-1 1 0 2 1 3 0 3 1 0 1 8 3 8 2 3 0 3 0 1 1 3-1 1 1 7-4 3-2 0-4 2-2 3-3 6-1 0-1-1 0 1-1 0 0-2-1 0-1-1-2 0-2-1 0 1-1-1-2 0-1-1 0-1-1-1 1-1-2-2-1-1 1 0 1-1-1-1 0-1 0-3-1 0 0 1-1 0 0 1-1 0 0-1-1-2 1 0 0-1 0-1-1 1-1-1 0 1-1 1-1-1 0 1-1-1 0-1-1 1 0-2 1 0-1-2-2-1 0-1 1 0 0-1z",176,53,[101,97,94,105,107,94,104]],["pomorskie","M110 12l0 2-8 4 1 1 1 1 0 1-2 1 0 1 0 1 0 1 1 0-1 1 1 1 1-1 1 1 1 0-1 1 0 1 1 1 0-1 2 0 1 0-1 1 0 1-1 2 0 1-2-1-1 0-1 2-1 2 0 1-1 1-1 1-3 0-1 0 0 1-1-1-2 0-1-1 1-2-1 0-1 0-1 0 0 1-1 0-1 0 0-1-2 0-3 0-1-1 1 0-1-1-1 1 0-1-1 0-1-1-1 2-1 0-1-1-1 0 0 2-1 1-1-1-1 2 0 1-1 0 0 1-2-1 0 1-1 0 0-1-2 0 0 1 0 1-1 2-1 0-1-1 1 0-1-1-2 0-2 0-1 1-1-1-1 0 0-1-1-2 0-4 1-1 0-1-1 0 0-1 0-1 2 0 0-1-2-1 0-1-1 0 0-1-1 0 0-1 1-1-1 0 1-2-1 0 0-1-1-1 0-1 1-1 2 0-1-2 0-1 0-1 1 0-1-1 0-1 0-1-1-1-1-1-1-1 4-1 3-3 4-2 2 0 6-1 7-2 7 0 8 5 2 2 0 1-3-3-5-3-1 1 2 2 0 1 1 1 0 1 1 5 1 1 2 0-1 0 1 1 4 1 0-1 1 1 1 0 4 0 5-2 3-2z",77,24,[79,46,78,83,84,75,81]],["śląskie","M107 127l0 1 2-1 1 1 1 0 0 1 1 0 2 1 0 1-1-1 0 1-1 1-1 0 1 1 0 1 1-1 0 1 2 0-1 2 2 0-1 1-2 2 1 0 1 0 1 1 0 1-1 0 0 1-1 0 0 1-3-1 0 1-1 1-2-1-1 1 0 1 0 1-1 0-1 2-1 0 2 1-1 1-1 1 0 1-1 0 0 1-1 0 0 1 0 1-1 0-1 0 0 1 0 2-1 0 1 1 1-1 0 2-1 1 1 1 0-1 2 0 1 3 1 0 1 0 0 1-1 2 1 0 1 2-2 2 0 1-2 0-1 1 0 1-1 1 0 1-1 0-1 0-1 0-1 0 0-1 0-1 0-1-1-1-2 0 1-1-1 0-1-4-1 0-1-1-1 0 0-1-1-3 0-1 0-1-1-1 0 1-1 0-1-1-2 0-1 0 0-1-1 0-1-1-1 0-1-2-1 0 1-2-1-1 1-1 1 0 2 0 0-1 3-1 0-1 1 1-1-2 1-1-2-1 1-1 0-1 0-2 1 0 0 1 1 0-1-3 1 0 2 0 1-1-1 0 0-1-1-1-1-2 1-1 0-1 1 0-1 0 0-1 1 0-1-1 2-1 0-2 0-1 1-1-1-1 1 0 0-1 4-1 1-1 1 1 1 1 1 0 1 1 1 1 1 0 0-1 0-1 1 0 1 0 0 1 1 0-1 1 1 0 2 2z",97,148,[84,93,88,95,96,90,96]],["świętokrzyskie","M112 129l2-3 0-1 1-2 1 1 0 1 2 1 0-1 0-3-1 0 0-2 1-1-1-1 1 0 2 0 1 0 1 0 1-1-1-1 1 0 1 0 1 1 0-1 0-2 1 0 0-1 1 1 1 0-1 0 0 1 1 1 0 1 1-1 2 2 0 1 0 1 1-1 1 1 0-1 0 1 1-1 1 0 1-1 1 1 0 1 1-1 1-1 1 0-1 1 1 1 0 2 4 0 1 1 1 1 2-2 0 1 3-1 0 1 1 0 1-1 1 1-1 1 1 0-1 2 1 3 1 1-1 4-1 1 0 1-1 0-3 4-1 0-2 1 0 1-3 2-2 1 0 1-1-1-1 1-1 0-2 1-1 0-1 1-1-1-2 3-1 0-1 1 0-1-3 1-1-1 0-1-1-1 0-1 0-1-1 0 1-1-1-2 0-1-1-1-2 0-1-1-1 1-1-1-1 0-1-1-1 0-1 0 2-2 1-1-2 0 1-2-2 0 0-1-1 1 0-1-1-1 1 0 1-1 0-1 0 1 1-1-2-1z",133,134,[68,66,135,124,67,69,71]],["warmińsko-mazurskie","M173 15l0 1 0 1 0 1-1-1-1 1-1 0-1 1-1 0 0 1-1 1 1 2 1 0 1 1-1 0 0 1 2 1 0 2 2 2 0 1-1 2-1 2-1 0-1 1-3 1 1 1-1 0 0-1-3 2-2 2-3 2-1 0-1 0-1 2-4-1-5 1-1 1-3 0-4 3-1-1-1 0 0 1-1 0-1 1-1-1-2 1-1 1-1 0 0 1-1 0-2 0-1 2-1 0 0 1-1 0-2-1-1 1-1-1-2 1-2-1 1-1-1 0-1 1 0 1-1 0-1-3-1 0 0-1 1-1-1 0 0-1-1-1-2 1 0-1-1 0-1 0 0-1-1-1-2 0 0 1-1 0 0-1 0-1 0-1-1-1 1-1-1 0 0-1-1-1 1-1 1-1 0-1 1-2 1-2 1 0 2 1 0-1 1-2 0-1 1-1-1 0-2 0 0 1-1-1 0-1 1-1-1 0-1-1-1 1-1-1 1-1-1 0 0-1 0-1 0-1 2-1 0-1-1-1-1-1 8-4 0-2 14 2 6 1 2 0 11 1 2 0 1 1 27-2z",134,34,[119,117,131,122,133,132,123]],["wielkopolskie","M54 39l1-1 0 1 1 2 0 1 1 0 1 1 1 0 0-1 2 0 2 0 1 1-1 0 1 1 1 0-2 2-1 1 1 1 1 0 1 2 1 1 0 1-2 1 0 1 1 1-1 0 1 2-1 0 0 2-1 1 1 0 1 0 3 2 0 2 0 2-1 0-1 0 0 1 0 1 1 0 0 2 1 0 1-1 1 0 0 2 1 0 0 1 1-1 1 0 1 1 1 0 1 0-1 1 2 1 0-1 0 1 2 0 0 1 2 1 1 0 1 0 1-1 0-1 1 1 0 1 2 0 2 0 0 1 1 0 1 2 1 0 0 1 0 1 4-1 0-1 1 2 1 0 0 2 1 0 0 2-1 0-2 0 0 1 0 2 0 1-1 0-1 1-1 0-1-1 0 1 0 1 0 1 0 1 1 1-1 2-1 0 0 2-1-1-1 0-1 0-1 0 0 1-1 0 0 1 0 1 0 2-1 0-1 1 1 0-1 1 1 0-1 1 1 0 0 2 0 2-1 2-2-1-1 0 1 1-1 1-1 0 0 1-1 0 1 1 0 2 1 0 0 1 0 2-1 0-1 0 0 1-1 0-2 1-1 0-1 0 0-1 0-1 0-1-1 0-1-1 0-1 1-2-2-2 1-1-1 0-1 0-1 0-1 0 0-1 0-1 0-1 1-1 0-2-1 0-1-1-3-1-2 1 0 2-2 0-1 0-2 1-2-1-1 0-1-2-2-1-1 0 0-1 1-1-1 0 0-1-1 0 0-1-1 1 0-1-3 0 0-2-1-1-2-1 0 1-1 0-1-1 0-1 0-2-1 1-1 0-1-2 1-1-1 0-1-1 0 1-1-1-1-1 1 0 0-1 0-1-1-3 1-1 0-1 0-1 0-1-1 0 0-1 0-1 0 1 1-1 0-1-1-1 1-1-2-2 0-1 0-1 1 0-1-1 3 0 0-1 0-2-1 0 0-1 1 0 0-1 1 0 0-2 0-1 0-3 3 1 3-1 1 0 1-1-1-1 1-1 0-1 1 1 1-1 1-1 1-1 1 1 0-1 0-1 2-1-2-2-1 0-1-1 0 1-1-1-1-2 1-1 3 0 2-2 1-3 1 0z",62,83,[94,95,97,96,96,97,101]],["zachodniopomorskie","M45 13l3-3 3-1 1 1 1 1 1 1 0 1 0 1 1 1-1 0 0 1 0 1 1 2-2 0-1 1 0 1 1 1 0 1 1 0-1 2 1 0-1 1 0 1 1 0 0 1 1 0 0 1 2 1 0 1-2 0 0 1 0 1 1 0 0 1-1 1 0 3-1 1-1 0-1 3-2 2-3 0-1 1 1 2 1 1 0-1 1 1 1 0 2 2-2 1 0 1 0 1-1-1-1 1-1 1-1 1-1-1 0 1-1 1 1 1-1 1-1 0-3 1-1 0-2-1 0-1 0-1-2 0-1 0 1 0-1 1-1 1 1 0-1 0 0 2-1 0-1 0-1 0-1 0-1-1-2 1-1 1-2 0 0 1 1 1-5 2-1-1-1 1 0-1-1-1-1 1 1 0-1 1 0-1 0 2-2 2 0 1-1 2-1 0-1 0-1 1-1-1-2-1-1-2-2-1-1-2-2 0 1-2-1-2 3-2 2-1 0-3 0-1 0-1 1 0 1-2-1 0 0-1 0-1-1-1 0-3-1-3 0-3-1 0 0-2 0-2 0-1-1-3 0-1 0-1 1 1 0-1 1 1 2 0 1-2 5-2 11-4 4 0 7-3 5-1 4-2 2-3z",28,43,[105,104,108,101,102,112,105]]],"providers":[{"n":"Szpital Wojewódzki, Rzeszów","v":[489,399,511,551,485,516,524],"d":7.3,"r":"podkarpackie","u":82.2},{"n":"Instytut Kardiologii, Warszawa","v":[513,413,471,481,477,518,524],"d":2.9,"r":"mazowieckie","u":85.1},{"n":"Szpital Uniwersytecki, Kraków","v":[432,349,437,455,463,439,420],"d":4.5,"r":"małopolskie","u":95.0},{"n":"Centrum Medyczne, Zielona Góra","v":[233,217,310,348,386,424,462],"d":2.3,"r":"lubuskie","u":82.6},{"n":"Szpital Specjalistyczny, Kielce","v":[417,328,748,739,385,386,367],"d":5.8,"r":"świętokrzyskie","u":83.7},{"n":"Szpital Miejski, Gdańsk","v":[335,268,343,341,351,334,331],"d":2.9,"r":"pomorskie","u":85.9},{"n":"Klinika Kardiologii, Lublin","v":[307,257,303,348,334,310,315],"d":4.1,"r":"lubelskie","u":75.0},{"n":"Szpital Powiatowy, Nowa Sól","v":[290,223,313,319,147,148,138],"d":2.6,"r":"lubuskie","u":83.8},{"n":"Centrum Serca, Łódź","v":[257,203,278,250,244,283,265],"d":2.9,"r":"łódzkie","u":87.0},{"n":"Szpital Wojewódzki, Olsztyn","v":[234,172,233,250,245,239,223],"d":4.2,"r":"warmińsko-mazurskie","u":91.4},{"n":"Szpital Kliniczny, Poznań","v":[189,167,201,209,195,191,210],"d":7.9,"r":"wielkopolskie","u":72.5},{"n":"Szpital Regionalny, Opole","v":[177,141,177,174,161,168,164],"d":2.2,"r":"opolskie","u":78.2}],"adm":[[3.4,84.3],[3.7,85.6],[4.5,84.8],[4.5,86.5],[4.5,84.6],[3.7,84.2],[3.6,84.1]],"pln":[52.2,39.1,40.6,50.3,60.3,62.1,66.9],"mort":[4.78,5.54,4.86,4.61,4.84,4.79,4.65],"family":[["E10",31.3],["E11",37.2],["E15",9.8],["E16",21.6]],"points":4161};
 const Y = DATA.years, N = Y.length;
 const R = DATA.regions;
-let year = N - 1, tab = "przeglad", area = null, provider = null;
+let year = N - 1, tab = "przeglad", area = null, provider = null, metric = "hosp";
 let hoverP = null, showDetails = false, lastList = [], lastTotal = 1; // najechany ośrodek, rozwinięte szczegóły, ostatni ranking
 const NS = "http://www.w3.org/2000/svg";
 const fmt = (v) => Math.round(v).toLocaleString("pl-PL");
@@ -949,7 +1000,7 @@ const amount = (j) => DATA.pln[j] * share(j);
 const deathsOf = (p, j) => Math.round((p.v[j] * p.d[j]) / 100);
 const mortality = (j) => { const l = active(j); const h = sumV(l, j); return h ? (l.reduce((s, p) => s + deathsOf(p, j), 0) / h) * 100 : 0; };
 const urgency = (j) => area ? (() => { const l = active(j); const h = sumV(l, j); return l.reduce((s, p) => s + p.u[j] * p.v[j], 0) / (h || 1); })() : DATA.adm[j][1];
-const famYear = (j) => { const shift = (j - (N - 1)) * 0.6; const f = DATA.family.map(([k, v], i) => [k, Math.max(4, v + (i === 0 ? shift : i === 1 ? -shift : 0))]); const t = f.reduce((s, [, v]) => s + v, 0); return f.map(([k, v]) => [k, (v / t) * 100]); };
+const famYear = (j) => { const shift = (j - (N - 1)) * 0.6; const f = DATA.family.map(([k, v], i) => [k, Math.max(4, v + shift * [1, -1.6, -0.2, 0.8][i])]); const t = f.reduce((s, [, v]) => s + v, 0); return f.map(([k, v]) => [k, (v / t) * 100]); };
 const loc = (name) => name.replace(/ie$/, "im");
 const ratioName = (v) => `${dec(v / 100)}×`;
 
@@ -995,34 +1046,51 @@ function drawHead() {
   document.getElementById("pt-years").hidden = tab !== "sygnaly";
 }
 
+// Miary „Ile?” (jak w aplikacji): przy filtrze obszaru wykres pokazuje tylko hospitalizacje.
+// Śmiertelność i % nagłych w makiecie: wartość roku z łagodną sezonowością (dane przykładowe).
+const METRICS = {
+  hosp: { title: "Hospitalizacje miesięcznie", line: "średnia 3 miesięcy", note: "Kropka = miesiąc, linia = średnia z 3 miesięcy. Miesiące według daty wypisu." },
+  mort: { title: "Śmiertelność miesięcznie", line: "udział z 3 miesięcy", note: "Zgony w szpitalu / hospitalizacje. Śmiertelność surowa: nie uwzględnia wieku, stanu pacjentów ani zgonów po wypisie." },
+  urg: { title: "Udział przyjęć nagłych miesięcznie", line: "udział z 3 miesięcy", note: "Przyjęcia nagłe (tryb 2 i 3) / hospitalizacje." },
+};
+const metricSeries = (k) => k === "hosp" ? monthly() : DATA.monthly.map((_, i) => { const j = Math.floor(i / 12), s = Math.cos(((i % 12) * Math.PI) / 6); return k === "mort" ? mortality(j) * (1 + 0.07 * s) : Math.min(99, urgency(j) + 0.8 * s); });
+document.querySelectorAll("#metric button").forEach((b) => b.addEventListener("click", () => { metric = b.dataset.m; draw(); }));
+
 function drawTrend() {
   const svg = document.getElementById("trend"); svg.innerHTML = "";
+  const k = area ? "hosp" : metric, M = METRICS[k], isShare = k !== "hosp";
+  const seg = document.getElementById("metric"); seg.hidden = !!area;
+  seg.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.m === metric)));
+  document.getElementById("trend-title").textContent = M.title;
+  document.getElementById("trend-line").textContent = M.line;
+  document.getElementById("trend-note").textContent = M.note;
   document.getElementById("trend-label").textContent = area ? area : "kraj";
-  const m = monthly(), W = 960, H = 230, L = 46, Rr = 12, T = 12, B = 30, n = m.length;
-  const x = (i) => L + (i * (W - L - Rr)) / (n - 1), max = Math.max(...m) * 1.15, y = (v) => T + (H - T - B) * (1 - v / max);
+  const m = metricSeries(k), W = 960, H = 230, L = 46, Rr = 12, T = 12, B = 30, n = m.length;
+  const lo = isShare ? Math.min(...m) * 0.85 : 0, max = Math.max(...m) * (isShare ? 1.05 : 1.15);
+  const x = (i) => L + (i * (W - L - Rr)) / (n - 1), y = (v) => T + (H - T - B) * (1 - (v - lo) / (max - lo));
+  const lab = (v) => isShare ? `${dec(v)}%` : fmt(v);
   svg.appendChild(el("rect", { x: x(year * 12) - 4, y: T, width: x(year * 12 + 11) - x(year * 12) + 8, height: H - T - B, fill: "var(--year-band)", rx: 4 }));
-  [0, 0.33, 0.66, 1].forEach((f) => { const g = max * f; svg.appendChild(el("line", { x1: L, x2: W - Rr, y1: y(g), y2: y(g), stroke: "var(--line)" })); svg.appendChild(el("text", { x: L - 8, y: y(g) + 4, "text-anchor": "end", "font-size": 11, fill: "var(--ink-3)" }, fmt(g))); });
+  [0, 0.33, 0.66, 1].forEach((f) => { const g = lo + (max - lo) * f; svg.appendChild(el("line", { x1: L, x2: W - Rr, y1: y(g), y2: y(g), stroke: "var(--line)" })); svg.appendChild(el("text", { x: L - 8, y: y(g) + 4, "text-anchor": "end", "font-size": 11, fill: "var(--ink-3)" }, lab(g))); });
   Y.forEach((yy, i) => svg.appendChild(el("text", { x: x(i * 12 + 5.5), y: H - 9, "text-anchor": "middle", "font-size": 11.5, fill: i === year ? "var(--year)" : "var(--ink-3)", "font-weight": i === year ? 700 : 400 }, yy)));
   const ma = m.map((_, i) => { const s = m.slice(Math.max(0, i - 2), i + 1); return s.reduce((a, b) => a + b, 0) / s.length; });
-  m.forEach((v, i) => { const c = el("circle", { cx: x(i), cy: y(v), r: 2.4, fill: "var(--chart)", opacity: 0.45 }); c.appendChild(el("title", {}, `${Y[Math.floor(i / 12)]}-${String((i % 12) + 1).padStart(2, "0")}: ${fmt(v)}`)); svg.appendChild(c); });
+  m.forEach((v, i) => { const c = el("circle", { cx: x(i), cy: y(v), r: 2.4, fill: "var(--chart)", opacity: 0.45 }); c.appendChild(el("title", {}, `${Y[Math.floor(i / 12)]}-${String((i % 12) + 1).padStart(2, "0")}: ${lab(v)}`)); svg.appendChild(c); });
   svg.appendChild(el("path", { d: "M" + ma.map((v, i) => `${x(i).toFixed(1)} ${y(v).toFixed(1)}`).join(" L"), fill: "none", stroke: "var(--chart)", "stroke-width": 2.2, "stroke-linejoin": "round" }));
 }
 
 function drawCost() {
-  const ys = yearly(), am = Y.map((_, j) => amount(j)), per = Y.map((_, j) => (am[j] * 1e6) / (ys[j] || 1));
+  const am = Y.map((_, j) => amount(j));
   document.getElementById("value-facts").innerHTML = [
     ["Wycena (katalog 2025)", `${fmt(DATA.points)} pkt`, "za hospitalizację"],
-    [`Kwota świadczeń ${Y[year]}`, `${dec(am[year])} mln zł`, area ? area : "cała Polska"],
-    [`Średnio na hospitalizację ${Y[year]}`, `${fmt(per[year])} zł`, year ? `${signed(pct(per[year], per[year - 1]))} r/r` : "pierwszy rok"],
+    [`Kwota świadczeń ${Y[year]}`, `${dec(am[year])} mln zł`, year ? `${signed(pct(am[year], am[year - 1]))} r/r` : "pierwszy rok"],
   ].map(([l, v, s]) => `<div class="kpi"><dt>${l}</dt><dd>${v}</dd><span class="sub"><span>${s}</span></span></div>`).join("");
   const svg = document.getElementById("pln"); svg.innerHTML = "";
-  const W = 640, H = 240, L = 4, B = 40, T = 18, bw = (W - L * 2) / N, max = Math.max(...am) * 1.15; // wąska kolumna obok liczb
+  const W = 460, H = 210, L = 2, B = 24, T = 18, bw = (W - L * 2) / N, max = Math.max(...am) * 1.12;
   am.forEach((v, i) => {
-    const h = ((H - T - B) * v) / max, xx = L + i * bw + 10, w = bw - 20, on = i === year;
-    const r = el("rect", { x: xx, y: H - B - h, width: w, height: h, rx: 4, fill: on ? "var(--year)" : "var(--chart)", opacity: on ? 1 : 0.55 }); r.appendChild(el("title", {}, `${Y[i]}: ${dec(v)} mln zł, ${fmt(per[i])} zł na hospitalizację`)); svg.appendChild(r);
-    svg.appendChild(el("text", { x: xx + w / 2, y: H - B - h - 5, "text-anchor": "middle", "font-size": 12, fill: "var(--ink-2)" }, `${dec(v)} mln`));
-    svg.appendChild(el("text", { x: xx + w / 2, y: H - 22, "text-anchor": "middle", "font-size": 12, fill: on ? "var(--year)" : "var(--ink-3)", "font-weight": on ? 700 : 400 }, Y[i]));
-    svg.appendChild(el("text", { x: xx + w / 2, y: H - 6, "text-anchor": "middle", "font-size": 11, fill: "var(--ink-2)" }, `${fmt(per[i])} zł`));
+    const h = ((H - T - B) * v) / max, xx = L + i * bw + 6, w = bw - 12, on = i === year;
+    const r = el("rect", { x: xx, y: H - B - h, width: w, height: h, rx: 4, fill: on ? "var(--year)" : "var(--chart)", opacity: on ? 1 : 0.55 });
+    r.appendChild(el("title", {}, `${Y[i]}: ${dec(v)} mln zł · kliknij, żeby pokazać ten rok`)); r.addEventListener("click", () => { year = i; draw(); }); svg.appendChild(r);
+    svg.appendChild(el("text", { x: xx + w / 2, y: H - B - h - 5, "text-anchor": "middle", "font-size": 11.5, fill: "var(--ink-2)" }, dec(v)));
+    svg.appendChild(el("text", { x: xx + w / 2, y: H - 6, "text-anchor": "middle", "font-size": 12, fill: on ? "var(--year)" : "var(--ink-3)", "font-weight": on ? 700 : 400 }, Y[i]));
   });
 }
 
@@ -1045,7 +1113,7 @@ function drawGeo() {
   document.getElementById("mapinfo").innerHTML = s ? `<b style="color:var(--chart-2)">${s[0]}</b> · ${Y[year]}: ${s[4][year]}% średniej Polski` : "Kliknij województwo, żeby ustawić filtr obszaru.";
   const link = document.getElementById("to-providers");
   link.hidden = !s; link.textContent = s ? `Ośrodki w województwie ${loc(s[0])} →` : "";
-  let h = `<colgroup><col style="width:122px">${"<col>".repeat(N)}<col style="width:46px"></colgroup><tr><th></th>${Y.map((y, i) => `<th class="${i === year ? "on" : ""}">${String(y).slice(2)}</th>`).join("")}<th style="text-align:right">${String(Y[0]).slice(2)}→${String(Y[N - 1]).slice(2)}</th></tr>`;
+  let h = `<colgroup><col style="width:122px">${"<col>".repeat(N)}<col style="width:46px"></colgroup><tr><th></th>${Y.map((y, i) => `<th class="${i === year ? "on" : ""}" data-year="${i}" title="Pokaż ${y} r. na mapie i na karcie" style="cursor:pointer">${String(y).slice(2)}</th>`).join("")}<th style="text-align:right">${String(Y[0]).slice(2)}→${String(Y[N - 1]).slice(2)}</th></tr>`;
   [...R.keys()].sort((a, b) => R[a][0].localeCompare(R[b][0], "pl")).forEach((i) => {
     const r = R[i][4], ch = Math.round((r[N - 1] / r[0] - 1) * 100);
     h += `<tr class="${R[i][0] === area ? "sel" : ""}" data-r="${R[i][0]}"><td class="name">${R[i][0]}</td>${r.map((v, j) => `<td tabindex="0" data-y="${j}" title="${R[i][0]} ${Y[j]}: ${v}% średniej Polski" style="background:${fill(v)};color:${ink(v)};${j === year ? "outline:2px solid var(--year);outline-offset:-2px" : ""}">${v}</td>`).join("")}<td class="ch">${ch > 0 ? "+" : ""}${ch}%</td></tr>`;
@@ -1053,15 +1121,60 @@ function drawGeo() {
   const hm = document.getElementById("hm"); hm.innerHTML = h;
   hm.querySelectorAll("tr[data-r]").forEach((tr) => tr.addEventListener("click", (e) => { area = tr.dataset.r; provider = null; const y = e.target.dataset.y; if (y !== undefined) year = +y; draw(); }));
   hm.querySelectorAll("td[data-y]").forEach((td) => td.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); td.click(); } }));
+  hm.querySelectorAll("th[data-year]").forEach((th) => th.addEventListener("click", () => { year = +th.dataset.year; draw(); }));
 }
 
 function drawProfile() {
-  const rows = Y.map((y, j) => { const u = urgency(j), p = area ? Math.max(0, 100 - u - 12) : DATA.adm[j][0]; return [y, p, u, Math.max(0, 100 - p - u), mortality(j)]; });
-  document.getElementById("profile").innerHTML = `<tr><th>Rok</th><th class="bar">Tryb przyjęcia</th><th>Nagłe</th><th>Planowe</th><th>Śmiertelność</th></tr>` + rows.map(([y, p, u, o, m], j) => `<tr class="${j === year ? "on" : ""}"><td>${y}</td><td class="bar"><div class="stack" title="nagłe ${dec(u)}%, planowe ${dec(p)}%, pozostałe ${dec(o)}%"><span style="flex:${u};background:var(--chart)"></span><span style="flex:${p};background:var(--fam-3)"></span><span style="flex:${o};background:var(--line)"></span></div></td><td>${dec(u)}%</td><td>${dec(p)}%</td><td>${dec(m)}%</td></tr>`).join("");
+  const rows = Y.map((y, j) => { const u = urgency(j), p = area ? Math.max(0, 100 - u - 12) : DATA.adm[j][0]; return [y, p, u, Math.max(0, 100 - p - u)]; });
+  document.getElementById("profile").innerHTML = `<tr><th>Rok</th><th class="bar">Tryb przyjęcia</th><th>Nagłe</th><th>Planowe</th></tr>` + rows.map(([y, p, u, o], j) => `<tr class="${j === year ? "on" : ""}"><td>${y}</td><td class="bar"><div class="stack" title="nagłe ${dec(u)}%, planowe ${dec(p)}%, pozostałe ${dec(o)}%"><span style="flex:${u};background:var(--chart)"></span><span style="flex:${p};background:var(--fam-3)"></span><span style="flex:${o};background:var(--line)"></span></div></td><td>${dec(u)}%</td><td>${dec(p)}%</td></tr>`).join("");
 }
 
+// Rodzina: liczby wariantów z udziałów i liczby hospitalizacji E10 (E10 = udział × suma rodziny).
+const famCounts = () => Y.map((_, j) => { const f = famYear(j), own = f.find(([k]) => k === "E10")[1], tot = (yearlyNat[j] * 100) / own; return f.map(([k, v]) => [k, (v * tot) / 100]); });
 function drawFamily() {
-  document.getElementById("famrows").innerHTML = Y.map((y, j) => `<div class="famrow ${j === year ? "on" : ""}"><span>${y}</span><div class="famstack">${famYear(j).map(([k, v], i) => `<span class="${i === 3 ? "light" : ""} ${k === "E10" ? "me" : ""}" style="flex:${v};background:var(--fam-${i + 1})" title="${y} · ${k}: ${dec(v)}%">${k} ${dec(v, 0)}%</span>`).join("")}</div></div>`).join("");
+  const sh = Y.map((_, j) => famYear(j)), cnt = famCounts(), codes = sh[0].map(([k]) => k);
+  const ownAt = codes.indexOf("E10");
+  const ch = codes.map((k, i) => [k, cnt[year][i][1] - cnt[0][i][1], cnt[0][i][1], sh[year][i][1] - sh[0][i][1]]).sort((p, q) => Math.abs(q[1]) - Math.abs(p[1]))[0];
+  document.getElementById("fam-lead").innerHTML = `E10 to <b>${dec(sh[year][ownAt][1], 0)}%</b> hospitalizacji rodziny w ${Y[year]} r.${year ? ` (w ${Y[0]} r.: ${dec(sh[0][ownAt][1], 0)}%). Największa zmiana od ${Y[0]} r.: <b>${ch[0]}</b> ${ch[1] >= 0 ? "+" : "−"}${fmt(Math.abs(ch[1]))} hospitalizacji (${signed(pct(ch[2] + ch[1], ch[2]))}), udział ${ch[3] >= 0 ? "+" : ""}${dec(ch[3])} pp` : ""}.`;
+  document.getElementById("fam-legend").innerHTML = codes.map((k, i) => `<span><i style="background:var(--fam-${i + 1});height:10px;width:12px"></i>${k === "E10" ? `<b>${k}</b>` : k}</span>`).join("");
+  document.querySelectorAll("#fam-from, .fam-from").forEach((e) => { e.textContent = Y[0]; });
+
+  // Wykres 1: zmiana liczby hospitalizacji od pierwszego roku do wybranego, na wariant i razem (słupki od zera w obie strony).
+  // Podpis: zmiana nominalna i w %, żeby było widać, co urosło znacząco w obu ujęciach.
+  const a = document.getElementById("fam-count"); a.innerHTML = "";
+  const W = 460, H = 230;
+  const rows = codes.map((k, i) => [k, cnt[0][i][1], cnt[year][i][1], i]);
+  const sum0 = rows.reduce((t, r) => t + r[1], 0), sum1 = rows.reduce((t, r) => t + r[2], 0);
+  rows.push(["Razem", sum0, sum1, -1]);
+  if (!year) {
+    a.appendChild(el("text", { x: W / 2, y: H / 2, "text-anchor": "middle", "font-size": 13, fill: "var(--ink-3)" }, `Wybierz rok po ${Y[0]}, żeby zobaczyć zmianę.`));
+  } else {
+    const AL = 58, AR = 130, top = 6, rh = (H - 30) / rows.length, dmax = Math.max(...rows.map((r) => Math.abs(r[2] - r[1]))) * 1.05 || 1;
+    const mid = AL + (W - AL - AR) / 2, sx = (d) => mid + ((W - AL - AR) / 2) * (d / dmax);
+    a.appendChild(el("line", { x1: mid, x2: mid, y1: 2, y2: H - 22, stroke: "var(--ink-3)" }));
+    a.appendChild(el("text", { x: mid, y: H - 6, "text-anchor": "middle", "font-size": 11, fill: "var(--ink-3)" }, `0 = poziom ${Y[0]}`));
+    rows.forEach(([k, v0, v1, ci], r) => {
+      const d = v1 - v0, p = v0 ? (d / v0) * 100 : 0, cy = top + rh * (r + 0.5) + (ci < 0 ? 6 : 0), own = k === "E10", sum = ci < 0;
+      if (sum) a.appendChild(el("line", { x1: 4, x2: W - 4, y1: cy - rh / 2 - 2, y2: cy - rh / 2 - 2, stroke: "var(--line)" }));
+      a.appendChild(el("text", { x: AL - 8, y: cy + 4, "text-anchor": "end", "font-size": 12, fill: "var(--ink)", "font-weight": own || sum ? 700 : 400 }, k));
+      const bar = el("rect", { x: Math.min(mid, sx(d)), y: cy - 8, width: Math.max(1.5, Math.abs(sx(d) - mid)), height: 16, rx: 3, fill: sum ? "var(--ink-3)" : `var(--fam-${ci + 1})` });
+      bar.appendChild(el("title", {}, `${k}: ${fmt(v0)} → ${fmt(v1)} hosp.`)); a.appendChild(bar);
+      a.appendChild(el("text", { x: W - AR + 10, y: cy + 4, "font-size": 12, fill: "var(--ink-2)", "font-weight": own || sum ? 700 : 400 }, `${d >= 0 ? "+" : "−"}${fmt(Math.abs(d))} · ${signed(p)}`));
+    });
+  }
+
+  // Wykres 2: udział w rodzinie w pierwszym roku (kółko) i w wybranym roku (kropka), zmiana w pp po prawej.
+  const b = document.getElementById("fam-shift"); b.innerHTML = "";
+  const BL = 46, BR = 62, smax = Math.ceil(Math.max(...sh.flat().map(([, v]) => v)) / 10) * 10, sx = (v) => BL + ((W - BL - BR) * v) / smax, row = (H - 26) / codes.length;
+  [0, smax / 2, smax].forEach((g) => { b.appendChild(el("line", { x1: sx(g), x2: sx(g), y1: 4, y2: H - 22, stroke: "var(--line)" })); b.appendChild(el("text", { x: sx(g), y: H - 7, "text-anchor": "middle", "font-size": 11, fill: "var(--ink-3)" }, `${g}%`)); });
+  codes.forEach((k, i) => {
+    const cy = 4 + row * (i + 0.5), v0 = sh[0][i][1], v1 = sh[year][i][1], d = v1 - v0, own = i === ownAt;
+    b.appendChild(el("text", { x: BL - 8, y: cy + 4, "text-anchor": "end", "font-size": 12, fill: "var(--ink)", "font-weight": own ? 700 : 400 }, k));
+    b.appendChild(el("line", { x1: sx(v0), x2: sx(v1), y1: cy, y2: cy, stroke: `var(--fam-${i + 1})`, "stroke-width": own ? 4 : 3, "stroke-linecap": "round" }));
+    const c0 = el("circle", { cx: sx(v0), cy, r: 5, fill: "var(--panel)", stroke: `var(--fam-${i + 1})`, "stroke-width": 2 }); c0.appendChild(el("title", {}, `${k} ${Y[0]}: ${dec(v0)}%`)); b.appendChild(c0);
+    const c1 = el("circle", { cx: sx(v1), cy, r: 6, fill: `var(--fam-${i + 1})`, stroke: "var(--panel)", "stroke-width": 1.2 }); c1.appendChild(el("title", {}, `${k} ${Y[year]}: ${dec(v1)}%`)); b.appendChild(c1);
+    b.appendChild(el("text", { x: W - BR + 10, y: cy + 4, "font-size": 12, fill: "var(--ink-2)", "font-weight": own ? 700 : 400 }, year ? `${d > 0 ? "+" : ""}${dec(d)} pp` : `${dec(v1)}%`));
+  });
 }
 
 function drawProviders() {
