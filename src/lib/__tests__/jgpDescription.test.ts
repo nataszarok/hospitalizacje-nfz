@@ -54,6 +54,17 @@ describe("buildJgpDescription — opis grupy z danych NFZ", () => {
     expect(description.source).toBe("Źródło: NFZ, statystyki JGP 2023 (rozpoznania ICD-10 z listy kierunkowej, dane ogólne).");
   });
 
+  it("proza zastępuje zdania z szablonu; wiersz źródła wymienia tabele grupy, rodzina dopisana, gdy proza jej nie opisuje", () => {
+    const prose = "Hospitalizacja z powodu ostrego zawału serca, w której wykonano koronarografię.";
+    expect(buildJgpDescription("E10", profiles, familyFor("E10"), prose)).toEqual({
+      sentences: [prose, "Należy do rodziny „Ostry zespół wieńcowy (OZW)”; pozostałe warianty: E11, E12G, E15, E16 i E17G."],
+      source: "Opis na podstawie: NFZ, statystyki JGP 2024 (rozpoznania ICD-10, procedury ICD-9 z listy kierunkowej, dane ogólne); rodzina: lista portalu.",
+    });
+    expect(buildJgpDescription("E10", profiles, familyFor("E10"), `${prose} Inne warianty rodziny OZW to leczenie inwazyjne.`)!.sentences).toHaveLength(1);
+    expect(buildJgpDescription("X02", profiles, null, "Opis.")!.source).toBe("Opis na podstawie: NFZ, statystyki JGP 2023 (rozpoznania ICD-10 z listy kierunkowej, dane ogólne).");
+    expect(buildJgpDescription("Z99", profiles, null, "Opis.")).toBeNull();
+  });
+
   it("bez danych API grupy opisu nie ma", () => {
     expect(buildJgpDescription("Z99", profiles)).toBeNull();
     expect(buildJgpDescription("E10", null)).toBeNull();

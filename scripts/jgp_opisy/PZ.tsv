@@ -1,0 +1,98 @@
+kod	opis
+PZ99	Inne zabiegi u dzieci, m.in. w zaburzeniach odpływu łez, gradówce i wadach dróg łzowych oraz nacięcie i drenaż skóry. Pobyt trwa zwykle 1 dzień (mediana).
+PZA01	Złożone operacje wewnątrz czaszki u dzieci, m.in. usuwanie guzów mózgu i móżdżku, torbieli mózgu oraz korekcja przedwczesnego zarośnięcia szwów czaszki. Pobyt trwa zwykle 8 dni (mediana).
+PZA02	Duże operacje wewnątrz czaszki u dzieci, głównie w wodogłowiu i torbielach mózgu. Pobyt trwa zwykle 7 dni (mediana).
+PZA03	Średnie operacje wewnątrz czaszki u dzieci, m.in. wymiana drenu komorowego w wodogłowiu. Pobyt trwa zwykle 5 dni (mediana).
+PZB01	Fakowitrektomia u dzieci, głównie we wrodzonej zaćmie (Q12.0). Grupa jest mała. Pobyt trwa zwykle 4 dni (mediana).
+PZB02	Witrektomia u dzieci, najczęściej z dostępu przedniego, m.in. we wrodzonej i dziecięcej zaćmie. Pobyt trwa zwykle 4 dni (mediana).
+PZB03	Średnie zabiegi oczodołu i dróg łzowych u dzieci, m.in. w zaburzeniach odpływu łez i siatkówczaku (nowotworze złośliwym siatkówki, C69.2). Pobyt trwa zwykle 1 dzień (mediana).
+PZB04	Operacje zeza u dzieci, głównie zeza rozbieżnego (H50.1) i zbieżnego. Pobyt trwa zwykle 2 dni (mediana).
+PZB05	Duże zabiegi rogówki i twardówki u dzieci, najczęściej przy ciele obcym w rogówce (T15.0). Pobyt trwa zwykle 1 dzień (mediana).
+PZB06	Duże operacje przeciwjaskrowe u dzieci, w jaskrze wtórnej i wrodzonej. Grupa jest mała. Pobyt trwa zwykle 3 dni (mediana).
+PZB07	Małe zabiegi oka u dzieci, głównie udrażnianie dróg łzowych we wrodzonych wadach aparatu łzowego (Q10.6). Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+PZC01	Złożone operacje jamy ustnej, gardła i krtani u dzieci, m.in. radykalne usunięcie ślinianki. Grupa jest mała. Pobyt trwa zwykle 2 dni (mediana).
+PZC02	Duże zabiegi jamy ustnej, gardła i krtani u dzieci, m.in. w wadach rozwojowych twarzy i szyi i przyrośnięciu języka. Pobyt trwa zwykle 2 dni (mediana).
+PZC03	Usunięcie migdałków u dzieci przy przeroście migdałka gardłowego i podniebiennych (J35). Pobyt trwa zwykle 1 dzień (mediana).
+PZC04	Małe zabiegi jamy ustnej i gardła u dzieci, m.in. zaopatrzenie ran warg i języka i podcięcie wędzidełka języka. Pobyt trwa zwykle 1 dzień (mediana).
+PZC05	Złożone operacje szczękowo-twarzowe u dzieci, głównie korekcja przedwczesnego zarośnięcia szwów czaszki (Q75.0). Pobyt trwa zwykle 4 dni (mediana).
+PZC06	Duże zabiegi szczękowo-twarzowe u dzieci, m.in. usunięcie torbieli i guzów kości szczęk oraz leczenie złamań żuchwy. Pobyt trwa zwykle 2 dni (mediana).
+PZC07	Średnie zabiegi szczękowo-twarzowe u dzieci, m.in. w złamaniach żuchwy i zaburzeniach stawów skroniowo-żuchwowych. Grupa jest mała. Pobyt trwa zwykle 1 dzień (mediana).
+PZC08	Małe zabiegi szczękowo-twarzowe u dzieci, głównie chirurgiczne usuwanie zębów. Pobyt trwa zwykle 1 dzień (mediana).
+PZC09	Jednoczasowa korekcja obustronnego rozszczepu wargi i podniebienia u dzieci. Grupa jest bardzo mała. Pobyt trwa zwykle 3 dni (mediana).
+PZC10	Złożone korekcje rozszczepu wargi i podniebienia u dzieci. Pobyt trwa zwykle 2 dni (mediana).
+PZC11	Duże korekcje rozszczepu podniebienia i wargi u dzieci. Pobyt trwa zwykle 2 dni (mediana).
+PZC12	Wycięcie torbieli i przetok szczeliny skrzelowej u dzieci (Q18.0). Pobyt trwa zwykle 2 dni (mediana).
+PZC13	Małe korekcje wad wrodzonych jamy ustnej u dzieci, głównie przyrośnięcia języka (Q38.1). Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+PZC14	Złożone operacje uszu u dzieci, m.in. w perlaku i przewlekłym zapaleniu ucha środkowego. Pobyt trwa zwykle 2 dni (mediana).
+PZC15	Duże operacje uszu u dzieci, głównie w zrostach i przewlekłym zapaleniu ucha środkowego. Pobyt trwa zwykle 2 dni (mediana).
+PZC16	Średnie zabiegi uszu u dzieci, m.in. plastyka błony bębenkowej w przewlekłym zapaleniu ucha środkowego. Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+PZC17	Małe zabiegi uszu u dzieci, głównie nacięcie błony bębenkowej w przewlekłym zapaleniu ucha środkowego. Pobyt trwa zwykle 1 dzień (mediana).
+PZC18	Złożone operacje nosa i zatok u dzieci, głównie otwarcie komórek sitowych w przewlekłym zapaleniu zatok. Pobyt trwa zwykle 3 dni (mediana).
+PZC19	Duże zabiegi nosa u dzieci, w większości przy skrzywieniu przegrody nosowej (J34.2). Pobyt trwa zwykle 3 dni (mediana).
+PZC20	Średnie zabiegi nosa u dzieci, głównie przy złamaniu kości nosowych (S02.2) i przeroście małżowin nosowych. Pobyt trwa zwykle 1 dzień (mediana).
+PZC21	Małe zabiegi nosa u dzieci, głównie zamknięte nastawienie złamania nosa. Pobyt trwa zwykle 1 dzień (mediana).
+PZC22	Duże zabiegi endoskopowe nosa i zatok u dzieci, głównie endoskopowe otwarcie wielu zatok. Grupa jest mała. Pobyt trwa zwykle 3 dni (mediana).
+PZC23	Średnie zabiegi endoskopowe u dzieci, m.in. przy przeroście migdałka gardłowego i krwawieniu z nosa. Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+PZD01	Złożone operacje klatki piersiowej u dzieci, głównie korekcja klatki piersiowej szewskiej (torakoplastyka). Pobyt trwa zwykle 5 dni (mediana).
+PZD02	Duże zabiegi klatki piersiowej u dzieci, m.in. torakoskopia i zabiegi naprawcze ściany klatki piersiowej. Pobyt trwa zwykle 6 dni (mediana).
+PZD03	Bronchoskopia u dzieci, m.in. przy ciele obcym w oskrzelach. Pobyt trwa zwykle 2 dni (mediana).
+PZD04	Małe zabiegi klatki piersiowej u dzieci, głównie drenaż jamy opłucnej. Pobyt trwa zwykle 5 dni (mediana).
+PZE01	Inne operacje kardiochirurgiczne u dzieci, m.in. zamknięcie przewodu tętniczego i operacje zwężenia cieśni aorty. Grupa jest mała. Pobyt trwa zwykle 8 dni (mediana).
+PZE02	Ablacja zaburzeń rytmu serca u dzieci, głównie w zespole preekscytacji (I45.6) i częstoskurczu nadkomorowym. Pobyt trwa zwykle 3 dni (mediana).
+PZF01	Zabiegi przełyku u dzieci, prawie zawsze rozszerzanie przełyku, m.in. po operacji zarośnięcia przełyku. Pobyt trwa zwykle 2 dni (mediana).
+PZF02	Zabiegi żołądka u dzieci, głównie wytworzenie przetoki żołądkowej do żywienia (PEG) przy zaburzeniach połykania. Pobyt trwa zwykle 2 dni (mediana).
+PZF03	Złożone operacje jelita cienkiego u dzieci z zespoleniem jelit, m.in. w uchyłku Meckela i wgłobieniu. Pobyt trwa zwykle 9 dni (mediana).
+PZF04	Złożone operacje jelita grubego u dzieci. Grupa jest bardzo mała. Pobyt trwa zwykle 11 dni (mediana).
+PZF05	Duże zabiegi jelita cienkiego u dzieci, m.in. przy zapaleniu otrzewnej i ostrym brzuchu. Pobyt trwa zwykle 6 dni (mediana).
+PZF06	Endoskopowe zabiegi przewodu pokarmowego u dzieci, głównie kolonoskopia z biopsją, m.in. w chorobach zapalnych jelit. Pobyt trwa zwykle 2 dni (mediana).
+PZF07	Duże operacje jamy brzusznej u dzieci. Pobyt trwa zwykle 5 dni (mediana).
+PZF08	Średnie zabiegi jamy brzusznej u dzieci, m.in. laparoskopia, wady ściany brzucha i wgłobienie jelita. Pobyt trwa zwykle 2 dni (mediana).
+PZF09	Operacje przepukliny z wszczepieniem siatki u dzieci i młodzieży, głównie przepukliny pachwinowej. Grupa jest mała. Pobyt trwa zwykle 1 dzień (mediana).
+PZF10	Operacje przepuklin u dzieci, głównie pachwinowej (K40.9) i pępkowej. Pobyt trwa zwykle 1 dzień (mediana).
+PZF11	Wycięcie wyrostka robaczkowego u dzieci w ostrym zapaleniu wyrostka. Pobyt trwa zwykle 5 dni (mediana).
+PZF12	Średnie zabiegi odbytu u dzieci, głównie wycięcie torbieli pilonidalnej (L05). Pobyt trwa zwykle 2 dni (mediana).
+PZF13	Złożone operacje jelita grubego u dzieci, głównie w chorobie Hirschsprunga (Q43.1). Grupa jest mała. Pobyt trwa zwykle 10 dni (mediana).
+PZG01	Wycięcie pęcherzyka żółciowego u dzieci i młodzieży w kamicy żółciowej. Pobyt trwa zwykle 3 dni (mediana).
+PZG02	Operacje śledziony u dzieci, m.in. usunięcie śledziony w sferocytozie dziedzicznej i operacje torbieli śledziony. Pobyt trwa zwykle 5 dni (mediana).
+PZH01	Artroskopowa rekonstrukcja stawu kolanowego z implantami u dzieci, przy uszkodzeniach łąkotki i niestabilności kolana. Pobyt trwa zwykle 2 dni (mediana).
+PZH02	Artroskopia lecznicza u dzieci, głównie wycięcie błony maziowej kolana. Pobyt trwa zwykle 2 dni (mediana).
+PZH03	Złożone zabiegi kończyny dolnej u dzieci, m.in. rekonstrukcje kolana przy niestabilności i zwichnięciach rzepki. Pobyt trwa zwykle 3 dni (mediana).
+PZH04	Duże zabiegi kończyny dolnej u dzieci, m.in. usunięcie niezłośliwych guzów kości i korekcja zniekształceń kończyn. Pobyt trwa zwykle 2 dni (mediana).
+PZH05	Średnie zabiegi kończyny dolnej u dzieci, głównie po złamaniach (np. usunięcie zespolenia). Pobyt trwa zwykle 2 dni (mediana).
+PZH06	Duże zabiegi kończyny górnej u dzieci, głównie w następstwach złamań. Pobyt trwa zwykle 2 dni (mediana).
+PZH07	Średnie zabiegi kończyny górnej u dzieci, głównie w następstwach złamań (T92.1). Pobyt trwa zwykle 1 dzień (mediana).
+PZH08	Złożone operacje korekcyjne kręgosłupa u dzieci, głównie w skoliozie młodzieńczej (M41.1): spondylodeza. Pobyt trwa zwykle 8 dni (mediana).
+PZH09	Leczenie złamań i zwichnięć miednicy lub kończyny dolnej u dzieci, m.in. złamań podudzia i kości udowej. Pobyt trwa zwykle 2 dni (mediana).
+PZH10	Leczenie złamań i zwichnięć kończyny górnej u dzieci, głównie złamań kości ramiennej i przedramienia. Pobyt trwa zwykle 2 dni (mediana).
+PZH11	Leczenie mniejszych złamań u dzieci, głównie złamań przedramienia. Pobyt trwa zwykle 1 dzień (mediana).
+PZH12	Średnie zabiegi na tkankach miękkich u dzieci, m.in. w uszkodzeniach kolana i zmianach skóry. Pobyt trwa zwykle 2 dni (mediana).
+PZH13	Mniejsze zabiegi tkanek miękkich u dzieci, m.in. wycięcie zmian skóry i wrastającego paznokcia. Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+PZH14	Rekonstrukcja wrodzonych i nabytych zniekształceń kości i stawów u dzieci, m.in. stopy i kończyn. Pobyt trwa zwykle 2 dni (mediana).
+PZJ01	Leczenie chirurgiczne ciężkich oparzeń u dzieci przy pobycie ponad 10 dni: przeszczepy skóry, także sztucznej, i wycięcie martwicy. Pobyt trwa zwykle 13 dni (mediana).
+PZJ02	Leczenie chirurgiczne średnich oparzeń i odmrożeń u dzieci przy pobycie ponad 5 dni. Pobyt trwa zwykle 8 dni (mediana).
+PZJ03	Leczenie naczyniaków (D18.0) i innych zmian naczyniowych u dzieci laserem pulsacyjno-barwnikowym. Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+PZJ04	Duże zabiegi skórne u dzieci, m.in. zamknięcie ubytku płatem skórnym. Pobyt trwa zwykle 1 dzień (mediana).
+PZJ05	Zabiegi skórne u dzieci, głównie radykalne wycięcie zmian skóry. Pobyt trwa zwykle 1 dzień (mediana).
+PZK01	Zabiegi diagnostyczne tarczycy u dzieci, głównie otwarta biopsja przy pojedynczym guzku tarczycy (E04.1). Grupa jest mała. Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+PZK02	Operacje tarczycy i przytarczyc u dzieci, m.in. przy guzku tarczycy i wadach rozwojowych szyi. Pobyt trwa zwykle 3 dni (mediana).
+PZL01	Duże otwarte operacje nerek u dzieci, głównie we wrodzonym wodonerczu (Q62.0); także usunięcie nerki. Pobyt trwa zwykle 6 dni (mediana).
+PZL02	Duże otwarte operacje moczowodu u dzieci, m.in. wszczepienie moczowodu do pęcherza w moczowodzie olbrzymim i odpływie pęcherzowo-moczowodowym. Grupa jest mała. Pobyt trwa zwykle 11 dni (mediana).
+PZL03	Małe zabiegi endoskopowe moczowodu u dzieci, m.in. założenie cewnika podwójnie zagiętego (2xJ). Pobyt trwa zwykle 2 dni (mediana).
+PZL04	Małe zabiegi pęcherza moczowego u dzieci, m.in. w odpływie pęcherzowo-moczowodowym i wodonerczu. Pobyt trwa zwykle 1 dzień (mediana).
+PZL05	Endoskopowe leczenie odpływu pęcherzowo-moczowodowego u dzieci (Q62.7): wstrzyknięcie implantu do ujścia moczowodu. Grupa jest mała. Pobyt trwa zwykle 2 dni (mediana).
+PZL06	Operacje spodziectwa u chłopców (Q54). Pobyt trwa zwykle 3 dni (mediana).
+PZL07	Średnie zabiegi cewki moczowej u dzieci, głównie wycięcie wrodzonej zastawki cewki tylnej (Q64.2). Pobyt trwa zwykle 2 dni (mediana).
+PZL08	Duże i średnie zabiegi prącia u dzieci, głównie przy stulejce (N47) i wadach prącia. Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+PZL09	Małe zabiegi prącia u dzieci, prawie zawsze operacja stulejki (N47). Pobyt trwa zwykle 1 dzień (mediana).
+PZL10	Zabiegi moszny i jąder u dzieci, m.in. w niezstąpieniu jądra (Q53.1), skręcie jądra i wodniaku jądra. Pobyt trwa zwykle 1 dzień (mediana).
+PZL11	Kruszenie kamieni falą uderzeniową spoza ciała (ESWL) u dzieci, głównie w kamicy nerki. Grupa jest mała. Pobyt trwa zwykle 2 dni (mediana).
+PZL12	Przeszczepienie nerki u dzieci ze schyłkową niewydolnością nerek (N18.0), w większości od dawcy zmarłego. Grupa jest mała. Pobyt jest długi: zwykle 20 dni (mediana).
+PZL13	Diagnostyczne zabiegi układu moczowo-płciowego u dzieci, m.in. we wrodzonym wodonerczu i odpływie pęcherzowo-moczowodowym. Pobyt trwa zwykle 1 dzień (mediana).
+PZN01	Złożone operacje u noworodków i niemowląt, m.in. wszczepienie zastawki komorowo-otrzewnowej w wodogłowiu, operacje w chorobie Hirschsprunga i wytrzewieniu. Pobyt trwa zwykle 11 dni (mediana).
+PZN02	Duże operacje u noworodków i niemowląt, m.in. we wrodzonym wodonerczu, zwężeniu odźwiernika i wadach odbytu. Pobyt trwa zwykle 7 dni (mediana).
+PZN03	Średnie operacje u noworodków i niemowląt, głównie przepukliny pachwinowej i niezstąpienia jądra. Pobyt trwa zwykle 2 dni (mediana).
+PZN04	Małe zabiegi u noworodków i niemowląt, głównie wycięcie wrodzonej zastawki cewki tylnej (Q64.2). Pobyt trwa zwykle 2 dni (mediana).
+PZQ01	Inne zabiegi na naczyniach u dzieci, m.in. u dzieci z białaczką i naczyniakami. Pobyt trwa zwykle 1 dzień (mediana).
+PZS01	Przeszczepienie własnych (autologicznych) komórek krwiotwórczych u dzieci, m.in. w nowotworach nadnerczy i układu nerwowego. Grupa jest mała. Pobyt jest bardzo długi: zwykle 32 dni (mediana).
+PZS02	Przeszczepienie komórek krwiotwórczych od rodzeństwa zgodnego w HLA u dzieci, m.in. w niedokrwistości aplastycznej i białaczkach. Grupa jest bardzo mała. Pobyt jest bardzo długi: zwykle 68 dni (mediana).
+PZS03	Przeszczepienie komórek krwiotwórczych od dawcy alternatywnego u dzieci, m.in. w ostrej białaczce szpikowej. Grupa jest mała. Pobyt jest bardzo długi: zwykle 46 dni (mediana).

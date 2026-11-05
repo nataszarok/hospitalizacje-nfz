@@ -49,6 +49,8 @@ export interface JgpPageExtras {
   facilities?: StaticDataset["facilities"];
   /** Profile grup z API statystyk JGP NFZ (`build-data/jgp_profiles.json.gz`): opis grupy. */
   profiles?: JgpProfilesFile | null;
+  /** Opisy grup prozą (`scripts/jgp_opisy/*.tsv`, `readJgpProse`). */
+  prose?: Record<string, string>;
 }
 
 /** Rodzina grupy: udziały wariantów w latach (hospitalizacje z trendów, w kolejności `catalogYears`). */
@@ -292,6 +294,6 @@ export function buildJgpPageData(trends: TrendsDataset, latest: StaticDataset, j
     } : null,
     valuePln: Object.entries(file?.valuePln?.national ?? {}).sort(([a], [b]) => a.localeCompare(b)).map(([year, pln]) => ({ year, value: pln })),
     family,
-    description: buildJgpDescription(jgpCode, extras.profiles, familyDefinition),
+    description: buildJgpDescription(jgpCode, extras.profiles, familyDefinition, extras.prose?.[jgpCode]),
   };
 }

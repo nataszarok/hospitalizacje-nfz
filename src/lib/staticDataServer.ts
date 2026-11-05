@@ -1,10 +1,11 @@
-import { access, readFile } from "node:fs/promises";
+import { access, readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { gunzipSync } from "node:zlib";
 import type { FinancialRecordSummary, HospitalProfileSummary } from "@/lib/hospitalHomeStats";
 import type { RegionsMap } from "@/lib/jgpCard";
 import type { JgpGroupFile, JgpPagesIndex, JgpPeerPair } from "@/lib/jgpPage";
 import type { JgpProfilesFile } from "@/lib/jgpDescription";
+import { readJgpProse } from "@/lib/jgpProse";
 import { decodeValuations, type JgpValuation, type ValuationsFile } from "@/lib/valuations";
 import { decodeJgpGroupFile, decodeStaticDataset, decodeTrends, type JgpGroupFileColumns, type StaticDatasetFile, type TrendsFile } from "@/lib/hospitalizationCodec";
 import type { HospitalizationIndex, StaticDataset, TrendsDataset } from "@/lib/staticData";
@@ -106,6 +107,19 @@ export async function readJgpProfilesFromDisk(file = join(BUILD_DATA_DIR, "jgp_p
   if (!promise) {
     promise = access(file).then(() => readGzipJson<JgpProfilesFile>(file), () => null);
     profilesCache.set(file, promise);
+  }
+  return promise;
+}
+
+/** Opisy grup prozą z `scripts/jgp_opisy/*.tsv` (kod → opis). Jeden odczyt na build. */
+const proseCache = new Map<string, Promise<Record<string, string>>>();
+export async function readJgpProseFromDisk(dir = join(process.cwd(), "scripts", "jgp_opisy")): Promise<Record<string, string>> {
+  let promise = proseCache.get(dir);
+  if (!promise) {
+    promise = readdir(dir)
+      .then((names) => Promise.all(names.filter((name) => name.endsWith(".tsv")).sort().map((name) => readFile(join(dir, name), "utf8"))))
+      .then(readJgpProse, () => ({}));
+    proseCache.set(dir, promise);
   }
   return promise;
 }

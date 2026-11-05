@@ -54,12 +54,27 @@ function days(value: number): string {
 /**
  * Opis grupy z danych NFZ (etap 4c): każde zdanie ma pokrycie w źródle — tabele API statystyk JGP
  * (rozpoznania, procedury z listy kierunkowej, dane ogólne) i lista rodzin portalu. Bez wiedzy spoza tych źródeł.
- * `null`, gdy API nie ma danych grupy.
+ * Gdy grupa ma opis prozą (`scripts/jgp_opisy`, `prose`), karta pokazuje prozę, a zdania z szablonu nie powstają;
+ * wiersz źródła wymienia wtedy tabele NFZ grupy, na których oparto opis. `null`, gdy API nie ma danych grupy.
  */
-export function buildJgpDescription(jgpCode: string, profiles: JgpProfilesFile | null | undefined, family?: JgpFamilyDefinition | null): JgpDescription | null {
+export function buildJgpDescription(jgpCode: string, profiles: JgpProfilesFile | null | undefined, family?: JgpFamilyDefinition | null, prose?: string | null): JgpDescription | null {
   const profile = profiles?.groups[jgpCode];
   if (!profile) return null;
   const [year, patients, hospitalizations, median, diseases, procedures, directional] = profile;
+  if (prose) {
+    const tables = [
+      diseases.length ? (directional ? "rozpoznania ICD-10 z listy kierunkowej" : "rozpoznania ICD-10") : null,
+      procedures.length ? "procedury ICD-9 z listy kierunkowej" : null,
+      "dane ogólne",
+    ].filter(Boolean);
+    // Rodzina z listy portalu, jeśli proza jej nie opisuje.
+    const others = family?.codes.filter((code) => code !== jgpCode) ?? [];
+    const familySentence = family && others.length && !/rodzin/i.test(prose) ? [`Należy do rodziny „${family.name}”; pozostałe warianty: ${list(others)}.`] : [];
+    return {
+      sentences: [prose, ...familySentence],
+      source: `Opis na podstawie: NFZ, statystyki JGP ${year} (${tables.join(", ")})${family ? "; rodzina: lista portalu" : ""}.`,
+    };
+  }
   const sentences: string[] = [];
   // Tabele API, z których powstały zdania (wiersz źródła wymienia tylko je).
   const used: string[] = [];
