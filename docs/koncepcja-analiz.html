@@ -265,8 +265,8 @@ li.ok::before { content: "✓"; position: absolute; left: -1.25em; color: var(--
     </div>
   </div>
 
-  <div class="phase now">
-    <div class="mark"><span class="num">4</span><span class="state">Teraz</span></div>
+  <div class="phase done">
+    <div class="mark"><span class="num">4</span><span class="state">Zrobione</span></div>
     <div>
       <h3>Przebudowa karty grupy według dokumentu 3</h3>
       <p class="goal">Karta z obecnej długiej strony zmienia się w układ z <a href="karta-jgp-pytania.html">karta-jgp-pytania.html</a>, na razie z dwiema zakładkami: Przegląd i Ośrodki. Zakładka „Sygnały” to osobny etap 7.</p>
@@ -277,12 +277,12 @@ li.ok::before { content: "✓"; position: absolute; left: -1.25em; color: var(--
         <li class="ok"><b>Zrobione, Ośrodki:</b> linie 15 największych ośrodków z najechaniem i wyborem kliknięciem, zwarty pasek ośrodka ze „Szczegółami”; pasek struktury i pełny ranking z r/r, udziałem i mini-trendem; „Jak leczą?” (tryb w ośrodkach i śmiertelność; granice lejka przy co najmniej 30 zgonach, poniżej same punkty; zawsze wszystkie ośrodki, przy wybranych województwach ich ośrodki w kolorach z mapy, reszta szara). Wybrany ośrodek: czerwona gwiazdka ★ na wykresach punktowych (opis tylko w podpowiedzi, po najechaniu gwiazdka rośnie), czerwona linia z podpisem na wykresie 15 ośrodków (pozostałe linie szare), ★ w tabeli, pasku i legendzie; kolory województw spójne na mapie, wykresach punktowych i w tabeli (kropka przy nazwie); ośrodek przestaje być wybrany, gdy jego województwo przestaje być aktywne; kolory województw bez czerwieni i pomarańczu, czerwona gwiazdka z cienką białą obwódką; tło wybranego roku na wykresach liniowych („Ile?” w obu zakładkach) i jedno tło kolumny roku w mapie ciepła; linie województw w „Ile?” liczone z ośrodków wszystkich lat (nie zmieniają się po zmianie roku).</li>
         <li class="ok"><b>Zrobione (2.11):</b> „Jak wygląda rodzina?” dla E10, H52 i H55 (rodziny OZW: E10, E11, E12G, E15, E16, E17G; zabiegi na kręgosłupie: H51, H52, H53, H55; lista redakcyjna w <code>src/lib/jgpGroupInfo.ts</code>, udziały z trendów); opis grupy w nagłówku (opis redakcyjny, bo słownik NFZ podaje tylko nazwy); wybór roku na pasku (<code>rok=</code> w adresie): liczby, mapa, ranking i wykresy ośrodków dla wybranego roku, ośrodki z wcześniejszych lat z pliku grupy.</li>
         <li class="ok"><b>Zrobione (5.11, branch <code>feature/jgp-card-sections</code>, według <a href="karta-jgp-pytania.html">karta-jgp-pytania.html</a>):</b> „Za ile?” i „Jak przyjmowani są pacjenci?” w jednym wierszu, 2 kolumny (na wąskim ekranie jedna pod drugą); „Za ile?”: wycena i kwota z r/r nad słupkami, kwota w mln zł nad słupkiem, bez „Średnio na hospitalizację” i bez wartości pod słupkami (kwoty NFZ są liczone na pacjenta); „Jak przyjmowani są pacjenci?” bez śmiertelności (jest w „Ile?”). Mapa ciepła „Gdzie?”: liczby na 100 tys. bez miejsc dziesiętnych.</li>
-        <li><b>Do zrobienia (koncepcja 2.11):</b> „Jak wygląda rodzina?” jako 2 wykresy: zmiana liczby hospitalizacji wariantów (nominalnie i w %, z wierszem „Razem”) i zmiana udziału, oba od pierwszego do wybranego roku.</li>
+        <li><b>Przeniesione do etapu 8 (5.11):</b> „Jak wygląda rodzina?” jako 2 wykresy (zmiana liczby i udziału wariantów).</li>
         <li class="ok"><b>Zrobione (3.11): grupy E i H na nowej karcie.</b> Grupa wycofana albo nowa pokazuje tylko lata, w których jest w katalogu (np. E03: 2017–2018, HK11: 2025), i otwiera się na ostatnim roku grupy (<code>limitToCatalogYears</code>, <code>defaultCardYear</code>). „% nagłych” w „Ile?” ma oś dopasowaną do danych, nie od zera. Mapa ciepła z 9 latami jest ścieśniona (lata „’17”, wąskie kolumny) i mieści się obok mapy.</li>
         <li class="ok"><b>Naprawione (4.11, branch <code>bugfix/jgp-card-scroll-jumps</code>): skoki strony w zakładce „Ośrodki”.</b> Zmiana roku przesuwała stronę w górę (do ok. 230 px), gdy widok był przy dolnych wykresach. Przyczyna: przeglądarka wybierała wiersz tabeli „Kto leczy?” jako kotwicę przewijania strony, a nowy rok zmienia kolejność wierszy. Poprawka: <code>overflow-anchor: none</code> na <code>.scrollTable</code>. Ten sam mechanizm jest prawdopodobną przyczyną drżenia ekranu przy najechaniu na szpital w tabeli po przycisku „Ośrodki w wybranych województwach” (zgłoszenie 4.11; nie odtworzone w Chrome, do sprawdzenia w przeglądarce zgłaszającego).</li>
         <li class="ok"><b>Zrobione (4.11, branch <code>feature/jgp-tabbed-card-all</code>): nowa karta dla wszystkich 780 grup.</b> Sekcje A–D, F, G, J–T i Z mają kartę w zakładkach; stara karta <code>JgpCard</code> usunięta razem z elementami z listy „Do usunięcia” i ok. 420 liniami nieużywanych stylów. Mapa województw w <code>RegionMap.tsx</code>; z <code>src/lib/jgpCard.ts</code> usunięte <code>topShare</code> i <code>poolAdmissions</code>. Strona grupy w <code>dist/</code>: 230–500 KB HTML (każda karta ma ośrodki ze wszystkich lat).</li>
         <li class="ok"><b>Zrobione (4.11): „Ile?” w miesiącach albo latach.</b> Przełącznik „Miesiące / Lata” w nagłówku sekcji „Ile?” (w miejscu etykiety „Lata”) w obu zakładkach; okres wspólny dla zakładek, w adresie <code>okres=lata</code> (bez parametru: miesiące). Rok = suma miesięcy (udział z sum roku), punkt w połowie roku, podpis roku pod punktem; rok niepełny ma w podpowiedzi liczbę miesięcy. Wykres ma tę samą wysokość w obu okresach (objaśnienie pod osią ma tyle samo zdań).</li>
-        <li><b>Zostało:</b> rodziny kolejnych grup: etap 8; opisy grup: etapy 4b i 4c; „Sygnały”: etap 7.</li>
+        <li><b>Zamknięte (5.11).</b> Dalej: rodziny (w tym 2 wykresy „Jak wygląda rodzina?”): etap 8; opisy grup: etapy 4b i 4c; „Sygnały”: etap 7.</li>
       </ul>
       <p class="goal">Pierwotny zakres:</p>
       <ul>
@@ -388,6 +388,9 @@ li.ok::before { content: "✓"; position: absolute; left: -1.25em; color: var(--
     <div>
       <h3>Rodziny grup</h3>
       <p class="goal">Karta <code>/jgp/rodziny/[nazwa]</code>: struktura rodziny w czasie i szpital na tle mediany. Sekcja „Jak wygląda rodzina?” na karcie grupy jest pierwszym krokiem.</p>
+      <ul>
+        <li><b>Do zrobienia (z etapu 4, koncepcja 2.11 w <a href="karta-jgp-pytania.html">karta-jgp-pytania.html</a>):</b> „Jak wygląda rodzina?” na karcie grupy jako 2 wykresy: zmiana liczby hospitalizacji wariantów (nominalnie i w %, z wierszem „Razem”) i zmiana udziału, oba od pierwszego do wybranego roku.</li>
+      </ul>
     </div>
   </div>
 
