@@ -123,6 +123,14 @@ export function JgpTabbedCard({ packed, map = null }: { packed: PackedJgpPageDat
   const linePool = useMemo(() => providerPool(all, { selectedKey: state.selectedKey, scope, regions: state.regions }), [all, state.selectedKey, scope, state.regions]);
   // Czy nagłówek karty zniknął pod nagłówkiem portalu (75 px): wtedy pasek pokazuje kod i nazwę grupy.
   const sentinel = useRef<HTMLDivElement>(null);
+  // Na telefonie rząd lat przewija się poziomo: wybrany rok przewijamy do widoku (tylko w rzędzie, bez przewijania strony).
+  const yearsRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const row = yearsRef.current;
+    const pressed = row?.querySelector<HTMLElement>('button[aria-pressed="true"]');
+    if (!row || !pressed || row.scrollWidth <= row.clientWidth) return;
+    row.scrollLeft = pressed.offsetLeft - row.offsetLeft - (row.clientWidth - pressed.offsetWidth) / 2;
+  }, [data.year]);
   const [stuck, setStuck] = useState(false);
   useEffect(() => {
     const node = sentinel.current;
@@ -167,7 +175,7 @@ export function JgpTabbedCard({ packed, map = null }: { packed: PackedJgpPageDat
           Ośrodki<small>{integer(pool.length)}</small>
         </button>
       </div>
-      <div className={styles.years} role="group" aria-label="Rok karty">
+      <div ref={yearsRef} className={styles.years} role="group" aria-label="Rok karty">
         <span>Rok</span>
         {(all.admissionYears.length ? all.admissionYears : [all.year]).map((year) => <button
           key={year}

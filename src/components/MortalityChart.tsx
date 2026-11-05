@@ -233,7 +233,7 @@ export function MortalityChart({
                 ? "Hospitalizacje na 100 tys. mieszkańców"
                 : "Liczba hospitalizacji",
               standoff: 18,
-              font: { size: 15, color: "#344054" },
+              font: { size: 14, color: "#344054" },
             },
             gridcolor: "#EEF1F5",
             zerolinecolor: "#EEF1F5",
@@ -243,7 +243,7 @@ export function MortalityChart({
             title: {
               text: "Śmiertelność (%)",
               standoff: 18,
-              font: { size: 15, color: "#344054" },
+              font: { size: 14, color: "#344054" },
             },
             tickfont: { size: 11, color: "#667085" },
             gridcolor: "#EEF1F5",
