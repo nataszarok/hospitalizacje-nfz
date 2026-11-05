@@ -1,0 +1,33 @@
+kod	opis
+K01	Radykalne operacje raków gruczołów dokrewnych, prawie zawsze raka tarczycy (C73): najczęściej całkowite usunięcie tarczycy. Pobyt trwa zwykle 3 dni (mediana).
+K02	Operacja powikłanego wola guzowatego, głównie z nadczynnością tarczycy (tyreotoksykozą); najczęściej całkowite usunięcie tarczycy. Pobyt trwa zwykle 3 dni (mediana).
+K03	Operacje tarczycy i przytarczyc, najczęściej całkowite usunięcie tarczycy w wolu wieloguzkowym nietoksycznym (E04.2); także w pierwotnej nadczynności przytarczyc. Pobyt trwa zwykle 3 dni (mediana).
+K04	Operacje nadnerczy, prawie zawsze jednostronne usunięcie nadnercza. Pobyt trwa zwykle 4 dni (mediana).
+K05	Diagnostyczne zabiegi tarczycy, przytarczyc i nadnerczy, prawie zawsze otwarta biopsja tarczycy w wolu. Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+K06	Leczenie stanów nagłych w endokrynologii. Grupa jest mała. Pobyt trwa zwykle 6 dni (mediana).
+K16	Diagnostyka i leczenie chorób przysadki i podwzgórza, m.in. hiperprolaktynemii (E22.1) i niedoczynności przysadki. Pobyt trwa zwykle 3 dni (mediana).
+K25	Leczenie zaburzeń wodno-elektrolitowych i zaburzeń odżywienia, m.in. otyłości, odwodnienia, hiponatremii i niedoboru żelaza. Pobyt trwa zwykle 3 dni (mediana).
+K26	Leczenie zaburzeń wodno-elektrolitowych, głównie hiponatremii (E87.1) i odwodnienia (E86). Pobyt trwa zwykle 5 dni (mediana).
+K27	Leczenie zaburzeń odżywienia, m.in. otyłości, niedoboru żelaza i witaminy D. Pobyt trwa zwykle 4 dni (mediana).
+K27A	Leczenie zaburzeń odżywienia u dorosłych, m.in. niedoboru żelaza, otyłości i niedoboru witaminy D. Pobyt trwa zwykle 5 dni (mediana).
+K27B	Leczenie zaburzeń odżywienia u dzieci i młodzieży, m.in. niedoboru witaminy D, otyłości i trudności w karmieniu. Pobyt trwa zwykle 3 dni (mediana).
+K28E	Leczenie wrodzonych zaburzeń przemiany materii u pacjentów powyżej 65 roku życia, głównie zaburzeń przemiany żelaza i lipidów. Pobyt trwa zwykle 2 dni (mediana).
+K28F	Leczenie wrodzonych zaburzeń przemiany materii u pacjentów poniżej 66 roku życia, głównie zaburzeń przemiany żelaza (E83.1) i hipercholesterolemii. Pobyt trwa zwykle 1 dzień (mediana).
+K34	Leczenie cukrzycy bez powikłań, w większości typu 2 (E11.9), rzadziej typu 1. Pobyt trwa zwykle 4 dni (mediana).
+K35	Leczenie cukrzycy z powikłaniami i stanów hipoglikemii, głównie cukrzycy typu 2 z powikłaniami. Pobyt trwa zwykle 6 dni (mediana).
+K37	Leczenie cukrzycy ze stanami hiperglikemii, najczęściej cukrzycy typu 1 z kwasicą ketonową (E10.1). Pobyt trwa zwykle 6 dni (mediana).
+K39	Leczenie stopy cukrzycowej: owrzodzenia kończyny dolnej (L97). Pobyt trwa zwykle 7 dni (mediana).
+K40	Leczenie cukrzycy z powikłaniami i innych zaburzeń glikemii, głównie cukrzycy typu 2 z powikłaniami. Pobyt trwa zwykle 5 dni (mediana).
+K46	Leczenie ciężkich chorób tarczycy lekami tyreostatycznymi, doustnie albo dożylnie. Pobyt trwa zwykle 6 dni (mediana).
+K47	Leczenie chorób tarczycy, m.in. niedoczynności, nadczynności z wolem rozlanym i autoimmunologicznego zapalenia tarczycy. Pobyt trwa zwykle 2 dni (mediana).
+K47D	Diagnostyka chorób tarczycy z oznaczeniem hormonów (TSH, FT4, FT3), głównie przy nadczynności tarczycy i wolu. Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+K47L	Leczenie chorób tarczycy, głównie nadczynności (tyreotoksykozy) i niedoczynności tarczycy. Pobyt trwa zwykle 5 dni (mediana).
+K48	Leczenie przeciwzapalne orbitopatii tarczycowej (wytrzeszczu w chorobie tarczycy, H06.2) i przygotowanie do radioterapii lub leczenia odbarczającego. Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+K53E	Diagnostyka nadczynności gruczołów dokrewnych u pacjentów powyżej 65 roku życia, głównie guzów nadnerczy (D35.0), z oceną dobowego rytmu wydzielania hormonów. Pobyt trwa zwykle 3 dni (mediana).
+K53F	Diagnostyka nadczynności gruczołów dokrewnych u pacjentów poniżej 66 roku życia, m.in. zaburzeń czynności jajników, hiperandrogenizmu i guzów nadnerczy. Pobyt trwa zwykle 2 dni (mediana).
+K54	Leczenie autoimmunologicznych zespołów wielogruczołowych, w których współistnieją m.in. autoimmunologiczne zapalenie tarczycy i niewydolność kory nadnerczy. Pobyt trwa zwykle 3 dni (mediana).
+K57	Diagnostyka i leczenie guzów neuroendokrynnych, m.in. trzustki, odbytnicy i żołądka, z badaniem immunohistochemicznym. Pobyt trwa zwykle 3 dni (mediana).
+K58	Leczenie nowotworów gruczołów dokrewnych poza przysadką, m.in. raka tarczycy. Pobyt trwa zwykle 3 dni (mediana).
+K59	Leczenie innych chorób układu dokrewnego, m.in. cukrzycy ciążowej (O24.4) i niskorosłości. Pobyt trwa zwykle 1 dzień (mediana).
+K60	Diagnostyka nowotworów gruczołów dokrewnych, m.in. tarczycy i nadnerczy, z oceną dobowego rytmu wydzielania hormonów. Pobyt trwa zwykle 3 dni (mediana).
+K63	Kwalifikacja do leczenia raka tarczycy (C73) jodem radioaktywnym albo ocena skuteczności tego leczenia z użyciem rekombinowanego TSH. Pobyt trwa zwykle 4 dni (mediana).

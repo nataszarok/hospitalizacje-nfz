@@ -4,7 +4,7 @@ import { JgpPage } from "@/components/jgp/JgpPage";
 import { buildJgpPageData } from "@/lib/jgpPage";
 import { SITE_NAME } from "@/lib/site";
 import {
-  readHospitalizationIndexFromDisk, readJgpGroupFileFromDisk, readJgpPagesIndexFromDisk, readPeerPairsFromDisk, readRegionsMapFromDisk, readStaticDatasetFromDisk, readTrendsFromDisk, readValuationsFromDisk,
+  readHospitalizationIndexFromDisk, readJgpGroupFileFromDisk, readJgpPagesIndexFromDisk, readJgpProfilesFromDisk, readJgpProseFromDisk, readPeerPairsFromDisk, readRegionsMapFromDisk, readStaticDatasetFromDisk, readTrendsFromDisk, readValuationsFromDisk,
 } from "@/lib/staticDataServer";
 
 export const dynamicParams = false;
@@ -16,13 +16,13 @@ export async function generateStaticParams() {
 }
 
 async function pageData(kod: string) {
-  const [trends, index, groupFile, valuations, peerPairs] = await Promise.all([
-    readTrendsFromDisk(), readHospitalizationIndexFromDisk(), readJgpGroupFileFromDisk(kod), readValuationsFromDisk(), readPeerPairsFromDisk(),
+  const [trends, index, groupFile, valuations, peerPairs, profiles, prose] = await Promise.all([
+    readTrendsFromDisk(), readHospitalizationIndexFromDisk(), readJgpGroupFileFromDisk(kod), readValuationsFromDisk(), readPeerPairsFromDisk(), readJgpProfilesFromDisk(), readJgpProseFromDisk(),
   ]);
   // Karta ma wybór roku: ośrodki ze wszystkich lat i ich nazwy ze starszych plików roku.
   const older = await Promise.all(index.years.filter((year) => year !== index.latestYear).map((year) => readStaticDatasetFromDisk(year)));
   return buildJgpPageData(trends, await readStaticDatasetFromDisk(index.latestYear), kod, "min", 15, {
-    groupFile, valuations: valuations.rows, valuationYear: valuations.year, peerPairs,
+    groupFile, valuations: valuations.rows, valuationYear: valuations.year, peerPairs, profiles, prose,
     allYearProviders: true, facilities: older.flatMap((dataset) => dataset.facilities),
   });
 }
@@ -32,7 +32,8 @@ export async function generateMetadata({ params }: { params: Promise<{ kod: stri
   const data = await pageData(kod);
   return {
     title: `${kod} ${data?.name ?? ""} | Grupy JGP | ${SITE_NAME}`,
-    description: `Hospitalizacje w grupie JGP ${kod} w kolejnych latach i świadczeniodawcy, którzy leczą najwięcej pacjentów. Dane NFZ.`,
+    // Pierwsze zdanie opisu (proza albo zdanie o rozpoznaniach) mówi wyszukiwarce, co obejmuje grupa.
+    description: `Hospitalizacje w grupie JGP ${kod} w kolejnych latach i świadczeniodawcy, którzy leczą najwięcej pacjentów.${data?.description ? ` ${data.description.sentences[0].split(/(?<=\.)\s/)[0]}` : ""} Dane NFZ.`,
   };
 }
 

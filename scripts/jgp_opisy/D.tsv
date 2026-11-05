@@ -1,0 +1,33 @@
+kod	opis
+D01	Złożone operacje klatki piersiowej, głównie wycięcie płata płuca (lobektomia) albo segmentu płuca z powodu raka płuca, najczęściej płata górnego (C34.1). Pobyt trwa zwykle 8 dni (mediana).
+D02	Rozległe operacje klatki piersiowej, najczęściej klinowe wycięcie fragmentu płuca, rzadziej lobektomia. Wśród rozpoznań przeważają przerzuty nowotworów do płuc (C78.0) i rak płuca. Pobyt trwa zwykle 7 dni (mediana).
+D03	Duże operacje klatki piersiowej o różnym zakresie: m.in. przy wysięku opłucnowym, guzach śródpiersia i płuc oraz korekcji klatki piersiowej szewskiej. Pobyt trwa zwykle 6 dni (mediana).
+D05	Bronchoskopia, najczęściej fiberoskopowa, czasem z biopsją oskrzela. Głównym powodem jest diagnostyka guza płuc lub oskrzeli o nieokreślonym charakterze (D38.1). Pobyt trwa zwykle 1 dzień (mediana).
+D06	Średnie zabiegi klatki piersiowej, w większości przezoskrzelowa biopsja śródpiersia lub płuca pod kontrolą USG. Wykonuje się ją głównie w diagnostyce raka płuca. Pobyt trwa zwykle 2 dni (mediana).
+D07	Małe zabiegi klatki piersiowej: przezskórna igłowa biopsja płuca albo drenaż jamy opłucnej. Najczęstsze rozpoznanie to guz płuc lub oskrzeli o nieokreślonym charakterze (D38.1). Pobyt trwa zwykle 2 dni (mediana).
+D10E	Leczenie astmy oskrzelowej u pacjentów powyżej 65 roku życia; najczęściej astmy nieokreślonej (J45.9). Pobyt trwa zwykle 7 dni (mediana).
+D10F	Leczenie astmy oskrzelowej u pacjentów poniżej 66 roku życia, w tym astmy alergicznej (J45.0). Pobyt trwa zwykle 3 dni (mediana).
+D16	Leczenie zatorowości płucnej, w większości bez ostrego serca płucnego (I26.9). Pobyt trwa zwykle 7 dni (mediana).
+D17	Leczenie ropnia płuca i ropniaka opłucnej; najczęściej to ropniak opłucnej bez przetoki (J86.9). Pobyt jest długi: zwykle 11 dni (mediana).
+D18	Leczenie nietypowego i wirusowego zapalenia płuc. Pobyt trwa zwykle 7 dni (mediana).
+D19	Leczenie rozstrzeni oskrzeli (J47). Pobyt trwa zwykle 6 dni (mediana).
+D20	Leczenie gruźlicy płuc i innych zakażeń prątkami. Pobyt trwa zwykle 3 dni (mediana).
+D21	Leczenie mukowiscydozy (zwłóknienia torbielowatego, E84), w tym postaci płucnej. Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+D26	Leczenie wysiękowego zapalenia opłucnej. Pobyt trwa zwykle 6 dni (mediana).
+D28	Leczenie chorób nowotworowych płuc i klatki piersiowej bez operacji, w tym diagnostyka. Najczęstsze rozpoznania to guz płuc lub oskrzeli o nieokreślonym charakterze (D38.1) i rak płuca. Pobyt trwa zwykle 5 dni (mediana).
+D36	Diagnostyka zaburzeń oddychania w czasie snu: zawsze polisomnografia u pacjentów z bezdechem sennym (G47.3). Pobyt trwa zwykle 1 dzień (mediana).
+D37E	Leczenie innych chorób układu oddechowego u pacjentów powyżej 65 roku życia, m.in. duszności i chorób płuc o nieokreślonej przyczynie. Pobyt trwa zwykle 4 dni (mediana).
+D37F	Leczenie innych chorób układu oddechowego u pacjentów poniżej 66 roku życia, m.in. duszności i chorób płuc o nieokreślonej przyczynie. Pobyt trwa zwykle 3 dni (mediana).
+D38	Leczenie obrzęku płuc (J81). Pobyt trwa zwykle 5 dni (mediana).
+D45	Leczenie niewydolności oddychania nieinwazyjną wentylacją mechaniczną (NIV) u dorosłych, głównie w przewlekłej obturacyjnej chorobie płuc (POChP) i w ciężkiej otyłości z hipowentylacją. Pobyt trwa zwykle 10 dni (mediana).
+D46	Leczenie POChP i innych chorób obturacyjnych, w tym ostrego zapalenia oskrzeli (J20.9) i zaostrzeń POChP. Pobyt trwa zwykle 5 dni (mediana).
+D47	Leczenie zapalenia płuc z powikłaniami lub chorobami współistniejącymi. W danych NFZ grupa jest prawie nieużywana.
+D48	Leczenie zapalenia płuc bez powikłań i chorób współistniejących, najczęściej zapalenia płuc o nieokreślonej przyczynie (J18.9). Pobyt trwa zwykle 7 dni (mediana).
+D49	Leczenie uszkodzeń płuc wywołanych wdychaniem lub zachłyśnięciem, głównie zachłystowego zapalenia płuc (J69.0). Pobyt trwa zwykle 6 dni (mediana).
+D50	Leczenie zwłóknienia płuc, pylicy i innych chorób tkanki śródmiąższowej płuc. Pobyt trwa zwykle 5 dni (mediana).
+D51	Leczenie odmy opłucnowej: urazowej (S27.0), samoistnej i innej. Pobyt trwa zwykle 6 dni (mediana).
+D52	Leczenie niewydolności oddechowej, przewlekłej (J96.1) albo ostrej. Pobyt trwa zwykle 7 dni (mediana).
+D53	Leczenie pierwotnego nadciśnienia płucnego (I27.0) u dorosłych. Pobyt trwa zwykle 5 dni (mediana).
+D54	Leczenie zapalenia opłucnej (R09.1). Grupa jest mała. Pobyt trwa zwykle 6 dni (mediana).
+D55	Leczenie chorób ziarniniakowych, alergicznych i autoimmunologicznych płuc, głównie sarkoidozy (D86) i ziarniniakowatości Wegenera (M31.3). Pobyt trwa zwykle 3 dni (mediana).
+D56	Leczenie ciężkich wrodzonych wad płuc u dzieci, np. niedorozwoju lub torbielowatości płuc. Grupa jest bardzo mała.
