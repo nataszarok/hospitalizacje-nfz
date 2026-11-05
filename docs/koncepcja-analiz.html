@@ -308,8 +308,8 @@ li.ok::before { content: "✓"; position: absolute; left: -1.25em; color: var(--
     </div>
   </div>
 
-  <div class="phase next">
-    <div class="mark"><span class="num">4b</span><span class="state">Następny</span></div>
+  <div class="phase now">
+    <div class="mark"><span class="num">4b</span><span class="state">Teraz</span></div>
     <div>
       <h3>Rozpoznania i procedury grup z API NFZ</h3>
       <p class="goal">Co obejmuje każda grupa JGP, z oficjalnego źródła: API statystyk JGP NFZ (<code>app-stat-api-jgp</code>), dla każdej grupy i roku (dostępne 2013–2024).</p>
@@ -317,14 +317,16 @@ li.ok::before { content: "✓"; position: absolute; left: -1.25em; color: var(--
         <li><b>Tabele w API:</b> rozpoznania ICD-10 (rozpoznanie główne, do 10 najczęstszych), procedury ICD-9 z listy kierunkowej (kwalifikujące pobyt do grupy; pobyt może mieć kilka, więc suma może przekroczyć 100%), wszystkie procedury ICD-9 (także badania i EKG), dane ogólne (liczba hospitalizacji i pacjentów, mediana pobytu). Procent = udział pobytów z danym kodem we wszystkich hospitalizacjach grupy.</li>
         <li><b>Skrypt i dane:</b> <code>scripts/build_jgp_profiles.py</code> pobiera tabele dla wszystkich grup i lat (z przerwami między zapytaniami) i zapisuje <code>public/data/jgp_profiles.json.gz</code> w krotkach; nazwy kodów ze słowników NFZ (ICD-9 PL, ICD-10) są w odpowiedzi API.</li>
         <li><b>W aplikacji:</b> opis grupy z danych zamiast prozy redakcyjnej (każde zdanie ze źródłem: rozpoznania, procedury kwalifikujące, mediana pobytu; zdanie o rodzinie z katalogu NFZ); sekcja „Co obejmuje grupa?” na karcie z tabelami rozpoznań i procedur w latach; wyszukiwarka po kodach ICD (np. „I21.4”, „koronarografia”) prowadzi do grup.</li>
+        <li class="ok"><b>Zrobione (5.11, branch <code>feature/jgp-card-sections</code>): dane najnowszego roku grupy.</b> <code>scripts/build_jgp_profiles.py</code> pobiera dla każdej grupy najnowszy rok w API (API ma lata do 2024; grupy wycofane: ich ostatni rok, np. E03 – 2018): dane ogólne, rozpoznania ICD-10 i procedury ICD-9 z listy kierunkowej (do 10 kodów). Odpowiedzi w cache <code>data/nfz_jgp_stats/</code>; wynik <code>build-data/jgp_profiles.json.gz</code> (98 KB, czyta tylko build). Pokrycie: 771 z 780 grup (695 z 2024 r.); 229 grup ma w API tylko rozpoznania z listy kierunkowej (zamiast wszystkich rozpoznań głównych), 250 nie ma procedur z listy kierunkowej, każda ma co najmniej jedną tabelę ICD. Bez danych API: A05, A68, B07, B98B, H03, HK11, HK16, M23, PZA04. API wymaga nagłówka <code>User-Agent</code> (bez niego CDN zwraca HTML). Pobieranie: ok. 3 tys. zapytań, ok. 15 min; uruchamiać przez <code>caffeinate -i</code> (macOS spowalnia pauzy procesów w tle). Skryptu nie ma w <code>generate:data</code>, bo wymaga sieci.</li>
+        <li><b>Do zrobienia:</b> tabele wszystkich lat (sekcja „Co obejmuje grupa?” na karcie, rozpoznania i procedury w latach); wyszukiwarka po kodach ICD; sumy z „Danych ogólnych” do etapu 4a.</li>
         <li><b>Przykłady (2024):</b> E10 – zawał serca I21.4 57% i I21.9 34%, koronarografia w 99% pobytów; H52 – spondylodeza szyjna 26% i lędźwiowa 20%, odbarczenie kanału kręgowego; H55 – przezskórne odnerwienie powierzchni stawowej wyrostka kręgu w 98% pobytów.</li>
       </ul>
       <div class="facts"><div>Zależy od: nic. Zastępuje opisy redakcyjne z etapu 4 (decyzja 6). Sumy z „Danych ogólnych” służą też etapowi 4a.</div></div>
     </div>
   </div>
 
-  <div class="phase">
-    <div class="mark"><span class="num">4c</span><span class="state">Potem</span></div>
+  <div class="phase done">
+    <div class="mark"><span class="num">4c</span><span class="state">Zrobione</span></div>
     <div>
       <h3>Poprawa opisów grup: proza ze źródłem</h3>
       <p class="goal">Czytelny opis grupy (2–4 zdania prozy) zamiast suchej listy kodów, ale każde zdanie musi mieć pokrycie w źródle. Obecne opisy redakcyjne E10, H52 i H55 pochodzą z ogólnej wiedzy i są do wymiany (np. opis H55 jest zbyt ogólny: dane pokazują jeden zabieg w 98% pobytów).</p>
@@ -332,7 +334,9 @@ li.ok::before { content: "✓"; position: absolute; left: -1.25em; color: var(--
         <li><b>Źródła zdań:</b> tabele NFZ z etapu 4b (rozpoznania, procedury kwalifikujące z udziałami, mediana pobytu), katalog grup NFZ (nazwy wariantów i rodzin), dane portalu (np. udział pobytów „0 dni”, przyjęć nagłych). Bez wiedzy spoza tych źródeł.</li>
         <li><b>Szablon:</b> zdania budowane automatycznie z danych dla każdej grupy, np. „Najczęściej z powodu …; w X% pobytów wykonano …; mediana pobytu …”; zdanie o rodzinie („leczenie inwazyjne rozlicza się w E11, E12G, E15”) z definicji rodzin.</li>
         <li><b>Redakcja:</b> opcjonalne zdanie redakcyjne dla wybranych grup, sprawdzane z danymi przed publikacją; pod opisem wiersz źródła („NFZ, statystyki JGP 2024; katalog grup NFZ”).</li>
-        <li><b>Do ustalenia:</b> rok danych w opisie (najnowszy czy wybrany na karcie), próg pokazywania kodu (np. co najmniej 5% pobytów), sposób zapisu udziałów, gdy procedur kwalifikujących jest kilka na pobyt (suma powyżej 100%).</li>
+        <li class="ok"><b>Zrobione (5.11, branch <code>feature/jgp-card-sections</code>): opis z szablonu dla wszystkich grup z danymi API (771 z 780).</b> <code>src/lib/jgpDescription.ts</code> (<code>buildJgpDescription</code>): rozpoznania główne albo rozpoznania z listy kierunkowej (zależnie od tabeli w API), procedury z listy kierunkowej z udziałem w pobytach, mediana pobytu („0 dni” z objaśnieniem), liczba hospitalizacji i pacjentów z odmianą, zdanie o rodzinie z <code>JGP_FAMILIES</code>. Pod opisem wiersz źródła z rokiem i tylko tymi tabelami, z których powstały zdania. Pierwsze zdanie trafia do opisu strony (meta description). Opisy redakcyjne E10, H52 i H55 usunięte. Grupy bez danych API nie mają opisu.</li>
+        <li class="ok"><b>Ustalone:</b> rok danych = najnowszy rok grupy w API (zwykle 2024, inny niż rok karty; podany w wierszu źródła); kod od 5% pobytów, najwyżej 3 w zdaniu (gdy żadne rozpoznanie nie ma 5%: zdanie „rozpoznania są rozproszone” z najczęstszym); udział każdej procedury podany osobno („w X% pobytów”), bez sumowania.</li>
+        <li><b>Dalej (opcjonalnie):</b> zdanie redakcyjne dla wybranych grup, sprawdzone z danymi przed publikacją.</li>
       </ul>
       <div class="facts"><div>Zależy od: etap 4b (dane ICD w aplikacji) i definicje rodzin (etap 8). Rozstrzyga decyzję 6 (opis grupy).</div></div>
     </div>

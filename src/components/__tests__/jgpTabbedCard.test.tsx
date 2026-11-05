@@ -173,13 +173,13 @@ describe("Karta w zakładkach — wybór roku, opis i rodzina", () => {
     expect(within(screen.getByRole("group", { name: "Rok karty" })).getByRole("button", { name: "2025" })).toHaveAttribute("aria-pressed", "true");
   });
 
-  it("opis redakcyjny i sekcja rodziny z udziałami w latach", () => {
-    const withFamily = { ...data, description: "Opis grupy testowej.", family: { id: "t", name: "Rodzina testowa", variants: [
+  it("opis z danych NFZ z wierszem źródła i sekcja rodziny z udziałami w latach", () => {
+    const withFamily = { ...data, description: { sentences: ["Opis grupy testowej."], source: "Źródło: NFZ, statystyki JGP 2024." }, family: { id: "t", name: "Rodzina testowa", variants: [
       { code: "A01", name: "STAŁY PRODUKT", values: [8, 8, 9] },
       { code: "A02", name: "INNY WARIANT", values: [2, 8, 1] },
     ] } };
     render(<JgpPage data={withFamily} />);
-    expect(screen.getByText(/Opis grupy testowej\./)).toHaveTextContent("opis redakcyjny");
+    expect(screen.getByText(/Opis grupy testowej\./)).toHaveTextContent("Źródło: NFZ, statystyki JGP 2024.");
     const section = screen.getByRole("region", { name: /Jak wygląda rodzina\?/ });
     expect(section).toHaveTextContent("A01 to 90% hospitalizacji rodziny w 2025 r. (w 2023 r.: 80%)");
     expect(within(section).getByRole("img", { name: "2024: A01 50,0%, A02 50,0%" })).toBeInTheDocument();

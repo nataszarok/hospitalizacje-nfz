@@ -242,7 +242,7 @@ function CardHeader({ data, regions, onClearRegion }: { data: JgpPageData; regio
       <nav className={base.breadcrumbs} aria-label="Ścieżka"><Link href="/jgp">Grupy JGP</Link> <span aria-hidden>›</span> <span>{data.jgpCode}</span></nav>
       <div className={base.eyebrow}>Grupa JGP · {data.procedural ? "zabiegowa" : "zachowawcza"}</div>
       <h1 className={styles.title}><span className={base.code}>{data.jgpCode}</span> {data.name}</h1>
-      {data.description ? <p className={styles.desc}>{data.description} <small>(opis redakcyjny; słownik NFZ podaje tylko nazwę grupy)</small></p> : null}
+      {data.description ? <p className={styles.desc}>{data.description.sentences.join(" ")} <small>{data.description.source}</small></p> : null}
       <p className={styles.meta}>
         {data.valuation?.points ? <span>Wycena <b>{integer(data.valuation.points)} pkt</b> (katalog {data.valuation.year})</span> : null}
         <span>Produkt {data.productCodes.join(", ")}</span>

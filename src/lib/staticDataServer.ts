@@ -4,6 +4,7 @@ import { gunzipSync } from "node:zlib";
 import type { FinancialRecordSummary, HospitalProfileSummary } from "@/lib/hospitalHomeStats";
 import type { RegionsMap } from "@/lib/jgpCard";
 import type { JgpGroupFile, JgpPagesIndex, JgpPeerPair } from "@/lib/jgpPage";
+import type { JgpProfilesFile } from "@/lib/jgpDescription";
 import { decodeValuations, type JgpValuation, type ValuationsFile } from "@/lib/valuations";
 import { decodeJgpGroupFile, decodeStaticDataset, decodeTrends, type JgpGroupFileColumns, type StaticDatasetFile, type TrendsFile } from "@/lib/hospitalizationCodec";
 import type { HospitalizationIndex, StaticDataset, TrendsDataset } from "@/lib/staticData";
@@ -94,6 +95,17 @@ export async function readPeerPairsFromDisk(file = join(DATA_DIR, "peer_pairs_ab
     promise = readGzipJson<{ rows: JgpPeerPair[] }>(file)
       .then((data) => data.rows.map(({ a, b, peer_grade_pred, distance_score }) => ({ a, b, peer_grade_pred, distance_score })));
     peerPairsCache.set(file, promise);
+  }
+  return promise;
+}
+
+/** Profile grup z API statystyk JGP (`scripts/build_jgp_profiles.py`) albo `null`, gdy pliku nie ma. Jeden odczyt na build. */
+const profilesCache = new Map<string, Promise<JgpProfilesFile | null>>();
+export async function readJgpProfilesFromDisk(file = join(BUILD_DATA_DIR, "jgp_profiles.json.gz")): Promise<JgpProfilesFile | null> {
+  let promise = profilesCache.get(file);
+  if (!promise) {
+    promise = access(file).then(() => readGzipJson<JgpProfilesFile>(file), () => null);
+    profilesCache.set(file, promise);
   }
   return promise;
 }
