@@ -2,11 +2,13 @@
 
 import { useMemo, useState } from "react";
 import { AreaStatsPopover } from "@/components/AreaStatsPopover";
+import { InfoTip } from "@/components/InfoTip";
 import { ChartScaleControl } from "@/components/ChartScaleControl";
 import { MortalityChart } from "@/components/MortalityChart";
 import { MortalityDisplayControl } from "@/components/MortalityDisplayControl";
 import { SortableTableHeader } from "@/components/SortableTableHeader";
 import { JgpCodeLinks, ProviderLink } from "@/components/TableLinks";
+import type { AnalysisArea } from "@/lib/area";
 import { formatCityName } from "@/lib/formatters";
 import {
   aggregateMortalityRowsByProvider,
@@ -37,9 +39,8 @@ type MortalityTabProps = {
   selectedProducts: string[];
   axisMode: AxisMode;
   setAxisMode: (value: AxisMode) => void;
-  geoMode: GeographyMode;
-  highlightedRegions: string[];
-  highlightedCities: string[];
+  /** Obszary analizy wyróżnione kolorami na wykresie (pusta lista = bez wyróżnień). */
+  highlightAreas: AnalysisArea[];
   displayMode: MortalityDisplayMode;
   setDisplayMode: (value: MortalityDisplayMode) => void;
 };
@@ -52,12 +53,13 @@ export function MortalityTab({
   selectedProducts,
   axisMode,
   setAxisMode,
-  geoMode,
-  highlightedRegions,
-  highlightedCities,
+  highlightAreas,
   displayMode,
   setDisplayMode,
 }: MortalityTabProps) {
+  // Panel statystyk obszarów ma jeden poziom: miasta, gdy wybrano tylko miasta; w pozostałych przypadkach województwa.
+  const geoMode: GeographyMode = highlightAreas.length && highlightAreas.every((area) => area.kind === "city") ? "cities" : "regions";
+  const selectedAreaKeys = highlightAreas.flatMap((area) => geoMode === "regions" ? (area.kind === "region" ? [area.owNfz] : []) : (area.kind === "city" ? [area.city] : []));
   const [sortState, setSortState] = useState<SortState<MortalitySortKey>>(null);
   const canGroupJgp = selectedProducts.length >= 2;
   const effectiveDisplayMode: MortalityDisplayMode = canGroupJgp ? displayMode : "combined";
@@ -109,16 +111,11 @@ export function MortalityTab({
     {error ? <div className="alert">{error}</div> : null}
     <div className={loading ? "content loading" : "content"}>
       <section className="chart-section">
-        <div className="chart-header">
-          <div>
-            <h2>Liczba hospitalizacji a śmiertelność</h2>
-            <p>Każdy punkt to świadczeniodawca.</p>
-          </div>
-        </div>
-
         {data.rows.length > 0 ? (
           <div className="plot-column">
             <div className={`plot-toolbar ${styles.toolbar}`}>
+              {/* Opis wykresu pod „?”: pytanie widoku nad liczbami zastępuje tytuł wykresu. */}
+              <InfoTip label="Każdy punkt to świadczeniodawca: oś X — liczba hospitalizacji, oś Y — śmiertelność (zgony w szpitalu / hospitalizacje). Przełącznik zmienia jednostkę osi X. Obszar wybrany w panelu jest wyróżniony kolorem." ariaLabel="Jak czytać wykres" />
               {canGroupJgp ? (
                 <MortalityDisplayControl value={displayMode} onChange={setDisplayMode} />
               ) : null}
@@ -128,7 +125,7 @@ export function MortalityTab({
                 <AreaStatsPopover
                   kind="mortality"
                   geographyMode={geoMode}
-                  selectedKeys={geoMode === "regions" ? highlightedRegions : highlightedCities}
+                  selectedKeys={selectedAreaKeys}
                   groups={geoMode === "regions" ? data.areaStats.regions : data.areaStats.cities}
                   baselineGroups={geoMode === "regions" ? data.baselineAreaStats.regions : data.baselineAreaStats.cities}
                   products={selectedProductDefinitions}
@@ -142,9 +139,7 @@ export function MortalityTab({
               rows={data.rows}
               axisMode={axisMode}
               displayMode={effectiveDisplayMode}
-              geographyMode={geoMode}
-              highlightedRegions={highlightedRegions}
-              highlightedCities={highlightedCities}
+              highlightAreas={highlightAreas}
               products={selectedProductDefinitions}
               regions={reference.regions}
             />

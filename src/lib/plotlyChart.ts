@@ -1,6 +1,9 @@
+import { OTHER_POINT, REGION_PICK_COLORS } from "@/lib/chartPalette";
+import { areaToValue, inArea, type AnalysisArea } from "@/lib/area";
 import type { GeographyMode } from "@/lib/types";
 
-export const HIGHLIGHT_COLORS = ["#2856A3", "#C65D2E", "#2E7D5B", "#7656A8", "#A06A17"];
+/** Kolory wyróżnionych obszarów: ta sama paleta co na karcie grupy JGP. */
+export const HIGHLIGHT_COLORS = REGION_PICK_COLORS;
 export const PRODUCT_SYMBOLS = [
   "circle",
   "square",
@@ -42,6 +45,22 @@ export function getGeoKey(row: { owNfz: string; city: string }, geographyMode: G
   return geographyMode === "regions" ? row.owNfz : row.city;
 }
 
+/**
+ * Wyróżnienie obszarów na wykresie świadczeniodawców: klucz obszaru (`ow:07`, `c:KRAKÓW`), do którego należy wiersz
+ * (pierwszy pasujący z listy), albo `null`. Kolejność listy = kolejność kolorów.
+ */
+export function areaHighlightKey(areas: AnalysisArea[], row: { owNfz: string; city: string }): string | null {
+  const area = areas.find((candidate) => inArea(candidate, row));
+  return area ? areaToValue(area) : null;
+}
+
+/** Tytuł legendy wyróżnień: województwa, miasta albo obszary (mieszane). */
+export function areaHighlightTitle(areas: AnalysisArea[]): string {
+  if (areas.every((area) => area.kind === "region")) return "Województwa";
+  if (areas.every((area) => area.kind === "city")) return "Miasta";
+  return "Obszary";
+}
+
 export function getCommonPlotLayout(showLegend: boolean) {
   return {
     height: getChartHeight(),
@@ -71,13 +90,14 @@ export function getCommonPlotLayout(showLegend: boolean) {
 }
 
 export function makeDimensionLegendTraces({
-  geographyMode,
+  geoTitle,
   geoSelection,
   geoLabel,
   productCodes,
   productLabel,
 }: {
-  geographyMode: GeographyMode;
+  /** Tytuł grupy legendy wyróżnień, np. „Obszary”. */
+  geoTitle: string;
   geoSelection: string[];
   geoLabel: (key: string) => string;
   productCodes: string[];
@@ -89,9 +109,9 @@ export function makeDimensionLegendTraces({
     traces.push({
       type: "scattergl", mode: "markers", x: [null], y: [null],
       name: "Pozostałe", hoverinfo: "skip",
-      marker: { size: 9, color: "#C7CBD1", symbol: "circle", line: { width: 0.4, color: "#FFFFFF" } },
+      marker: { size: 9, color: OTHER_POINT, symbol: "circle", line: { width: 0.4, color: "#FFFFFF" } },
       legendgroup: "geography",
-      legendgrouptitle: { text: geographyMode === "regions" ? "Województwa" : "Miasta" },
+      legendgrouptitle: { text: geoTitle },
     });
     geoSelection.forEach((key, index) => {
       traces.push({

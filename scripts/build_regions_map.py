@@ -92,6 +92,32 @@ def ring_area_centroid(ring: list[tuple[float, float]]) -> tuple[float, float, f
     return abs(area), cx / (6 * area), cy / (6 * area)
 
 
+def project_regions(features: list[dict]):
+    """Rzutowanie: x = długość × cos(52°), y = −szerokość; potem skala do pudełka o szerokości WIDTH.
+
+    Zwraca województwa w rzucie [(kod OW, nazwa, pierścienie)], funkcję (x, y) → współrzędne pudełka
+    i wysokość pudełka. Ten sam rzut stosuje build_cities_map.py, żeby miasta trafiały na mapę.
+    """
+    projected = []
+    for feature in features:
+        code = OW_BY_NAME.get(normalize(feature["properties"]["nazwa"]))
+        if not code:
+            raise SystemExit(f"nieznane województwo: {feature['properties']['nazwa']}")
+        rings = [[(lon * math.cos(LAT0), -lat) for lon, lat in ring] for polygon in polygons(feature["geometry"]) for ring in polygon]
+        projected.append((code, feature["properties"]["nazwa"], rings))
+    xs = [x for _, _, rings in projected for ring in rings for x, _ in ring]
+    ys = [y for _, _, rings in projected for ring in rings for _, y in ring]
+    min_x, min_y = min(xs), min(ys)
+    scale = WIDTH / (max(xs) - min_x)
+    height = math.ceil((max(ys) - min_y) * scale)
+    return projected, lambda x, y: ((x - min_x) * scale, (y - min_y) * scale), height
+
+
+def lonlat(lon: float, lat: float) -> tuple[float, float]:
+    """Punkt (długość, szerokość) w rzucie przed skalowaniem (jak granice w project_regions)."""
+    return lon * math.cos(LAT0), -lat
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--source", type=Path, default=ROOT / "data" / "maps" / "wojewodztwa-min.geojson")
@@ -104,25 +130,14 @@ def main() -> None:
         urllib.request.urlretrieve(SOURCE_URL, args.source)
     features = json.loads(args.source.read_text(encoding="utf-8"))["features"]
 
-    # Rzutowanie: x = długość × cos(52°), y = −szerokość; potem skala do pudełka o szerokości WIDTH.
-    projected = []
-    for feature in features:
-        code = OW_BY_NAME.get(normalize(feature["properties"]["nazwa"]))
-        if not code:
-            raise SystemExit(f"nieznane województwo: {feature['properties']['nazwa']}")
-        rings = [[(lon * math.cos(LAT0), -lat) for lon, lat in ring] for polygon in polygons(feature["geometry"]) for ring in polygon]
-        projected.append((code, feature["properties"]["nazwa"], rings))
-    xs = [x for _, _, rings in projected for ring in rings for x, _ in ring]
-    ys = [y for _, _, rings in projected for ring in rings for _, y in ring]
-    scale = WIDTH / (max(xs) - min(xs))
-    height = math.ceil((max(ys) - min(ys)) * scale)
+    projected, to_box, height = project_regions(features)
 
     regions = []
     for code, name, rings in sorted(projected):
         parts = []
         best = (0.0, 0.0, 0.0)
         for ring in rings:
-            points = [((x - min(xs)) * scale, (y - min(ys)) * scale) for x, y in ring]
+            points = [to_box(x, y) for x, y in ring]
             points = simplify(points, TOLERANCE)
             rounded = []
             for x, y in points:

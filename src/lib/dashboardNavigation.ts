@@ -3,7 +3,6 @@ import type { HospitalView } from "@/lib/hospitalUrlState";
 
 // Zdarzenia synchronizują nagłówek portalu z widokiem strony bez przeładowania (filtry zostają w stanie).
 export const DASHBOARD_TAB_NAVIGATE_EVENT = "atlas:dashboard-navigate";
-export const DASHBOARD_TAB_CHANGED_EVENT = "atlas:dashboard-tab-changed";
 export const HOSPITAL_VIEW_NAVIGATE_EVENT = "atlas:hospital-view-navigate";
 export const HOSPITAL_VIEW_CHANGED_EVENT = "atlas:hospital-view-changed";
 

@@ -8,11 +8,13 @@ import {
   type MortalityDisplayMode,
   type MortalityDisplayRow,
 } from "@/lib/mortality";
+import { BASE_POINT, OTHER_POINT } from "@/lib/chartPalette";
+import { areaFromValue, areaToValue, type AnalysisArea } from "@/lib/area";
 import {
+  areaHighlightKey,
+  areaHighlightTitle,
   attachHoverMarker,
   getCommonPlotLayout,
-  getGeoKey,
-  getGeoSelection,
   HIGHLIGHT_COLORS,
   makeDimensionLegendTraces,
   makeHoverTrace,
@@ -20,24 +22,21 @@ import {
   PRODUCT_SYMBOLS,
   type PlotElement,
 } from "@/lib/plotlyChart";
-import type { AxisMode, GeographyMode, MortalityRow, ProductOption, RegionOption } from "@/lib/types";
+import type { AxisMode, MortalityRow, ProductOption, RegionOption } from "@/lib/types";
 
 export function MortalityChart({
   rows,
   axisMode,
   displayMode,
-  geographyMode,
-  highlightedRegions,
-  highlightedCities,
+  highlightAreas,
   products,
   regions,
 }: {
   rows: MortalityRow[];
   axisMode: AxisMode;
   displayMode: MortalityDisplayMode;
-  geographyMode: GeographyMode;
-  highlightedRegions: string[];
-  highlightedCities: string[];
+  /** Obszary wyróżnione kolorami (kolejność = kolejność kolorów); reszta punktów jest szara. */
+  highlightAreas: AnalysisArea[];
   products: ProductOption[];
   regions: RegionOption[];
 }) {
@@ -68,16 +67,15 @@ export function MortalityChart({
         ...[...rowProductCodes].filter((code) => !productByCode.has(code)),
       ];
 
-      const geoSelection = getGeoSelection(
-        geographyMode,
-        highlightedRegions,
-        highlightedCities,
-      );
+      const geoSelection = highlightAreas.map(areaToValue);
 
-      const geoLabel = (key: string) => geographyMode === "regions"
-        ? (regionByCode.get(key) ?? `Województwo ${key}`)
-        : formatCityName(key);
+      const geoLabel = (key: string) => {
+        const area = areaFromValue(key);
+        return area.kind === "region" ? (regionByCode.get(area.owNfz) ?? `Województwo ${area.owNfz}`) : area.kind === "city" ? formatCityName(area.city) : key;
+      };
 
+      // Bez wyróżnienia punkty są niebieskie; z wyróżnieniem pozostałe szare (jak na karcie grupy JGP).
+      const restColor = geoSelection.length ? OTHER_POINT : BASE_POINT;
       const isCombined = displayMode === "combined";
       const showLegend = geoSelection.length > 0 || (!isCombined && productCodes.length > 1);
 
@@ -111,7 +109,8 @@ export function MortalityChart({
         ]),
         marker: {
           size: emphasized ? 11 : 9,
-          opacity: emphasized ? 0.94 : 0.68,
+          // Kolory tła mają już przezroczystość z palety.
+          opacity: emphasized ? 0.94 : 1,
           symbol: isCombined || productCodes.length === 1
             ? "circle"
             : PRODUCT_SYMBOLS[productIndex % PRODUCT_SYMBOLS.length],
@@ -139,16 +138,16 @@ export function MortalityChart({
       if (isCombined) {
         const chartRows = aggregateMortalityRowsByProvider(rows);
         const remaining = chartRows.filter(
-          (row) => !geoSelection.includes(getGeoKey(row, geographyMode)),
+          (row) => areaHighlightKey(highlightAreas, row) === null,
         );
 
         if (remaining.length > 0) {
-          traces.push(makeTrace(remaining, 0, "Pozostałe", "#C7CBD1"));
+          traces.push(makeTrace(remaining, 0, "Pozostałe", restColor));
         }
 
         geoSelection.forEach((key, geoIndex) => {
           const subset = chartRows.filter(
-            (row) => getGeoKey(row, geographyMode) === key,
+            (row) => areaHighlightKey(highlightAreas, row) === key,
           );
 
           if (subset.length > 0) {
@@ -169,7 +168,7 @@ export function MortalityChart({
           const productLabel = productByCode.get(productCode)?.jgpCode ?? productCode;
 
           const remaining = productRows.filter(
-            (row) => !geoSelection.includes(getGeoKey(row, geographyMode)),
+            (row) => areaHighlightKey(highlightAreas, row) === null,
           );
 
           if (remaining.length > 0) {
@@ -177,13 +176,13 @@ export function MortalityChart({
               remaining,
               productIndex,
               `Pozostałe · ${productLabel}`,
-              "#C7CBD1",
+              restColor,
             ));
           }
 
           geoSelection.forEach((key, geoIndex) => {
             const subset = productRows.filter(
-              (row) => getGeoKey(row, geographyMode) === key,
+              (row) => areaHighlightKey(highlightAreas, row) === key,
             );
 
             if (subset.length > 0) {
@@ -200,7 +199,7 @@ export function MortalityChart({
       }
 
       traces.push(...makeDimensionLegendTraces({
-        geographyMode,
+        geoTitle: areaHighlightTitle(highlightAreas),
         geoSelection,
         geoLabel,
         productCodes: isCombined ? [] : productCodes,
@@ -268,9 +267,7 @@ export function MortalityChart({
     rows,
     axisMode,
     displayMode,
-    geographyMode,
-    highlightedRegions,
-    highlightedCities,
+    highlightAreas,
     products,
     productByCode,
     regionByCode,

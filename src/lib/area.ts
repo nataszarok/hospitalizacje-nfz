@@ -54,6 +54,46 @@ export function areaMatcher(d: StaticDataset, area: AnalysisArea | undefined): (
   return (ow, nip) => inCity.has(`${ow}|${nip}`);
 }
 
+/** Najwięcej obszarów wybranych naraz (kolory wyróżnień na wykresach i mapie). */
+export const MAX_AREAS = 5;
+
+/** Wartość adresu i pola wyboru dla listy obszarów (pusta lista = cała Polska). */
+export const areasToValues = (areas: AnalysisArea[]) => areas.filter((area) => area.kind !== "country").map(areaToValue);
+
+export function areasFromValues(values: string[]): AnalysisArea[] {
+  const seen = new Set<string>();
+  return values.map(areaFromValue).filter((area) => {
+    const value = areaToValue(area);
+    if (area.kind === "country" || seen.has(value)) return false;
+    seen.add(value);
+    return true;
+  }).slice(0, MAX_AREAS);
+}
+
+/** Obszary istniejące w słowniku danego roku (pozostałe wypadają). */
+export function validAreas(areas: AnalysisArea[], reference: ReferencePayload): AnalysisArea[] {
+  return areas.map((area) => validArea(area, reference)).filter((area) => area.kind !== "country");
+}
+
+/** Opis listy obszarów, np. „woj. mazowieckie, Kraków”; pusta lista = „cała Polska”. */
+export function areasLabel(areas: AnalysisArea[], reference: Pick<ReferencePayload, "regions">): string {
+  return areas.length ? areas.map((area) => areaLabel(area, reference)).join(", ") : "cała Polska";
+}
+
+/** Czy świadczeniodawca (OW NFZ, miasto siedziby) należy do obszaru. */
+export function inArea(area: AnalysisArea, row: { owNfz: string; city: string }): boolean {
+  if (area.kind === "region") return row.owNfz === area.owNfz;
+  if (area.kind === "city") return row.city.trim() === area.city;
+  return true;
+}
+
+/** Jak `areaMatcher`, ale dla kilku obszarów naraz: świadczeniodawca należy do któregokolwiek; pusta lista = cały kraj. */
+export function areasMatcher(d: StaticDataset, areas: AnalysisArea[] | undefined): ((ow: string, nip: string) => boolean) | null {
+  const matchers = (areas ?? []).map((area) => areaMatcher(d, area)).filter((match): match is (ow: string, nip: string) => boolean => match !== null);
+  if (!matchers.length) return null;
+  return (ow, nip) => matchers.some((match) => match(ow, nip));
+}
+
 /**
  * Województwo (OW NFZ), w którym świadczeniodawcy z danego miasta mają najwięcej hospitalizacji wybranych produktów.
  * Trend miesięczny nie ma podziału na miasta, więc dla miasta pokazujemy to województwo. `null` = brak danych.

@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 
 import "@testing-library/jest-dom/vitest";
+import type { AnalysisArea } from "@/lib/area";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { AdmissionTab } from "@/components/AdmissionTab";
@@ -21,6 +22,7 @@ vi.mock("@mantine/core", () => ({
   SegmentedControl: ({ value }: { value: string }) => <div data-testid="segmented-control">{value}</div>,
 }));
 
+vi.mock("@/components/InfoTip", () => ({ InfoTip: ({ label }: { label: string }) => <span role="note">{label}</span> }));
 vi.mock("@/components/MortalityChart", () => ({
   MortalityChart: () => <div data-testid="mortality-chart" />,
 }));
@@ -105,14 +107,18 @@ const commonProps = {
   selectedProducts: ["P1"],
   axisMode: "total" as const,
   setAxisMode: vi.fn(),
-  geoMode: "regions" as const,
-  highlightedRegions: [] as string[],
-  highlightedCities: [] as string[],
+  highlightAreas: [] as AnalysisArea[],
   displayMode: "combined" as const,
   setDisplayMode: vi.fn(),
 };
 
 describe("MortalityTab data table", () => {
+  it("has no chart title; the chart description is behind the „?” tooltip", () => {
+    render(<MortalityTab {...commonProps} data={mortalityPayload([mortalityRow()])} />);
+    expect(screen.queryByRole("heading", { name: "Liczba hospitalizacji a śmiertelność" })).not.toBeInTheDocument();
+    expect(screen.getByRole("note")).toHaveTextContent(/Każdy punkt to świadczeniodawca/);
+  });
+
   it("renders the expected columns and formatted values", () => {
     render(<MortalityTab {...commonProps} data={mortalityPayload([mortalityRow()])} />);
 
@@ -272,6 +278,12 @@ describe("MortalityTab data table", () => {
 });
 
 describe("AdmissionTab data table", () => {
+  it("has no chart title; the axis description is behind the „?” tooltip", () => {
+    render(<AdmissionTab {...commonProps} data={admissionPayload([admissionRow()])} />);
+    expect(screen.queryByRole("heading", { name: "Przyjęcia planowane a nagłe" })).not.toBeInTheDocument();
+    expect(screen.getByRole("note")).toHaveTextContent(/oś Y sumę przyjęć nagłych/);
+  });
+
   it("renders the expected columns and rounds all admission counts", () => {
     render(<AdmissionTab {...commonProps} data={admissionPayload([admissionRow()])} />);
 

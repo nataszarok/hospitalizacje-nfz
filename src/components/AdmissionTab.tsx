@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { AdmissionChart } from "@/components/AdmissionChart";
 import { AreaStatsPopover } from "@/components/AreaStatsPopover";
+import { InfoTip } from "@/components/InfoTip";
 import { ChartScaleControl } from "@/components/ChartScaleControl";
 import { MortalityDisplayControl } from "@/components/MortalityDisplayControl";
 import { SortableTableHeader } from "@/components/SortableTableHeader";
@@ -11,6 +12,7 @@ import {
   admissionRowsPerJgp,
   aggregateAdmissionRowsByProvider,
 } from "@/lib/admissions";
+import type { AnalysisArea } from "@/lib/area";
 import { formatCityName } from "@/lib/formatters";
 import type { MortalityDisplayMode } from "@/lib/mortality";
 import { nextSortState, sortTableRows, type SortState } from "@/lib/tableSort";
@@ -35,9 +37,7 @@ export function AdmissionTab({
   selectedProducts,
   axisMode,
   setAxisMode,
-  geoMode,
-  highlightedRegions,
-  highlightedCities,
+  highlightAreas,
   displayMode,
   setDisplayMode,
 }: {
@@ -48,13 +48,14 @@ export function AdmissionTab({
   selectedProducts: string[];
   axisMode: AxisMode;
   setAxisMode: (value: AxisMode) => void;
-  geoMode: GeographyMode;
-  highlightedRegions: string[];
-  highlightedCities: string[];
+  /** Obszary analizy wyróżnione kolorami na wykresie (pusta lista = bez wyróżnień). */
+  highlightAreas: AnalysisArea[];
   displayMode: MortalityDisplayMode;
   setDisplayMode: (value: MortalityDisplayMode) => void;
 }) {
-  const selectedAreaKeys = geoMode === "regions" ? highlightedRegions : highlightedCities;
+  // Panel statystyk obszarów ma jeden poziom: miasta, gdy wybrano tylko miasta; w pozostałych przypadkach województwa.
+  const geoMode: GeographyMode = highlightAreas.length && highlightAreas.every((area) => area.kind === "city") ? "cities" : "regions";
+  const selectedAreaKeys = highlightAreas.flatMap((area) => geoMode === "regions" ? (area.kind === "region" ? [area.owNfz] : []) : (area.kind === "city" ? [area.city] : []));
   const [sortState, setSortState] = useState<SortState<AdmissionSortKey>>(null);
   const canGroupJgp = selectedProducts.length >= 2;
   const effectiveDisplayMode: MortalityDisplayMode = canGroupJgp ? displayMode : "combined";
@@ -99,16 +100,11 @@ export function AdmissionTab({
     {error ? <div className="alert">{error}</div> : null}
     <div className={loading ? "content loading" : "content"}>
       <section className="chart-section">
-        <div className="chart-header">
-          <div>
-            <h2>Przyjęcia planowane a nagłe</h2>
-            <p>Każdy punkt to świadczeniodawca. Oś X pokazuje przyjęcia planowane (kod 6), a oś Y sumę przyjęć nagłych (kody 2 i 3). Przełącznik zmienia jednostkę obu osi.</p>
-          </div>
-        </div>
-
         {data.rows.length > 0 ? (
           <div className="plot-column">
             <div className={`plot-toolbar ${styles.toolbar}`}>
+              {/* Opis wykresu pod „?”: pytanie widoku nad liczbami zastępuje tytuł wykresu. */}
+              <InfoTip label="Każdy punkt to świadczeniodawca. Oś X pokazuje przyjęcia planowane (kod 6), a oś Y sumę przyjęć nagłych (kody 2 i 3). Przełącznik zmienia jednostkę obu osi. Obszar wybrany w panelu jest wyróżniony kolorem." ariaLabel="Jak czytać wykres" />
               {canGroupJgp ? (
                 <MortalityDisplayControl value={displayMode} onChange={setDisplayMode} />
               ) : null}
@@ -130,9 +126,7 @@ export function AdmissionTab({
               rows={data.rows}
               axisMode={axisMode}
               displayMode={effectiveDisplayMode}
-              geographyMode={geoMode}
-              highlightedRegions={highlightedRegions}
-              highlightedCities={highlightedCities}
+              highlightAreas={highlightAreas}
               products={reference.products}
               regions={reference.regions}
             />

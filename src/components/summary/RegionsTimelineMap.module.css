@@ -1,16 +1,5 @@
 /* Mapa województw w latach: suwak roku, odtwarzanie, wspólna skala koloru. */
 .wrap { display: grid; gap: 8px; }
-.controls { display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; gap: 12px; align-items: center; }
-.play { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--color-border-strong); background: #fff; color: #1B3D78; display: grid; place-items: center; cursor: pointer; padding: 0; }
-.play:hover { border-color: var(--color-primary); background: var(--color-primary-soft); }
-.play:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
-.play svg { width: 14px; height: 14px; fill: currentColor; }
-.track { min-width: 0; }
-.slider { display: block; width: 100%; margin: 0; accent-color: #2856A3; }
-.year { font-size: var(--fs-2xl); font-weight: var(--fw-bold); color: #1B3D78; font-variant-numeric: tabular-nums; min-width: 54px; text-align: right; }
-/* Podziałka: środek pierwszej i ostatniej etykiety pod końcami suwaka (uchwyt ok. 16 px). */
-.ticks { display: flex; justify-content: space-between; margin: 2px -4px 0; font-size: var(--fs-xs); color: var(--color-text-tertiary); font-variant-numeric: tabular-nums; }
-.tickActive { color: #1B3D78; font-weight: var(--fw-bold); }
 .map { display: block; width: 100%; max-width: 420px; height: auto; margin: 4px auto 0; }
 .mapLink { cursor: pointer; }
 .mapShape { stroke: #fff; stroke-width: 2; stroke-linejoin: round; transition: fill .35s, filter .15s; }
@@ -23,4 +12,3 @@
 .scale { width: 140px; height: 8px; border-radius: 4px; }
 .national { margin: 0; text-align: center; font-size: var(--fs-base); color: var(--color-text-secondary); }
 .national strong { color: #1B3D78; }
-@media (max-width: 550px) { .ticks span:nth-child(even) { visibility: hidden; } }

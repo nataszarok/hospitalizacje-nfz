@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { SiteHeader } from "@/components/portal/SiteHeader";
 import {
-  DASHBOARD_TAB_CHANGED_EVENT, DASHBOARD_TAB_NAVIGATE_EVENT, HOSPITAL_VIEW_CHANGED_EVENT, HOSPITAL_VIEW_NAVIGATE_EVENT,
+  DASHBOARD_TAB_NAVIGATE_EVENT, HOSPITAL_VIEW_CHANGED_EVENT, HOSPITAL_VIEW_NAVIGATE_EVENT,
 } from "@/lib/dashboardNavigation";
 
 const navigation = vi.hoisted(() => ({ pathname: "/" }));
@@ -37,7 +37,7 @@ describe("SiteHeader", () => {
 
   it("ma siedem pozycji w kolejności od podsumowania do szczegółów", () => {
     render(<SiteHeader />);
-    const items = [...nav().querySelectorAll(":scope > a, :scope > div > button")].map((item) => item.textContent?.trim());
+    const items = [...nav().querySelectorAll(":scope > a")].map((item) => item.textContent?.trim());
     expect(items).toEqual(["Start", "Przegląd", "Grupy JGP", "Eksplorator danych", "Szpitale", "Porównania", "O danych"]);
     expect(screen.getByRole("link", { name: "Przegląd" })).toHaveAttribute("href", "/hospitalizacje");
   });
@@ -53,10 +53,14 @@ describe("SiteHeader", () => {
     expect(screen.getByRole("link", { name: label })).toHaveAttribute("aria-current", "page");
   });
 
-  it("na /analizy oznacza aktywną sekcję Eksplorator danych", () => {
-    openPage("/analizy");
+  it("Eksplorator danych to jeden link do /analizy, bez menu widoków", () => {
+    openPage("/analizy", "?t=k");
     render(<SiteHeader />);
-    expect(screen.getByRole("button", { name: /Eksplorator danych/ }).className).toMatch(/linkActive/);
+    const link = screen.getByRole("link", { name: "Eksplorator danych" });
+    expect(link).toHaveAttribute("href", "/analizy");
+    expect(link).toHaveAttribute("aria-current", "page");
+    expect(screen.queryByRole("button", { name: /Eksplorator danych/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /Kto leczy|Tryb przyjęcia|Gdzie|W czasie/ })).not.toBeInTheDocument();
   });
 
   it.each(["/jgp", "/jgp/E10"])("na %s oznacza aktywną pozycję Grupy JGP", (pathname) => {
@@ -64,19 +68,18 @@ describe("SiteHeader", () => {
     render(<SiteHeader />);
     expect(screen.getByRole("link", { name: "Grupy JGP" })).toHaveAttribute("href", "/jgp");
     expect(screen.getByRole("link", { name: "Grupy JGP" })).toHaveAttribute("aria-current", "page");
-    expect(screen.getByRole("button", { name: /Eksplorator danych/ }).className).not.toMatch(/linkActive/);
+    expect(screen.getByRole("link", { name: "Eksplorator danych" })).not.toHaveAttribute("aria-current");
   });
 
-  it("na /analizy przełącza widok zdarzeniem zamiast przeładowania strony", () => {
-    openPage("/analizy");
+  it("na /analizy wraca do pierwszego widoku zdarzeniem zamiast przeładowania strony", () => {
+    openPage("/analizy", "?t=g");
     const listener = vi.fn();
     window.addEventListener(DASHBOARD_TAB_NAVIGATE_EVENT, listener);
     render(<SiteHeader />);
-    fireEvent.click(screen.getByRole("button", { name: /Eksplorator danych/ }));
-    const event = click(screen.getByRole("link", { name: /Gdzie/ }));
+    const event = click(screen.getByRole("link", { name: "Eksplorator danych" }));
     window.removeEventListener(DASHBOARD_TAB_NAVIGATE_EVENT, listener);
     expect(event.defaultPrevented).toBe(true);
-    expect(listener.mock.calls[0][0].detail).toEqual({ tab: "regions" });
+    expect(listener.mock.calls[0][0].detail).toEqual({ tab: "trend" });
   });
 
   it("na /szpitale przełącza Profil i Porównanie zdarzeniem", () => {
@@ -107,27 +110,6 @@ describe("SiteHeader", () => {
     render(<SiteHeader />);
     act(() => { window.dispatchEvent(new CustomEvent(HOSPITAL_VIEW_CHANGED_EVENT, { detail: { view: "comparison" } })); });
     expect(screen.getByRole("link", { name: "Porównania" })).toHaveAttribute("aria-current", "page");
-    cleanup();
-
-    openPage("/analizy");
-    render(<SiteHeader />);
-    act(() => { window.dispatchEvent(new CustomEvent(DASHBOARD_TAB_CHANGED_EVENT, { detail: { tab: "admissions" } })); });
-    fireEvent.click(screen.getByRole("button", { name: /Eksplorator danych/ }));
-    expect(screen.getByRole("link", { name: /Tryb przyjęcia/ })).toHaveAttribute("aria-current", "page");
-  });
-
-  it("menu analiz ma cztery widoki i zamyka się klawiszem Escape", () => {
-    render(<SiteHeader />);
-    const trigger = screen.getByRole("button", { name: /Eksplorator danych/ });
-    fireEvent.click(trigger);
-    expect(trigger).toHaveAttribute("aria-expanded", "true");
-    expect(screen.getByRole("link", { name: /W czasie/ })).toHaveAttribute("href", "/analizy");
-    expect(screen.getByRole("link", { name: /Kto leczy/ })).toHaveAttribute("href", "/analizy?t=k");
-    expect(screen.getByRole("link", { name: /Tryb przyjęcia/ })).toHaveAttribute("href", "/analizy?t=a");
-    expect(screen.getByRole("link", { name: /Gdzie/ })).toHaveAttribute("href", "/analizy?t=g");
-    fireEvent.keyDown(document, { key: "Escape" });
-    expect(trigger).toHaveAttribute("aria-expanded", "false");
-    expect(nav()).toBeInTheDocument();
   });
 
   it("przełącza menu mobilne", () => {
