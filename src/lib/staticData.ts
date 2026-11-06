@@ -2,6 +2,7 @@ import type { AdmissionPayload, AdmissionRow, EstimationMethod, MortalityPayload
 import { areaMatcher, type AnalysisArea } from "@/lib/area";
 import { decodeRegionalTrends, decodeStaticDataset, decodeTrends, type RegionalTrendsFile, type StaticDatasetFile, type TrendsFile } from "@/lib/hospitalizationCodec";
 import { summarize, summarizeAdmissionGeographies, summarizeGeographies } from "@/lib/query";
+import type { CalibrationSummary } from "@/lib/calibration";
 
 type ProductTuple = [string, string | null, string | null];
 type RegionTuple = [string, string];
@@ -29,6 +30,8 @@ export interface HospitalizationIndex {
   years: string[];
   latestYear: string;
   defaultProductCode: string;
+  /** Lata z metodą cal (kolumny hCal/dCal) i podsumowanie kalibracji; aplikacja na razie używa min i sim. */
+  calibration?: Record<string, CalibrationSummary>;
 }
 
 /** Grupa trybu przyjęcia w trendach: p = planowe (6), u = nagłe (2, 3), o = pozostałe. */

@@ -28,3 +28,6 @@ pipeline.md
 CLAUDE.md
 AGENTS.md
 .claude/
+
+# Dokumenty robocze (koncepcje, analizy, roadmapa) trzymamy lokalnie, poza repozytorium
+/docs/

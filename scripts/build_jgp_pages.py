@@ -34,7 +34,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from build_hospitalizations import ALL_YEARS, ROOT, VALUE_COLS, columns, iter_frames, source_path, write_json_gz
+from build_hospitalizations import ALL_YEARS, ROOT, VALUE_COLS, columns, iter_frames, load_provider_codes, source_path, write_json_gz
 
 SETTLEMENTS_FILE = "zestawienie_swiadczen_2019_2026.csv"
 PROVIDERS_FILE = "nfz_swiadczeniodawcy_2025.csv"
@@ -77,8 +77,8 @@ def read_settlements(data_dir: Path, groups: set[str], provider_year: str) -> di
     if not path.exists():
         print(f"Uwaga: brak {path.name} — pliki grup bez kwot rozliczeń.")
         return {}
-    providers = pd.read_csv(data_dir / PROVIDERS_FILE, dtype=str, encoding="utf-8-sig")
-    nip_by_code = dict(zip(providers["oddzial_nfz"].str.zfill(2) + "|" + providers["kod"].str.strip(), providers["nip"].str.strip()))
+    # NIP-y potrzebne tylko dla roku kwot świadczeniodawców.
+    nip_by_code = load_provider_codes(data_dir, provider_year)
     frame = pd.read_csv(path, sep=";", dtype=str, usecols=[
         "Rok", "Oddzial_wojewodzki_NFZ", "Kod_swiadczeniodawcy", "Nazwa_produktu_jednostkowego", "Wartosc_jednostek_rozliczonych",
     ])

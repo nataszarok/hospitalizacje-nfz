@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { DASHBOARD_HREFS } from "@/lib/dashboardNavigation";
 import { SITE_NAME } from "@/lib/site";
+import { BELOW5_METHOD_HREF } from "./Below5MethodPage";
 import styles from "./AboutDataPage.module.css";
 
 const HOSPITALIZATIONS_SOURCE_URL = "https://dane.gov.pl/en/dataset/3009,dane-dotyczace-hospitalizacji-rozliczonych-jgp-w-l/resource/2231001/table";
@@ -40,6 +41,11 @@ export function AboutDataPage({ yearFrom, yearTo }: { yearFrom: string; yearTo: 
         <li><strong>Symulacyjna</strong>: wartości 1–4 losowane z rozkładu, w którym mniejsze liczby są bardziej prawdopodobne. Losowanie jest stałe, więc wyniki się powtarzają.</li>
       </ul>
       <p>Metoda wpływa także na liczbę zgonów, gdy wartość &lt;5 dotyczy hospitalizacji zakończonych zgonem.</p>
+      <p>
+        Przygotowujemy trzecią metodę, kalibrowaną: szacunek dla każdego świadczeniodawcy i zakresu, dopasowany do sum krajowych
+        ze statystyk JGP NFZ, z użyciem punktów rozliczonych i liczby pacjentów.
+      </p>
+      <p className={styles.links}><Link href={BELOW5_METHOD_HREF}>Jak szacujemy wartości &lt;5 — opis metody →</Link></p>
     </section>
 
     <section className={styles.card}>

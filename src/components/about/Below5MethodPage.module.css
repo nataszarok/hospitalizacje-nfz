@@ -1,0 +1,154 @@
+.page {
+  width: min(calc(100% - var(--atlas-page-gutter) - var(--atlas-page-gutter)), 880px);
+  margin: 0 auto;
+  padding: 20px 0 56px;
+  color: #172033;
+}
+
+.back {
+  margin: 0 0 8px;
+  font-size: var(--fs-md);
+}
+
+.header h1 {
+  margin: 0;
+  font-size: var(--fs-title);
+}
+
+.header p {
+  margin: 6px 0 16px;
+  color: #475467;
+}
+
+.status {
+  padding: 12px 16px;
+  border: 1px solid #b7dcd6;
+  border-radius: 12px;
+  background: #eef7f5;
+  font-size: var(--fs-md);
+  line-height: 1.55;
+}
+
+.status p {
+  margin: 0;
+}
+
+.card {
+  margin-top: 14px;
+  padding: 18px 20px;
+  border: 1px solid #e4e7ec;
+  border-radius: 12px;
+  background: #fff;
+  font-size: var(--fs-lg);
+  line-height: 1.6;
+}
+
+.card h2 {
+  margin: 0 0 8px;
+  font-size: var(--fs-xl);
+}
+
+.card h3 {
+  margin: 0 0 6px;
+  font-size: var(--fs-lg);
+}
+
+.card p {
+  margin: 0 0 8px;
+}
+
+.card ul,
+.card ol {
+  margin: 0 0 8px;
+  padding-left: 20px;
+}
+
+.card li {
+  margin-bottom: 4px;
+}
+
+.card code {
+  font-size: var(--fs-base);
+  padding: 0 3px;
+  border-radius: 4px;
+  background: #f2f4f7;
+}
+
+.formula {
+  margin: 8px 0 10px;
+  padding: 10px 14px;
+  border: 1px solid #e4e7ec;
+  border-radius: 10px;
+  background: #f8faf9;
+  font-variant-numeric: tabular-nums;
+  overflow-x: auto;
+}
+
+.note {
+  color: #667085;
+  font-size: var(--fs-md);
+}
+
+.methods {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 12px;
+}
+
+.method {
+  padding: 12px 14px;
+  border: 1px solid #e4e7ec;
+  border-radius: 10px;
+}
+
+.method ul {
+  margin: 0;
+}
+
+.scroll {
+  overflow-x: auto;
+  margin-bottom: 8px;
+}
+
+.scroll table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-md);
+  font-variant-numeric: tabular-nums;
+}
+
+.scroll th,
+.scroll td {
+  padding: 6px 8px;
+  border-bottom: 1px solid #e4e7ec;
+  text-align: left;
+  vertical-align: top;
+}
+
+.scroll th {
+  position: static;
+  width: auto;
+  color: #667085;
+  font-weight: var(--fw-semibold);
+}
+
+.scroll table {
+  table-layout: auto;
+}
+
+.sources {
+  table-layout: fixed;
+  min-width: 560px;
+}
+
+.sources th:nth-child(1) {
+  width: 30%;
+}
+
+.sources th:nth-child(2) {
+  width: 22%;
+}
+
+.sources th:nth-child(3) {
+  width: 48%;
+}

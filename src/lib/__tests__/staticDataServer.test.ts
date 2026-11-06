@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { gzipSync } from "node:zlib";
 import { afterEach, describe, expect, it } from "vitest";
-import { readAllStaticDatasetsFromDisk, readHospitalizationIndexFromDisk, readJgpSettlementsFromDisk, readStaticDatasetFromDisk } from "@/lib/staticDataServer";
+import { readAllStaticDatasetsFromDisk, readCalibrationSummariesFromDisk, readHospitalizationIndexFromDisk, readJgpSettlementsFromDisk, readStaticDatasetFromDisk } from "@/lib/staticDataServer";
 
 let dir = "";
 afterEach(async () => { if (dir) await rm(dir, { recursive: true, force: true }); });
@@ -56,5 +56,26 @@ describe("readJgpSettlementsFromDisk", () => {
 
   it("zwraca null, gdy plików grup nie zbudowano", async () => {
     await expect(readJgpSettlementsFromDisk("/nie/ma/takiego/katalogu")).resolves.toBeNull();
+  });
+});
+
+describe("readCalibrationSummariesFromDisk", () => {
+  it("czyta podsumowania kalibracji z index.json od najstarszego roku", async () => {
+    dir = await mkdtemp(join(tmpdir(), "atlas-cal-"));
+    const summary = (year: string, staysCal: number) => ({
+      year, method: "cal-v4", cells: 1, groups: 1, groupsA: 0, groupsB: 1, groupsWithoutApi: 0, staysMin: 2, staysCal, staysApi: staysCal,
+      deathsMin: 0, deathsCal: 0, deathsApi: 0, groupsStaysEqualApi: 1, groupsDeathsEqualApi: 1, cellsBelowPatients: 0, groupsBelowPatients: 0,
+    });
+    await writeFile(join(dir, "index.json"), JSON.stringify({
+      version: 1, years: ["2023", "2024"], latestYear: "2024", defaultProductCode: "P1",
+      calibration: { "2024": summary("2024", 5), "2023": summary("2023", 3) },
+    }));
+    const summaries = await readCalibrationSummariesFromDisk(dir);
+    expect(summaries.map((s) => [s.year, s.staysCal])).toEqual([["2023", 3], ["2024", 5]]);
+  });
+
+  it("zwraca pustą listę, gdy index.json nie ma kalibracji", async () => {
+    await writeYears(["2025"]);
+    await expect(readCalibrationSummariesFromDisk(dir)).resolves.toEqual([]);
   });
 });

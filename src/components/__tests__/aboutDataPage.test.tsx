@@ -15,6 +15,7 @@ describe("AboutDataPage", () => {
     expect(screen.getByRole("link", { name: /zbiór danych o hospitalizacjach/ })).toHaveAttribute("href", expect.stringContaining("dane.gov.pl"));
     expect(screen.getByRole("link", { name: "Przejdź do analiz →" })).toHaveAttribute("href", "/analizy");
     expect(screen.getByRole("link", { name: "Profile szpitali →" })).toHaveAttribute("href", "/szpitale");
+    expect(screen.getByRole("link", { name: /Jak szacujemy wartości <5/ })).toHaveAttribute("href", "/o-danych/szacowanie-ponizej-5");
   });
 
   it("dla jednego roku pokazuje sam rok", () => {
