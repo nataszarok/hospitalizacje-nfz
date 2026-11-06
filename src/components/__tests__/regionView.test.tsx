@@ -115,18 +115,42 @@ describe("RegionView", () => {
   it("legenda: kolory i wielkość kropek w jednym układzie", async () => {
     render(<RegionView productCodes={["P1"]} year="2025" method="min" areas={[{ kind: "city", city: "KATOWICE" }]} />);
     await openCities();
-    expect(screen.getByText("Kolor")).toBeInTheDocument();
+    expect(screen.getByText(/Hospitalizacje placówki wobec mediany roku/)).toBeInTheDocument();
     expect(screen.getByText("Hospitalizacje w roku")).toBeInTheDocument();
-    expect(screen.getByText("pozostałe placówki")).toBeInTheDocument();
+    expect(screen.getByText("Obszary")).toBeInTheDocument();
     expect(screen.getAllByText("Katowice").length).toBeGreaterThan(0);
   });
 
-  it("wybrane obszary mają kolory wyróżnień, a tabela miast pokazuje tylko ich miasta", async () => {
+  it("kolor kropki: hospitalizacje placówki wobec mediany placówek w roku mapy", async () => {
+    render(<RegionView productCodes={["P1"]} year="2025" method="min" />);
+    const map = await openCities();
+    const alfa = within(map).getByRole("button", { name: /^Szpital Alfa/ });
+    const beta = within(map).getByRole("button", { name: /^Szpital Beta/ });
+    expect(alfa.getAttribute("fill")).toMatch(/^rgb\(/);
+    expect(alfa.getAttribute("fill")).not.toBe(beta.getAttribute("fill"));
+    expect(beta).not.toHaveAttribute("opacity");
+  });
+
+  it("wybrane obszary mają obwódkę w kolorze wyróżnienia, pozostałe kropki są przygaszone; tabela miast tylko z obszarów", async () => {
     render(<RegionView productCodes={["P1"]} year="2025" method="min" areas={[{ kind: "region", owNfz: "07" }]} />);
     const map = await openCities();
-    expect(within(map).getByRole("button", { name: /^Szpital Alfa/ })).toHaveAttribute("fill", REGION_PICK_COLORS[0]);
-    expect(within(map).getByRole("button", { name: /^Szpital Beta/ })).toHaveAttribute("fill", "#9DB4D9");
+    expect(within(map).getByRole("button", { name: /^Szpital Alfa/ }).getAttribute("style")).toContain(`--area-color: ${REGION_PICK_COLORS[0]}`);
+    expect(within(map).getByRole("button", { name: /^Szpital Beta/ })).toHaveAttribute("opacity", "0.3");
     expect(tableRows(/Miasta · 2025/).map((row) => cellText(row, 1))).toEqual(["Warszawa"]);
+  });
+
+  it("najechanie na kropkę pokazuje podpowiedź i nie zmienia tabeli miast", async () => {
+    render(<RegionView productCodes={["P1"]} year="2025" method="min" />);
+    const map = await openCities();
+    fireEvent.mouseEnter(within(map).getByRole("button", { name: /^Szpital Beta/ }), { clientX: 10, clientY: 10 });
+    const tip = screen.getByRole("tooltip");
+    expect(tip).toHaveTextContent("Szpital Beta");
+    expect(tip).toHaveTextContent("Hospitalizacje 2025: 18");
+    expect(tip).toHaveTextContent("Katowice · Śląskie");
+    expect(tip).toHaveTextContent(/× mediany roku/);
+    expect(screen.getByRole("region", { name: /Miasta · 2025/ })).toBeInTheDocument();
+    fireEvent.mouseLeave(within(map).getByRole("button", { name: /^Szpital Beta/ }));
+    expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
   });
 
   it("kliknięcie kropki pokazuje placówki miasta z wyróżnioną placówką; można dodać miasto do obszarów i wrócić", async () => {

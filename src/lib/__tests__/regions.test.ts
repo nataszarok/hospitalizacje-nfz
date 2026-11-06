@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  cityBreakdown, cityProviders, citySection, cityYearPoints, cityYearTotals, durationYears, facilityDots, facilityYearTotals, packCircles, regionalBreakdown,
+  cityBreakdown, cityProviders, citySection, cityYearPoints, cityYearTotals, durationYears, facilityDots, facilityYearTotals, packCircles, regionalBreakdown, separateDots, median,
   type CitiesMap, type DurationYearsSection, type FacilityYearsIndex, type FacilityYearsSection,
 } from "@/lib/regions";
 import { latestDatasetFixture as dataset, trendsFixture as trends } from "./fixtures/trendsFixture";
@@ -95,6 +95,27 @@ describe("placówki w latach", () => {
     }
     // Ciasno: wszystkie koła w promieniu 2,5 × promień największego (luźna spirala dawała ok. 4 ×).
     expect(Math.max(...points.map((p, i) => Math.hypot(p.x, p.y) + radii[i]))).toBeLessThan(10 * 2.5);
+  });
+
+  it("separateDots: rozsuwa koła sąsiednich miast, mniejsze przesuwa dalej; koła bez kolizji zostają", () => {
+    // Duże koło „Warszawy” i małe koło sąsiedniego miasta 5 jednostek dalej; trzecie daleko.
+    const dots = [{ x: 0, y: 0, r: 20 }, { x: 5, y: 0, r: 5 }, { x: 200, y: 200, r: 5 }];
+    const out = separateDots(dots);
+    for (let a = 0; a < out.length; a++) {
+      for (let b = a + 1; b < out.length; b++) {
+        expect(Math.hypot(out[a].x - out[b].x, out[a].y - out[b].y)).toBeGreaterThanOrEqual(out[a].r + out[b].r + 0.5 - 1e-3);
+      }
+    }
+    expect(Math.abs(out[0].x)).toBeLessThan(Math.abs(out[1].x - 5));
+    expect(out[2]).toEqual(dots[2]);
+    // Wejście bez zmian (kopie kół).
+    expect(dots[1]).toEqual({ x: 5, y: 0, r: 5 });
+  });
+
+  it("median: środek posortowanych wartości, średnia dwóch środkowych, 0 bez wartości", () => {
+    expect(median([40, 10, 20])).toBe(20);
+    expect(median([10, 40, 20, 30])).toBe(25);
+    expect(median([])).toBe(0);
   });
 
   it("citySection: pierwsza litera kodu JGP, „_” bez kodu", () => {

@@ -1,10 +1,11 @@
 "use client";
 
-import { MultiSelect, Select } from "@mantine/core";
+import { Select } from "@mantine/core";
 import { useCallback, useState, type Dispatch, type ReactNode, type SetStateAction } from "react";
 import { InfoTip } from "@/components/InfoTip";
 import { YearPlayer } from "@/components/YearPlayer";
-import { areasFromValues, areasToValues, MAX_AREAS, type AnalysisArea } from "@/lib/area";
+import { areaLabel, areasFromValues, areasToValues, MAX_AREAS, type AnalysisArea } from "@/lib/area";
+import { REGION_PICK_COLORS } from "@/lib/chartPalette";
 import type { DashboardActiveTab } from "@/lib/dashboardUrlState";
 import { formatCityName, formatJgpName } from "@/lib/formatters";
 import type { ProductOption, ReferencePayload } from "@/lib/types";
@@ -50,22 +51,23 @@ export function ExplorerSidebar(props: ExplorerSidebarProps) {
       </Field>
 
       <Field label="Obszar" htmlFor="area" meta={`${props.areas.length}/${MAX_AREAS}`} help="Do 5 województw lub miast naraz; liczby to ich suma. Województwo to oddział NFZ, miasto to siedziba świadczeniodawcy. W widokach Kto leczy i Tryb przyjęcia wykres pokazuje wszystkich świadczeniodawców, a obszary wyróżnia kolorami; liczby nad wykresem dotyczą obszarów.">
-        <MultiSelect
+        <ListPicker
           id="area"
-          value={areasToValues(props.areas)}
+          selected={areasToValues(props.areas)}
           onChange={(values) => props.setAreas(areasFromValues(values))}
           data={[
             { group: "Województwa", items: reference.regions.map((region) => ({ value: `ow:${region.owNfz}`, label: region.name })) },
             { group: "Miasta", items: reference.cities.map((city) => ({ value: `c:${city}`, label: formatCityName(city) })) },
           ]}
-          placeholder={props.areas.length ? undefined : "Cała Polska"}
-          searchable
-          clearable
-          maxValues={MAX_AREAS}
-          hidePickedOptions
-          nothingFoundMessage="Brak wyników"
-          comboboxProps={COMBOBOX}
-          className="mantine-filter"
+          max={MAX_AREAS}
+          placeholder={(count) => count >= MAX_AREAS ? `Wybrano ${MAX_AREAS} obszarów` : count ? "Dodaj województwo lub miasto" : "Cała Polska: wpisz województwo lub miasto"}
+          listLabel="Wybrane obszary"
+          // Kolor obszaru jak na wykresach i mapie (pozycja na liście).
+          lead={(_value, index) => <i className={styles.pickedSwatch} style={{ background: REGION_PICK_COLORS[index % REGION_PICK_COLORS.length] }} aria-hidden />}
+          label={(value) => {
+            const area = areasFromValues([value])[0];
+            return area ? areaLabel(area, reference) : value;
+          }}
         />
       </Field>
 
@@ -88,15 +90,14 @@ export function ExplorerSidebar(props: ExplorerSidebarProps) {
 
     {durationFilter ? <Section title="Filtry">
       <Field label="Długość pobytu" htmlFor="durations" help="Tylko hospitalizacje z wybranych przedziałów długości pobytu. Bez wyboru: wszystkie. Filtr działa tylko w bieżącym widoku. W widoku W czasie pokazuje lata (dane miesięczne nie mają podziału na długość pobytu).">
-        <MultiSelect
+        <ListPicker
           id="durations"
-          data={reference.durations}
-          value={props.durations}
+          selected={props.durations}
           onChange={props.setDurations}
-          placeholder="Wszystkie przedziały"
-          clearable
-          comboboxProps={COMBOBOX}
-          className="mantine-filter"
+          data={reference.durations.map((value) => ({ value, label: value }))}
+          placeholder={(count) => count ? "Dodaj przedział" : "Wszystkie przedziały"}
+          listLabel="Wybrane przedziały długości pobytu"
+          label={(value) => value}
         />
       </Field>
     </Section> : null}
@@ -109,45 +110,85 @@ export function ExplorerSidebar(props: ExplorerSidebarProps) {
  * Lista zamiast „pigułek” w polu: długie nazwy grup się zawijają, a pole nie rośnie o pustą linię.
  */
 function ProductPicker({ reference, known = [], selected, setSelected }: { reference: ReferencePayload; known?: ProductOption[]; selected: string[]; setSelected: Dispatch<SetStateAction<string[]>> }) {
+  const products = new Map([...known, ...reference.products].map((product) => [product.code, product]));
+  const jgpOf = (code: string) => products.get(code)?.jgpCode ?? code;
+  return <ListPicker
+    id="products"
+    selected={selected}
+    onChange={setSelected}
+    data={reference.products.map((product) => ({ value: product.code, label: product.label }))}
+    max={MAX_PRODUCTS}
+    placeholder={(count) => count >= MAX_PRODUCTS ? "Wybrano 10 grup" : count ? "Dodaj grupę: kod lub nazwa" : "Wpisz kod lub nazwę grupy"}
+    listLabel="Wybrane grupy JGP"
+    limit={50}
+    lead={(code) => <span className={styles.pickedCode}>{jgpOf(code)}</span>}
+    label={(code) => {
+      const product = products.get(code);
+      return product?.name ? formatJgpName(product.name) : product?.label ?? code;
+    }}
+    removeLabel={(code) => `Usuń ${jgpOf(code)}`}
+  />;
+}
+
+type PickerOption = { value: string; label: string };
+
+/**
+ * Pole wyszukiwania i lista wybranych pozycji pod nim (wspólny wzór pól panelu: grupy JGP, obszar, długość pobytu).
+ * Wybrana pozycja znika z podpowiedzi; Enter dodaje pierwszą pasującą. Lista nie zostawia pustego miejsca w polu.
+ */
+function ListPicker({ id, selected, onChange, data, max, placeholder, listLabel, limit, lead, label, detail, removeLabel }: {
+  id: string;
+  selected: string[];
+  onChange: (values: string[]) => void;
+  data: PickerOption[] | { group: string; items: PickerOption[] }[];
+  max?: number;
+  placeholder: (count: number) => string;
+  listLabel: string;
+  limit?: number;
+  lead?: (value: string, index: number) => ReactNode;
+  label: (value: string) => string;
+  detail?: (value: string) => string;
+  removeLabel?: (value: string) => string;
+}) {
   const [search, setSearch] = useState("");
   const chosen = new Set(selected);
-  const products = new Map([...known, ...reference.products].map((product) => [product.code, product]));
-  const full = selected.length >= MAX_PRODUCTS;
+  const full = max !== undefined && selected.length >= max;
+  const available = data.map((item) => "group" in item
+    ? { group: item.group, items: item.items.filter((option) => !chosen.has(option.value)) }
+    : item).filter((item) => "group" in item ? item.items.length > 0 : !chosen.has(item.value));
 
   return <div className={styles.picker}>
     <Select
-      id="products"
+      id={id}
       value={null}
       searchValue={search}
       onSearchChange={setSearch}
-      onChange={(code) => {
-        if (code) setSelected((current) => current.includes(code) ? current : [...current, code].slice(0, MAX_PRODUCTS));
+      onChange={(value) => {
+        if (value && !chosen.has(value)) onChange([...selected, value].slice(0, max));
         setSearch("");
       }}
-      data={reference.products.filter((product) => !chosen.has(product.code)).map((product) => ({ value: product.code, label: product.label }))}
-      placeholder={full ? "Wybrano 10 grup" : selected.length ? "Dodaj grupę: kod lub nazwa" : "Wpisz kod lub nazwę grupy"}
+      data={available}
+      placeholder={placeholder(selected.length)}
       disabled={full}
       searchable
-      // Enter dodaje pierwszą pasującą grupę (bez wybierania strzałkami).
+      // Enter dodaje pierwszą pasującą pozycję (bez wybierania strzałkami).
       selectFirstOptionOnChange
-      limit={50}
+      limit={limit}
       nothingFoundMessage="Brak wyników"
       comboboxProps={COMBOBOX}
       className="mantine-filter"
     />
-    {selected.length ? <ul className={styles.pickedList} aria-label="Wybrane grupy JGP">
-      {selected.map((code) => {
-        const product = products.get(code);
-        const jgp = product?.jgpCode ?? code;
-        const name = product?.name ? formatJgpName(product.name) : product?.label ?? code;
-        return <li key={code} className={styles.picked}>
-          <span className={styles.pickedCode}>{jgp}</span>
-          <span className={styles.pickedName} title={name}>{name}</span>
-          <button type="button" className={styles.pickedRemove} aria-label={`Usuń ${jgp}`} onClick={() => setSelected((current) => current.filter((value) => value !== code))}>×</button>
+    {selected.length ? <ul className={styles.pickedList} aria-label={listLabel}>
+      {selected.map((value, index) => {
+        const name = label(value);
+        return <li key={value} className={`${styles.picked} ${lead ? "" : styles.pickedPlain}`}>
+          {lead ? lead(value, index) : null}
+          <span className={styles.pickedName} title={name}>{name}{detail ? <small className={styles.pickedDetail}> · {detail(value)}</small> : null}</span>
+          <button type="button" className={styles.pickedRemove} aria-label={removeLabel ? removeLabel(value) : `Usuń ${name}`} onClick={() => onChange(selected.filter((item) => item !== value))}>×</button>
         </li>;
       })}
     </ul> : null}
-    {selected.length >= 2 ? <button type="button" className={styles.pickedClear} onClick={() => setSelected([])}>Usuń wszystkie</button> : null}
+    {selected.length >= 2 ? <button type="button" className={styles.pickedClear} onClick={() => onChange([])}>Usuń wszystkie</button> : null}
   </div>;
 }
 

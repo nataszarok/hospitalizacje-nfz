@@ -15,6 +15,7 @@ import {
   areaHighlightTitle,
   attachHoverMarker,
   getCommonPlotLayout,
+  PLOT_TOOLBAR_MARGIN,
   HIGHLIGHT_COLORS,
   makeDimensionLegendTraces,
   makeHoverTrace,
@@ -211,11 +212,12 @@ export function AdmissionChart({
 
       await Plotly.react(chartRef.current, traces, {
         ...getCommonPlotLayout(showLegend),
+        margin: { ...getCommonPlotLayout(showLegend).margin, t: PLOT_TOOLBAR_MARGIN },
         xaxis: {
           title: {
             text: axisMode === "per_100k"
-              ? "Przyjęcia planowane na 100 tys. mieszkańców (kod 6)"
-              : "Liczba przyjęć planowanych (kod 6)",
+              ? "Przyjęcia planowane na 100 tys. mieszkańców"
+              : "Liczba przyjęć planowanych",
             standoff: 18,
             font: { size: 14, color: "#344054" },
           },
@@ -226,8 +228,8 @@ export function AdmissionChart({
         yaxis: {
           title: {
             text: axisMode === "per_100k"
-              ? "Przyjęcia nagłe na 100 tys. mieszkańców (kody 2 + 3)"
-              : "Liczba przyjęć nagłych (kody 2 + 3)",
+              ? "Przyjęcia nagłe na 100 tys. mieszkańców"
+              : "Liczba przyjęć nagłych",
             standoff: 18,
             font: { size: 14, color: "#344054" },
           },

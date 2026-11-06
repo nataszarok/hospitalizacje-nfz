@@ -12,8 +12,8 @@ vi.mock("@mantine/core", () => {
   const options = (data: (Option | Group)[]): { value: string; label: string }[] => data.flatMap((o) =>
     typeof o === "string" ? [{ value: o, label: o }] : "group" in o ? options(o.items) : [o]);
   return {
-    Select: ({ id, data, value, onChange, selectFirstOptionOnChange }: { id?: string; data: (Option | Group)[]; value: string | null; onChange: (v: string | null) => void; selectFirstOptionOnChange?: boolean }) => (
-      <select data-testid={id} data-first-option={selectFirstOptionOnChange ? "true" : undefined} value={value ?? ""} onChange={(e) => onChange(e.target.value)}>
+    Select: ({ id, data, value, onChange, selectFirstOptionOnChange, disabled }: { id?: string; data: (Option | Group)[]; value: string | null; onChange: (v: string | null) => void; selectFirstOptionOnChange?: boolean; disabled?: boolean }) => (
+      <select data-testid={id} disabled={disabled} data-first-option={selectFirstOptionOnChange ? "true" : undefined} value={value ?? ""} onChange={(e) => onChange(e.target.value)}>
         {options(data).map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
       </select>
     ),
@@ -73,9 +73,10 @@ describe("ExplorerSidebar", () => {
 
   it("dodaje grupę z pola wyszukiwania i usuwa ją przyciskiem", () => {
     const selection = trackSelection(["P1"]);
-    render(<ExplorerSidebar {...props({ setSelectedProducts: selection.set })} />);
+    const { rerender } = render(<ExplorerSidebar {...props({ setSelectedProducts: selection.set })} />);
     fireEvent.change(screen.getByTestId("products"), { target: { value: "P2" } });
     expect(selection.get()).toEqual(["P1", "P2"]);
+    rerender(<ExplorerSidebar {...props({ selectedProducts: selection.get(), setSelectedProducts: selection.set })} />);
     fireEvent.click(screen.getByRole("button", { name: "Usuń E10" }));
     expect(selection.get()).toEqual(["P2"]);
   });
@@ -131,15 +132,26 @@ describe("ExplorerSidebar", () => {
     expect(screen.getAllByRole("tooltip").map((t) => t.textContent)).toContainEqual(expect.stringContaining("Filtr działa tylko w bieżącym widoku."));
   });
 
-  it("obszar: do 5 województw lub miast naraz, licznik i dodawanie kolejnego", () => {
+  it("obszar: lista wybranych jak grupy JGP (kolor obszaru, nazwa, usuwanie), licznik i dodawanie kolejnego", () => {
     const setAreas = vi.fn();
     render(<ExplorerSidebar {...props({ setAreas, areas: [{ kind: "region", owNfz: "07" }] })} />);
-    const area = screen.getByTestId("area");
-    expect(area).toHaveAttribute("data-max", "5");
-    expect(area).toHaveTextContent("ow:07");
+    const list = screen.getByRole("list", { name: "Wybrane obszary" });
+    expect([...list.querySelectorAll("li")].map((li) => li.textContent)).toEqual(["woj. mazowieckie×"]);
     expect(screen.getByText("1/5")).toBeInTheDocument();
-    fireEvent.click(within(area).getByRole("button", { name: "dodaj Warszawa" }));
+    // W polu wyszukiwania są tylko obszary jeszcze niewybrane.
+    const area = screen.getByTestId("area");
+    expect([...area.querySelectorAll("option")].map((o) => o.value)).toEqual(["c:WARSZAWA"]);
+    fireEvent.change(area, { target: { value: "c:WARSZAWA" } });
     expect(setAreas).toHaveBeenCalledWith([{ kind: "region", owNfz: "07" }, { kind: "city", city: "WARSZAWA" }]);
+    fireEvent.click(within(list).getByRole("button", { name: "Usuń woj. mazowieckie" }));
+    expect(setAreas).toHaveBeenLastCalledWith([]);
+  });
+
+  it("obszar: przy 5 obszarach pole wyszukiwania jest wyłączone", () => {
+    const areas = ["07", "12", "02", "06", "01"].map((owNfz) => ({ kind: "region" as const, owNfz }));
+    render(<ExplorerSidebar {...props({ areas })} />);
+    expect(screen.getByTestId("area")).toBeDisabled();
+    expect(screen.getByText("5/5")).toBeInTheDocument();
   });
 
   it("w widoku Gdzie nie ma filtra długości pobytu", () => {

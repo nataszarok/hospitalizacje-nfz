@@ -243,6 +243,22 @@
   line-height: 1.35;
 }
 
+.pickedPlain {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.pickedSwatch {
+  width: 10px;
+  height: 10px;
+  margin-top: 4px;
+  border-radius: 50%;
+}
+
+.pickedDetail {
+  color: var(--color-text-tertiary);
+  font-size: var(--fs-xs);
+}
+
 .pickedCode {
   color: var(--color-primary-active);
   font-weight: var(--fw-bold);
@@ -311,7 +327,7 @@
   font-size: var(--fs-base);
   font-weight: var(--fw-semibold);
   white-space: nowrap;
-  transition: border-color .15s, background .15s, color .15s;
+  transition: border-color .15s, background .15s, color .15s, padding .3s ease, gap .3s ease;
 }
 
 .viewButton svg {
@@ -340,13 +356,21 @@
 }
 
 /* Tryb analizy: przycisk na końcu rzędu widoków. */
+.viewActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+/* Tryb analizy: sama ikona (opis w podpowiedzi). */
 .focusButton {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  justify-content: center;
+  width: 40px;
   min-height: 40px;
-  margin-left: auto;
-  padding: 0 14px;
+  padding: 0;
   border: 1px dashed var(--color-border-strong);
   border-radius: 999px;
   background: transparent;
@@ -369,10 +393,81 @@
 }
 
 /* Tryb analizy: bez nagłówka strony, obszar roboczy na całą szerokość okna. */
+.workspace {
+  transition: width .35s ease, margin-top .35s ease;
+}
+
 .focus .workspace {
   width: calc(100% - 32px);
-  max-width: none;
-  margin-top: 16px;
+  margin-top: 20px;
+}
+
+/* Tryb analizy: tylko tytuł i wykres — opis pod wykresem i tabela danych gasną i znikają. */
+.content :global(:is(.data-details, .chart-insight)) {
+  transition: opacity .25s ease, display .25s allow-discrete;
+}
+
+.focus .content :global(:is(.data-details, .chart-insight)) {
+  display: none;
+  opacity: 0;
+}
+
+/* Nagłówek portalu schowany (pasek 8 px), więc panel przypina się przy górze okna. */
+.focus .sidebar {
+  top: 20px;
+  max-height: calc(100vh - 36px);
+}
+
+/* Płynne chowanie bloków w trybie analizy: wysokość przez wiersz siatki (1fr → 0fr) i przezroczystość. */
+.collapsible {
+  display: grid;
+  grid-template-rows: 1fr;
+  opacity: 1;
+  transition: grid-template-rows .35s ease, opacity .25s ease;
+}
+
+.collapsibleInner {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.collapsed {
+  grid-template-rows: 0fr;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Tryb analizy: widoki i link do karty grupy jako ikony; podpis wysuwa się po najechaniu (aktywny widok ma go zawsze). */
+.viewLabel {
+  display: inline-block;
+  max-width: 220px;
+  overflow: hidden;
+  white-space: nowrap;
+  transition: max-width .3s ease, opacity .2s ease;
+}
+
+.focus .viewButton:not(.viewButtonActive),
+.focus .groupLink {
+  gap: 0;
+  padding: 0 11px;
+}
+
+.focus .viewButton:not(.viewButtonActive) .viewLabel,
+.focus .groupLink .viewLabel {
+  max-width: 0;
+  opacity: 0;
+}
+
+.focus .viewButton:not(.viewButtonActive):is(:hover, :focus-visible),
+.focus .groupLink:is(:hover, :focus-visible) {
+  gap: 8px;
+  padding: 0 16px 0 13px;
+}
+
+.focus .viewButton:not(.viewButtonActive):is(:hover, :focus-visible) .viewLabel,
+.focus .groupLink:is(:hover, :focus-visible) .viewLabel {
+  max-width: 220px;
+  opacity: 1;
 }
 
 .field :global(.mantine-segmented) {
@@ -398,6 +493,11 @@
   color: #1c3534;
 }
 
+.question :global(.mantine-ActionIcon-root) {
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
 .scope {
   margin: 4px 0 0;
   color: var(--color-text-tertiary);
@@ -405,7 +505,12 @@
 }
 
 .groupLink {
-  padding: 8px 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: padding .3s ease, gap .3s ease, border-color .15s;
+  min-height: 40px;
+  padding: 0 16px;
   border: 1px solid var(--color-primary-outline);
   border-radius: 999px;
   background: var(--color-primary-soft);
@@ -588,10 +693,6 @@
   gap: 8px;
 }
 
-.facilityDotSelected {
-  stroke: #c65d2e;
-  stroke-width: 3;
-}
 
 .areaSwatch {
   display: inline-block;
@@ -715,6 +816,46 @@
 
 .cityDot:hover {
   stroke: #172033;
+}
+
+.cityDot.facilityDotArea {
+  stroke: var(--area-color);
+  stroke-width: 3;
+}
+
+.cityDot.facilityDotSelected {
+  stroke: #c65d2e;
+  stroke-width: 3;
+}
+
+/* Podpowiedź kropki placówki: jak etykiety najechania na wykresach Plotly (Kto leczy, Tryb przyjęcia). */
+.facilityMap {
+  position: relative;
+}
+
+.mapTip {
+  position: absolute;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-width: 300px;
+  padding: 7px 10px;
+  border-radius: 4px;
+  background: #5f6672;
+  color: #ffffff;
+  font-size: var(--fs-md);
+  line-height: 1.35;
+  pointer-events: none;
+  transform: translate(14px, -50%);
+}
+
+.mapTipLeft {
+  transform: translate(calc(-100% - 14px), -50%);
+}
+
+.mapTip .areaSwatch {
+  box-shadow: 0 0 0 1.5px #ffffff;
 }
 
 .cityDot:focus {

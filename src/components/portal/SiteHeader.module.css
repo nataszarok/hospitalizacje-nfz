@@ -1,5 +1,9 @@
 /* Nagłówek krojem tytułów portalu (Inter Tight, jak „Publiczna ochrona zdrowia w liczbach.”). */
-.header { font-family: var(--font-display), var(--font-body), sans-serif; position: sticky; top: 0; z-index: 100; background: rgba(255,255,255,.97); border-bottom: 1px solid var(--color-border); backdrop-filter: blur(14px); }
+.header { font-family: var(--font-display), var(--font-body), sans-serif; position: sticky; top: 0; z-index: 100; background: rgba(255,255,255,.97); border-bottom: 1px solid var(--color-border); backdrop-filter: blur(14px); transition: transform .35s ease, margin-bottom .35s ease, box-shadow .2s; }
+/* Tryb analizy eksploratora (`data-explorer-focus` na <html>): nagłówek nie zajmuje miejsca, widać tylko pasek 8 px;
+   najechanie albo fokus wysuwa go nad treść (bez przesuwania strony). */
+:global(html[data-explorer-focus]) .header { margin-bottom: calc(-1 * var(--atlas-header-height, 75px)); transform: translateY(calc(-100% + 8px)); border-bottom: 3px solid var(--color-primary-outline); }
+:global(html[data-explorer-focus]) .header:hover, :global(html[data-explorer-focus]) .header:focus-within { transform: none; box-shadow: 0 8px 24px rgba(16,24,40,.12); }
 .inner { width: min(calc(100% - var(--atlas-page-gutter) - var(--atlas-page-gutter)), var(--atlas-page-max)); min-height: 74px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 30px; }
 .brand { display: inline-flex; gap: 10px; align-items: center; text-decoration: none; color: var(--color-text); }
 .brandSymbol { width: 39px; height: 39px; display: grid; place-items: center; color: #fff; background: var(--color-primary); border-radius: 10px; flex: none; }

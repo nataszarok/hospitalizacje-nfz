@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState, useSyncExternalStore, type SetStateAction } from "react";
+import { InfoTip } from "@/components/InfoTip";
+import { useCallback, useEffect, useMemo, useState, useSyncExternalStore, type ReactNode, type SetStateAction } from "react";
 import { AdmissionTab } from "@/components/AdmissionTab";
 import { ExplorerSidebar } from "@/components/explorer/ExplorerSidebar";
 import { RegionView } from "@/components/explorer/RegionView";
@@ -39,10 +40,13 @@ const EMPTY_DATA: MortalityPayload = { rows: [], current: EMPTY_KPI, baseline: E
 const EMPTY_ADMISSION_DATA: AdmissionPayload = { rows: [], areaStats: EMPTY_GEO_STATS };
 
 /** Widoki-pytania eksploratora (kolejność zakładek). */
-export const EXPLORER_VIEWS: { tab: DashboardActiveTab; label: string; question: string; icon: PortalIconName }[] = [
+/** Widoki eksploratora; `help` = objaśnienie wykresu pod „?” na końcu pytania (widoki bez własnego tytułu wykresu). */
+export const EXPLORER_VIEWS: { tab: DashboardActiveTab; label: string; question: string; icon: PortalIconName; help?: string }[] = [
   { tab: "trend", label: "W czasie", question: "Jak zmieniała się liczba hospitalizacji?", icon: "chart" },
-  { tab: "mortality", label: "Kto leczy", question: "Którzy świadczeniodawcy leczą i z jaką śmiertelnością?", icon: "heart" },
-  { tab: "admissions", label: "Tryb przyjęcia", question: "Ile przyjęć jest planowych, a ile nagłych?", icon: "bed" },
+  { tab: "mortality", label: "Kto leczy", question: "Którzy świadczeniodawcy leczą i z jaką śmiertelnością?", icon: "heart",
+    help: "Każdy punkt to świadczeniodawca: oś X — liczba hospitalizacji, oś Y — śmiertelność (zgony w szpitalu / hospitalizacje). Przełącznik zmienia jednostkę osi X. Obszar wybrany w panelu jest wyróżniony kolorem." },
+  { tab: "admissions", label: "Tryb przyjęcia", question: "Ile przyjęć jest planowych, a ile nagłych?", icon: "bed",
+    help: "Każdy punkt to świadczeniodawca. Oś X pokazuje przyjęcia planowane (kod 6), a oś Y sumę przyjęć nagłych (kody 2 i 3). Przełącznik zmienia jednostkę obu osi. Obszar wybrany w panelu jest wyróżniony kolorem." },
   { tab: "regions", label: "Gdzie", question: "Jak hospitalizacje rozkładają się na województwa i miasta?", icon: "pin" },
 ];
 
@@ -297,6 +301,12 @@ export function AnalysisExplorer() {
     ];
   }, [areaData, data, reference, yearChange, areaUrgent]);
 
+  // Tryb analizy chowa też nagłówek portalu (pasek u góry okna wysuwa go po najechaniu): znacznik na <html>.
+  useEffect(() => {
+    document.documentElement.toggleAttribute("data-explorer-focus", focus);
+    return () => document.documentElement.removeAttribute("data-explorer-focus");
+  }, [focus]);
+
   const toggleFocus = () => {
     setFocus(!focus);
     window.scrollTo({ top: 0 });
@@ -315,45 +325,47 @@ export function AnalysisExplorer() {
     : `${selectedProducts.length} grup${selectedProducts.length < 5 ? "y" : ""} JGP łącznie`;
 
   return <main className={`${styles.page} ${focus ? styles.focus : ""}`}>
-    {focus ? null : <PageHeader
-      wide
-      compact
-      eyebrow={<>Hospitalizacje · grupy JGP · {range}</>}
-      title="Eksplorator danych"
-      lead={<p>Własne analizy hospitalizacji NFZ: wybierz grupy JGP, obszar i rok, a eksplorator policzy wyniki łącznie dla całego wyboru.</p>}
-      actions={<button
-        type="button"
-        className={styles.headerButton}
-        aria-expanded={introOpen}
-        aria-controls="explorer-intro"
-        onClick={() => setIntroOpen(!introOpen)}
-      >Jak korzystać? <span className={`${styles.chevron} ${introOpen ? styles.chevronOpen : ""}`} aria-hidden /></button>}
-    >
-      {introOpen ? <div id="explorer-intro">
-        <div className={styles.introGrid}>
-          <div className={styles.introCard}>
-            <h2>Kiedy eksplorator?</h2>
-            <p>Gdy chcesz złożyć własny zakres: połączyć do 10 grup JGP (np. wszystkie grupy zawałów), zawęzić dane do województwa lub miasta
-            i ustawić filtry świadczeniodawców.</p>
+    <Collapsible open={!focus}>
+      <PageHeader
+        wide
+        compact
+        eyebrow={<>Hospitalizacje · grupy JGP · {range}</>}
+        title="Eksplorator danych"
+        lead={<p>Własne analizy hospitalizacji NFZ: wybierz grupy JGP, obszar i rok, a eksplorator policzy wyniki łącznie dla całego wyboru.</p>}
+        actions={<button
+          type="button"
+          className={styles.headerButton}
+          aria-expanded={introOpen}
+          aria-controls="explorer-intro"
+          onClick={() => setIntroOpen(!introOpen)}
+        >Jak korzystać? <span className={`${styles.chevron} ${introOpen ? styles.chevronOpen : ""}`} aria-hidden /></button>}
+      >
+        {introOpen ? <div id="explorer-intro">
+          <div className={styles.introGrid}>
+            <div className={styles.introCard}>
+              <h2>Kiedy eksplorator?</h2>
+              <p>Gdy chcesz złożyć własny zakres: połączyć do 10 grup JGP (np. wszystkie grupy zawałów), zawęzić dane do województwa lub miasta
+              i ustawić filtry świadczeniodawców.</p>
+            </div>
+            <div className={styles.introCard}>
+              <h2>Kiedy karta grupy JGP?</h2>
+              <p>Gdy interesuje cię jedna grupa. <Link href="/jgp">Karta grupy</Link> to gotowy opis: co obejmuje grupa, ile płaci NFZ,
+              jak zmienia się liczba hospitalizacji i kto leczy. Nie wymaga ustawień.</p>
+            </div>
+            <div className={styles.introCard}>
+              <h2>Jak zacząć?</h2>
+              <ol>
+                <li>Wybierz grupy JGP w panelu „Zakres analizy”.</li>
+                <li>Ustaw obszar i okres. Obszar wyróżnia świadczeniodawców na wykresach.</li>
+                <li>Wybierz widok: {EXPLORER_VIEWS.map((view) => view.label).join(", ")}.</li>
+                <li>Potrzebujesz więcej miejsca? Włącz tryb analizy (ikona po prawej nad wykresem).</li>
+              </ol>
+            </div>
           </div>
-          <div className={styles.introCard}>
-            <h2>Kiedy karta grupy JGP?</h2>
-            <p>Gdy interesuje cię jedna grupa. <Link href="/jgp">Karta grupy</Link> to gotowy opis: co obejmuje grupa, ile płaci NFZ,
-            jak zmienia się liczba hospitalizacji i kto leczy. Nie wymaga ustawień.</p>
-          </div>
-          <div className={styles.introCard}>
-            <h2>Jak zacząć?</h2>
-            <ol>
-              <li>Wybierz grupy JGP w panelu „Zakres analizy”.</li>
-              <li>Ustaw obszar i okres. Obszar wyróżnia świadczeniodawców na wykresach.</li>
-              <li>Wybierz widok: {EXPLORER_VIEWS.map((view) => view.label).join(", ")}.</li>
-              <li>Potrzebujesz więcej miejsca? Włącz „Tryb analizy”.</li>
-            </ol>
-          </div>
-        </div>
-        <p className={styles.method}><span className={styles.badge}>Szacunek</span> Wartości „&lt;5” w danych NFZ liczymy jako 1 (metoda konserwatywna). <Link href={DASHBOARD_HREFS.methodology}>Metodologia</Link></p>
-      </div> : null}
-    </PageHeader>}
+          <p className={styles.method}><span className={styles.badge}>Szacunek</span> Wartości „&lt;5” w danych NFZ liczymy jako 1 (metoda konserwatywna). <Link href={DASHBOARD_HREFS.methodology}>Metodologia</Link></p>
+        </div> : null}
+      </PageHeader>
+    </Collapsible>
 
     <div className={styles.workspace}>
       <aside className={styles.sidebar}>
@@ -381,25 +393,36 @@ export function AnalysisExplorer() {
             className={`${styles.viewButton} ${activeTab === view.tab ? styles.viewButtonActive : ""}`}
             aria-current={activeTab === view.tab ? "page" : undefined}
             onClick={() => setActiveTab(view.tab)}
-          ><PortalIcon name={view.icon} size={18} /><span>{view.label}</span></button>)}
-          <button
-            type="button"
-            className={styles.focusButton}
-            aria-pressed={focus}
-            title={focus ? "Pokaż nagłówek strony i wstęp" : "Schowaj nagłówek strony i daj wykresom całą szerokość okna"}
-            onClick={toggleFocus}
-          ><PortalIcon name={focus ? "collapse" : "expand"} size={18} /><span>{focus ? "Zakończ tryb analizy" : "Tryb analizy"}</span></button>
+            title={focus ? view.label : undefined}
+          ><PortalIcon name={view.icon} size={18} /><span className={styles.viewLabel}>{view.label}</span></button>)}
+          <div className={styles.viewActions}>
+            {groupPage ? <Link className={styles.groupLink} href={groupPage} title={focus ? `Wszystko o grupie ${singleProduct?.jgpCode}` : undefined}>
+              <PortalIcon name="book" size={17} /><span className={styles.viewLabel}>Wszystko o grupie {singleProduct?.jgpCode} →</span>
+            </Link> : null}
+            <button
+              type="button"
+              className={styles.focusButton}
+              aria-pressed={focus}
+              aria-label={focus ? "Zakończ tryb analizy" : "Tryb analizy"}
+              title={focus ? "Zakończ tryb analizy: pokaż nagłówek strony i wstęp" : "Tryb analizy: schowaj nagłówek strony i daj wykresom całą szerokość okna"}
+              onClick={toggleFocus}
+            ><PortalIcon name={focus ? "collapse" : "expand"} size={18} /></button>
+          </div>
         </nav>
 
         <div className={styles.viewHeader}>
           <div>
-            <h2 className={styles.question}>{activeView.question}</h2>
-            <p className={styles.scope}>{scopeLabel} · {areasLabel(areas, reference)} · {activeTab === "trend" ? range : reference.analysisYear}</p>
+            <h2 className={styles.question}>
+              {activeView.question}
+              {activeView.help ? <InfoTip label={activeView.help} ariaLabel="Jak czytać wykres" /> : null}
+            </h2>
+            <Collapsible open={!focus}>
+              <p className={styles.scope}>{scopeLabel} · {areasLabel(areas, reference)} · {activeTab === "trend" ? range : reference.analysisYear}</p>
+            </Collapsible>
           </div>
-          {groupPage ? <Link className={styles.groupLink} href={groupPage}>Wszystko o grupie {singleProduct?.jgpCode} →</Link> : null}
         </div>
 
-        {selectedProducts.length ? <ExplorerKpis items={kpis} /> : null}
+        {selectedProducts.length ? <Collapsible open={!focus}><ExplorerKpis items={kpis} /></Collapsible> : null}
 
         {activeTab === "trend" ? <TrendView productCodes={selectedProducts} method={method} regions={trendArea.regions} areaLabel={trendArea.label} areaNote={trendArea.note} durations={durations} displayMode={jgpDisplayMode} onDisplayModeChange={setJgpDisplayMode} />
           : activeTab === "regions" ? <RegionView productCodes={selectedProducts} year={reference.analysisYear} method={method} areas={areas} onAreasChange={setAreas} />
@@ -429,4 +452,14 @@ export function AnalysisExplorer() {
       </section>
     </div>
   </main>;
+}
+
+/**
+ * Płynne chowanie bloku w trybie analizy (wysokość i przezroczystość). Schowany blok jest poza
+ * drzewem dostępności i fokusem (`inert`), ale zostaje w DOM, więc wraca bez ponownego ładowania.
+ */
+function Collapsible({ open, children }: { open: boolean; children: ReactNode }) {
+  return <div className={`${styles.collapsible} ${open ? "" : styles.collapsed}`} aria-hidden={!open} inert={!open}>
+    <div className={styles.collapsibleInner}>{children}</div>
+  </div>;
 }

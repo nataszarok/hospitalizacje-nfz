@@ -15,6 +15,7 @@ import {
   areaHighlightTitle,
   attachHoverMarker,
   getCommonPlotLayout,
+  PLOT_TOOLBAR_MARGIN,
   HIGHLIGHT_COLORS,
   makeDimensionLegendTraces,
   makeHoverTrace,
@@ -226,6 +227,7 @@ export function MortalityChart({
         traces,
         {
           ...getCommonPlotLayout(showLegend),
+          margin: { ...getCommonPlotLayout(showLegend).margin, t: PLOT_TOOLBAR_MARGIN },
           xaxis: {
             title: {
               text: axisMode === "per_100k"

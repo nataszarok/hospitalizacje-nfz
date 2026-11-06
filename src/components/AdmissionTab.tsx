@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import { AdmissionChart } from "@/components/AdmissionChart";
 import { AreaStatsPopover } from "@/components/AreaStatsPopover";
-import { InfoTip } from "@/components/InfoTip";
 import { ChartScaleControl } from "@/components/ChartScaleControl";
 import { MortalityDisplayControl } from "@/components/MortalityDisplayControl";
 import { SortableTableHeader } from "@/components/SortableTableHeader";
@@ -101,10 +100,8 @@ export function AdmissionTab({
     <div className={loading ? "content loading" : "content"}>
       <section className="chart-section">
         {data.rows.length > 0 ? (
-          <div className="plot-column">
+          <div className={`plot-column ${styles.plotColumn}`}>
             <div className={`plot-toolbar ${styles.toolbar}`}>
-              {/* Opis wykresu pod „?”: pytanie widoku nad liczbami zastępuje tytuł wykresu. */}
-              <InfoTip label="Każdy punkt to świadczeniodawca. Oś X pokazuje przyjęcia planowane (kod 6), a oś Y sumę przyjęć nagłych (kody 2 i 3). Przełącznik zmienia jednostkę obu osi. Obszar wybrany w panelu jest wyróżniony kolorem." ariaLabel="Jak czytać wykres" />
               {canGroupJgp ? (
                 <MortalityDisplayControl value={displayMode} onChange={setDisplayMode} />
               ) : null}

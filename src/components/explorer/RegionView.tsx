@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { InfoTip } from "@/components/InfoTip";
 import { RegionMap } from "@/components/jgp/RegionMap";
 import { ProviderLink } from "@/components/TableLinks";
@@ -9,7 +9,7 @@ import { REGION_PICK_COLORS } from "@/lib/chartPalette";
 import { formatCityName } from "@/lib/formatters";
 import { cartogramCells, scaleColor, type CartogramCell, type RegionsMap } from "@/lib/jgpCard";
 import {
-  cityProviders, citySection, cityYearPoints, cityYearTotals, facilityDots, facilityYearTotals, MIN_FACILITY_HOSPITALIZATIONS, regionalBreakdown,
+  cityProviders, citySection, median, cityYearPoints, cityYearTotals, facilityDots, facilityYearTotals, MIN_FACILITY_HOSPITALIZATIONS, regionalBreakdown,
   type CitiesMap, type CityProviderRow, type CityYearPoint, type FacilityDot, type FacilityYearsIndex, type FacilityYearsSection, type RegionRow,
 } from "@/lib/regions";
 import {
@@ -27,9 +27,8 @@ const CITY_LIMIT = 15;
 export const MAX_DOT = 30;
 /** Najmniejsza widoczna kropka placówki z hospitalizacjami. */
 const MIN_DOT = 2;
-/** Kolory kropek: placówki, gdy obszar nie jest wybrany / placówki spoza wybranych obszarów. */
-const DOT_COLOR = "#2856A3";
-const DOT_OUTSIDE = "#9DB4D9";
+/** Przezroczystość kropek spoza wybranych obszarów. */
+const DOT_OUTSIDE_OPACITY = 0.3;
 
 type MapMode = "regions" | "cities";
 
@@ -52,8 +51,13 @@ export function dotRadius(hospitalizations: number, max: number): number {
   return Math.max(MIN_DOT, MAX_DOT * Math.sqrt(hospitalizations / max));
 }
 
-/** Położenie na skali koloru (−1 = ½ × odniesienia, 0 = odniesienie, 1 = 2 × odniesienia). */
-const scalePosition = (value: number, reference: number) => value > 0 && reference > 0 ? Math.max(-1, Math.min(1, Math.log2(value / reference))) : -1;
+/**
+ * Położenie na skali koloru (−1 = odniesienie / `span`, 0 = odniesienie, 1 = `span` × odniesienie).
+ * Województwa: `span` 2. Placówki: `DOT_SPAN` 4 — wielkości placówek różnią się o rzędy wielkości, więc przy ½–2 ×
+ * większość kropek miała skrajny kolor (H52 2024: 93 ze 159; przy ¼–4 ×: 28).
+ */
+const scalePosition = (value: number, reference: number, span = 2) => value > 0 && reference > 0 ? Math.max(-1, Math.min(1, Math.log2(value / reference) / Math.log2(span))) : -1;
+const DOT_SPAN = 4;
 
 const NO_AREAS: AnalysisArea[] = [];
 
@@ -127,6 +131,8 @@ export function RegionView({ productCodes, year, method, areas = NO_AREAS, onAre
   const dots = useMemo(() => data && facilityTotals
     ? facilityDots(data.facilityIndex, facilityTotals, data.citiesMap, yearIndex, (value) => dotRadius(value, maxFacility))
     : null, [data, facilityTotals, yearIndex, maxFacility]);
+  // Środek skali koloru kropek: mediana placówek na mapie w roku mapy (osobno dla każdego roku).
+  const dotMedian = useMemo(() => median((dots ?? []).map((dot) => dot.hospitalizations)), [dots]);
   const cityYear = useMemo(() => data && facilityTotals
     ? cityYearPoints(cityYearTotals(data.facilityIndex, facilityTotals), data.citiesMap, yearIndex)
     : null, [data, facilityTotals, yearIndex]);
@@ -151,7 +157,7 @@ export function RegionView({ productCodes, year, method, areas = NO_AREAS, onAre
   const range = years.length > 1 ? `${years[0]}–${years.at(-1)}` : mapYear;
   const mapHelp = mode === "regions"
     ? `Hospitalizacje na 100 tys. mieszkańców województwa. Kolor względem średniej Polski z lat ${range} (${decimal(regionReference)}), wspólny dla wszystkich lat. Województwo to oddział NFZ, w którym świadczeniodawca rozlicza hospitalizacje, nie miejsce zamieszkania pacjenta. Kliknij województwo, aby dodać je do obszaru analizy (do ${MAX_AREAS} obszarów) albo usunąć.`
-    : `Kropka = placówka z co najmniej ${MIN_FACILITY_HOSPITALIZATIONS} hospitalizacjami wybranych grup w roku; placówki jednego miasta są zebrane wokół jego punktu. Pole kropki = liczba hospitalizacji; największa kropka to największa wartość placówki w latach ${range}, więc wielkości są porównywalne między latami. Wybrane obszary mają swoje kolory. Placówki z siedzibą poza słownikiem miast (głównie wsie) nie mają kropki. Kliknij kropkę, aby zobaczyć placówki miasta.`;
+    : `Kropka = placówka z co najmniej ${MIN_FACILITY_HOSPITALIZATIONS} hospitalizacjami wybranych grup w roku; placówki jednego miasta są zebrane wokół jego punktu, a kropki sąsiednich miast są rozsunięte. Pole kropki = liczba hospitalizacji; największa kropka to największa wartość placówki w latach ${range}, więc wielkości są porównywalne między latami. Kolor = hospitalizacje placówki wobec mediany placówek na mapie w roku ${mapYear} (${integer(dotMedian)}), od ¼ × do 4 ×; mediana jest liczona osobno dla każdego roku, więc kolor pokazuje pozycję placówki w danym roku. Wybrane obszary mają obwódkę w swoim kolorze. Placówki z siedzibą poza słownikiem miast (głównie wsie) nie mają kropki. Kliknij kropkę, aby zobaczyć placówki miasta.`;
 
   return <div className={styles.viewStack}>
     <section className={styles.card} aria-labelledby="region-map">
@@ -171,7 +177,17 @@ export function RegionView({ productCodes, year, method, areas = NO_AREAS, onAre
             {mode === "regions"
               ? <RegionMap map={data.regionsMap} cells={cells} regions={regionAreas.map((area) => area.owNfz)} onToggle={toggleRegion} colors={regionAreas.map(areaColor)} />
               : dots
-                ? <FacilityMap map={data.regionsMap} dots={dots} mapYear={mapYear} areas={areas} areaColor={areaColor} focus={focus} onSelect={(dot) => setFocus({ city: dot.city, facility: dot.facility })} />
+                ? <FacilityMap
+                  map={data.regionsMap}
+                  dots={dots}
+                  mapYear={mapYear}
+                  areas={areas}
+                  areaColor={areaColor}
+                  median={dotMedian}
+                  regionName={(ow) => reference.regions.find((region) => region.owNfz === ow)?.name ?? ow}
+                  focus={focus}
+                  onSelect={(dot) => setFocus({ city: dot.city, facility: dot.facility })}
+                />
                 : <div className="empty-chart">Ładowanie danych placówek…</div>}
           </div>
           <MapLegend
@@ -181,6 +197,7 @@ export function RegionView({ productCodes, year, method, areas = NO_AREAS, onAre
             areaColor={areaColor}
             reference={reference}
             max={maxFacility}
+            dotMedian={dotMedian}
             scale={mapWidth / data.regionsMap.viewBox[0]}
           />
         </div>
@@ -217,13 +234,15 @@ function niceValue(value: number): number {
  * Województwa: skala koloru i wybrane obszary. Placówki: kolory i wielkość — kropki w skali mapy
  * (`scale` = piksele na jednostkę mapy), więc kropka legendy ma rozmiar kropki na mapie.
  */
-function MapLegend({ mode, range, areas, areaColor, reference, max, scale }: {
+function MapLegend({ mode, range, areas, areaColor, reference, max, dotMedian, scale }: {
   mode: MapMode;
   range: string;
   areas: AnalysisArea[];
   areaColor: (area: AnalysisArea) => string;
   reference: { regions: { owNfz: string; name: string }[] };
   max: number;
+  /** Mediana placówek w roku mapy (środek skali koloru kropek). */
+  dotMedian: number;
   scale: number;
 }) {
   const regionAreas = areas.filter((area) => area.kind === "region");
@@ -246,12 +265,19 @@ function MapLegend({ mode, range, areas, areaColor, reference, max, scale }: {
   const sizes = [...new Set([niceValue(max), niceValue(max / 4), niceValue(max / 16)])].filter((value) => value > 0);
   return <div className={styles.mapLegend}>
     <div className={styles.legendGroup}>
-      <div className={styles.legendTitle}>Kolor</div>
-      <ul className={styles.legendItems}>
-        {areas.map((area) => <li key={areaToValue(area)}><i className={styles.legendDot} style={{ background: areaColor(area) }} aria-hidden />{areaLabel(area, reference)}</li>)}
-        <li><i className={styles.legendDot} style={{ background: areas.length ? DOT_OUTSIDE : DOT_COLOR }} aria-hidden />{areas.length ? "pozostałe placówki" : "placówka"}</li>
-      </ul>
+      <div className={styles.legendTitle}>Hospitalizacje placówki wobec mediany roku ({integer(dotMedian)})</div>
+      <div className={styles.legendScale}>
+        <span>¼ ×</span>
+        <i style={{ background: `linear-gradient(90deg, ${scaleColor(-1)}, ${scaleColor(0)}, ${scaleColor(1)})` }} aria-hidden />
+        <span>4 ×</span>
+      </div>
     </div>
+    {areas.length ? <div className={styles.legendGroup}>
+      <div className={styles.legendTitle}>Obszary</div>
+      <ul className={styles.legendItems}>
+        {areas.map((area) => <li key={areaToValue(area)}><i className={styles.legendRing} style={{ borderColor: areaColor(area) }} aria-hidden />{areaLabel(area, reference)}</li>)}
+      </ul>
+    </div> : null}
     <div className={styles.legendGroup}>
       <div className={styles.legendTitle}>Hospitalizacje w roku</div>
       <ul className={styles.legendSizes}>
@@ -270,45 +296,79 @@ function MapLegend({ mode, range, areas, areaColor, reference, max, scale }: {
 const dotTitle = (dot: FacilityDot, year: string) =>
   `${dot.name} (${formatCityName(dot.city)}): ${integer(dot.hospitalizations)} hospitalizacji w ${year} r.`;
 
+/** Krotność wobec odniesienia, np. „1,4 × mediany”. */
+const ratio = (value: number, reference: number) => reference > 0
+  ? `${(value / reference).toLocaleString("pl-PL", { maximumFractionDigits: 1 })} ×`
+  : "—";
+
 /**
  * Mapa placówek: kontury województw i kropka na każdą placówkę z kropką w roku mapy (`facilityDots`).
+ * Kolor = hospitalizacje placówki wobec mediany placówek w roku mapy; wybrane obszary mają obwódkę,
+ * pozostałe placówki są przygaszone. Najechanie pokazuje podpowiedź (bez zmiany tabeli obok).
  * Większe kropki pod spodem, mniejsze na wierzchu; przy zmianie roku kropki płynnie zmieniają wielkość i miejsce.
  */
-function FacilityMap({ map, dots, mapYear, areas, areaColor, focus, onSelect }: {
+function FacilityMap({ map, dots, mapYear, areas, areaColor, median: yearMedian, regionName, focus, onSelect }: {
   map: RegionsMap;
   dots: FacilityDot[];
   mapYear: string;
   areas: AnalysisArea[];
   areaColor: (area: AnalysisArea) => string;
+  /** Mediana hospitalizacji placówek na mapie w roku mapy (środek skali koloru). */
+  median: number;
+  regionName: (owNfz: string) => string;
   focus: { city: string; facility?: number } | null;
   onSelect: (dot: FacilityDot) => void;
 }) {
   const [width, height] = map.viewBox;
+  const [hover, setHover] = useState<{ dot: FacilityDot; x: number; y: number; left: boolean } | null>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
   const shown = [...dots].sort((a, b) => b.r - a.r);
-  const colorOf = (dot: FacilityDot) => {
-    const area = areas.find((candidate) => inArea(candidate, { owNfz: dot.owNfz, city: dot.city }));
-    return area ? areaColor(area) : areas.length ? DOT_OUTSIDE : DOT_COLOR;
+  const areaOf = (dot: FacilityDot) => areas.find((candidate) => inArea(candidate, { owNfz: dot.owNfz, city: dot.city }));
+  const showTip = (dot: FacilityDot, clientX: number, clientY: number) => {
+    const box = wrapRef.current?.getBoundingClientRect();
+    // Po prawej połowie mapy podpowiedź po lewej stronie kursora (nie wychodzi poza kartę).
+    if (box) setHover({ dot, x: clientX - box.left, y: clientY - box.top, left: clientX - box.left > box.width / 2 });
   };
-  return <svg className={jgp.regionMap} viewBox={`0 0 ${width} ${height}`} role="group" aria-label={`Mapa placówek: hospitalizacje w ${mapYear} r.`}>
-    {map.regions.map(([code, , path]) => <path key={code} d={path} className={styles.cityMapRegion} fill="#EEF2F7" aria-hidden />)}
-    {shown.map((dot) => {
-      const selected = focus?.facility === dot.facility || (focus?.facility === undefined && focus?.city === dot.city);
-      return <circle
-        key={dot.facility}
-        cx={dot.x}
-        cy={dot.y}
-        r={dot.r}
-        fill={colorOf(dot)}
-        className={`${styles.cityDot} ${selected ? styles.facilityDotSelected : ""}`}
-        role="button"
-        tabIndex={0}
-        aria-label={dotTitle(dot, mapYear)}
-        aria-pressed={selected}
-        onClick={() => onSelect(dot)}
-        onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onSelect(dot); } }}
-      ><title>{dotTitle(dot, mapYear)}</title></circle>;
-    })}
-  </svg>;
+  const tipArea = hover ? areaOf(hover.dot) : undefined;
+  return <div ref={wrapRef} className={styles.facilityMap} onMouseLeave={() => setHover(null)}>
+    <svg className={jgp.regionMap} viewBox={`0 0 ${width} ${height}`} role="group" aria-label={`Mapa placówek: hospitalizacje w ${mapYear} r.`}>
+      {map.regions.map(([code, , path]) => <path key={code} d={path} className={styles.cityMapRegion} fill="#EEF2F7" aria-hidden />)}
+      {shown.map((dot) => {
+        const selected = focus?.facility === dot.facility || (focus?.facility === undefined && focus?.city === dot.city);
+        const area = areaOf(dot);
+        const outside = areas.length > 0 && !area;
+        return <circle
+          key={dot.facility}
+          cx={dot.x}
+          cy={dot.y}
+          r={dot.r}
+          fill={scaleColor(scalePosition(dot.hospitalizations, yearMedian, DOT_SPAN))}
+          style={area ? { "--area-color": areaColor(area) } as CSSProperties : undefined}
+          opacity={outside ? DOT_OUTSIDE_OPACITY : undefined}
+          className={`${styles.cityDot} ${area ? styles.facilityDotArea : ""} ${selected ? styles.facilityDotSelected : ""}`}
+          role="button"
+          tabIndex={0}
+          aria-label={dotTitle(dot, mapYear)}
+          aria-pressed={selected}
+          onClick={() => onSelect(dot)}
+          onMouseEnter={(event) => showTip(dot, event.clientX, event.clientY)}
+          onMouseMove={(event) => showTip(dot, event.clientX, event.clientY)}
+          onMouseLeave={() => setHover(null)}
+          onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onSelect(dot); } }}
+        />;
+      })}
+    </svg>
+    {hover ? <div
+      className={`${styles.mapTip} ${hover.left ? styles.mapTipLeft : ""}`}
+      style={{ left: hover.x, top: hover.y }}
+      role="tooltip"
+    >
+      <b>{hover.dot.name}</b>
+      <span>{formatCityName(hover.dot.city)} · {regionName(hover.dot.owNfz)}</span>
+      <span>Hospitalizacje {mapYear}: <b>{integer(hover.dot.hospitalizations)}</b> ({ratio(hover.dot.hospitalizations, yearMedian)} mediany roku)</span>
+      {tipArea ? <span><i className={styles.areaSwatch} style={{ background: areaColor(tipArea) }} aria-hidden /> w obszarze analizy</span> : null}
+    </div> : null}
+  </div>;
 }
 
 /** Tabela województw w roku mapy: od najwyższego wskaźnika na 100 tys.; kliknięcie dodaje albo usuwa obszar. */

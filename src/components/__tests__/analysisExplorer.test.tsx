@@ -2,7 +2,7 @@
 
 import "@testing-library/jest-dom/vitest";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { AnalysisExplorer } from "@/components/explorer/AnalysisExplorer";
 import { DASHBOARD_TAB_NAVIGATE_EVENT } from "@/lib/dashboardNavigation";
 import type { ReferencePayload } from "@/lib/types";
@@ -118,11 +118,15 @@ describe("AnalysisExplorer", () => {
     expect(screen.queryByRole("heading", { level: 1 })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Zakończ tryb analizy" })).toHaveAttribute("aria-pressed", "true");
     expect(window.localStorage.getItem("funduszdanych:explorer-focus")).toBe("1");
+    // Pasek liczb chowa się płynnie (zostaje w DOM, poza drzewem dostępności); nagłówek portalu dostaje znacznik trybu.
+    expect(document.querySelector('dl[aria-label="Liczby wybranego zakresu"]')?.closest("[aria-hidden]")).toHaveAttribute("aria-hidden", "true");
+    expect(document.documentElement).toHaveAttribute("data-explorer-focus");
     cleanup();
     render(<AnalysisExplorer />);
     expect(await screen.findByRole("button", { name: "Zakończ tryb analizy" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Zakończ tryb analizy" }));
     expect(screen.getByRole("heading", { level: 1, name: "Eksplorator danych" })).toBeInTheDocument();
+    expect(document.documentElement).not.toHaveAttribute("data-explorer-focus");
   });
 
   it("w „W czasie” przekazuje zestawienie JGP wspólne z „Kto leczy”", async () => {
@@ -254,7 +258,12 @@ describe("AnalysisExplorer", () => {
 
   it("linkuje stronę grupy JGP, gdy wybrano jedną grupę, która ją ma", async () => {
     render(<AnalysisExplorer />);
-    expect(await screen.findByRole("link", { name: "Wszystko o grupie E10 →" })).toHaveAttribute("href", "/jgp/E10");
+    const link = await screen.findByRole("link", { name: "Wszystko o grupie E10 →" });
+    expect(link).toHaveAttribute("href", "/jgp/E10");
+    // Obok przycisku trybu analizy (sama ikona), w pasku widoków.
+    const nav = screen.getByRole("navigation", { name: "Widoki analizy" });
+    expect(nav).toContainElement(link);
+    expect(within(nav).getByRole("button", { name: "Tryb analizy" })).toHaveTextContent("");
     fireEvent.click(screen.getByText("dwie grupy"));
     expect(screen.queryByRole("link", { name: /Wszystko o grupie/ })).not.toBeInTheDocument();
   });

@@ -113,10 +113,10 @@ const commonProps = {
 };
 
 describe("MortalityTab data table", () => {
-  it("has no chart title; the chart description is behind the „?” tooltip", () => {
+  it("has no chart title and no „?” in the toolbar (the explorer puts it after the view question)", () => {
     render(<MortalityTab {...commonProps} data={mortalityPayload([mortalityRow()])} />);
     expect(screen.queryByRole("heading", { name: "Liczba hospitalizacji a śmiertelność" })).not.toBeInTheDocument();
-    expect(screen.getByRole("note")).toHaveTextContent(/Każdy punkt to świadczeniodawca/);
+    expect(screen.queryByRole("button", { name: "Jak czytać wykres" })).not.toBeInTheDocument();
   });
 
   it("renders the expected columns and formatted values", () => {
@@ -278,10 +278,10 @@ describe("MortalityTab data table", () => {
 });
 
 describe("AdmissionTab data table", () => {
-  it("has no chart title; the axis description is behind the „?” tooltip", () => {
+  it("has no chart title and no „?” in the toolbar (the explorer puts it after the view question)", () => {
     render(<AdmissionTab {...commonProps} data={admissionPayload([admissionRow()])} />);
     expect(screen.queryByRole("heading", { name: "Przyjęcia planowane a nagłe" })).not.toBeInTheDocument();
-    expect(screen.getByRole("note")).toHaveTextContent(/oś Y sumę przyjęć nagłych/);
+    expect(screen.queryByRole("button", { name: "Jak czytać wykres" })).not.toBeInTheDocument();
   });
 
   it("renders the expected columns and rounds all admission counts", () => {

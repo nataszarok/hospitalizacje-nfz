@@ -240,7 +240,49 @@ export function facilityDots(index: FacilityYearsIndex, totals: Map<number, numb
       dots.push({ facility: item.facility, owNfz, nip, name, city, x: cx + offsets[i].x, y: cy + offsets[i].y, r: radii[i], hospitalizations: item.hospitalizations });
     });
   }
-  return dots;
+  // Pakowanie nie widzi sąsiednich miast (np. Warszawa i Konstancin-Jeziorna): rozsuwamy kolizje między miastami.
+  return separateDots(dots);
+}
+
+/**
+ * Rozsuwa nachodzące na siebie koła: każda para przesuwa się wzdłuż linii środków, mniejsze koło dalej
+ * (udział przesunięcia ∝ polu drugiego koła). Powtarza do braku kolizji albo `iterations` przebiegów.
+ * `gap` mniejszy od odstępu `packCircles`, więc koła upakowane w jednym mieście zostają na miejscu.
+ */
+export function separateDots<T extends { x: number; y: number; r: number }>(dots: T[], gap = 0.5, iterations = 200): T[] {
+  const out = dots.map((dot) => ({ ...dot }));
+  for (let pass = 0; pass < iterations; pass++) {
+    let moved = false;
+    for (let i = 0; i < out.length; i++) {
+      for (let j = i + 1; j < out.length; j++) {
+        const a = out[i], b = out[j];
+        const min = a.r + b.r + gap;
+        let dx = b.x - a.x, dy = b.y - a.y;
+        if (Math.abs(dx) >= min || Math.abs(dy) >= min) continue;
+        let d = Math.hypot(dx, dy);
+        if (d >= min - 1e-6) continue;
+        // Wspólny środek: stały kierunek zależny od indeksu (wynik powtarzalny).
+        if (d < 1e-9) { dx = Math.cos(i + j); dy = Math.sin(i + j); d = 1; }
+        const overlap = min - d;
+        const massA = a.r * a.r, massB = b.r * b.r;
+        const shareA = massA + massB > 0 ? massB / (massA + massB) : 0.5;
+        const ux = dx / d, uy = dy / d;
+        a.x -= ux * overlap * shareA; a.y -= uy * overlap * shareA;
+        b.x += ux * overlap * (1 - shareA); b.y += uy * overlap * (1 - shareA);
+        moved = true;
+      }
+    }
+    if (!moved) break;
+  }
+  return out;
+}
+
+/** Mediana wartości (0 dla pustej listy). */
+export function median(values: number[]): number {
+  if (!values.length) return 0;
+  const sorted = [...values].sort((a, b) => a - b);
+  const middle = Math.floor(sorted.length / 2);
+  return sorted.length % 2 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2;
 }
 
 /** `durations/<sekcja>.json.gz`: hospitalizacje w roku według OW NFZ i długości pobytu (bez miesięcy). */
@@ -336,9 +378,7 @@ export function cityYearPoints(totals: Map<string, number[]>, map: CitiesMap, ye
     }
     if (hospitalizations > 0) points.push({ city: name, owNfz, x, y, population, populationYear, hospitalizations, per100k: population ? (hospitalizations / population) * 100_000 : 0 });
   }
-  allRates.sort((a, b) => a - b);
-  const middle = Math.floor(allRates.length / 2);
-  const medianPer100k = !allRates.length ? 0 : allRates.length % 2 ? allRates[middle] : (allRates[middle - 1] + allRates[middle]) / 2;
+  const medianPer100k = median(allRates);
   points.sort((a, b) => b.hospitalizations - a.hospitalizations);
   missing.sort((a, b) => b.hospitalizations - a.hospitalizations);
   return { points, missing, maxHospitalizations, medianPer100k };

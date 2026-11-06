@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react";
 import { AreaStatsPopover } from "@/components/AreaStatsPopover";
-import { InfoTip } from "@/components/InfoTip";
 import { ChartScaleControl } from "@/components/ChartScaleControl";
 import { MortalityChart } from "@/components/MortalityChart";
 import { MortalityDisplayControl } from "@/components/MortalityDisplayControl";
@@ -112,10 +111,8 @@ export function MortalityTab({
     <div className={loading ? "content loading" : "content"}>
       <section className="chart-section">
         {data.rows.length > 0 ? (
-          <div className="plot-column">
+          <div className={`plot-column ${styles.plotColumn}`}>
             <div className={`plot-toolbar ${styles.toolbar}`}>
-              {/* Opis wykresu pod „?”: pytanie widoku nad liczbami zastępuje tytuł wykresu. */}
-              <InfoTip label="Każdy punkt to świadczeniodawca: oś X — liczba hospitalizacji, oś Y — śmiertelność (zgony w szpitalu / hospitalizacje). Przełącznik zmienia jednostkę osi X. Obszar wybrany w panelu jest wyróżniony kolorem." ariaLabel="Jak czytać wykres" />
               {canGroupJgp ? (
                 <MortalityDisplayControl value={displayMode} onChange={setDisplayMode} />
               ) : null}
@@ -211,7 +208,7 @@ const integer = (value: number) => Math.round(value).toLocaleString("pl-PL");
 /** Krótka interpretacja wykresu: średnia śmiertelność, koncentracja wolumenu, małe i duże ośrodki. */
 export function MortalityInsightText({ insights }: { insights: MortalityInsights }) {
   const { providers, hospitalizations, deaths, mortalityPct, topCount, topSharePct, medianHospitalizations, smallMortalityPct, largeMortalityPct } = insights;
-  return <div className={styles.insight} aria-label="Interpretacja wykresu">
+  return <div className={`${styles.insight} chart-insight`} aria-label="Interpretacja wykresu">
     <p>
       Średnia śmiertelność: <strong>{pct(mortalityPct)}</strong> ({integer(deaths)} zgonów na {integer(hospitalizations)} hospitalizacji
       {" "}u {integer(providers)} świadczeniodawców).
