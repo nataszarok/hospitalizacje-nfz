@@ -6,7 +6,7 @@ Source: API "Statystyki NFZ - Świadczenia" (https://api.nfz.gov.pl/app-stat-api
   - "Rozpoznania ICD 10" (icd10-diseases): most frequent main diagnoses, or the directional list when the group has no other;
   - "Procedury ICD 9 - Kody listy kierunkowej" (icd9-procedures): procedures that qualify a stay to the group.
 The API has data up to 2024. Each group gets its latest year in the API (2024, or the last year
-of a withdrawn group). Raw responses are cached in data/nfz_jgp_stats/<KOD>.json; without
+of a withdrawn group). Raw responses are cached in data/nfz_jgp_stats/profile/<KOD>.json; without
 --fetch the script only reads the cache (groups without a cache file are skipped).
 
 Output (read only by the build: group descriptions on /jgp/[kod]):
@@ -137,7 +137,7 @@ def main() -> None:
     if args.only:
         wanted = set(args.only.split(","))
         groups = [code for code in groups if code in wanted]
-    cache = args.data_dir / "nfz_jgp_stats"
+    cache = args.data_dir / "nfz_jgp_stats" / "profile"
     cache.mkdir(parents=True, exist_ok=True)
     names = benefit_names(args.data_dir)
 

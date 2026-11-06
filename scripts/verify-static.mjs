@@ -162,6 +162,42 @@ console.log(`Hospitalization data OK: ${index.years.join(", ")}; ${((totalSize +
   console.log(`Group pages OK: ${pagesIndex.groups.length} groups, ${(totalSize / 1024 / 1024).toFixed(2)} MiB, largest ${largest[1]} ${(largest[0] / 1024).toFixed(0)} KiB.`);
 }
 
+// Metoda cal (kalibracja „<5”, scripts/calibrate_below5.py w build_hospitalizations.py): kolumny hCal/dCal tylko dla lat
+// z index.json → calibration. W pliku roku cal ≥ min, zgony cal ≤ pobyty cal, nadwyżka cal − min równa podsumowaniu
+// (pobyty i zgony), trendy sumują się do pliku roku; lata bez kalibracji nie mają hCal, a w trendach mają null.
+{
+  const calibration = index.calibration ?? {};
+  const { data: rawTrends } = await readGzipJson(path.join(DIR, "trends.json.gz"));
+  const m = rawTrends.monthly;
+  for (const year of index.years) {
+    const summary = calibration[year];
+    const { data: yearFile } = await readGzipJson(path.join(DIR, `${year}.json.gz`));
+    const f = yearFile.facts;
+    if (!summary) {
+      if (f.hCal || f.dCal) throw new Error(`${year}.json.gz has hCal/dCal but index.json has no calibration for ${year}.`);
+      continue;
+    }
+    if (f.hCal?.length !== f.hMin.length || f.dCal?.length !== f.dMin.length) throw new Error(`${year}.json.gz: hCal/dCal missing or of wrong length.`);
+    let extraH = 0, extraD = 0, h = 0, d = 0;
+    for (let i = 0; i < f.hMin.length; i++) {
+      if (f.hCal[i] < f.hMin[i] || f.dCal[i] < f.dMin[i] || f.dCal[i] > f.hCal[i]) throw new Error(`${year}.json.gz: fact ${i} has hMin ${f.hMin[i]}, hCal ${f.hCal[i]}, dMin ${f.dMin[i]}, dCal ${f.dCal[i]}.`);
+      extraH += f.hCal[i] - f.hMin[i]; extraD += f.dCal[i] - f.dMin[i]; h += f.hCal[i]; d += f.dCal[i];
+    }
+    if (extraH !== summary.staysCal - summary.staysMin || extraD !== summary.deathsCal - summary.deathsMin) {
+      throw new Error(`${year}.json.gz: cal excess ${extraH} stays / ${extraD} deaths differs from index.json calibration.`);
+    }
+    const yearIndex = rawTrends.years.indexOf(year);
+    let th = 0, td = 0;
+    for (let i = 0; i < m.year.length; i++) if (m.year[i] === yearIndex) { th += m.hCal[i]; td += m.dCal[i]; }
+    if (th !== h || td !== d) throw new Error(`trends.json.gz ${year}: hCal/dCal ${th}/${td} differ from ${year}.json.gz ${h}/${d}.`);
+    console.log(`Calibration OK: ${year}, ${summary.groups} groups = API, stays cal ${h.toLocaleString("en-US")}, deaths cal ${d.toLocaleString("en-US")}.`);
+  }
+  for (let i = 0; i < m.year.length; i++) {
+    const withCal = Boolean(calibration[rawTrends.years[m.year[i]]]);
+    if (withCal !== (m.hCal[i] !== null) || withCal !== (m.dCal[i] !== null)) throw new Error(`trends.json.gz: hCal/dCal must be set exactly for calibrated years (row ${i}).`);
+  }
+}
+
 // Mapa województw (scripts/build_regions_map.py): 16 województw z kodami OW jak w danych.
 {
   const { size, data: map } = await readGzipJson("public/data/regions-map.json.gz");

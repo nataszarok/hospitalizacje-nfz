@@ -21,6 +21,14 @@ Values "<5" are estimated per year in file order with a fixed seed (method "sim"
 draw 1-4 with weights exp(-x); method "min": 1), exactly like the former db_build
 pipeline, so the 2025 output matches the previous dashboard.json.gz.
 
+Method "cal" (calibrated "<5", scripts/calibrate_below5.py) is computed here for every year that has its inputs
+(NFZ JGP statistics tables, valuations and settlements in data/) and written as columns hCal/dCal next to the
+other methods; index.json gets a summary per calibrated year ("calibration"). The calibration gives totals per
+cell (NFZ branch + NIP + contract range + product); they are split over the cell's "<5" rows: extra deaths evenly
+to "<5" rows with discharge "death", the remaining extra stays evenly to the other "<5" rows, and the remainders
+to rows drawn at random (fixed seed per year). In trends, years without calibration have null in hCal/dCal.
+The app still reads min and sim.
+
 JGP product names come from data/kody_produktu_jgp.csv (current catalog). Codes that
 no longer exist there (e.g. groups removed after 2024) are taken, in this order, from
 the NFZ JGP statistics dictionary cached in data/jgp_benefits_nfz.json
@@ -74,6 +82,9 @@ FACT_KEYS = ["ow", "nip", "product", "duration", "admission"]
 VALUE_COLS = ["h_sim", "h_min", "d_sim", "d_min"]
 # Nazwy kolumn wartości w plikach dla przeglądarki (kolejność jak VALUE_COLS).
 VALUE_KEYS = ["hSim", "hMin", "dSim", "dMin"]
+# Metoda kalibrowana: tylko lata z plikiem build-data/calibration/<rok>.json.gz.
+CAL_COLS = ["h_cal", "d_cal"]
+CAL_KEYS = ["hCal", "dCal"]
 # Grupy trybu przyjęcia w trendach: indeks w tej liście zamiast litery w każdym wierszu.
 ADMISSION_GROUPS = ["p", "u", "o"]
 ALL_YEARS = "2017,2018,2019,2020,2021,2022,2023,2024,2025"
@@ -111,17 +122,37 @@ def source_path(data_dir: Path, year: str) -> Path:
     raise SystemExit(f"Brak danych źródłowych dla roku {year} w {data_dir}")
 
 
-def iter_frames(path: Path, year: str):
-    """Kolejne fragmenty pliku źródłowego jako ramki z oszacowanymi wartościami „<5” (h_sim, h_min, d_sim, d_min).
+def calibration_row_plan(cells: pd.DataFrame, year: str) -> tuple[pd.DataFrame, set[str]]:
+    """Plan podziału wyniku kalibracji komórek na wiersze „<5” (komórka = OW|NIP|zakres|produkt).
 
-    Losowanie idzie po wierszach danego roku w kolejności pliku, więc każdy skrypt, który czyta plik
-    tą funkcją, dostaje te same wartości co pliki z tego skryptu. Eksport wieloletni daje tylko wiersze roku.
+    Dodatkowe zgony (dCal − dMin) idą po równo na wiersze „<5” ze zgonem, reszta nadwyżki (hCal − hMin − dodatkowe zgony)
+    po równo na pozostałe wiersze „<5”. Resztę z dzielenia dostają wiersze wybrane losowo (stałe ziarno dla roku),
+    żeby nie tworzyć sztucznych szczytów w pierwszych miesiącach. Zwraca część całkowitą dla komórki i zbiór
+    „komórka|zgon|numer wiersza” z wierszami, które dostają jeden pobyt więcej.
     """
-    rng = np.random.default_rng(SEED)
-    values = np.array([1, 2, 3, 4])
-    weights = np.exp(-values)
-    p = weights / weights.sum()
+    c = cells.copy()
+    c.index = pd.Index(c.ow + "|" + c.nip + "|" + c.kk + "|" + c.pj, name="cell")
+    extra_d = c.D - c.dMin
+    extra_h = c.N - c.lo - extra_d
+    alive = c.rows - c.rowsDeath
+    if (extra_d < 0).any() or (extra_h < 0).any() or ((extra_h > 0) & (alive == 0)).any() or ((extra_d > 0) & (c.rowsDeath == 0)).any():
+        raise SystemExit(f"{year}: nadwyżki kalibracji nie da się rozdzielić na wiersze „<5”")
+    plan = pd.DataFrame({"alive_base": extra_h // alive.clip(lower=1), "death_base": extra_d // c.rowsDeath.clip(lower=1)})
+    alive_rem = (extra_h % alive.clip(lower=1)).astype(int); death_rem = (extra_d % c.rowsDeath.clip(lower=1)).astype(int)
+    if ((plan.alive_base + (alive_rem > 0)) > 3).any() or ((plan.death_base + (death_rem > 0)) > 3).any():
+        raise SystemExit(f"{year}: wiersz „<5” dostałby więcej niż 4 pobyty")
+    rng = np.random.default_rng([SEED, int(year)])
+    chosen: set[str] = set()
+    for death, rem, n in [(False, alive_rem, alive), (True, death_rem, c.rowsDeath)]:
+        flag = "1" if death else "0"
+        for cell in rem.index[rem > 0].sort_values():
+            for pos in rng.choice(int(n[cell]), size=int(rem[cell]), replace=False):
+                chosen.add(f"{cell}|{flag}|{pos}")
+    return plan, chosen
 
+
+def read_source_chunks(path: Path, year: str):
+    """Fragmenty pliku źródłowego z wierszami jednego roku (kolumny RAW_COLUMNS, wartości tekstowe)."""
     multi = MULTI_YEAR_SOURCES.get(path.name)
     options = {"header": None, "names": RAW_COLUMNS, "encoding": multi[1]} if multi else {}
     for chunk in pd.read_csv(path, sep=";", dtype=str, chunksize=CHUNK_SIZE, keep_default_na=False, **options):
@@ -133,6 +164,23 @@ def iter_frames(path: Path, year: str):
         years = set(chunk["ROK"].str.strip())
         if years != {year}:
             raise SystemExit(f"{path.name}: oczekiwano roku {year}, znaleziono {sorted(years)}")
+        yield chunk
+
+
+def iter_frames(path: Path, year: str, calibration: tuple[pd.DataFrame, set[str]] | None = None):
+    """Kolejne fragmenty pliku źródłowego jako ramki z oszacowanymi wartościami „<5” (h_sim, h_min, d_sim, d_min).
+
+    Losowanie idzie po wierszach danego roku w kolejności pliku, więc każdy skrypt, który czyta plik
+    tą funkcją, dostaje te same wartości co pliki z tego skryptu. Eksport wieloletni daje tylko wiersze roku.
+    Z planem kalibracji roku (calibration_row_plan) ramki mają też h_cal i d_cal.
+    """
+    rng = np.random.default_rng(SEED)
+    values = np.array([1, 2, 3, 4])
+    weights = np.exp(-values)
+    p = weights / weights.sum()
+
+    seen: dict[tuple[str, bool], int] = defaultdict(int)   # wiersze „<5” komórki już przejrzane (kolejność pliku)
+    for chunk in read_source_chunks(path, year):
         raw = chunk["LICZBA_HOSPITALIZACJI"].str.strip()
         suppressed = raw.eq("<5").to_numpy()
         h_sim = pd.to_numeric(raw, errors="coerce").to_numpy(dtype="float64")
@@ -154,26 +202,50 @@ def iter_frames(path: Path, year: str):
             "d_sim": np.where(death, h_sim, 0.0), "d_min": np.where(death, h_min, 0.0),
         })
         frame["group"] = frame["admission"].map(admission_group)
+        if calibration is not None:
+            cell = (frame["ow"] + "|" + frame["nip"] + "|" + chunk["KOD_PRODUKTU_KONTRAKTOWEGO"].str.strip().values + "|" + frame["product"]).to_numpy()
+            extra = np.zeros(len(frame))
+            idx = np.flatnonzero(suppressed)
+            if len(idx):
+                keys = pd.DataFrame({"cell": cell[idx], "death": death[idx]})
+                # Numer wiersza „<5” w komórce (osobno ze zgonem i bez) liczony od początku pliku roku.
+                rank = keys.groupby(["cell", "death"], sort=False).cumcount().to_numpy()
+                offset = np.array([seen[(c, d)] for c, d in zip(keys.cell, keys.death)])
+                for (c, d), n in keys.groupby(["cell", "death"], sort=False).size().items():
+                    seen[(c, d)] += n
+                plan, chosen = calibration
+                info = plan.reindex(keys.cell)
+                base = np.nan_to_num(np.where(keys.death, info.death_base, info.alive_base))
+                tag = keys.cell + "|" + np.where(keys.death, "1", "0") + "|" + (rank + offset).astype(str)
+                extra[idx] = base + tag.isin(chosen).to_numpy()
+            frame["h_cal"] = h_min + extra
+            frame["d_cal"] = np.where(death, frame["h_cal"], 0.0)
         yield frame, len(chunk)
 
 
-def read_year(path: Path, year: str) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, int]:
-    """Zwraca fakty (szczegóły), trend miesięczny, trend regionalny i miesięczny regionalny dla jednego roku."""
+def read_year(path: Path, year: str, calibration: tuple[pd.DataFrame, set[str]] | None = None) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, int]:
+    """Zwraca fakty (szczegóły), trend miesięczny, trend regionalny i miesięczny regionalny dla jednego roku.
+
+    Z kalibracją ramki mają dodatkowo kolumny CAL_COLS.
+    """
+    cols = VALUE_COLS + (CAL_COLS if calibration is not None else [])
     facts: list[pd.DataFrame] = []
     monthly: list[pd.DataFrame] = []
     regional: list[pd.DataFrame] = []
     regional_monthly: list[pd.DataFrame] = []
     rows = 0
-    for frame, chunk_rows in iter_frames(path, year):
-        facts.append(frame.groupby(FACT_KEYS, sort=False)[VALUE_COLS].sum().reset_index())
-        monthly.append(frame.groupby(["month", "product", "group"], sort=False)[VALUE_COLS].sum().reset_index())
-        regional.append(frame.groupby(["ow", "product", "group"], sort=False)[VALUE_COLS].sum().reset_index())
-        regional_monthly.append(frame.groupby(["month", "ow", "product", "group"], sort=False)[VALUE_COLS].sum().reset_index())
+    for frame, chunk_rows in iter_frames(path, year, calibration):
+        facts.append(frame.groupby(FACT_KEYS, sort=False)[cols].sum().reset_index())
+        monthly.append(frame.groupby(["month", "product", "group"], sort=False)[cols].sum().reset_index())
+        regional.append(frame.groupby(["ow", "product", "group"], sort=False)[cols].sum().reset_index())
+        regional_monthly.append(frame.groupby(["month", "ow", "product", "group"], sort=False)[cols].sum().reset_index())
         rows += chunk_rows
 
     def combine(parts: list[pd.DataFrame], keys: list[str]) -> pd.DataFrame:
-        out = pd.concat(parts).groupby(keys, sort=True)[VALUE_COLS].sum().reset_index()
-        out[VALUE_COLS] = out[VALUE_COLS].round().astype("int64")
+        out = pd.concat(parts).groupby(keys, sort=True)[cols].sum().reset_index()
+        out[cols] = out[cols].round().astype("int64")
+        if calibration is None:   # rok bez kalibracji: puste kolumny cal (null w plikach trendów)
+            for col in CAL_COLS: out[col] = None
         return out
 
     return (
@@ -269,6 +341,32 @@ def load_facility_names(exports: Path, data: Path) -> tuple[dict[str, tuple[str,
     return curated, nfz, supplement
 
 
+def load_provider_codes(data: Path, year: str | None = None) -> dict[str, str]:
+    """Kod świadczeniodawcy NFZ → NIP z pliku hospitalizacji, klucz „OW|kod” (np. „01|3401029”).
+
+    Podstawą jest data/nfz_swiadczeniodawcy_2025.csv. Lista ręczna data/kody_swiadczeniodawcow_uzupelnienie.csv
+    ma pierwszeństwo: kody spoza pliku 2025 (placówki zamknięte) i kody, dla których plik 2025 podaje NIP
+    inny niż plik hospitalizacji (połączenia placówek, zmiana NIP). Wiersz z kolumną LATA (np. „2019,2020”)
+    działa tylko w tych latach; bez roku (year=None) działają tylko wiersze bez LATA.
+    """
+    codes: dict[str, str] = {}
+    path = data / "nfz_swiadczeniodawcy_2025.csv"
+    if path.exists():
+        with path.open(encoding="utf-8-sig", newline="") as fh:
+            for row in csv.DictReader(fh):
+                codes[f"{row['oddzial_nfz'].strip().zfill(2)}|{row['kod'].strip()}"] = re.sub(r"\D", "", row["nip"])
+    path = data / "kody_swiadczeniodawcow_uzupelnienie.csv"
+    if not path.exists():
+        return codes
+    with path.open(encoding="utf-8", newline="") as fh:
+        for row in csv.DictReader(fh):
+            years = {y.strip() for y in (row.get("LATA") or "").split(",") if y.strip()}
+            if years and year not in years:
+                continue
+            codes[f"{row['OW_NFZ'].strip().zfill(2)}|{row['KOD_SWIADCZENIODAWCY'].strip()}"] = re.sub(r"\D", "", row["NIP"])
+    return codes
+
+
 def read_reference(exports: Path) -> tuple[list[list[str]], list[list[Any]]]:
     with (exports / "nfz_regions.csv").open(encoding="utf-8", newline="") as fh:
         regions = sorted(csv.DictReader(fh), key=lambda r: int(r["sort_order"]))
@@ -300,6 +398,18 @@ def write_json_gz(path: Path, payload: dict[str, Any]) -> int:
     return path.stat().st_size
 
 
+def calibrate(data_dir: Path, year: str, source: Path) -> tuple[tuple[pd.DataFrame, set[str]] | None, dict[str, Any] | None]:
+    """Kalibracja „<5” roku (scripts/calibrate_below5.py), gdy są dane wejściowe; inaczej (None, None)."""
+    from calibrate_below5 import calibrate_year, inputs_available, summarize   # import tutaj: moduł importuje ten plik
+    if not inputs_available(data_dir, year):
+        return None, None
+    cells, report = calibrate_year(data_dir, year, source)
+    summary = summarize(cells, report, year)
+    print(f"{year}: kalibracja cal — {summary['groups']} grup z API, pobyty {summary['staysCal']:,} (API {summary['staysApi']:,}), "
+          f"zgony {summary['deathsCal']:,} (API {summary['deathsApi']:,})")
+    return calibration_row_plan(cells, year), summary
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--years", default=ALL_YEARS, help="lata oddzielone przecinkami")
@@ -324,6 +434,7 @@ def main() -> None:
     curated, nfz_names, supplement = load_facility_names(args.exports_dir, args.data_dir)
     regions, populations = read_reference(args.exports_dir)
 
+    calibration_summaries: dict[str, dict[str, Any]] = {}
     monthly_rows: list[list[Any]] = []
     regional_rows: list[list[Any]] = []
     regional_monthly_rows: list[list[Any]] = []
@@ -333,7 +444,11 @@ def main() -> None:
 
     for year in years:
         source = source_path(args.data_dir, year)
-        facts, monthly, regional, regional_monthly, raw_rows = read_year(source, year)
+        calibration, summary = calibrate(args.data_dir, year, source)
+        if summary: calibration_summaries[year] = summary
+        facts, monthly, regional, regional_monthly, raw_rows = read_year(source, year, calibration)
+        value_cols = VALUE_COLS + (CAL_COLS if calibration is not None else [])
+        value_keys = VALUE_KEYS + (CAL_KEYS if calibration is not None else [])
 
         codes = sorted(facts["product"].unique())
         products = []
@@ -376,21 +491,22 @@ def main() -> None:
             "facilities": facilities,
             "populations": populations,
             # Fakty jako kolumny indeksów: świadczeniodawca (facilities), produkt (products),
-            # czas pobytu (durations), tryb przyjęcia (admissions) i cztery kolumny wartości.
+            # czas pobytu (durations), tryb przyjęcia (admissions) i kolumny wartości (hCal/dCal tylko dla roku z kalibracją).
             "durations": durations,
             "admissions": admissions,
             "facts": columns([
                 [facility_index[f"{ow}|{nip}"], product_index[product], duration_index[duration], admission_index[admission], *values]
-                for ow, nip, product, duration, admission, *values in facts[FACT_KEYS + VALUE_COLS].values.tolist()
-            ], ["facility", "product", "duration", "admission", *VALUE_KEYS]),
+                for ow, nip, product, duration, admission, *values in facts[FACT_KEYS + value_cols].values.tolist()
+            ], ["facility", "product", "duration", "admission", *value_keys]),
         }
         size = write_json_gz(args.output_dir / f"{year}.json.gz", dataset)
         print(f"{year}: {raw_rows:,} source rows -> {len(facts):,} facts, {len(products)} products, "
-              f"{len(facilities)} providers, {size / 1024 / 1024:.2f} MiB")
+              f"{len(facilities)} providers, {size / 1024 / 1024:.2f} MiB" + (", z kalibracją cal" if calibration is not None else ""))
 
-        monthly_rows += [[year, *r] for r in monthly[["month", "product", "group"] + VALUE_COLS].values.tolist()]
-        regional_rows += [[year, *r] for r in regional[["ow", "product", "group"] + VALUE_COLS].values.tolist()]
-        regional_monthly_rows += [[year, *r] for r in regional_monthly[["month", "ow", "product", "group"] + VALUE_COLS].values.tolist()]
+        trend_cols = VALUE_COLS + CAL_COLS
+        monthly_rows += [[year, *r] for r in monthly[["month", "product", "group"] + trend_cols].values.tolist()]
+        regional_rows += [[year, *r] for r in regional[["ow", "product", "group"] + trend_cols].values.tolist()]
+        regional_monthly_rows += [[year, *r] for r in regional_monthly[["month", "ow", "product", "group"] + trend_cols].values.tolist()]
 
     # Trendy: produkty ze wszystkich lat, wiersze odwołują się do indeksu produktu.
     codes = sorted(product_info)
@@ -398,7 +514,7 @@ def main() -> None:
     year_index = {year: i for i, year in enumerate(years)}
     group_index = {group: i for i, group in enumerate(ADMISSION_GROUPS)}
     branches, branch_index = dictionary([ow for _, ow, *_ in regional_rows])
-    month_keys = ["year", "month", "product", "group", *VALUE_KEYS]
+    month_keys = ["year", "month", "product", "group", *VALUE_KEYS, *CAL_KEYS]
     trends = {
         "version": 2,
         "years": years,
@@ -407,7 +523,7 @@ def main() -> None:
         "products": [[code, product_info[code][0] or None, product_info[code][1] or None, product_years[code]] for code in codes],
         "monthly": columns([[year_index[y], m, index[p], group_index[g], *v] for y, m, p, g, *v in monthly_rows], month_keys),
         "regional": columns([[year_index[y], branch_index[ow], index[p], group_index[g], *v] for y, ow, p, g, *v in regional_rows],
-                            ["year", "branch", "product", "group", *VALUE_KEYS]),
+                            ["year", "branch", "product", "group", *VALUE_KEYS, *CAL_KEYS]),
     }
     size = write_json_gz(args.output_dir / "trends.json.gz", trends)
     print(f"trends: {len(monthly_rows):,} monthly + {len(regional_rows):,} regional rows, {size / 1024:.0f} KiB")
@@ -427,6 +543,9 @@ def main() -> None:
     print(f"trends-regions: {len(by_ow)} plików OW, {len(regional_monthly_rows):,} rows, {total / 1024:.0f} KiB")
 
     index_payload = {"version": 1, "years": years, "latestYear": years[-1], "defaultProductCode": DEFAULT_PRODUCT_CODE}
+    if calibration_summaries:
+        # Lata z metodą cal (kolumny hCal/dCal) i podsumowanie kalibracji dla strony metody.
+        index_payload["calibration"] = calibration_summaries
     (args.output_dir / "index.json").write_text(json.dumps(index_payload, ensure_ascii=False) + "\n", encoding="utf-8")
 
     if report:

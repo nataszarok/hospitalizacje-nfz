@@ -9,6 +9,7 @@ import { readJgpProse } from "@/lib/jgpProse";
 import { decodeValuations, type JgpValuation, type ValuationsFile } from "@/lib/valuations";
 import { decodeJgpGroupFile, decodeStaticDataset, decodeTrends, type JgpGroupFileColumns, type StaticDatasetFile, type TrendsFile } from "@/lib/hospitalizationCodec";
 import type { HospitalizationIndex, StaticDataset, TrendsDataset } from "@/lib/staticData";
+import { calibrationSummaries, type CalibrationSummary } from "@/lib/calibration";
 
 // Odczyt danych podczas budowania strony (statyczny eksport). Tylko dla komponentów serwerowych.
 const DATA_DIR = join(process.cwd(), "public", "data");
@@ -50,6 +51,11 @@ async function readGzipJson<T, F = T>(file: string, decode: (raw: F) => T = (raw
 export function clearDiskCache() {
   gzipCache.clear();
   peerPairsCache.clear();
+}
+
+/** Podsumowania kalibracji „<5” z `index.json` (lata z metodą cal), od najstarszego roku; pusta lista, gdy ich nie ma. */
+export async function readCalibrationSummariesFromDisk(dir = DEFAULT_DIR): Promise<CalibrationSummary[]> {
+  return calibrationSummaries((await readHospitalizationIndexFromDisk(dir)).calibration);
 }
 
 /** Grupy JGP ze stroną (`scripts/build_jgp_pages.py`). */

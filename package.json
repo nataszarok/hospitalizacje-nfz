@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "generate:data": "python3 scripts/build_hospitalizations.py && python3 scripts/build_jgp_pages.py && python3 scripts/build_valuations.py && python3 scripts/build_regions_map.py && python3 scripts/build_psz.py",
+    "fetch:calibration": "python3 scripts/fetch_jgp_stats.py --years 2022-2024 && python3 scripts/build_valuation_history.py --years 2019-2024",
     "verify:static": "node scripts/verify-static.mjs",
     "refresh:data": "npm run generate:data && npm run verify:static",
     "test": "vitest run",
