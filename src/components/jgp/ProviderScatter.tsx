@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { attachHoverMarker, getAppFontFamily, makeHoverTrace, PLOTLY_CONFIG, type PlotElement, type PlotlyHoverEvent } from "@/lib/plotlyChart";
+import { BASE_POINT } from "@/lib/chartPalette";
 import { loadPlotly } from "@/lib/plotlyLoader";
 
 export interface ScatterPoint {
@@ -64,7 +65,7 @@ export function ProviderScatter({ points, xTitle, yTitle, ySuffix, reference, on
         y: group.map((p) => p.y),
         customdata: group.map((p) => [p.key, `<b>${p.name}</b><br>${p.lines.join("<br>")}`]),
         marker: i < groups.length - 1
-          ? { color: colors[i] || "rgba(40, 86, 163, 0.55)", size: colors[i] ? 9 : 8, line: { color: "#FFFFFF", width: 1 } }
+          ? { color: colors[i] || BASE_POINT, size: colors[i] ? 9 : 8, line: { color: "#FFFFFF", width: 1 } }
           : marker === "star"
             ? { color: STAR_COLOR, size: 18, symbol: "star", line: { color: STAR_OUTLINE, width: 1.5 } }
             : { color: "#C65D2E", size: 13, line: { color: "#FFFFFF", width: 2 } },

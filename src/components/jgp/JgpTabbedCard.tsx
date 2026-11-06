@@ -15,6 +15,8 @@ import type { JgpPageData, JgpProviderRow } from "@/lib/jgpPage";
 import { hospitalHref } from "@/lib/portalLinks";
 import base from "./JgpPage.module.css";
 import styles from "./JgpTabs.module.css";
+import { OTHER_POINT, REGION_PICK_COLORS } from "@/lib/chartPalette";
+import { TREND_METRICS, type TrendMetric } from "@/lib/trendMetrics";
 
 const integer = (value: number) => Math.round(value).toLocaleString("pl-PL");
 const decimal = (value: number, digits = 1) => value.toLocaleString("pl-PL", { minimumFractionDigits: digits, maximumFractionDigits: digits });
@@ -36,12 +38,7 @@ const TOP_LINES = 15;
 const SERVER_ROWS = 30;
 const subscribeNothing = () => () => {};
 // Kolory lejka: poza granicą 95% i 99,8% (w górę i w dół).
-// Kolory wybranych województw (mapa, wykresy punktowe, tabela): kontrastowe wobec niebieskiej skali mapy,
-// bez czerwieni i pomarańczu (zarezerwowanych dla wybranego ośrodka). Sprawdzone walidatorem palety
-// (jasność, nasycenie, odstęp ΔE ≥ 15 przy normalnym widzeniu; dla daltonizmu dodatkowo podpisy w legendzie).
-const REGION_PICK_COLORS = ["#7B3FA0", "#1A9850", "#D6338A", "#B88A00", "#0097A7", "#9A5B13"];
-// Ośrodki spoza wybranych województw na wykresach „Jak leczą?”.
-const OTHER_POINT = "rgba(152, 162, 179, 0.5)";
+// Kolory wybranych województw i ośrodków spoza nich: wspólna paleta z eksploratorem (`chartPalette`).
 /** Kolor każdego wybranego województwa (kolejność wyboru), ten sam na mapie, wykresach i w tabeli. */
 const regionColors = (regions: string[]) => new Map(regions.map((ow, i) => [ow, REGION_PICK_COLORS[i % REGION_PICK_COLORS.length]]));
 const FUNNEL_COLORS = { up95: "#E3A27F", up998: "#B4441B", down95: "#8FB0DD", down998: "#2856A3" };
@@ -285,24 +282,9 @@ const periodWord = (period: ChartPeriod) => period === "year" ? "rocznie" : "mie
 
 // ——— Przegląd ———
 
-type Metric = "hospitalizations" | "mortality" | "urgent";
-
-// Miary wykresu „Ile?”: przycisk, tytuł sekcji (bez okresu), jednostka w podpowiedzi i objaśnienie pod osią w obu okresach.
-// Objaśnienie roczne ma tyle samo zdań co miesięczne: wykres ma tę samą wysokość w obu okresach.
-const METRICS: Record<Metric, { button: string; title: string; unit: string; note: Record<ChartPeriod, string> }> = {
-  hospitalizations: { button: "Hospitalizacje", title: "Hospitalizacje", unit: "hosp.", note: {
-    month: "Kropka = miesiąc, linia = średnia z 3 miesięcy. Miesiące według daty wypisu, wartości <5 liczone jako 1.",
-    year: "Kropka = suma roku. Lata według daty wypisu, wartości <5 liczone jako 1.",
-  } },
-  mortality: { button: "Śmiertelność", title: "Śmiertelność", unit: "zgonów", note: {
-    month: "Zgony w szpitalu / hospitalizacje. Linia = udział z 3 miesięcy, miesiące według daty wypisu.",
-    year: "Zgony w szpitalu / hospitalizacje w roku. Lata według daty wypisu.",
-  } },
-  urgent: { button: "% nagłych", title: "Udział przyjęć nagłych", unit: "nagłych", note: {
-    month: "Przyjęcia nagłe (tryb 2 i 3) / hospitalizacje. Linia = udział z 3 miesięcy, miesiące według daty wypisu.",
-    year: "Przyjęcia nagłe (tryb 2 i 3) / hospitalizacje w roku. Lata według daty wypisu.",
-  } },
-};
+// Miary wykresu „Ile?”: wspólne z widokiem „W czasie” eksploratora (`trendMetrics`).
+type Metric = TrendMetric;
+const METRICS = TREND_METRICS;
 
 function OverviewTab({ data, pool, linePool, map, regions, onToggleRegion, onYear, onRegionYear, onClearRegions, onShowProviders, period, onPeriod }: {
   data: JgpPageData; pool: JgpProviderRow[]; linePool: JgpProviderRow[]; map: RegionsMap | null; regions: string[]; onToggleRegion: (ow: string) => void; onYear: (year: string) => void;

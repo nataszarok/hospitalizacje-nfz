@@ -1,139 +1,528 @@
-.explorer {
+/* Eksplorator /analizy: nagłówek modułu (portal/PageHeader), panel ustawień po lewej, widoki po prawej.
+   Kolory, kroje i promienie z tokenów portalu (src/styles/portal.css). */
+.page {
+  padding-bottom: 64px;
+  color: var(--color-text);
+}
+
+/* Przycisk „Jak korzystać?” obok tytułu: rozwija wstęp. */
+.headerButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--color-primary-outline);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-primary-hover);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-bold);
+}
+
+.headerButton:hover {
+  border-color: var(--color-primary);
+}
+
+.headerButton:focus-visible,
+.focusButton:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.chevron {
+  width: 7px;
+  height: 7px;
+  margin-top: -3px;
+  border-right: 1.8px solid currentColor;
+  border-bottom: 1.8px solid currentColor;
+  transform: rotate(45deg);
+  transition: transform .15s;
+}
+
+.chevronOpen {
+  margin-top: 3px;
+  transform: rotate(225deg);
+}
+
+/* Wstęp: trzy karty „kiedy eksplorator / kiedy karta JGP / jak zacząć”. */
+.introGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0 0 16px;
+}
+
+.introCard {
+  min-width: 0;
+  padding: 16px 18px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+}
+
+.introCard h2 {
+  margin: 0 0 6px;
+  font-family: var(--font-display), var(--font-body), sans-serif;
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-semibold);
+  letter-spacing: -.01em;
+  color: var(--color-text);
+}
+
+.introCard p,
+.introCard ol {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--fs-base);
+  line-height: 1.55;
+}
+
+.introCard ol {
+  padding-left: 20px;
+}
+
+.introCard a,
+.method a {
+  color: var(--color-primary-hover);
+  font-weight: var(--fw-semibold);
+}
+
+.method {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--fs-md);
+}
+
+.badge {
+  padding: 3px 7px;
+  border-radius: 4px;
+  background: #FFF4E0;
+  color: #8A5300;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+/* Obszar roboczy: szerokość jak nagłówek (`PageHeader wide`). */
+.workspace {
+  display: grid;
+  grid-template-columns: clamp(300px, 22vw, 360px) minmax(0, 1fr);
+  gap: var(--atlas-workspace-gap);
+  align-items: start;
   width: min(calc(100% - var(--atlas-page-gutter) - var(--atlas-page-gutter)), var(--atlas-workspace-max));
-  margin: 0 auto;
-  padding: 20px 0 48px;
+  margin: 24px auto 0;
+}
+
+/* Panel przypięty pod nagłówkiem portalu; długi panel przewija się sam. */
+.sidebar {
+  position: sticky;
+  top: calc(var(--atlas-header-height, 64px) + 16px);
+  max-height: calc(100vh - var(--atlas-header-height, 64px) - 32px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
   min-width: 0;
 }
 
-.header {
+.sidebarInner {
+  display: grid;
+  /* minmax(0, …): długie nazwy grup JGP zawijają się w polu, nie rozpychają panelu. */
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+}
+
+.sidebarSection {
+  min-width: 0;
+  padding: 12px 14px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-sidebar);
+}
+
+.sidebarKicker {
+  margin: 0 0 10px;
+  color: var(--color-primary-hover);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.field {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 4px;
+  min-width: 0;
+}
+
+.field + .field {
+  margin-top: 10px;
+}
+
+.fieldLabelRow {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-height: 20px;
+}
+
+.fieldLabel {
+  color: var(--color-text);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-semibold);
+}
+
+.fieldMeta {
+  margin-left: auto;
+  color: var(--color-text-tertiary);
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.staticValue {
+  display: flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: var(--fs-base);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Kontrolki Mantine w panelu: obramowania i wybrane wartości w kolorach portalu. */
+.sidebar :global(.mantine-filter .mantine-Input-input) {
+  border-color: var(--color-border-strong);
+  border-radius: var(--radius-control);
+  color: var(--color-text);
+}
+
+.sidebar :global(.mantine-filter .mantine-Pill-root) {
+  border-color: var(--color-primary-outline);
+  background: var(--color-primary-soft);
+  color: var(--color-primary-active);
+}
+
+.sidebar :global(.mantine-segmented) {
+  background: var(--color-background-muted);
+}
+
+/* Wybór grup JGP: wybrane grupy jako lista pod polem wyszukiwania. */
+.picker {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.pickedList {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.picked {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 8px;
+  padding: 5px 4px 5px 8px;
+  border: 1px solid var(--color-primary-outline);
+  border-radius: 8px;
+  background: var(--color-primary-soft);
+  font-size: var(--fs-sm);
+  line-height: 1.35;
+}
+
+.pickedPlain {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.pickedSwatch {
+  width: 10px;
+  height: 10px;
+  margin-top: 4px;
+  border-radius: 50%;
+}
+
+.pickedDetail {
+  color: var(--color-text-tertiary);
+  font-size: var(--fs-xs);
+}
+
+.pickedCode {
+  color: var(--color-primary-active);
+  font-weight: var(--fw-bold);
+  font-variant-numeric: tabular-nums;
+}
+
+.pickedName {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--color-text);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.pickedRemove {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--color-text-tertiary);
+  font-size: var(--fs-lg);
+  line-height: 1;
+}
+
+.pickedRemove:hover,
+.pickedRemove:focus-visible {
+  background: #fff;
+  color: var(--color-error);
+}
+
+.pickedClear {
+  justify-self: start;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-primary-hover);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+}
+
+.content {
+  min-width: 0;
+}
+
+/* Widoki-pytania: przyciski-pigułki jak spis treści kart portalu. */
+.views {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.viewButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 16px 0 13px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  font-family: var(--font-display), var(--font-body), sans-serif;
+  font-size: var(--fs-base);
+  font-weight: var(--fw-semibold);
+  white-space: nowrap;
+  transition: border-color .15s, background .15s, color .15s, padding .3s ease, gap .3s ease;
+}
+
+.viewButton svg {
+  color: var(--color-primary);
+}
+
+.viewButton:hover {
+  border-color: var(--color-primary-outline);
+  color: var(--color-primary-hover);
+}
+
+.viewButton:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.viewButtonActive,
+.viewButtonActive:hover {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.viewButtonActive svg {
+  color: #fff;
+}
+
+/* Tryb analizy: przycisk na końcu rzędu widoków. */
+.viewActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+/* Tryb analizy: sama ikona (opis w podpowiedzi). */
+.focusButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  min-height: 40px;
+  padding: 0;
+  border: 1px dashed var(--color-border-strong);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-semibold);
+  white-space: nowrap;
+}
+
+.focusButton:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary-hover);
+}
+
+.focusButton[aria-pressed="true"] {
+  border-style: solid;
+  border-color: var(--color-primary-outline);
+  background: var(--color-primary-soft);
+  color: var(--color-primary-hover);
+}
+
+/* Tryb analizy: bez nagłówka strony, obszar roboczy na całą szerokość okna. */
+.workspace {
+  transition: width .35s ease, margin-top .35s ease;
+}
+
+.focus .workspace {
+  width: calc(100% - 32px);
+  margin-top: 20px;
+}
+
+/* Tryb analizy: tylko tytuł i wykres — opis pod wykresem i tabela danych gasną i znikają. */
+.content :global(:is(.data-details, .chart-insight)) {
+  transition: opacity .25s ease, display .25s allow-discrete;
+}
+
+.focus .content :global(:is(.data-details, .chart-insight)) {
+  display: none;
+  opacity: 0;
+}
+
+/* Nagłówek portalu schowany (pasek 8 px), więc panel przypina się przy górze okna. */
+.focus .sidebar {
+  top: 20px;
+  max-height: calc(100vh - 36px);
+}
+
+/* Płynne chowanie bloków w trybie analizy: wysokość przez wiersz siatki (1fr → 0fr) i przezroczystość. */
+.collapsible {
+  display: grid;
+  grid-template-rows: 1fr;
+  opacity: 1;
+  transition: grid-template-rows .35s ease, opacity .25s ease;
+}
+
+.collapsibleInner {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.collapsed {
+  grid-template-rows: 0fr;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Tryb analizy: widoki i link do karty grupy jako ikony; podpis wysuwa się po najechaniu (aktywny widok ma go zawsze). */
+.viewLabel {
+  display: inline-block;
+  max-width: 220px;
+  overflow: hidden;
+  white-space: nowrap;
+  transition: max-width .3s ease, opacity .2s ease;
+}
+
+.focus .viewButton:not(.viewButtonActive),
+.focus .groupLink {
+  gap: 0;
+  padding: 0 11px;
+}
+
+.focus .viewButton:not(.viewButtonActive) .viewLabel,
+.focus .groupLink .viewLabel {
+  max-width: 0;
+  opacity: 0;
+}
+
+.focus .viewButton:not(.viewButtonActive):is(:hover, :focus-visible),
+.focus .groupLink:is(:hover, :focus-visible) {
+  gap: 8px;
+  padding: 0 16px 0 13px;
+}
+
+.focus .viewButton:not(.viewButtonActive):is(:hover, :focus-visible) .viewLabel,
+.focus .groupLink:is(:hover, :focus-visible) .viewLabel {
+  max-width: 220px;
+  opacity: 1;
+}
+
+.field :global(.mantine-segmented) {
+  margin-bottom: 4px;
+}
+
+.viewHeader {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 14px;
+  margin-bottom: 16px;
 }
 
-.header h1 {
+.question {
   margin: 0;
-  font-size: var(--fs-title);
+  font-family: var(--font-display), var(--font-body), sans-serif;
+  font-size: var(--fs-2xl);
+  font-weight: var(--fw-regular);
+  letter-spacing: -.025em;
+  line-height: 1.2;
+  color: #1c3534;
 }
 
-.header p {
-  margin: 5px 0 0;
-  color: #667085;
+.question :global(.mantine-ActionIcon-root) {
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+.scope {
+  margin: 4px 0 0;
+  color: var(--color-text-tertiary);
   font-size: var(--fs-base);
 }
 
 .groupLink {
-  padding: 7px 12px;
-  border: 1px solid #d0d5dd;
-  border-radius: 8px;
-  background: #fff;
-  color: #172033;
-  font-size: var(--fs-md);
-  font-weight: var(--fw-semibold);
-  text-decoration: none;
-}
-
-.contextBar {
-  margin-bottom: 14px;
-  padding: 14px 16px;
-  border: 1px solid #e4e7ec;
-  border-radius: 12px;
-  background: #f8fafd;
-}
-
-.contextRow {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 12px;
-}
-
-.contextField {
-  flex: 1 1 420px;
-  min-width: 0;
-}
-
-.contextFieldNarrow {
-  flex: 0 0 150px;
-}
-
-.contextFieldArea {
-  flex: 0 1 220px;
-  min-width: 180px;
-}
-
-.contextLabel {
-  display: block;
-  margin-bottom: 5px;
-  color: #475467;
-  font-size: var(--fs-sm);
-  font-weight: var(--fw-semibold);
-}
-
-.contextStatic {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  min-height: 36px;
-  padding: 0 12px;
-  border: 1px solid #e4e7ec;
-  border-radius: 8px;
-  background: #fff;
-  color: #172033;
-  font-size: var(--fs-base);
-}
-
-.contextHint {
-  margin: 8px 0 0;
-  color: #667085;
-  font-size: var(--fs-sm);
-}
-
-.moreButton {
-  min-height: 36px;
-  padding: 0 14px;
-  border: 1px solid #d0d5dd;
-  border-radius: 8px;
-  background: #fff;
-  color: #344054;
+  gap: 8px;
+  transition: padding .3s ease, gap .3s ease, border-color .15s;
+  min-height: 40px;
+  padding: 0 16px;
+  border: 1px solid var(--color-primary-outline);
+  border-radius: 999px;
+  background: var(--color-primary-soft);
+  color: var(--color-primary-hover);
   font-size: var(--fs-md);
-  font-weight: var(--fw-semibold);
+  font-weight: var(--fw-bold);
+  text-decoration: none;
   white-space: nowrap;
-  cursor: pointer;
 }
 
-.moreFilters {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 14px 18px;
-  margin-top: 14px;
-  padding-top: 14px;
-  border-top: 1px solid #e4e7ec;
-}
-
-.moreField {
-  display: grid;
-  align-content: start;
-  gap: 6px;
-  min-width: 0;
-}
-
-.moreField .contextLabel {
-  margin-bottom: 0;
-}
-
-.fieldHelp {
-  color: #667085;
-  font-size: var(--fs-sm);
-  line-height: 1.4;
-}
-
-.question {
-  margin: -6px 0 12px;
-  color: #475467;
-  font-size: var(--fs-base);
+.groupLink:hover {
+  border-color: var(--color-primary);
 }
 
 .viewStack {
@@ -145,9 +534,10 @@
 
 .card {
   padding: 16px;
-  border: 1px solid #e4e7ec;
-  border-radius: 10px;
-  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-soft);
 }
 
 .cardHeader {
@@ -168,6 +558,319 @@
   margin: 4px 0 0;
   color: #667085;
   font-size: var(--fs-md);
+}
+
+.cardTitle {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin: 0;
+  font-size: var(--fs-lg);
+}
+
+/* Przełącznik mapy Województwa / Miasta: ten sam wygląd co Miesiące / Lata. */
+.modeToggle {
+  display: inline-flex;
+  overflow: hidden;
+  border: 1px solid #d0d5dd;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.modeToggle button {
+  padding: 6px 12px;
+  border: 0;
+  border-left: 1px solid #d0d5dd;
+  background: transparent;
+  color: #344054;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+}
+
+.modeToggle button:first-child {
+  border-left: 0;
+}
+
+.modeToggle button[aria-pressed="true"] {
+  background: var(--color-primary-soft);
+  color: var(--color-primary-hover);
+}
+
+/* Mapa po lewej, tabela miast po prawej; na węższym ekranie jedna pod drugą. */
+.mapLayout {
+  display: grid;
+  /* Mapa dostaje większość szerokości; tabela obok jest pomocnicza. */
+  grid-template-columns: minmax(0, 3fr) minmax(260px, 2fr);
+  gap: 24px;
+  align-items: start;
+}
+
+/* Mapa na całą szerokość kolumny (na karcie grupy JGP ma limit 560 px). */
+.mapColumn svg {
+  max-width: none;
+}
+
+.mapColumn {
+  min-width: 0;
+}
+
+.legendNote {
+  margin-left: 4px;
+}
+
+.citySection {
+  min-width: 0;
+}
+
+/* Tabela obok mapy bez poziomego przewijania: stały układ kolumn, nazwy się zawijają, pasek zajmuje resztę. */
+.citySection :global(.table-wrap) {
+  overflow-x: hidden;
+}
+
+.citySection .cityTable {
+  table-layout: fixed;
+}
+
+.citySection .cityTable th,
+.citySection .cityTable td {
+  padding: 6px 6px;
+  overflow-wrap: break-word;
+  white-space: normal;
+}
+
+.citySection .cityTable th:first-child {
+  width: 34px;
+}
+
+.citySection .cityTable .num {
+  width: 70px;
+}
+
+.citySection .barCell {
+  min-width: 0;
+}
+
+.citySection .bar {
+  max-width: calc(100% - 48px);
+}
+
+.citySection td:first-child {
+  white-space: nowrap;
+}
+
+/* Lista placówek miasta: nazwa szeroka, trzy wąskie kolumny liczb. */
+.citySection .providerTable th:first-child {
+  width: auto;
+}
+
+.citySection .cardTitle {
+  margin-bottom: 8px;
+  font-size: var(--fs-base);
+}
+
+.backButton {
+  margin-bottom: 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-primary-hover);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+}
+
+.cityFacts {
+  margin: 4px 0 10px;
+  color: var(--color-text-secondary);
+  font-size: var(--fs-md);
+}
+
+.cityFacts b {
+  color: var(--color-text);
+}
+
+.mapColumn {
+  display: grid;
+  gap: 8px;
+}
+
+
+.areaSwatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  flex: none;
+  border-radius: 50%;
+}
+
+.areaSwatch {
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+/* Legenda mapy: grupy obok siebie, każda z nagłówkiem jak etykiety sekcji panelu. */
+.mapLegend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 12px 28px;
+  padding-top: 10px;
+  border-top: 1px solid var(--color-border);
+}
+
+.legendGroup {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.legendTitle {
+  color: var(--color-text-tertiary);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.legendItems {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--color-text-secondary);
+  font-size: var(--fs-sm);
+}
+
+.legendItems li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legendDot,
+.legendRing {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  flex: none;
+  border-radius: 50%;
+}
+
+.legendRing {
+  border: 2px solid;
+}
+
+.legendScale {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-text-secondary);
+  font-size: var(--fs-sm);
+}
+
+.legendScale i {
+  display: inline-block;
+  width: 140px;
+  height: 8px;
+  border-radius: 4px;
+}
+
+.legendSizes {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.legendSizes li {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  color: var(--color-text-secondary);
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.legendSizes circle {
+  fill: #c9d6e8;
+  stroke: #2856a3;
+  stroke-width: 1;
+}
+
+.cityMapRegion {
+  stroke: #ffffff;
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+
+.cityDot {
+  stroke: #ffffff;
+  stroke-width: 0.8;
+  cursor: pointer;
+  /* Przy zmianie roku kropki płynnie zmieniają wielkość i miejsce (upakowanie miasta zależy od roku). */
+  transition: cx .5s ease, cy .5s ease, r .5s ease, fill .2s;
+}
+
+.cityDot:hover {
+  stroke: #172033;
+}
+
+.cityDot.facilityDotArea {
+  stroke: var(--area-color);
+  stroke-width: 3;
+}
+
+.cityDot.facilityDotSelected {
+  stroke: #c65d2e;
+  stroke-width: 3;
+}
+
+/* Podpowiedź kropki placówki: jak etykiety najechania na wykresach Plotly (Kto leczy, Tryb przyjęcia). */
+.facilityMap {
+  position: relative;
+}
+
+.mapTip {
+  position: absolute;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-width: 300px;
+  padding: 7px 10px;
+  border-radius: 4px;
+  background: #5f6672;
+  color: #ffffff;
+  font-size: var(--fs-md);
+  line-height: 1.35;
+  pointer-events: none;
+  transform: translate(14px, -50%);
+}
+
+.mapTipLeft {
+  transform: translate(calc(-100% - 14px), -50%);
+}
+
+.mapTip .areaSwatch {
+  box-shadow: 0 0 0 1.5px #ffffff;
+}
+
+.cityDot:focus {
+  outline: none;
+}
+
+.cityDot:focus-visible {
+  stroke: #172033;
+  stroke-width: 3;
+}
+
+@media (max-width: 1200px) {
+  .mapLayout {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .cityTable {
@@ -244,18 +947,151 @@
   font-size: var(--fs-sm);
 }
 
-@media (max-width: 640px) {
-  .contextFieldNarrow,
-  .contextFieldArea {
-    flex: 1 1 100%;
-  }
+/* Pasek liczb (wszystkie widoki): styl liczb z nagłówka karty grupy JGP. */
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0 0 16px;
+}
 
-  .moreButton {
-    width: 100%;
+.kpis > div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid #e4e7ec;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.kpis dt {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  color: #667085;
+  font-size: var(--fs-sm);
+}
+
+.kpis dd {
+  margin: 0;
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-bold);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.kpis span {
+  color: #667085;
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Rozwijana tabela danych pod wykresem (W czasie, Kto leczy, Tryb przyjęcia): pasek jak karta portalu. */
+.content :global(.data-details) {
+  margin-top: 16px;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+}
+
+.content :global(.data-details > summary) {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  color: var(--color-text);
+  font-size: var(--fs-base);
+  font-weight: var(--fw-semibold);
+  list-style: none;
+  cursor: pointer;
+}
+
+.content :global(.data-details > summary::-webkit-details-marker) {
+  display: none;
+}
+
+/* Ikona tabeli przed tekstem, strzałka na końcu paska. */
+.content :global(.data-details > summary::before) {
+  content: "";
+  width: 16px;
+  height: 16px;
+  flex: none;
+  border: 1.6px solid var(--color-primary);
+  border-radius: 3px;
+  background:
+    linear-gradient(var(--color-primary), var(--color-primary)) 0 4px / 100% 1.6px no-repeat,
+    linear-gradient(var(--color-primary), var(--color-primary)) 5px 0 / 1.6px 100% no-repeat;
+}
+
+.content :global(.data-details > summary::after) {
+  content: "";
+  width: 7px;
+  height: 7px;
+  margin: -3px 2px 0 auto;
+  border-right: 1.8px solid var(--color-text-tertiary);
+  border-bottom: 1.8px solid var(--color-text-tertiary);
+  transform: rotate(45deg);
+  transition: transform .15s;
+}
+
+.content :global(.data-details[open] > summary::after) {
+  margin-top: 3px;
+  transform: rotate(225deg);
+}
+
+.content :global(.data-details > summary:hover) {
+  background: var(--color-background-soft);
+  color: var(--color-primary-hover);
+}
+
+.content :global(.data-details[open] > summary) {
+  border-bottom: 1px solid var(--color-border);
+}
+
+.content :global(.data-details .table-wrap) {
+  margin: 0;
+  padding: 4px 16px 12px;
+}
+
+/* Widoki (wykresy, tabele, karty liczb) w kształtach portalu: obramowanie i promień z tokenów. */
+.content :global(.chart-header h2) {
+  font-family: var(--font-display), var(--font-body), sans-serif;
+  font-weight: var(--fw-semibold);
+  letter-spacing: -.015em;
+}
+
+@media (max-width: 900px) {
+  .kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
-/* Zakładki widoków w jednej linii; na wąskim ekranie przewijają się w poziomie (globalne .tabs). */
-.explorer :global(.tabs) button {
-  white-space: nowrap;
+@media (max-width: 1100px) {
+  .introGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Wąski ekran: panel nad wynikami, bez przypięcia. */
+@media (max-width: 1000px) {
+  .workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .sidebar {
+    position: static;
+    max-height: none;
+    overflow: visible;
+  }
+}
+
+@media (max-width: 640px) {
+  .views {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
 }

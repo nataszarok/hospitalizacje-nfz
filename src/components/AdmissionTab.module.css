@@ -1,6 +1,24 @@
+/* Przełączniki wykresu w górnym marginesie wykresu (prawy górny róg karty): nie zabierają miejsca nad wykresem.
+   Wykres ma większy górny margines (`PLOT_TOOLBAR_MARGIN`), więc pasek nie zasłania punktów ani legendy. */
+.plotColumn {
+  position: relative;
+}
+
 .toolbar {
+  position: absolute;
+  z-index: 2;
+  top: 9px;
+  right: 10px;
+  left: 10px;
   flex-wrap: wrap;
   justify-content: space-between;
+  min-height: 0;
+  margin: 0;
+  pointer-events: none;
+}
+
+.toolbar > * {
+  pointer-events: auto;
 }
 
 .presentationControls {
@@ -12,7 +30,9 @@
 
 @media (max-width: 700px) {
   .toolbar {
+    position: static;
     align-items: stretch;
+    margin: 0 0 2px;
   }
 
   .presentationControls {

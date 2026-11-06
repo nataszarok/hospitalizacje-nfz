@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { YearPlayer } from "@/components/YearPlayer";
 import { DASHBOARD_HREFS } from "@/lib/dashboardNavigation";
 import type { SummaryRegionTimeline } from "@/lib/hospitalizationSummary";
 import { scaleColor } from "@/lib/jgpCard";
@@ -8,8 +9,7 @@ import styles from "./RegionsTimelineMap.module.css";
 
 const integer = (value: number) => Math.round(value).toLocaleString("pl-PL");
 const thousands = (value: number) => (value / 1000).toLocaleString("pl-PL", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
-/** Czas wyświetlania jednego roku przy odtwarzaniu (ms). */
-export const PLAY_STEP_MS = 900;
+export { PLAY_STEP_MS } from "@/components/YearPlayer";
 
 /**
  * Mapa województw: hospitalizacje na 100 tys. mieszkańców w wybranym roku.
@@ -19,14 +19,6 @@ export const PLAY_STEP_MS = 900;
 export function RegionsTimelineMap({ timeline }: { timeline: SummaryRegionTimeline }) {
   const last = timeline.years.length - 1;
   const [index, setIndex] = useState(last);
-  const [playing, setPlaying] = useState(false);
-  const isPlaying = playing && index < last;
-
-  useEffect(() => {
-    if (!playing || index >= last) return;
-    const timer = setTimeout(() => setIndex(index + 1), PLAY_STEP_MS);
-    return () => clearTimeout(timer);
-  }, [playing, index, last]);
 
   const values = timeline.years.flatMap((y) => y.per100k.filter((value) => value > 0));
   const min = values.length ? Math.min(...values) : 0;
@@ -42,37 +34,8 @@ export function RegionsTimelineMap({ timeline }: { timeline: SummaryRegionTimeli
     return [{ code, name: timeline.regions[i][1], path, label, value, position: position(value) }];
   });
 
-  const toggle = () => {
-    if (isPlaying) {
-      setPlaying(false);
-      return;
-    }
-    if (index >= last) setIndex(0);
-    setPlaying(true);
-  };
-
   return <div className={styles.wrap}>
-    <div className={styles.controls}>
-      <button type="button" className={styles.play} onClick={toggle} aria-label={isPlaying ? "Zatrzymaj" : "Odtwórz lata"}>
-        {isPlaying ? <svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="2" width="3.5" height="12" rx="1" /><rect x="9.5" y="2" width="3.5" height="12" rx="1" /></svg>
-          : <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.5v11l9.5-5.5z" /></svg>}
-      </button>
-      <div className={styles.track}>
-        <input
-          type="range"
-          className={styles.slider}
-          min={0}
-          max={last}
-          step={1}
-          value={index}
-          onChange={(event) => { setPlaying(false); setIndex(Number(event.target.value)); }}
-          aria-label="Rok"
-          aria-valuetext={`${current.year} r.`}
-        />
-        <div className={styles.ticks} aria-hidden="true">{timeline.years.map((y, i) => <span key={y.year} className={i === index ? styles.tickActive : undefined}>{`’${y.year.slice(2)}`}</span>)}</div>
-      </div>
-      <output className={styles.year} aria-live="polite">{current.year}</output>
-    </div>
+    <YearPlayer years={timeline.years.map((y) => y.year)} index={index} onIndex={setIndex} />
     <svg className={styles.map} viewBox={`0 0 ${width} ${height}`} role="group" aria-label={`Mapa województw: hospitalizacje na 100 tys. mieszkańców w ${current.year} r.`}>
       {shapes.map(({ code, name, path, value, position: p }) => {
         const title = `${name}: ${integer(value)} hospitalizacji na 100 tys. mieszkańców w ${current.year} r.`;

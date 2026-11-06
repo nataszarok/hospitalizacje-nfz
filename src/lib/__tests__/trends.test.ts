@@ -1,39 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { productTrend } from "@/lib/staticData";
-import { incompleteCoverage, monthlySeries, productCodesForJgp, trendSummary } from "@/lib/trends";
+import { durationChartData, incompleteCoverage, productCodesForJgp, trendChartLines, trendMonths, yearChangePct } from "@/lib/trends";
 import { trendsFixture as trends } from "./fixtures/trendsFixture";
-
-describe("trendSummary", () => {
-  it("podsumowuje najnowszy rok i liczy zmianę rok do roku", () => {
-    const summary = trendSummary(productTrend(trends, ["P1"], "sim"));
-    expect(summary).toEqual({
-      year: "2025", previousYear: "2024", hospitalizations: 12,
-      changePct: ((12 - 9) / 9) * 100, deaths: 0, mortalityPct: 0, urgentPct: 0,
-    });
-  });
-
-  it("liczy śmiertelność i udział przyjęć nagłych", () => {
-    const summary = trendSummary(productTrend(trends, ["P3"], "sim"));
-    expect(summary).toMatchObject({ year: "2025", previousYear: null, changePct: null, mortalityPct: 50, urgentPct: 100 });
-  });
-
-  it("nie liczy zmiany, gdy zestaw grup różni się między porównywanymi latami", () => {
-    const trend = productTrend(trends, ["P1", "P3"], "sim");
-    expect(trendSummary(trend, incompleteCoverage(trends, ["P1", "P3"]))?.changePct).toBeNull();
-    // Bez informacji o katalogu zmiana byłaby liczona (i myląca).
-    expect(trendSummary(trend)?.changePct).not.toBeNull();
-  });
-
-  it("dla grupy wycofanej z katalogu podsumowuje ostatni rok, w którym występuje", () => {
-    const coverage = incompleteCoverage(trends, ["P2"]);
-    // 2023 bez hospitalizacji: zmiany względem zera nie liczymy.
-    expect(trendSummary(productTrend(trends, ["P2"], "sim"), coverage)).toMatchObject({ year: "2024", previousYear: "2023", hospitalizations: 4, changePct: null });
-  });
-
-  it("zwraca null, gdy żaden rok nie ma danych", () => {
-    expect(trendSummary({ yearly: [null, null], monthly: [] })).toBeNull();
-  });
-});
 
 describe("incompleteCoverage", () => {
   it("zwraca tylko wybrane produkty, których nie ma we wszystkich latach", () => {
@@ -49,12 +16,54 @@ describe("productCodesForJgp", () => {
   });
 });
 
-describe("monthlySeries", () => {
-  it("buduje pełną oś miesięcy: zera w miesiącach bez hospitalizacji, null w latach spoza katalogu", () => {
-    const series = monthlySeries(productTrend(trends, ["P3"], "sim"), trends.years);
-    expect(series).toHaveLength(36);
-    expect(series[0]).toEqual({ date: "2023-01-01", year: "2023", month: 1, point: null });
-    expect(series[24].point).toMatchObject({ hospitalizations: 0 });
-    expect(series[26]).toMatchObject({ date: "2025-03-01", point: { hospitalizations: 2, urgent: 2 } });
+describe("wykres „W czasie”", () => {
+  it("trendMonths: lata wybranych grup, ostatni rok tylko z miesiącami z pliku", () => {
+    expect(trendMonths(trends, ["P3"])).toEqual(["2025-01", "2025-02", "2025-03"]);
+    const months = trendMonths(trends, ["P1"]);
+    expect(months).toHaveLength(27);
+    expect([months[0], months[11], months[12], months.at(-1)]).toEqual(["2023-01", "2023-12", "2024-01", "2025-03"]);
+    expect(trendMonths(trends, [])).toEqual([]);
+  });
+
+  it("trendChartLines: jedna seria razem albo seria na grupę; udziały z mianownikiem hospitalizacji", () => {
+    const months = trendMonths(trends, ["P1", "P2"]);
+    const [all] = trendChartLines(trends, ["P1", "P2"], "min", "hospitalizations", false, months);
+    expect(all).toMatchObject({ key: "all", name: "Wybrane grupy JGP" });
+    expect(all.values[0]).toBe(8);
+    expect(all.values[12]).toBe(5 + 4);
+    const perGroup = trendChartLines(trends, ["P1", "P2"], "min", "urgent", true, months);
+    expect(perGroup.map((line) => line.name)).toEqual(["A01", "F04"]);
+    expect(perGroup[0].values[12]).toBe(5);
+    expect(perGroup[0].base?.[12]).toBe(5);
+    expect(perGroup[1].values[12]).toBe(0);
+  });
+
+  it("yearChangePct: zmiana r/r wybranego roku, bez porównania przy zmianie katalogu", () => {
+    const trend = { yearly: [{ year: "2024", hospitalizations: 100, deaths: 0, planned: 0, urgent: 0 }, { year: "2025", hospitalizations: 120, deaths: 0, planned: 0, urgent: 0 }], monthly: [] };
+    expect(yearChangePct(trend, ["2024", "2025"], "2025")).toBeCloseTo(20);
+    expect(yearChangePct(trend, ["2024", "2025"], "2024")).toBeNull();
+    expect(yearChangePct(trend, ["2024", "2025"], "2025", [{ code: "P3", jgpCode: "F99", name: null, years: ["2025"] }])).toBeNull();
+  });
+});
+
+describe("durationChartData", () => {
+  const series = new Map([
+    ["P1", [null, { year: "2024", hospitalizations: 12, deaths: 0, urgent: 6 }, { year: "2025", hospitalizations: 24, deaths: 2, urgent: 6 }]],
+    ["P2", [null, { year: "2024", hospitalizations: 12, deaths: 1, urgent: 0 }, null]],
+  ]);
+
+  it("lata bez danych na początku pomija; wartość roku rozkłada na 12 miesięcy (suma roku bez zmian)", () => {
+    const { months, lines } = durationChartData(series, ["2023", "2024", "2025"], "hospitalizations", false, new Map());
+    expect(months[0]).toBe("2024-01");
+    expect(months).toHaveLength(24);
+    expect(lines[0].values.slice(0, 12).reduce((sum, value) => sum + value, 0)).toBeCloseTo(24);
+    expect(lines[0].values.slice(12).reduce((sum, value) => sum + value, 0)).toBeCloseTo(24);
+  });
+
+  it("udział: licznik i mianownik rozłożone tak samo; Per JGP podpisany kodem JGP", () => {
+    const { lines } = durationChartData(series, ["2023", "2024", "2025"], "urgent", true, new Map([["P1", "A01"], ["P2", "F04"]]));
+    expect(lines.map((line) => line.name)).toEqual(["A01", "F04"]);
+    expect(lines[0].values[0] / lines[0].base![0]).toBeCloseTo(0.5);
+    expect(lines[1].values.slice(12)).toEqual(Array(12).fill(0));
   });
 });

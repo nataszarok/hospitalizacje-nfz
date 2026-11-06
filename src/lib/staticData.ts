@@ -1,5 +1,7 @@
 import type { AdmissionPayload, AdmissionRow, EstimationMethod, MortalityPayload, MortalityRow, ReferencePayload } from "@/lib/types";
-import { areaMatcher, type AnalysisArea } from "@/lib/area";
+import { areasMatcher, type AnalysisArea } from "@/lib/area";
+import type { RegionsMap } from "@/lib/jgpCard";
+import type { CitiesMap, DurationYearsSection, FacilityYearsIndex, FacilityYearsSection } from "@/lib/regions";
 import { decodeRegionalTrends, decodeStaticDataset, decodeTrends, type RegionalTrendsFile, type StaticDatasetFile, type TrendsFile } from "@/lib/hospitalizationCodec";
 import { summarize, summarizeAdmissionGeographies, summarizeGeographies } from "@/lib/query";
 
@@ -20,8 +22,8 @@ export interface StaticDataset {
   facts: FactTuple[];
 }
 
-/** `area`: obszar analizy (brak = cały kraj). */
-export interface StaticQuery { products: string[]; durations: string[]; method: EstimationMethod; minHosp: number; area?: AnalysisArea; }
+/** `areas`: obszary analizy, suma (brak albo pusta lista = cały kraj). */
+export interface StaticQuery { products: string[]; durations: string[]; method: EstimationMethod; minHosp: number; areas?: AnalysisArea[]; }
 
 /** Spis lat z danymi o hospitalizacjach (`public/data/hospitalizations/index.json`). */
 export interface HospitalizationIndex {
@@ -104,6 +106,54 @@ export function loadTrends(): Promise<TrendsDataset> {
   return trendsPromise;
 }
 
+let regionsMapPromise: Promise<RegionsMap> | null = null;
+let citiesMapPromise: Promise<CitiesMap> | null = null;
+
+/** Granice województw (SVG) do mapy w przeglądarce: ten sam plik co mapa na karcie grupy JGP. */
+export function loadRegionsMap(): Promise<RegionsMap> {
+  regionsMapPromise ??= fetchGzipJson<RegionsMap>("/data/regions-map.json.gz");
+  regionsMapPromise.catch(() => { regionsMapPromise = null; });
+  return regionsMapPromise;
+}
+
+/** Miasta siedzib świadczeniodawców: położenie na mapie województw i ludność (`scripts/build_cities_map.py`). */
+export function loadCitiesMap(): Promise<CitiesMap> {
+  citiesMapPromise ??= fetchGzipJson<CitiesMap>("/data/cities-map.json.gz");
+  citiesMapPromise.catch(() => { citiesMapPromise = null; });
+  return citiesMapPromise;
+}
+
+let facilityYearsIndexPromise: Promise<FacilityYearsIndex> | null = null;
+const sectionPromises = new Map<string, Promise<unknown>>();
+
+/** Placówki w latach (`scripts/build_facility_years.py`): lista lat i placówek z miastem siedziby. */
+export function loadFacilityYearsIndex(): Promise<FacilityYearsIndex> {
+  facilityYearsIndexPromise ??= fetch(`${HOSPITALIZATIONS_DATA_PATH}/facilities/index.json`).then((response) => {
+    if (!response.ok) throw new Error("Nie udało się pobrać danych placówek.");
+    return response.json() as Promise<FacilityYearsIndex>;
+  });
+  facilityYearsIndexPromise.catch(() => { facilityYearsIndexPromise = null; });
+  return facilityYearsIndexPromise;
+}
+
+/** Plik sekcji katalogu JGP (pierwsza litera kodu; „_” = produkty bez kodu JGP) z katalogu `facilities/` albo `durations/`. */
+function loadSection<T>(folder: "facilities" | "durations", section: string): Promise<T> {
+  const key = `${folder}/${section}`;
+  let promise = sectionPromises.get(key) as Promise<T> | undefined;
+  if (!promise) {
+    promise = fetchGzipJson<T>(`${HOSPITALIZATIONS_DATA_PATH}/${folder}/${encodeURIComponent(section)}.json.gz`);
+    sectionPromises.set(key, promise);
+    promise.catch(() => sectionPromises.delete(key));
+  }
+  return promise;
+}
+
+/** Hospitalizacje placówek w latach, jedna sekcja katalogu JGP. */
+export const loadFacilityYearsSection = (section: string) => loadSection<FacilityYearsSection>("facilities", section);
+
+/** Hospitalizacje w latach według długości pobytu i OW NFZ (`scripts/build_duration_years.py`), jedna sekcja. */
+export const loadDurationYearsSection = (section: string) => loadSection<DurationYearsSection>("durations", section);
+
 const regionalTrendsPromises = new Map<string, Promise<RegionalTrendsDataset>>();
 /** Trend miesięczny jednego województwa (OW NFZ) — pobierany dopiero przy filtrze obszaru. */
 export function loadRegionalTrends(owNfz: string): Promise<RegionalTrendsDataset> {
@@ -117,6 +167,16 @@ export function loadRegionalTrends(owNfz: string): Promise<RegionalTrendsDataset
 }
 
 /** Trendy zawężone do OW NFZ z pliku regionalnego: wiersze miesięczne z tego pliku, reszta bez zmian. */
+/** Trendy sumy kilku województw (pliki regionalne razem: wiersze każdego OW sumują się w `productTrend`). */
+export function trendsForRegions(t: TrendsDataset, regionals: RegionalTrendsDataset[]): TrendsDataset {
+  const owCodes = new Set(regionals.map((regional) => regional.owNfz));
+  return {
+    ...t,
+    monthly: regionals.flatMap((regional) => regional.rows),
+    regional: t.regional.filter((row) => owCodes.has(row[1])),
+  };
+}
+
 export function trendsForRegion(t: TrendsDataset, regional: RegionalTrendsDataset): TrendsDataset {
   return {
     ...t,
@@ -238,7 +298,7 @@ function context(d: StaticDataset) {
 
 function mortalityRows(d: StaticDataset, q: StaticQuery, baseline: boolean): MortalityRow[] {
   if (!q.products.length) return [];
-  const selected = new Set(q.products), durations = new Set(q.durations), inArea = areaMatcher(d, q.area);
+  const selected = new Set(q.products), durations = new Set(q.durations), inArea = areasMatcher(d, q.areas);
   const grouped = new Map<string, {ow:string;nip:string;product:string;h:number;deaths:number}>();
   for (const f of d.facts) {
     const [ow,nip,product,duration,,hSim,hMin,dSim,dMin] = f;
@@ -267,7 +327,7 @@ export function mortalityFromDataset(d: StaticDataset, q: StaticQuery): Mortalit
 
 export function admissionsFromDataset(d: StaticDataset, q: StaticQuery): AdmissionPayload {
   if (!q.products.length) return { rows:[], areaStats:{regions:[],cities:[]} };
-  const selected = new Set(q.products), durations = new Set(q.durations), inArea = areaMatcher(d, q.area);
+  const selected = new Set(q.products), durations = new Set(q.durations), inArea = areasMatcher(d, q.areas);
   const grouped = new Map<string,{ow:string;nip:string;product:string;planned:number;urgent:number}>();
   for (const f of d.facts) {
     const [ow,nip,product,duration,admission,hSim,hMin] = f;
