@@ -1,0 +1,209 @@
+<title>Baner funduszdanych.pl</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Inter+Tight:wght@400;500&display=swap">
+<style>
+/* Układ: baner to kafel sali operacyjnej. Siatka kafli jest skalą wykresu lejkowego: 1 kafel (40 px) = 200 hospitalizacji × 5 pp.
+   Tekst i wykres stoją na liniach siatki. Baner ma jeden, jasny wygląd marki; strona galerii wokół niego ma oba motywy. */
+:root {
+  --teal:#087F75; --teal-ink:#076B63; --tile:#F3F8F7; --tile-line:rgba(8,127,117,.085);
+  --graphite:#253B3A; --graphite-2:#536C68; --graphite-3:#6C827E; --line-strong:#B9CEC9;
+  --navy:#1B3D78; --blue:#2856A3; --signal:#C65D2E;
+  --font-display:"Inter Tight", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-body:"Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  /* Strona galerii */
+  --page-bg:#FFFFFF; --page-fg:#253B3A; --page-fg-2:#536C68; --page-line:#D9E6E3;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --page-bg:#0E1A19; --page-fg:#E3EEEC; --page-fg-2:#A9BFBB; --page-line:#25403C; color-scheme:dark; } }
+:root[data-theme="dark"] { --page-bg:#0E1A19; --page-fg:#E3EEEC; --page-fg-2:#A9BFBB; --page-line:#25403C; color-scheme:dark; }
+
+* { box-sizing:border-box; }
+body { margin:0; background:var(--page-bg); color:var(--page-fg); font-family:var(--font-body); }
+
+/* Galeria formatów */
+.gallery { max-width:1120px; margin:0 auto; padding-block:40px 64px; padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px)); display:grid; gap:40px; }
+.gallery > header { display:grid; gap:8px; }
+.gallery > header h1 { font-family:var(--font-display); font-weight:400; letter-spacing:-.035em; font-size:clamp(28px, 4vw, 40px); margin:0; line-height:1.1; }
+.gallery > header p { margin:0; color:var(--page-fg-2); max-width:68ch; line-height:1.6; }
+.format { display:grid; gap:12px; }
+.format > h2 { font-size:13px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; margin:0; color:var(--page-fg-2); }
+.frame { width:100%; max-width:100%; position:relative; overflow:hidden; border-radius:10px; border:1px solid var(--page-line); }
+.frame.og { aspect-ratio:1200 / 630; }
+.frame.wide { aspect-ratio:1500 / 500; }
+.frame > .banner { position:absolute; top:0; left:0; transform-origin:0 0; transform:scale(var(--s, .5)); }
+
+/* Baner: siatka 40 px od lewego górnego rogu; elementy stoją na jej liniach */
+.banner { position:relative; overflow:hidden; background-color:var(--tile); color:var(--graphite); font-family:var(--font-body);
+  background-image:linear-gradient(var(--tile-line) 1px, transparent 1px), linear-gradient(90deg, var(--tile-line) 1px, transparent 1px);
+  background-size:40px 40px; }
+.banner.og { width:1200px; height:630px; }
+.banner.wide { width:1500px; height:500px; }
+.banner > * { position:absolute; }
+.lock { display:flex; align-items:center; gap:14px; }
+.lock .m { width:48px; height:48px; border-radius:11px; background:var(--teal); display:grid; place-items:center; color:#fff; }
+.lock .m svg { width:33px; height:33px; }
+.lock .w { font-family:var(--font-display); font-size:28px; letter-spacing:-.045em; }
+.lock .w span { color:var(--graphite-3); }
+.kicker { display:flex; align-items:center; gap:12px; font-size:15px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--teal-ink); }
+.kicker i { width:26px; height:2px; background:var(--teal); }
+.headline { font-family:var(--font-display); font-weight:400; letter-spacing:-.045em; line-height:1; margin:0; color:#1c3534; }
+.headline b { font-weight:400; color:var(--teal); }
+.banner .sub { font-size:21px; line-height:1.5; color:var(--graphite-2); margin:0; }
+.facts { display:flex; border-top:2px solid var(--graphite); }
+.fact { display:grid; gap:2px; padding:12px 26px 0 0; white-space:nowrap; }
+.fact + .fact { padding-left:26px; border-left:1px solid var(--line-strong); }
+.fact strong { font-size:34px; font-weight:700; letter-spacing:-.03em; color:var(--navy); font-variant-numeric:tabular-nums; line-height:1.1; }
+.fact strong small { font-size:20px; font-weight:600; letter-spacing:-.01em; }
+.fact span { font-size:15px; color:var(--graphite-2); }
+.foot { font-size:13px; line-height:1.45; color:var(--graphite-3); }
+.url { font-family:var(--font-display); font-size:22px; letter-spacing:-.03em; color:var(--teal-ink); }
+.chart { inset:0; width:100%; height:100%; overflow:visible; }
+.chart .pt { fill:#C3D2EB; fill-opacity:.9; }
+/* Bez legendy kolory statusu nic nie mówią: poza lejkiem symetrycznie (w górę i w dół) ciemniejszy błękit, bez pomarańczu sygnału. */
+.chart .pt.up95, .chart .pt.down95 { fill:#6A8FCB; fill-opacity:.95; }
+.chart .pt.up998, .chart .pt.down998 { fill:var(--navy); }
+.chart .lim { fill:none; stroke:var(--graphite-3); stroke-width:1.4; stroke-dasharray:6 4; }
+.chart .lim.inner { stroke-opacity:.55; }
+.chart .ref { stroke:var(--graphite-2); stroke-width:1.2; stroke-dasharray:1.5 3.5; }
+.chart .base { stroke:var(--line-strong); stroke-width:1.5; }
+.chart .tick { font:500 13px var(--font-body); fill:var(--graphite-3); }
+.chart .year { font:500 13px var(--font-body); fill:var(--graphite-2); }
+.chart .value { font:700 14px var(--font-body); fill:var(--graphite-2); }
+.chart .cap { font:700 13px var(--font-body); letter-spacing:.1em; text-transform:uppercase; fill:var(--teal-ink); }
+.chart .scale { font:500 13px var(--font-body); fill:var(--graphite-3); }
+
+/* 1200×630: tekst od linii x=80, wykres x=720–1080, podstawa y=520 */
+.og .lock { left:80px; top:56px; }
+.og .kicker { left:80px; top:148px; }
+.og .headline { left:80px; top:186px; width:620px; font-size:72px; }
+.og .sub { left:80px; top:360px; width:540px; }
+.og .facts { left:80px; top:480px; }
+.og .foot { right:80px; bottom:24px; text-align:right; }
+
+/* 1500×500: tekst od x=80, wykres x=1000–1360, podstawa y=420 */
+.wide .lock { left:80px; top:44px; }
+.wide .headline { left:80px; top:130px; width:800px; font-size:68px; }
+.wide .facts { left:80px; top:360px; }
+.wide .url { right:100px; top:452px; }
+
+/* Render jednego formatu do PNG: ?f=og albo ?f=wide */
+body.single { background:transparent; }
+body.single .gallery { display:block; padding:0; max-width:none; }
+body.single .gallery > header, body.single .format > h2, body.single .format { display:none; }
+body.single .format.show { display:block; }
+body.single .frame { border:0; border-radius:0; aspect-ratio:auto; overflow:visible; }
+body.single .frame > .banner { position:relative; transform:none; }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="heart" viewBox="0 0 24 24">
+    <g fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round">
+      <path d="M12 20.2s-7.6-4.5-8.9-9.6C2.3 7.4 4.3 4.4 7.4 4.4c1.9 0 3.5 1.1 4.6 2.7 1.1-1.6 2.7-2.7 4.6-2.7 3.1 0 5.1 3 4.3 6.2-1.3 5.1-8.9 9.6-8.9 9.6Z"/>
+      <path d="M3.6 12h4.2l1.6-3 2.5 6 1.9-4.1h6.6" stroke-linecap="round"/>
+    </g>
+  </symbol>
+</svg>
+
+<main class="gallery">
+  <header>
+    <h1>Baner promocyjny</h1>
+    <p>Siatka kafli jest skalą wykresu lejkowego: jeden kafel to 200 hospitalizacji w poziomie i 5 punktów procentowych w pionie. Wykres: śmiertelność w grupie E53G Niewydolność krążenia w 2025 r., 497 ośrodków z co najmniej 30 hospitalizacjami, granice lejka 95% i 99,8% jak na karcie grupy. Na banerze bez osi, podpisów i przypisu: wykres jest motywem, źródło jest w tekście alternatywnym. Punkty tylko w błękitach (poza lejkiem ciemniej, w obie strony): bez legendy pomarańcz sugerowałby „gorsze szpitale” i kolidował z kolorem sygnału. Liczby w pasku podsumowują lata 2017–2025 metodą konserwatywną (min). PNG: <code>brand/baner-1200x630.png</code>, <code>brand/baner-1500x500.png</code>.</p>
+  </header>
+
+  <section class="format" id="og">
+    <h2>1200 × 630 · podgląd linku</h2>
+    <div class="frame og">
+      <div class="banner og" role="img" aria-label="Baner funduszdanych.pl: Publiczna ochrona zdrowia w liczbach. Lata 2017–2025: ponad 49 mln hospitalizacji JGP, 1021 świadczeniodawców, 780 grup JGP. Wykres lejkowy: śmiertelność w grupie E53G Niewydolność krążenia w 2025 r., 497 ośrodków, średnia 11,5%.">
+        <svg class="chart" data-x0="720" data-base="520" aria-hidden="true"></svg>
+        <div class="lock"><span class="m"><svg><use href="#heart"/></svg></span><span class="w">funduszdanych<span>.pl</span></span></div>
+        <div class="kicker"><i></i>Dane NFZ · 2017–2025</div>
+        <h2 class="headline">Publiczna ochrona zdrowia <b>w liczbach.</b></h2>
+        <p class="sub">Hospitalizacje, szpitale publiczne i grupy JGP. Dane, które każdy może sprawdzić.</p>
+        <div class="facts">
+          <div class="fact"><strong><small>ponad</small> 49 mln</strong><span>hospitalizacji JGP</span></div>
+          <div class="fact"><strong>1021</strong><span>świadczeniodawców</span></div>
+          <div class="fact"><strong>780</strong><span>grup JGP</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="format" id="wide">
+    <h2>1500 × 500 · nagłówek profilu</h2>
+    <div class="frame wide">
+      <div class="banner wide" role="img" aria-label="Baner funduszdanych.pl w formacie panoramicznym: Publiczna ochrona zdrowia w liczbach. Lata 2017–2025: ponad 49 mln hospitalizacji JGP, 1021 świadczeniodawców, 780 grup JGP.">
+        <svg class="chart" data-x0="1000" data-base="420" aria-hidden="true"></svg>
+        <div class="lock"><span class="m"><svg><use href="#heart"/></svg></span><span class="w">funduszdanych<span>.pl</span></span></div>
+        <h2 class="headline">Publiczna ochrona zdrowia<br><b>w liczbach.</b></h2>
+        <div class="facts">
+          <div class="fact"><strong><small>ponad</small> 49 mln</strong><span>hospitalizacji JGP 2017–2025</span></div>
+          <div class="fact"><strong>1021</strong><span>świadczeniodawców</span></div>
+          <div class="fact"><strong>780</strong><span>grup JGP</span></div>
+        </div>
+        <div class="url">funduszdanych.pl</div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+  // E53G Niewydolność krążenia, 2025 r., metoda min (build-data/jgp/E53G.json.gz): pary [hospitalizacje, śmiertelność w %]
+  // dla ośrodków z co najmniej 30 hospitalizacjami. Śmiertelność grupy: 16 272 / 141 991 = 11,46%.
+  const POINTS = [[32,12.5],[33,0.0],[33,21.21],[35,0.0],[37,0.0],[37,5.41],[41,2.44],[42,2.38],[43,18.6],[45,17.78],[48,2.08],[53,1.89],[55,34.55],[56,7.14],[57,15.79],[62,3.23],[62,4.84],[65,10.77],[66,4.55],[68,5.88],[68,14.71],[71,2.82],[72,15.28],[72,19.44],[72,31.94],[73,2.74],[74,0.0],[75,8.0],[76,5.26],[77,0.0],[79,6.33],[79,11.39],[80,2.5],[83,14.46],[83,14.46],[85,1.18],[87,3.45],[87,6.9],[87,21.84],[87,29.89],[88,3.41],[90,2.22],[90,15.56],[91,14.29],[91,20.88],[91,25.27],[99,22.22],[104,23.08],[106,7.55],[107,10.28],[107,15.89],[107,17.76],[108,11.11],[109,10.09],[109,21.1],[109,22.94],[110,22.73],[110,23.64],[111,3.6],[111,13.51],[112,11.61],[112,15.18],[113,27.43],[114,14.04],[115,0.0],[115,1.74],[115,4.35],[115,5.22],[116,3.45],[116,4.31],[116,26.72],[117,12.82],[118,2.54],[118,10.17],[118,16.95],[118,16.95],[120,12.5],[120,26.67],[121,9.92],[121,17.36],[121,19.01],[124,14.52],[124,15.32],[125,8.0],[125,10.4],[125,14.4],[125,21.6],[126,3.17],[127,17.32],[127,23.62],[128,17.19],[130,7.69],[130,11.54],[130,13.85],[130,20.0],[130,36.15],[131,0.0],[132,18.94],[133,12.78],[133,22.56],[134,10.45],[134,23.13],[134,33.58],[135,2.96],[136,5.88],[136,11.03],[136,23.53],[136,26.47],[139,9.35],[140,4.29],[140,17.14],[141,9.22],[141,12.06],[141,14.89],[141,14.89],[141,29.79],[142,9.15],[142,23.94],[143,7.69],[143,20.28],[144,12.5],[144,12.5],[144,13.19],[144,15.28],[144,17.36],[146,10.96],[146,13.01],[146,13.01],[147,23.13],[148,15.54],[148,16.22],[148,20.95],[149,14.77],[150,18.0],[150,21.33],[151,11.26],[153,0.65],[153,13.07],[153,23.53],[154,9.74],[154,19.48],[155,11.61],[155,15.48],[155,16.77],[156,14.1],[156,19.23],[157,5.73],[157,11.46],[157,19.75],[159,9.43],[160,7.5],[160,8.75],[160,11.88],[160,31.87],[161,14.29],[161,17.39],[161,26.71],[162,22.84],[162,24.69],[163,1.23],[163,9.82],[163,14.11],[163,28.22],[164,10.98],[165,21.82],[165,24.24],[166,4.82],[166,16.87],[166,26.51],[167,1.8],[167,16.17],[167,21.56],[169,7.1],[169,11.24],[172,9.3],[173,17.34],[173,20.81],[174,11.49],[174,24.14],[175,2.86],[175,10.29],[175,13.71],[175,15.43],[176,12.5],[176,15.34],[178,8.99],[178,14.61],[179,18.44],[181,0.55],[181,11.6],[182,8.79],[182,12.09],[182,14.29],[182,17.03],[183,13.11],[183,20.77],[183,21.86],[184,13.04],[184,13.04],[184,13.59],[185,4.32],[185,8.65],[185,15.14],[187,16.58],[189,18.52],[190,10.53],[190,14.21],[191,10.47],[191,15.18],[193,13.99],[194,8.25],[194,19.59],[195,14.87],[195,15.9],[195,16.41],[196,13.27],[197,20.81],[198,5.56],[198,6.06],[198,11.62],[198,13.13],[198,13.64],[198,14.14],[198,26.26],[199,11.56],[200,9.5],[200,15.0],[201,13.93],[202,17.33],[203,6.9],[205,11.71],[205,19.02],[206,14.08],[206,17.96],[207,12.56],[208,16.83],[209,19.62],[210,26.67],[211,11.37],[211,13.74],[211,18.01],[211,27.96],[212,15.57],[216,3.7],[216,20.37],[217,10.14],[218,11.93],[220,10.45],[220,14.09],[220,19.55],[222,20.27],[224,0.0],[224,20.98],[225,8.0],[225,12.89],[226,13.72],[227,6.17],[227,7.49],[227,22.03],[228,7.89],[228,17.11],[228,17.11],[229,15.72],[229,20.52],[231,16.88],[232,13.36],[234,15.81],[235,8.51],[238,24.37],[239,6.69],[239,7.11],[240,20.83],[240,34.58],[241,12.86],[242,9.92],[242,13.22],[244,16.39],[245,0.41],[245,17.55],[246,3.66],[248,7.66],[248,12.1],[249,9.64],[249,10.84],[249,13.65],[249,18.07],[251,1.99],[254,11.81],[255,0.0],[256,12.11],[256,14.06],[257,20.62],[260,13.85],[262,7.63],[262,9.92],[264,6.82],[264,10.98],[266,2.26],[267,17.23],[268,17.91],[268,23.13],[269,11.52],[271,5.17],[271,11.07],[271,12.55],[271,14.76],[275,6.91],[276,5.43],[276,13.77],[277,9.75],[277,13.72],[282,6.03],[283,8.83],[285,12.28],[288,9.72],[288,18.75],[289,11.07],[289,11.07],[289,12.8],[289,15.57],[291,11.0],[292,18.49],[295,11.53],[297,10.1],[302,15.23],[304,17.11],[306,16.99],[308,5.52],[309,15.53],[310,12.58],[310,17.42],[311,19.94],[312,10.26],[315,9.84],[317,12.93],[318,12.26],[321,15.58],[322,11.18],[323,15.79],[324,15.12],[327,8.56],[327,13.46],[328,11.89],[329,14.59],[334,4.79],[334,12.87],[337,14.24],[339,2.36],[339,5.01],[340,6.76],[341,13.2],[343,9.62],[343,9.91],[344,12.5],[344,16.28],[346,9.25],[346,15.61],[349,0.29],[349,13.75],[350,16.57],[352,7.39],[352,19.03],[353,10.48],[353,16.43],[357,7.56],[357,8.96],[361,16.07],[363,8.54],[364,9.62],[365,11.78],[365,16.99],[369,15.18],[372,3.49],[372,8.6],[375,14.13],[376,7.45],[378,6.61],[382,16.23],[383,7.31],[383,39.95],[384,9.9],[386,10.88],[386,16.84],[388,14.43],[389,9.77],[390,10.0],[392,23.72],[394,14.72],[396,13.13],[399,6.52],[400,10.75],[401,13.72],[402,7.96],[403,18.86],[404,4.7],[404,5.94],[404,9.41],[410,18.54],[411,10.71],[412,6.55],[413,8.23],[413,11.86],[416,16.35],[419,19.57],[421,7.84],[427,0.0],[427,17.56],[430,8.6],[439,12.98],[441,13.83],[443,15.12],[446,12.56],[449,15.59],[456,9.21],[457,5.47],[459,7.41],[459,7.63],[459,19.39],[465,18.49],[467,10.92],[467,14.78],[468,12.39],[475,15.58],[480,10.0],[480,11.88],[480,15.0],[481,6.24],[481,17.88],[482,5.81],[483,11.18],[486,18.52],[493,11.36],[503,17.69],[506,9.49],[507,10.26],[509,7.27],[510,1.76],[510,9.02],[511,7.24],[512,6.64],[512,20.9],[514,4.28],[515,8.54],[528,10.61],[528,15.53],[529,14.56],[535,18.88],[550,7.82],[550,14.91],[555,10.45],[558,5.2],[567,10.58],[573,7.5],[573,11.52],[576,8.51],[582,3.26],[582,9.45],[584,17.47],[588,9.01],[598,6.69],[607,8.24],[612,11.44],[623,9.15],[626,12.46],[627,11.0],[632,8.54],[649,9.55],[651,13.67],[653,8.42],[653,11.94],[657,7.91],[661,7.56],[668,5.09],[683,14.06],[694,9.65],[701,4.14],[703,6.12],[723,20.47],[731,4.65],[753,7.17],[753,13.81],[769,14.69],[770,3.25],[773,3.1],[788,7.36],[794,10.58],[817,7.1],[838,10.26],[867,0.46],[879,10.35],[967,0.62],[1125,7.02],[1167,4.8],[1234,7.37],[1369,2.41],[1549,4.52],[1710,2.11]];
+  const GROUP = 11.46;
+  const TILE = 40, X_TILE = 200, Y_TILE = 5, X_TILES = 9, Y_TILES = 9;
+  const Z = { inner: 1.96, outer: 3.09 };
+  const NS = "http://www.w3.org/2000/svg";
+  const el = (svg, name, attrs, text) => {
+    const node = document.createElementNS(NS, name);
+    for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, v);
+    if (text) node.textContent = text;
+    svg.appendChild(node);
+  };
+  // Ta sama formuła co funnelHalfWidth w src/lib/jgpCard.ts.
+  const half = (n, z) => z * Math.sqrt((GROUP / 100) * (1 - GROUP / 100) / n) * 100;
+  const status = (n, rate) => {
+    const diff = rate - GROUP;
+    if (Math.abs(diff) > half(n, Z.outer)) return diff > 0 ? "up998" : "down998";
+    if (Math.abs(diff) > half(n, Z.inner)) return diff > 0 ? "up95" : "down95";
+    return "";
+  };
+
+  document.querySelectorAll(".chart").forEach((svg) => {
+    const x0 = Number(svg.dataset.x0), base = Number(svg.dataset.base);
+    const x1 = x0 + X_TILES * TILE;
+    const sx = (n) => x0 + (n / X_TILE) * TILE;
+    const sy = (pct) => base - (pct / Y_TILE) * TILE;
+    // Podstawa pod punktami: ośrodek z zerową śmiertelnością leży na niej, linia go nie zakrywa.
+    el(svg, "line", { class: "base", x1: x0, y1: base, x2: x1, y2: base });
+    const curve = (z, sign) => {
+      const d = [];
+      for (let n = 30; n <= X_TILE * X_TILES; n += 15) {
+        const v = Math.min(Y_TILE * Y_TILES, Math.max(0, GROUP + sign * half(n, z)));
+        d.push(`${d.length ? "L" : "M"}${sx(n).toFixed(1)} ${sy(v).toFixed(1)}`);
+      }
+      return d.join(" ");
+    };
+    for (const [z, cls] of [[Z.inner, "lim inner"], [Z.outer, "lim"]]) for (const sign of [1, -1]) el(svg, "path", { class: cls, d: curve(z, sign) });
+    el(svg, "line", { class: "ref", x1: x0, y1: sy(GROUP), x2: x1, y2: sy(GROUP) });
+    // Najpierw ośrodki w granicach, potem poza nimi (na wierzchu).
+    const sorted = [...POINTS].sort((a, b) => (status(...a) ? 1 : 0) - (status(...b) ? 1 : 0));
+    for (const [n, rate] of sorted) el(svg, "circle", { class: `pt ${status(n, rate)}`, cx: sx(n).toFixed(1), cy: sy(rate).toFixed(1), r: 3.6 });
+  });
+
+
+  // Skalowanie banerów do szerokości ramki; ?f=og|wide renderuje jeden format w natywnym rozmiarze (PNG).
+  const f = new URLSearchParams(location.search).get("f");
+  if (f) {
+    document.body.classList.add("single");
+    document.getElementById(f)?.classList.add("show");
+  } else {
+    const fit = () => document.querySelectorAll(".frame").forEach((frame) => {
+      const banner = frame.querySelector(".banner");
+      frame.style.setProperty("--s", String(frame.clientWidth / banner.offsetWidth));
+    });
+    fit();
+    addEventListener("resize", fit);
+  }
+</script>

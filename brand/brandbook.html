@@ -1,0 +1,1297 @@
+<title>Brandbook funduszdanych.pl</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Inter+Tight:wght@400;500&display=swap">
+<style>
+/* Układ: dokument marki jak karta pacjenta — wąska kolumna treści, numery sekcji jak pozycje w historii choroby,
+   tło z siatką kafli sali operacyjnej, która jest jednocześnie siatką wykresu. */
+:root {
+  /* Kolory marki (stałe — próbki pokazują dokładne wartości w obu motywach) */
+  --brand-teal:#087F75; --brand-teal-hover:#076B63; --brand-teal-deep:#055850; --brand-teal-soft:#E9F6F2; --brand-teal-line:#B9DDD4;
+  --brand-navy:#1B3D78; --brand-blue:#2856A3; --brand-ceil:#9DB4DB; --brand-ceil-soft:#E4EAF4;
+  --brand-signal:#C65D2E; --brand-alarm:#B42318; --brand-graphite:#253B3A; --brand-tile:#F3F8F7; --brand-white:#FFFFFF;
+
+  /* Motyw strony */
+  --bg:#FFFFFF; --bg-soft:#F3F8F7; --bg-muted:#EDF4F1; --fg:#253B3A; --fg-2:#536C68; --fg-3:#6C827E;
+  --line:#D9E6E3; --line-strong:#B9CEC9; --accent:#087F75; --accent-ink:#076B63; --accent-soft:#E9F6F2;
+  --tile-grid:rgba(8,127,117,.13); --card:#FFFFFF; --do:#1D6B3A; --dont:#B42318;
+
+  --font-display:"Inter Tight", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-body:"Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono:ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --measure:68ch;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg:#0E1A19; --bg-soft:#132321; --bg-muted:#182B29; --fg:#E3EEEC; --fg-2:#A9BFBB; --fg-3:#86A09B;
+  --line:#25403C; --line-strong:#33544F; --accent:#3FB7A6; --accent-ink:#6FD0C1; --accent-soft:#16332F;
+  --tile-grid:rgba(63,183,166,.14); --card:#122220; --do:#5CC08A; --dont:#F2867C; color-scheme:dark;
+} }
+:root[data-theme="dark"] {
+  --bg:#0E1A19; --bg-soft:#132321; --bg-muted:#182B29; --fg:#E3EEEC; --fg-2:#A9BFBB; --fg-3:#86A09B;
+  --line:#25403C; --line-strong:#33544F; --accent:#3FB7A6; --accent-ink:#6FD0C1; --accent-soft:#16332F;
+  --tile-grid:rgba(63,183,166,.14); --card:#122220; --do:#5CC08A; --dont:#F2867C; color-scheme:dark;
+}
+
+* { box-sizing:border-box; }
+body { background:var(--bg); color:var(--fg); font-family:var(--font-body); font-size:16px; line-height:1.6; }
+a { color:var(--accent-ink); }
+a:focus-visible, button:focus-visible { outline:2px solid var(--accent); outline-offset:3px; border-radius:4px; }
+h1, h2, h3 { font-family:var(--font-display); font-weight:400; letter-spacing:-.035em; line-height:1.08; text-wrap:balance; margin:0; }
+h2 { font-size:clamp(28px, 4vw, 40px); }
+h3 { font-size:21px; letter-spacing:-.02em; line-height:1.25; }
+p { margin:0; max-width:var(--measure); }
+.wrap { width:100%; max-width:1080px; margin:0 auto; padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px)); }
+.eyebrow { font-size:12px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--accent-ink); }
+.lead { font-size:18px; color:var(--fg-2); line-height:1.65; }
+.muted { color:var(--fg-2); }
+.small { font-size:14px; }
+code { font-family:var(--font-mono); font-size:.86em; background:var(--bg-muted); padding:1px 5px; border-radius:4px; }
+
+/* Okładka: siatka kafli jako skala wykresu lejkowego (1 kafel = 200 hospitalizacji × 5 pp) */
+.cover { background-color:var(--bg-soft); border-bottom:1px solid var(--line); }
+.cover .wrap { padding-block:56px 40px; display:grid; gap:28px; }
+.cover-top { display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap; }
+.lockup { display:inline-flex; align-items:center; gap:12px; }
+.mark { width:44px; height:44px; border-radius:11px; background:var(--brand-teal); display:grid; place-items:center; flex:none; }
+.mark svg { width:30px; height:30px; }
+.wordmark { font-family:var(--font-display); font-size:24px; letter-spacing:-.045em; color:var(--fg); }
+.wordmark span { color:var(--fg-3); }
+.version { font-size:13px; color:var(--fg-2); border:1px solid var(--line-strong); border-radius:999px; padding:4px 11px; background:var(--card); }
+.cover h1 { font-size:clamp(40px, 7vw, 76px); max-width:13ch; color:var(--fg); }
+.cover h1 em { font-style:normal; color:var(--accent); }
+.pulse { width:100%; height:auto; display:block; max-width:100%; }
+.pulse .tile { stroke:var(--tile-grid); stroke-width:1; }
+.pulse .pt { fill:#C3D2EB; fill-opacity:.85; }
+.pulse .pt.up95, .pulse .pt.down95 { fill:#6A8FCB; }
+.pulse .pt.up998, .pulse .pt.down998 { fill:var(--brand-navy); }
+:root[data-theme="dark"] .pulse .pt.up998, :root[data-theme="dark"] .pulse .pt.down998 { fill:#E4EAF4; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .pulse .pt.up998, :root:not([data-theme="light"]) .pulse .pt.down998 { fill:#E4EAF4; } }
+.pulse .lim { fill:none; stroke:var(--fg-3); stroke-width:1.2; stroke-dasharray:5 4; }
+.pulse .lim.inner { stroke-opacity:.55; }
+.pulse .ref { stroke:var(--fg-2); stroke-width:1; stroke-dasharray:1.5 3; }
+.pulse .base { stroke:var(--line-strong); stroke-width:1.5; }
+.pulse .lbl { font:500 12px var(--font-body); fill:var(--fg-3); }
+.pulse .cap { font:700 12px var(--font-body); letter-spacing:.1em; fill:var(--accent-ink); }
+
+/* Spis treści */
+.toc { display:flex; flex-wrap:wrap; gap:6px 18px; font-size:14px; padding:0; margin:0; list-style:none; }
+.toc a { color:var(--fg-2); text-decoration:none; }
+.toc a:hover { color:var(--accent-ink); }
+.toc b { font-variant-numeric:tabular-nums; color:var(--accent-ink); font-weight:600; margin-right:4px; }
+
+/* Sekcje */
+section.block { padding-block:64px; border-bottom:1px solid var(--line); scroll-margin-top:16px; }
+.block-head { display:grid; grid-template-columns:72px minmax(0,1fr); gap:8px 20px; margin-bottom:32px; }
+.block-num { font-family:var(--font-display); font-size:40px; letter-spacing:-.04em; color:var(--accent); line-height:1; font-variant-numeric:tabular-nums; }
+.block-head > div { display:grid; gap:10px; min-width:0; }
+.stack { display:grid; gap:24px; }
+.grid-2 { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:20px; }
+.grid-3 { display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:20px; }
+.panel { border:1px solid var(--line); border-radius:12px; background:var(--card); padding:22px; display:grid; gap:10px; align-content:start; min-width:0; }
+.panel h3 { font-size:18px; }
+.panel p { font-size:15px; color:var(--fg-2); }
+.kv { display:grid; grid-template-columns:150px minmax(0,1fr); gap:12px 20px; margin:0; }
+.kv dt { font-size:13px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--fg-3); padding-top:3px; }
+.kv dd { margin:0; min-width:0; }
+.trait-list { list-style:none; padding:0; margin:0; display:grid; gap:0; border-top:2px solid var(--fg); }
+.trait-list li { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:20px; padding:16px 0; border-bottom:1px solid var(--line); }
+.trait-list strong { font-family:var(--font-display); font-weight:500; font-size:20px; letter-spacing:-.02em; }
+.trait-list .not { color:var(--fg-3); font-size:15px; }
+
+/* Znak */
+.mark-stage { display:grid; grid-template-columns:minmax(0,1.2fr) minmax(0,1fr); gap:20px; }
+.construct { border:1px solid var(--line); border-radius:12px; background:var(--bg-soft); padding:20px; display:grid; place-items:center; }
+.construct svg { width:100%; max-width:340px; height:auto; }
+.construct .grid line { stroke:var(--line-strong); stroke-width:.5; }
+.construct .zone { fill:none; stroke:var(--accent); stroke-dasharray:3 3; stroke-width:.8; }
+.construct .lbl { font:600 7px var(--font-body); fill:var(--fg-2); }
+.variants { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:12px; }
+.variant { border-radius:12px; padding:18px 16px; display:grid; gap:12px; justify-items:start; min-width:0; border:1px solid var(--line); }
+.variant .cap { font-size:12px; font-weight:600; letter-spacing:.04em; }
+.v-light { background:#FFFFFF; color:#253B3A; }
+.v-tile { background:#F3F8F7; color:#253B3A; }
+.v-teal { background:#087F75; color:#FFFFFF; border-color:#087F75; }
+.v-navy { background:#14233A; color:#FFFFFF; border-color:#14233A; }
+.v-lock { display:inline-flex; align-items:center; gap:9px; font-family:var(--font-display); font-size:19px; letter-spacing:-.045em; }
+.v-lock .m { width:32px; height:32px; border-radius:8px; display:grid; place-items:center; flex:none; }
+.v-lock .m svg { width:22px; height:22px; }
+.v-lock .tld { opacity:.6; }
+.donts { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:12px; }
+.dont { border:1px solid var(--line); border-radius:12px; padding:16px 12px 12px; display:grid; gap:10px; justify-items:center; text-align:center; background:var(--card); }
+.dont .m { width:44px; height:44px; border-radius:11px; display:grid; place-items:center; }
+.dont .m svg { width:30px; height:30px; }
+.dont p { font-size:13px; color:var(--fg-2); }
+.dont .x { color:var(--dont); font-weight:700; font-size:12px; letter-spacing:.06em; text-transform:uppercase; }
+
+/* Kolory */
+.swatches { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:14px; }
+.swatch { border:1px solid var(--line); border-radius:12px; overflow:hidden; background:var(--card); display:grid; min-width:0; }
+.chip { height:96px; position:relative; }
+.chip span { position:absolute; left:12px; bottom:10px; font:600 12px var(--font-mono); }
+.swatch .meta { padding:12px 14px 14px; display:grid; gap:4px; }
+.swatch .name { font-weight:600; font-size:15px; }
+.swatch .role { font-size:13px; color:var(--fg-2); line-height:1.45; }
+.swatch .src { font-size:12px; color:var(--fg-3); font-style:italic; }
+.ratio { display:flex; height:56px; border-radius:10px; overflow:hidden; border:1px solid var(--line); }
+.ratio div { display:flex; align-items:flex-end; padding:6px 8px; font:600 11px var(--font-mono); min-width:0; overflow:hidden; white-space:nowrap; }
+.uniforms { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:14px; }
+.uniform { display:grid; grid-template-columns:52px minmax(0,1fr); gap:12px; align-items:center; }
+.uniform svg { width:52px; height:58px; }
+.uniform strong { font-size:14px; display:block; }
+.uniform span { font-size:13px; color:var(--fg-2); line-height:1.4; display:block; }
+
+/* Typografia */
+.type-specimen { display:grid; gap:0; border-top:2px solid var(--fg); }
+.type-row { display:grid; grid-template-columns:170px minmax(0,1fr); gap:20px; padding:18px 0; border-bottom:1px solid var(--line); align-items:baseline; }
+.type-row .spec { font-size:12px; color:var(--fg-3); font-family:var(--font-mono); line-height:1.5; }
+.t-hero { font-family:var(--font-display); font-size:clamp(34px, 5vw, 56px); letter-spacing:-.04em; line-height:1.02; }
+.t-section { font-family:var(--font-display); font-size:clamp(26px, 3.5vw, 32px); letter-spacing:-.035em; line-height:1.05; }
+.t-kicker { font-size:12px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--accent-ink); }
+.t-number { font-size:28px; font-weight:700; letter-spacing:-.03em; color:var(--brand-navy); font-variant-numeric:tabular-nums; }
+:root[data-theme="dark"] .t-number { color:#9DB4DB; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .t-number { color:#9DB4DB; } }
+.t-body { font-size:16px; line-height:1.7; color:var(--fg-2); }
+.t-meta { font-size:12px; color:var(--fg-3); }
+
+/* Wykresy */
+.chart-demo { border:1px solid var(--line); border-radius:12px; background:var(--card); padding:20px; display:grid; gap:12px; min-width:0; }
+.chart-demo svg { width:100%; height:auto; display:block; }
+.chart-demo .ax { fill:var(--fg-3); font:500 11px var(--font-body); }
+.chart-demo .gl { stroke:var(--line); stroke-width:1; }
+.chart-demo .src { font-size:12px; color:var(--fg-3); }
+.legend { display:flex; flex-wrap:wrap; gap:6px 16px; font-size:13px; color:var(--fg-2); }
+.legend i { display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:6px; vertical-align:-1px; }
+.series { display:flex; gap:6px; flex-wrap:wrap; }
+.series span { width:34px; height:34px; border-radius:8px; }
+
+/* Ikony i obraz */
+.icons { display:flex; flex-wrap:wrap; gap:12px; }
+.icon-tile { width:56px; height:56px; border-radius:12px; display:grid; place-items:center; background:var(--accent-soft); color:var(--accent); }
+.icon-tile svg { width:26px; height:26px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+.photo-rules { list-style:none; padding:0; margin:0; display:grid; gap:10px; }
+.photo-rules li { display:grid; grid-template-columns:22px minmax(0,1fr); gap:8px; font-size:15px; color:var(--fg-2); }
+.photo-rules li::before { content:"✓"; color:var(--do); font-weight:700; }
+.photo-rules li.no::before { content:"✕"; color:var(--dont); }
+
+/* Dymek */
+.tip-stage { border:1px solid var(--line); border-radius:12px; background:var(--bg-soft); padding:28px 20px 16px; display:grid; gap:12px; justify-items:center; min-width:0; }
+.tip { width:min(300px, 100%); background:#FFFFFF; color:#253B3A; border:1px solid #B9CEC9; border-radius:9px; box-shadow:0 8px 24px rgba(16,54,45,.12); padding:10px 12px; display:grid; gap:3px; font-size:13px; line-height:1.4; }
+.tip strong { font-weight:700; }
+.tip .tip-ctx { color:#6C827E; font-size:12px; }
+.tip dl { display:grid; grid-template-columns:1fr auto; gap:2px 16px; margin:6px 0 0; }
+.tip dt { color:#536C68; }
+.tip dd { margin:0; font-weight:700; text-align:right; font-variant-numeric:tabular-nums; }
+.tip .tip-status { display:flex; align-items:center; gap:6px; margin-top:6px; padding-top:6px; border-top:1px solid #E6EFEC; font-weight:600; color:#B4441B; font-size:12px; }
+.tip .tip-status i { width:8px; height:8px; border-radius:50%; background:#B4441B; }
+.tip-rich { width:min(330px, 100%); gap:4px; }
+.tip-key { display:grid; grid-template-columns:auto 1fr; align-items:baseline; gap:0 10px; margin:6px 0 2px; padding:8px 0; border-block:1px solid #E6EFEC; }
+.tip-key span { color:#536C68; font-size:12px; }
+.tip-key b { font-size:22px; letter-spacing:-.02em; color:#1B3D78; font-variant-numeric:tabular-nums; justify-self:end; }
+.tip-key em { grid-column:1 / -1; font-style:normal; font-weight:600; color:#B4441B; font-size:12px; }
+.tip-cmp { width:100%; border-collapse:collapse; font-size:13px; }
+.tip-cmp th { font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:#6C827E; text-align:right; padding:2px 0 4px; }
+.tip-cmp td { padding:2px 0; color:#253B3A; text-align:right; font-variant-numeric:tabular-nums; font-weight:700; }
+.tip-cmp td:first-child { text-align:left; font-weight:400; color:#536C68; }
+.tip-cmp td + td, .tip-cmp th + th { padding-left:12px; }
+.tip-sec { margin-top:6px; font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:#6C827E; }
+.tip-rich dl { margin-top:0; }
+.tip .tip-up { color:#B4441B; }
+.tip-foot { margin-top:6px; padding-top:6px; border-top:1px solid #E6EFEC; font-size:12px; color:#6C827E; line-height:1.4; }
+.tip-note { font-size:12px; color:var(--fg-3); text-align:center; }
+
+/* Głos */
+.voice-pair { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:0; border:1px solid var(--line); border-radius:12px; overflow:hidden; }
+.voice-pair > div { padding:18px 20px; display:grid; gap:6px; align-content:start; min-width:0; }
+.voice-pair > div + div { border-left:1px solid var(--line); }
+.voice-pair .tag { font-size:12px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+.voice-pair .tag.no { color:var(--dont); }
+.voice-pair .tag.yes { color:var(--do); }
+.voice-pair p { font-size:15px; }
+.voice-pair .no-text { color:var(--fg-3); text-decoration:line-through; text-decoration-color:color-mix(in srgb, var(--dont) 50%, transparent); }
+
+/* Audyt */
+.audit { width:100%; border-collapse:collapse; font-size:14px; min-width:640px; }
+.audit th, .audit td { text-align:left; padding:10px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
+.audit th { font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--fg-3); font-weight:700; }
+.audit td:first-child { font-weight:600; }
+.scroll-x { overflow-x:auto; }
+.sev { display:inline-block; font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; padding:2px 7px; border-radius:4px; white-space:nowrap; }
+.sev.hi { background:color-mix(in srgb, var(--brand-signal) 16%, transparent); color:var(--brand-signal); }
+.sev.md { background:var(--accent-soft); color:var(--accent-ink); }
+
+footer.end { padding-block:36px 56px; font-size:14px; color:var(--fg-2); }
+footer.end .wrap { display:flex; flex-wrap:wrap; gap:8px 24px; justify-content:space-between; }
+
+@media (max-width: 860px) {
+  .grid-3, .swatches, .uniforms { grid-template-columns:repeat(2, minmax(0,1fr)); }
+  .donts { grid-template-columns:repeat(2, minmax(0,1fr)); }
+  .mark-stage { grid-template-columns:1fr; }
+}
+@media (max-width: 560px) {
+  .grid-2, .grid-3, .uniforms, .voice-pair { grid-template-columns:1fr; }
+  .voice-pair > div + div { border-left:0; border-top:1px solid var(--line); }
+  .block-head { grid-template-columns:1fr; }
+  .kv, .type-row, .trait-list li { grid-template-columns:1fr; gap:6px; }
+  section.block { padding-block:44px; }
+}
+</style>
+
+<!-- Symbol: serce z linią EKG (ten sam rysunek co src/app/icon.svg) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="heart" viewBox="0 0 24 24">
+    <g fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round">
+      <path d="M12 20.2s-7.6-4.5-8.9-9.6C2.3 7.4 4.3 4.4 7.4 4.4c1.9 0 3.5 1.1 4.6 2.7 1.1-1.6 2.7-2.7 4.6-2.7 3.1 0 5.1 3 4.3 6.2-1.3 5.1-8.9 9.6-8.9 9.6Z"/>
+      <path d="M3.6 12h4.2l1.6-3 2.5 6 1.9-4.1h6.6" stroke-linecap="round"/>
+    </g>
+  </symbol>
+</svg>
+
+<header class="cover">
+  <div class="wrap">
+    <div class="cover-top">
+      <span class="lockup"><span class="mark"><svg style="color:#fff"><use href="#heart"/></svg></span><span class="wordmark">funduszdanych<span>.pl</span></span></span>
+      <span class="version">Brandbook · wersja robocza 0.1 · listopad 2026</span>
+    </div>
+    <div class="eyebrow">Publiczna ochrona zdrowia · Dane NFZ</div>
+    <h1>Liczby podane <em>sterylnie</em>.</h1>
+    <p class="lead">Zasady marki funduszdanych.pl: znak, kolory, typografia, wykresy i głos. Dokument porządkuje to, co już działa na stronie, i dodaje paletę z uniformów szpitalnych.</p>
+    <svg class="pulse" viewBox="0 0 1000 240" role="img" aria-label="Wykres lejkowy na siatce kafli: śmiertelność w grupie E53G Niewydolność krążenia w 2025 r., 497 ośrodków, średnia 11,5%, granice 95% i 99,8%.">
+      <line class="tile" x1="0" y1="0" x2="0" y2="240"/>
+      <line class="tile" x1="25" y1="0" x2="25" y2="240"/>
+      <line class="tile" x1="50" y1="0" x2="50" y2="240"/>
+      <line class="tile" x1="75" y1="0" x2="75" y2="240"/>
+      <line class="tile" x1="100" y1="0" x2="100" y2="240"/>
+      <line class="tile" x1="125" y1="0" x2="125" y2="240"/>
+      <line class="tile" x1="150" y1="0" x2="150" y2="240"/>
+      <line class="tile" x1="175" y1="0" x2="175" y2="240"/>
+      <line class="tile" x1="200" y1="0" x2="200" y2="240"/>
+      <line class="tile" x1="225" y1="0" x2="225" y2="240"/>
+      <line class="tile" x1="250" y1="0" x2="250" y2="240"/>
+      <line class="tile" x1="275" y1="0" x2="275" y2="240"/>
+      <line class="tile" x1="300" y1="0" x2="300" y2="240"/>
+      <line class="tile" x1="325" y1="0" x2="325" y2="240"/>
+      <line class="tile" x1="350" y1="0" x2="350" y2="240"/>
+      <line class="tile" x1="375" y1="0" x2="375" y2="240"/>
+      <line class="tile" x1="400" y1="0" x2="400" y2="240"/>
+      <line class="tile" x1="425" y1="0" x2="425" y2="240"/>
+      <line class="tile" x1="450" y1="0" x2="450" y2="240"/>
+      <line class="tile" x1="475" y1="0" x2="475" y2="240"/>
+      <line class="tile" x1="500" y1="0" x2="500" y2="240"/>
+      <line class="tile" x1="525" y1="0" x2="525" y2="240"/>
+      <line class="tile" x1="550" y1="0" x2="550" y2="240"/>
+      <line class="tile" x1="575" y1="0" x2="575" y2="240"/>
+      <line class="tile" x1="600" y1="0" x2="600" y2="240"/>
+      <line class="tile" x1="625" y1="0" x2="625" y2="240"/>
+      <line class="tile" x1="650" y1="0" x2="650" y2="240"/>
+      <line class="tile" x1="675" y1="0" x2="675" y2="240"/>
+      <line class="tile" x1="700" y1="0" x2="700" y2="240"/>
+      <line class="tile" x1="725" y1="0" x2="725" y2="240"/>
+      <line class="tile" x1="750" y1="0" x2="750" y2="240"/>
+      <line class="tile" x1="775" y1="0" x2="775" y2="240"/>
+      <line class="tile" x1="800" y1="0" x2="800" y2="240"/>
+      <line class="tile" x1="825" y1="0" x2="825" y2="240"/>
+      <line class="tile" x1="850" y1="0" x2="850" y2="240"/>
+      <line class="tile" x1="875" y1="0" x2="875" y2="240"/>
+      <line class="tile" x1="900" y1="0" x2="900" y2="240"/>
+      <line class="tile" x1="925" y1="0" x2="925" y2="240"/>
+      <line class="tile" x1="950" y1="0" x2="950" y2="240"/>
+      <line class="tile" x1="975" y1="0" x2="975" y2="240"/>
+      <line class="tile" x1="1000" y1="0" x2="1000" y2="240"/>
+      <line class="tile" x1="0" y1="15" x2="1000" y2="15"/>
+      <line class="tile" x1="0" y1="40" x2="1000" y2="40"/>
+      <line class="tile" x1="0" y1="65" x2="1000" y2="65"/>
+      <line class="tile" x1="0" y1="90" x2="1000" y2="90"/>
+      <line class="tile" x1="0" y1="115" x2="1000" y2="115"/>
+      <line class="tile" x1="0" y1="140" x2="1000" y2="140"/>
+      <line class="tile" x1="0" y1="165" x2="1000" y2="165"/>
+      <line class="tile" x1="0" y1="190" x2="1000" y2="190"/>
+      <line class="tile" x1="0" y1="215" x2="1000" y2="215"/>
+      <line class="tile" x1="0" y1="240" x2="1000" y2="240"/>
+      <text class="cap" x="25" y="56">E53G NIEWYDOLNOŚĆ KRĄŻENIA · 2025</text>
+      <text class="lbl" x="25" y="76">Śmiertelność w 497 ośrodkach · 1 kafel = 200 hospitalizacji × 5 pp · średnia 11,5%</text>
+      <line class="base" x1="725" y1="215" x2="975" y2="215"/>
+      <path class="lim inner" d="M728.8 100.7 L731.2 113.6 L733.8 120.4 L736.2 124.8 L738.8 127.9 L741.2 130.3 L743.8 132.2 L746.2 133.8 L748.8 135.1 L751.2 136.2 L753.8 137.1 L756.2 138.0 L758.8 138.7 L761.2 139.4 L763.8 140.0 L766.2 140.5 L768.8 141.0 L771.2 141.5 L773.8 141.9 L776.2 142.3 L778.8 142.6 L781.2 143.0 L783.8 143.3 L786.2 143.6 L788.8 143.9 L791.2 144.1 L793.8 144.4 L796.2 144.6 L798.8 144.8 L801.2 145.1 L803.8 145.3 L806.2 145.5 L808.8 145.6 L811.2 145.8 L813.8 146.0 L816.2 146.1 L818.8 146.3 L821.2 146.5 L823.8 146.6 L826.2 146.7 L828.8 146.9 L831.2 147.0 L833.8 147.1 L836.2 147.2 L838.8 147.4 L841.2 147.5 L843.8 147.6 L846.2 147.7 L848.8 147.8 L851.2 147.9 L853.8 148.0 L856.2 148.1 L858.8 148.2 L861.2 148.2 L863.8 148.3 L866.2 148.4 L868.8 148.5 L871.2 148.6 L873.8 148.7 L876.2 148.7 L878.8 148.8 L881.2 148.9 L883.8 148.9 L886.2 149.0 L888.8 149.1 L891.2 149.1 L893.8 149.2 L896.2 149.3 L898.8 149.3 L901.2 149.4 L903.8 149.4 L906.2 149.5 L908.8 149.6 L911.2 149.6 L913.8 149.7 L916.2 149.7 L918.8 149.8 L921.2 149.8 L923.8 149.9 L926.2 149.9 L928.8 150.0 L931.2 150.0 L933.8 150.1 L936.2 150.1 L938.8 150.2 L941.2 150.2 L943.8 150.2 L946.2 150.3 L948.8 150.3 L951.2 150.4 L953.8 150.4 L956.2 150.4 L958.8 150.5 L961.2 150.5 L963.8 150.6 L966.2 150.6 L968.8 150.6 L971.2 150.7 L973.8 150.7"/>
+      <path class="lim inner" d="M728.8 214.7 L731.2 201.8 L733.8 195.0 L736.2 190.6 L738.8 187.5 L741.2 185.1 L743.8 183.2 L746.2 181.6 L748.8 180.3 L751.2 179.2 L753.8 178.3 L756.2 177.4 L758.8 176.7 L761.2 176.0 L763.8 175.4 L766.2 174.9 L768.8 174.4 L771.2 173.9 L773.8 173.5 L776.2 173.1 L778.8 172.8 L781.2 172.4 L783.8 172.1 L786.2 171.8 L788.8 171.5 L791.2 171.3 L793.8 171.0 L796.2 170.8 L798.8 170.6 L801.2 170.3 L803.8 170.1 L806.2 169.9 L808.8 169.8 L811.2 169.6 L813.8 169.4 L816.2 169.3 L818.8 169.1 L821.2 168.9 L823.8 168.8 L826.2 168.7 L828.8 168.5 L831.2 168.4 L833.8 168.3 L836.2 168.2 L838.8 168.0 L841.2 167.9 L843.8 167.8 L846.2 167.7 L848.8 167.6 L851.2 167.5 L853.8 167.4 L856.2 167.3 L858.8 167.2 L861.2 167.2 L863.8 167.1 L866.2 167.0 L868.8 166.9 L871.2 166.8 L873.8 166.7 L876.2 166.7 L878.8 166.6 L881.2 166.5 L883.8 166.5 L886.2 166.4 L888.8 166.3 L891.2 166.3 L893.8 166.2 L896.2 166.1 L898.8 166.1 L901.2 166.0 L903.8 166.0 L906.2 165.9 L908.8 165.8 L911.2 165.8 L913.8 165.7 L916.2 165.7 L918.8 165.6 L921.2 165.6 L923.8 165.5 L926.2 165.5 L928.8 165.4 L931.2 165.4 L933.8 165.3 L936.2 165.3 L938.8 165.2 L941.2 165.2 L943.8 165.2 L946.2 165.1 L948.8 165.1 L951.2 165.0 L953.8 165.0 L956.2 165.0 L958.8 164.9 L961.2 164.9 L963.8 164.8 L966.2 164.8 L968.8 164.8 L971.2 164.7 L973.8 164.7"/>
+      <path class="lim" d="M728.8 67.8 L731.2 88.1 L733.8 98.9 L736.2 105.8 L738.8 110.8 L741.2 114.5 L743.8 117.5 L746.2 120.0 L748.8 122.0 L751.2 123.7 L753.8 125.2 L756.2 126.6 L758.8 127.7 L761.2 128.8 L763.8 129.7 L766.2 130.6 L768.8 131.4 L771.2 132.1 L773.8 132.8 L776.2 133.4 L778.8 134.0 L781.2 134.5 L783.8 135.0 L786.2 135.5 L788.8 135.9 L791.2 136.3 L793.8 136.7 L796.2 137.1 L798.8 137.4 L801.2 137.8 L803.8 138.1 L806.2 138.4 L808.8 138.7 L811.2 139.0 L813.8 139.2 L816.2 139.5 L818.8 139.7 L821.2 140.0 L823.8 140.2 L826.2 140.4 L828.8 140.6 L831.2 140.8 L833.8 141.0 L836.2 141.2 L838.8 141.4 L841.2 141.6 L843.8 141.7 L846.2 141.9 L848.8 142.1 L851.2 142.2 L853.8 142.4 L856.2 142.5 L858.8 142.7 L861.2 142.8 L863.8 142.9 L866.2 143.1 L868.8 143.2 L871.2 143.3 L873.8 143.4 L876.2 143.6 L878.8 143.7 L881.2 143.8 L883.8 143.9 L886.2 144.0 L888.8 144.1 L891.2 144.2 L893.8 144.3 L896.2 144.4 L898.8 144.5 L901.2 144.6 L903.8 144.7 L906.2 144.8 L908.8 144.9 L911.2 145.0 L913.8 145.0 L916.2 145.1 L918.8 145.2 L921.2 145.3 L923.8 145.4 L926.2 145.4 L928.8 145.5 L931.2 145.6 L933.8 145.7 L936.2 145.7 L938.8 145.8 L941.2 145.9 L943.8 145.9 L946.2 146.0 L948.8 146.1 L951.2 146.1 L953.8 146.2 L956.2 146.3 L958.8 146.3 L961.2 146.4 L963.8 146.4 L966.2 146.5 L968.8 146.6 L971.2 146.6 L973.8 146.7"/>
+      <path class="lim" d="M728.8 215.0 L731.2 215.0 L733.8 215.0 L736.2 209.6 L738.8 204.6 L741.2 200.9 L743.8 197.9 L746.2 195.4 L748.8 193.4 L751.2 191.7 L753.8 190.2 L756.2 188.8 L758.8 187.7 L761.2 186.6 L763.8 185.7 L766.2 184.8 L768.8 184.0 L771.2 183.3 L773.8 182.6 L776.2 182.0 L778.8 181.4 L781.2 180.9 L783.8 180.4 L786.2 179.9 L788.8 179.5 L791.2 179.1 L793.8 178.7 L796.2 178.3 L798.8 178.0 L801.2 177.6 L803.8 177.3 L806.2 177.0 L808.8 176.7 L811.2 176.4 L813.8 176.2 L816.2 175.9 L818.8 175.7 L821.2 175.4 L823.8 175.2 L826.2 175.0 L828.8 174.8 L831.2 174.6 L833.8 174.4 L836.2 174.2 L838.8 174.0 L841.2 173.8 L843.8 173.7 L846.2 173.5 L848.8 173.3 L851.2 173.2 L853.8 173.0 L856.2 172.9 L858.8 172.7 L861.2 172.6 L863.8 172.5 L866.2 172.3 L868.8 172.2 L871.2 172.1 L873.8 172.0 L876.2 171.8 L878.8 171.7 L881.2 171.6 L883.8 171.5 L886.2 171.4 L888.8 171.3 L891.2 171.2 L893.8 171.1 L896.2 171.0 L898.8 170.9 L901.2 170.8 L903.8 170.7 L906.2 170.6 L908.8 170.5 L911.2 170.4 L913.8 170.4 L916.2 170.3 L918.8 170.2 L921.2 170.1 L923.8 170.0 L926.2 170.0 L928.8 169.9 L931.2 169.8 L933.8 169.7 L936.2 169.7 L938.8 169.6 L941.2 169.5 L943.8 169.5 L946.2 169.4 L948.8 169.3 L951.2 169.3 L953.8 169.2 L956.2 169.1 L958.8 169.1 L961.2 169.0 L963.8 169.0 L966.2 168.9 L968.8 168.8 L971.2 168.8 L973.8 168.7"/>
+      <line class="ref" x1="725" y1="157.7" x2="975" y2="157.7"/>
+      <circle class="pt " cx="729.0" cy="152.5" r="2.6"/>
+      <circle class="pt " cx="729.1" cy="109.0" r="2.6"/>
+      <circle class="pt " cx="729.6" cy="187.9" r="2.6"/>
+      <circle class="pt " cx="730.1" cy="202.8" r="2.6"/>
+      <circle class="pt " cx="730.2" cy="203.1" r="2.6"/>
+      <circle class="pt " cx="730.4" cy="122.0" r="2.6"/>
+      <circle class="pt " cx="730.6" cy="126.1" r="2.6"/>
+      <circle class="pt " cx="732.0" cy="179.3" r="2.6"/>
+      <circle class="pt " cx="732.1" cy="136.1" r="2.6"/>
+      <circle class="pt " cx="732.8" cy="190.8" r="2.6"/>
+      <circle class="pt " cx="733.1" cy="161.2" r="2.6"/>
+      <circle class="pt " cx="733.2" cy="192.2" r="2.6"/>
+      <circle class="pt " cx="733.5" cy="185.6" r="2.6"/>
+      <circle class="pt " cx="733.5" cy="141.4" r="2.6"/>
+      <circle class="pt " cx="734.0" cy="138.6" r="2.6"/>
+      <circle class="pt " cx="734.4" cy="175.0" r="2.6"/>
+      <circle class="pt " cx="734.5" cy="188.7" r="2.6"/>
+      <circle class="pt " cx="734.9" cy="183.3" r="2.6"/>
+      <circle class="pt " cx="734.9" cy="158.1" r="2.6"/>
+      <circle class="pt " cx="735.4" cy="142.7" r="2.6"/>
+      <circle class="pt " cx="735.4" cy="142.7" r="2.6"/>
+      <circle class="pt " cx="735.9" cy="180.5" r="2.6"/>
+      <circle class="pt " cx="736.2" cy="137.2" r="2.6"/>
+      <circle class="pt " cx="736.4" cy="143.6" r="2.6"/>
+      <circle class="pt " cx="738.2" cy="177.2" r="2.6"/>
+      <circle class="pt " cx="738.4" cy="163.6" r="2.6"/>
+      <circle class="pt " cx="738.4" cy="135.6" r="2.6"/>
+      <circle class="pt " cx="738.5" cy="159.4" r="2.6"/>
+      <circle class="pt " cx="738.6" cy="164.6" r="2.6"/>
+      <circle class="pt " cx="738.9" cy="147.4" r="2.6"/>
+      <circle class="pt " cx="739.0" cy="156.9" r="2.6"/>
+      <circle class="pt " cx="739.0" cy="139.1" r="2.6"/>
+      <circle class="pt " cx="739.2" cy="144.8" r="2.6"/>
+      <circle class="pt " cx="739.6" cy="150.9" r="2.6"/>
+      <circle class="pt " cx="739.8" cy="164.2" r="2.6"/>
+      <circle class="pt " cx="739.8" cy="130.2" r="2.6"/>
+      <circle class="pt " cx="739.8" cy="130.2" r="2.6"/>
+      <circle class="pt " cx="740.0" cy="152.5" r="2.6"/>
+      <circle class="pt " cx="740.1" cy="165.4" r="2.6"/>
+      <circle class="pt " cx="740.5" cy="142.4" r="2.6"/>
+      <circle class="pt " cx="740.5" cy="138.4" r="2.6"/>
+      <circle class="pt " cx="740.6" cy="175.0" r="2.6"/>
+      <circle class="pt " cx="740.6" cy="163.0" r="2.6"/>
+      <circle class="pt " cx="740.6" cy="143.0" r="2.6"/>
+      <circle class="pt " cx="741.2" cy="176.6" r="2.6"/>
+      <circle class="pt " cx="741.2" cy="157.3" r="2.6"/>
+      <circle class="pt " cx="741.2" cy="145.8" r="2.6"/>
+      <circle class="pt " cx="741.6" cy="151.1" r="2.6"/>
+      <circle class="pt " cx="741.8" cy="162.8" r="2.6"/>
+      <circle class="pt " cx="742.0" cy="159.8" r="2.6"/>
+      <circle class="pt " cx="742.4" cy="168.2" r="2.6"/>
+      <circle class="pt " cx="742.6" cy="168.9" r="2.6"/>
+      <circle class="pt " cx="742.6" cy="154.7" r="2.6"/>
+      <circle class="pt " cx="742.6" cy="140.6" r="2.6"/>
+      <circle class="pt " cx="742.6" cy="140.6" r="2.6"/>
+      <circle class="pt " cx="742.8" cy="169.2" r="2.6"/>
+      <circle class="pt " cx="742.9" cy="176.6" r="2.6"/>
+      <circle class="pt " cx="743.0" cy="152.5" r="2.6"/>
+      <circle class="pt " cx="743.0" cy="152.5" r="2.6"/>
+      <circle class="pt " cx="743.0" cy="149.1" r="2.6"/>
+      <circle class="pt " cx="743.0" cy="138.6" r="2.6"/>
+      <circle class="pt " cx="743.2" cy="160.2" r="2.6"/>
+      <circle class="pt " cx="743.2" cy="149.9" r="2.6"/>
+      <circle class="pt " cx="743.2" cy="149.9" r="2.6"/>
+      <circle class="pt " cx="743.5" cy="137.3" r="2.6"/>
+      <circle class="pt " cx="743.5" cy="133.9" r="2.6"/>
+      <circle class="pt " cx="743.6" cy="141.2" r="2.6"/>
+      <circle class="pt " cx="743.9" cy="158.7" r="2.6"/>
+      <circle class="pt " cx="744.1" cy="149.7" r="2.6"/>
+      <circle class="pt " cx="744.2" cy="166.3" r="2.6"/>
+      <circle class="pt " cx="744.4" cy="156.9" r="2.6"/>
+      <circle class="pt " cx="744.4" cy="137.6" r="2.6"/>
+      <circle class="pt " cx="744.5" cy="144.5" r="2.6"/>
+      <circle class="pt " cx="744.6" cy="157.7" r="2.6"/>
+      <circle class="pt " cx="744.9" cy="167.8" r="2.6"/>
+      <circle class="pt " cx="745.0" cy="177.5" r="2.6"/>
+      <circle class="pt " cx="745.0" cy="171.2" r="2.6"/>
+      <circle class="pt " cx="745.0" cy="155.6" r="2.6"/>
+      <circle class="pt " cx="745.1" cy="143.6" r="2.6"/>
+      <circle class="pt " cx="745.4" cy="165.9" r="2.6"/>
+      <circle class="pt " cx="745.4" cy="144.4" r="2.6"/>
+      <circle class="pt " cx="745.5" cy="160.1" r="2.6"/>
+      <circle class="pt " cx="745.9" cy="134.1" r="2.6"/>
+      <circle class="pt " cx="746.1" cy="179.5" r="2.6"/>
+      <circle class="pt " cx="746.1" cy="158.8" r="2.6"/>
+      <circle class="pt " cx="746.5" cy="168.5" r="2.6"/>
+      <circle class="pt " cx="746.8" cy="157.6" r="2.6"/>
+      <circle class="pt " cx="746.9" cy="163.6" r="2.6"/>
+      <circle class="pt " cx="746.9" cy="146.4" r="2.6"/>
+      <circle class="pt " cx="746.9" cy="137.9" r="2.6"/>
+      <circle class="pt " cx="747.0" cy="152.5" r="2.6"/>
+      <circle class="pt " cx="747.0" cy="138.3" r="2.6"/>
+      <circle class="pt " cx="747.2" cy="170.1" r="2.6"/>
+      <circle class="pt " cx="747.2" cy="141.9" r="2.6"/>
+      <circle class="pt " cx="747.6" cy="157.0" r="2.6"/>
+      <circle class="pt " cx="747.8" cy="171.1" r="2.6"/>
+      <circle class="pt " cx="747.8" cy="154.6" r="2.6"/>
+      <circle class="pt " cx="747.8" cy="143.6" r="2.6"/>
+      <circle class="pt " cx="747.9" cy="149.4" r="2.6"/>
+      <circle class="pt " cx="748.0" cy="149.8" r="2.6"/>
+      <circle class="pt " cx="748.0" cy="149.8" r="2.6"/>
+      <circle class="pt " cx="748.0" cy="147.1" r="2.6"/>
+      <circle class="pt " cx="748.1" cy="171.8" r="2.6"/>
+      <circle class="pt " cx="748.1" cy="139.3" r="2.6"/>
+      <circle class="pt " cx="748.8" cy="162.3" r="2.6"/>
+      <circle class="pt " cx="748.8" cy="143.9" r="2.6"/>
+      <circle class="pt " cx="748.9" cy="162.6" r="2.6"/>
+      <circle class="pt " cx="748.9" cy="139.1" r="2.6"/>
+      <circle class="pt " cx="749.1" cy="145.1" r="2.6"/>
+      <circle class="pt " cx="749.2" cy="173.8" r="2.6"/>
+      <circle class="pt " cx="749.4" cy="140.7" r="2.6"/>
+      <circle class="pt " cx="749.4" cy="135.5" r="2.6"/>
+      <circle class="pt " cx="749.5" cy="148.7" r="2.6"/>
+      <circle class="pt " cx="749.8" cy="156.9" r="2.6"/>
+      <circle class="pt " cx="749.8" cy="149.3" r="2.6"/>
+      <circle class="pt " cx="749.8" cy="146.8" r="2.6"/>
+      <circle class="pt " cx="749.8" cy="144.3" r="2.6"/>
+      <circle class="pt " cx="749.9" cy="157.2" r="2.6"/>
+      <circle class="pt " cx="750.0" cy="167.5" r="2.6"/>
+      <circle class="pt " cx="750.0" cy="140.0" r="2.6"/>
+      <circle class="pt " cx="750.1" cy="145.3" r="2.6"/>
+      <circle class="pt " cx="750.6" cy="156.4" r="2.6"/>
+      <circle class="pt " cx="750.8" cy="144.6" r="2.6"/>
+      <circle class="pt " cx="750.9" cy="152.2" r="2.6"/>
+      <circle class="pt " cx="751.4" cy="158.2" r="2.6"/>
+      <circle class="pt " cx="751.4" cy="146.3" r="2.6"/>
+      <circle class="pt " cx="751.5" cy="137.2" r="2.6"/>
+      <circle class="pt " cx="752.1" cy="164.3" r="2.6"/>
+      <circle class="pt " cx="752.2" cy="155.3" r="2.6"/>
+      <circle class="pt " cx="752.5" cy="162.8" r="2.6"/>
+      <circle class="pt " cx="752.5" cy="144.6" r="2.6"/>
+      <circle class="pt " cx="753.1" cy="175.0" r="2.6"/>
+      <circle class="pt " cx="753.1" cy="150.6" r="2.6"/>
+      <circle class="pt " cx="753.2" cy="146.4" r="2.6"/>
+      <circle class="pt " cx="753.4" cy="177.6" r="2.6"/>
+      <circle class="pt " cx="753.5" cy="175.6" r="2.6"/>
+      <circle class="pt " cx="754.0" cy="148.2" r="2.6"/>
+      <circle class="pt " cx="754.4" cy="172.4" r="2.6"/>
+      <circle class="pt " cx="755.1" cy="150.7" r="2.6"/>
+      <circle class="pt " cx="755.2" cy="165.4" r="2.6"/>
+      <circle class="pt " cx="755.2" cy="148.9" r="2.6"/>
+      <circle class="pt " cx="756.0" cy="176.7" r="2.6"/>
+      <circle class="pt " cx="756.0" cy="154.5" r="2.6"/>
+      <circle class="pt " cx="756.1" cy="166.8" r="2.6"/>
+      <circle class="pt " cx="756.1" cy="160.8" r="2.6"/>
+      <circle class="pt " cx="756.1" cy="146.8" r="2.6"/>
+      <circle class="pt " cx="756.8" cy="155.9" r="2.6"/>
+      <circle class="pt " cx="757.0" cy="154.5" r="2.6"/>
+      <circle class="pt " cx="757.0" cy="144.7" r="2.6"/>
+      <circle class="pt " cx="757.5" cy="145.8" r="2.6"/>
+      <circle class="pt " cx="757.8" cy="176.8" r="2.6"/>
+      <circle class="pt " cx="757.8" cy="165.4" r="2.6"/>
+      <circle class="pt " cx="758.0" cy="160.1" r="2.6"/>
+      <circle class="pt " cx="758.6" cy="157.4" r="2.6"/>
+      <circle class="pt " cx="758.9" cy="159.7" r="2.6"/>
+      <circle class="pt " cx="758.9" cy="152.2" r="2.6"/>
+      <circle class="pt " cx="758.9" cy="141.2" r="2.6"/>
+      <circle class="pt " cx="759.5" cy="146.2" r="2.6"/>
+      <circle class="pt " cx="759.6" cy="166.2" r="2.6"/>
+      <circle class="pt " cx="759.6" cy="146.4" r="2.6"/>
+      <circle class="pt " cx="760.4" cy="170.8" r="2.6"/>
+      <circle class="pt " cx="760.6" cy="153.6" r="2.6"/>
+      <circle class="pt " cx="761.0" cy="166.4" r="2.6"/>
+      <circle class="pt " cx="761.1" cy="159.7" r="2.6"/>
+      <circle class="pt " cx="761.1" cy="159.7" r="2.6"/>
+      <circle class="pt " cx="761.1" cy="151.0" r="2.6"/>
+      <circle class="pt " cx="761.4" cy="160.0" r="2.6"/>
+      <circle class="pt " cx="761.9" cy="157.3" r="2.6"/>
+      <circle class="pt " cx="762.1" cy="164.5" r="2.6"/>
+      <circle class="pt " cx="763.8" cy="152.1" r="2.6"/>
+      <circle class="pt " cx="764.0" cy="163.7" r="2.6"/>
+      <circle class="pt " cx="764.4" cy="165.8" r="2.6"/>
+      <circle class="pt " cx="764.6" cy="150.4" r="2.6"/>
+      <circle class="pt " cx="764.8" cy="153.7" r="2.6"/>
+      <circle class="pt " cx="765.2" cy="159.1" r="2.6"/>
+      <circle class="pt " cx="765.9" cy="172.2" r="2.6"/>
+      <circle class="pt " cx="765.9" cy="147.7" r="2.6"/>
+      <circle class="pt " cx="766.0" cy="155.6" r="2.6"/>
+      <circle class="pt " cx="766.1" cy="142.1" r="2.6"/>
+      <circle class="pt " cx="766.8" cy="150.7" r="2.6"/>
+      <circle class="pt " cx="767.1" cy="143.8" r="2.6"/>
+      <circle class="pt " cx="767.6" cy="149.0" r="2.6"/>
+      <circle class="pt " cx="767.9" cy="166.9" r="2.6"/>
+      <circle class="pt " cx="767.9" cy="165.4" r="2.6"/>
+      <circle class="pt " cx="768.0" cy="152.5" r="2.6"/>
+      <circle class="pt " cx="768.2" cy="168.8" r="2.6"/>
+      <circle class="pt " cx="768.6" cy="146.2" r="2.6"/>
+      <circle class="pt " cx="769.1" cy="162.6" r="2.6"/>
+      <circle class="pt " cx="769.6" cy="170.2" r="2.6"/>
+      <circle class="pt " cx="770.4" cy="172.3" r="2.6"/>
+      <circle class="pt " cx="770.5" cy="166.9" r="2.6"/>
+      <circle class="pt " cx="770.6" cy="156.1" r="2.6"/>
+      <circle class="pt " cx="771.5" cy="172.0" r="2.6"/>
+      <circle class="pt " cx="771.9" cy="144.3" r="2.6"/>
+      <circle class="pt " cx="773.0" cy="165.5" r="2.6"/>
+      <circle class="pt " cx="773.2" cy="160.6" r="2.6"/>
+      <circle class="pt " cx="773.5" cy="142.8" r="2.6"/>
+      <circle class="pt " cx="773.6" cy="166.2" r="2.6"/>
+      <circle class="pt " cx="773.8" cy="165.0" r="2.6"/>
+      <circle class="pt " cx="774.5" cy="149.3" r="2.6"/>
+      <circle class="pt " cx="775.0" cy="161.2" r="2.6"/>
+      <circle class="pt " cx="775.1" cy="146.4" r="2.6"/>
+      <circle class="pt " cx="775.5" cy="167.9" r="2.6"/>
+      <circle class="pt " cx="776.4" cy="161.4" r="2.6"/>
+      <circle class="pt " cx="776.6" cy="155.7" r="2.6"/>
+      <circle class="pt " cx="778.8" cy="172.0" r="2.6"/>
+      <circle class="pt " cx="779.9" cy="150.1" r="2.6"/>
+      <circle class="pt " cx="780.1" cy="145.8" r="2.6"/>
+      <circle class="pt " cx="780.8" cy="152.2" r="2.6"/>
+      <circle class="pt " cx="782.0" cy="168.9" r="2.6"/>
+      <circle class="pt " cx="783.4" cy="160.4" r="2.6"/>
+      <circle class="pt " cx="783.5" cy="153.1" r="2.6"/>
+      <circle class="pt " cx="785.0" cy="165.0" r="2.6"/>
+      <circle class="pt " cx="785.0" cy="155.6" r="2.6"/>
+      <circle class="pt " cx="785.4" cy="159.1" r="2.6"/>
+      <circle class="pt " cx="786.6" cy="158.2" r="2.6"/>
+      <circle class="pt " cx="788.2" cy="167.6" r="2.6"/>
+      <circle class="pt " cx="788.4" cy="163.7" r="2.6"/>
+      <circle class="pt " cx="788.8" cy="169.9" r="2.6"/>
+      <circle class="pt " cx="791.0" cy="161.9" r="2.6"/>
+      <circle class="pt " cx="794.4" cy="162.8" r="2.6"/>
+      <circle class="pt " cx="795.9" cy="162.1" r="2.6"/>
+      <circle class="pt " cx="796.6" cy="157.4" r="2.6"/>
+      <circle class="pt " cx="797.8" cy="167.8" r="2.6"/>
+      <circle class="pt " cx="798.5" cy="169.9" r="2.6"/>
+      <circle class="pt " cx="801.5" cy="157.8" r="2.6"/>
+      <circle class="pt " cx="802.9" cy="169.2" r="2.6"/>
+      <circle class="pt " cx="803.2" cy="152.7" r="2.6"/>
+      <circle class="pt " cx="803.4" cy="160.0" r="2.6"/>
+      <circle class="pt " cx="806.1" cy="167.2" r="2.6"/>
+      <circle class="pt " cx="806.4" cy="146.7" r="2.6"/>
+      <circle class="pt " cx="806.6" cy="155.3" r="2.6"/>
+      <circle class="pt " cx="811.8" cy="166.8" r="2.6"/>
+      <circle class="pt " cx="824.2" cy="162.1" r="2.6"/>
+      <circle class="pt " cx="829.8" cy="163.7" r="2.6"/>
+      <circle class="pt " cx="834.9" cy="163.2" r="2.6"/>
+      <circle class="pt down95" cx="729.1" cy="215.0" r="2.6"/>
+      <circle class="pt down95" cx="729.4" cy="215.0" r="2.6"/>
+      <circle class="pt down95" cx="729.6" cy="215.0" r="2.6"/>
+      <circle class="pt down95" cx="731.0" cy="204.6" r="2.6"/>
+      <circle class="pt down95" cx="731.6" cy="205.6" r="2.6"/>
+      <circle class="pt up998" cx="731.9" cy="42.3" r="2.6"/>
+      <circle class="pt down95" cx="732.8" cy="198.8" r="2.6"/>
+      <circle class="pt down95" cx="733.9" cy="200.9" r="2.6"/>
+      <circle class="pt up95" cx="734.0" cy="117.8" r="2.6"/>
+      <circle class="pt up998" cx="734.0" cy="55.3" r="2.6"/>
+      <circle class="pt down95" cx="734.1" cy="201.3" r="2.6"/>
+      <circle class="pt down998" cx="734.2" cy="215.0" r="2.6"/>
+      <circle class="pt down998" cx="734.6" cy="215.0" r="2.6"/>
+      <circle class="pt down95" cx="735.0" cy="202.5" r="2.6"/>
+      <circle class="pt down95" cx="735.6" cy="209.1" r="2.6"/>
+      <circle class="pt down95" cx="735.9" cy="197.8" r="2.6"/>
+      <circle class="pt up95" cx="735.9" cy="105.8" r="2.6"/>
+      <circle class="pt up998" cx="735.9" cy="65.6" r="2.6"/>
+      <circle class="pt down95" cx="736.0" cy="197.9" r="2.6"/>
+      <circle class="pt down95" cx="736.2" cy="203.9" r="2.6"/>
+      <circle class="pt up95" cx="736.4" cy="110.6" r="2.6"/>
+      <circle class="pt up998" cx="736.4" cy="88.6" r="2.6"/>
+      <circle class="pt up998" cx="737.4" cy="103.9" r="2.6"/>
+      <circle class="pt up998" cx="738.0" cy="99.6" r="2.6"/>
+      <circle class="pt up95" cx="738.4" cy="126.2" r="2.6"/>
+      <circle class="pt up998" cx="738.6" cy="109.5" r="2.6"/>
+      <circle class="pt up998" cx="738.6" cy="100.3" r="2.6"/>
+      <circle class="pt up998" cx="738.8" cy="101.3" r="2.6"/>
+      <circle class="pt up998" cx="738.8" cy="96.8" r="2.6"/>
+      <circle class="pt down95" cx="738.9" cy="197.0" r="2.6"/>
+      <circle class="pt up998" cx="739.1" cy="77.8" r="2.6"/>
+      <circle class="pt down998" cx="739.4" cy="215.0" r="2.6"/>
+      <circle class="pt down998" cx="739.4" cy="206.3" r="2.6"/>
+      <circle class="pt down95" cx="739.4" cy="193.2" r="2.6"/>
+      <circle class="pt down95" cx="739.4" cy="188.9" r="2.6"/>
+      <circle class="pt down95" cx="739.5" cy="197.8" r="2.6"/>
+      <circle class="pt down95" cx="739.5" cy="193.4" r="2.6"/>
+      <circle class="pt up998" cx="739.5" cy="81.4" r="2.6"/>
+      <circle class="pt down95" cx="739.8" cy="202.3" r="2.6"/>
+      <circle class="pt up998" cx="740.0" cy="81.6" r="2.6"/>
+      <circle class="pt up95" cx="740.1" cy="128.2" r="2.6"/>
+      <circle class="pt up95" cx="740.1" cy="119.9" r="2.6"/>
+      <circle class="pt up998" cx="740.6" cy="107.0" r="2.6"/>
+      <circle class="pt down95" cx="740.8" cy="199.2" r="2.6"/>
+      <circle class="pt up95" cx="740.9" cy="128.4" r="2.6"/>
+      <circle class="pt up998" cx="740.9" cy="96.9" r="2.6"/>
+      <circle class="pt up95" cx="741.0" cy="129.1" r="2.6"/>
+      <circle class="pt up95" cx="741.2" cy="115.0" r="2.6"/>
+      <circle class="pt up998" cx="741.2" cy="34.2" r="2.6"/>
+      <circle class="pt down998" cx="741.4" cy="215.0" r="2.6"/>
+      <circle class="pt up95" cx="741.5" cy="120.3" r="2.6"/>
+      <circle class="pt up998" cx="741.6" cy="102.2" r="2.6"/>
+      <circle class="pt up998" cx="741.8" cy="99.4" r="2.6"/>
+      <circle class="pt up998" cx="741.8" cy="47.1" r="2.6"/>
+      <circle class="pt down998" cx="741.9" cy="200.2" r="2.6"/>
+      <circle class="pt down95" cx="742.0" cy="185.6" r="2.6"/>
+      <circle class="pt up998" cx="742.0" cy="97.3" r="2.6"/>
+      <circle class="pt up998" cx="742.0" cy="82.7" r="2.6"/>
+      <circle class="pt down95" cx="742.5" cy="193.6" r="2.6"/>
+      <circle class="pt up95" cx="742.5" cy="129.3" r="2.6"/>
+      <circle class="pt up998" cx="742.6" cy="66.0" r="2.6"/>
+      <circle class="pt up998" cx="742.8" cy="95.3" r="2.6"/>
+      <circle class="pt up998" cx="742.9" cy="113.6" r="2.6"/>
+      <circle class="pt up95" cx="743.0" cy="128.2" r="2.6"/>
+      <circle class="pt up998" cx="743.4" cy="99.4" r="2.6"/>
+      <circle class="pt up998" cx="743.5" cy="110.3" r="2.6"/>
+      <circle class="pt up95" cx="743.8" cy="125.0" r="2.6"/>
+      <circle class="pt up998" cx="743.8" cy="108.3" r="2.6"/>
+      <circle class="pt down998" cx="744.1" cy="211.8" r="2.6"/>
+      <circle class="pt up998" cx="744.1" cy="97.3" r="2.6"/>
+      <circle class="pt up998" cx="744.2" cy="117.6" r="2.6"/>
+      <circle class="pt up95" cx="744.4" cy="131.1" r="2.6"/>
+      <circle class="pt up95" cx="744.5" cy="118.8" r="2.6"/>
+      <circle class="pt down95" cx="744.6" cy="186.3" r="2.6"/>
+      <circle class="pt up998" cx="744.6" cy="116.2" r="2.6"/>
+      <circle class="pt up998" cx="745.0" cy="55.6" r="2.6"/>
+      <circle class="pt up95" cx="745.1" cy="128.1" r="2.6"/>
+      <circle class="pt up998" cx="745.1" cy="81.4" r="2.6"/>
+      <circle class="pt up998" cx="745.2" cy="100.8" r="2.6"/>
+      <circle class="pt up998" cx="745.2" cy="91.5" r="2.6"/>
+      <circle class="pt down998" cx="745.4" cy="208.8" r="2.6"/>
+      <circle class="pt up998" cx="745.4" cy="73.9" r="2.6"/>
+      <circle class="pt up998" cx="745.6" cy="105.9" r="2.6"/>
+      <circle class="pt up998" cx="745.6" cy="93.8" r="2.6"/>
+      <circle class="pt down95" cx="745.8" cy="190.9" r="2.6"/>
+      <circle class="pt up95" cx="745.8" cy="130.6" r="2.6"/>
+      <circle class="pt up998" cx="745.8" cy="82.4" r="2.6"/>
+      <circle class="pt down998" cx="745.9" cy="206.0" r="2.6"/>
+      <circle class="pt up998" cx="745.9" cy="107.2" r="2.6"/>
+      <circle class="pt up95" cx="746.6" cy="128.3" r="2.6"/>
+      <circle class="pt up998" cx="746.6" cy="111.0" r="2.6"/>
+      <circle class="pt up998" cx="746.8" cy="94.3" r="2.6"/>
+      <circle class="pt down998" cx="746.9" cy="200.7" r="2.6"/>
+      <circle class="pt up95" cx="747.4" cy="122.8" r="2.6"/>
+      <circle class="pt down998" cx="747.6" cy="212.2" r="2.6"/>
+      <circle class="pt up95" cx="747.8" cy="129.8" r="2.6"/>
+      <circle class="pt up998" cx="747.9" cy="111.2" r="2.6"/>
+      <circle class="pt up998" cx="747.9" cy="105.7" r="2.6"/>
+      <circle class="pt down95" cx="748.1" cy="193.4" r="2.6"/>
+      <circle class="pt up95" cx="748.4" cy="132.1" r="2.6"/>
+      <circle class="pt up95" cx="748.6" cy="122.4" r="2.6"/>
+      <circle class="pt up998" cx="749.2" cy="117.0" r="2.6"/>
+      <circle class="pt up95" cx="749.4" cy="132.9" r="2.6"/>
+      <circle class="pt up998" cx="749.6" cy="111.0" r="2.6"/>
+      <circle class="pt down95" cx="749.8" cy="187.2" r="2.6"/>
+      <circle class="pt down95" cx="749.8" cy="184.7" r="2.6"/>
+      <circle class="pt up998" cx="749.8" cy="83.7" r="2.6"/>
+      <circle class="pt up95" cx="750.2" cy="128.4" r="2.6"/>
+      <circle class="pt down95" cx="750.4" cy="180.5" r="2.6"/>
+      <circle class="pt up998" cx="750.6" cy="119.9" r="2.6"/>
+      <circle class="pt up95" cx="750.8" cy="125.2" r="2.6"/>
+      <circle class="pt up95" cx="751.0" cy="130.9" r="2.6"/>
+      <circle class="pt up998" cx="751.1" cy="116.9" r="2.6"/>
+      <circle class="pt up998" cx="751.2" cy="81.6" r="2.6"/>
+      <circle class="pt up95" cx="751.4" cy="124.9" r="2.6"/>
+      <circle class="pt up998" cx="751.4" cy="75.2" r="2.6"/>
+      <circle class="pt down998" cx="752.0" cy="196.5" r="2.6"/>
+      <circle class="pt up998" cx="752.0" cy="113.2" r="2.6"/>
+      <circle class="pt up998" cx="752.5" cy="117.2" r="2.6"/>
+      <circle class="pt up998" cx="752.8" cy="113.6" r="2.6"/>
+      <circle class="pt down998" cx="753.0" cy="215.0" r="2.6"/>
+      <circle class="pt up998" cx="753.0" cy="110.1" r="2.6"/>
+      <circle class="pt down95" cx="753.4" cy="184.2" r="2.6"/>
+      <circle class="pt up998" cx="753.4" cy="104.8" r="2.6"/>
+      <circle class="pt up95" cx="753.5" cy="129.4" r="2.6"/>
+      <circle class="pt up95" cx="753.5" cy="129.4" r="2.6"/>
+      <circle class="pt up95" cx="753.6" cy="136.4" r="2.6"/>
+      <circle class="pt up998" cx="753.6" cy="112.4" r="2.6"/>
+      <circle class="pt up95" cx="753.9" cy="130.6" r="2.6"/>
+      <circle class="pt up95" cx="754.2" cy="135.9" r="2.6"/>
+      <circle class="pt up998" cx="754.8" cy="93.1" r="2.6"/>
+      <circle class="pt down95" cx="754.9" cy="181.6" r="2.6"/>
+      <circle class="pt down95" cx="754.9" cy="179.4" r="2.6"/>
+      <circle class="pt up998" cx="755.0" cy="110.9" r="2.6"/>
+      <circle class="pt up998" cx="755.0" cy="42.1" r="2.6"/>
+      <circle class="pt up95" cx="755.5" cy="133.1" r="2.6"/>
+      <circle class="pt down998" cx="755.6" cy="212.9" r="2.6"/>
+      <circle class="pt up95" cx="755.6" cy="127.2" r="2.6"/>
+      <circle class="pt down998" cx="755.8" cy="196.7" r="2.6"/>
+      <circle class="pt up998" cx="756.1" cy="124.7" r="2.6"/>
+      <circle class="pt down998" cx="756.4" cy="205.1" r="2.6"/>
+      <circle class="pt down998" cx="756.9" cy="215.0" r="2.6"/>
+      <circle class="pt up998" cx="757.1" cy="111.9" r="2.6"/>
+      <circle class="pt down95" cx="758.0" cy="180.9" r="2.6"/>
+      <circle class="pt down998" cx="758.2" cy="203.7" r="2.6"/>
+      <circle class="pt up95" cx="758.4" cy="128.8" r="2.6"/>
+      <circle class="pt up998" cx="758.5" cy="125.5" r="2.6"/>
+      <circle class="pt up998" cx="758.5" cy="99.4" r="2.6"/>
+      <circle class="pt down998" cx="758.9" cy="189.2" r="2.6"/>
+      <circle class="pt down95" cx="759.4" cy="180.4" r="2.6"/>
+      <circle class="pt down998" cx="759.5" cy="187.8" r="2.6"/>
+      <circle class="pt down95" cx="760.2" cy="184.8" r="2.6"/>
+      <circle class="pt up998" cx="761.0" cy="121.2" r="2.6"/>
+      <circle class="pt up95" cx="761.1" cy="137.2" r="2.6"/>
+      <circle class="pt up998" cx="761.5" cy="122.6" r="2.6"/>
+      <circle class="pt up95" cx="762.8" cy="138.8" r="2.6"/>
+      <circle class="pt up998" cx="763.0" cy="129.4" r="2.6"/>
+      <circle class="pt up95" cx="763.2" cy="130.1" r="2.6"/>
+      <circle class="pt down998" cx="763.5" cy="187.4" r="2.6"/>
+      <circle class="pt up95" cx="763.6" cy="137.4" r="2.6"/>
+      <circle class="pt up998" cx="763.8" cy="127.9" r="2.6"/>
+      <circle class="pt up998" cx="763.9" cy="115.3" r="2.6"/>
+      <circle class="pt up95" cx="765.1" cy="137.1" r="2.6"/>
+      <circle class="pt up95" cx="765.4" cy="136.1" r="2.6"/>
+      <circle class="pt up95" cx="765.5" cy="139.4" r="2.6"/>
+      <circle class="pt down998" cx="766.8" cy="191.1" r="2.6"/>
+      <circle class="pt down998" cx="767.4" cy="203.2" r="2.6"/>
+      <circle class="pt down998" cx="767.4" cy="189.9" r="2.6"/>
+      <circle class="pt down95" cx="767.5" cy="181.2" r="2.6"/>
+      <circle class="pt up95" cx="768.0" cy="133.6" r="2.6"/>
+      <circle class="pt up95" cx="768.2" cy="136.9" r="2.6"/>
+      <circle class="pt down998" cx="768.6" cy="213.6" r="2.6"/>
+      <circle class="pt up95" cx="768.8" cy="132.2" r="2.6"/>
+      <circle class="pt down95" cx="769.0" cy="178.1" r="2.6"/>
+      <circle class="pt up998" cx="769.0" cy="119.8" r="2.6"/>
+      <circle class="pt up95" cx="769.1" cy="132.8" r="2.6"/>
+      <circle class="pt down95" cx="769.6" cy="177.2" r="2.6"/>
+      <circle class="pt up95" cx="770.1" cy="134.7" r="2.6"/>
+      <circle class="pt up998" cx="770.6" cy="130.1" r="2.6"/>
+      <circle class="pt up95" cx="771.1" cy="139.1" r="2.6"/>
+      <circle class="pt down998" cx="771.5" cy="197.6" r="2.6"/>
+      <circle class="pt down95" cx="772.0" cy="177.8" r="2.6"/>
+      <circle class="pt down95" cx="772.2" cy="181.9" r="2.6"/>
+      <circle class="pt up95" cx="772.8" cy="133.8" r="2.6"/>
+      <circle class="pt down95" cx="772.9" cy="178.4" r="2.6"/>
+      <circle class="pt up998" cx="772.9" cy="15.2" r="2.6"/>
+      <circle class="pt up998" cx="773.2" cy="130.8" r="2.6"/>
+      <circle class="pt up998" cx="774.0" cy="96.4" r="2.6"/>
+      <circle class="pt up95" cx="774.2" cy="141.4" r="2.6"/>
+      <circle class="pt down998" cx="774.9" cy="182.4" r="2.6"/>
+      <circle class="pt down95" cx="775.2" cy="175.2" r="2.6"/>
+      <circle class="pt up998" cx="775.4" cy="120.7" r="2.6"/>
+      <circle class="pt down998" cx="775.5" cy="191.5" r="2.6"/>
+      <circle class="pt down998" cx="775.5" cy="185.3" r="2.6"/>
+      <circle class="pt up998" cx="776.2" cy="122.3" r="2.6"/>
+      <circle class="pt down998" cx="776.5" cy="182.2" r="2.6"/>
+      <circle class="pt down95" cx="776.6" cy="173.8" r="2.6"/>
+      <circle class="pt up998" cx="777.0" cy="133.2" r="2.6"/>
+      <circle class="pt up998" cx="777.4" cy="117.1" r="2.6"/>
+      <circle class="pt down95" cx="777.6" cy="175.8" r="2.6"/>
+      <circle class="pt down998" cx="778.4" cy="215.0" r="2.6"/>
+      <circle class="pt up998" cx="778.4" cy="127.2" r="2.6"/>
+      <circle class="pt up95" cx="780.4" cy="139.4" r="2.6"/>
+      <circle class="pt up95" cx="781.1" cy="137.1" r="2.6"/>
+      <circle class="pt down998" cx="782.1" cy="187.7" r="2.6"/>
+      <circle class="pt down95" cx="782.4" cy="177.9" r="2.6"/>
+      <circle class="pt down95" cx="782.4" cy="176.8" r="2.6"/>
+      <circle class="pt up998" cx="782.4" cy="118.0" r="2.6"/>
+      <circle class="pt up998" cx="783.1" cy="122.6" r="2.6"/>
+      <circle class="pt up95" cx="783.4" cy="141.1" r="2.6"/>
+      <circle class="pt up95" cx="784.4" cy="137.1" r="2.6"/>
+      <circle class="pt up95" cx="785.0" cy="140.0" r="2.6"/>
+      <circle class="pt down998" cx="785.1" cy="183.8" r="2.6"/>
+      <circle class="pt up998" cx="785.1" cy="125.6" r="2.6"/>
+      <circle class="pt down998" cx="785.2" cy="185.9" r="2.6"/>
+      <circle class="pt up998" cx="785.8" cy="122.4" r="2.6"/>
+      <circle class="pt up998" cx="787.9" cy="126.5" r="2.6"/>
+      <circle class="pt down95" cx="788.6" cy="178.7" r="2.6"/>
+      <circle class="pt down998" cx="788.8" cy="206.2" r="2.6"/>
+      <circle class="pt down95" cx="788.9" cy="178.8" r="2.6"/>
+      <circle class="pt down998" cx="789.0" cy="181.8" r="2.6"/>
+      <circle class="pt up998" cx="789.0" cy="110.5" r="2.6"/>
+      <circle class="pt down998" cx="789.2" cy="193.6" r="2.6"/>
+      <circle class="pt down95" cx="789.4" cy="172.3" r="2.6"/>
+      <circle class="pt up95" cx="791.0" cy="137.4" r="2.6"/>
+      <circle class="pt up95" cx="791.1" cy="142.2" r="2.6"/>
+      <circle class="pt up998" cx="791.9" cy="120.6" r="2.6"/>
+      <circle class="pt down95" cx="793.8" cy="175.9" r="2.6"/>
+      <circle class="pt up95" cx="793.8" cy="140.4" r="2.6"/>
+      <circle class="pt down998" cx="794.8" cy="189.0" r="2.6"/>
+      <circle class="pt down95" cx="796.6" cy="177.5" r="2.6"/>
+      <circle class="pt down95" cx="797.0" cy="172.4" r="2.6"/>
+      <circle class="pt down998" cx="797.8" cy="198.7" r="2.6"/>
+      <circle class="pt up998" cx="798.0" cy="127.7" r="2.6"/>
+      <circle class="pt down998" cx="799.8" cy="181.6" r="2.6"/>
+      <circle class="pt down95" cx="800.9" cy="173.8" r="2.6"/>
+      <circle class="pt down95" cx="804.0" cy="172.3" r="2.6"/>
+      <circle class="pt down95" cx="806.6" cy="172.9" r="2.6"/>
+      <circle class="pt down95" cx="807.1" cy="175.4" r="2.6"/>
+      <circle class="pt down998" cx="807.6" cy="177.2" r="2.6"/>
+      <circle class="pt down998" cx="808.5" cy="189.6" r="2.6"/>
+      <circle class="pt up95" cx="810.4" cy="144.7" r="2.6"/>
+      <circle class="pt down998" cx="812.6" cy="194.3" r="2.6"/>
+      <circle class="pt down998" cx="812.9" cy="184.4" r="2.6"/>
+      <circle class="pt up998" cx="815.4" cy="112.7" r="2.6"/>
+      <circle class="pt down998" cx="816.4" cy="191.8" r="2.6"/>
+      <circle class="pt down998" cx="819.1" cy="179.2" r="2.6"/>
+      <circle class="pt up95" cx="819.1" cy="145.9" r="2.6"/>
+      <circle class="pt up95" cx="821.1" cy="141.6" r="2.6"/>
+      <circle class="pt down998" cx="821.2" cy="198.8" r="2.6"/>
+      <circle class="pt down998" cx="821.6" cy="199.5" r="2.6"/>
+      <circle class="pt down998" cx="823.5" cy="178.2" r="2.6"/>
+      <circle class="pt down998" cx="827.1" cy="179.5" r="2.6"/>
+      <circle class="pt down998" cx="833.4" cy="212.7" r="2.6"/>
+      <circle class="pt down998" cx="845.9" cy="211.9" r="2.6"/>
+      <circle class="pt down998" cx="865.6" cy="179.9" r="2.6"/>
+      <circle class="pt down998" cx="870.9" cy="191.0" r="2.6"/>
+      <circle class="pt down998" cx="879.2" cy="178.2" r="2.6"/>
+      <circle class="pt down998" cx="896.1" cy="202.9" r="2.6"/>
+      <circle class="pt down998" cx="918.6" cy="192.4" r="2.6"/>
+      <circle class="pt down998" cx="938.8" cy="204.4" r="2.6"/>
+      <text class="lbl" x="719" y="219.0" text-anchor="end">0%</text>
+      <text class="lbl" x="719" y="119.0" text-anchor="end">20%</text>
+      <text class="lbl" x="719" y="19.0" text-anchor="end">40%</text>
+    </svg>
+    <ul class="toc" aria-label="Spis treści">
+      <li><a href="#idea"><b>01</b>Idea</a></li>
+      <li><a href="#znak"><b>02</b>Znak</a></li>
+      <li><a href="#kolory"><b>03</b>Kolory</a></li>
+      <li><a href="#typografia"><b>04</b>Typografia</a></li>
+      <li><a href="#wykresy"><b>05</b>Wykresy</a></li>
+      <li><a href="#obraz"><b>06</b>Ikony i obraz</a></li>
+      <li><a href="#glos"><b>07</b>Głos</a></li>
+      <li><a href="#audyt"><b>08</b>Do uporządkowania</a></li>
+    </ul>
+  </div>
+</header>
+
+<main>
+  <section class="block" id="idea">
+    <div class="wrap">
+      <div class="block-head">
+        <div class="block-num">01</div>
+        <div><span class="eyebrow">Idea marki</span><h2>Sterylna precyzja.</h2>
+          <p class="lead">Szpital kojarzy się z czystością, porządkiem i procedurą. Tak samo traktujemy dane: bez brudu interpretacji, z opisaną metodą i źródłem przy każdej liczbie.</p></div>
+      </div>
+      <div class="stack">
+        <dl class="kv">
+          <dt>Misja</dt><dd>Pokazać, jak działa publiczna ochrona zdrowia w Polsce, na podstawie danych NFZ, które każdy może sprawdzić.</dd>
+          <dt>Obietnica</dt><dd>Każda liczba ma źródło, zakres lat i metodę. Szacunki są oznaczone.</dd>
+          <dt>Dla kogo</dt><dd>Dziennikarze i analitycy, dyrekcje i kadra szpitali, lekarze, urzędnicy, obywatele ciekawi, jak wydawane są składki.</dd>
+          <dt>Hasło</dt><dd><strong>Publiczna ochrona zdrowia w liczbach.</strong> Kropka na końcu jest częścią hasła: to stwierdzenie, nie reklama.</dd>
+          <dt>Motyw graficzny</dt><dd>Kafel jako jednostka. Siatka kafli sali operacyjnej jest skalą wykresu: jeden kafel to stała wartość (np. 200 hospitalizacji × 5 pp na lejku śmiertelności). Tekst i wykres stoją na liniach tej samej siatki.</dd>
+        </dl>
+        <ul class="trait-list" aria-label="Cechy marki">
+          <li><strong>Rzeczowa</strong><span class="not">ale nie urzędowa. Mówimy prostym językiem, bez kancelaryjnych zwrotów.</span></li>
+          <li><strong>Spokojna</strong><span class="not">ale nie obojętna. Nie straszymy liczbami i nie szukamy winnych.</span></li>
+          <li><strong>Przejrzysta</strong><span class="not">ale nie przegadana. Metoda jest pod ręką, nie w każdym zdaniu.</span></li>
+          <li><strong>Publiczna</strong><span class="not">ale nie partyjna. Perspektywa systemu i pacjenta, nie jednej instytucji.</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="znak">
+    <div class="wrap">
+      <div class="block-head">
+        <div class="block-num">02</div>
+        <div><span class="eyebrow">Znak i logotyp</span><h2>Serce z zapisem EKG na zielonym kaflu.</h2>
+          <p class="lead">Symbol łączy dwie rzeczy: pacjenta (serce) i pomiar (linia EKG). Kafel w zieleni operacyjnej to ten sam kształt co ikona karty przeglądarki.</p></div>
+      </div>
+      <div class="stack">
+        <div class="mark-stage">
+          <div class="construct">
+            <svg viewBox="0 0 200 140" role="img" aria-label="Konstrukcja znaku: kafel 32 jednostki, promień 7, pole ochronne 8 jednostek">
+              <g class="grid">
+                <line x1="20" y1="10" x2="20" y2="130"/><line x1="44" y1="10" x2="44" y2="130"/><line x1="116" y1="10" x2="116" y2="130"/><line x1="140" y1="10" x2="140" y2="130"/>
+                <line x1="10" y1="22" x2="190" y2="22"/><line x1="10" y1="46" x2="190" y2="46"/><line x1="10" y1="118" x2="190" y2="118"/><line x1="10" y1="94" x2="190" y2="94"/>
+              </g>
+              <rect class="zone" x="20" y="22" width="120" height="96" rx="4"/>
+              <rect x="44" y="34" width="72" height="72" rx="15.75" fill="#087F75"/>
+              <svg x="51.65" y="41.65" width="56.7" height="56.7" style="color:#fff"><use href="#heart"/></svg>
+              <text class="lbl" x="146" y="74">pole ochronne</text>
+              <text class="lbl" x="146" y="84">= ¼ boku kafla</text>
+              <text class="lbl" x="44" y="134">bok kafla 32 j. · promień 7 j.</text>
+            </svg>
+          </div>
+          <div class="panel">
+            <h3>Zasady</h3>
+            <p>Bok kafla: 32 jednostki, promień narożnika: 7 (ok. 22%). Linia symbolu: 2 jednostki, łączenia zaokrąglone.</p>
+            <p>Pole ochronne: ¼ boku kafla z każdej strony. W tym polu nie stawiaj tekstu ani innych znaków.</p>
+            <p>Minimalny rozmiar: 16 px (favicon), w nagłówku 36–40 px. Logotyp obok symbolu: odstęp ¼ boku kafla.</p>
+            <p>Logotyp piszemy małymi literami: <strong>funduszdanych.pl</strong>. Inter Tight 400, odstęp liter −4,5%. Końcówka <em>.pl</em> może mieć 60% krycia.</p>
+          </div>
+        </div>
+        <div class="variants">
+          <div class="variant v-light"><span class="v-lock"><span class="m" style="background:#087F75;color:#fff"><svg><use href="#heart"/></svg></span><span>funduszdanych<span class="tld">.pl</span></span></span><span class="cap">Podstawowa · na bieli</span></div>
+          <div class="variant v-tile"><span class="v-lock"><span class="m" style="background:#087F75;color:#fff"><svg><use href="#heart"/></svg></span><span>funduszdanych<span class="tld">.pl</span></span></span><span class="cap">Na kaflu #F3F8F7</span></div>
+          <div class="variant v-teal"><span class="v-lock"><span class="m" style="background:#fff;color:#087F75"><svg><use href="#heart"/></svg></span><span>funduszdanych<span class="tld">.pl</span></span></span><span class="cap">Odwrócona · na zieleni</span></div>
+          <div class="variant v-navy"><span class="v-lock"><span class="m" style="background:#087F75;color:#fff"><svg><use href="#heart"/></svg></span><span>funduszdanych<span class="tld">.pl</span></span></span><span class="cap">Na ciemnym tle (granat nocnego dyżuru)</span></div>
+        </div>
+        <div>
+          <h3 style="margin-bottom:14px">Czego nie robimy ze znakiem</h3>
+          <div class="donts">
+            <div class="dont"><span class="m" style="background:linear-gradient(135deg,#7B3FA0,#2856A3);color:#fff"><svg><use href="#heart"/></svg></span><span class="x">Nie</span><p>Gradienty i inne kolory kafla.</p></div>
+            <div class="dont"><span class="m" style="background:#087F75;color:#fff;transform:rotate(-14deg)"><svg><use href="#heart"/></svg></span><span class="x">Nie</span><p>Obrót i pochylenie.</p></div>
+            <div class="dont"><span class="m" style="background:#087F75;color:#fff;box-shadow:0 10px 18px rgba(0,0,0,.35)"><svg><use href="#heart"/></svg></span><span class="x">Nie</span><p>Ciężki cień i efekty 3D.</p></div>
+            <div class="dont"><span class="m" style="background:#C65D2E;color:#fff"><svg><use href="#heart"/></svg></span><span class="x">Nie</span><p>Czerwone lub pomarańczowe serce. Ten kolor znaczy „wyróżnione” na wykresie.</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="kolory">
+    <div class="wrap">
+      <div class="block-head">
+        <div class="block-num">03</div>
+        <div><span class="eyebrow">Kolory</span><h2>Sala operacyjna i dyżurka.</h2>
+          <p class="lead">Rdzeń palety to biel, kafel i zieleń operacyjna: kolory sterylności. Rozszerzenie bierzemy z uniformów personelu. Każdy kolor ma jedną funkcję.</p></div>
+      </div>
+      <div class="stack">
+        <h3>Rdzeń: sterylność</h3>
+        <div class="swatches">
+          <div class="swatch"><div class="chip" style="background:#087F75"><span style="color:#fff">#087F75</span></div><div class="meta"><span class="name">Zieleń operacyjna</span><span class="role">Interfejs: znak, linki, aktywna zakładka, przyciski, fokus.</span><span class="src">Obłożenia i fartuchy chirurgiczne</span></div></div>
+          <div class="swatch"><div class="chip" style="background:#FFFFFF;border-bottom:1px solid #D9E6E3"><span style="color:#253B3A">#FFFFFF</span></div><div class="meta"><span class="name">Biel fartucha</span><span class="role">Tło treści, karty, wykresy.</span><span class="src">Fartuch lekarski</span></div></div>
+          <div class="swatch"><div class="chip" style="background:#F3F8F7;border-bottom:1px solid #D9E6E3"><span style="color:#253B3A">#F3F8F7</span></div><div class="meta"><span class="name">Kafel</span><span class="role">Tła sekcji, panel boczny, stopka, hero.</span><span class="src">Glazura sali operacyjnej</span></div></div>
+          <div class="swatch"><div class="chip" style="background:#253B3A"><span style="color:#fff">#253B3A</span></div><div class="meta"><span class="name">Grafit</span><span class="role">Tekst. Szarości pochodne: #536C68, #6C827E.</span><span class="src">Stal i blat instrumentariuszki</span></div></div>
+        </div>
+
+        <h3>Rozszerzenie: uniformy</h3>
+        <div class="uniforms" aria-label="Źródła kolorów rozszerzenia">
+          <div class="uniform"><svg viewBox="0 0 52 58" aria-hidden="true"><path d="M14 4 L22 4 L26 12 L30 4 L38 4 L50 14 L44 24 L40 20 L40 56 L12 56 L12 20 L8 24 L2 14 Z" fill="#1B3D78"/><path d="M22 4 L26 12 L30 4" fill="none" stroke="#fff" stroke-width="1.5"/></svg><div><strong>Granat pielęgniarski</strong><span>#1B3D78 · liczby kluczowe, nagłówki danych</span></div></div>
+          <div class="uniform"><svg viewBox="0 0 52 58" aria-hidden="true"><path d="M14 4 L22 4 L26 12 L30 4 L38 4 L50 14 L44 24 L40 20 L40 56 L12 56 L12 20 L8 24 L2 14 Z" fill="#2856A3"/><path d="M22 4 L26 12 L30 4" fill="none" stroke="#fff" stroke-width="1.5"/></svg><div><strong>Błękit danych</strong><span>#2856A3 · główna seria wykresów</span></div></div>
+          <div class="uniform"><svg viewBox="0 0 52 58" aria-hidden="true"><path d="M14 4 L22 4 L26 12 L30 4 L38 4 L50 14 L44 24 L40 20 L40 56 L12 56 L12 20 L8 24 L2 14 Z" fill="#9DB4DB"/><path d="M22 4 L26 12 L30 4" fill="none" stroke="#fff" stroke-width="1.5"/></svg><div><strong>Błękit fartucha</strong><span>#9DB4DB · druga seria, wartości tła</span></div></div>
+          <div class="uniform"><svg viewBox="0 0 52 58" aria-hidden="true"><path d="M14 4 L22 4 L26 12 L30 4 L38 4 L50 14 L44 24 L40 20 L40 56 L12 56 L12 20 L8 24 L2 14 Z" fill="#C65D2E"/><rect x="12" y="38" width="28" height="4" fill="#E9F2A0"/><path d="M22 4 L26 12 L30 4" fill="none" stroke="#fff" stroke-width="1.5"/></svg><div><strong>Sygnał ratowniczy</strong><span>#C65D2E · wyróżnienie: „ten ośrodek”, „Ty tu jesteś”</span></div></div>
+        </div>
+        <p class="small muted">Granat nawiązuje do strojów pielęgniarek, błękit do fartuchów jednorazowych, sygnał do kombinezonów ratowników medycznych z pasami odblaskowymi. Sygnał jest ciepły, ale nie jest czerwienią alarmu: czerwień #B42318 zostaje tylko dla błędów.</p>
+
+        <h3>Proporcje na ekranie</h3>
+        <div class="ratio" role="img" aria-label="Proporcje kolorów: biel i kafel 72%, grafit 14%, zieleń 7%, błękity 5%, sygnał 2%">
+          <div style="flex:72;background:#F3F8F7;color:#536C68">biel + kafel 72%</div>
+          <div style="flex:14;background:#253B3A;color:#fff">grafit 14%</div>
+          <div style="flex:7;background:#087F75;color:#fff">zieleń 7%</div>
+          <div style="flex:5;background:#2856A3;color:#fff">5%</div>
+          <div style="flex:2;background:#C65D2E"></div>
+        </div>
+        <div class="grid-2">
+          <div class="panel"><h3>Zieleń = działanie</h3><p>Zieleń operacyjna mówi „tu możesz kliknąć” albo „tu jesteś w nawigacji”. Nie używaj jej jako koloru serii danych.</p></div>
+          <div class="panel"><h3>Błękit = dane</h3><p>Liczby i serie danych rysujemy w błękitach i granacie. Dzięki temu wykres nie myli się z przyciskiem.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="typografia">
+    <div class="wrap">
+      <div class="block-head">
+        <div class="block-num">04</div>
+        <div><span class="eyebrow">Typografia</span><h2>Lekkie tytuły, gęste liczby.</h2>
+          <p class="lead">Dwa kroje z jednej rodziny. Inter Tight w grubości 400 dla tytułów i marki: lekki, ciasny, spokojny. Inter dla tekstu, tabel i wykresów.</p></div>
+      </div>
+      <div class="type-specimen">
+        <div class="type-row"><div class="spec">Hero<br>Inter Tight 400<br>34–56 px · −4%</div><div class="t-hero">Publiczna ochrona zdrowia w liczbach.</div></div>
+        <div class="type-row"><div class="spec">Sekcja<br>Inter Tight 400<br>26–32 px · −3,5%</div><div class="t-section">Liczby, które warto znać.</div></div>
+        <div class="type-row"><div class="spec">Etykieta<br>Inter 700 · 12 px<br>wersaliki · +12%</div><div class="t-kicker">Hospitalizacje · 2017–2025</div></div>
+        <div class="type-row"><div class="spec">Liczba<br>Inter 700 · 28 px<br>cyfry tabelaryczne</div><div class="t-number">49,6 mln</div></div>
+        <div class="type-row"><div class="spec">Tekst<br>Inter 400 · 16 px<br>interlinia 1,6–1,7</div><div class="t-body">Wybrane wskaźniki z danych NFZ. Każdy wykres prowadzi do pełnego widoku z filtrami.</div></div>
+        <div class="type-row"><div class="spec">Przypis<br>Inter 400 · 12 px</div><div class="t-meta">Źródło: NFZ, statystyki JGP 2017–2025. Wartości &lt;5 szacowane (metoda min).</div></div>
+      </div>
+      <div class="grid-3" style="margin-top:24px">
+        <div class="panel"><h3>Tytuł z kropką</h3><p>Tytuły-stwierdzenia kończymy kropką: „Trzy ścieżki przez dane.” Tytuły-pytania kończymy znakiem zapytania.</p></div>
+        <div class="panel"><h3>Liczby po polsku</h3><p>Przecinek dziesiętny, spacja tysięcy, „mln” i „mld zł”, minus typograficzny (−), półpauza w zakresie lat (2017–2025).</p></div>
+        <div class="panel"><h3>Jedna skala</h3><p>Rozmiary tylko z tokenów <code>--fs-*</code>. Nowy rozmiar = nowy token, nie wartość w pliku komponentu.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="wykresy">
+    <div class="wrap">
+      <div class="block-head">
+        <div class="block-num">05</div>
+        <div><span class="eyebrow">Wykresy</span><h2>Siatka tam, gdzie oś jest miarą.</h2>
+          <p class="lead">Wykresy w eksploratorze, na kartach JGP i w profilu szpitala rysuje Plotly, na stronie głównej własne SVG. Dziś każdy plik ustawia kolory, siatkę i dymki osobno. Ta sekcja opisuje zasady docelowe. Przykłady pokazują zasady, wartości nie są danymi.</p></div>
+      </div>
+      <div class="stack">
+        <div class="grid-2">
+          <div class="chart-demo">
+            <span class="eyebrow">Słupki w latach · tylko linie poziome</span>
+            <svg viewBox="0 0 420 210" role="img" aria-label="Przykład: słupki w latach z liniami poziomymi i bez linii pionowych; ostatni rok wyróżniony">
+              <line class="gl" x1="36" y1="20" x2="410" y2="20"/><line class="gl" x1="36" y1="70" x2="410" y2="70"/><line class="gl" x1="36" y1="120" x2="410" y2="120"/>
+              <text class="ax" x="30" y="24" text-anchor="end">6</text><text class="ax" x="30" y="74" text-anchor="end">4</text><text class="ax" x="30" y="124" text-anchor="end">2</text><text class="ax" x="30" y="174" text-anchor="end">0</text>
+              <g fill="#2856A3">
+                <rect x="46" y="20" width="28" height="150" rx="2"/><rect x="87" y="22" width="28" height="148" rx="2"/><rect x="128" y="23" width="28" height="147" rx="2"/><rect x="169" y="62" width="28" height="108" rx="2"/>
+                <rect x="210" y="52" width="28" height="118" rx="2"/><rect x="251" y="38" width="28" height="132" rx="2"/><rect x="292" y="29" width="28" height="141" rx="2"/><rect x="333" y="23" width="28" height="147" rx="2"/>
+              </g>
+              <rect x="374" y="21" width="28" height="149" rx="2" fill="#C65D2E"/>
+              <line x1="36" y1="170" x2="410" y2="170" stroke="#B9CEC9" stroke-width="1.5"/>
+              <text class="ax" x="60" y="188" text-anchor="middle">2017</text><text class="ax" x="183" y="188" text-anchor="middle">2020</text><text class="ax" x="388" y="188" text-anchor="middle">2025</text>
+            </svg>
+            <div class="src">Oś lat to kategorie: linie pionowe nic nie mierzą, więc ich nie rysujemy. Podstawa (zero) mocniejsza.</div>
+          </div>
+          <div class="chart-demo">
+            <span class="eyebrow">Wykres punktowy · linie w obu kierunkach</span>
+            <svg viewBox="0 0 420 210" role="img" aria-label="Przykład: wykres punktowy z siatką poziomą i pionową, kropkowaną linią średniej kraju i jednym wyróżnionym ośrodkiem">
+              <g class="gl"><line x1="44" y1="20" x2="410" y2="20"/><line x1="44" y1="70" x2="410" y2="70"/><line x1="44" y1="120" x2="410" y2="120"/>
+                <line x1="136" y1="20" x2="136" y2="170"/><line x1="228" y1="20" x2="228" y2="170"/><line x1="320" y1="20" x2="320" y2="170"/><line x1="410" y1="20" x2="410" y2="170"/></g>
+              <line x1="44" y1="170" x2="410" y2="170" stroke="#B9CEC9" stroke-width="1.5"/><line x1="44" y1="20" x2="44" y2="170" stroke="#B9CEC9" stroke-width="1.5"/>
+              <path d="M52 40 C 120 80, 220 98, 410 104" fill="none" stroke="#6C827E" stroke-width="1.2" stroke-dasharray="6 4"/>
+              <path d="M52 160 C 120 130, 220 118, 410 114" fill="none" stroke="#6C827E" stroke-width="1.2" stroke-dasharray="6 4"/>
+              <line x1="44" y1="109" x2="410" y2="109" stroke="#536C68" stroke-width="1" stroke-dasharray="1.5 3"/>
+              <g fill="#2856A3" fill-opacity=".7">
+                <circle cx="60" cy="140" r="4"/><circle cx="72" cy="88" r="4"/><circle cx="85" cy="122" r="4"/><circle cx="98" cy="102" r="4"/><circle cx="110" cy="130" r="4"/>
+                <circle cx="128" cy="96" r="4"/><circle cx="150" cy="115" r="4"/><circle cx="168" cy="104" r="4"/><circle cx="190" cy="120" r="4"/><circle cx="214" cy="108" r="4"/>
+                <circle cx="246" cy="112" r="4"/><circle cx="270" cy="101" r="4"/><circle cx="300" cy="110" r="4"/><circle cx="342" cy="106" r="4"/><circle cx="376" cy="111" r="4"/>
+              </g>
+              <g fill="#7B3FA0"><circle cx="118" cy="110" r="4.5"/><circle cx="232" cy="99" r="4.5"/></g>
+              <circle cx="286" cy="88" r="6.5" fill="#C65D2E" stroke="#fff" stroke-width="2"/>
+              <text class="ax" x="38" y="113" text-anchor="end">śr.</text>
+              <text class="ax" x="227" y="200" text-anchor="middle">liczba hospitalizacji</text>
+            </svg>
+            <div class="src">Obie osie to miary (np. „Kto leczy”: hospitalizacje × śmiertelność), więc siatka idzie w obu kierunkach, tym samym kolorem.</div>
+          </div>
+        </div>
+
+        <div class="scroll-x">
+          <table class="audit">
+            <thead><tr><th>Typ wykresu</th><th>Gdzie w portalu</th><th>Linie poziome</th><th>Linie pionowe</th></tr></thead>
+            <tbody>
+              <tr><td>Słupki w latach</td><td>Strona główna, karta JGP „Ile?” (Lata)</td><td>Tak</td><td>Nie: oś lat to kategorie</td></tr>
+              <tr><td>Linia w miesiącach</td><td>„W czasie”, karta JGP „Ile?” (Miesiące)</td><td>Tak</td><td>Tylko granica roku (co 12 miesięcy)</td></tr>
+              <tr><td>Punktowy</td><td>Eksplorator: „Kto leczy”, „Tryb przyjęcia”; ośrodki na karcie JGP</td><td>Tak</td><td>Tak: obie osie to miary</td></tr>
+              <tr><td>Udziały (paski 100%)</td><td>Tryb przyjęcia w podsumowaniu</td><td>Nie</td><td>Opcjonalnie co 25%</td></tr>
+              <tr><td>Mapa, mapa drzewa</td><td>„Gdzie”, profil szpitala</td><td colspan="2">Bez siatki</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="grid-2" style="align-items:start">
+          <div class="panel">
+            <h3>Cztery rodzaje linii</h3>
+            <svg viewBox="0 0 300 92" style="width:100%;max-width:340px;height:auto" role="img" aria-label="Rodzaje linii: siatka, podstawa, odniesienie, granica">
+              <line x1="0" y1="10" x2="70" y2="10" style="stroke:var(--line)" stroke-width="2"/><text x="82" y="14" class="ax" style="fill:var(--fg-2);font:500 12px var(--font-body)">Siatka · ciągła 1 px, jasna</text>
+              <line x1="0" y1="34" x2="70" y2="34" stroke="#B9CEC9" stroke-width="2"/><text x="82" y="38" style="fill:var(--fg-2);font:500 12px var(--font-body)">Podstawa / zero · ciągła 1,5 px</text>
+              <line x1="0" y1="58" x2="70" y2="58" stroke="#536C68" stroke-width="1.5" stroke-dasharray="1.5 3"/><text x="82" y="62" style="fill:var(--fg-2);font:500 12px var(--font-body)">Odniesienie · kropki (średnia kraju)</text>
+              <line x1="0" y1="82" x2="70" y2="82" stroke="#6C827E" stroke-width="1.5" stroke-dasharray="6 4"/><text x="82" y="86" style="fill:var(--fg-2);font:500 12px var(--font-body)">Granica · kreski (lejek, przedział)</text>
+            </svg>
+            <p>Linia pionowa pojawia się tylko jako siatka osi-miary albo jako znacznik (granica roku, data zmiany wyceny). Nie jest ozdobą.</p>
+          </div>
+          <div class="stack" style="gap:16px">
+            <div class="panel"><h3>Seria główna i tło</h3><div class="series"><span style="background:#1B3D78"></span><span style="background:#2856A3"></span><span style="background:#9DB4DB"></span><span style="background:#E4EAF4"></span></div><p>Skala sekwencyjna: granat → błękit → błękit fartucha → mgła. Np. przyjęcia nagłe, planowe, pozostałe.</p></div>
+            <div class="panel"><h3>Obszary i wyróżnienie</h3><div class="series"><span style="background:#7B3FA0"></span><span style="background:#1A9850"></span><span style="background:#D6338A"></span><span style="background:#B88A00"></span><span style="background:#0097A7"></span><span style="background:#9A5B13"></span><span style="background:#C65D2E;outline:2px solid var(--fg);outline-offset:2px"></span></div><p>Do 6 obszarów (<code>REGION_PICK_COLORS</code>) i jedno wyróżnienie: wybrany ośrodek albo ostatni rok. Kolor sygnału tylko na wykresie bez skali odchylenia (niżej).</p></div>
+            <div class="panel"><h3>Podpisy</h3><p>Tytuły osi 12–13 px, kolor tekstu drugiego planu. Pod wykresem źródło i jednostka. Dymki i formaty liczb: niżej.</p></div>
+          </div>
+        </div>
+
+        <h3 id="status">Status i wyróżnienie na jednym wykresie</h3>
+        <div class="grid-2" style="align-items:start">
+          <div class="chart-demo">
+            <span class="eyebrow">Lejek z wybranym ośrodkiem</span>
+            <svg viewBox="0 0 420 200" role="img" aria-label="Przykład: lejek ze skalą odchylenia (ciepłe w górę, błękitne w dół) i wybranym ośrodkiem jako grafitowy punkt z obwódką i podpisem">
+              <line class="gl" x1="40" y1="30" x2="410" y2="30"/><line class="gl" x1="40" y1="90" x2="410" y2="90"/><line class="gl" x1="40" y1="150" x2="410" y2="150"/>
+              <line x1="40" y1="180" x2="410" y2="180" stroke="#B9CEC9" stroke-width="1.5"/>
+              <path d="M48 20 C 110 70, 220 92, 410 98" fill="none" stroke="#6C827E" stroke-width="1.2" stroke-dasharray="6 4"/>
+              <path d="M48 170 C 110 130, 220 112, 410 106" fill="none" stroke="#6C827E" stroke-width="1.2" stroke-dasharray="6 4"/>
+              <line x1="40" y1="102" x2="410" y2="102" stroke="#536C68" stroke-dasharray="1.5 3"/>
+              <g fill="#9DB4DB"><circle cx="70" cy="110" r="4"/><circle cx="95" cy="92" r="4"/><circle cx="130" cy="104" r="4"/><circle cx="170" cy="98" r="4"/><circle cx="210" cy="106" r="4"/><circle cx="260" cy="100" r="4"/><circle cx="330" cy="103" r="4"/></g>
+              <g fill="#E3A27F"><circle cx="150" cy="72" r="4"/><circle cx="240" cy="86" r="4"/></g>
+              <g fill="#B4441B"><circle cx="90" cy="40" r="4"/><circle cx="300" cy="78" r="4"/></g>
+              <g fill="#8FB0DD"><circle cx="120" cy="140" r="4"/><circle cx="220" cy="118" r="4"/></g>
+              <g fill="#2856A3"><circle cx="160" cy="160" r="4"/><circle cx="360" cy="124" r="4"/></g>
+              <circle cx="196" cy="62" r="7" style="fill:var(--fg);stroke:var(--card)" stroke-width="2.5"/>
+              <text x="208" y="52" style="font:700 12px var(--font-body);fill:var(--fg)">Ten szpital</text>
+            </svg>
+            <div class="src">Kolory punktów = skala odchylenia. Wybrany ośrodek = grafit z białą obwódką i podpisem, nie pomarańcz.</div>
+          </div>
+          <div class="panel">
+            <h3>Sygnał albo skala odchylenia, nie oba</h3>
+            <p><b>Skala odchylenia</b> (lejek, różnica wobec podobnych): w górę ciepło (<span style="color:#E3A27F;font-weight:700">●</span> poza 95%, <span style="color:#B4441B;font-weight:700">●</span> poza 99,8%), w dół błękit (<span style="color:#8FB0DD;font-weight:700">●</span>, <span style="color:#2856A3;font-weight:700">●</span>), w granicach błękit fartucha. Zawsze z legendą albo podpisem w dymku.</p>
+            <p><b>Wyróżnienie</b> („ten szpital”): na wykresie bez skali odchylenia kolor sygnału. Na wykresie ze skalą odchylenia grafitowy punkt z białą obwódką, większy o połowę, z podpisem. Kolor sygnału zniknąłby wśród ciepłych punktów.</p>
+            <p><b>Bez legendy</b> (baner, miniatura) skala odchylenia nic nie mówi. Wtedy trzy stopnie jednego błękitu z wyraźnym odstępem jasności: w granicach <code>#C3D2EB</code>, poza 95% <code>#6A8FCB</code>, poza 99,8% <code>#1B3D78</code>; w obie strony tak samo.</p>
+          </div>
+        </div>
+
+        <h3 id="dymki">Dymek (tooltip)</h3>
+        <div class="grid-2" style="align-items:start">
+          <div class="tip-stage" aria-label="Wzór dymka">
+            <div class="tip">
+              <strong>Szpital Wojewódzki im. Przykładowego</strong>
+              <span class="tip-ctx">Przykładowo · mazowieckie · E53G</span>
+              <dl>
+                <dt>Śmiertelność</dt><dd>17,8%</dd>
+                <dt>Hospitalizacje</dt><dd>1 245</dd>
+                <dt>Zgony</dt><dd>222</dd>
+              </dl>
+              <span class="tip-status"><i></i>powyżej granicy 99,8%</span>
+            </div>
+            <span class="tip-note">Wzór: nazwa, kontekst, 2–4 wartości, status. Dane przykładowe.</span>
+          </div>
+          <div class="panel">
+            <h3>Jeden wzór w Plotly i w HTML</h3>
+            <p><b>Wygląd:</b> biel, ramka <code>--color-border-strong</code>, promień 9 px, tekst grafit 13 px, szerokość do 300 px. W Plotly: <code>hoverlabel</code> z tłem <code>#FFFFFF</code>, ramką <code>#B9CEC9</code>, kolorem tekstu <code>#253B3A</code>.</p>
+            <p><b>Kolejność:</b> 1. nazwa (pogrubiona). 2. Kontekst szarym: miejscowość, województwo, kod. 3. Wartości: najpierw oś Y, potem oś X, potem reszta; etykieta po lewej, wartość pogrubiona. 4. Status opcjonalnie: kolor + słowo.</p>
+            <p><b>Formaty:</b> takie jak na osiach. Bez nazwy serii w ramce obok (<code>&lt;extra&gt;&lt;/extra&gt;</code>). Identyfikatory techniczne (NIP, kod świadczenia) na końcu albo w tabeli, nie na początku.</p>
+          </div>
+        </div>
+
+        <h3 id="dymki-rozszerzone">Dymek rozszerzony: porównanie i profil szpitala</h3>
+        <div class="grid-2" style="align-items:start">
+          <div class="tip-stage" aria-label="Wzór dymka rozszerzonego">
+            <div class="tip tip-rich">
+              <strong>Szpital Wojewódzki im. Przykładowego</strong>
+              <span class="tip-ctx">Przykładowo · mazowieckie · E53G · 2025</span>
+              <div class="tip-key"><span>Śmiertelność</span><b>17,8%</b><em>+5,7 pp wobec podobnych</em></div>
+              <table class="tip-cmp">
+                <thead><tr><th></th><th>Ten szpital</th><th>Podobne (12)</th></tr></thead>
+                <tbody>
+                  <tr><td>Hospitalizacje</td><td>1 245</td><td>11 760</td></tr>
+                  <tr><td>Zgony</td><td>222</td><td>1 423</td></tr>
+                  <tr><td>Śmiertelność</td><td>17,8%</td><td>12,1%</td></tr>
+                </tbody>
+              </table>
+              <span class="tip-sec">Ocena</span>
+              <dl>
+                <dt>Zgony oczekiwane</dt><dd>151</dd>
+                <dt>Różnica</dt><dd class="tip-up">+71</dd>
+              </dl>
+              <span class="tip-foot">Podobne szpitale dobrane modelem par A/B. Kliknij punkt, żeby przypiąć dymek i otworzyć profil.</span>
+            </div>
+            <span class="tip-note">Dane przykładowe. Zgony oczekiwane = 1 245 × 12,1%.</span>
+          </div>
+          <div class="panel">
+            <h3>Kiedy rozszerzony</h3>
+            <p>Gdy dymek porównuje dwa obiekty (szpital i podobne) albo rozkłada wartość na części. Prosty dymek wystarcza do 4 wartości jednego obiektu.</p>
+            <p><b>Budowa:</b> 1. nazwa i kontekst. 2. Jedna wartość kluczowa: duża liczba w granacie i różnica słowami. 3. Tabela porównania: wiersze = miary, kolumny = obiekty, liczby do prawej. 4. Najwyżej 2 sekcje z tytułem wersalikami. 5. Przypis metody.</p>
+            <p><b>Granice:</b> szerokość 280–340 px, do 10 wierszy razem, tekst min. 12 px. Więcej treści = panel boczny albo profil, nie dymek.</p>
+            <p><b>Zachowanie:</b> najechanie pokazuje, kliknięcie przypina (dopiero wtedy linki są klikalne), Esc i klik obok zamykają. Na telefonie dotknięcie otwiera arkusz od dołu. Jedna funkcja pozycji: dymek po stronie z większym miejscem, nigdy poza oknem.</p>
+            <p><b>Kolory:</b> wartości grafitem, wartość kluczowa granatem, różnica w kolorze lejka (w górę: <span style="color:#B4441B;font-weight:700">+</span>, w dół: <span style="color:#2856A3;font-weight:700">−</span>) ze znakiem. Zieleń tylko dla linku.</p>
+          </div>
+        </div>
+
+        <h3 id="dymki-pozycja">Dymek nie zasłania obiektu</h3>
+        <div class="grid-2" style="align-items:start">
+          <div class="chart-demo">
+            <span class="eyebrow">Punkt i słupek</span>
+            <svg viewBox="0 0 420 190" role="img" aria-label="Przykład: dymek obok punktu z odstępem i strzałką; dymek nad słupkiem; obszar zakazany wokół obiektu zaznaczony przerywanym okręgiem">
+              <line x1="20" y1="170" x2="200" y2="170" stroke="#B9CEC9" stroke-width="1.5"/>
+              <g fill="#9DB4DB"><circle cx="40" cy="120" r="4"/><circle cx="62" cy="96" r="4"/><circle cx="80" cy="140" r="4"/><circle cx="120" cy="130" r="4"/></g>
+              <circle cx="92" cy="88" r="20" fill="none" stroke="#6C827E" stroke-dasharray="2 3"/>
+              <circle cx="92" cy="88" r="7" style="fill:var(--fg);stroke:var(--card)" stroke-width="2.5"/>
+              <path d="M116 88 l8 -6 v12 z" fill="#FFFFFF" stroke="#B9CEC9"/>
+              <rect x="124" y="58" width="76" height="60" rx="7" fill="#FFFFFF" stroke="#B9CEC9"/>
+              <rect x="124.6" y="82.5" width="2" height="11" fill="#FFFFFF"/>
+              <rect x="134" y="70" width="44" height="6" rx="2" fill="#253B3A"/><rect x="134" y="84" width="56" height="5" rx="2" fill="#B9CEC9"/><rect x="134" y="96" width="40" height="5" rx="2" fill="#B9CEC9"/>
+              <line x1="230" y1="170" x2="410" y2="170" stroke="#B9CEC9" stroke-width="1.5"/>
+              <g fill="#2856A3"><rect x="240" y="120" width="26" height="50" rx="2"/><rect x="274" y="100" width="26" height="70" rx="2"/><rect x="342" y="112" width="26" height="58" rx="2"/><rect x="376" y="130" width="26" height="40" rx="2"/></g>
+              <rect x="308" y="90" width="26" height="80" rx="2" fill="#1B3D78"/>
+              <rect x="283" y="24" width="76" height="50" rx="7" fill="#FFFFFF" stroke="#B9CEC9"/>
+              <path d="M315 74 l6 8 l6 -8 z" fill="#FFFFFF" stroke="#B9CEC9"/><rect x="315.5" y="72" width="11" height="3" fill="#FFFFFF"/>
+              <rect x="293" y="36" width="44" height="6" rx="2" fill="#253B3A"/><rect x="293" y="50" width="56" height="5" rx="2" fill="#B9CEC9"/>
+            </svg>
+            <div class="src">Okrąg przerywany = strefa ochronna punktu. Dymek słupka stoi nad jego końcem.</div>
+          </div>
+          <div class="panel">
+            <h3>Reguła pozycji</h3>
+            <p>1. Dymek nigdy nie zasłania obiektu, który opisuje: punktu, słupka, kafla mapy drzewa, województwa. Ani obiektu wybranego wcześniej („ten szpital”).</p>
+            <p>2. Strefa ochronna: promień znacznika + 12 px. Dymek zaczyna się za nią, ze strzałką do obiektu.</p>
+            <p>3. Kolejność stron: punkt i linia — prawo, lewo, nad, pod; słupek pionowy — nad końcem, potem obok; słupek poziomy — za końcem; kafel i obszar mapy — poza jego krawędzią.</p>
+            <p>4. Strona z większym miejscem wygrywa. Dymek nie wychodzi poza okno; gdy nie mieści się nigdzie, idzie do panelu pod wykresem.</p>
+            <p>5. Plotly: bez <code>hovermode: "x unified"</code> nad danymi; rozszerzone dymki liczy jedna funkcja pozycji z prostokątem obiektu, nie tylko z kursora.</p>
+            <p>6. Telefon: arkusz od dołu, a wykres przewija się tak, że obiekt jest nad arkuszem.</p>
+          </div>
+        </div>
+
+        <h3 id="osie">Osie, liczby i zero</h3>
+        <div class="scroll-x">
+          <table class="audit">
+            <thead><tr><th>Wartość</th><th>Na osi</th><th>W dymku</th><th>Ustawienie Plotly</th></tr></thead>
+            <tbody>
+              <tr><td>Liczba całkowita</td><td>1 800 · 10 000</td><td>1 245</td><td><code>separators: ", "</code> w każdym wykresie, <code>tickformat: ",.0f"</code></td></tr>
+              <tr><td>Duża liczba (≥ 100 000)</td><td>150 · 300 (tytuł osi „tys.”)</td><td>142 tys.</td><td>Przelicz wartości, jednostka w tytule osi; bez „150k”</td></tr>
+              <tr><td>Udział, śmiertelność</td><td>0% · 10% · 20%</td><td>11,5% (2 miejsca, gdy &lt; 1%)</td><td><code>percentAxis</code>: krok 1/2/5 × 10ᵏ, miejsca z kroku</td></tr>
+              <tr><td>Różnica udziałów</td><td>−2 pp · +2 pp</td><td>+1,4 pp</td><td>Minus typograficzny, znak „+” przy dodatnich</td></tr>
+              <tr><td>Kwota</td><td>0 · 2 · 4 mln zł</td><td>1,49 mld zł</td><td>Jednostka w tytule osi lub sufiksie</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="grid-2" style="align-items:start">
+          <div class="chart-demo">
+            <span class="eyebrow">Zero jest daną, nie krawędzią</span>
+            <svg viewBox="0 0 420 170" role="img" aria-label="Przykład: oś zaczyna się 6% poniżej zera; punkty z wartością zero leżą nad linią podstawy i nie są ucięte">
+              <rect x="44" y="12" width="366" height="130" fill="none" stroke="currentColor" style="color:var(--line)" stroke-dasharray="2 3"/>
+              <line class="gl" x1="44" y1="30" x2="410" y2="30"/><line class="gl" x1="44" y1="80" x2="410" y2="80"/>
+              <line x1="44" y1="130" x2="410" y2="130" stroke="#B9CEC9" stroke-width="1.5"/>
+              <text class="ax" x="38" y="34" text-anchor="end">20%</text><text class="ax" x="38" y="84" text-anchor="end">10%</text><text class="ax" x="38" y="134" text-anchor="end">0%</text>
+              <g fill="#2856A3" fill-opacity=".8" stroke="#fff" stroke-width="1.2">
+                <circle cx="70" cy="130" r="5"/><circle cx="96" cy="130" r="5"/><circle cx="150" cy="130" r="5"/><circle cx="120" cy="96" r="5"/><circle cx="190" cy="74" r="5"/><circle cx="240" cy="88" r="5"/><circle cx="300" cy="70" r="5"/><circle cx="360" cy="84" r="5"/><circle cx="404" cy="30" r="5"/>
+              </g>
+              <text class="ax" x="226" y="160" text-anchor="middle">margines 6% pod zerem i 10% nad maksimum · punkty nad liniami</text>
+            </svg>
+          </div>
+          <div class="panel">
+            <h3>Zasady krawędzi</h3>
+            <p>1. Oś wartości zaczyna się 6% rozpiętości poniżej zera, kończy 10% nad maksimum (<code>countAxis</code>, <code>percentAxis</code>).</p>
+            <p>2. Siatka i podstawa leżą pod danymi. Bez <code>zeroline</code> grubości 3 px w kolorze tła jako maski.</p>
+            <p>3. <code>cliponaxis: false</code> dla punktów i etykiet: znacznik przy krawędzi nie jest ucinany.</p>
+            <p>4. Zero to wartość: punkt na zerze jest widoczny. Brak danych to przerwa w linii (<code>null</code>), nie zero.</p>
+            <p>5. Słupek o wartości 0 dostaje kreskę 2 px na podstawie, żeby różnił się od braku danych.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="obraz">
+    <div class="wrap">
+      <div class="block-head">
+        <div class="block-num">06</div>
+        <div><span class="eyebrow">Ikony i obraz</span><h2>Sprzęt, nie ludzie.</h2>
+          <p class="lead">Ikony liniowe na miękkim zielonym kaflu. Zdjęcia i ilustracje pokazują przestrzeń szpitala, nie pacjentów. Dane dotyczą ludzi, więc obraz ich nie eksponuje.</p></div>
+      </div>
+      <div class="grid-2">
+        <div class="panel">
+          <h3>Ikony</h3>
+          <div class="icons" aria-label="Przykłady ikon">
+            <span class="icon-tile"><svg viewBox="0 0 24 24"><path d="M3 18V8M3 14h18v4M21 14v-2a3 3 0 0 0-3-3h-7v5"/><circle cx="7" cy="11" r="1.6"/></svg></span>
+            <span class="icon-tile"><svg viewBox="0 0 24 24"><path d="M4 21V6l8-3 8 3v15M9 21v-5h6v5M12 8v4M10 10h4"/></svg></span>
+            <span class="icon-tile"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></span>
+            <span class="icon-tile"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></span>
+            <span class="icon-tile"><svg viewBox="0 0 24 24"><path d="M3 12h4l2-4 3 8 2-4h7"/></svg></span>
+          </div>
+          <p>Kontur 1,75 px (<code>PortalIcon</code>), zaokrąglone końce, siatka 24 px. Kafel 40–56 px, promień 10–12 px, tło <code>--color-primary-soft</code>. Bez ikon wypełnionych i emoji.</p>
+        </div>
+        <div class="panel">
+          <h3>Fotografia i ilustracja</h3>
+          <ul class="photo-rules">
+            <li>Chłodne, jasne wnętrza: sala operacyjna, korytarz, monitor, łóżko.</li>
+            <li>Dominują biel i zieleń operacyjna. Zdjęcie przechodzi w kafel gradientem.</li>
+            <li>Własne ilustracje (droga pacjenta) bez licencji zewnętrznych.</li>
+            <li class="no">Rozpoznawalne twarze pacjentów i personelu.</li>
+            <li class="no">Krew, rany, sceny dramatyczne, karetka na sygnale jako emocja.</li>
+            <li class="no">Logo konkretnego szpitala lub NFZ jako ozdoba.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="glos">
+    <div class="wrap">
+      <div class="block-head">
+        <div class="block-num">07</div>
+        <div><span class="eyebrow">Głos marki</span><h2>Mówimy jak dobra karta wypisowa.</h2>
+          <p class="lead">Konkretnie, w kolejności: co się stało, ile, skąd to wiemy. Pełne zasady są w <code>brand/brand-voice.md</code>. Tu trzy przykłady.</p></div>
+      </div>
+      <div class="stack" style="gap:14px">
+        <div class="voice-pair"><div><span class="tag no">Zamiast</span><p class="no-text">Szokujące dane! Ten szpital leczy najgorzej w Polsce.</p></div><div><span class="tag yes">Piszemy</span><p>Śmiertelność w grupie E53 była tu wyższa niż w 12 podobnych szpitalach. Sprawdź, jak dobraliśmy pary.</p></div></div>
+        <div class="voice-pair"><div><span class="tag no">Zamiast</span><p class="no-text">Przedmiotowe zestawienie obrazuje kształtowanie się wolumenu świadczeń.</p></div><div><span class="tag yes">Piszemy</span><p>Ile hospitalizacji JGP rozlicza NFZ w roku?</p></div></div>
+        <div class="voice-pair"><div><span class="tag no">Zamiast</span><p class="no-text">W analizowanym okresie zrealizowano 49,6 mln hospitalizacji.</p></div><div><span class="tag yes">Piszemy</span><p>Ponad 49 mln hospitalizacji JGP w latach 2017–2025. Szacunek konserwatywny: część wartości NFZ podaje jako „&lt;5”.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="audyt">
+    <div class="wrap">
+      <div class="block-head">
+        <div class="block-num">08</div>
+        <div><span class="eyebrow">Audyt kodu · branch explorer-sidebar</span><h2>Co dziś odbiega od marki.</h2>
+          <p class="lead">Strona ma dwa systemy kolorów: nowy (tokeny <code>--color-*</code> w <code>portal.css</code>) i starszy z dashboardu (chłodne szarości w <code>globals.css</code> i w komponentach). To główne źródło niespójności.</p></div>
+      </div>
+      <div class="scroll-x">
+        <table class="audit">
+          <thead><tr><th>Obszar</th><th>Teraz</th><th>Według marki</th><th>Waga</th></tr></thead>
+          <tbody>
+            <tr><td>Szarości tekstu</td><td>Chłodne szarości <code>#667085</code> (93 wystąpienia), <code>#344054</code>, <code>#475467</code></td><td>Szarości z odcieniem zieleni: <code>--color-text-secondary</code>, <code>--color-text-tertiary</code></td><td><span class="sev hi">wysoka</span></td></tr>
+            <tr><td>Kolor tekstu</td><td>Trzy wartości: <code>#172033</code>, <code>#253B3A</code>, <code>#1c3534</code> (h1)</td><td>Jeden token <code>--color-text</code></td><td><span class="sev hi">wysoka</span></td></tr>
+            <tr><td>Kolory danych</td><td>Literały <code>#2856A3</code>, <code>#1B3D78</code>, <code>#C65D2E</code> w plikach TSX i CSS</td><td>Tokeny <code>--color-data-*</code> i stałe w <code>chartPalette.ts</code></td><td><span class="sev md">średnia</span></td></tr>
+            <tr><td>Etykieta „szacunek”</td><td>Brązowa plakietka <code>#FFF4E0</code> / <code>#8A5300</code> powtórzona w 3 plikach</td><td>Token <code>--color-estimate-*</code> i jeden komponent</td><td><span class="sev md">średnia</span></td></tr>
+            <tr><td>Stary panel boczny</td><td>Klasy z dawnego dashboardu w <code>globals.css</code> (<code>.kpi-card</code> nieużywana, <code>.sidebar-brand</code> z gradientem)</td><td>Usunąć nieużywane, resztę przenieść na tokeny</td><td><span class="sev md">średnia</span></td></tr>
+            <tr><td>Liczby na stronie głównej</td><td>Pasek faktów: 65,3 mln (metoda sim), wykres lat pod nim: suma 49,6 mln (metoda min)</td><td>Jedna metoda dla całej strony albo podpis metody przy liczbie</td><td><span class="sev hi">wysoka</span></td></tr>
+            <tr><td>Motyw wykresów</td><td>Siatka, osie, legendy i dymki (3 różne tła) wpisane osobno w 6 plikach; wspólny <code>getCommonPlotLayout</code> mają tylko 2 wykresy eksploratora</td><td>Jeden motyw wykresów w <code>plotlyChart.ts</code> według sekcji 05</td><td><span class="sev hi">wysoka</span></td></tr>
+            <tr><td>Promienie narożników</td><td>12 wartości od 2 do 14 px; tokeny <code>--radius-*</code> użyte 8 razy</td><td>4 tokeny: 4 (plakietka), 9 (kontrolka), 12 (karta), 999 (chip)</td><td><span class="sev md">średnia</span></td></tr>
+            <tr><td>Cienie</td><td>51 różnych deklaracji <code>box-shadow</code>; <code>--shadow-soft</code> użyty 4 razy</td><td>2 tokeny: karta nad tłem, element unoszący się (menu, dymek)</td><td><span class="sev md">niska</span></td></tr>
+            <tr><td>Separator tysięcy</td><td>4 wykresy Plotly bez <code>separators</code>: „10,000” na osi, „11.46%” w dymku (m.in. „Kto leczy”)</td><td><code>separators: ", "</code> we wspólnym layoucie</td><td><span class="sev hi">wysoka</span></td></tr>
+            <tr><td>Dymki</td><td>Plotly: ciemne tła w 3 odcieniach; HTML: białe karty; różna kolejność pól</td><td>Jeden jasny wzór (sekcja 05)</td><td><span class="sev md">średnia</span></td></tr>
+            <tr><td>Marginesy osi</td><td>Dół osi −2%, −3% albo −6%; maska linii zero 3 px w <code>MortalityChart</code></td><td>−6% / +10%, podstawa pod danymi, <code>cliponaxis: false</code></td><td><span class="sev md">średnia</span></td></tr>
+            <tr><td>Dymki w „Porównaniu”</td><td>Wiersze 10 px; liczby w zieleni; potrójny podpis („Placówka główna”, „Wybrany szpital”, „Placówka”); 4 kopie funkcji pozycji dymka; wybrany szpital na czerwono</td><td>Dymek rozszerzony (sekcja 05), jedna funkcja pozycji, wybrany szpital w kolorze sygnału</td><td><span class="sev md">średnia</span></td></tr>
+            <tr><td>Język w „Porównaniu”</td><td>„peer”, „Peery łącznie”, „Mapa peerów”; notatka dla programisty widoczna w UI („Tooltip jest liczony niezależnie od hoveru Plotly”)</td><td>„podobne szpitale”, „grupa porównawcza”; usunąć notatki techniczne</td><td><span class="sev hi">wysoka</span></td></tr>
+            <tr><td>Wyróżnienie na lejku</td><td>Karta JGP: wybrany ośrodek pomarańczowy <code>#C65D2E</code> (albo czerwona gwiazdka <code>#D92D20</code>) wśród punktów lejka <code>#B4441B</code> / <code>#E3A27F</code></td><td>Grafitowy punkt z białą obwódką i podpisem</td><td><span class="sev hi">wysoka</span></td></tr>
+            <tr><td>Motyw ciemny</td><td>Brak (Mantine na sztywno <code>light</code>)</td><td>Na później. Tokeny przygotowane tak, żeby dało się go dodać</td><td><span class="sev md">niska</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="end">
+  <div class="wrap">
+    <span>funduszdanych.pl · brandbook 0.1 (eksploracja)</span>
+    <span>Pliki: <code>brand/</code>, <code>DESIGN.md</code> · branch <code>feature/brandbook</code></span>
+  </div>
+</footer>
