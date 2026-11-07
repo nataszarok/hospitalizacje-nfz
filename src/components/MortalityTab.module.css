@@ -43,9 +43,9 @@
 .insight {
   margin-top: 12px;
   padding: 10px 14px;
-  border-left: 3px solid var(--primary);
-  background: #f8fafc;
-  color: #344054;
+  border-left: 3px solid var(--color-primary);
+  background: var(--color-background-soft);
+  color: var(--color-text);
   font-size: var(--fs-md);
   line-height: 1.5;
 }

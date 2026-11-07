@@ -6,7 +6,7 @@
 
 .chartCard {
   padding: 0 16px 16px;
-  border: 1px solid var(--color-border, #e4e7ec);
+  border: 1px solid var(--color-border, var(--color-border));
   border-radius: var(--radius-card, 12px);
   background: #fff;
   box-shadow: var(--shadow-soft, 0 1px 2px rgba(16, 24, 40, 0.04));
@@ -18,7 +18,7 @@
   gap: 4px;
   margin: 0 -16px 12px;
   padding: 0 12px;
-  border-bottom: 1px solid var(--color-border, #e4e7ec);
+  border-bottom: 1px solid var(--color-border, var(--color-border));
   overflow-x: auto;
   scrollbar-width: none;
 }
@@ -28,7 +28,7 @@
   border: 0;
   border-bottom: 2px solid transparent;
   background: transparent;
-  color: var(--color-text-secondary, #667085);
+  color: var(--color-text-secondary, var(--color-text-tertiary));
   font-size: var(--fs-base);
   font-weight: var(--fw-semibold);
   white-space: nowrap;
@@ -65,7 +65,7 @@
 
 .chartHeader p {
   margin: 4px 0 0;
-  color: #667085;
+  color: var(--color-text-tertiary);
   font-size: var(--fs-md);
 }
 
@@ -80,7 +80,7 @@
 .periodToggle {
   display: inline-flex;
   overflow: hidden;
-  border: 1px solid #d0d5dd;
+  border: 1px solid var(--color-border);
   border-radius: 8px;
   background: #fff;
 }
@@ -88,9 +88,9 @@
 .periodToggle button {
   padding: 6px 12px;
   border: 0;
-  border-left: 1px solid #d0d5dd;
+  border-left: 1px solid var(--color-border);
   background: transparent;
-  color: #344054;
+  color: var(--color-text);
   font-size: var(--fs-sm);
   font-weight: var(--fw-semibold);
 }
@@ -100,7 +100,7 @@
 }
 
 .periodToggle button:disabled {
-  color: #98a2b3;
+  color: var(--color-text-tertiary);
   cursor: not-allowed;
 }
 
@@ -121,6 +121,6 @@
 .chartHeader .areaNote {
   margin-top: 6px;
   padding-left: 8px;
-  border-left: 3px solid #d0d5dd;
-  color: #475467;
+  border-left: 3px solid var(--color-border);
+  color: var(--color-text-secondary);
 }

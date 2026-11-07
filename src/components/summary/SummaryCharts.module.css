@@ -10,7 +10,7 @@
 .barLatest { fill: #2856A3; }
 .linePrevious { stroke: #9DB4DB; stroke-width: 3; fill: none; }
 .lineLatest { stroke: #2856A3; stroke-width: 3.5; fill: none; }
-.lineFirst { stroke: #8A94A6; stroke-width: 2.5; stroke-dasharray: 6 5; fill: none; }
+.lineFirst { stroke: var(--color-border-strong); stroke-width: 2.5; stroke-dasharray: 6 5; fill: none; }
 .endLabel { font-size: var(--fs-md); font-weight: var(--fw-bold); font-variant-numeric: tabular-nums; }
 .dotLatest { fill: #2856A3; }
 
@@ -19,7 +19,7 @@
 .letter { font-weight: var(--fw-bold); color: #1B3D78; }
 .label { min-width: 0; }
 .share { display: grid; grid-template-columns: 1fr 44px; gap: 6px; align-items: center; font-size: var(--fs-md); color: var(--color-text-secondary); font-variant-numeric: tabular-nums; text-align: right; }
-.track { height: 8px; border-radius: 3px; background: #EEF2F8; overflow: hidden; }
+.track { height: 8px; border-radius: 3px; background: var(--color-background-muted); overflow: hidden; }
 .fill { display: block; height: 100%; background: #2856A3; border-radius: 3px; }
 .up, .down { font-weight: var(--fw-bold); text-align: right; font-variant-numeric: tabular-nums; }
 .up { color: #1D6B3A; }

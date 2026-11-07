@@ -734,7 +734,7 @@ export function PeerDistanceSlider({ value, onChange }: { value:number; onChange
       onChangeEnd={commit}
       label={(x)=>peerDistanceFormat.format(x)}
       marks={[{value:PEER_DISTANCE_A_LIMIT,label:"granica A"}]}
-      color={scope==="A" ? "var(--primary)" : "#B26A00"}
+      color={scope==="A" ? "var(--color-primary)" : "#B26A00"}
       className="hospital-peer-distance-slider"
     />
     <div className="hospital-peer-distance-scale"><span>bardziej podobne</span><span>więcej par</span></div>

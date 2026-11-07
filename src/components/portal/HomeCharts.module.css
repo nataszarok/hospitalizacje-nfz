@@ -17,7 +17,7 @@
 .groupRow:hover .groupLabel, .changeRow:hover .changeName { color: var(--color-primary-hover); text-decoration: underline; }
 .groupLabel { grid-column: 1 / -1; font-size: var(--fs-base); line-height: 1.35; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .groupLabel b { display: inline-block; min-width: 42px; font-weight: var(--fw-bold); color: #1B3D78; }
-.groupTrack { height: 8px; background: #EEF2F8; border-radius: 3px; overflow: hidden; }
+.groupTrack { height: 8px; background: var(--color-background-muted); border-radius: 3px; overflow: hidden; }
 .groupBar { display: block; height: 100%; background: #2856A3; border-radius: 3px; }
 .groupValue { font-size: var(--fs-md); text-align: right; font-variant-numeric: tabular-nums; color: var(--color-text-secondary); }
 
@@ -35,9 +35,9 @@
 .mapShape { stroke: #fff; stroke-width: 2; stroke-linejoin: round; transition: filter .15s; }
 .mapLink:hover .mapShape, .mapLink:focus-visible .mapShape { filter: brightness(.88); }
 .mapLink:focus { outline: none; }
-.mapLink:focus-visible .mapShape { stroke: #172033; stroke-width: 4; }
+.mapLink:focus-visible .mapShape { stroke: var(--color-text); stroke-width: 4; }
 .mapLabel { fill: #fff; font-size: var(--fs-2xl); font-weight: var(--fw-bold); text-anchor: middle; dominant-baseline: middle; pointer-events: none; font-variant-numeric: tabular-nums; }
-.mapLabelDark { fill: #172033; }
+.mapLabelDark { fill: var(--color-text); }
 .mapLegend { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: var(--fs-sm); color: var(--color-text-tertiary); margin-top: 8px; }
 .mapScale { width: 120px; height: 8px; border-radius: 4px; }
 

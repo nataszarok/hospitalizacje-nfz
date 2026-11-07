@@ -1,4 +1,4 @@
-/* Układ portalu. Tokeny (kolory, promienie, cienie, szerokości) są na :root w globals.css. */
+/* Układ portalu. Tokeny (kolory, promienie, cienie, szerokości) są na::root w globals.css. */
 .atlas-portal .app-shell {
   width: min(calc(100% - var(--atlas-page-gutter) - var(--atlas-page-gutter)), var(--atlas-workspace-max));
   margin-inline: auto;
