@@ -98,16 +98,6 @@
   font-size: var(--fs-md);
 }
 
-.badge {
-  padding: 3px 7px;
-  border-radius: 4px;
-  background: var(--color-estimate-bg);
-  color: var(--color-estimate-fg);
-  font-size: var(--fs-xs);
-  font-weight: var(--fw-bold);
-  letter-spacing: .08em;
-  text-transform: uppercase;
-}
 
 /* Obszar roboczy: szerokość jak nagłówek (`PageHeader wide`). */
 .workspace {

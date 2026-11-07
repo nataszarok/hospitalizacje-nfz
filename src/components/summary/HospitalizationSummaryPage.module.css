@@ -5,7 +5,6 @@
 .toc a:hover { border-color: var(--color-primary); }
 .method { margin: 0; font-size: var(--fs-md); color: var(--color-text-secondary); display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .method a { color: var(--color-primary-hover); font-weight: var(--fw-semibold); }
-.badge { font-size: var(--fs-xs); font-weight: var(--fw-bold); letter-spacing: .08em; text-transform: uppercase; padding: 3px 7px; border-radius: 4px; background: var(--color-estimate-bg); color: var(--color-estimate-fg); }
 .section { padding-top: 48px; scroll-margin-top: 92px; }
 .sectionTitle { font-family: var(--font-display), var(--font-body), sans-serif; font-weight: var(--fw-regular); font-size: var(--fs-section); margin: 0 0 16px; letter-spacing: -.035em; line-height: 1.05; }
 .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }

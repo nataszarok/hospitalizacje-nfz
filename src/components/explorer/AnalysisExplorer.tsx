@@ -23,6 +23,7 @@ import {
 import { incompleteCoverage, yearChangePct } from "@/lib/trends";
 import type { AdmissionPayload, AxisMode, EstimationMethod, MortalityPayload, ProductOption, ReferencePayload } from "@/lib/types";
 import styles from "./Explorer.module.css";
+import { EstimateBadge } from "@/components/portal/EstimateBadge";
 
 const integer = (value: number) => Math.round(value).toLocaleString("pl-PL");
 const percent = (value: number) => `${value.toLocaleString("pl-PL", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`;
@@ -362,7 +363,7 @@ export function AnalysisExplorer() {
               </ol>
             </div>
           </div>
-          <p className={styles.method}><span className={styles.badge}>Szacunek</span> Wartości „&lt;5” w danych NFZ liczymy jako 1 (metoda konserwatywna). <Link href={DASHBOARD_HREFS.methodology}>Metodologia</Link></p>
+          <p className={styles.method}><EstimateBadge /> Wartości „&lt;5” w danych NFZ liczymy jako 1 (metoda konserwatywna). <Link href={DASHBOARD_HREFS.methodology}>Metodologia</Link></p>
         </div> : null}
       </PageHeader>
     </Collapsible>
