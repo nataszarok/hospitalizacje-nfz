@@ -60,7 +60,6 @@ export function HospitalsPage() {
   return <div className="app-shell">
     <aside className="sidebar">
       <div className="sidebar-brand">
-        <div className="sidebar-brand-mark">H</div>
         <div>
           <div className="sidebar-eyebrow">NFZ · dane {year}</div>
           <div className="sidebar-title">Szpitale publiczne</div>
