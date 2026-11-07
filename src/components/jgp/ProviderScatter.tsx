@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { attachHoverMarker, getAppFontFamily, makeHoverTrace, PLOTLY_CONFIG, type PlotElement, type PlotlyHoverEvent } from "@/lib/plotlyChart";
-import { BASE_POINT } from "@/lib/chartPalette";
+import { CHART_COLORS, BASE_POINT } from "@/lib/chartPalette";
 import { loadPlotly } from "@/lib/plotlyLoader";
 
 export interface ScatterPoint {
@@ -68,7 +68,7 @@ export function ProviderScatter({ points, xTitle, yTitle, ySuffix, reference, on
           ? { color: colors[i] || BASE_POINT, size: colors[i] ? 9 : 8, line: { color: "#FFFFFF", width: 1 } }
           : marker === "star"
             ? { color: STAR_COLOR, size: 18, symbol: "star", line: { color: STAR_OUTLINE, width: 1.5 } }
-            : { color: "#C65D2E", size: 13, line: { color: "#FFFFFF", width: 2 } },
+            : { color: CHART_COLORS.signal, size: 13, line: { color: "#FFFFFF", width: 2 } },
         hovertemplate: "%{customdata[1]}<extra></extra>",
       }))];
       // Znacznik najechanego punktu: ta sama seria i mechanizm co na wykresach eksploratora.

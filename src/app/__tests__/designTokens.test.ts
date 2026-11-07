@@ -1,6 +1,7 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join, relative } from "node:path";
 import { describe, expect, it } from "vitest";
+import { CHART_COLORS } from "@/lib/chartPalette";
 
 // Pilnuje tokenów kolorów z globals.css (DESIGN.md, sekcja 2): jeden zestaw --color-* na :root,
 // szarości tylko z rodziny z odcieniem zieleni.
@@ -54,5 +55,16 @@ describe("tokeny kolorów", () => {
     const grays = files.flatMap(({ name, css }) => [...css.matchAll(/#[0-9a-fA-F]{6}\b/g)]
       .map((m) => m[0].toUpperCase()).filter(isCoolGray).map((hex) => `${name}: ${hex}`));
     expect(grays).toEqual([]);
+  });
+
+  it("stałe wykresów w chartPalette.ts mają wartości tokenów z globals.css", () => {
+    const tokenValue = (token: string) => globals.match(new RegExp(`${token}\\s*:\\s*(#[0-9A-Fa-f]{6})`))?.[1]?.toUpperCase();
+    const pairs: [keyof typeof CHART_COLORS, string][] = [
+      ["text", "--color-text"], ["textSecondary", "--color-text-secondary"], ["textTertiary", "--color-text-tertiary"],
+      ["border", "--color-border"], ["borderStrong", "--color-border-strong"], ["grid", "--color-chart-grid"], ["background", "--color-background"],
+      ["dataStrong", "--color-data-strong"], ["data", "--color-data"], ["dataSoft", "--color-data-soft"], ["dataMuted", "--color-data-muted"],
+      ["dataFaint", "--color-data-faint"], ["signal", "--color-signal"], ["positive", "--color-positive"],
+    ];
+    for (const [key, token] of pairs) expect(CHART_COLORS[key], token).toBe(tokenValue(token));
   });
 });

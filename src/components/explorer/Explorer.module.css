@@ -101,8 +101,8 @@
 .badge {
   padding: 3px 7px;
   border-radius: 4px;
-  background: #FFF4E0;
-  color: #8A5300;
+  background: var(--color-estimate-bg);
+  color: var(--color-estimate-fg);
   font-size: var(--fs-xs);
   font-weight: var(--fw-bold);
   letter-spacing: .08em;
@@ -796,7 +796,7 @@
 
 .legendSizes circle {
   fill: var(--color-border-strong);
-  stroke: #2856a3;
+  stroke: var(--color-data);
   stroke-width: 1;
 }
 
@@ -824,7 +824,7 @@
 }
 
 .cityDot.facilityDotSelected {
-  stroke: #c65d2e;
+  stroke: var(--color-signal);
   stroke-width: 3;
 }
 

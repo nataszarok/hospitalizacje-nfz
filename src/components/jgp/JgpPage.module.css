@@ -155,7 +155,7 @@
 }
 
 .segmentUrgent {
-  background: #c65d2e;
+  background: var(--color-signal);
 }
 
 .segmentOther {

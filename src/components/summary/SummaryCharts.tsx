@@ -3,6 +3,7 @@ import { formatJgpName, formatPln, shortenName } from "@/lib/formatters";
 import { STAY_BUCKETS, type SummaryStayYear, type SummarySection, type SummaryTrendRow, type SummaryValueRow } from "@/lib/hospitalizationSummary";
 import { jgpHref } from "@/lib/portalLinks";
 import styles from "./SummaryCharts.module.css";
+import { CHART_COLORS } from "@/lib/chartPalette";
 
 // Lekkie wykresy SVG karty „Hospitalizacje w Polsce”: rysowane podczas budowania, bez JavaScriptu w przeglądarce.
 const integer = (value: number) => Math.round(value).toLocaleString("pl-PL");
@@ -111,7 +112,7 @@ export function TrendRows({ rows, firstYear, latestYear, label }: { rows: Summar
 }
 
 /** Kolory linii przedziałów długości pobytu: od najkrótszego (jasny) do najdłuższego (ciemny). */
-export const STAY_COLORS = ["#6C93D6", "#5B7FC4", "#2856A3", "#132C57"];
+export const STAY_COLORS = ["#6C93D6", "#5B7FC4", CHART_COLORS.data, "#132C57"];
 
 /** Udział przedziałów długości pobytu w hospitalizacjach roku (%): linia na przedział z podpisem na końcu. `buckets`: indeksy przedziałów do pokazania. */
 export function StayShares({ stays, buckets = STAY_BUCKETS.map((_, i) => i) }: { stays: SummaryStayYear[]; buckets?: number[] }) {

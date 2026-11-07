@@ -15,7 +15,7 @@ import type { JgpPageData, JgpProviderRow } from "@/lib/jgpPage";
 import { hospitalHref } from "@/lib/portalLinks";
 import base from "./JgpPage.module.css";
 import styles from "./JgpTabs.module.css";
-import { OTHER_POINT, REGION_PICK_COLORS } from "@/lib/chartPalette";
+import { CHART_COLORS, DEVIATION_COLORS, OTHER_POINT, REGION_PICK_COLORS } from "@/lib/chartPalette";
 import { TREND_METRICS, type TrendMetric } from "@/lib/trendMetrics";
 
 const integer = (value: number) => Math.round(value).toLocaleString("pl-PL");
@@ -41,7 +41,7 @@ const subscribeNothing = () => () => {};
 // Kolory wybranych województw i ośrodków spoza nich: wspólna paleta z eksploratorem (`chartPalette`).
 /** Kolor każdego wybranego województwa (kolejność wyboru), ten sam na mapie, wykresach i w tabeli. */
 const regionColors = (regions: string[]) => new Map(regions.map((ow, i) => [ow, REGION_PICK_COLORS[i % REGION_PICK_COLORS.length]]));
-const FUNNEL_COLORS = { up95: "#E3A27F", up998: "#B4441B", down95: "#8FB0DD", down998: "#2856A3" };
+const FUNNEL_COLORS = DEVIATION_COLORS;
 
 export type CardTab = "przeglad" | "osrodki";
 
@@ -494,7 +494,7 @@ function ProfileSection({ data }: { data: JgpPageData }) {
 function FamilySection({ data }: { data: JgpPageData }) {
   const family = data.family!;
   const years = data.catalogYears;
-  const palette = ["#2856A3", "#6F8FC9", "#A9BCE0", "#5B8C7A", "#A3C4B5", "#C9A86A", "#E2CFA3"];
+  const palette = [CHART_COLORS.data, "#6F8FC9", "#A9BCE0", "#5B8C7A", "#A3C4B5", "#C9A86A", "#E2CFA3"];
   const color = new Map(family.variants.map((variant, i) => [variant.code, palette[i % palette.length]]));
   const totals = years.map((_, j) => family.variants.reduce((sum, variant) => sum + (variant.values[j] ?? 0), 0));
   const own = family.variants.find((variant) => variant.code === data.jgpCode);
@@ -633,7 +633,7 @@ function ProviderDetails({ data, row, comparison, scope, onScope }: { data: JgpP
 function Spark({ values }: { values: number[] }) {
   const max = Math.max(...values, 1);
   const points = values.map((value, i) => `${((i / Math.max(values.length - 1, 1)) * 80).toFixed(1)},${(20 - (value / max) * 18).toFixed(1)}`).join(" ");
-  return <svg className={styles.spark} viewBox="0 0 80 22" aria-hidden><polyline points={points} fill="none" stroke="#2856A3" strokeWidth="1.4" /></svg>;
+  return <svg className={styles.spark} viewBox="0 0 80 22" aria-hidden><polyline points={points} fill="none" stroke={CHART_COLORS.data} strokeWidth="1.4" /></svg>;
 }
 
 function RankingSection({ data, pool, selectedRow, filtered, regionColor, onSelect, onHover }: {
@@ -643,7 +643,7 @@ function RankingSection({ data, pool, selectedRow, filtered, regionColor, onSele
   const visible = mounted ? pool : pool.slice(0, SERVER_ROWS);
   const total = pool.reduce((sum, row) => sum + row.hospitalizations, 0);
   const shares = structureShares(pool);
-  const colors = ["#2856A3", "#6F8FC9", "#A9BCE0"];
+  const colors = [CHART_COLORS.data, "#6F8FC9", "#A9BCE0"];
   const yearAt = data.admissionYears.indexOf(data.year);
   const previousYear = yearAt > 0 ? data.admissionYears[yearAt - 1] : undefined;
   const scrollRef = useRef<HTMLDivElement>(null);

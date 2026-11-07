@@ -1,4 +1,31 @@
 /**
+ * Kolory wykresów: te same wartości co tokeny --color-* w globals.css (Plotly i atrybuty SVG nie czytają zmiennych CSS;
+ * zgodność pilnuje test designTokens). Błękity i granat = dane, sygnał = jedno wyróżnienie na wykres (DESIGN.md, 2.2).
+ */
+export const CHART_COLORS = {
+  text: "#253B3A",
+  textSecondary: "#536C68",
+  textTertiary: "#6C827E",
+  border: "#D9E6E3",
+  borderStrong: "#B9CEC9",
+  grid: "#E6EFEC",
+  background: "#FFFFFF",
+  dataStrong: "#1B3D78",
+  data: "#2856A3",
+  dataSoft: "#9DB4DB",
+  dataMuted: "#B5C7E6",
+  dataFaint: "#E4EAF4",
+  signal: "#C65D2E",
+  positive: "#1D6B3A",
+} as const;
+
+/**
+ * Skala odchylenia (lejek, różnica wobec podobnych): ciepłe w górę, błękity w dół, w granicach błękit fartucha.
+ * Na wykresie z tą skalą wyróżnienie jest grafitowe, nie w kolorze sygnału (DESIGN.md, 6.2a).
+ */
+export const DEVIATION_COLORS = { up95: "#E3A27F", up998: "#B4441B", down95: "#8FB0DD", down998: "#2856A3", within: "#9DB4DB" } as const;
+
+/**
  * Wspólna paleta wykresów punktowych świadczeniodawców (karta grupy JGP i eksplorator).
  * Kolory wybranych województw i miast: kontrastowe wobec niebieskiej skali mapy, bez czerwieni i pomarańczu
  * (zarezerwowanych dla wybranego ośrodka). Sprawdzone walidatorem palety (jasność, nasycenie, odstęp ΔE ≥ 15

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { MortalityDisplayControl } from "@/components/MortalityDisplayControl";
 import { GroupLineChart, type ChartLine } from "@/components/jgp/GroupLineChart";
-import { REGION_PICK_COLORS } from "@/lib/chartPalette";
+import { CHART_COLORS, REGION_PICK_COLORS } from "@/lib/chartPalette";
 import type { ChartPeriod } from "@/lib/jgpCard";
 import type { MortalityDisplayMode } from "@/lib/mortality";
 import { citySection, durationYears, type DurationYearsSection } from "@/lib/regions";
@@ -18,7 +18,7 @@ const NO_DURATIONS: string[] = [];
 const integer = (value: number) => Math.round(value).toLocaleString("pl-PL");
 const pct = (value: number) => `${value.toLocaleString("pl-PL", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`;
 /** Kolory grup w zestawieniu „Per JGP”: niebieski danych, potem paleta wyróżnień z karty grupy JGP. */
-const GROUP_COLORS = ["#2856A3", ...REGION_PICK_COLORS];
+const GROUP_COLORS = [CHART_COLORS.data, ...REGION_PICK_COLORS];
 
 export type TrendViewProps = {
   productCodes: string[];

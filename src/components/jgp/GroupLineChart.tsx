@@ -4,11 +4,12 @@ import { useEffect, useRef } from "react";
 import { monthYears, movingAverage, movingRatio, ratioSeries, sumByYear, type ChartPeriod } from "@/lib/jgpCard";
 import { countAxis, getAppFontFamily, makeHoverTrace, monthAxis, percentAxis, PLOTLY_CONFIG, type PlotElement } from "@/lib/plotlyChart";
 import { loadPlotly } from "@/lib/plotlyLoader";
+import { CHART_COLORS } from "@/lib/chartPalette";
 
 const MONTHS = ["sty", "lut", "mar", "kwi", "maj", "cze", "lip", "sie", "wrz", "paź", "lis", "gru"];
 const BASE = "#98A2B3";
-const PRIMARY = "#2856A3";
-const SELECTED = "#C65D2E";
+const PRIMARY = CHART_COLORS.data;
+const SELECTED = CHART_COLORS.signal;
 // Tło wybranego roku (jak „wybrany rok” w makietach karty); to samo tło ma kolumna roku w mapie ciepła (.heatBand).
 const YEAR_BAND = "rgba(31, 138, 112, 0.10)";
 const integer = (value: number) => Math.round(value).toLocaleString("pl-PL");

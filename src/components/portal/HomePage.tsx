@@ -12,6 +12,7 @@ import { DataCard, Legend } from "@/components/portal/DataCard";
 import { PortalIcon } from "@/components/portal/PortalIcon";
 import { SearchBox } from "@/components/search/SearchBox";
 import styles from "./HomePage.module.css";
+import { CHART_COLORS } from "@/lib/chartPalette";
 
 // Dział bez href jest pokazywany jako „Planowane”.
 type Topic = {
@@ -196,7 +197,7 @@ export function HomePage({ highlights, stats, hospitals }: { highlights: Dataset
             estimate={false}
           >
             <ContinuousHistogram bins={finance.margins} label="Podmioty według marży netto" unit="%" />
-            <Legend items={[{ label: "Strata", color: "#C65D2E" }, { label: "Zysk", color: "#2856A3" }]} />
+            <Legend items={[{ label: "Strata", color: CHART_COLORS.signal }, { label: "Zysk", color: CHART_COLORS.data }]} />
           </DataCard> : null}
         </div>
       </section>

@@ -6,7 +6,7 @@
 .kicker { font-size: var(--fs-xs); font-weight: var(--fw-bold); letter-spacing: .1em; text-transform: uppercase; color: var(--color-text-tertiary); }
 .title { font-size: var(--fs-xl); letter-spacing: -.02em; line-height: 1.25; margin: 6px 0 6px; }
 .lead { margin: 0 0 14px; font-size: var(--fs-base); line-height: 1.55; color: var(--color-text-secondary); }
-.lead strong { color: #1B3D78; font-size: var(--fs-lg); }
+.lead strong { color: var(--color-data-strong); font-size: var(--fs-lg); }
 .chart { flex: 1; display: flex; flex-direction: column; justify-content: center; min-width: 0; }
 .chartStart { justify-content: flex-start; }
 /* Karty obok siebie z listami od góry: wstęp zajmuje zawsze dwie linie, więc listy zaczynają się na tej samej wysokości. */
@@ -15,7 +15,7 @@
 .description p { margin: 0 0 6px; }
 .description b { color: var(--color-text); }
 .footer { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--color-border); }
-.badge { font-size: var(--fs-xs); font-weight: var(--fw-bold); letter-spacing: .08em; text-transform: uppercase; padding: 3px 7px; border-radius: 4px; background: #FFF4E0; color: #8A5300; cursor: help; }
+.badge { font-size: var(--fs-xs); font-weight: var(--fw-bold); letter-spacing: .08em; text-transform: uppercase; padding: 3px 7px; border-radius: 4px; background: var(--color-estimate-bg); color: var(--color-estimate-fg); cursor: help; }
 .source { font-size: var(--fs-md); color: var(--color-text-tertiary); }
 .link { margin-left: auto; color: var(--color-primary-hover); font-size: var(--fs-base); font-weight: var(--fw-bold); display: inline-flex; gap: 6px; align-items: center; text-decoration: none; white-space: nowrap; }
 .link:hover { text-decoration: underline; }
