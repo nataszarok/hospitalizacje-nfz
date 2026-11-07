@@ -2,7 +2,7 @@ import Link from "next/link";
 import { LegacyDashboardRedirect } from "@/components/portal/LegacyDashboardRedirect";
 import { DASHBOARD_HREFS } from "@/lib/dashboardNavigation";
 import { SITE_NAME } from "@/lib/site";
-import { formatCompactCount, formatYearRange } from "@/lib/formatters";
+import { formatAtLeastCount, formatCompactCount, formatYearRange } from "@/lib/formatters";
 import type { DatasetHighlights } from "@/lib/staticData";
 import type { HomeStats } from "@/lib/homeStats";
 import type { HospitalHomeStats } from "@/lib/hospitalHomeStats";
@@ -109,7 +109,7 @@ export function HomePage({ highlights, stats, hospitals }: { highlights: Dataset
 
       <section className={`${styles.container} ${styles.facts}`} aria-label="Informacje o danych">
         <div className={styles.fact}><span className={styles.factIcon}><PortalIcon name="calendar" /></span><div><strong>{formatYearRange(highlights.yearFrom, highlights.yearTo)}</strong><span>Zakres danych NFZ</span></div></div>
-        <div className={styles.fact}><span className={styles.factIcon}><PortalIcon name="bed" /></span><div><strong>{formatCompactCount(highlights.hospitalizations)}</strong><span>Hospitalizacji JGP (szacunek)</span></div></div>
+        <div className={styles.fact}><span className={styles.factIcon}><PortalIcon name="bed" /></span><div><strong>{formatAtLeastCount(highlights.hospitalizations)}</strong><span title="Szacunek konserwatywny: każde „<5” w danych NFZ liczymy jako 1, jak na wykresach niżej.">Hospitalizacji JGP (szacunek)</span></div></div>
         <div className={styles.fact}><span className={styles.factIcon}><PortalIcon name="hospital" /></span><div><strong>{formatCompactCount(highlights.providers)}</strong><span>Świadczeniodawców</span></div></div>
         <div className={styles.fact}><span className={styles.factIcon}><PortalIcon name="chart" /></span><div><strong>{formatCompactCount(highlights.jgpGroups)}</strong><span>Grup JGP</span></div></div>
       </section>

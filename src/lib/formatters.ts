@@ -18,6 +18,16 @@ export function formatCompactCount(value: number): string {
 }
 
 /** Kwota w zł w skrócie: od 1 mld w mld (1 miejsce po przecinku), od 100 mln w pełnych mln, od 1 mln w mln z 1 miejscem, niżej w tys. */
+/**
+ * Dolna granica liczby w skrócie, dla szacunków konserwatywnych (metoda min): 49 613 383 → „ponad 49 mln”,
+ * 48 200 → „ponad 48 tys.”, 833 → „833”. Część jednostki obcinamy w dół, więc „ponad” jest zawsze prawdą.
+ */
+export function formatAtLeastCount(value: number): string {
+  if (value >= 1_000_000) return `ponad ${integerFormat.format(Math.floor(value / 1_000_000))} mln`;
+  if (value >= 10_000) return `ponad ${integerFormat.format(Math.floor(value / 1_000))} tys.`;
+  return integerFormat.format(value);
+}
+
 export function formatPln(value: number): string {
   const abs = Math.abs(value);
   if (abs >= 1_000_000_000) return `${compactFormat.format(value / 1_000_000_000)} mld zł`;

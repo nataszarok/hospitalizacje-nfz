@@ -69,7 +69,7 @@ describe("Strona główna", () => {
     renderHome();
     const facts = screen.getByRole("region", { name: "Informacje o danych" });
     expect(facts).toHaveTextContent("2024–2025Zakres danych NFZ");
-    expect(facts).toHaveTextContent("7,8 mlnHospitalizacji JGP (szacunek)");
+    expect(facts).toHaveTextContent("ponad 7 mlnHospitalizacji JGP (szacunek)");
     expect(facts).toHaveTextContent("833Świadczeniodawców");
     expect(facts).toHaveTextContent("693Grup JGP");
   });

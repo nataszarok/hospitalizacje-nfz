@@ -10,13 +10,13 @@ function dataset(year: string, facts: StaticDataset["facts"], products: StaticDa
 }
 
 describe("datasetHighlights dla wielu lat", () => {
-  it("sumuje hospitalizacje, łączy świadczeniodawców i grupy JGP oraz podaje zakres lat", () => {
+  it("sumuje hospitalizacje metodą min, łączy świadczeniodawców i grupy JGP oraz podaje zakres lat", () => {
     const d2025 = dataset("2025", [["07", "111", "P1", "0-1", "6", 10, 8, 1, 1]], [["P1", "A01", "Jeden"]]);
     const d2024 = dataset("2024", [
       ["07", "111", "P1", "0-1", "6", 5, 4, 0, 0],
       ["12", "333", "P2", "0-1", "2", 7, 6, 0, 0],
     ], [["P1", "A01", "Jeden"], ["P2", "F04", "Usunięta po 2024"]]);
-    expect(datasetHighlights([d2025, d2024])).toEqual({ yearFrom: "2024", yearTo: "2025", hospitalizations: 22, providers: 2, jgpGroups: 2 });
+    expect(datasetHighlights([d2025, d2024])).toEqual({ yearFrom: "2024", yearTo: "2025", hospitalizations: 18, providers: 2, jgpGroups: 2 });
   });
 
   it("odrzuca pustą listę", () => {
