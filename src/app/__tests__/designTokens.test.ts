@@ -68,3 +68,24 @@ describe("tokeny kolorów", () => {
     for (const [key, token] of pairs) expect(CHART_COLORS[key], token).toBe(tokenValue(token));
   });
 });
+
+function declarations(css: string, property: string): string[] {
+  return [...css.matchAll(new RegExp(`(?:^|[;{\\s])${property}\\s*:\\s*([^;}]+)`, "g"))].map((m) => m[1].replace(/!important/, "").trim());
+}
+
+describe("tokeny kształtu", () => {
+  it("border-radius używa tylko tokenów --radius-* (plakietka, kontrolka, karta, chip), 0 albo 50%", () => {
+    const wrong = files.flatMap(({ name, css }) => declarations(css, "border-radius")
+      .filter((value) => !value.split(/\s+/).every((part) => /^(0|50%|var\(--radius-(badge|control|card|pill)\)|var\(--[a-z-]+-radius\))$/.test(part)))
+      .map((value) => `${name}: ${value}`));
+    expect(wrong).toEqual([]);
+  });
+
+  it("box-shadow używa tokenów cienia; poza nimi tylko obrysy (pierścień, linia wewnętrzna)", () => {
+    const wrong = files.flatMap(({ name, css }) => declarations(css, "box-shadow")
+      .filter((value) => !/^(none|var\(--shadow-(soft|float)\)|inset .*|0 0 0 [\d.]+px .*|0 1px 0 .*)$/.test(value))
+      .map((value) => `${name}: ${value}`));
+    expect(wrong).toEqual([]);
+  });
+});
+

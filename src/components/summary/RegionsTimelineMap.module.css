@@ -9,6 +9,6 @@
 .mapLabel { fill: #fff; font-size: var(--fs-2xl); font-weight: var(--fw-bold); text-anchor: middle; dominant-baseline: middle; pointer-events: none; font-variant-numeric: tabular-nums; }
 .mapLabelDark { fill: var(--color-text); }
 .legend { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: var(--fs-sm); color: var(--color-text-tertiary); font-variant-numeric: tabular-nums; }
-.scale { width: 140px; height: 8px; border-radius: 4px; }
+.scale { width: 140px; height: 8px; border-radius: var(--radius-badge); }
 .national { margin: 0; text-align: center; font-size: var(--fs-base); color: var(--color-text-secondary); }
 .national strong { color: var(--color-data-strong); }

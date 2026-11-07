@@ -54,7 +54,7 @@
   min-height: 38px;
   padding: 0 10px;
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   background: #fff;
   font: inherit;
 }
@@ -109,7 +109,7 @@
   /* `clip`, a nie `hidden`: zaokrąglone rogi bez kontenera przewijania, więc nagłówek tabeli może być przypięty. */
   overflow: clip;
   border: 1px solid var(--color-border);
-  border-radius: 10px;
+  border-radius: var(--radius-control);
   background: #fff;
 }
 
@@ -238,7 +238,7 @@ a.code {
 .badge {
   margin-left: 6px;
   padding: 1px 6px;
-  border-radius: 4px;
+  border-radius: var(--radius-badge);
   background: var(--color-background-soft);
   color: var(--color-text-secondary);
   font-size: var(--fs-xs);
@@ -285,7 +285,7 @@ a.code {
 .footer button {
   padding: 6px 12px;
   border: 1px solid var(--color-primary-outline);
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   background: var(--color-primary-soft);
   color: var(--color-primary-hover);
   font: inherit;
@@ -309,7 +309,7 @@ a.code {
 .changeCard {
   padding: 14px;
   border: 1px solid var(--color-border);
-  border-radius: 10px;
+  border-radius: var(--radius-control);
   background: #fff;
 }
 

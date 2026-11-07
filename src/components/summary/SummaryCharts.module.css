@@ -19,15 +19,15 @@
 .letter { font-weight: var(--fw-bold); color: var(--color-data-strong); }
 .label { min-width: 0; }
 .share { display: grid; grid-template-columns: 1fr 44px; gap: 6px; align-items: center; font-size: var(--fs-md); color: var(--color-text-secondary); font-variant-numeric: tabular-nums; text-align: right; }
-.track { height: 8px; border-radius: 3px; background: var(--color-background-muted); overflow: hidden; }
-.fill { display: block; height: 100%; background: var(--color-data); border-radius: 3px; }
+.track { height: 8px; border-radius: var(--radius-badge); background: var(--color-background-muted); overflow: hidden; }
+.fill { display: block; height: 100%; background: var(--color-data); border-radius: var(--radius-badge); }
 .up, .down { font-weight: var(--fw-bold); text-align: right; font-variant-numeric: tabular-nums; }
 .up { color: var(--color-positive); }
 .down { color: #A23B16; }
 .headRow { font-size: var(--fs-xs); text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-tertiary); border-bottom: 1px solid var(--color-border-strong); }
 .headRow span:nth-child(n+3) { text-align: right; }
 
-.familyRow { display: grid; grid-template-columns: minmax(0, 1fr) 120px 64px; gap: 4px 14px; align-items: center; padding: 8px 8px; margin-inline: -8px; border-radius: 7px; color: var(--color-text); text-decoration: none; font-size: var(--fs-base); }
+.familyRow { display: grid; grid-template-columns: minmax(0, 1fr) 120px 64px; gap: 4px 14px; align-items: center; padding: 8px 8px; margin-inline: -8px; border-radius: var(--radius-control); color: var(--color-text); text-decoration: none; font-size: var(--fs-base); }
 .familyRow:hover { background: var(--color-primary-soft); }
 .familyRow:hover .familyName { color: var(--color-primary-hover); text-decoration: underline; }
 .familyName { font-weight: var(--fw-semibold); }
@@ -41,7 +41,7 @@
 .valueSectionRow { grid-template-columns: 30px minmax(0, 1fr) 130px 64px; }
 .valueSectionRow .share { grid-template-columns: 1fr 66px; }
 /* Kwoty grup: układ jak lista najczęstszych grup (nazwa nad paskiem). */
-.valueGroupRow { display: grid; grid-template-columns: minmax(0, 1fr) 76px 60px; align-items: center; gap: 4px 12px; padding: 6px 8px; margin-inline: -8px; border-radius: 7px; color: var(--color-text); text-decoration: none; }
+.valueGroupRow { display: grid; grid-template-columns: minmax(0, 1fr) 76px 60px; align-items: center; gap: 4px 12px; padding: 6px 8px; margin-inline: -8px; border-radius: var(--radius-control); color: var(--color-text); text-decoration: none; }
 .valueGroupRow:hover { background: var(--color-primary-soft); }
 .valueGroupRow:hover .valueGroupLabel { color: var(--color-primary-hover); text-decoration: underline; }
 .valueGroupLabel { grid-column: 1 / -1; font-size: var(--fs-base); line-height: 1.35; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

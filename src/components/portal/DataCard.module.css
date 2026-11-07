@@ -20,5 +20,5 @@
 .link:hover { text-decoration: underline; }
 .legend { display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; margin-top: 8px; font-size: var(--fs-sm); color: var(--color-text-secondary); }
 .legend span { display: inline-flex; align-items: center; gap: 6px; }
-.legend i { width: 12px; height: 12px; border-radius: 2px; display: inline-block; }
+.legend i { width: 12px; height: 12px; border-radius: var(--radius-badge); display: inline-block; }
 @media (max-width: 550px) { .card { padding: 18px 16px 14px; } .link { margin-left: 0; } }

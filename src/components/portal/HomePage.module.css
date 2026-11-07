@@ -15,8 +15,8 @@
 .hero .searchHint { margin: 0; font-size: var(--fs-md); line-height: 1.5; color: var(--color-text-secondary); }
 .searchHint a { color: var(--color-primary-hover); font-weight: var(--fw-semibold); }
 .facts { position: relative; z-index: 2; margin-top: -29px; display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 12px; }
-.fact { min-width: 0; min-height: 99px; border: 1px solid var(--color-border); border-radius: 12px; box-shadow: 0 8px 24px rgba(16,54,45,.055); background: #fff; display: flex; align-items: center; gap: 13px; padding: 17px 18px; }
-.factIcon { color: var(--color-primary); background: var(--color-primary-soft); width: 49px; height: 49px; flex: none; border-radius: 12px; display: grid; place-items: center; }
+.fact { min-width: 0; min-height: 99px; border: 1px solid var(--color-border); border-radius: var(--radius-card); box-shadow: var(--shadow-float); background: #fff; display: flex; align-items: center; gap: 13px; padding: 17px 18px; }
+.factIcon { color: var(--color-primary); background: var(--color-primary-soft); width: 49px; height: 49px; flex: none; border-radius: var(--radius-card); display: grid; place-items: center; }
 .fact strong { display: block; font-size: var(--fs-2xl); letter-spacing: -.035em; white-space: nowrap; line-height: 1.2; }
 .fact span:not(.factIcon) { font-size: var(--fs-md); color: var(--color-text-secondary); line-height: 1.4; }
 .paths, .data, .sections { padding-top: 64px; scroll-margin-top: 92px; }
@@ -33,7 +33,7 @@
 .path h3 { font-size: var(--fs-xl); line-height: 1.25; letter-spacing: -.025em; margin: 6px 0 8px; }
 .path p { font-size: var(--fs-lg); line-height: 1.6; color: var(--color-text-secondary); margin: 0 0 16px; }
 .chips { list-style: none; margin: 0 0 18px; padding: 0; display: flex; flex-wrap: wrap; gap: 7px; }
-.chips a { display: inline-block; padding: 5px 11px; border: 1px solid var(--color-border-strong); border-radius: 999px; font-size: var(--fs-md); font-weight: var(--fw-semibold); color: var(--color-text); text-decoration: none; background: var(--color-surface); transition: border-color .15s, background-color .15s; }
+.chips a { display: inline-block; padding: 5px 11px; border: 1px solid var(--color-border-strong); border-radius: var(--radius-pill); font-size: var(--fs-md); font-weight: var(--fw-semibold); color: var(--color-text); text-decoration: none; background: var(--color-surface); transition: border-color .15s, background-color .15s; }
 .chips a:hover { border-color: var(--color-primary); background: var(--color-primary-soft); color: var(--color-primary-hover); }
 .pathCta { margin-top: auto; display: inline-flex; align-items: center; gap: 8px; font-weight: var(--fw-bold); font-size: var(--fs-lg); color: var(--color-primary-hover); text-decoration: none; }
 .pathCta:hover { text-decoration: underline; }
@@ -53,20 +53,20 @@
 /* Działy portalu: lista zamiast kafli */
 .sectionList { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 0 32px; border-top: 1px solid var(--color-border); }
 .sectionList li { border-bottom: 1px solid var(--color-border); }
-.sectionRow { position: relative; display: flex; align-items: center; gap: 14px; padding: 16px 8px; color: var(--color-text); text-decoration: none; border-radius: 8px; }
+.sectionRow { position: relative; display: flex; align-items: center; gap: 14px; padding: 16px 8px; color: var(--color-text); text-decoration: none; border-radius: var(--radius-control); }
 a.sectionRow:hover { background: var(--color-primary-soft); }
 a.sectionRow:hover strong { color: var(--color-primary-hover); }
-.sectionIcon { width: 40px; height: 40px; flex: none; display: grid; place-items: center; border-radius: 10px; background: var(--color-primary-soft); color: var(--color-primary); }
+.sectionIcon { width: 40px; height: 40px; flex: none; display: grid; place-items: center; border-radius: var(--radius-control); background: var(--color-primary-soft); color: var(--color-primary); }
 .sectionText { flex: 1; min-width: 0; display: grid; gap: 2px; }
 .sectionText strong { font-size: var(--fs-lg); }
 .sectionText span { font-size: var(--fs-base); line-height: 1.5; color: var(--color-text-secondary); }
 .sectionArrow { color: var(--color-primary); flex: none; }
 .sectionDisabled { color: var(--color-text-secondary); }
 .sectionDisabled .sectionIcon { background: var(--color-background-muted); color: var(--color-text-tertiary); }
-.topicPlanned { flex: none; color: var(--color-text-secondary); background: var(--color-background-muted); font-size: var(--fs-sm); padding: 4px 8px; border-radius: 5px; font-weight: var(--fw-semibold); }
+.topicPlanned { flex: none; color: var(--color-text-secondary); background: var(--color-background-muted); font-size: var(--fs-sm); padding: 4px 8px; border-radius: var(--radius-badge); font-weight: var(--fw-semibold); }
 .lower { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding-block: 27px 56px; }
-.lowerCard { min-width: 0; border: 1px solid var(--color-border); border-radius: 12px; display: flex; align-items: flex-start; gap: 14px; padding: 23px; }
-.lowerIcon { width: 42px; height: 42px; display: grid; place-items: center; color: var(--color-primary); background: var(--color-primary-soft); border-radius: 10px; flex: none; }
+.lowerCard { min-width: 0; border: 1px solid var(--color-border); border-radius: var(--radius-card); display: flex; align-items: flex-start; gap: 14px; padding: 23px; }
+.lowerIcon { width: 42px; height: 42px; display: grid; place-items: center; color: var(--color-primary); background: var(--color-primary-soft); border-radius: var(--radius-control); flex: none; }
 .lowerCard > div { flex: 1; }
 .lowerCard h2 { font-size: var(--fs-lg); margin: 2px 0 7px; }
 .lowerCard p { font-size: var(--fs-base); color: var(--color-text-secondary); line-height: 1.6; margin: 0; }
@@ -88,7 +88,7 @@ a.sectionRow:hover strong { color: var(--color-primary-hover); }
  .hero p { font-size: var(--fs-lg); line-height: 1.6; margin-bottom: 19px; }
  .facts { gap: 9px; margin-top: -22px; }
  .fact { min-height: 82px; padding: 11px 9px; }
- .factIcon { width: 35px; height: 35px; border-radius: 9px; }
+ .factIcon { width: 35px; height: 35px; border-radius: var(--radius-control); }
  .factIcon svg { width: 20px; height: 20px; }
  .fact strong { font-size: var(--fs-lg); }
  .fact span:not(.factIcon) { font-size: var(--fs-sm); }

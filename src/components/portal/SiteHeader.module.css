@@ -3,10 +3,10 @@
 /* Tryb analizy eksploratora (`data-explorer-focus` na <html>): nagłówek nie zajmuje miejsca, widać tylko pasek 8 px;
    najechanie albo fokus wysuwa go nad treść (bez przesuwania strony). */
 :global(html[data-explorer-focus]) .header { margin-bottom: calc(-1 * var(--atlas-header-height, 75px)); transform: translateY(calc(-100% + 8px)); border-bottom: 3px solid var(--color-primary-outline); }
-:global(html[data-explorer-focus]) .header:hover, :global(html[data-explorer-focus]) .header:focus-within { transform: none; box-shadow: 0 8px 24px rgba(16,24,40,.12); }
+:global(html[data-explorer-focus]) .header:hover, :global(html[data-explorer-focus]) .header:focus-within { transform: none; box-shadow: var(--shadow-float); }
 .inner { width: min(calc(100% - var(--atlas-page-gutter) - var(--atlas-page-gutter)), var(--atlas-page-max)); min-height: 74px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 30px; }
 .brand { display: inline-flex; gap: 10px; align-items: center; text-decoration: none; color: var(--color-text); }
-.brandSymbol { width: 39px; height: 39px; display: grid; place-items: center; color: #fff; background: var(--color-primary); border-radius: 10px; flex: none; }
+.brandSymbol { width: 39px; height: 39px; display: grid; place-items: center; color: #fff; background: var(--color-primary); border-radius: var(--radius-control); flex: none; }
 .brandText { font-size: var(--fs-xl); font-weight: var(--fw-regular); letter-spacing: -.045em; line-height: 1.12; white-space: nowrap; }
 .nav { display: flex; align-items: center; gap: 9px; align-self: stretch; }
 .link { display: inline-flex; align-items: center; justify-content: center; gap: 6px; color: var(--color-text-secondary); text-decoration: none; font-size: var(--fs-lg); font-weight: var(--fw-medium); letter-spacing: -.01em; white-space: nowrap; padding: 7px 12px; border-bottom: 2px solid transparent; transition: color .15s, border-color .15s; }
@@ -14,12 +14,12 @@
 .linkActive { color: var(--color-primary); border-bottom-color: var(--color-primary); }
 .end { display: flex; align-items: center; justify-content: flex-end; min-width: 115px; }
 .searchInline { width: 250px; }
-.searchButton { display: none; border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text); align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 9px; cursor: pointer; }
+.searchButton { display: none; border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text); align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: var(--radius-control); cursor: pointer; }
 .searchPanel { width: min(calc(100% - var(--atlas-page-gutter) - var(--atlas-page-gutter)), var(--atlas-page-max)); margin: 0 auto; padding: 0 0 12px; }
 /* Pole wyszukiwania w nawigacji: węższe od 1360 px, pod 1220 px zamiast pola ikona lupy. */
 @media(max-width: 1360px) { .searchInline { width: 200px; } }
 @media(max-width: 1220px) { .searchInline { display: none; } .searchButton { display: inline-flex; } .end { gap: 10px; } }
-.menuButton { display: none; border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text); align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 9px; }
+.menuButton { display: none; border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text); align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: var(--radius-control); }
 @media(max-width: 1220px) { .inner { gap: 12px; } .nav { gap: 0; } .link { padding: 7px 9px; } .end { min-width: 0; } }
 /* Siedem pozycji menu: od 1060 px menu chowa się pod przyciskiem. */
 @media(max-width: 1060px) {
@@ -29,9 +29,9 @@
  .brandSymbol { width: 36px; height: 36px; }
  .end { gap: 10px; }
  .menuButton { display: inline-flex; }
- .nav { display: none; position: absolute; left: 0; right: 0; top: 100%; background: #fff; border-bottom: 1px solid var(--color-border); padding: 12px 16px 18px; box-shadow: 0 16px 24px rgba(20,60,50,.09); }
+ .nav { display: none; position: absolute; left: 0; right: 0; top: 100%; background: #fff; border-bottom: 1px solid var(--color-border); padding: 12px 16px 18px; box-shadow: var(--shadow-float); }
  .navOpen { display: flex; flex-direction: column; align-items: stretch; }
- .link { justify-content: flex-start; padding: 14px; border-bottom: 0; border-left: 3px solid transparent; border-radius: 5px; }
+ .link { justify-content: flex-start; padding: 14px; border-bottom: 0; border-left: 3px solid transparent; border-radius: var(--radius-badge); }
  .linkActive { background: var(--color-primary-soft); border-left-color: var(--color-primary); }
 }
 

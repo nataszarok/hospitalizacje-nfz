@@ -44,7 +44,7 @@
 .chip {
   padding: 2px 10px;
   border: 1px solid var(--color-primary-outline, var(--color-border-strong));
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--color-primary-soft, var(--color-background-muted));
   color: var(--color-text);
   font: inherit;
@@ -66,7 +66,7 @@
   min-width: 0;
   padding: 10px 12px;
   border: 1px solid var(--color-border);
-  border-radius: 10px;
+  border-radius: var(--radius-control);
   background: #fff;
 }
 
@@ -186,7 +186,7 @@
 .years button {
   padding: 3px 12px;
   border: 1px solid var(--color-border);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: #fff;
   color: var(--color-text);
   font: inherit;
@@ -257,7 +257,7 @@
   gap: 2px;
   height: 28px;
   overflow: hidden;
-  border-radius: 6px;
+  border-radius: var(--radius-control);
 }
 
 .famBar span {
@@ -289,7 +289,7 @@
   min-width: 0;
   padding: 16px 18px;
   border: 1px solid var(--color-border);
-  border-radius: 12px;
+  border-radius: var(--radius-card);
   background: #fff;
   scroll-margin-top: 140px;
 }
@@ -320,7 +320,7 @@
 
 .tag {
   padding: 2px 8px;
-  border-radius: 6px;
+  border-radius: var(--radius-control);
   background: var(--color-background-muted);
   color: var(--color-text-secondary);
   font-size: var(--fs-sm);
@@ -389,7 +389,7 @@
 .heatCell {
   min-width: 52px;
   padding: 0;
-  border-radius: 4px;
+  border-radius: var(--radius-badge);
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
@@ -537,7 +537,7 @@
   align-items: center;
   gap: 10px;
   padding: 3px 6px;
-  border-radius: 6px;
+  border-radius: var(--radius-control);
   outline: none;
   cursor: default;
 }
@@ -582,7 +582,7 @@
   flex-wrap: wrap;
   align-items: center;
   padding: 6px 10px;
-  border-radius: 6px;
+  border-radius: var(--radius-control);
   background: var(--color-text);
   color: #fff;
   font-size: var(--fs-sm);
@@ -597,7 +597,7 @@
   width: 8px;
   height: 8px;
   margin-right: 5px;
-  border-radius: 2px;
+  border-radius: var(--radius-badge);
 }
 
 .admRow:hover .admTip,
@@ -630,7 +630,7 @@
 
 .costFill {
   width: 100%;
-  border-radius: 4px 4px 0 0;
+  border-radius: var(--radius-badge) var(--radius-badge) 0 0;
   background: var(--color-data-soft);
 }
 
@@ -668,7 +668,7 @@
   gap: 2px;
   padding: 8px 12px;
   border: 1px solid var(--color-border);
-  border-radius: 10px;
+  border-radius: var(--radius-control);
 }
 
 .costFacts dt,
@@ -697,7 +697,7 @@
   margin: 0;
   padding: 6px 12px;
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   font-size: var(--fs-md);
   font-variant-numeric: tabular-nums;
 }
@@ -738,7 +738,7 @@
   gap: 10px;
   padding: 12px;
   border: 1px solid var(--color-border);
-  border-radius: 10px;
+  border-radius: var(--radius-control);
   background: var(--color-background-soft);
 }
 
@@ -752,7 +752,7 @@
   gap: 2px;
   height: 26px;
   overflow: hidden;
-  border-radius: 6px;
+  border-radius: var(--radius-control);
 }
 
 .structBar span {
@@ -905,7 +905,7 @@
   flex: none;
   overflow: hidden;
   border: 1px solid var(--color-border);
-  border-radius: 6px;
+  border-radius: var(--radius-control);
   background: #fff;
 }
 

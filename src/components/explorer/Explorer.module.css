@@ -13,7 +13,7 @@
   min-height: 36px;
   padding: 0 14px;
   border: 1px solid var(--color-primary-outline);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--color-surface);
   color: var(--color-primary-hover);
   font-size: var(--fs-md);
@@ -227,7 +227,7 @@
   gap: 8px;
   padding: 5px 4px 5px 8px;
   border: 1px solid var(--color-primary-outline);
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   background: var(--color-primary-soft);
   font-size: var(--fs-sm);
   line-height: 1.35;
@@ -310,7 +310,7 @@
   min-height: 40px;
   padding: 0 16px 0 13px;
   border: 1px solid var(--color-border);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--color-surface);
   color: var(--color-text-secondary);
   font-family: var(--font-display), var(--font-body), sans-serif;
@@ -362,7 +362,7 @@
   min-height: 40px;
   padding: 0;
   border: 1px dashed var(--color-border-strong);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: transparent;
   color: var(--color-text-secondary);
   font-size: var(--fs-md);
@@ -502,7 +502,7 @@
   min-height: 40px;
   padding: 0 16px;
   border: 1px solid var(--color-primary-outline);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--color-primary-soft);
   color: var(--color-primary-hover);
   font-size: var(--fs-md);
@@ -563,7 +563,7 @@
   display: inline-flex;
   overflow: hidden;
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   background: #fff;
 }
 
@@ -763,7 +763,7 @@
   display: inline-block;
   width: 140px;
   height: 8px;
-  border-radius: 4px;
+  border-radius: var(--radius-badge);
 }
 
 .legendSizes {
@@ -831,7 +831,7 @@
   gap: 2px;
   max-width: 300px;
   padding: 7px 10px;
-  border-radius: 4px;
+  border-radius: var(--radius-badge);
   background: var(--color-text);
   color: #ffffff;
   font-size: var(--fs-md);
@@ -922,7 +922,7 @@
 
 .bar {
   height: 10px;
-  border-radius: 0 4px 4px 0;
+  border-radius: 0 var(--radius-badge) var(--radius-badge) 0;
   background: var(--color-data);
 }
 
@@ -951,7 +951,7 @@
   min-width: 0;
   padding: 10px 12px;
   border: 1px solid var(--color-border);
-  border-radius: 10px;
+  border-radius: var(--radius-control);
   background: #fff;
 }
 
@@ -1010,7 +1010,7 @@
   height: 16px;
   flex: none;
   border: 1.6px solid var(--color-primary);
-  border-radius: 3px;
+  border-radius: var(--radius-badge);
   background:
     linear-gradient(var(--color-primary), var(--color-primary)) 0 4px / 100% 1.6px no-repeat,
     linear-gradient(var(--color-primary), var(--color-primary)) 5px 0 / 1.6px 100% no-repeat;
