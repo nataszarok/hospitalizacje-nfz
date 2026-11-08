@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { PortalIcon } from "@/components/portal/PortalIcon";
 import styles from "./DataCard.module.css";
+import { EstimateBadge } from "./EstimateBadge";
 
 export const HOSPITALIZATION_SOURCE = "Dane NFZ o hospitalizacjach";
 
@@ -34,7 +35,7 @@ export function DataCard({ id, kicker, title, lead, children, description, href,
     <div className={`${styles.chart} ${chartAlign === "start" ? styles.chartStart : ""}`}>{children}</div>
     {description ? <div className={styles.description}>{description}</div> : null}
     <footer className={styles.footer}>
-      {estimate ? <span className={styles.badge} title="Wartości „<5” w danych NFZ liczone jako 1 (metoda konserwatywna).">Szacunek</span> : null}
+      {estimate ? <EstimateBadge /> : null}
       <span className={styles.source}>{source}</span>
       {href && cta ? <Link className={styles.link} href={href}>{cta} <PortalIcon name="arrow" size={16} /></Link> : null}
     </footer>

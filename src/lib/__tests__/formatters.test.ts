@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatCityName, formatCompactCount, formatJgpName, formatPln, formatYearRange, shortenName } from "@/lib/formatters";
+import { formatAtLeastCount, formatCityName, formatSigned, formatCompactCount, formatJgpName, formatPln, formatYearRange, shortenName } from "@/lib/formatters";
 
 describe("formatCityName", () => {
   it("formats city names for display without changing stored values", () => {
@@ -7,6 +7,31 @@ describe("formatCityName", () => {
     expect(formatCityName("zielona góra")).toBe("Zielona Góra");
     expect(formatCityName("BIELSKO-BIAŁA")).toBe("Bielsko-Biała");
     expect(formatCityName("  ŁÓDŹ  ")).toBe("Łódź");
+  });
+});
+
+describe("formatSigned", () => {
+  it.each([
+    [5.74, "", "+5,7"],
+    [-1.25, " pp", "−1,3 pp"],
+    [0, " pp", "0,0 pp"],
+    [-9.1, "", "−9,1"],
+  ])("%d%s → %s (polski minus, plus przy dodatnich)", (value, unit, expected) => {
+    expect(formatSigned(value, unit)).toBe(expected);
+  });
+});
+
+describe("formatAtLeastCount", () => {
+  it.each([
+    [49_613_383, "ponad 49 mln"],
+    [49_999_999, "ponad 49 mln"],
+    [1_000_000, "ponad 1 mln"],
+    [48_200, "ponad 48 tys."],
+    [9_999, "9999"],
+    [833, "833"],
+    [0, "0"],
+  ])("%d → %s (dolna granica, część jednostki obcięta)", (value, expected) => {
+    expect(formatAtLeastCount(value)).toBe(expected);
   });
 });
 

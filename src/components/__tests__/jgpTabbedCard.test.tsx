@@ -17,7 +17,6 @@ vi.mock("@/components/jgp/GroupLineChart", () => ({
   </ul>,
 }));
 vi.mock("@/components/jgp/ProviderScatter", () => ({
-  STAR_COLOR: "#D92D20",
   ProviderScatter: ({ points, ariaLabel, curves }: { points: { key: string; name: string; color?: string; label?: string }[]; ariaLabel: string; curves?: unknown[] }) => <div role="group" aria-label={ariaLabel} data-curves={curves?.length ?? 0}>
     {points.map((point) => <span key={point.key} data-color={point.color ?? ""} data-label={point.label ?? ""}>{point.name}</span>)}
   </div>,
@@ -219,13 +218,13 @@ describe("Karta w zakładkach — Gdzie?", () => {
 });
 
 describe("Karta w zakładkach — wybrany ośrodek przy wybranych województwach", () => {
-  it("gwiazdka w tabeli i legendzie, bez podpisu na wykresie; województwa w kolorach mapy", () => {
+  it("znacznik wybranego ośrodka w tabeli i legendzie; województwa w kolorach mapy", () => {
     open("?osrodek=07%7C111&ow=07&ow=12");
     renderCard();
     const rows = within(screen.getByRole("region", { name: /^Lista ośrodków/ })).getAllByRole("row").slice(1);
     const alfa = rows.find((row) => row.textContent?.includes("Szpital Alfa"))!;
-    expect(within(alfa).getByLabelText("wybrany ośrodek")).toHaveTextContent("★");
-    expect(screen.getByRole("list", { name: "Legenda województw" })).toHaveTextContent("★wybrany ośrodek: Szpital Alfa");
+    expect(within(alfa).getByRole("img", { name: "wybrany ośrodek" })).toBeInTheDocument();
+    expect(screen.getByRole("list", { name: "Legenda województw" })).toHaveTextContent("wybrany ośrodek: Szpital Alfa");
     const urgent = screen.getByRole("group", { name: /udział przyjęć nagłych/ });
     expect(within(urgent).getByText("Szpital Alfa")).toHaveAttribute("data-label", "");
     expect(within(urgent).getByText("Szpital Beta")).toHaveAttribute("data-color", "#1A9850");

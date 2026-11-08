@@ -10,15 +10,15 @@
   --hospital-page-gap:16px;
   --hospital-card-gap:14px;
   --hospital-card-bg:#FFFFFF;
-  --hospital-card-border:#E4E7EC;
-  --hospital-card-radius:12px;
+  --hospital-card-border:var(--color-border);
+  --hospital-card-radius:var(--radius-card);
   --hospital-card-padding-y:18px;
   --hospital-card-padding-x:20px;
   --hospital-metric-bg:#FFFFFF;
-  --hospital-title:#101828;
-  --hospital-text:#344054;
-  --hospital-muted:#667085;
-  --hospital-faint:#98A2B3;
+  --hospital-title:var(--color-text);
+  --hospital-text:var(--color-text);
+  --hospital-muted:var(--color-text-tertiary);
+  --hospital-faint:var(--color-text-tertiary);
   min-width:0;
   container-type:inline-size;
   container-name:hospital-profile;
@@ -85,7 +85,7 @@
   box-sizing:border-box;
   background:var(--hospital-metric-bg);
   border:1px solid var(--hospital-card-border);
-  border-radius:10px;
+  border-radius:var(--radius-control);
   box-shadow:none;
 }
 
@@ -100,18 +100,18 @@
   min-height:360px;
   display:grid;
   place-items:center;
-  color:#667085;
-  border:1px dashed #D0D5DD;
-  border-radius:12px;
-  background:#FCFCFD;
+  color:var(--color-text-tertiary);
+  border:1px dashed var(--color-border);
+  border-radius:var(--radius-card);
+  background:var(--color-background);
 }
 
 /* Shared chart-card primitive used by Summary and comparison. */
 .hospital-peer-chart-card{
   min-width:0;
   padding:15px 15px 7px;
-  border:1px solid #E3E8F0;
-  border-radius:14px;
+  border:1px solid var(--color-border);
+  border-radius:var(--radius-card);
   background:#fff;
 }
 
@@ -127,7 +127,7 @@
 .hospital-peer-chart-head span{
   display:block;
   margin-bottom:2px;
-  color:#7B8494;
+  color:var(--color-text-tertiary);
   font-size:var(--fs-2xs);
   font-weight:var(--fw-bold);
   letter-spacing:.06em;
@@ -136,14 +136,14 @@
 
 .hospital-peer-chart-head h3{
   margin:0;
-  color:#172033;
+  color:var(--color-text);
   font-size:var(--fs-base);
   line-height:1.2;
 }
 
 .hospital-peer-chart-head small{
   max-width:220px;
-  color:#98A2B3;
+  color:var(--color-text-tertiary);
   font-size:var(--fs-2xs);
   line-height:1.3;
   text-align:right;
@@ -169,17 +169,17 @@
 
 .hospital-sort-header:hover,
 .hospital-sort-header.is-active{
-  color:#101828;
+  color:var(--color-text);
 }
 
 .hospital-sort-icon{
   font-size:var(--fs-2xs);
   line-height:1;
-  color:#98A2B3;
+  color:var(--color-text-tertiary);
 }
 
 .hospital-sort-header.is-active .hospital-sort-icon{
-  color:#344054;
+  color:var(--color-text);
 }
 
 /* Shared tooltip primitive used by Summary and comparison views. */
@@ -191,10 +191,10 @@
   top:calc(100% - 4px);
   width:min(370px,calc(100vw - 48px));
   padding:12px;
-  border:1px solid #D9E0EA;
-  border-radius:11px;
+  border:1px solid var(--color-border);
+  border-radius:var(--radius-card);
   background:#FFFFFF;
-  box-shadow:0 14px 34px rgba(16,24,40,.14);
+  box-shadow:var(--shadow-float);
 }
 
 .hospital-peer-tooltip-head,
@@ -209,46 +209,46 @@
 .hospital-peer-tooltip-head{
   padding-bottom:8px;
   margin-bottom:5px;
-  border-bottom:1px solid #EDF1F6;
+  border-bottom:1px solid var(--color-border-subtle);
 }
 
 .hospital-peer-tooltip-head>b{
-  color:#344054;
+  color:var(--color-text);
   font-size:var(--fs-xs);
 }
 
 .hospital-peer-tooltip-head>strong{
-  color:var(--primary);
+  color:var(--color-primary);
   font-size:var(--fs-md);
 }
 
 .hospital-peer-tooltip-row{
   padding:5px 0;
-  color:#475467;
+  color:var(--color-text-secondary);
   font-size:var(--fs-2xs);
 }
 
 .hospital-peer-tooltip-row>b{
-  color:#172033;
+  color:var(--color-text);
   font-size:var(--fs-2xs);
 }
 
 .hospital-peer-tooltip-sub{
   padding:2px 0 2px 10px;
-  color:#98A2B3;
+  color:var(--color-text-tertiary);
   font-size:var(--fs-2xs);
 }
 
 .hospital-peer-tooltip-sub>b{
-  color:#667085;
+  color:var(--color-text-tertiary);
 }
 
 .hospital-peer-tooltip>small{
   display:block;
   margin-top:7px;
   padding-top:7px;
-  border-top:1px solid #EDF1F6;
-  color:#98A2B3;
+  border-top:1px solid var(--color-border-subtle);
+  color:var(--color-text-tertiary);
   font-size:var(--fs-2xs);
   line-height:1.35;
 }
@@ -256,7 +256,7 @@
 .hospital-peer-tooltip-group + .hospital-peer-tooltip-group{
   margin-top:8px;
   padding-top:8px;
-  border-top:1px solid #EDF1F6;
+  border-top:1px solid var(--color-border-subtle);
 }
 
 .hospital-peer-tooltip-grouphead{
@@ -268,12 +268,12 @@
 }
 
 .hospital-peer-tooltip-grouphead>b{
-  color:#344054;
+  color:var(--color-text);
   font-size:var(--fs-2xs);
 }
 
 .hospital-peer-tooltip-grouphead>strong{
-  color:var(--primary);
+  color:var(--color-primary);
   font-size:var(--fs-xs);
 }
 
@@ -281,7 +281,7 @@
 #hospital-sidebar-slot .filter-section,
 #hospital-sidebar-bottom-slot .filter-section{
   padding:12px!important;
-  border-radius:11px!important;
+  border-radius:var(--radius-card)!important;
 }
 
 #hospital-sidebar-slot .sidebar-kicker,
@@ -338,11 +338,11 @@
 /* Suwak dystansu par (widok Porównanie) */
 .hospital-peer-distance { display:grid; gap:8px; }
 .hospital-peer-distance-head { display:flex; justify-content:space-between; align-items:baseline; gap:8px; font-size:var(--fs-sm); }
-.hospital-peer-distance-head b { font-weight:var(--fw-bold); color:var(--text); }
-.hospital-peer-distance-head span { color:var(--muted); font-variant-numeric:tabular-nums; }
+.hospital-peer-distance-head b { font-weight:var(--fw-bold); color:var(--color-text); }
+.hospital-peer-distance-head span { color:var(--color-text-tertiary); font-variant-numeric:tabular-nums; }
 .hospital-peer-distance-slider { margin:4px 2px 18px; }
-.hospital-peer-distance-slider .mantine-Slider-markLabel { font-size:var(--fs-2xs); color:var(--muted); }
-.hospital-peer-distance-scale { display:flex; justify-content:space-between; font-size:var(--fs-xs); color:var(--muted); }
-.hospital-peer-distance-reset { justify-self:start; padding:0; border:0; background:none; color:var(--primary); font-size:var(--fs-sm); font-weight:var(--fw-semibold); text-decoration:underline; text-underline-offset:2px; }
+.hospital-peer-distance-slider .mantine-Slider-markLabel { font-size:var(--fs-2xs); color:var(--color-text-tertiary); }
+.hospital-peer-distance-scale { display:flex; justify-content:space-between; font-size:var(--fs-xs); color:var(--color-text-tertiary); }
+.hospital-peer-distance-reset { justify-self:start; padding:0; border:0; background:none; color:var(--color-primary); font-size:var(--fs-sm); font-weight:var(--fw-semibold); text-decoration:underline; text-underline-offset:2px; }
 .hospital-comparison-subtab { transition:opacity .18s ease; }
 .hospital-comparison-subtab.is-updating { opacity:.72; }

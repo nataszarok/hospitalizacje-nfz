@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { GroupLineChart, type ChartLine } from "@/components/jgp/GroupLineChart";
 import { RegionMap, regionTitle } from "@/components/jgp/RegionMap";
-import { ProviderScatter, STAR_COLOR, type ScatterCurve, type ScatterPoint } from "@/components/jgp/ProviderScatter";
+import { ProviderScatter, type ScatterCurve, type ScatterPoint } from "@/components/jgp/ProviderScatter";
 import { ProviderLink } from "@/components/TableLinks";
 import { formatCityName } from "@/lib/formatters";
 import {
@@ -15,7 +15,7 @@ import type { JgpPageData, JgpProviderRow } from "@/lib/jgpPage";
 import { hospitalHref } from "@/lib/portalLinks";
 import base from "./JgpPage.module.css";
 import styles from "./JgpTabs.module.css";
-import { OTHER_POINT, REGION_PICK_COLORS } from "@/lib/chartPalette";
+import { BASE_POINT, CHART_COLORS, DEVIATION_COLORS, OTHER_POINT, REGION_PICK_COLORS } from "@/lib/chartPalette";
 import { TREND_METRICS, type TrendMetric } from "@/lib/trendMetrics";
 
 const integer = (value: number) => Math.round(value).toLocaleString("pl-PL");
@@ -41,7 +41,7 @@ const subscribeNothing = () => () => {};
 // Kolory wybranych województw i ośrodków spoza nich: wspólna paleta z eksploratorem (`chartPalette`).
 /** Kolor każdego wybranego województwa (kolejność wyboru), ten sam na mapie, wykresach i w tabeli. */
 const regionColors = (regions: string[]) => new Map(regions.map((ow, i) => [ow, REGION_PICK_COLORS[i % REGION_PICK_COLORS.length]]));
-const FUNNEL_COLORS = { up95: "#E3A27F", up998: "#B4441B", down95: "#8FB0DD", down998: "#2856A3" };
+const FUNNEL_COLORS = DEVIATION_COLORS;
 
 export type CardTab = "przeglad" | "osrodki";
 
@@ -413,7 +413,7 @@ function RegionsSection({ data, pool, map, regions, onToggle, onYear, onRegionYe
                 {heat.map((year) => {
                   const value = year.values.get(row.owNfz) ?? 0;
                   const pos = position(value, year.national);
-                  return <td key={year.year} data-year={year.year} className={styles.heatCell} style={{ background: scaleColor(pos), color: pos > 0.15 ? "#fff" : "#172033" }}>
+                  return <td key={year.year} data-year={year.year} className={styles.heatCell} style={{ background: scaleColor(pos), color: pos > 0.15 ? "#fff" : CHART_COLORS.text }}>
                     <button type="button" className={styles.heatButton} onClick={() => onRegionYear(row.owNfz, year.year)} title={`${names.get(row.owNfz)} ${year.year}: ${integer(value)} na 100 tys. — kliknij, żeby pokazać ten rok i województwo`}>{integer(value)}</button>
                   </td>;
                 })}
@@ -494,7 +494,7 @@ function ProfileSection({ data }: { data: JgpPageData }) {
 function FamilySection({ data }: { data: JgpPageData }) {
   const family = data.family!;
   const years = data.catalogYears;
-  const palette = ["#2856A3", "#6F8FC9", "#A9BCE0", "#5B8C7A", "#A3C4B5", "#C9A86A", "#E2CFA3"];
+  const palette = [CHART_COLORS.data, "#6F8FC9", "#A9BCE0", "#5B8C7A", "#A3C4B5", "#C9A86A", "#E2CFA3"];
   const color = new Map(family.variants.map((variant, i) => [variant.code, palette[i % palette.length]]));
   const totals = years.map((_, j) => family.variants.reduce((sum, variant) => sum + (variant.values[j] ?? 0), 0));
   const own = family.variants.find((variant) => variant.code === data.jgpCode);
@@ -541,7 +541,7 @@ function ProvidersTab({ data, pool, comparison, regions, selectedRow, scope, fil
   const regionColor = useMemo(() => regionColors(regions), [regions]);
   const lines = useMemo((): ChartLine[] => {
     const shown = selectedRow && !top.includes(selectedRow) ? [...top, selectedRow] : top;
-    // Linie ośrodków szare; wybrany ośrodek – czerwona linia z podpisem „★ nazwa”.
+    // Linie ośrodków szare; wybrany ośrodek – linia w kolorze sygnału z podpisem (nazwa).
     return shown.map((row) => ({
       key: row.key,
       name: `${data.providers.indexOf(row) + 1}. ${row.name}`,
@@ -561,10 +561,10 @@ function ProvidersTab({ data, pool, comparison, regions, selectedRow, scope, fil
         height={300}
         onSelect={onSelect}
         onHover={setHoverKey}
-        selectedColor={STAR_COLOR}
+        selectedColor={CHART_COLORS.signal}
         highlightYear={data.year}
         period={period}
-        selectedLabel={selectedRow ? `★ ${selectedRow.name.length > 40 ? `${selectedRow.name.slice(0, 39)}…` : selectedRow.name}` : undefined}
+        selectedLabel={selectedRow ? (selectedRow.name.length > 40 ? `${selectedRow.name.slice(0, 39)}…` : selectedRow.name) : undefined}
         ariaLabel={`Wykres liniowy: hospitalizacje ${periodWord(period)} w ${lines.length} ośrodkach`}
       />
       <ProviderBar
@@ -594,7 +594,7 @@ function ProviderBar({ data, pool, regionColor, row, preview, selected, details,
   const rank = pool.indexOf(row) + 1;
   const change = yearChangePct(row.hospitalizations, row.previousHospitalizations);
   return <p className={`${styles.bar} ${preview ? styles.barPreview : ""}`} aria-live="polite">
-    {selected ? <span className={styles.star} aria-hidden>★</span> : <i className={styles.dot} style={{ background: regionColor.get(row.owNfz) ?? "#98A2B3" }} aria-hidden />}
+    {selected ? <i className={styles.selectedDot} aria-hidden /> : <i className={styles.dot} style={{ background: regionColor.get(row.owNfz) ?? CHART_COLORS.borderStrong }} aria-hidden />}
     <b>{row.name}</b>
     <span className={styles.hint}>{formatCityName(row.city)} · {row.voivodeship}</span>
     <span className={styles.barChip}><b>{integer(row.hospitalizations)}</b> hosp. {data.year}</span>
@@ -633,7 +633,7 @@ function ProviderDetails({ data, row, comparison, scope, onScope }: { data: JgpP
 function Spark({ values }: { values: number[] }) {
   const max = Math.max(...values, 1);
   const points = values.map((value, i) => `${((i / Math.max(values.length - 1, 1)) * 80).toFixed(1)},${(20 - (value / max) * 18).toFixed(1)}`).join(" ");
-  return <svg className={styles.spark} viewBox="0 0 80 22" aria-hidden><polyline points={points} fill="none" stroke="#2856A3" strokeWidth="1.4" /></svg>;
+  return <svg className={styles.spark} viewBox="0 0 80 22" aria-hidden><polyline points={points} fill="none" stroke={CHART_COLORS.data} strokeWidth="1.4" /></svg>;
 }
 
 function RankingSection({ data, pool, selectedRow, filtered, regionColor, onSelect, onHover }: {
@@ -643,7 +643,7 @@ function RankingSection({ data, pool, selectedRow, filtered, regionColor, onSele
   const visible = mounted ? pool : pool.slice(0, SERVER_ROWS);
   const total = pool.reduce((sum, row) => sum + row.hospitalizations, 0);
   const shares = structureShares(pool);
-  const colors = ["#2856A3", "#6F8FC9", "#A9BCE0"];
+  const colors = [CHART_COLORS.data, "#6F8FC9", "#A9BCE0"];
   const yearAt = data.admissionYears.indexOf(data.year);
   const previousYear = yearAt > 0 ? data.admissionYears[yearAt - 1] : undefined;
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -687,8 +687,8 @@ function RankingSection({ data, pool, selectedRow, filtered, regionColor, onSele
             >
               <td>{data.providers.indexOf(row) + 1}</td>
               <td className={styles.nameCell}>
-                {/* Znak jak na wykresach: gwiazdka = wybrany ośrodek, kropka = kolor województwa. */}
-                {isSelected ? <span className={styles.star} aria-label="wybrany ośrodek">★</span> : regionColor.has(row.owNfz) ? <i className={styles.dot} style={{ background: regionColor.get(row.owNfz) }} aria-hidden /> : null}
+                {/* Znak jak na wykresach: kropka sygnału = wybrany ośrodek, kropka = kolor województwa. */}
+                {isSelected ? <i className={styles.selectedDot} role="img" aria-label="wybrany ośrodek" /> : regionColor.has(row.owNfz) ? <i className={styles.dot} style={{ background: regionColor.get(row.owNfz) }} aria-hidden /> : null}
                 <ProviderLink owNfz={row.owNfz} nip={row.nip} name={row.name} /><small>{formatCityName(row.city)} · {row.voivodeship}</small>
               </td>
               {previousYear ? <td className={base.num}>{row.previousHospitalizations === null ? "—" : integer(row.previousHospitalizations)}</td> : null}
@@ -717,7 +717,7 @@ function HowSection({ data, rows, regions, selectedRow, onSelect }: { data: JgpP
   const regionColor = useMemo(() => regionColors(regions), [regions]);
   const highlight = regions.length > 0;
   const colorOf = useCallback((row: JgpProviderRow, fallback?: string) => highlight ? regionColor.get(row.owNfz) ?? OTHER_POINT : fallback, [highlight, regionColor]);
-  // Wybrany ośrodek: czerwona gwiazdka; nazwa i liczby tylko w podpowiedzi, jak przy innych punktach.
+  // Wybrany ośrodek: kolor sygnału; na lejku grafitowy punkt z podpisem (skala odchylenia zajmuje ciepłe kolory i błękity).
   const point = useCallback((row: JgpProviderRow, y: number, line: string, color?: string): ScatterPoint => ({
     key: row.key, name: row.name, lines: [`${formatCityName(row.city)} · OW ${row.voivodeship}`, line], x: row.hospitalizations, y, selected: row === selectedRow, color,
   }), [selectedRow]);
@@ -733,8 +733,8 @@ function HowSection({ data, rows, regions, selectedRow, onSelect }: { data: JgpP
     const xMax = Math.max(...rows.map((row) => row.hospitalizations), 10);
     const c = funnelCurves(stats.mortalityPct, Math.max(5, Math.round(xMax * 0.01)), Math.round(xMax * 1.05));
     const curves: ScatterCurve[] = [
-      { x: c.x, y: c.inner[0], color: "#98A2B3", dash: "dot" }, { x: c.x, y: c.inner[1], color: "#98A2B3", dash: "dot" },
-      { x: c.x, y: c.outer[0], color: "#667085", dash: "dash" }, { x: c.x, y: c.outer[1], color: "#667085", dash: "dash" },
+      { x: c.x, y: c.inner[0], color: CHART_COLORS.borderStrong, dash: "dot" }, { x: c.x, y: c.inner[1], color: CHART_COLORS.borderStrong, dash: "dot" },
+      { x: c.x, y: c.outer[0], color: CHART_COLORS.textTertiary, dash: "dash" }, { x: c.x, y: c.outer[1], color: CHART_COLORS.textTertiary, dash: "dash" },
     ];
     return { points, curves };
   }, [rows, point, colorOf, showFunnel, stats.mortalityPct]);
@@ -742,7 +742,7 @@ function HowSection({ data, rows, regions, selectedRow, onSelect }: { data: JgpP
   const referenceMortality = useMemo(() => ({ y: stats.mortalityPct, label: `grupa: ${pct(stats.mortalityPct, stats.mortalityPct < 1 ? 2 : 1)}` }), [stats.mortalityPct]);
   const names = new Map(data.regions.map((row) => [row.owNfz, row.name]));
   const regionLegend = highlight || selectedRow ? <ul className={base.legend} aria-label="Legenda województw">
-    {selectedRow ? <li><span className={styles.star} aria-hidden>★</span>wybrany ośrodek: {selectedRow.name}</li> : null}
+    {selectedRow ? <li><i className={styles.selectedDot} aria-hidden />wybrany ośrodek: {selectedRow.name}</li> : null}
     {regions.map((ow) => <li key={ow}><span className={base.swatch} style={{ background: regionColor.get(ow) }} aria-hidden />{(names.get(ow) ?? ow).toLocaleLowerCase("pl-PL")}</li>)}
     {highlight ? <li><span className={base.swatch} style={{ background: OTHER_POINT }} aria-hidden />pozostałe ośrodki</li> : null}
   </ul> : null;
@@ -752,16 +752,17 @@ function HowSection({ data, rows, regions, selectedRow, onSelect }: { data: JgpP
     <div className={styles.two}>
       <div>
         <h3 className={base.chartTitle}>Udział przyjęć nagłych</h3>
-        <ProviderScatter points={urgency} xTitle="Hospitalizacje" yTitle="Nagłe" ySuffix="%" reference={referenceUrgent} onSelect={onSelect} height={300} marker="star" ariaLabel={`Wykres punktowy: ${rows.length} ośrodków, liczba hospitalizacji i udział przyjęć nagłych`} />
+        <ProviderScatter points={urgency} xTitle="Hospitalizacje" yTitle="Nagłe" ySuffix="%" reference={referenceUrgent} onSelect={onSelect} height={300} marker="signal" ariaLabel={`Wykres punktowy: ${rows.length} ośrodków, liczba hospitalizacji i udział przyjęć nagłych`} />
       </div>
       <div>
         <h3 className={base.chartTitle}>{showFunnel ? "Śmiertelność: wykres lejkowy" : "Śmiertelność"}</h3>
-        <ProviderScatter points={mortality.points} curves={mortality.curves} xTitle="Hospitalizacje" yTitle="Śmiertelność" ySuffix="%" reference={referenceMortality} onSelect={onSelect} height={300} marker="star" ariaLabel={`${showFunnel ? "Wykres lejkowy" : "Wykres punktowy"}: ${rows.length} ośrodków, śmiertelność względem liczby hospitalizacji`} />
+        <ProviderScatter points={mortality.points} curves={mortality.curves} xTitle="Hospitalizacje" yTitle="Śmiertelność" ySuffix="%" reference={referenceMortality} onSelect={onSelect} height={300} marker={showFunnel ? "graphite" : "signal"} ariaLabel={`${showFunnel ? "Wykres lejkowy" : "Wykres punktowy"}: ${rows.length} ośrodków, śmiertelność względem liczby hospitalizacji`} />
         {showFunnel && !highlight ? <ul className={base.legend} aria-label="Legenda lejka">
-          <li><span className={base.swatch} style={{ background: "rgba(40, 86, 163, 0.55)" }} aria-hidden />w granicach</li>
+          <li><span className={base.swatch} style={{ background: BASE_POINT }} aria-hidden />w granicach</li>
           <li><span className={base.swatch} style={{ background: FUNNEL_COLORS.up95 }} aria-hidden />powyżej 95%</li>
           <li><span className={base.swatch} style={{ background: FUNNEL_COLORS.up998 }} aria-hidden />powyżej 99,8%</li>
           <li><span className={base.swatch} style={{ background: FUNNEL_COLORS.down998 }} aria-hidden />poniżej granic</li>
+          {selectedRow ? <li><i className={styles.graphiteDot} aria-hidden />wybrany ośrodek</li> : null}
         </ul> : null}
         {!showFunnel ? <p className={base.note}>Bez granic lejka: {integer(stats.deaths)} {stats.deaths === 1 ? "zgon" : "zgonów"} w grupie w {data.year} r. to za mało, żeby odróżnić różnice między ośrodkami od przypadku (granice rysujemy od {MIN_FUNNEL_DEATHS} zgonów).</p> : null}
       </div>

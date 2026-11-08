@@ -14,7 +14,12 @@ import {
   areaHighlightKey,
   areaHighlightTitle,
   attachHoverMarker,
+  axisTitle,
+  baselineShape,
   getCommonPlotLayout,
+  hoverTemplate,
+  measureAxis,
+  paddedRange,
   PLOT_TOOLBAR_MARGIN,
   HIGHLIGHT_COLORS,
   makeDimensionLegendTraces,
@@ -121,17 +126,19 @@ export function MortalityChart({
             color: "#FFFFFF",
           },
         },
-        hovertemplate: [
-          "<b>%{customdata[0]}</b>",
-          "NIP: %{customdata[1]}",
-          "Województwo: %{customdata[3]}",
-          "Miejscowość: %{customdata[4]}",
-          isCombined ? "Kody JGP: %{customdata[8]}" : "Kod JGP: %{customdata[8]}",
-          "Hospitalizacje: %{customdata[5]:,.0f}",
-          "Zgony: %{customdata[6]:,.0f}",
-          "Śmiertelność: %{y:.2f}%",
-          "<extra></extra>",
-        ].join("<br>"),
+        // Kolejność dymka: nazwa, kontekst (miejscowość · województwo · JGP), oś Y, oś X, NIP na końcu.
+        hovertemplate: hoverTemplate({
+          title: "%{customdata[0]}",
+          context: "%{customdata[4]} · %{customdata[3]} · %{customdata[8]}",
+          rows: [
+            { label: "Śmiertelność", value: "%{y:.2f}%" },
+            axisMode === "per_100k"
+              ? { label: "Hospitalizacje na 100 tys.", value: "%{customdata[7]:,.1f}" }
+              : { label: "Hospitalizacje", value: "%{customdata[5]:,.0f}" },
+            { label: "Zgony", value: "%{customdata[6]:,.0f}" },
+          ],
+          footer: "NIP %{customdata[1]}",
+        }),
       });
 
       const traces: Record<string, unknown>[] = [];
@@ -210,17 +217,9 @@ export function MortalityChart({
       const hoverTraceIndex = traces.length;
       traces.push(makeHoverTrace());
 
-      const maxMortality = Math.max(
-        0,
-        ...rows.map((row) => row.mortalityPct),
-      );
-
-      const maxRange = Math.max(
-        1,
-        Math.ceil(maxMortality * 1.1),
-      );
-
-      const minRange = -maxRange * 0.02;
+      // Ten sam margines na obu osiach (−6% / +10%); zero rysuje podstawa pod danymi.
+      const xValues = traces.flatMap((trace) => (trace.x as (number | null)[] | undefined) ?? []);
+      const yValues = rows.map((row) => row.mortalityPct);
 
       await Plotly.react(
         chartRef.current,
@@ -228,30 +227,17 @@ export function MortalityChart({
         {
           ...getCommonPlotLayout(showLegend),
           margin: { ...getCommonPlotLayout(showLegend).margin, t: PLOT_TOOLBAR_MARGIN },
-          xaxis: {
-            title: {
-              text: axisMode === "per_100k"
-                ? "Hospitalizacje na 100 tys. mieszkańców"
-                : "Liczba hospitalizacji",
-              standoff: 18,
-              font: { size: 14, color: "#344054" },
-            },
-            gridcolor: "#EEF1F5",
-            zerolinecolor: "#EEF1F5",
-            zerolinewidth: 3,
-          },
-          yaxis: {
-            title: {
-              text: "Śmiertelność (%)",
-              standoff: 18,
-              font: { size: 14, color: "#344054" },
-            },
-            tickfont: { size: 11, color: "#667085" },
-            gridcolor: "#EEF1F5",
-            zerolinecolor: "#EEF1F5",
-            zerolinewidth: 3,
-            range: [minRange, maxRange],
-          },
+          xaxis: measureAxis({
+            title: axisTitle(axisMode === "per_100k" ? "Hospitalizacje na 100 tys. mieszkańców" : "Liczba hospitalizacji", 18),
+            range: paddedRange(xValues),
+            ...(axisMode === "per_100k" ? {} : { tickformat: ",.0f" }),
+          }),
+          yaxis: measureAxis({
+            title: axisTitle("Śmiertelność (%)", 18),
+            range: paddedRange(yValues),
+            ticksuffix: "%",
+          }),
+          shapes: [baselineShape("y"), baselineShape("x")],
         },
         PLOTLY_CONFIG,
       );

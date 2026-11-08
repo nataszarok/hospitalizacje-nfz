@@ -72,7 +72,7 @@ describe("HospitalSimilarityTab — porównanie modelu par", () => {
 
   it("ładuje plik peer_pairs_ab oraz JGP i renderuje porównania", async () => {
     render(<HospitalSimilarityTab {...props} />);
-    expect(await screen.findByText(/Jak ten szpital wygląda na tle wybranych peerów/)).toBeInTheDocument();
+    expect(await screen.findByText(/Jak ten szpital wygląda na tle podobnych szpitali/)).toBeInTheDocument();
     expect(fetch).toHaveBeenCalledWith("/data/peer_pairs_ab.json.gz", { cache: "force-cache" });
     expect(mocks.loadJgpValuations).toHaveBeenCalled();
     expect(screen.getByTestId("peer-charts")).toHaveTextContent("true");
@@ -134,7 +134,7 @@ describe("HospitalSimilarityTab — porównanie modelu par", () => {
 
   it("wyświetla metodologię i aktualny zakres filtrów w dialogu", async () => {
     render(<HospitalSimilarityTab {...props} gradeScope="AB" maxDistance={5} />);
-    await screen.findByText(/Jak ten szpital wygląda na tle wybranych peerów/);
+    await screen.findByText(/Jak ten szpital wygląda na tle podobnych szpitali/);
     fireEvent.click(screen.getByRole("button", { name: "Jak wybieramy placówki porównawcze" }));
     const dialog = screen.getByRole("dialog");
     expect(dialog).toHaveTextContent("A + B");
@@ -145,7 +145,7 @@ describe("HospitalSimilarityTab — porównanie modelu par", () => {
 
   it("pokazuje grupę porównawczą po kliknięciu przycisku", async () => {
     render(<HospitalSimilarityTab {...props} />);
-    await screen.findByText(/Jak ten szpital wygląda na tle wybranych peerów/);
+    await screen.findByText(/Jak ten szpital wygląda na tle podobnych szpitali/);
     fireEvent.click(screen.getByRole("button", { name: /Grupa porównawcza/ }));
     expect(screen.getByRole("dialog")).toBeInTheDocument();
     expect(screen.getByRole("dialog")).toHaveTextContent("SZPITAL PORÓWNAWCZY");
@@ -153,7 +153,7 @@ describe("HospitalSimilarityTab — porównanie modelu par", () => {
 
   it("przy zmianie dystansu zostawia poprzedni wynik do czasu przeliczenia", async () => {
     const { rerender } = render(<HospitalSimilarityTab {...props} gradeScope="A" maxDistance={10} />);
-    await screen.findByText(/Jak ten szpital wygląda na tle wybranych peerów/);
+    await screen.findByText(/Jak ten szpital wygląda na tle podobnych szpitali/);
     rerender(<HospitalSimilarityTab {...props} gradeScope="AB" maxDistance={12} />);
     expect(screen.queryByText(/Ładowanie analizy porównawczej/)).not.toBeInTheDocument();
     expect(screen.getByTestId("peer-charts")).toBeInTheDocument();
@@ -165,7 +165,7 @@ describe("HospitalSimilarityTab — porównanie modelu par", () => {
 
   it("przy zmianie szpitala nie pokazuje wyniku poprzedniej placówki", async () => {
     const { rerender } = render(<HospitalSimilarityTab {...props} />);
-    await screen.findByText(/Jak ten szpital wygląda na tle wybranych peerów/);
+    await screen.findByText(/Jak ten szpital wygląda na tle podobnych szpitali/);
     rerender(<HospitalSimilarityTab {...props} hospitalKey={pairA.b} />);
     expect(screen.getByText(/Ładowanie analizy porównawczej/)).toBeInTheDocument();
     expect(screen.queryByTestId("peer-charts")).not.toBeInTheDocument();

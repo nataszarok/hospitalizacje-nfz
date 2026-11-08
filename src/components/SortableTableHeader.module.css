@@ -16,22 +16,22 @@
 
 .button:hover,
 .button:focus-visible {
-  color: var(--primary);
+  color: var(--color-primary);
 }
 
 .button:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--primary) 35%, transparent);
+  outline: 2px solid color-mix(in srgb, var(--color-primary) 35%, transparent);
   outline-offset: 2px;
-  border-radius: 3px;
+  border-radius: var(--radius-badge);
 }
 
 .active {
-  color: var(--primary);
+  color: var(--color-primary);
 }
 
 .icon {
   flex: none;
-  color: #98A2B3;
+  color: var(--color-text-tertiary);
   font-size: var(--fs-xs);
   line-height: 1;
 }

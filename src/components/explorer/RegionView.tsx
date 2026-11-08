@@ -5,7 +5,7 @@ import { InfoTip } from "@/components/InfoTip";
 import { RegionMap } from "@/components/jgp/RegionMap";
 import { ProviderLink } from "@/components/TableLinks";
 import { areaLabel, areaToValue, inArea, MAX_AREAS, type AnalysisArea } from "@/lib/area";
-import { REGION_PICK_COLORS } from "@/lib/chartPalette";
+import { CHART_COLORS, REGION_PICK_COLORS } from "@/lib/chartPalette";
 import { formatCityName } from "@/lib/formatters";
 import { cartogramCells, scaleColor, type CartogramCell, type RegionsMap } from "@/lib/jgpCard";
 import {
@@ -332,7 +332,7 @@ function FacilityMap({ map, dots, mapYear, areas, areaColor, median: yearMedian,
   const tipArea = hover ? areaOf(hover.dot) : undefined;
   return <div ref={wrapRef} className={styles.facilityMap} onMouseLeave={() => setHover(null)}>
     <svg className={jgp.regionMap} viewBox={`0 0 ${width} ${height}`} role="group" aria-label={`Mapa placówek: hospitalizacje w ${mapYear} r.`}>
-      {map.regions.map(([code, , path]) => <path key={code} d={path} className={styles.cityMapRegion} fill="#EEF2F7" aria-hidden />)}
+      {map.regions.map(([code, , path]) => <path key={code} d={path} className={styles.cityMapRegion} fill={CHART_COLORS.backgroundMuted} aria-hidden />)}
       {shown.map((dot) => {
         const selected = focus?.facility === dot.facility || (focus?.facility === undefined && focus?.city === dot.city);
         const area = areaOf(dot);

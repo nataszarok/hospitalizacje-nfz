@@ -250,7 +250,7 @@ export interface DatasetHighlights {
   /** Zakres lat w zbiorze. POC ma kilka lat; docelowo zbiór obejmie całą dostępną historię. */
   yearFrom: string;
   yearTo: string;
-  /** Szacunek metodą symulacyjną (wartości <5 losowane z rozkładu), suma za wszystkie lata. */
+  /** Szacunek konserwatywny (metoda min: każde „<5” = 1), suma za wszystkie lata — ta sama metoda co wykresy strony głównej. */
   hospitalizations: number;
   /** Świadczeniodawcy i grupy JGP obecni w którymkolwiek roku. */
   providers: number;
@@ -265,9 +265,9 @@ export function datasetHighlights(datasets: StaticDataset | StaticDataset[]): Da
   const jgpGroups = new Set<string>();
   let hospitalizations = 0;
   for (const d of list) {
-    for (const [ow, nip, , , , hSim] of d.facts) {
+    for (const [ow, nip, , , , , hMin] of d.facts) {
       providers.add(`${ow}|${nip}`);
-      hospitalizations += hSim;
+      hospitalizations += hMin;
     }
     for (const [, jgp] of d.products) if (jgp?.trim()) jgpGroups.add(jgp.trim());
   }

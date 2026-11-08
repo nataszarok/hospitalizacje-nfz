@@ -8,6 +8,8 @@ import { DASHBOARD_HREFS } from "@/lib/dashboardNavigation";
 import { formatYearRange } from "@/lib/formatters";
 import { STAY_BUCKETS, TREND_MIN_HOSPITALIZATIONS, type HospitalizationSummary } from "@/lib/hospitalizationSummary";
 import styles from "./HospitalizationSummaryPage.module.css";
+import { CHART_COLORS } from "@/lib/chartPalette";
+import { EstimateBadge } from "@/components/portal/EstimateBadge";
 
 const integer = (value: number) => Math.round(value).toLocaleString("pl-PL");
 const decimal = (value: number) => value.toLocaleString("pl-PL", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
@@ -76,7 +78,7 @@ export function HospitalizationSummaryPage({ summary }: { summary: Hospitalizati
       <nav className={styles.toc} aria-label="Części karty">
         {toc.map((item) => <a key={item.id} href={`#${item.id}`}>{item.label}</a>)}
       </nav>
-      <p className={styles.method}><span className={styles.badge}>Szacunek</span> Wartości „&lt;5” w danych NFZ liczymy jako 1 (metoda konserwatywna, jak w eksploratorze). {partial ? <>Rok {latestYear} ma dane za {latest!.months} mies.</> : null} <Link href={DASHBOARD_HREFS.methodology}>Metodologia</Link></p>
+      <p className={styles.method}><EstimateBadge /> Wartości „&lt;5” w danych NFZ liczymy jako 1 (metoda konserwatywna, jak w eksploratorze). {partial ? <>Rok {latestYear} ma dane za {latest!.months} mies.</> : null} <Link href={DASHBOARD_HREFS.methodology}>Metodologia</Link></p>
     </PageHeader>
 
     <div className={pageContainerClass}>
@@ -108,7 +110,7 @@ export function HospitalizationSummaryPage({ summary }: { summary: Hospitalizati
             cta="W czasie"
           >
             <MonthLines months={summary.months} />
-            <Legend items={summary.months.map((m, i) => ({ label: m.year, color: i === summary.months.length - 1 ? "#2856A3" : i === 0 && summary.months.length > 2 ? "#8A94A6" : "#9DB4DB" }))} />
+            <Legend items={summary.months.map((m, i) => ({ label: m.year, color: i === summary.months.length - 1 ? CHART_COLORS.data : i === 0 && summary.months.length > 2 ? CHART_COLORS.textTertiary : CHART_COLORS.dataSoft }))} />
           </DataCard> : null}
         </div>
       </section>
@@ -214,7 +216,7 @@ export function HospitalizationSummaryPage({ summary }: { summary: Hospitalizati
             cta="Tryb przyjęcia"
           >
             <AdmissionBars years={years} />
-            <Legend items={[{ label: "Nagłe (%)", color: "#2856A3" }, { label: "Planowe", color: "#B5C7E6" }, { label: "Pozostałe", color: "#E4EAF4", border: "#D3DCEA" }]} />
+            <Legend items={[{ label: "Nagłe (%)", color: CHART_COLORS.data }, { label: "Planowe", color: CHART_COLORS.dataMuted }, { label: "Pozostałe", color: CHART_COLORS.dataFaint, border: CHART_COLORS.border }]} />
           </DataCard>
           <DataCard
             id="summary-mortality"

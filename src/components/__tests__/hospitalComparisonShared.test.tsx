@@ -133,16 +133,16 @@ describe("JgpMortalityDifferenceTable — odchylenia JGP", () => {
 
 
 describe("PeerComparisonCharts — wykresy porównawcze", () => {
-  it("rysuje mapę peerów i wykres nadmiaru zgonów", async () => {
+  it("rysuje mapę podobnych szpitali i wykres nadmiaru zgonów", async () => {
     const onHoverPeer = vi.fn();
     render(<PeerComparisonCharts benchmark={sampleBenchmark()} hoveredPeerKey={null}
       onHoverPeer={onHoverPeer} products={products} valuationByJgp={new Map()} />);
     expect(screen.getByText("Realna skala struktury vs zakres leczenia")).toBeInTheDocument();
     await waitFor(() => expect(Plotly.react).toHaveBeenCalledTimes(2));
     const traces = vi.mocked(Plotly.react).mock.calls[0][1] as Array<{ name: string; x: number[] }>;
-    expect(traces[0].name).toBe("Peery");
+    expect(traces[0].name).toBe("Podobne szpitale");
     expect(traces[0].x).toEqual([100]);
-    expect(traces[2].name).toBe("Wybrany szpital");
+    expect(traces[2].name).toBe("Ten szpital");
     expect(traces[2].x).toEqual([200]);
   });
 

@@ -5,10 +5,10 @@
 .mapShape { stroke: #fff; stroke-width: 2; stroke-linejoin: round; transition: fill .35s, filter .15s; }
 .mapLink:hover .mapShape, .mapLink:focus-visible .mapShape { filter: brightness(.88); }
 .mapLink:focus { outline: none; }
-.mapLink:focus-visible .mapShape { stroke: #172033; stroke-width: 4; }
+.mapLink:focus-visible .mapShape { stroke: var(--color-text); stroke-width: 4; }
 .mapLabel { fill: #fff; font-size: var(--fs-2xl); font-weight: var(--fw-bold); text-anchor: middle; dominant-baseline: middle; pointer-events: none; font-variant-numeric: tabular-nums; }
-.mapLabelDark { fill: #172033; }
+.mapLabelDark { fill: var(--color-text); }
 .legend { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: var(--fs-sm); color: var(--color-text-tertiary); font-variant-numeric: tabular-nums; }
-.scale { width: 140px; height: 8px; border-radius: 4px; }
+.scale { width: 140px; height: 8px; border-radius: var(--radius-badge); }
 .national { margin: 0; text-align: center; font-size: var(--fs-base); color: var(--color-text-secondary); }
-.national strong { color: #1B3D78; }
+.national strong { color: var(--color-data-strong); }

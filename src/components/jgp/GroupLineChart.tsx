@@ -2,13 +2,14 @@
 
 import { useEffect, useRef } from "react";
 import { monthYears, movingAverage, movingRatio, ratioSeries, sumByYear, type ChartPeriod } from "@/lib/jgpCard";
-import { countAxis, getAppFontFamily, makeHoverTrace, monthAxis, percentAxis, PLOTLY_CONFIG, type PlotElement } from "@/lib/plotlyChart";
+import { baselineShape, categoryAxis, chartLayout, countAxis, makeHoverTrace, measureAxis, monthAxis, percentAxis, PLOTLY_CONFIG, type PlotElement } from "@/lib/plotlyChart";
 import { loadPlotly } from "@/lib/plotlyLoader";
+import { CHART_COLORS } from "@/lib/chartPalette";
 
 const MONTHS = ["sty", "lut", "mar", "kwi", "maj", "cze", "lip", "sie", "wrz", "paź", "lis", "gru"];
-const BASE = "#98A2B3";
-const PRIMARY = "#2856A3";
-const SELECTED = "#C65D2E";
+const BASE = CHART_COLORS.borderStrong;
+const PRIMARY = CHART_COLORS.data;
+const SELECTED = CHART_COLORS.signal;
 // Tło wybranego roku (jak „wybrany rok” w makietach karty); to samo tło ma kolumna roku w mapie ciepła (.heatBand).
 const YEAR_BAND = "rgba(31, 138, 112, 0.10)";
 const integer = (value: number) => Math.round(value).toLocaleString("pl-PL");
@@ -69,9 +70,9 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
   /** Najechanie na serię i zjechanie z wykresu (`null`). */
   onHover?: (key: string | null) => void;
   height?: number;
-  /** Kolor linii wybranego ośrodka (domyślnie pomarańczowy). */
+  /** Kolor linii wybranego ośrodka (domyślnie kolor sygnału). */
   selectedColor?: string;
-  /** Podpis na końcu linii wybranego ośrodka, np. „★ nazwa”. */
+  /** Podpis na końcu linii wybranego ośrodka (nazwa). */
   selectedLabel?: string;
   /** Rok wyróżniony tłem (jak pasek „wybrany rok” w dokumencie karty), np. rok wybrany na karcie. */
   highlightYear?: string;
@@ -144,38 +145,40 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
       // Objaśnienie pod osią: na wąskim ekranie w dwóch wierszach (adnotacje Plotly nie zawijają tekstu).
       const noteText = note && plot.clientWidth < 640 ? note.replace(/\. /, ".<br>") : note;
       const noteLines = noteText ? noteText.split("<br>").length : 0;
+      const allPoints = ordered.flatMap((line) => series.get(line.key)!.points);
+      const yAxis = percent ? percentAxis(allPoints, { fit: fitAxis }) : countAxis(allPoints);
       await Plotly.react(plot, traces, {
+        ...chartLayout(),
         height,
         autosize: true,
         margin: { l: 56, r: 16, t: legend ? 36 : 12, b: 44 + noteLines * 16 },
-        paper_bgcolor: "#FFFFFF",
-        plot_bgcolor: "#FFFFFF",
-        font: { family: getAppFontFamily(), color: "#172033", size: 12 },
-        separators: ", ",
-        hovermode: "closest",
         showlegend: legend,
         legend: { orientation: "h", x: 0, y: 1.1, font: { size: 12 } },
         // Tło wybranego roku: od 1 stycznia do końca grudnia (pół miesiąca zapasu po obu stronach kropek).
-        shapes: highlightYear && months.some((month) => month.startsWith(highlightYear)) ? [{
-          type: "rect", xref: "x", yref: "paper", layer: "below",
-          x0: `${Number(highlightYear) - 1}-12-16`, x1: `${highlightYear}-12-16`, y0: 0, y1: 1,
-          fillcolor: YEAR_BAND, line: { width: 0 },
-        }] : [],
+        // Podstawa (zero) pod danymi, gdy zero jest w zakresie osi.
+        shapes: [
+          ...(highlightYear && months.some((month) => month.startsWith(highlightYear)) ? [{
+            type: "rect", xref: "x", yref: "paper", layer: "below",
+            x0: `${Number(highlightYear) - 1}-12-16`, x1: `${highlightYear}-12-16`, y0: 0, y1: 1,
+            fillcolor: YEAR_BAND, line: { width: 0 },
+          }] : []),
+          ...(yAxis.range[0] <= 0 ? [baselineShape("y")] : []),
+        ],
         // Podpis wybranego ośrodka przy ostatnim punkcie jego średniej 3M.
         annotations: (() => {
           const line = selectedLabel ? ordered.find((item) => item.tone === "selected") : undefined;
           const last = line ? series.get(line.key)!.average.at(-1) : null;
           const label = line && last !== null && last !== undefined ? [{ x: x.at(-1), y: last, text: selectedLabel, xanchor: "right", yanchor: "bottom", showarrow: false, font: { size: 12, color: selectedColor }, bgcolor: "rgba(255,255,255,0.85)" }] : [];
-          const explain = noteText ? [{ xref: "paper", yref: "paper", x: 0, y: 0, yshift: -40, xanchor: "left", yanchor: "top", align: "left", showarrow: false, text: noteText, font: { size: 12, color: "#667085" } }] : [];
+          const explain = noteText ? [{ xref: "paper", yref: "paper", x: 0, y: 0, yshift: -40, xanchor: "left", yanchor: "top", align: "left", showarrow: false, text: noteText, font: { size: 12, color: CHART_COLORS.textTertiary } }] : [];
           return [...label, ...explain];
         })(),
-        hoverlabel: { bgcolor: "#344054", font: { color: "#FFFFFF", size: 13 } },
         // Lata: podpis roku na środku roku (pod punktem), zakres od stycznia pierwszego do grudnia ostatniego roku.
+        // Oś lat to kategorie (bez siatki); oś miesięcy ma siatkę tylko na granicy roku (podziałka co rok, DESIGN.md 6.1).
         xaxis: yearly
-          ? { type: "date", tickformat: "%Y", dtick: "M12", tick0: "2000-01-01", ticklabelmode: "period", range: [`${years[0]}-01-01`, `${years.at(-1)}-12-31`], gridcolor: "#EEF1F5" }
-          : { ...monthAxis(x.length), gridcolor: "#EEF1F5" },
+          ? categoryAxis({ type: "date", tickformat: "%Y", dtick: "M12", tick0: "2000-01-01", ticklabelmode: "period", range: [`${years[0]}-01-01`, `${years.at(-1)}-12-31`] })
+          : measureAxis({ ...monthAxis(x.length), ...(x.length > 72 ? {} : { showgrid: false }) }),
         // Margines pod zerem i całkowita podziałka także przy bardzo małych liczbach (np. pojedyncze zgony).
-        yaxis: { ...(percent ? percentAxis(ordered.flatMap((line) => series.get(line.key)!.points), { fit: fitAxis }) : countAxis(ordered.flatMap((line) => series.get(line.key)!.points))), gridcolor: "#EEF1F5", zerolinecolor: "#D0D5DD" },
+        yaxis: measureAxis(yAxis),
       }, PLOTLY_CONFIG);
       if (cancelled) return;
       const overlay = [overlayStart, overlayStart + 1, overlayStart + 2];
@@ -202,7 +205,7 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
           x: [x, x, [point.x]],
           y: [average, points, [y]],
           "line.color": [highlight, highlight, "#FFFFFF"],
-          "marker.color": [highlight, highlight, "#D92D20"],
+          "marker.color": [highlight, highlight, CHART_COLORS.text],
         }, overlay);
         restyleInProgress = false;
       });

@@ -94,3 +94,78 @@ describe("monthAxis — oś X miesięcy", () => {
     expect(monthAxis(108)).toMatchObject({ dtick: "M12", tickformat: "%Y" });
   });
 });
+
+import { axisTitle, baselineShape, categoryAxis, chartHoverLabel, chartLayout, getCommonPlotLayout, hoverTemplate, measureAxis, paddedRange } from "@/lib/plotlyChart";
+import { CHART_COLORS } from "@/lib/chartPalette";
+
+describe("motyw wykresów", () => {
+  it("layout ma polskie separatory, jasny dymek i jeden dymek naraz", () => {
+    const layout = chartLayout();
+    expect(layout.separators).toBe(", ");
+    expect(layout.hovermode).toBe("closest");
+    expect(layout.hoverlabel).toMatchObject({ bgcolor: "#FFFFFF", bordercolor: CHART_COLORS.borderStrong, font: { color: CHART_COLORS.text, size: 13 }, align: "left" });
+    expect(chartHoverLabel()).toEqual(layout.hoverlabel);
+  });
+
+  it("wspólny layout eksploratora dziedziczy motyw (separatory, dymek)", () => {
+    vi.stubGlobal("window", { innerHeight: 900, innerWidth: 1400 });
+    const layout = getCommonPlotLayout(true);
+    vi.unstubAllGlobals();
+    expect(layout.separators).toBe(", ");
+    expect(layout.hoverlabel.bgcolor).toBe("#FFFFFF");
+    expect(layout.showlegend).toBe(true);
+  });
+
+  it("oś-miara ma siatkę, oś kategorii nie; żadna nie rysuje linii zera", () => {
+    expect(measureAxis()).toMatchObject({ showgrid: true, gridcolor: CHART_COLORS.grid, zeroline: false });
+    expect(categoryAxis()).toMatchObject({ showgrid: false, zeroline: false });
+    expect(measureAxis({ ticksuffix: "%" }).ticksuffix).toBe("%");
+    expect(axisTitle("Śmiertelność (%)").font.color).toBe(CHART_COLORS.textSecondary);
+  });
+
+  it("podstawa leży pod danymi, w kolorze mocnej ramki", () => {
+    expect(baselineShape("y")).toMatchObject({ layer: "below", y0: 0, y1: 0, xref: "paper", line: { color: CHART_COLORS.borderStrong, width: 1.5 } });
+    expect(baselineShape("x", 2)).toMatchObject({ layer: "below", x0: 2, x1: 2, yref: "paper" });
+  });
+});
+
+describe("paddedRange — margines osi −6% / +10%", () => {
+  it("od zera: −6% i +10% maksimum", () => {
+    const [bottom, top] = paddedRange([0, 50, 100, null]);
+    expect(bottom).toBeCloseTo(-6);
+    expect(top).toBeCloseTo(110);
+  });
+
+  it("wartości ujemne i dodatnie: zero w zakresie, margines od rozpiętości", () => {
+    const [bottom, top] = paddedRange([-4, 6]);
+    expect(bottom).toBeCloseTo(-4.6);
+    expect(top).toBeCloseTo(7);
+  });
+
+  it("bez zera, gdy `includeZero: false`; brak danych daje zakres domyślny", () => {
+    expect(paddedRange([10, 20], { includeZero: false })).toEqual([9.4, 21]);
+    expect(paddedRange([])).toEqual([-0.06, 1.1]);
+  });
+});
+
+describe("hoverTemplate — kolejność dymka", () => {
+  it("nazwa, kontekst, wartości (najpierw oś Y), stopka; zawsze <extra></extra>", () => {
+    const template = hoverTemplate({
+      title: "%{customdata[0]}",
+      context: "Kraków · Małopolskie · E53G",
+      rows: [{ label: "Śmiertelność", value: "%{y:.1f}%" }, { label: "Hospitalizacje", value: "%{x:,.0f}" }],
+      footer: "NIP 123",
+    });
+    const lines = template.replace("<extra></extra>", "").split("<br>");
+    expect(lines[0]).toBe("<b>%{customdata[0]}</b>");
+    expect(lines[1]).toContain("Kraków · Małopolskie · E53G");
+    expect(lines[2]).toBe("Śmiertelność: <b>%{y:.1f}%</b>");
+    expect(lines[3]).toBe("Hospitalizacje: <b>%{x:,.0f}</b>");
+    expect(lines[4]).toContain("NIP 123");
+    expect(template.endsWith("<extra></extra>")).toBe(true);
+  });
+
+  it("bez kontekstu i stopki ma tylko nazwę i wartości", () => {
+    expect(hoverTemplate({ title: "A", rows: [{ label: "B", value: "1" }] })).toBe("<b>A</b><br>B: <b>1</b><extra></extra>");
+  });
+});

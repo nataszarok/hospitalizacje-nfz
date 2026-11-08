@@ -21,6 +21,7 @@ import {
   type PeerGrade,
   type PeerPair,
 } from "./HospitalComparisonShared";
+import { formatSigned as signed } from "@/lib/formatters";
 
 type PeerPairsPayload={version:number;grades:PeerGrade[];rows:PeerPair[]};
 let peerPairsPromise:Promise<PeerPairsPayload>|null=null;
@@ -213,9 +214,9 @@ function PairBenchmarkPanel({ benchmark, hoveredPeerKey, onHoverPeer, method, gr
   return <section className="hospital-peer-section">
     <div className="hospital-peer-heading hospital-peer-heading-actions">
       <div>
-        <span>Benchmark placówek z modelu par</span>
+        <span>Porównanie z podobnymi szpitalami (model par)</span>
         <div className="hospital-peer-title-with-info">
-          <h3>Jak ten szpital wygląda na tle wybranych peerów?</h3>
+          <h3>Jak ten szpital wygląda na tle podobnych szpitali?</h3>
           <ActionIcon
             variant="subtle"
             color="gray"
@@ -244,12 +245,12 @@ function PairBenchmarkPanel({ benchmark, hoveredPeerKey, onHoverPeer, method, gr
     <div className="hospital-benchmark-kpis hospital-metric-grid">
       {rows.map(r=>{
         const diff=r.selected-r.median;
-        const diffText=r.label==="Hospitalizacje" ? `${diff>0?"+":""}${nf.format(diff)}` : `${diff>0?"+":""}${pf.format(diff)} pp`;
+        const diffText=r.label==="Hospitalizacje" ? `${diff>0?"+":diff<0?"−":""}${nf.format(Math.abs(diff))}` : signed(diff," pp");
         const diffClass=Math.abs(diff)<.05 ? "" : (r.inverse ? diff<0 : diff>0) ? " is-positive" : " is-negative";
         return <div className="hospital-benchmark-kpi" key={r.label}>
           <span>{r.label}</span>
           <strong>{r.fmt(r.selected)}</strong>
-          <div><small>Mediana peerów</small><b>{r.fmt(r.median)}</b></div>
+          <div><small>Mediana grupy</small><b>{r.fmt(r.median)}</b></div>
           <em className={diffClass}>{diffText}</em>
         </div>;
       })}
@@ -266,9 +267,9 @@ function PairBenchmarkPanel({ benchmark, hoveredPeerKey, onHoverPeer, method, gr
         <div className="hospital-methodology-head hospital-peer-group-modal-head">
           <div>
             <span>Grupa porównawcza</span>
-            <h3 id="peer-group-title">Placówka główna i wybrane peery</h3>
+            <h3 id="peer-group-title">Ten szpital i grupa porównawcza</h3>
             <small>
-              {benchmark.peers.length} peerów · zakres {gradeScope==="A" ? "A" : "A + B"} · maks. dystans {pf.format(maxDistance)}
+              podobne szpitale: {benchmark.peers.length} · zakres {gradeScope==="A" ? "A" : "A + B"} · maks. dystans {pf.format(maxDistance)}
             </small>
           </div>
           <button type="button" onClick={()=>setPeerGroupOpen(false)} aria-label="Zamknij">×</button>
@@ -294,7 +295,7 @@ function PairBenchmarkPanel({ benchmark, hoveredPeerKey, onHoverPeer, method, gr
                 <td>
                   <div className="hospital-peer-group-provider">
                     <b>{displayHospitalName(benchmark.selected.providerName)}</b>
-                    <small>Placówka główna · punkt odniesienia</small>
+                    <small>Ten szpital · punkt odniesienia</small>
                   </div>
                 </td>
                 <td><span className="hospital-peer-group-main-badge">GŁÓWNA</span></td>
@@ -355,7 +356,7 @@ function PairBenchmarkPanel({ benchmark, hoveredPeerKey, onHoverPeer, method, gr
             <div><strong>B</strong><span>podobne, ale z większymi różnicami</span></div>
             <div><strong>N</strong><span>niepodobne</span></div>
           </div>
-          <p>Granice pomiędzy klasami A, B i N zostały wyuczone na ręcznie ocenionych parach szpitali. Domyślnie grupę tworzą pary klasy <strong>A</strong>. Suwakiem możesz rozszerzyć ją o pary klasy <strong>B</strong>. Pary klasy <strong>N</strong> nie są włączane do grupy peerów.</p>
+          <p>Granice pomiędzy klasami A, B i N zostały wyuczone na ręcznie ocenionych parach szpitali. Domyślnie grupę tworzą pary klasy <strong>A</strong>. Suwakiem możesz rozszerzyć ją o pary klasy <strong>B</strong>. Pary klasy <strong>N</strong> nie są włączane do grupy porównawczej.</p>
         </div>
 
         <div className="hospital-methodology-note"><b>Jak działa filtr w tej zakładce?</b><p>Suwak <strong>Podobieństwo par</strong> w panelu bocznym ustawia <strong>maksymalny dystans</strong>. Domyślnie stoi na granicy klasy <strong>A</strong>: grupę tworzą wszystkie pary A. Przesunięcie w lewo zawęża grupę do najbardziej podobnych par A. Przesunięcie w prawo za granicę A dołącza pary klasy <strong>B</strong> do wybranego dystansu.</p></div>
