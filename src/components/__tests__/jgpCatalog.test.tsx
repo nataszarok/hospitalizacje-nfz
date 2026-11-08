@@ -29,6 +29,22 @@ describe("Katalog grup JGP", () => {
     expect(screen.getByText("do 2024")).toHaveAttribute("title", "Grupa wycofana z katalogu");
   });
 
+  it("pokazuje rozliczenia NFZ i ich zmianę, sortuje po kwocie; bez kwot tych kolumn nie ma", () => {
+    render(<JgpCatalogPage catalog={buildJgpCatalog(trendsFixture, { A01: { "2024": 2_000_000_000, "2025": 2_500_000_000 }, F99: { "2025": 3_400_000 } })} />);
+    const cells = (code: string) => within(screen.getByRole("link", { name: code }).closest("tr")!).getAllByRole("cell").map((cell) => cell.textContent);
+    expect(cells("A01").slice(7)).toEqual(["2,5 mld zł", "+25%"]);
+    expect(cells("F99").slice(7)).toEqual(["3,4 mln zł", "—"]);
+    fireEvent.click(screen.getByRole("button", { name: /^Rozliczenia\s*NFZ 2025$/ }));
+    expect(codes()).toEqual(["A01", "F99"]);
+    fireEvent.click(screen.getByRole("button", { name: /^Rozliczenia\s*NFZ 2025/ }));
+    expect(codes()).toEqual(["F99", "A01"]);
+    expect(window.location.search).toBe("?sort=kwota&kier=rosnaco");
+    expect(screen.getByRole("button", { name: /^Zmiana\s*od 2024$/ })).toBeInTheDocument();
+    cleanup();
+    render(<JgpCatalogPage catalog={catalog} />);
+    expect(screen.queryByRole("button", { name: /Rozliczenia/ })).not.toBeInTheDocument();
+  });
+
   it("zakładka Grupy liczy wszystkie grupy, także wycofane", () => {
     render(<JgpCatalogPage catalog={catalog} />);
     expect(screen.getByRole("tab", { name: /Grupy/ })).toHaveTextContent("Grupy 3");

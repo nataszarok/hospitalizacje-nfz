@@ -51,8 +51,33 @@ describe("Karta w zakładkach — nagłówek i Przegląd", () => {
     renderCard();
     const panel = screen.getByRole("tabpanel");
     expect(within(panel).getAllByRole("heading", { level: 2 }).map((h) => h.textContent?.split(" ")[0])).toEqual(["Ile?", "Gdzie?", "Za", "Jak"]);
-    expect(within(panel).getByRole("region", { name: /Za ile\?/ })).toHaveTextContent("Średnio na hospitalizację 2025");
     expect(within(panel).getByRole("region", { name: "Mapa ciepła: województwa w latach" })).toBeInTheDocument();
+  });
+
+  it("„Za ile?” ma wycenę i kwotę, bez średniej na hospitalizację; obok tryb przyjęcia bez śmiertelności", () => {
+    renderCard();
+    const panel = screen.getByRole("tabpanel");
+    const cost = within(panel).getByRole("region", { name: /Za ile\?/ });
+    const profile = within(panel).getByRole("region", { name: /Jak przyjmowani/ });
+    expect(cost).toHaveTextContent("Kwota świadczeń 2025");
+    expect(cost).not.toHaveTextContent("Średnio na hospitalizację");
+    expect(cost).not.toHaveTextContent(/\d zł(?! )/);
+    expect(cost.parentElement).toBe(profile.parentElement);
+    // Tryb przyjęcia: same słupki bez tabeli; wartości w podpowiedzi i w etykiecie wiersza (fokus klawiaturą).
+    expect(within(profile).queryByRole("table")).toBeNull();
+    const rows = within(profile).getAllByRole("listitem");
+    expect(rows.length).toBeGreaterThan(0);
+    expect(rows.at(-1)).toHaveAttribute("tabindex", "0");
+    expect(rows.at(-1)!.getAttribute("aria-label")).toMatch(/^2025: nagłe [\d,]+%, planowe [\d,]+%, pozostałe [\d,]+%$/);
+    expect(within(rows.at(-1)!).getByRole("tooltip", { hidden: true })).toHaveTextContent(/2025nagłe/);
+  });
+
+  it("mapa ciepła podaje liczby na 100 tys. bez miejsc dziesiętnych", () => {
+    renderCard();
+    const heat = screen.getByRole("region", { name: "Mapa ciepła: województwa w latach" });
+    const cells = within(heat).getAllByRole("button", { name: /^\d[\d\s\u00a0]*$/ });
+    expect(cells.length).toBeGreaterThan(0);
+    expect(within(heat).queryAllByRole("button", { name: /\d,\d/ })).toEqual([]);
   });
 
   it("kliknięcie województwa w tabeli lat zawęża kartę i trafia do adresu", () => {
@@ -154,13 +179,13 @@ describe("Karta w zakładkach — wybór roku, opis i rodzina", () => {
     expect(within(screen.getByRole("group", { name: "Rok karty" })).getByRole("button", { name: "2025" })).toHaveAttribute("aria-pressed", "true");
   });
 
-  it("opis redakcyjny i sekcja rodziny z udziałami w latach", () => {
-    const withFamily = { ...data, description: "Opis grupy testowej.", family: { id: "t", name: "Rodzina testowa", variants: [
+  it("opis z danych NFZ z wierszem źródła i sekcja rodziny z udziałami w latach", () => {
+    const withFamily = { ...data, description: { sentences: ["Opis grupy testowej."], source: "Źródło: NFZ, statystyki JGP 2024." }, family: { id: "t", name: "Rodzina testowa", variants: [
       { code: "A01", name: "STAŁY PRODUKT", values: [8, 8, 9] },
       { code: "A02", name: "INNY WARIANT", values: [2, 8, 1] },
     ] } };
     render(<JgpPage data={withFamily} />);
-    expect(screen.getByText(/Opis grupy testowej\./)).toHaveTextContent("opis redakcyjny");
+    expect(screen.getByText(/Opis grupy testowej\./)).toHaveTextContent("Źródło: NFZ, statystyki JGP 2024.");
     const section = screen.getByRole("region", { name: /Jak wygląda rodzina\?/ });
     expect(section).toHaveTextContent("A01 to 90% hospitalizacji rodziny w 2025 r. (w 2023 r.: 80%)");
     expect(within(section).getByRole("img", { name: "2024: A01 50,0%, A02 50,0%" })).toBeInTheDocument();

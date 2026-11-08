@@ -199,7 +199,7 @@ export function AnalysisExplorer() {
   return <main className={styles.explorer}>
     <header className={styles.header}>
       <div>
-        <h1>Analizy hospitalizacji</h1>
+        <h1>Eksplorator danych o hospitalizacjach</h1>
         <p>Hospitalizacje rozliczone w grupach JGP · {areaLabel(area, reference)} · dane NFZ {range}</p>
       </div>
       {groupPage ? <Link className={styles.groupLink} href={groupPage}>Wszystko o grupie {singleProduct?.jgpCode} →</Link> : null}

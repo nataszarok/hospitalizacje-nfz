@@ -544,7 +544,7 @@ function HospitalCharts({ analysis, products }: { analysis: HospitalAnalysis; pr
           plot_bgcolor:"#FFFFFF",
           font:{family:getAppFontFamily(),color:"#172033",size:11},
           margin:{l:2,r:2,t:6,b:64},
-          uniformtext:{minsize:9,mode:"show"},
+          uniformtext:{minsize:10,mode:"show"},
           hovermode:"closest",
         },{...PLOTLY_CONFIG,displayModeBar:false});
 

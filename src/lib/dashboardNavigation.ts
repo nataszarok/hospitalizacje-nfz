@@ -12,6 +12,7 @@ export type HospitalNavigation = { view: HospitalView };
 
 // Adresy modułów portalu używane przez stronę główną i nagłówek.
 export const DASHBOARD_HREFS = {
+  summary: "/hospitalizacje",
   trend: "/analizy",
   mortality: "/analizy?t=k",
   admissions: "/analizy?t=a",

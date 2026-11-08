@@ -35,7 +35,15 @@ describe("SiteHeader", () => {
     expect(screen.getByRole("link", { name: "Start" })).toHaveAttribute("aria-current", "page");
   });
 
+  it("ma siedem pozycji w kolejności od podsumowania do szczegółów", () => {
+    render(<SiteHeader />);
+    const items = [...nav().querySelectorAll(":scope > a, :scope > div > button")].map((item) => item.textContent?.trim());
+    expect(items).toEqual(["Start", "Przegląd", "Grupy JGP", "Eksplorator danych", "Szpitale", "Porównania", "O danych"]);
+    expect(screen.getByRole("link", { name: "Przegląd" })).toHaveAttribute("href", "/hospitalizacje");
+  });
+
   it.each([
+    ["/hospitalizacje", "", "Przegląd"],
     ["/szpitale", "", "Szpitale"],
     ["/szpitale", "?hv=c", "Porównania"],
     ["/o-danych", "", "O danych"],
@@ -45,10 +53,10 @@ describe("SiteHeader", () => {
     expect(screen.getByRole("link", { name: label })).toHaveAttribute("aria-current", "page");
   });
 
-  it("na /analizy oznacza aktywną sekcję Analizy", () => {
+  it("na /analizy oznacza aktywną sekcję Eksplorator danych", () => {
     openPage("/analizy");
     render(<SiteHeader />);
-    expect(screen.getByRole("button", { name: /Analizy/ }).className).toMatch(/linkActive/);
+    expect(screen.getByRole("button", { name: /Eksplorator danych/ }).className).toMatch(/linkActive/);
   });
 
   it.each(["/jgp", "/jgp/E10"])("na %s oznacza aktywną pozycję Grupy JGP", (pathname) => {
@@ -56,7 +64,7 @@ describe("SiteHeader", () => {
     render(<SiteHeader />);
     expect(screen.getByRole("link", { name: "Grupy JGP" })).toHaveAttribute("href", "/jgp");
     expect(screen.getByRole("link", { name: "Grupy JGP" })).toHaveAttribute("aria-current", "page");
-    expect(screen.getByRole("button", { name: /Analizy/ }).className).not.toMatch(/linkActive/);
+    expect(screen.getByRole("button", { name: /Eksplorator danych/ }).className).not.toMatch(/linkActive/);
   });
 
   it("na /analizy przełącza widok zdarzeniem zamiast przeładowania strony", () => {
@@ -64,7 +72,7 @@ describe("SiteHeader", () => {
     const listener = vi.fn();
     window.addEventListener(DASHBOARD_TAB_NAVIGATE_EVENT, listener);
     render(<SiteHeader />);
-    fireEvent.click(screen.getByRole("button", { name: /Analizy/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Eksplorator danych/ }));
     const event = click(screen.getByRole("link", { name: /Gdzie/ }));
     window.removeEventListener(DASHBOARD_TAB_NAVIGATE_EVENT, listener);
     expect(event.defaultPrevented).toBe(true);
@@ -104,13 +112,13 @@ describe("SiteHeader", () => {
     openPage("/analizy");
     render(<SiteHeader />);
     act(() => { window.dispatchEvent(new CustomEvent(DASHBOARD_TAB_CHANGED_EVENT, { detail: { tab: "admissions" } })); });
-    fireEvent.click(screen.getByRole("button", { name: /Analizy/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Eksplorator danych/ }));
     expect(screen.getByRole("link", { name: /Tryb przyjęcia/ })).toHaveAttribute("aria-current", "page");
   });
 
   it("menu analiz ma cztery widoki i zamyka się klawiszem Escape", () => {
     render(<SiteHeader />);
-    const trigger = screen.getByRole("button", { name: /Analizy/ });
+    const trigger = screen.getByRole("button", { name: /Eksplorator danych/ });
     fireEvent.click(trigger);
     expect(trigger).toHaveAttribute("aria-expanded", "true");
     expect(screen.getByRole("link", { name: /W czasie/ })).toHaveAttribute("href", "/analizy");

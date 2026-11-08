@@ -663,7 +663,7 @@ export function PeerComparisonCharts({ benchmark, hoveredPeerKey, onHoverPeer, p
           autosize:true,height:320,paper_bgcolor:"#fff",plot_bgcolor:"#fff",
           font:{family:getAppFontFamily(),color:"#172033",size:11},
           margin:{l:52,r:8,t:4,b:40},
-          legend:{orientation:"h",x:0,y:1.06,font:{size:9}},
+          legend:{orientation:"h",x:0,y:1.06,font:{size:10}},
           xaxis:{title:{text:"Liczba łóżek na głównych oddziałach",standoff:3,font:{size:11}},automargin:true,gridcolor:"#EEF1F5",rangemode:"tozero"},
           yaxis:{title:{text:"Liczba hospitalizacji",standoff:3,font:{size:11}},automargin:true,gridcolor:"#EEF1F5",rangemode:"tozero"}
         },PLOTLY_CONFIG);
