@@ -4,7 +4,7 @@ import { decodeValuations, VALUATIONS_PATH, type JgpValuation, type ValuationsFi
 import { useEffect, useMemo, useRef, useState } from "react";
 import type * as React from "react";
 import type { HospitalPeerBenchmark, ProductOption } from "@/lib/types";
-import { PLOTLY_CONFIG, getAppFontFamily } from "@/lib/plotlyChart";
+import { PLOTLY_CONFIG, axisTitle, baselineShape, categoryAxis, chartLayout, measureAxis, paddedRange } from "@/lib/plotlyChart";
 import "./HospitalAnalysisBase.css";
 import "./HospitalComparison.css";
 
@@ -292,10 +292,10 @@ export function JgpMortalityDifferenceTable({ benchmark, products, valuationByJg
           hovertemplate:pairMode ? undefined : "<b>Peery łącznie</b><br>Śmiertelność ważona: <b>%{x:.1f}%</b><br>Hospitalizacje: %{customdata[0]:,.0f}<br>Zgony: %{customdata[1]:,.0f}<br>Peerów: %{customdata[2]}<extra></extra>"
         }
       ],{
-        autosize:true,height:280,paper_bgcolor:"#fff",plot_bgcolor:"#fff",
-        font:{family:getAppFontFamily(),color:"#172033",size:11},
+        ...chartLayout(),
+        autosize:true,height:280,
         margin:{l:28,r:16,t:8,b:48},
-        legend:{orientation:"h",x:0,y:1.12,font:{size:10}},
+        legend:{orientation:"h",x:0,y:1.12,font:{size:12}},
         xaxis:(()=>{
           const values=[...points.map((p)=>p.mortalityPct),selectedRow.targetMortalityPct,selectedRow.peerMortalityPct].filter((v)=>Number.isFinite(v));
           const min=Math.min(...values),max=Math.max(...values),span=max-min;
@@ -304,9 +304,9 @@ export function JgpMortalityDifferenceTable({ benchmark, products, valuationByJg
           const pad=Math.max(.5,range*.12);
           const center=(min+max)/2;
           const half=Math.max(range/2+pad,2);
-          return {title:{text:"Śmiertelność (%)",standoff:5,font:{size:11}},gridcolor:"#EEF1F5",range:[center-half,center+half],automargin:true};
+          return measureAxis({title:axisTitle("Śmiertelność (%)",5),range:[center-half,center+half],ticksuffix:"%"});
         })(),
-        yaxis:{showticklabels:false,showgrid:false,zeroline:false}
+        yaxis:categoryAxis({showticklabels:false})
       },PLOTLY_CONFIG);
 
       if(pairMode && popupPlotRef.current){
@@ -660,12 +660,14 @@ export function PeerComparisonCharts({ benchmark, hoveredPeerKey, onHoverPeer, p
               : "<b>Wybrany szpital</b><br><br>Łóżka na głównych oddziałach: %{x:,.0f}<br>Istotne JGP >10: %{y:,.0f}<br>Główne i wspierające oddziały: %{customdata[0]}<br>Komórki: %{customdata[1]}<br>Poradnie: %{customdata[2]}<br>Hospitalizacje: %{customdata[3]:,.0f}<extra></extra>"
           }
         ],{
-          autosize:true,height:320,paper_bgcolor:"#fff",plot_bgcolor:"#fff",
-          font:{family:getAppFontFamily(),color:"#172033",size:11},
+          ...chartLayout(),
+          autosize:true,height:320,
           margin:{l:52,r:8,t:4,b:40},
-          legend:{orientation:"h",x:0,y:1.06,font:{size:10}},
-          xaxis:{title:{text:"Liczba łóżek na głównych oddziałach",standoff:3,font:{size:11}},automargin:true,gridcolor:"#EEF1F5",rangemode:"tozero"},
-          yaxis:{title:{text:"Liczba hospitalizacji",standoff:3,font:{size:11}},automargin:true,gridcolor:"#EEF1F5",rangemode:"tozero"}
+          legend:{orientation:"h",x:0,y:1.06,font:{size:12}},
+          // Ten sam margines na obu osiach (−6% / +10%); zero rysuje podstawa pod danymi.
+          xaxis:measureAxis({title:axisTitle("Liczba łóżek na głównych oddziałach",3),range:paddedRange([...peers.map(p=>p.coreBeds),base.coreBeds]),tickformat:",.0f"}),
+          yaxis:measureAxis({title:axisTitle("Liczba hospitalizacji",3),range:paddedRange([...peers.map(p=>p.hospitalizations),base.hospitalizations]),tickformat:",.0f"}),
+          shapes:[baselineShape("y"),baselineShape("x")]
         },PLOTLY_CONFIG);
         const plot=mapRef.current as PlotlyDiv;
         plot.removeAllListeners?.("plotly_hover");
@@ -705,11 +707,13 @@ export function PeerComparisonCharts({ benchmark, hoveredPeerKey, onHoverPeer, p
           hoverinfo:pairMode ? "none" : undefined,
           hovertemplate:pairMode ? undefined : "<b>%{y}</b><br>%{customdata[0]}<br>Nadmiar: <b>%{customdata[4]}</b><br>Śmiertelność szpitala: %{customdata[6]:.1f}%<br>Śmiertelność peerów łącznie: %{customdata[7]:.1f}%<br>Zgony: %{customdata[1]:.0f} · oczekiwane: %{customdata[2]:.1f}<br>Peery z tym JGP: %{customdata[5]:.0f}<br>Wycena: %{customdata[3]:.1f} pkt<extra></extra>"
         }],{
-          autosize:true,height:320,paper_bgcolor:"#fff",plot_bgcolor:"#fff",showlegend:false,
-          font:{family:getAppFontFamily(),color:"#172033",size:11},
+          ...chartLayout(),
+          autosize:true,height:320,showlegend:false,
           margin:{l:42,r:8,t:4,b:40},
-          xaxis:{title:{text:"Zgony nadmiarowe vs peery",standoff:3,font:{size:11}},automargin:true,zeroline:true,zerolinecolor:"#98A2B3",gridcolor:"#EEF1F5"},
-          yaxis:{title:"Kod JGP",automargin:true}
+          // Wartości ujemne i dodatnie: zero zawsze w zakresie, podstawa na zerze (DESIGN.md 6.4, pkt 6).
+          xaxis:measureAxis({title:axisTitle("Zgony nadmiarowe vs peery",3),range:paddedRange(top.map(x=>x.excessDeaths))}),
+          yaxis:categoryAxis({title:axisTitle("Kod JGP",3)}),
+          shapes:[baselineShape("x")]
         },PLOTLY_CONFIG);
 
         if(pairMode && benchmarkRef.current){

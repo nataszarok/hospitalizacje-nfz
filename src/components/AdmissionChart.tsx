@@ -14,7 +14,12 @@ import {
   areaHighlightKey,
   areaHighlightTitle,
   attachHoverMarker,
+  axisTitle,
+  baselineShape,
   getCommonPlotLayout,
+  hoverTemplate,
+  measureAxis,
+  paddedRange,
   PLOT_TOOLBAR_MARGIN,
   HIGHLIGHT_COLORS,
   makeDimensionLegendTraces,
@@ -119,19 +124,23 @@ export function AdmissionChart({
           color,
           line: { width: emphasized ? 0.8 : 0.4, color: "#FFFFFF" },
         },
-        hovertemplate: [
-          "<b>%{customdata[0]}</b>",
-          "NIP: %{customdata[1]}",
-          "Województwo: %{customdata[3]}",
-          "Miejscowość: %{customdata[4]}",
-          isCombined ? "Kody JGP: %{customdata[11]}" : "Kod JGP: %{customdata[11]}",
-          "Planowane (6): %{customdata[5]:,.0f}",
-          "Nagłe (2+3): %{customdata[6]:,.0f}",
-          "Planowane / nagłe: %{customdata[10]}",
-          axisMode === "per_100k" ? "Planowane / 100 tys.: %{customdata[8]:,.2f}" : "",
-          axisMode === "per_100k" ? "Nagłe / 100 tys.: %{customdata[9]:,.2f}" : "",
-          "<extra></extra>",
-        ].filter(Boolean).join("<br>"),
+        // Kolejność dymka: nazwa, kontekst, oś Y (nagłe), oś X (planowe), stosunek, NIP na końcu.
+        hovertemplate: hoverTemplate({
+          title: "%{customdata[0]}",
+          context: "%{customdata[4]} · %{customdata[3]} · %{customdata[11]}",
+          rows: axisMode === "per_100k"
+            ? [
+              { label: "Nagłe (2+3) na 100 tys.", value: "%{customdata[9]:,.2f}" },
+              { label: "Planowe (6) na 100 tys.", value: "%{customdata[8]:,.2f}" },
+              { label: "Planowe / nagłe", value: "%{customdata[10]}" },
+            ]
+            : [
+              { label: "Nagłe (2+3)", value: "%{customdata[6]:,.0f}" },
+              { label: "Planowe (6)", value: "%{customdata[5]:,.0f}" },
+              { label: "Planowe / nagłe", value: "%{customdata[10]}" },
+            ],
+          footer: "NIP %{customdata[1]}",
+        }),
       });
 
       const traces: Record<string, unknown>[] = [];
@@ -213,31 +222,18 @@ export function AdmissionChart({
       await Plotly.react(chartRef.current, traces, {
         ...getCommonPlotLayout(showLegend),
         margin: { ...getCommonPlotLayout(showLegend).margin, t: PLOT_TOOLBAR_MARGIN },
-        xaxis: {
-          title: {
-            text: axisMode === "per_100k"
-              ? "Przyjęcia planowane na 100 tys. mieszkańców"
-              : "Liczba przyjęć planowanych",
-            standoff: 18,
-            font: { size: 14, color: "#344054" },
-          },
-          gridcolor: "#EEF1F5",
-          zerolinecolor: "#EEF1F5",
-          zerolinewidth: 3,
-        },
-        yaxis: {
-          title: {
-            text: axisMode === "per_100k"
-              ? "Przyjęcia nagłe na 100 tys. mieszkańców"
-              : "Liczba przyjęć nagłych",
-            standoff: 18,
-            font: { size: 14, color: "#344054" },
-          },
-          tickfont: { size: 11, color: "#667085" },
-          gridcolor: "#EEF1F5",
-          zerolinecolor: "#EEF1F5",
-          zerolinewidth: 3,
-        },
+        // Ten sam margines na obu osiach (−6% / +10%); zero rysuje podstawa pod danymi.
+        xaxis: measureAxis({
+          title: axisTitle(axisMode === "per_100k" ? "Przyjęcia planowane na 100 tys. mieszkańców" : "Liczba przyjęć planowanych", 18),
+          range: paddedRange(traces.flatMap((trace) => (trace.x as (number | null)[] | undefined) ?? [])),
+          ...(axisMode === "per_100k" ? {} : { tickformat: ",.0f" }),
+        }),
+        yaxis: measureAxis({
+          title: axisTitle(axisMode === "per_100k" ? "Przyjęcia nagłe na 100 tys. mieszkańców" : "Liczba przyjęć nagłych", 18),
+          range: paddedRange(traces.flatMap((trace) => (trace.y as (number | null)[] | undefined) ?? [])),
+          ...(axisMode === "per_100k" ? {} : { tickformat: ",.0f" }),
+        }),
+        shapes: [baselineShape("y"), baselineShape("x")],
       }, PLOTLY_CONFIG);
 
       const plot = chartRef.current as PlotElement;

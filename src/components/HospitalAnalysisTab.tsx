@@ -5,7 +5,7 @@ import { SegmentedControl, Select, Slider } from "@mantine/core";
 import { createPortal } from "react-dom";
 import type { EstimationMethod, HospitalAnalysis, HospitalDirectoryEntry, ProductOption } from "@/lib/types";
 import { hospitalAnalysisFromDataset, hospitalDirectoryFromDataset, loadStaticDataset } from "@/lib/staticData";
-import { PLOTLY_CONFIG, getAppFontFamily } from "@/lib/plotlyChart";
+import { PLOTLY_CONFIG, axisTitle, baselineShape, categoryAxis, chartLayout, measureAxis, paddedRange } from "@/lib/plotlyChart";
 import { HospitalSimilarityTab } from "@/components/HospitalSimilarityTab";
 import {
   PEER_DISTANCE_A_LIMIT,
@@ -425,7 +425,7 @@ function HospitalCharts({ analysis, products }: { analysis: HospitalAnalysis; pr
           text:top.map(row=>total>0 ? `${pf.format((Number(row.hospitalizations)||0)/total*100)}%` : "0%"),
           textposition:"inside",
           insidetextanchor:"end",
-          textfont:{color:"#FFFFFF",size:10},
+          textfont:{color:"#FFFFFF",size:12},
           constraintext:"inside",
           cliponaxis:false,
           customdata:top.map(row=>[
@@ -437,21 +437,20 @@ function HospitalCharts({ analysis, products }: { analysis: HospitalAnalysis; pr
           marker:{color:baseColors},
           hoverinfo:"none",
         }],{
+          ...chartLayout(),
           autosize:true,
           height:400,
-          paper_bgcolor:"#FFFFFF",
-          plot_bgcolor:"#FFFFFF",
-          font:{family:getAppFontFamily(),color:"#172033",size:11},
           showlegend:false,
-          hovermode:"closest",
           margin:{l:54,r:48,t:6,b:64},
-          xaxis:{
-            title:{text:"Liczba hospitalizacji",standoff:8,font:{size:10,color:"#667085"}},
-            gridcolor:"#EEF1F5",
-            zeroline:false,
+          // Słupki poziome: oś wartości od zera z marginesem +10%, podstawa pod słupkami.
+          xaxis:measureAxis({
+            title:axisTitle("Liczba hospitalizacji",8),
+            range:[0,paddedRange(top.map(row=>Number(row.hospitalizations)||0))[1]],
+            tickformat:",.0f",
             automargin:false,
-          },
-          yaxis:{title:"",automargin:true},
+          }),
+          yaxis:categoryAxis({title:{text:""}}),
+          shapes:[baselineShape("x")],
         },{...PLOTLY_CONFIG,displayModeBar:false});
 
         const plot=topRef.current as PlotlyDiv;
@@ -527,7 +526,7 @@ function HospitalCharts({ analysis, products }: { analysis: HospitalAnalysis; pr
           text:rows.map(row=>treemapLabel(row)),
           texttemplate:"%{text}",
           textinfo:"text",
-          textfont:{size:10,color:familyBaseTextColors},
+          textfont:{size:11,color:familyBaseTextColors},
           branchvalues:"total",
           tiling:{pad:2},
           pathbar:{visible:false},
@@ -538,14 +537,11 @@ function HospitalCharts({ analysis, products }: { analysis: HospitalAnalysis; pr
           customdata:rows.map(row=>[row.name,row.hospitalizations,row.sharePct,row.codeCount,row.isOther]),
           hoverinfo:"none",
         }],{
+          ...chartLayout(),
           autosize:true,
           height:400,
-          paper_bgcolor:"#FFFFFF",
-          plot_bgcolor:"#FFFFFF",
-          font:{family:getAppFontFamily(),color:"#172033",size:11},
           margin:{l:2,r:2,t:6,b:64},
-          uniformtext:{minsize:10,mode:"show"},
-          hovermode:"closest",
+          uniformtext:{minsize:11,mode:"show"},
         },{...PLOTLY_CONFIG,displayModeBar:false});
 
         const familyPlot=familyRef.current as PlotlyDiv;

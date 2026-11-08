@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { attachHoverMarker, getAppFontFamily, makeHoverTrace, PLOTLY_CONFIG, type PlotElement, type PlotlyHoverEvent } from "@/lib/plotlyChart";
+import { attachHoverMarker, axisTitle, baselineShape, chartLayout, makeHoverTrace, measureAxis, paddedRange, PLOTLY_CONFIG, referenceShape, type PlotElement, type PlotlyHoverEvent } from "@/lib/plotlyChart";
 import { CHART_COLORS, BASE_POINT } from "@/lib/chartPalette";
 import { loadPlotly } from "@/lib/plotlyLoader";
 
@@ -74,26 +74,22 @@ export function ProviderScatter({ points, xTitle, yTitle, ySuffix, reference, on
       // Znacznik najechanego punktu: ta sama seria i mechanizm co na wykresach eksploratora.
       const hoverTraceIndex = traces.length;
       traces.push(makeHoverTrace());
-      // Margines pod zerem i nad maksimum: punkty dokładnie na 0 nie są ucinane.
+      // Ten sam margines na obu osiach (−6% / +10%): punkty na zerze nie leżą na krawędzi.
+      // Granice lejka mogą podnieść oś, ale najwyżej do 1,6 × maksimum punktów.
       const xMax = Math.max(...points.map((p) => p.x), 1);
       const yMax = Math.max(...points.map((p) => p.y), reference?.y ?? 0, 1);
       const curveMax = Math.max(0, ...curves.flatMap((curve) => curve.y));
       const plot = chartRef.current as PlotElement;
       await Plotly.react(plot, traces, {
+        ...chartLayout(),
         height,
         autosize: true,
         margin: { l: 56, r: 16, t: 12, b: 52 },
-        paper_bgcolor: "#FFFFFF",
-        plot_bgcolor: "#FFFFFF",
-        font: { family: getAppFontFamily(), color: "#172033", size: 12 },
-        separators: ", ",
-        hovermode: "closest",
         showlegend: false,
-        hoverlabel: { bgcolor: "#344054", font: { color: "#FFFFFF", size: 13 }, align: "left" },
-        xaxis: { title: { text: xTitle }, range: [-xMax * 0.03, xMax * 1.05], gridcolor: "#EEF1F5", zerolinecolor: "#D0D5DD", tickformat: ",.0f" },
-        yaxis: { title: { text: yTitle }, range: [-yMax * 0.06, Math.max(yMax * 1.08, Math.min(curveMax, yMax * 1.6))], gridcolor: "#EEF1F5", zerolinecolor: "#D0D5DD", ticksuffix: ySuffix },
-        shapes: reference ? [{ type: "line", xref: "paper", x0: 0, x1: 1, y0: reference.y, y1: reference.y, line: { color: "#667085", width: 1, dash: "dot" } }] : [],
-        annotations: reference ? [{ xref: "paper", x: 1, y: reference.y, xanchor: "right", yanchor: "bottom", showarrow: false, text: reference.label, font: { size: 11, color: "#667085" } }] : [],
+        xaxis: measureAxis({ title: axisTitle(xTitle), range: paddedRange([xMax]), tickformat: ",.0f" }),
+        yaxis: measureAxis({ title: axisTitle(yTitle), range: paddedRange([yMax, Math.min(curveMax, yMax * 1.6)]), ticksuffix: ySuffix }),
+        shapes: [baselineShape("y"), baselineShape("x"), ...(reference ? [referenceShape(reference.y)] : [])],
+        annotations: reference ? [{ xref: "paper", x: 1, y: reference.y, xanchor: "right", yanchor: "bottom", showarrow: false, text: reference.label, font: { size: 12, color: CHART_COLORS.textSecondary } }] : [],
       }, PLOTLY_CONFIG);
       if (cancelled) return;
       attachHoverMarker({ plot, Plotly, traces, hoverTraceIndex });

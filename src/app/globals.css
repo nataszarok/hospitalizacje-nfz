@@ -206,9 +206,6 @@ td:nth-child(6), td:nth-child(7), td:nth-child(8) { white-space:nowrap; }
   .area-stats-panel { height:calc(var(--compact-chart-height, 470px) + 6px); }
   .data-details { margin-top:7px; }
 }
-.plotly .hoverlayer .hovertext path {
-  fill-opacity: 0.45 !important;
-}
 /* Tryb przyjęcia */
 .admission-table th:nth-child(1) { width:25%; }
 .admission-table th:nth-child(2) { width:12%; }
