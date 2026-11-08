@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { monthYears, movingAverage, movingRatio, ratioSeries, sumByYear, type ChartPeriod } from "@/lib/jgpCard";
-import { baselineShape, categoryAxis, chartLayout, countAxis, makeHoverTrace, measureAxis, monthAxis, percentAxis, PLOTLY_CONFIG, type PlotElement } from "@/lib/plotlyChart";
+import { baselineShape, categoryAxis, chartLayout, countAxis, makeHoverTrace, measureAxis, monthAxis, percentAxis, PLOTLY_CONFIG, wrapChartLabel, type PlotElement } from "@/lib/plotlyChart";
 import { loadPlotly } from "@/lib/plotlyLoader";
 import { CHART_COLORS } from "@/lib/chartPalette";
 
@@ -53,7 +53,7 @@ const yearlyLine = (line: ChartLine, months: string[]): ChartLine => ({ ...line,
  * Wszystkie serie są typu `scattergl` (jak w eksploratorze): `restyle` serii SVG w trakcie najechania
  * przerysowuje dymek podpowiedzi, wywołuje kolejne najechanie i przepełnia stos.
  */
-export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = false, onSelect, onHover, height = 400, selectedColor = SELECTED, selectedLabel, highlightYear, note, fitAxis = false, period = "month" }: {
+export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = false, onSelect, onHover, height = 400, selectedColor = SELECTED, selectedLabel, hoverSelectedOnly = false, highlightYear, note, fitAxis = false, period = "month" }: {
   /** Miesiące jako „RRRR-MM”. */
   months: string[];
   /** „year”: suma każdego roku zamiast miesięcy (te same wymiary wykresu). */
@@ -72,8 +72,10 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
   height?: number;
   /** Kolor linii wybranego ośrodka (domyślnie kolor sygnału). */
   selectedColor?: string;
-  /** Podpis na końcu linii wybranego ośrodka (nazwa). */
+  /** Podpis na końcu linii wybranego ośrodka (nazwa; długa w kilku liniach). */
   selectedLabel?: string;
+  /** Gdy jest wybrany ośrodek, dymek i najechanie działają tylko na jego linii. */
+  hoverSelectedOnly?: boolean;
   /** Rok wyróżniony tłem (jak pasek „wybrany rok” w dokumencie karty), np. rok wybrany na karcie. */
   highlightYear?: string;
   /** Objaśnienie pod osią X, wewnątrz wykresu (zamiast osobnego akapitu pod nim). */
@@ -108,11 +110,13 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
       const markerSize = (line: ChartLine) => (emphasized(line) ? 7 : 5) + (yearly ? 2 : 0);
       const percent = ordered.some((line) => line.base);
       const series = new Map(ordered.map((line) => [line.key, seriesOf(line, period)]));
+      const hasSelected = ordered.some((line) => line.tone === "selected");
+      const hoverable = (line: ChartLine) => !hoverSelectedOnly || !hasSelected || line.tone === "selected";
       const shown = (value: number | null) => value === null ? "—" : percent ? `${value.toLocaleString("pl-PL", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%` : Math.round(value).toLocaleString("pl-PL");
       // Dwie serie na linię: kropki (wartości) i średnia 3M. Indeks serii = indeks śladu / 2.
       const traces = ordered.flatMap((line) => {
         const { points, average } = series.get(line.key)!;
-        const custom = labels.map((label, i) => [label, line.name, line.detail ?? "", shown(average[i]), integer(line.values[i]), integer(line.base?.[i] ?? 0)]);
+        const custom = labels.map((label, i) => [label, wrapChartLabel(line.name), line.detail ?? "", shown(average[i]), integer(line.values[i]), integer(line.base?.[i] ?? 0)]);
         const head = `<b>%{customdata[1]}</b><br>${line.detail ? "%{customdata[2]}<br>" : ""}%{customdata[0]}`;
         // Udział: procent z liczbami, z których powstał (np. „2,4% (3 z 125 hosp.)”).
         const value = percent ? `%{y:.1f}% (%{customdata[4]} ${valueLabel} z %{customdata[5]} hosp.)` : `%{y:,.0f} ${valueLabel}`;
@@ -123,6 +127,7 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
             marker: { color: color(line), size: markerSize(line), line: { color: "#FFFFFF", width: 1 } },
             opacity: opacity(line),
             hovertemplate: `${head}: ${value}${yearly ? "" : "<br>średnia 3M: %{customdata[3]}"}<extra></extra>`,
+            ...(hoverable(line) ? {} : { hoverinfo: "skip" }),
           },
           {
             type: "scattergl", mode: "lines", name: yearly ? line.name : `${line.name} · średnia 3M`, legendgroup: line.key, showlegend: false,
@@ -130,6 +135,7 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
             line: { color: color(line), width: width(line) },
             opacity: opacity(line),
             hovertemplate: yearly ? `${head}: ${value}<extra></extra>` : `${head}<br>średnia 3M: %{customdata[3]}${percent ? "" : ` ${valueLabel}`}<extra></extra>`,
+            ...(hoverable(line) ? {} : { hoverinfo: "skip" }),
           },
         ];
       });
@@ -168,7 +174,7 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
         annotations: (() => {
           const line = selectedLabel ? ordered.find((item) => item.tone === "selected") : undefined;
           const last = line ? series.get(line.key)!.average.at(-1) : null;
-          const label = line && last !== null && last !== undefined ? [{ x: x.at(-1), y: last, text: selectedLabel, xanchor: "right", yanchor: "bottom", showarrow: false, font: { size: 12, color: selectedColor }, bgcolor: "rgba(255,255,255,0.85)" }] : [];
+          const label = line && last !== null && last !== undefined ? [{ x: x.at(-1), y: last, text: wrapChartLabel(selectedLabel!), xanchor: "right", yanchor: "bottom", align: "right", showarrow: false, font: { size: 12, color: selectedColor }, bgcolor: "rgba(255,255,255,0.85)" }] : [];
           const explain = noteText ? [{ xref: "paper", yref: "paper", x: 0, y: 0, yshift: -40, xanchor: "left", yanchor: "top", align: "left", showarrow: false, text: noteText, font: { size: 12, color: CHART_COLORS.textTertiary } }] : [];
           return [...label, ...explain];
         })(),
@@ -219,7 +225,7 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
     };
     void render();
     return () => { cancelled = true; };
-  }, [months, lines, valueLabel, legend, height, selectedColor, selectedLabel, highlightYear, note, fitAxis, period]);
+  }, [months, lines, valueLabel, legend, height, selectedColor, selectedLabel, hoverSelectedOnly, highlightYear, note, fitAxis, period]);
 
   // Wysokość zarezerwowana od razu: wykres rysuje się asynchronicznie i nie przesuwa treści pod nim.
   return <div ref={chartRef} role="img" aria-label={ariaLabel} style={{ minHeight: height }} />;

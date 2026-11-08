@@ -6,13 +6,6 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-libra
 import { HospitalsPage } from "@/components/hospitals/HospitalsPage";
 import { HOSPITAL_VIEW_CHANGED_EVENT, HOSPITAL_VIEW_NAVIGATE_EVENT } from "@/lib/dashboardNavigation";
 
-vi.mock("@mantine/core", () => ({
-  Select: ({ id, value, onChange }: { id?: string; value: string; onChange: (v: string) => void }) => (
-    <select data-testid={id} value={value} onChange={(e) => onChange(e.target.value)}>
-      <option value="min">min</option><option value="sim">sim</option>
-    </select>
-  ),
-}));
 const loadStaticDataset = vi.fn();
 vi.mock("@/lib/staticData", () => ({
   loadStaticDataset: (year?: string) => loadStaticDataset(year),
@@ -42,17 +35,21 @@ afterEach(() => {
 describe("HospitalsPage", () => {
   it("ładuje najnowszy rok i pokazuje profil", async () => {
     render(<HospitalsPage />);
-    expect(await screen.findByText("szpital: — · widok: summary · metoda: min · produkty: 1")).toBeInTheDocument();
+    // Bez szpitala w adresie: szpital domyślny (Koszalin).
+    expect(await screen.findByText("szpital: 16|6691044410 · widok: summary · metoda: min · produkty: 1")).toBeInTheDocument();
     expect(loadStaticDataset).toHaveBeenCalledWith(undefined);
     expect(screen.getByRole("heading", { name: "Profil szpitala" })).toBeInTheDocument();
     expect(screen.getByText("NFZ · dane 2025")).toBeInTheDocument();
     expect(document.getElementById("hospital-sidebar-slot")).not.toBeNull();
+    // Bez wyboru metody wartości „<5”.
+    expect(screen.queryByText("Estymacja wartości ukrytych")).not.toBeInTheDocument();
+    expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
   });
 
-  it("odtwarza szpital, widok i metodę z adresu", async () => {
+  it("odtwarza szpital i widok z adresu; metoda jest zawsze konserwatywna", async () => {
     window.history.replaceState(null, "", "/szpitale?hospital=07%7C111&hv=c&m=sim");
     render(<HospitalsPage />);
-    expect(await screen.findByText("szpital: 07|111 · widok: comparison · metoda: sim · produkty: 1")).toBeInTheDocument();
+    expect(await screen.findByText("szpital: 07|111 · widok: comparison · metoda: min · produkty: 1")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Porównanie szpitali" })).toBeInTheDocument();
   });
 
@@ -60,8 +57,7 @@ describe("HospitalsPage", () => {
     window.history.replaceState(null, "", "/szpitale?hospital=07%7C111");
     render(<HospitalsPage />);
     fireEvent.click(await screen.findByText("porównanie"));
-    fireEvent.change(screen.getByTestId("method"), { target: { value: "sim" } });
-    await waitFor(() => expect(window.location.search).toBe("?hospital=07%7C111&hv=c&m=sim"));
+    await waitFor(() => expect(window.location.search).toBe("?hospital=07%7C111&hv=c"));
     expect(changed.mock.calls.at(-1)?.[0].detail).toEqual({ view: "comparison" });
   });
 

@@ -44,7 +44,7 @@ export function ChartTooltip({ anchor, container, kind = "point", children }: {
   return <div ref={ref} className={styles.tooltip} role="tooltip">{children}</div>;
 }
 
-/** Nazwa (pogrubiona, do 2 linii) i kontekst szarym: miejscowość · województwo · kod. */
+/** Nazwa (pogrubiona, cała, w kilku liniach) i kontekst szarym: miejscowość · województwo · kod. */
 export function TooltipHead({ title, context }: { title: ReactNode; context?: ReactNode }) {
   return <div className={styles.head}>
     <b className={styles.title}>{title}</b>
@@ -87,6 +87,11 @@ export function TooltipSection({ title, rows }: { title?: ReactNode; rows: { lab
       </div>)}
     </dl>
   </div>;
+}
+
+/** Wiersze tekstu pod nagłówkiem (np. „411 hosp. · nagłe 85,9%”). */
+export function TooltipLines({ lines }: { lines: ReactNode[] }) {
+  return <div className={styles.lines}>{lines.map((line, i) => <div key={i}>{line}</div>)}</div>;
 }
 
 /** Przypis metody pod treścią dymka. */

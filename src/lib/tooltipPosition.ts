@@ -124,3 +124,23 @@ export function plotlyObjectBox(plot: HTMLElement, type: "scatter" | "bar" | "tr
   const node = trace?.querySelectorAll(type === "scatter" ? "path.point" : ".point").item(pointIndex);
   return node ? elementBox(node) : null;
 }
+
+/** Część `_fullLayout` Plotly potrzebna do przeliczenia danych na piksele. */
+interface PlotlyFullLayout {
+  _size: { l: number; t: number };
+  xaxis: { l2p: (value: number) => number };
+  yaxis: { l2p: (value: number) => number };
+}
+
+/**
+ * Prostokąt punktu serii `scattergl` (WebGL nie ma elementów SVG punktów): środek z osi wykresu, bok = rozmiar znacznika.
+ * `null`, gdy wykres nie jest jeszcze narysowany.
+ */
+export function plotlyDataBox(plot: HTMLElement, x: number, y: number, size: number): Box | null {
+  const layout = (plot as HTMLElement & { _fullLayout?: PlotlyFullLayout })._fullLayout;
+  if (!layout?._size || !layout.xaxis?.l2p || !layout.yaxis?.l2p) return null;
+  const rect = plot.getBoundingClientRect();
+  const cx = rect.left + layout._size.l + layout.xaxis.l2p(x);
+  const cy = rect.top + layout._size.t + layout.yaxis.l2p(y);
+  return { left: cx - size / 2, top: cy - size / 2, width: size, height: size };
+}

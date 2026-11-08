@@ -574,7 +574,8 @@ function ProvidersTab({ data, pool, comparison, regions, selectedRow, scope, fil
         selectedColor={CHART_COLORS.signal}
         highlightYear={data.year}
         period={period}
-        selectedLabel={selectedRow ? (selectedRow.name.length > 40 ? `${selectedRow.name.slice(0, 39)}…` : selectedRow.name) : undefined}
+        selectedLabel={selectedRow?.name}
+        hoverSelectedOnly
         ariaLabel={`Wykres liniowy: hospitalizacje ${periodWord(period)} w ${lines.length} ośrodkach`}
       />
       <ProviderBar
@@ -750,7 +751,7 @@ function HowSection({ data, rows, regions, selectedRow, onSelect }: { data: JgpP
   const referenceMortality = useMemo(() => ({ y: stats.mortalityPct, label: `grupa: ${pct(stats.mortalityPct, stats.mortalityPct < 1 ? 2 : 1)}` }), [stats.mortalityPct]);
   const names = new Map(data.regions.map((row) => [row.owNfz, row.name]));
   const regionLegend = highlight || selectedRow ? <ul className={base.legend} aria-label="Legenda województw">
-    {selectedRow ? <li><i className={styles.selectedDot} aria-hidden />wybrany ośrodek: {selectedRow.name}</li> : null}
+    {selectedRow ? <li><i className={styles.selectedStar} aria-hidden />wybrany ośrodek: {selectedRow.name}</li> : null}
     {regions.map((ow) => <li key={ow}><span className={base.swatch} style={{ background: regionColor.get(ow) }} aria-hidden />{(names.get(ow) ?? ow).toLocaleLowerCase("pl-PL")}</li>)}
     {highlight ? <li><span className={base.swatch} style={{ background: OTHER_POINT }} aria-hidden />pozostałe ośrodki</li> : null}
   </ul> : null;
@@ -770,7 +771,7 @@ function HowSection({ data, rows, regions, selectedRow, onSelect }: { data: JgpP
           <li><span className={base.swatch} style={{ background: FUNNEL_COLORS.up95 }} aria-hidden />powyżej 95%</li>
           <li><span className={base.swatch} style={{ background: FUNNEL_COLORS.up998 }} aria-hidden />powyżej 99,8%</li>
           <li><span className={base.swatch} style={{ background: FUNNEL_COLORS.down998 }} aria-hidden />poniżej granic</li>
-          {selectedRow ? <li><i className={styles.graphiteDot} aria-hidden />wybrany ośrodek</li> : null}
+          {selectedRow ? <li><i className={styles.graphiteStar} aria-hidden />wybrany ośrodek</li> : null}
         </ul> : null}
         {!showFunnel ? <p className={base.note}>Bez granic lejka: {integer(stats.deaths)} {stats.deaths === 1 ? "zgon" : "zgonów"} w grupie w {data.year} r. to za mało, żeby odróżnić różnice między ośrodkami od przypadku (granice rysujemy od {MIN_FUNNEL_DEATHS} zgonów).</p> : null}
       </div>

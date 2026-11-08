@@ -1,15 +1,16 @@
 "use client";
 
-import { Select } from "@mantine/core";
 import { useEffect, useState } from "react";
 import { HospitalAnalysisTab } from "@/components/HospitalAnalysisTab";
 import { HOSPITAL_VIEW_CHANGED_EVENT, HOSPITAL_VIEW_NAVIGATE_EVENT, type HospitalNavigation } from "@/lib/dashboardNavigation";
 import { hospitalUrlSearch, readHospitalUrlState, type HospitalView } from "@/lib/hospitalUrlState";
 import { PEER_DISTANCE_A_LIMIT } from "@/lib/peerDistance";
 import { loadStaticDataset, referenceFromDataset } from "@/lib/staticData";
-import type { EstimationMethod, ProductOption } from "@/lib/types";
+import type { ProductOption } from "@/lib/types";
 
 const noop = () => {};
+// Profil i porównanie liczą wartości „<5” metodą konserwatywną (bez wyboru metody na stronie).
+const METHOD = "min";
 
 /**
  * Moduł „Szpitale publiczne”: profil i porównanie z podobnymi placówkami (/szpitale).
@@ -21,7 +22,6 @@ export function HospitalsPage() {
   const [products, setProducts] = useState<ProductOption[]>([]);
   const [hospitalKey, setHospitalKey] = useState("");
   const [view, setView] = useState<HospitalView>("summary");
-  const [method, setMethod] = useState<EstimationMethod>("min");
   const [peerDistance, setPeerDistance] = useState(PEER_DISTANCE_A_LIMIT);
   const [error, setError] = useState<string | null>(null);
 
@@ -34,7 +34,6 @@ export function HospitalsPage() {
         setYear(reference.analysisYear);
         setHospitalKey(state.hospitalKey);
         setView(state.view);
-        setMethod(state.method);
         setPeerDistance(state.peerDistance);
         setReady(true);
       })
@@ -50,9 +49,9 @@ export function HospitalsPage() {
 
   useEffect(() => {
     if (!ready) return;
-    window.history.replaceState(window.history.state, "", `${window.location.pathname}${hospitalUrlSearch({ hospitalKey, view, method, peerDistance })}${window.location.hash}`);
+    window.history.replaceState(window.history.state, "", `${window.location.pathname}${hospitalUrlSearch({ hospitalKey, view, method: METHOD, peerDistance })}${window.location.hash}`);
     window.dispatchEvent(new CustomEvent<HospitalNavigation>(HOSPITAL_VIEW_CHANGED_EVENT, { detail: { view } }));
-  }, [ready, hospitalKey, view, method, peerDistance]);
+  }, [ready, hospitalKey, view, peerDistance]);
 
   if (error) return <main className="center-state error">{error}</main>;
   if (!ready) return <main className="center-state">Ładowanie profili szpitali…</main>;
@@ -69,22 +68,6 @@ export function HospitalsPage() {
       {/* HospitalAnalysisTab wstawia tu wybór szpitala i widoku. */}
       <div id="hospital-sidebar-slot" />
 
-      <section className="filter-section last">
-        <div className="sidebar-kicker">Estymacja wartości ukrytych</div>
-        <label className="field-label" htmlFor="method">Wartości &lt;5</label>
-        <Select
-          id="method"
-          value={method}
-          onChange={(value) => value && setMethod(value as EstimationMethod)}
-          data={[
-            { value: "sim", label: "Symulacyjna: losowanie 1–4" },
-            { value: "min", label: "Konserwatywna: każde <5 = 1" },
-          ]}
-          allowDeselect={false}
-          comboboxProps={{ withinPortal: true, shadow: "md" }}
-          className="mantine-filter"
-        />
-      </section>
       <div id="hospital-sidebar-bottom-slot" />
       <div className="sidebar-status"><span className="status-dot" />Dane statyczne</div>
     </aside>
@@ -95,7 +78,7 @@ export function HospitalsPage() {
         <p>Oddziały, łóżka, świadczenia i finanse szpitala oraz porównanie z podobnymi placówkami · dane NFZ {year}</p>
       </header>
       <HospitalAnalysisTab
-        method={method}
+        method={METHOD}
         products={products}
         hospitalKey={hospitalKey}
         setHospitalKey={setHospitalKey}

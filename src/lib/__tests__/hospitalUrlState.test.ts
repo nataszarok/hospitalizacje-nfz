@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { hospitalUrlSearch, readHospitalUrlState } from "@/lib/hospitalUrlState";
+import { DEFAULT_HOSPITAL_KEY, hospitalUrlSearch, readHospitalUrlState } from "@/lib/hospitalUrlState";
 
 describe("stan strony /szpitale w adresie", () => {
-  it("domyślny stan nie trafia do adresu", () => {
-    expect(readHospitalUrlState("")).toEqual({ hospitalKey: "", view: "summary", method: "min", peerDistance: 10.01 });
+  it("bez parametru otwiera szpital domyślny (Koszalin); domyślny stan nie trafia do adresu", () => {
+    expect(DEFAULT_HOSPITAL_KEY).toBe("16|6691044410");
+    expect(readHospitalUrlState("")).toEqual({ hospitalKey: DEFAULT_HOSPITAL_KEY, view: "summary", method: "min", peerDistance: 10.01 });
+    expect(readHospitalUrlState("?hospital=%20")).toMatchObject({ hospitalKey: DEFAULT_HOSPITAL_KEY });
+    expect(hospitalUrlSearch({ hospitalKey: DEFAULT_HOSPITAL_KEY, view: "summary", method: "min", peerDistance: 10.01 })).toBe("");
     expect(hospitalUrlSearch({ hospitalKey: "", view: "summary", method: "min", peerDistance: 10.01 })).toBe("");
   });
 

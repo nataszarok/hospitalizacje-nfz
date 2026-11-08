@@ -50,3 +50,37 @@ describe("GroupLineChart — okres", () => {
     expect(markers.y).toEqual([20, 95]);
   });
 });
+
+describe("GroupLineChart — wybrany ośrodek", () => {
+  const name = "SZPITAL WOJEWÓDZKI IM. MIKOŁAJA KOPERNIKA W KOSZALINIE";
+  const lines = [
+    { key: "a", name: "Inny ośrodek", values },
+    { key: "b", name, values, tone: "selected" as const },
+  ];
+  type HoverTrace = Trace & { hoverinfo?: string };
+  type Annotation = { text: string };
+
+  async function drawSelected(hoverSelectedOnly: boolean) {
+    render(<GroupLineChart months={months} lines={lines} valueLabel="hosp." ariaLabel="wykres" selectedLabel={name} hoverSelectedOnly={hoverSelectedOnly} />);
+    await waitFor(() => expect(react).toHaveBeenCalled());
+    const [, traces, layout] = react.mock.calls.at(-1) as unknown as [unknown, HoverTrace[], { annotations: Annotation[] }];
+    return { traces, layout };
+  }
+
+  it("z hoverSelectedOnly dymek działa tylko na linii wybranego ośrodka", async () => {
+    const { traces } = await drawSelected(true);
+    // Serie: inny ośrodek (kropki, średnia), wybrany (kropki, średnia).
+    expect(traces.slice(0, 4).map((trace) => trace.hoverinfo)).toEqual(["skip", "skip", undefined, undefined]);
+  });
+
+  it("bez hoverSelectedOnly dymek działa na wszystkich liniach", async () => {
+    const { traces } = await drawSelected(false);
+    expect(traces.slice(0, 4).every((trace) => trace.hoverinfo === undefined)).toBe(true);
+  });
+
+  it("długą nazwę w podpisie i w dymku łamie na linie, bez skracania", async () => {
+    const { traces, layout } = await drawSelected(true);
+    expect(layout.annotations[0].text).toBe("SZPITAL WOJEWÓDZKI IM. MIKOŁAJA<br>KOPERNIKA W KOSZALINIE");
+    expect(traces[2].customdata[0][1]).toBe("SZPITAL WOJEWÓDZKI IM. MIKOŁAJA<br>KOPERNIKA W KOSZALINIE");
+  });
+});
