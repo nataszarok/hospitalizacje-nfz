@@ -28,3 +28,6 @@ pipeline.md
 CLAUDE.md
 AGENTS.md
 .claude/
+
+# Lokalne notatki projektowe (zasady wyglądu), nie trafiają do repo
+/DESIGN.md
