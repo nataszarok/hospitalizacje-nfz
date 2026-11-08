@@ -39,7 +39,6 @@
   container-name:hospital-summary;
 }
 
-
 /* Shared primitives used by the summary profile. */
 .hospital-analysis.hospital-subtab-summary .hospital-profile-card{
   box-sizing:border-box;
@@ -54,7 +53,6 @@
   box-shadow:var(--shadow-soft);
 }
 
-
 .hospital-analysis.hospital-subtab-summary .hospital-profile-card-head{
   display:flex;
   align-items:flex-start;
@@ -66,7 +64,6 @@
   color:var(--hp-text);
 }
 
-
 .hospital-analysis.hospital-subtab-summary .hospital-summary-redesign .hospital-jgp-bars-card{grid-area:bars!important}
 .hospital-analysis.hospital-subtab-summary .hospital-summary-redesign .hospital-jgp-family-panel{grid-area:family!important}
 .hospital-analysis.hospital-subtab-summary .hospital-summary-redesign .hospital-jgp-bars-card, .hospital-analysis.hospital-subtab-summary .hospital-summary-redesign .hospital-jgp-family-panel{
@@ -74,16 +71,13 @@
 }
 .hospital-analysis.hospital-subtab-summary .hospital-profile-chart-head{display:flex!important;align-items:flex-start!important;justify-content:space-between!important;gap:10px!important;margin:0 0 8px!important}
 
-
 .hospital-analysis.hospital-subtab-summary .modebar{display:none!important}
-
 
 .hospital-analysis.hospital-subtab-summary .hospital-empty-inline{
   padding:12px;
   color:var(--color-text-tertiary);
   font-size:var(--fs-2xs);
 }
-
 
 /* Second row — four KPI cards, aligned with the comparison-method card hierarchy. */
 .hospital-analysis.hospital-subtab-summary .hospital-profile-stats-card{
@@ -145,7 +139,6 @@
   overflow:hidden;
   text-overflow:ellipsis;
 }
-
 
 /* ================================================================
    Component: RPWDL
@@ -285,7 +278,6 @@
   line-height:1.3;
 }
 
-
 .hospital-analysis.hospital-subtab-summary .hospital-rpwdl-kpi-label{
   display:flex!important;
   align-items:center;
@@ -363,7 +355,6 @@
   font-size:var(--fs-2xs);
   line-height:1.35;
 }
-
 
 .hospital-analysis.hospital-subtab-summary .hospital-rpwdl-help-popover.is-table{
   width:min(430px,78vw);
@@ -615,7 +606,6 @@
 .hospital-analysis.hospital-subtab-summary .hospital-rpwdl-wards-table th .hospital-sort-header{width:100%;justify-content:flex-start}
 .hospital-analysis.hospital-subtab-summary .hospital-rpwdl-wards-table th.num .hospital-sort-header{justify-content:flex-end}
 
-
 /* ================================================================
    Component: hospital top line
    Identity is intentionally unboxed; finance stays a compact card.
@@ -726,7 +716,6 @@
   line-height:1.32;
   font-weight:var(--fw-regular);
 }
-
 
 /* Finance */
 .hospital-analysis.hospital-subtab-summary .hospital-profile-card-finance-top{
@@ -860,7 +849,6 @@
 .hospital-analysis.hospital-subtab-summary .hospital-profile-card-finance-top .hospital-profile-finance-bars i:nth-child(5){height:34px}
 .hospital-analysis.hospital-subtab-summary .hospital-profile-card-finance-top .hospital-profile-finance-bars i:nth-child(6){height:27px}
 
-
 /* ================================================================
    Component: JGP charts
    Two charts. One source of truth.
@@ -904,7 +892,6 @@
   display:flex;
   flex-direction:column;
 }
-
 
 .hospital-analysis.hospital-subtab-summary .hospital-jgp-profile-section .hospital-profile-chart-head-simple{
   min-height:28px;
@@ -977,7 +964,6 @@
 .hospital-analysis.hospital-subtab-summary .hospital-summary-redesign .hospital-jgp-family-treemap .slicetext{
   font-weight:var(--fw-medium)!important;
 }
-
 
 /* ================================================================
    Responsive system — hospital summary
@@ -1079,75 +1065,14 @@
   }
 }
 
-/* Summary chart tooltips. */
+/* Kontener wykresu z dymkiem `ChartTooltip`. */
 .hospital-analysis.hospital-subtab-summary .hospital-summary-chart-shell{
   position:relative;
   min-width:0;
   overflow:visible;
 }
 
-.hospital-analysis.hospital-subtab-summary .hospital-summary-chart-tooltip{
-  display:block!important;
-  visibility:visible!important;
-  opacity:1!important;
-  position:absolute!important;
-  right:auto!important;
-  bottom:auto!important;
-  transform:none!important;
-  width:min(330px,calc(100% - 20px))!important;
-  max-width:330px!important;
-  max-height:min(420px,calc(100vh - 32px))!important;
-  overflow-y:auto!important;
-  z-index:120!important;
-  pointer-events:none!important;
-  box-shadow:var(--shadow-float)!important;
-}
-
-.hospital-analysis.hospital-subtab-summary .hospital-summary-chart-tooltip .hospital-peer-tooltip-head{
-  padding-bottom:7px!important;
-  margin-bottom:7px!important;
-}
-
-.hospital-analysis.hospital-subtab-summary .hospital-summary-chart-tooltip .hospital-peer-tooltip-group{
-  padding:7px 0!important;
-  margin:0!important;
-}
-
-.hospital-analysis.hospital-subtab-summary .hospital-summary-chart-tooltip .hospital-peer-tooltip-grouphead{
-  margin-bottom:4px!important;
-}
-
-.hospital-analysis.hospital-subtab-summary .hospital-summary-chart-tooltip .hospital-peer-tooltip-row{
-  padding:3px 0!important;
-  gap:10px!important;
-}
-
-.hospital-analysis.hospital-subtab-summary .hospital-summary-chart-tooltip .hospital-peer-tooltip-row>span{
-  min-width:0;
-}
-
-.hospital-analysis.hospital-subtab-summary .hospital-summary-chart-tooltip .hospital-peer-tooltip-row>b{
-  text-align:right;
-}
-
-.hospital-analysis.hospital-subtab-summary .hospital-summary-tooltip-name>b{
-  max-width:205px;
-  white-space:normal;
-  line-height:1.3;
-}
-
 .hospital-analysis.hospital-subtab-summary .hospital-summary-jgp-grid>.hospital-chart-card:hover{
   z-index:20;
 }
 
-.hospital-analysis.hospital-subtab-summary .hospital-summary-chart-tooltip--side{
-  transform:translateY(-50%)!important;
-}
-
-.hospital-analysis.hospital-subtab-summary .hospital-summary-chart-tooltip--above{
-  transform:translateY(-100%)!important;
-}
-
-.hospital-analysis.hospital-subtab-summary .hospital-summary-chart-tooltip--below{
-  transform:none!important;
-}

@@ -24,7 +24,9 @@
   --color-error:#B42318; --color-error-soft:#FFF4F2; --color-error-border:#F0C8C3;
   /* Dane: błękity i granat. Sygnał = jedno wyróżnienie na wykres. */
   --color-data-strong:#1B3D78; --color-data:#2856A3; --color-data-soft:#9DB4DB; --color-data-muted:#B5C7E6; --color-data-faint:#E4EAF4;
-  --color-signal:#C65D2E; --color-positive:#1D6B3A;
+  --color-signal:#C65D2E; --color-signal-soft:#FBEEE7; --color-positive:#1D6B3A;
+  /* Skala odchylenia: ciepły = powyżej (lejek, różnica wobec podobnych), błękit = poniżej (--color-data). */
+  --color-deviation-up:#B4441B;
   --color-estimate-bg:#FFF4E0; --color-estimate-fg:#8A5300;
   --color-chart-grid:#E6EFEC; --color-chart-secondary:#A0B4AF;
   /* Kształt: plakietka, kontrolka, karta, chip. */
@@ -254,8 +256,9 @@ td:nth-child(6), td:nth-child(7), td:nth-child(8) { white-space:nowrap; }
   max-width:220px;
   padding:6px 8px;
   border-radius:var(--radius-control);
-  background:var(--color-text);
-  color:#FFFFFF;
+  border:1px solid var(--color-border-strong);
+  background:var(--color-background);
+  color:var(--color-text);
   font-size:var(--fs-xs);
   font-weight:var(--fw-semibold);
   line-height:1.2;

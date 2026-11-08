@@ -195,7 +195,7 @@
 .hospital-jgp-table-controls>small{position:static!important;margin:0!important;text-align:right}
 .hospital-jgp-filter-chip{border:1px solid var(--color-border);background:#fff;color:var(--color-text-secondary);border-radius:var(--radius-pill);padding:6px 10px;font:inherit;font-size:var(--fs-xs);font-weight:var(--fw-semibold);line-height:1;cursor:pointer;white-space:nowrap}
 .hospital-jgp-filter-chip:hover{background:var(--color-background-soft)}
-.hospital-jgp-filter-chip.is-active{background:#FEE4E2;border-color:#FDA29B;color:#B42318}
+.hospital-jgp-filter-chip.is-active{background:var(--color-primary-soft);border-color:var(--color-primary-outline);color:var(--color-primary-hover)}
 .hospital-methodology-backdrop{position:fixed;inset:0;z-index:1100;background:rgba(16,24,40,.42);display:flex;align-items:center;justify-content:center;padding:24px}
 .hospital-methodology-modal{width:min(820px,94vw);max-height:88vh;overflow:auto;background:#fff;border:1px solid var(--color-border);border-radius:var(--radius-card);box-shadow:var(--shadow-float);padding:22px}
 .hospital-methodology-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px}.hospital-methodology-head span{display:block;color:var(--color-text-tertiary);font-size:var(--fs-xs);font-weight:var(--fw-bold);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}.hospital-methodology-head h3{margin:0;color:var(--color-text);font-size:var(--fs-xl)}.hospital-methodology-head button{border:0;background:transparent;color:var(--color-text-tertiary);font-size:var(--fs-3xl);line-height:1;cursor:pointer;padding:0 2px}
@@ -209,8 +209,8 @@
 .hospital-jgp-modal-stats{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:12px;padding:10px 0;border-top:1px solid var(--color-border-subtle);border-bottom:1px solid var(--color-border-subtle);color:var(--color-text-tertiary);font-size:var(--fs-xs)}.hospital-jgp-modal-stats b{color:var(--color-text);margin-left:4px}.hospital-jgp-modal-plot{display:block;width:100%;height:280px;min-height:280px;position:relative}
 .hospital-jgp-outlier-table .name{white-space:normal;min-width:220px;max-width:320px}
 .hospital-jgp-outlier-table .num{text-align:right;font-variant-numeric:tabular-nums}
-.hospital-jgp-outlier-table .bad{color:#B42318;font-weight:var(--fw-bold)}
-.hospital-jgp-outlier-table .good{color:var(--color-text-tertiary);font-weight:var(--fw-bold)}
+.hospital-jgp-outlier-table .bad{color:var(--color-deviation-up);font-weight:var(--fw-bold)}
+.hospital-jgp-outlier-table .good{color:var(--color-data);font-weight:var(--fw-bold)}
 .hospital-jgp-table-empty{margin:12px 0 0;color:var(--color-text-tertiary);font-size:var(--fs-md)}
 
 
@@ -231,7 +231,7 @@
 .hospital-benchmark-kpi>div b{font-size:var(--fs-xs);color:var(--color-text-secondary)}
 .hospital-benchmark-kpi>em{display:block;margin-top:5px;font-size:var(--fs-xs);font-style:normal;font-weight:var(--fw-bold);color:var(--color-text-tertiary)}
 .hospital-benchmark-kpi>em.is-positive{color:#067647}
-.hospital-benchmark-kpi>em.is-negative{color:#B42318}
+.hospital-benchmark-kpi>em.is-negative{color:var(--color-deviation-up)}
 .hospital-peer-actions{display:flex;justify-content:flex-end;margin-top:10px}
 .hospital-peer-actions .hospital-peer-disclosure{min-height:auto}
 .hospital-peer-actions .hospital-peer-disclosure-button{padding:7px 10px;cursor:default}
@@ -245,24 +245,9 @@
 .hospital-sidebar-tabs button:hover{color:var(--color-text)}
 .hospital-sidebar-tabs button.is-active{background:#fff;color:var(--color-text);box-shadow:var(--shadow-soft)}
 
-.hospital-map-peer-tooltip{display:block!important;visibility:visible!important;opacity:1!important;position:absolute!important;right:auto!important;bottom:auto!important;transform:translateY(-50%)!important;width:min(380px,calc(100% - 24px))!important;max-width:380px!important;max-height:min(520px,calc(100vh - 32px))!important;overflow-y:auto!important;overscroll-behavior:contain;z-index:80!important;pointer-events:none!important}
 
-.hospital-map-peer-tooltip .hospital-peer-tooltip-head{padding-bottom:7px!important;margin-bottom:7px!important}
-.hospital-map-peer-tooltip .hospital-peer-tooltip-group{padding:7px 0!important;margin:0!important}
-.hospital-map-peer-tooltip .hospital-peer-tooltip-grouphead{margin-bottom:4px!important}
-.hospital-map-peer-tooltip .hospital-peer-tooltip-row{padding:3px 0!important;gap:10px!important}
-.hospital-map-peer-tooltip>small{display:block;margin-top:7px!important;line-height:1.35!important}
-.hospital-map-peer-tooltip .hospital-peer-tooltip-row>span{min-width:0}
-.hospital-map-peer-tooltip .hospital-peer-tooltip-row>span:first-child{padding-right:12px}
-.hospital-map-peer-tooltip .hospital-peer-tooltip-row b{text-align:right}
-.hospital-map-peer-driver-similarity{display:block!important;margin-top:1px!important;color:var(--color-text-tertiary)!important;font-size:var(--fs-2xs)!important;font-weight:var(--fw-medium)!important}
-.hospital-map-peer-highlight{position:absolute;width:17px;height:17px;border-radius:50%;background:var(--color-text);border:2px solid #fff;box-shadow:0 0 0 1px var(--color-text);transform:translate(-50%,-50%);pointer-events:none;z-index:90}
-.hospital-map-main-highlight{position:absolute;width:22px;height:22px;border-radius:50%;background:transparent;border:2px solid #D92D20;box-shadow:0 0 0 3px rgba(217,45,32,.14);transform:translate(-50%,-50%);pointer-events:none;z-index:91}
-.hospital-map-main-tooltip{border-color:#FDA29B!important}
-.hospital-map-main-tooltip::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:#D92D20;border-radius:var(--radius-control) 0 0 var(--radius-control)}
-.hospital-map-main-tooltip-head{padding-left:3px}
-.hospital-map-main-tooltip-head>b{color:#B42318}
-.hospital-map-main-tooltip-head>strong{color:#B42318;background:#FEE4E2;border-radius:var(--radius-pill);padding:3px 7px;font-size:var(--fs-2xs);letter-spacing:.04em}
+.hospital-map-peer-highlight{position:absolute;width:17px;height:17px;border-radius:50%;background:var(--color-data-strong);border:2px solid #fff;box-shadow:0 0 0 1px var(--color-data-strong);transform:translate(-50%,-50%);pointer-events:none;z-index:90}
+.hospital-map-main-highlight{position:absolute;width:22px;height:22px;border-radius:50%;background:transparent;border:2px solid var(--color-signal);box-shadow:0 0 0 3px rgba(198,93,46,.16);transform:translate(-50%,-50%);pointer-events:none;z-index:91}
 
 .hospital-peer-heading-actions .hospital-peer-disclosure{min-height:auto;flex:0 0 auto}
 .hospital-peer-heading-actions .hospital-peer-disclosure-button{padding:7px 10px}
@@ -282,48 +267,11 @@
 .hospital-pair-grade-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px}
 .hospital-filter-note{display:block;margin-top:8px;color:var(--color-text-tertiary);font-size:var(--fs-2xs);line-height:1.3}
 
-/* Standard Plotly tooltip shell used in the 3rd comparison tab. */
+/* Kontener wykresu z dymkiem `ChartTooltip`. */
 .hospital-standard-plot-shell{
   position:relative;
   min-width:0;
   overflow:visible;
-}
-.hospital-standard-plot-tooltip{
-  display:block!important;
-  visibility:visible!important;
-  opacity:1!important;
-  position:absolute!important;
-  right:auto!important;
-  bottom:auto!important;
-  transform:translateY(-50%)!important;
-  width:min(330px,calc(100% - 20px))!important;
-  max-width:330px!important;
-  max-height:min(430px,calc(100vh - 32px))!important;
-  overflow-y:auto!important;
-  z-index:120!important;
-  pointer-events:none!important;
-  box-shadow:var(--shadow-float)!important;
-}
-.hospital-standard-plot-tooltip-main{
-  border-color:#FDA29B!important;
-}
-.hospital-standard-plot-tooltip-main::before{
-  content:"";
-  position:absolute;
-  left:0;
-  top:0;
-  bottom:0;
-  width:4px;
-  border-radius:var(--radius-control) 0 0 var(--radius-control);
-  background:#D92D20;
-}
-.hospital-standard-plot-tooltip-main .hospital-peer-tooltip-head>b{
-  color:#B42318;
-}
-.hospital-standard-tooltip-name>b{
-  max-width:215px;
-  white-space:normal;
-  line-height:1.3;
 }
 .hospital-jgp-modal-plot-shell{
   overflow:visible;
@@ -428,14 +376,14 @@
   position:sticky;
   top:42px;
   z-index:20;
-  background:#FFF4F2;
-  border-top:1px solid #FDA29B;
-  border-bottom:1px solid #FDA29B;
-  color:#7A271A;
+  background:var(--color-signal-soft);
+  border-top:1px solid var(--color-signal);
+  border-bottom:1px solid var(--color-signal);
+  color:var(--color-text);
   box-shadow:var(--shadow-soft);
 }
 .hospital-peer-group-main-body .hospital-peer-group-main-row td:first-child{
-  box-shadow:inset 4px 0 0 #D92D20,0 2px 4px rgba(16,24,40,.06);
+  box-shadow:inset 4px 0 0 var(--color-signal);
 }
 .hospital-peer-group-main-badge{
   display:inline-flex;
@@ -443,9 +391,9 @@
   min-height:22px;
   padding:2px 7px;
   border-radius:var(--radius-pill);
-  background:#FEE4E2;
-  color:#B42318;
-  font-size:var(--fs-2xs);
+  background:var(--color-signal-soft);
+  color:var(--color-signal);
+  font-size:var(--fs-xs);
   font-weight:var(--fw-bold);
   letter-spacing:.04em;
 }
@@ -459,7 +407,7 @@
   line-height:1.35;
 }
 .hospital-peer-group-main-row .hospital-peer-group-provider b{
-  color:#B42318;
+  color:var(--color-text);
 }
 .hospital-peer-group-provider small{
   display:block;

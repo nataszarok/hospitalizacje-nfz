@@ -6,6 +6,9 @@ import { createPortal } from "react-dom";
 import type { EstimationMethod, HospitalAnalysis, HospitalDirectoryEntry, ProductOption } from "@/lib/types";
 import { hospitalAnalysisFromDataset, hospitalDirectoryFromDataset, loadStaticDataset } from "@/lib/staticData";
 import { PLOTLY_CONFIG, axisTitle, baselineShape, categoryAxis, chartLayout, measureAxis, paddedRange } from "@/lib/plotlyChart";
+import { CHART_COLORS } from "@/lib/chartPalette";
+import { plotlyObjectBox, pointerBox, type Box } from "@/lib/tooltipPosition";
+import { ChartTooltip, TooltipHead, TooltipKeyValue, TooltipSection } from "./ChartTooltip";
 import { HospitalSimilarityTab } from "@/components/HospitalSimilarityTab";
 import {
   PEER_DISTANCE_A_LIMIT,
@@ -216,90 +219,6 @@ type PlotlyDiv = HTMLDivElement & {
   removeAllListeners?: (event:string)=>void;
 };
 
-const tooltipPosition=(shell:HTMLDivElement|null,clientX:number,clientY:number,estimatedHeight=210)=>{
-  if(!shell) return {left:12,top:12};
-  const r=shell.getBoundingClientRect();
-  const x=clientX-r.left;
-  const y=clientY-r.top;
-  const tooltipWidth=Math.min(330,Math.max(230,r.width-24));
-  const gap=14;
-  const left=x+r.width*0.02+tooltipWidth+gap<r.width
-    ? Math.min(x+gap,r.width-tooltipWidth-10)
-    : Math.max(10,x-tooltipWidth-gap);
-  const halfHeight=Math.min(estimatedHeight/2,Math.max(40,(r.height-20)/2));
-  const top=Math.max(halfHeight+10,Math.min(r.height-halfHeight-10,y));
-  return {left,top};
-};
-
-
-const treemapTooltipPosition=(
-  shell:HTMLDivElement|null,
-  eventTarget:EventTarget|null|undefined,
-  clientX:number,
-  clientY:number,
-  estimatedHeight=180,
-)=>{
-  if(!shell) return {left:12,top:12,placement:"side" as const};
-
-  const shellRect=shell.getBoundingClientRect();
-  const target=eventTarget instanceof Element ? eventTarget : null;
-  const slice=target?.closest("g.slice") ?? target?.closest("path.surface") ?? target;
-  const boxRect=slice instanceof Element ? slice.getBoundingClientRect() : null;
-
-  if(!boxRect || boxRect.width<=0 || boxRect.height<=0){
-    const fallback=tooltipPosition(shell,clientX,clientY,estimatedHeight);
-    return {...fallback,placement:"side" as const};
-  }
-
-  const gap=14;
-  const viewportPad=12;
-  const tooltipWidth=Math.min(330,Math.max(230,shellRect.width-24));
-  const tooltipHeight=Math.min(estimatedHeight,Math.max(120,window.innerHeight-viewportPad*2));
-  const roomRight=window.innerWidth-boxRect.right-viewportPad;
-  const roomLeft=boxRect.left-viewportPad;
-  const roomAbove=boxRect.top-viewportPad;
-  const roomBelow=window.innerHeight-boxRect.bottom-viewportPad;
-  const boxCenterY=boxRect.top+boxRect.height/2;
-  const clampedCenterY=Math.max(
-    viewportPad+tooltipHeight/2,
-    Math.min(window.innerHeight-viewportPad-tooltipHeight/2,boxCenterY),
-  );
-
-  // Priorytet: prawa/lewa strona kafla. To gwarantuje brak nakładania na box.
-  if(roomRight>=tooltipWidth+gap){
-    return {
-      left:boxRect.right+gap-shellRect.left,
-      top:clampedCenterY-shellRect.top,
-      placement:"side" as const,
-    };
-  }
-  if(roomLeft>=tooltipWidth+gap){
-    return {
-      left:boxRect.left-gap-tooltipWidth-shellRect.left,
-      top:clampedCenterY-shellRect.top,
-      placement:"side" as const,
-    };
-  }
-
-  // Gdy po bokach brakuje miejsca, tooltip trafia całkowicie nad albo pod box.
-  const centeredViewportLeft=Math.max(
-    viewportPad,
-    Math.min(window.innerWidth-viewportPad-tooltipWidth,boxRect.left+boxRect.width/2-tooltipWidth/2),
-  );
-  if(roomAbove>=tooltipHeight+gap || roomAbove>=roomBelow){
-    return {
-      left:centeredViewportLeft-shellRect.left,
-      top:boxRect.top-gap-shellRect.top,
-      placement:"above" as const,
-    };
-  }
-  return {
-    left:centeredViewportLeft-shellRect.left,
-    top:boxRect.bottom+gap-shellRect.top,
-    placement:"below" as const,
-  };
-};
-
 const wrapTreemapName=(value:string,maxLine=18)=>{
   const words=value.trim().split(/\s+/).filter(Boolean);
   if(!words.length) return "";
@@ -351,8 +270,8 @@ function HospitalCharts({ analysis, products }: { analysis: HospitalAnalysis; pr
   const familyShellRef = useRef<HTMLDivElement>(null);
   const productMap = useMemo(() => new Map(products.map((p) => [p.code, p])), [products]);
   const [chartTooltip,setChartTooltip]=useState<
-    | {kind:"jgp";left:number;top:number;code:string;name:string;hospitalizations:number;sharePct:number;deaths:number;mortalityPct:number}
-    | {kind:"family";left:number;top:number;placement:"side"|"above"|"below";code:string;name:string;hospitalizations:number;sharePct:number;codeCount:number;isOther:boolean}
+    | {kind:"jgp";anchor:Box;code:string;name:string;hospitalizations:number;sharePct:number;deaths:number;mortalityPct:number}
+    | {kind:"family";anchor:Box;code:string;name:string;hospitalizations:number;sharePct:number;codeCount:number;isOther:boolean}
     | null
   >(null);
 
@@ -415,7 +334,7 @@ function HospitalCharts({ analysis, products }: { analysis: HospitalAnalysis; pr
       if(topRef.current){
         const top=analysis.codes.slice(0,10).reverse();
         const total=analysis.codes.reduce((sum,row)=>sum+(Number(row.hospitalizations)||0),0);
-        const baseColors=top.map(()=>"#98A2B3");
+        const baseColors:string[]=top.map(()=>CHART_COLORS.data);
 
         await Plotly.react(topRef.current,[{
           type:"bar",
@@ -469,18 +388,13 @@ function HospitalCharts({ analysis, products }: { analysis: HospitalAnalysis; pr
           if(!row) return;
 
           const colors=baseColors.slice();
-          colors[pt.pointIndex]="#D92D20";
+          colors[pt.pointIndex]=CHART_COLORS.dataStrong;
           void Plotly.restyle(plot,{"marker.color":[colors]},[0]);
 
           const mouse=ev?.event;
-          const pos=tooltipPosition(
-            topShellRef.current,
-            Number(mouse?.clientX ?? 0),
-            Number(mouse?.clientY ?? 0),
-          );
           setChartTooltip({
             kind:"jgp",
-            ...pos,
+            anchor:plotlyObjectBox(plot,"bar",0,pt.pointIndex) ?? pointerBox(Number(mouse?.clientX ?? 0),Number(mouse?.clientY ?? 0)),
             code:String(row.jgpCode ?? row.productCode ?? "—"),
             name:String(productMap.get(row.productCode)?.name ?? ""),
             hospitalizations:Number(row.hospitalizations)||0,
@@ -515,8 +429,8 @@ function HospitalCharts({ analysis, products }: { analysis: HospitalAnalysis; pr
             isOther:true,
           }] : []),
         ];
-        const familyBaseColors:string[]=rows.map(row=>row.isOther ? "#EAECF0" : "#98A2B3");
-        const familyBaseTextColors:string[]=rows.map(row=>row.isOther ? "#344054" : "#FFFFFF");
+        const familyBaseColors:string[]=rows.map(row=>row.isOther ? CHART_COLORS.dataFaint : CHART_COLORS.dataSoft);
+        const familyBaseTextColors:string[]=rows.map(row=>row.isOther ? CHART_COLORS.text : CHART_COLORS.dataStrong);
 
         await Plotly.react(familyRef.current,[{
           type:"treemap",
@@ -564,7 +478,7 @@ function HospitalCharts({ analysis, products }: { analysis: HospitalAnalysis; pr
 
           const colors=familyBaseColors.slice();
           const textColors=familyBaseTextColors.slice();
-          colors[pt.pointNumber]="#D92D20";
+          colors[pt.pointNumber]=CHART_COLORS.data;
           textColors[pt.pointNumber]="#FFFFFF";
           void Plotly.restyle(familyPlot,{
             "marker.colors":[colors],
@@ -572,16 +486,9 @@ function HospitalCharts({ analysis, products }: { analysis: HospitalAnalysis; pr
           },[0]);
 
           const mouse=ev?.event;
-          const pos=treemapTooltipPosition(
-            familyShellRef.current,
-            mouse?.target,
-            Number(mouse?.clientX ?? 0),
-            Number(mouse?.clientY ?? 0),
-            180,
-          );
           setChartTooltip({
             kind:"family",
-            ...pos,
+            anchor:plotlyObjectBox(familyPlot,"treemap",0,pt.pointNumber,mouse?.target) ?? pointerBox(Number(mouse?.clientX ?? 0),Number(mouse?.clientY ?? 0)),
             code:row.label,
             name:row.name,
             hospitalizations:row.hospitalizations,
@@ -612,34 +519,20 @@ function HospitalCharts({ analysis, products }: { analysis: HospitalAnalysis; pr
           <div className="hospital-profile-chart-title">
             <h3>TOP 10 kodów JGP</h3>
           </div>
-          <small>Szary: udział bazowy · czerwony: wskazany kod.</small>
+          <small>Udział kodu w hospitalizacjach szpitala.</small>
         </div>
 
         <div ref={topShellRef} className="hospital-summary-chart-shell">
           <div ref={topRef} className="hospital-jgp-code-bars" />
-          {chartTooltip?.kind==="jgp" ? <div
-            className="hospital-peer-tooltip hospital-summary-chart-tooltip"
-            role="tooltip"
-            style={{left:chartTooltip.left,top:chartTooltip.top}}
-          >
-            <div className="hospital-peer-tooltip-head">
-              <b>{chartTooltip.code}</b>
-              <strong>{pf.format(chartTooltip.sharePct)}%</strong>
-            </div>
-            <div className="hospital-peer-tooltip-group">
-              <div className="hospital-peer-tooltip-grouphead"><b>Grupa JGP</b></div>
-              <div className="hospital-peer-tooltip-row hospital-summary-tooltip-name">
-                <span>Nazwa</span><b>{chartTooltip.name || "—"}</b>
-              </div>
-            </div>
-            <div className="hospital-peer-tooltip-group">
-              <div className="hospital-peer-tooltip-grouphead"><b>Dane szpitala</b></div>
-              <div className="hospital-peer-tooltip-row"><span>Hospitalizacje</span><b>{nf.format(chartTooltip.hospitalizations)}</b></div>
-              <div className="hospital-peer-tooltip-row"><span>Udział w JGP</span><b>{pf.format(chartTooltip.sharePct)}%</b></div>
-              <div className="hospital-peer-tooltip-row"><span>Zgony</span><b>{nf.format(chartTooltip.deaths)}</b></div>
-              <div className="hospital-peer-tooltip-row"><span>Śmiertelność</span><b>{pf.format(chartTooltip.mortalityPct)}%</b></div>
-            </div>
-          </div> : null}
+          {chartTooltip?.kind==="jgp" ? <ChartTooltip anchor={chartTooltip.anchor} container={topShellRef} kind="bar-horizontal">
+            <TooltipHead title={chartTooltip.name || chartTooltip.code} context={`JGP ${chartTooltip.code}`}/>
+            <TooltipKeyValue label="Udział w hospitalizacjach szpitala" value={`${pf.format(chartTooltip.sharePct)}%`}/>
+            <TooltipSection rows={[
+              {label:"Hospitalizacje",value:nf.format(chartTooltip.hospitalizations)},
+              {label:"Zgony",value:nf.format(chartTooltip.deaths)},
+              {label:"Śmiertelność",value:`${pf.format(chartTooltip.mortalityPct)}%`},
+            ]}/>
+          </ChartTooltip> : null}
         </div>
       </section>
 
@@ -655,27 +548,14 @@ function HospitalCharts({ analysis, products }: { analysis: HospitalAnalysis; pr
 
         <div ref={familyShellRef} className="hospital-summary-chart-shell">
           <div ref={familyRef} className="hospital-jgp-family-treemap" />
-          {chartTooltip?.kind==="family" ? <div
-            className={`hospital-peer-tooltip hospital-summary-chart-tooltip hospital-summary-chart-tooltip--${chartTooltip.placement}`}
-            role="tooltip"
-            style={{left:chartTooltip.left,top:chartTooltip.top}}
-          >
-            <div className="hospital-peer-tooltip-head">
-              <b>{chartTooltip.isOther ? "Pozostałe" : chartTooltip.code}</b>
-              <strong>{pf.format(chartTooltip.sharePct)}%</strong>
-            </div>
-            <div className="hospital-peer-tooltip-group">
-              <div className="hospital-peer-tooltip-grouphead"><b>Sekcja JGP</b></div>
-              <div className="hospital-peer-tooltip-row hospital-summary-tooltip-name">
-                <span>Nazwa</span><b>{chartTooltip.name}</b>
-              </div>
-            </div>
-            <div className="hospital-peer-tooltip-group">
-              <div className="hospital-peer-tooltip-grouphead"><b>Dane szpitala</b></div>
-              <div className="hospital-peer-tooltip-row"><span>Hospitalizacje</span><b>{nf.format(chartTooltip.hospitalizations)}</b></div>
-              {!chartTooltip.isOther ? <div className="hospital-peer-tooltip-row"><span>Kody JGP w sekcji</span><b>{nf.format(chartTooltip.codeCount)}</b></div> : null}
-            </div>
-          </div> : null}
+          {chartTooltip?.kind==="family" ? <ChartTooltip anchor={chartTooltip.anchor} container={familyShellRef} kind="area">
+            <TooltipHead title={chartTooltip.name} context={chartTooltip.isOther ? "Sekcje JGP poza głównymi" : `Sekcja JGP ${chartTooltip.code}`}/>
+            <TooltipKeyValue label="Udział w hospitalizacjach szpitala" value={`${pf.format(chartTooltip.sharePct)}%`}/>
+            <TooltipSection rows={[
+              {label:"Hospitalizacje",value:nf.format(chartTooltip.hospitalizations)},
+              ...(!chartTooltip.isOther ? [{label:"Kody JGP w sekcji",value:nf.format(chartTooltip.codeCount)}] : []),
+            ]}/>
+          </ChartTooltip> : null}
         </div>
       </section>
     </div>

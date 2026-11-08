@@ -1,16 +1,22 @@
 "use client";
 
+import { formatCityName } from "@/lib/formatters";
 import { decodeValuations, VALUATIONS_PATH, type JgpValuation, type ValuationsFile } from "@/lib/valuations";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type * as React from "react";
 import type { HospitalPeerBenchmark, ProductOption } from "@/lib/types";
 import { PLOTLY_CONFIG, axisTitle, baselineShape, categoryAxis, chartLayout, measureAxis, paddedRange } from "@/lib/plotlyChart";
+import { BASE_POINT, CHART_COLORS, DEVIATION_COLORS } from "@/lib/chartPalette";
+import { elementBox, plotlyObjectBox, pointerBox, type Box } from "@/lib/tooltipPosition";
+import { ChartTooltip, TooltipCompareTable, TooltipHead, TooltipKeyValue, TooltipNote, TooltipSection } from "./ChartTooltip";
 import "./HospitalAnalysisBase.css";
 import "./HospitalComparison.css";
 
 export const nf = new Intl.NumberFormat("pl-PL", { maximumFractionDigits: 0 });
 export const pf = new Intl.NumberFormat("pl-PL", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 export const pct = (v: number) => `${pf.format(v)}%`;
+/** Różnica ze znakiem (minus „−”), np. „+5,7 pp”, „−1,2”. */
+export const signed = (v: number, unit = "") => `${v > 0 ? "+" : v < 0 ? "−" : ""}${pf.format(Math.abs(v))}${unit}`;
 
 export async function parseMaybeGzip(r: Response) {
   if (!r.ok) throw new Error(`Nie udało się pobrać danych (${r.status})`);
@@ -130,34 +136,6 @@ function getProductJgpCode(product:ProductOption){
   const alias=product as ProductOption & {jgpCode?:string;jgp?:string};
   return String(alias.jgpCode ?? alias.jgp ?? product.code ?? "").trim();
 }
-function popupTooltipPosition(shell:HTMLDivElement|null,clientX:number,clientY:number){
-  if(!shell) return {left:12,top:120};
-  const r=shell.getBoundingClientRect();
-  const x=clientX-r.left;
-  const y=clientY-r.top;
-  const tooltipWidth=Math.min(330,Math.max(240,r.width-24));
-  const gap=14;
-  const roomRight=r.width-x;
-  const roomLeft=x;
-  const placeRight=roomRight>=tooltipWidth+gap || roomRight>=roomLeft;
-  const left=placeRight ? Math.min(x+gap,r.width-tooltipWidth-10) : Math.max(10,x-tooltipWidth-gap);
-  const top=Math.max(90,Math.min(r.height-90,y));
-  return {left,top};
-}
-function benchmarkTooltipPosition(shell:HTMLDivElement|null,clientX:number,clientY:number){
-  if(!shell) return {left:12,top:150};
-  const r=shell.getBoundingClientRect();
-  const x=clientX-r.left;
-  const y=clientY-r.top;
-  const tooltipWidth=Math.min(330,Math.max(240,r.width-24));
-  const gap=14;
-  const roomRight=r.width-x;
-  const roomLeft=x;
-  const placeRight=roomRight>=tooltipWidth+gap || roomRight>=roomLeft;
-  const left=placeRight ? Math.min(x+gap,r.width-tooltipWidth-10) : Math.max(10,x-tooltipWidth-gap);
-  const top=Math.max(100,Math.min(r.height-100,y));
-  return {left,top};
-}
 function getPairRenderedPoint(map:HTMLDivElement|null,shell:HTMLDivElement|null,index:number,pairMode:boolean){
   if(!pairMode || !map || !shell) return null;
   const traces=map.querySelectorAll<SVGGElement>("g.trace.scatter");
@@ -185,12 +163,9 @@ export function JgpMortalityDifferenceTable({ benchmark, products, valuationByJg
   const popupPlotRef=useRef<HTMLDivElement>(null);
   const popupPlotShellRef=useRef<HTMLDivElement>(null);
   const [popupPlotMounted,setPopupPlotMounted]=useState(false);
-  const [popupTooltip,setPopupTooltip]=useState<
-    | {kind:"peer";left:number;top:number;name:string;mortalityPct:number;hospitalizations:number;deaths:number}
-    | {kind:"selected";left:number;top:number;name:string;mortalityPct:number;hospitalizations:number;deaths:number}
-    | {kind:"aggregate";left:number;top:number;name:string;mortalityPct:number;hospitalizations:number;deaths:number;peerCount:number}
-    | null
-  >(null);
+  const [popupTooltip,setPopupTooltip]=useState<{
+    kind:"peer"|"selected"|"aggregate";anchor:Box;name:string;mortalityPct:number;hospitalizations:number;deaths:number;
+  }|null>(null);
 
   const names=useMemo(()=>{
     const m=new Map<string,string>();
@@ -269,7 +244,7 @@ export function JgpMortalityDifferenceTable({ benchmark, products, valuationByJg
           x:points.map((p)=>p.mortalityPct),
           y:points.map(()=>selectedRow.jgpCode),
           customdata:points.map((p)=>[peerName(p),p.hospitalizations,p.deaths]),
-          marker:{size:9,color:"#98A2B3",opacity:.7,line:{width:.7,color:"#fff"}},
+          marker:{size:9,color:BASE_POINT,line:{width:.7,color:"#fff"}},
           hoverinfo:pairMode ? "none" : undefined,
           hovertemplate:pairMode ? undefined : "<b>%{customdata[0]}</b><br>Śmiertelność: <b>%{x:.1f}%</b><br>Hospitalizacje: %{customdata[1]:,.0f}<br>Zgony: %{customdata[2]:,.0f}<extra>Peer</extra>"
         },
@@ -278,7 +253,7 @@ export function JgpMortalityDifferenceTable({ benchmark, products, valuationByJg
           x:[selectedRow.targetMortalityPct],
           y:[selectedRow.jgpCode],
           customdata:[[selectedRow.targetHospitalizations,selectedRow.targetDeaths]],
-          marker:{size:13,color:"#D92D20",line:{width:1.5,color:"#fff"}},
+          marker:{size:13,color:CHART_COLORS.signal,line:{width:1.5,color:"#fff"}},
           hoverinfo:pairMode ? "none" : undefined,
           hovertemplate:pairMode ? undefined : "<b>Wybrany szpital</b><br>Śmiertelność: <b>%{x:.1f}%</b><br>Hospitalizacje: %{customdata[0]:,.0f}<br>Zgony: %{customdata[1]:,.0f}<extra></extra>"
         },
@@ -287,7 +262,7 @@ export function JgpMortalityDifferenceTable({ benchmark, products, valuationByJg
           x:[selectedRow.peerMortalityPct],
           y:[selectedRow.jgpCode],
           customdata:[[selectedRow.peerHospitalizations,selectedRow.peerDeaths,selectedRow.peerHospitals]],
-          marker:{size:13,color:"#101828",symbol:"x",line:{width:2,color:"#101828"}},
+          marker:{size:13,color:CHART_COLORS.text,symbol:"x",line:{width:2,color:CHART_COLORS.text}},
           hoverinfo:pairMode ? "none" : undefined,
           hovertemplate:pairMode ? undefined : "<b>Peery łącznie</b><br>Śmiertelność ważona: <b>%{x:.1f}%</b><br>Hospitalizacje: %{customdata[0]:,.0f}<br>Zgony: %{customdata[1]:,.0f}<br>Peerów: %{customdata[2]}<extra></extra>"
         }
@@ -320,14 +295,14 @@ export function JgpMortalityDifferenceTable({ benchmark, products, valuationByJg
           const pt=ev?.points?.[0];
           if(!pt) return;
           const mouse=ev?.event;
-          const pos=popupTooltipPosition(popupPlotShellRef.current,Number(mouse?.clientX ?? 0),Number(mouse?.clientY ?? 0));
+          const anchor=plotlyObjectBox(plot,"scatter",pt.curveNumber,pt.pointIndex) ?? pointerBox(Number(mouse?.clientX ?? 0),Number(mouse?.clientY ?? 0));
 
           if(pt.curveNumber===0 && Number.isInteger(pt.pointIndex)){
             const p=points[pt.pointIndex];
             if(!p) return;
             setPopupTooltip({
               kind:"peer",
-              ...pos,
+              anchor,
               name:peerName(p),
               mortalityPct:Number(p.mortalityPct)||0,
               hospitalizations:Number(p.hospitalizations)||0,
@@ -336,7 +311,7 @@ export function JgpMortalityDifferenceTable({ benchmark, products, valuationByJg
           }else if(pt.curveNumber===1){
             setPopupTooltip({
               kind:"selected",
-              ...pos,
+              anchor,
               name:selectedName,
               mortalityPct:Number(selectedRow.targetMortalityPct)||0,
               hospitalizations:Number(selectedRow.targetHospitalizations)||0,
@@ -345,12 +320,11 @@ export function JgpMortalityDifferenceTable({ benchmark, products, valuationByJg
           }else if(pt.curveNumber===2){
             setPopupTooltip({
               kind:"aggregate",
-              ...pos,
-              name:"Peery łącznie",
+              anchor,
+              name:"Podobne szpitale łącznie",
               mortalityPct:Number(selectedRow.peerMortalityPct)||0,
               hospitalizations:Number(selectedRow.peerHospitalizations)||0,
               deaths:Number(selectedRow.peerDeaths)||0,
-              peerCount:Number(selectedRow.peerHospitals)||0,
             });
           }
         });
@@ -412,31 +386,35 @@ export function JgpMortalityDifferenceTable({ benchmark, products, valuationByJg
       <div className="hospital-jgp-modal-stats"><span>Szpital <b>{pct(selectedRow.targetMortalityPct)}</b></span><span>Peery łącznie <b>{pct(selectedRow.peerMortalityPct)}</b></span><span>Różnica <b>{selectedRow.diff>=0?"+":""}{pf.format(selectedRow.diff)} pp</b></span><span>Nadmiar <b>{selectedRow.excessDeaths>=0?"+":""}{pf.format(selectedRow.excessDeaths)}</b></span></div>
       <div ref={popupPlotShellRef} className="hospital-standard-plot-shell hospital-jgp-modal-plot-shell">
         <div ref={el=>{popupPlotRef.current=el;if(el) setPopupPlotMounted(true)}} className="hospital-jgp-modal-plot"/>
-        {pairMode && popupTooltip ? <div
-          className={`hospital-peer-tooltip hospital-standard-plot-tooltip${popupTooltip.kind==="selected"?" hospital-standard-plot-tooltip-main":""}`}
-          role="tooltip"
-          style={{left:popupTooltip.left,top:popupTooltip.top}}
-        >
-          <div className="hospital-peer-tooltip-head">
-            <b>{popupTooltip.kind==="selected" ? "Placówka główna" : popupTooltip.kind==="aggregate" ? "Peery łącznie" : "Peer"}</b>
-            <strong>{pf.format(popupTooltip.mortalityPct)}%</strong>
-          </div>
-          <div className="hospital-peer-tooltip-group">
-            <div className="hospital-peer-tooltip-grouphead">
-              <b>{popupTooltip.kind==="selected" ? "Wybrany szpital" : popupTooltip.kind==="aggregate" ? "Grupa porównawcza" : "Placówka porównawcza"}</b>
-            </div>
-            <div className="hospital-peer-tooltip-row hospital-standard-tooltip-name">
-              <span>Placówka</span><b>{popupTooltip.name}</b>
-            </div>
-          </div>
-          <div className="hospital-peer-tooltip-group">
-            <div className="hospital-peer-tooltip-grouphead"><b>Dane dla JGP {selectedRow.jgpCode}</b></div>
-            <div className="hospital-peer-tooltip-row"><span>Śmiertelność</span><b>{pf.format(popupTooltip.mortalityPct)}%</b></div>
-            <div className="hospital-peer-tooltip-row"><span>Hospitalizacje</span><b>{nf.format(popupTooltip.hospitalizations)}</b></div>
-            <div className="hospital-peer-tooltip-row"><span>Zgony</span><b>{nf.format(popupTooltip.deaths)}</b></div>
-            {popupTooltip.kind==="aggregate" ? <div className="hospital-peer-tooltip-row"><span>Liczba peerów</span><b>{nf.format(popupTooltip.peerCount)}</b></div> : null}
-          </div>
-        </div> : null}
+        {pairMode && popupTooltip ? (()=>{
+          const isPeer=popupTooltip.kind==="peer";
+          const diff=popupTooltip.mortalityPct-selectedRow.peerMortalityPct;
+          return <ChartTooltip anchor={popupTooltip.anchor} container={popupPlotShellRef}>
+            <TooltipHead
+              title={popupTooltip.name}
+              context={`${popupTooltip.kind==="selected" ? "Ten szpital" : isPeer ? "Podobny szpital" : "Grupa porównawcza"} · JGP ${selectedRow.jgpCode}`}
+            />
+            <TooltipKeyValue
+              label="Śmiertelność"
+              value={pct(popupTooltip.mortalityPct)}
+              delta={popupTooltip.kind==="aggregate" ? undefined : `${signed(diff," pp")} wobec grupy porównawczej`}
+              tone={popupTooltip.kind==="aggregate" || diff===0 ? undefined : diff>0 ? "up" : "down"}
+            />
+            {isPeer
+              ? <TooltipSection rows={[
+                {label:"Hospitalizacje",value:nf.format(popupTooltip.hospitalizations)},
+                {label:"Zgony",value:nf.format(popupTooltip.deaths)},
+              ]}/>
+              : <TooltipCompareTable
+                columns={["Ten szpital",`Podobne (${nf.format(selectedRow.peerHospitals)})`]}
+                rows={[
+                  {label:"Śmiertelność",values:[pct(selectedRow.targetMortalityPct),pct(selectedRow.peerMortalityPct)]},
+                  {label:"Hospitalizacje",values:[nf.format(selectedRow.targetHospitalizations),nf.format(selectedRow.peerHospitalizations)]},
+                  {label:"Zgony",values:[nf.format(selectedRow.targetDeaths),nf.format(selectedRow.peerDeaths)]},
+                ]}
+              />}
+          </ChartTooltip>;
+        })() : null}
       </div>
     </section>
   </div> : null}
@@ -508,11 +486,11 @@ export function PeerComparisonCharts({ benchmark, hoveredPeerKey, onHoverPeer, p
   const benchmarkRef = useRef<HTMLDivElement>(null);
   const benchmarkShellRef = useRef<HTMLDivElement>(null);
   const pairMapShellRef = useRef<HTMLDivElement>(null);
-  const [pairManualHover,setPairManualHover]=useState<{index:number;left:number;top:number;pointLeft:number;pointTop:number}|null>(null);
-  const [pairSelectedHover,setPairSelectedHover]=useState<{left:number;top:number;pointLeft:number;pointTop:number}|null>(null);
+  const [pairManualHover,setPairManualHover]=useState<{index:number;anchor:Box;pointLeft:number;pointTop:number}|null>(null);
+  const [pairSelectedHover,setPairSelectedHover]=useState<{anchor:Box;pointLeft:number;pointTop:number}|null>(null);
   const [pairListHighlight,setPairListHighlight]=useState<{index:number;pointLeft:number;pointTop:number}|null>(null);
   const [benchmarkTooltip,setBenchmarkTooltip]=useState<{
-    left:number;top:number;jgpCode:string;name:string;excessDeaths:number;
+    anchor:Box;jgpCode:string;name:string;excessDeaths:number;
     targetMortalityPct:number;peerMortalityPct:number;targetDeaths:number;
     expectedDeaths:number;peerHospitals:number;valuation:number|null;
   }|null>(null);
@@ -523,7 +501,7 @@ export function PeerComparisonCharts({ benchmark, hoveredPeerKey, onHoverPeer, p
     const traces=mapRef.current.querySelectorAll<SVGGElement>("g.trace.scatter");
     const shellRect=pairMapShellRef.current.getBoundingClientRect();
 
-    // Placówka główna jest ostatnim scatter trace na mapie.
+    // Wybrany szpital jest ostatnią serią na mapie.
     const selectedTrace=traces.item(traces.length-1);
     const selectedPoint=selectedTrace?.querySelector<SVGPathElement>("path.point") ?? null;
     let selectedDistance=Infinity;
@@ -544,6 +522,7 @@ export function PeerComparisonCharts({ benchmark, hoveredPeerKey, onHoverPeer, p
     let bestDistance=Infinity;
     let bestX=0;
     let bestY=0;
+    let bestNode:SVGPathElement|null=null;
     points?.forEach((node,i)=>{
       if(i>=benchmark.peers.length) return;
       const r=node.getBoundingClientRect();
@@ -555,27 +534,15 @@ export function PeerComparisonCharts({ benchmark, hoveredPeerKey, onHoverPeer, p
         bestIndex=i;
         bestX=cx-shellRect.left;
         bestY=cy-shellRect.top;
+        bestNode=node;
       }
     });
 
-    const gap=16;
-    const tooltipWidth=Math.min(380,Math.max(220,shellRect.width-24));
-    const positionTooltip=(pointX:number,pointY:number)=>{
-      const roomRight=shellRect.width-pointX;
-      const roomLeft=pointX;
-      const placeRight=roomRight>=tooltipWidth+gap || roomRight>=roomLeft;
-      const left=placeRight
-        ? Math.min(pointX+gap,shellRect.width-tooltipWidth-12)
-        : Math.max(12,pointX-tooltipWidth-gap);
-      const top=pointY;
-      return {left,top};
-    };
-
-    // Czerwony punkt ma priorytet, jeśli kursor jest najbliżej niego.
+    // Wybrany szpital ma priorytet, jeśli kursor jest najbliżej niego.
+    // Dymek liczy pozycję z prostokąta punktu (`ChartTooltip`), więc nie zasłania punktu.
     if(selectedPoint && selectedDistance<=20 && selectedDistance<=bestDistance){
-      const pos=positionTooltip(selectedX,selectedY);
       setPairSelectedHover({
-        ...pos,
+        anchor:elementBox(selectedPoint),
         pointLeft:selectedX,
         pointTop:selectedY,
       });
@@ -583,11 +550,10 @@ export function PeerComparisonCharts({ benchmark, hoveredPeerKey, onHoverPeer, p
       return;
     }
 
-    if(bestIndex>=0 && bestDistance<=18){
-      const pos=positionTooltip(bestX,bestY);
+    if(bestNode && bestIndex>=0 && bestDistance<=18){
       setPairManualHover({
         index:bestIndex,
-        ...pos,
+        anchor:elementBox(bestNode),
         pointLeft:bestX,
         pointTop:bestY,
       });
@@ -638,7 +604,7 @@ export function PeerComparisonCharts({ benchmark, hoveredPeerKey, onHoverPeer, p
               p.coreWards,p.cellCount,p.clinicCount,p.hospitalizations,
               p.similarityBreakdown.sharedJgp,p.similarityBreakdown.targetJgp
             ]),
-            marker:{size:10,opacity:.55,color:"#98A2B3",line:{width:1,color:"#FFFFFF"}},
+            marker:{size:10,color:BASE_POINT,line:{width:1,color:"#FFFFFF"}},
             hoverinfo:pairMode ? "skip" : undefined,
             hovertemplate:pairMode
               ? undefined
@@ -647,12 +613,12 @@ export function PeerComparisonCharts({ benchmark, hoveredPeerKey, onHoverPeer, p
           {
             type:"scatter",mode:"markers",name:"",showlegend:false,hoverinfo:"skip",
             x:[null],y:[null],
-            marker:{size:17,opacity:1,color:"#344054",line:{width:2,color:"#FFFFFF"}}
+            marker:{size:17,opacity:1,color:CHART_COLORS.dataStrong,line:{width:2,color:"#FFFFFF"}}
           },
           {
             type:"scatter",mode:"markers",name:"Wybrany szpital",
             x:[base.coreBeds],y:[base.hospitalizations],
-            marker:{size:16,color:"#D92D20",line:{width:3,color:"#FFFFFF"}},
+            marker:{size:16,color:CHART_COLORS.signal,line:{width:3,color:"#FFFFFF"}},
             customdata:[[base.coreWards,base.cellCount,base.clinicCount,base.hospitalizations]],
             hoverinfo:pairMode ? "skip" : undefined,
             hovertemplate:pairMode
@@ -703,7 +669,8 @@ export function PeerComparisonCharts({ benchmark, hoveredPeerKey, onHoverPeer, p
             x.targetMortalityPct,
             x.peerMortalityPct
           ]),
-          marker:{color:top.map(x=>x.excessDeaths>=0?"#D92D20":"#98A2B3")},
+          // Skala odchylenia: więcej zgonów niż w grupie porównawczej — ciepły, mniej — błękit.
+          marker:{color:top.map(x=>x.excessDeaths>=0?DEVIATION_COLORS.up998:DEVIATION_COLORS.down998)},
           hoverinfo:pairMode ? "none" : undefined,
           hovertemplate:pairMode ? undefined : "<b>%{y}</b><br>%{customdata[0]}<br>Nadmiar: <b>%{customdata[4]}</b><br>Śmiertelność szpitala: %{customdata[6]:.1f}%<br>Śmiertelność peerów łącznie: %{customdata[7]:.1f}%<br>Zgony: %{customdata[1]:.0f} · oczekiwane: %{customdata[2]:.1f}<br>Peery z tym JGP: %{customdata[5]:.0f}<br>Wycena: %{customdata[3]:.1f} pkt<extra></extra>"
         }],{
@@ -729,9 +696,8 @@ export function PeerComparisonCharts({ benchmark, hoveredPeerKey, onHoverPeer, p
             const row=top[pt.pointIndex];
             if(!row) return;
             const mouse=ev?.event;
-            const pos=benchmarkTooltipPosition(benchmarkShellRef.current,Number(mouse?.clientX ?? 0),Number(mouse?.clientY ?? 0));
             setBenchmarkTooltip({
-              ...pos,
+              anchor:plotlyObjectBox(plot,"bar",0,pt.pointIndex) ?? pointerBox(Number(mouse?.clientX ?? 0),Number(mouse?.clientY ?? 0)),
               jgpCode:row.jgpCode,
               name:jgpNameByCode.get(row.jgpCode) ?? "—",
               excessDeaths:Number(row.excessDeaths)||0,
@@ -759,7 +725,7 @@ export function PeerComparisonCharts({ benchmark, hoveredPeerKey, onHoverPeer, p
   },[benchmark,plotHighlightKey,onHoverPeer,pairMode,jgpNameByCode,valuationByJgp]);
   return <div className="hospital-peer-charts">
     <section className="hospital-peer-chart-card hospital-surface-card">
-      <div className="hospital-peer-chart-head"><div><span>Mapa peerów</span><h3>Realna skala struktury vs zakres leczenia</h3></div><small>{pairMode ? "Czerwony: wybrany szpital · szary: peery. Tooltip jest liczony niezależnie od hoveru Plotly." : "Czerwony: wybrany szpital · szary: peery. Podobieństwo jest dopiero w hoverze."}</small></div>
+      <div className="hospital-peer-chart-head"><div><span>Mapa peerów</span><h3>Realna skala struktury vs zakres leczenia</h3></div><small>Pomarańczowy punkt: ten szpital · niebieskie: podobne szpitale.</small></div>
       <div
         ref={pairMapShellRef}
         className="hospital-peer-map-shell"
@@ -781,38 +747,17 @@ export function PeerComparisonCharts({ benchmark, hoveredPeerKey, onHoverPeer, p
               top:pairSelectedHover.pointTop,
             }}
           />
-          <div
-            className="hospital-peer-tooltip hospital-map-peer-tooltip hospital-map-main-tooltip"
-            role="tooltip"
-            style={{
-              left:pairSelectedHover.left,
-              top:pairSelectedHover.top,
-            }}
-          >
-            <div className="hospital-peer-tooltip-head hospital-map-main-tooltip-head">
-              <b>Placówka główna</b>
-              <strong>PUNKT ODNIESIENIA</strong>
-            </div>
-
-            <div className="hospital-peer-tooltip-group">
-              <div className="hospital-peer-tooltip-grouphead">
-                <b>Wybrany szpital</b>
-                <strong>główna placówka</strong>
-              </div>
-              <div className="hospital-peer-tooltip-row"><span>Placówka</span><b>{displayHospitalName(benchmark.selected.providerName)}</b></div>
-            </div>
-
-            <div className="hospital-peer-tooltip-group">
-              <div className="hospital-peer-tooltip-grouphead"><b>Dane placówki</b></div>
-              <div className="hospital-peer-tooltip-row"><span>Łóżka na głównych oddziałach</span><b>{nf.format(benchmark.selected.coreBeds)}</b></div>
-              <div className="hospital-peer-tooltip-row"><span>Hospitalizacje</span><b>{nf.format(benchmark.selected.hospitalizations)}</b></div>
-              <div className="hospital-peer-tooltip-row"><span>Główne oddziały</span><b>{nf.format(benchmark.selected.coreWards)}</b></div>
-              <div className="hospital-peer-tooltip-row"><span>Zakres specjalizacji</span><b>{nf.format(benchmark.selected.cellCount)}</b></div>
-              <div className="hospital-peer-tooltip-row"><span>Poradnie</span><b>{nf.format(benchmark.selected.clinicCount)}</b></div>
-            </div>
-
-            <small>To jest placówka główna. Szare punkty są peerami dobieranymi do niej przez model par.</small>
-          </div>
+          <ChartTooltip anchor={pairSelectedHover.anchor} container={pairMapShellRef}>
+            <TooltipHead title={displayHospitalName(benchmark.selected.providerName)} context="Ten szpital · punkt odniesienia"/>
+            <TooltipSection rows={[
+              {label:"Łóżka na głównych oddziałach",value:nf.format(benchmark.selected.coreBeds)},
+              {label:"Hospitalizacje",value:nf.format(benchmark.selected.hospitalizations)},
+              {label:"Główne oddziały",value:nf.format(benchmark.selected.coreWards)},
+              {label:"Zakres specjalizacji",value:nf.format(benchmark.selected.cellCount)},
+              {label:"Poradnie",value:nf.format(benchmark.selected.clinicCount)},
+            ]}/>
+            <TooltipNote>Niebieskie punkty to podobne szpitale dobrane przez model par.</TooltipNote>
+          </ChartTooltip>
         </> : null}
         {pairMode && (pairManualHover || pairListHighlight) ? (()=>{
           const active=pairManualHover ?? pairListHighlight;
@@ -830,48 +775,29 @@ export function PeerComparisonCharts({ benchmark, hoveredPeerKey, onHoverPeer, p
                 top:active.pointTop,
               }}
             />
-            {pairManualHover ? <div
-              className="hospital-peer-tooltip hospital-map-peer-tooltip"
-              role="tooltip"
-              style={{
-                left:pairManualHover.left,
-                top:pairManualHover.top,
-              }}
-            >
-              <div className="hospital-peer-tooltip-head">
-                <b>Para placówek</b>
-                <strong>dystans {p.distanceScore==null?"—":pf.format(p.distanceScore)}</strong>
-              </div>
-
-              <div className="hospital-peer-tooltip-group">
-                <div className="hospital-peer-tooltip-grouphead">
-                  <b>Klasyfikacja</b>
-                  <strong>{p.peerGrade ?? "—"}</strong>
-                </div>
-                <div className="hospital-peer-tooltip-row"><span>Placówka</span><b>{displayHospitalName(p.providerName)}</b></div>
-              </div>
-
-              <div className="hospital-peer-tooltip-group">
-                <div className="hospital-peer-tooltip-grouphead"><b>Największy wkład do dystansu</b></div>
-                {d.map((x,i)=><div className="hospital-peer-tooltip-row" key={`${x.label}-${i}`}>
-                  <span>{i+1}. {x.label}<small className="hospital-map-peer-driver-similarity">podobieństwo {pf.format(x.similarityPct)}%</small></span>
-                  <b>+{x.contribution.toFixed(2)}</b>
-                </div>)}
-              </div>
-
-              <div className="hospital-peer-tooltip-group">
-                <div className="hospital-peer-tooltip-grouphead"><b>Dane pary</b></div>
-                <div className="hospital-peer-tooltip-row"><span>Łóżka na głównych oddziałach</span><b>{nf.format(p.coreBeds)}</b></div>
-                <div className="hospital-peer-tooltip-row"><span>Hospitalizacje</span><b>{nf.format(p.hospitalizations)}</b></div>
-                <div className="hospital-peer-tooltip-row"><span>Główne oddziały</span><b>{nf.format(p.coreWards)}</b></div>
-                <div className="hospital-peer-tooltip-row"><span>Zakres specjalizacji</span><b>{nf.format(p.cellCount)}</b></div>
-                <div className="hospital-peer-tooltip-row"><span>Poradnie</span><b>{nf.format(p.clinicCount)}</b></div>
-                <div className="hospital-peer-tooltip-row"><span>Wspólne główne oddziały</span><b>{m ? `${m.sharedCoreTypes} / ${m.targetCoreTypes}` : "—"}</b></div>
-                <div className="hospital-peer-tooltip-row"><span>Wspólne JGP &gt;10</span><b>{m ? `${m.sharedJgp} / ${m.targetJgpOver10}` : "—"}</b></div>
-              </div>
-
-              <small>Niższy dystans oznacza bliższą parę. Wkład pokazuje, o ile dana zmienna zwiększa dystans modelu.</small>
-            </div> : null}
+            {pairManualHover ? <ChartTooltip anchor={pairManualHover.anchor} container={pairMapShellRef}>
+              <TooltipHead title={displayHospitalName(p.providerName)} context={[p.city ? formatCityName(p.city) : null,p.peerGrade ? `klasa ${p.peerGrade}` : null].filter(Boolean).join(" · ")}/>
+              <TooltipKeyValue label="Dystans pary" value={p.distanceScore==null?"—":pf.format(p.distanceScore)} delta="niższy dystans = bliższa para"/>
+              <TooltipCompareTable
+                columns={["Ten szpital","Podobny"]}
+                rows={[
+                  {label:"Łóżka na głównych oddz.",values:[nf.format(benchmark.selected.coreBeds),nf.format(p.coreBeds)]},
+                  {label:"Hospitalizacje",values:[nf.format(benchmark.selected.hospitalizations),nf.format(p.hospitalizations)]},
+                  {label:"Główne oddziały",values:[nf.format(benchmark.selected.coreWards),nf.format(p.coreWards)]},
+                  {label:"Zakres specjalizacji",values:[nf.format(benchmark.selected.cellCount),nf.format(p.cellCount)]},
+                  {label:"Poradnie",values:[nf.format(benchmark.selected.clinicCount),nf.format(p.clinicCount)]},
+                ]}
+              />
+              <TooltipSection title="Największy wkład do dystansu" rows={d.map((x,i)=>({
+                label:`${i+1}. ${x.label}`,
+                hint:`podobieństwo ${pf.format(x.similarityPct)}%`,
+                value:`+${pf.format(x.contribution)}`,
+              }))}/>
+              <TooltipSection title="Wspólny profil" rows={[
+                {label:"Wspólne główne oddziały",value:m ? `${m.sharedCoreTypes} / ${m.targetCoreTypes}` : "—"},
+                {label:"Wspólne JGP >10",value:m ? `${m.sharedJgp} / ${m.targetJgpOver10}` : "—"},
+              ]}/>
+            </ChartTooltip> : null}
           </>;
         })() : null}
       </div>
@@ -883,32 +809,25 @@ export function PeerComparisonCharts({ benchmark, hoveredPeerKey, onHoverPeer, p
       </div>
       <div ref={benchmarkShellRef} className="hospital-standard-plot-shell">
         <div ref={benchmarkRef} className="hospital-peer-chart-plot"/>
-        {pairMode && benchmarkTooltip ? <div
-          className="hospital-peer-tooltip hospital-standard-plot-tooltip"
-          role="tooltip"
-          style={{left:benchmarkTooltip.left,top:benchmarkTooltip.top}}
-        >
-          <div className="hospital-peer-tooltip-head">
-            <b>{benchmarkTooltip.jgpCode}</b>
-            <strong>{benchmarkTooltip.excessDeaths>=0?"+":""}{pf.format(benchmarkTooltip.excessDeaths)}</strong>
-          </div>
-          <div className="hospital-peer-tooltip-group">
-            <div className="hospital-peer-tooltip-grouphead"><b>Grupa JGP</b></div>
-            <div className="hospital-peer-tooltip-row hospital-standard-tooltip-name">
-              <span>Nazwa</span><b>{benchmarkTooltip.name}</b>
-            </div>
-          </div>
-          <div className="hospital-peer-tooltip-group">
-            <div className="hospital-peer-tooltip-grouphead"><b>Wynik względem peerów</b></div>
-            <div className="hospital-peer-tooltip-row"><span>Nadmiar zgonów</span><b>{benchmarkTooltip.excessDeaths>=0?"+":""}{pf.format(benchmarkTooltip.excessDeaths)}</b></div>
-            <div className="hospital-peer-tooltip-row"><span>Śmiertelność szpitala</span><b>{pf.format(benchmarkTooltip.targetMortalityPct)}%</b></div>
-            <div className="hospital-peer-tooltip-row"><span>Śmiertelność peerów</span><b>{pf.format(benchmarkTooltip.peerMortalityPct)}%</b></div>
-            <div className="hospital-peer-tooltip-row"><span>Zgony</span><b>{nf.format(benchmarkTooltip.targetDeaths)}</b></div>
-            <div className="hospital-peer-tooltip-row"><span>Oczekiwane zgony</span><b>{pf.format(benchmarkTooltip.expectedDeaths)}</b></div>
-            <div className="hospital-peer-tooltip-row"><span>Peery z tym JGP</span><b>{nf.format(benchmarkTooltip.peerHospitals)}</b></div>
-            <div className="hospital-peer-tooltip-row"><span>Wycena</span><b>{benchmarkTooltip.valuation==null?"—":`${pf.format(benchmarkTooltip.valuation)} pkt`}</b></div>
-          </div>
-        </div> : null}
+        {pairMode && benchmarkTooltip ? <ChartTooltip anchor={benchmarkTooltip.anchor} container={benchmarkShellRef} kind="bar-horizontal">
+          <TooltipHead title={benchmarkTooltip.name} context={`JGP ${benchmarkTooltip.jgpCode}`}/>
+          <TooltipKeyValue
+            label="Zgony nadmiarowe"
+            value={signed(benchmarkTooltip.excessDeaths)}
+            delta={benchmarkTooltip.excessDeaths>=0 ? "więcej zgonów niż w grupie porównawczej" : "mniej zgonów niż w grupie porównawczej"}
+            tone={benchmarkTooltip.excessDeaths>0 ? "up" : benchmarkTooltip.excessDeaths<0 ? "down" : undefined}
+          />
+          <TooltipCompareTable
+            columns={["Ten szpital",`Podobne (${nf.format(benchmarkTooltip.peerHospitals)})`]}
+            rows={[{label:"Śmiertelność",values:[pct(benchmarkTooltip.targetMortalityPct),pct(benchmarkTooltip.peerMortalityPct)]}]}
+          />
+          <TooltipSection rows={[
+            {label:"Zgony",value:nf.format(benchmarkTooltip.targetDeaths)},
+            {label:"Oczekiwane zgony",value:pf.format(benchmarkTooltip.expectedDeaths)},
+            {label:"Wycena",value:benchmarkTooltip.valuation==null?"—":`${pf.format(benchmarkTooltip.valuation)} pkt`},
+          ]}/>
+          <TooltipNote>Oczekiwane zgony: hospitalizacje szpitala × śmiertelność grupy porównawczej.</TooltipNote>
+        </ChartTooltip> : null}
       </div>
     </section> : null}
     
