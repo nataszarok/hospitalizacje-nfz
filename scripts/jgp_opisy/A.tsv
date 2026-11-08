@@ -1,0 +1,47 @@
+kod	opis
+A01	Operacje wewnątrz czaszki po poważnym urazie głowy, najczęściej z powodu urazowego krwotoku podtwardówkowego (S06.5). Zwykle polegają na kraniotomii z usunięciem krwiaka albo na trepanacji czaszki. Pobyt trwa zwykle 8 dni (mediana).
+A02	Operacje wewnątrz czaszki u pacjentów po urazie głowy, głównie z powodu następstw dawnego urazu śródczaszkowego (T90.5) albo złamań kości czaszki. Najczęściej polegają na założeniu płytki uzupełniającej ubytek kości czaszki.
+A03	Wszczepienie stymulatora struktur głębokich mózgu albo stymulatora nerwu błędnego. Najczęstszym powodem jest choroba Parkinsona (G20), rzadziej padaczka i drżenie samoistne. W większości pobytów wszczepia się neurostymulator mózgu.
+A04	Wszczepienie albo wymiana stymulatora rdzenia kręgowego oraz wymiana generatora impulsów do neurostymulacji, także do stymulacji głębokich struktur mózgu. Pobyt jest krótki: zwykle 2 dni (mediana).
+A11	Najbardziej złożone operacje wewnątrz czaszki, w tym usuwanie guzów mózgu, opon mózgowych i przysadki. Wśród rozpoznań przeważają nowotwory niezłośliwe, np. nowotwory niezłośliwe opon mózgowych (D32.0) i przysadki (D35.2). Pobyt trwa zwykle 8 dni (mediana).
+A11O	Złożone operacje wewnątrz czaszki u pacjentów z nowotworem złośliwym mózgu, najczęściej płata czołowego lub skroniowego. W większości pobytów wykonano operację naprawczą mózgu, często z wycięciem opony mózgowej.
+A12	Duże operacje wewnątrz czaszki: usuwanie guzów mózgu, biopsje stereotaktyczne mózgu i zabiegi w wodogłowiu. Rozpoznania są zróżnicowane: guzy mózgu o nieokreślonym charakterze i różne postacie wodogłowia. Pobyt trwa zwykle 7 dni (mediana).
+A13	Średnie operacje wewnątrz czaszki, m.in. zabiegi w neuralgii nerwu trójdzielnego (ablacja nerwów czaszkowych prądem o wysokiej częstotliwości) i w wodogłowiu. Rozpoznania są rozproszone. Pobyt trwa zwykle 4 dni (mediana).
+A14	Małe zabiegi wewnątrz czaszki, najczęściej usunięcie płytki z czaszki, drenaż lędźwiowy płynu mózgowo-rdzeniowego albo przeprogramowanie zastawki komorowo-otrzewnowej w wodogłowiu. Pobyt trwa zwykle 2 dni (mediana).
+A22	Duże operacje rdzenia kręgowego i struktur kanału kręgowego. W większości pobytów NFZ wykazuje ogólny kod „operacje struktur kanału kręgowego – inne”. Pobyt trwa zwykle 3 dni (mediana).
+A23	Operacje usunięcia przepukliny krążka międzykręgowego w odcinku lędźwiowym, wykonywane z powodu dyskopatii z uciskiem korzeni nerwowych (M51.1). Pobyt trwa zwykle 3 dni (mediana).
+A24	Małe zabiegi w kanale kręgowym, prawie zawsze usunięcie stymulatora rdzenia kręgowego. Najczęstszym rozpoznaniem jest nerwoból z zanikiem mięśni (G54.5). Pobyt trwa zwykle 2 dni (mediana).
+A25	Zabiegi na nerwach obwodowych: oczyszczenie (uwolnienie) nerwu, np. pośrodkowego albo łokciowego, i zabiegi przeciwbólowe z ablacją nerwów prądem o wysokiej częstotliwości. Pobyt trwa zwykle 3 dni (mediana).
+A26	Zabiegi przeciwbólowe, głównie wstrzyknięcia sterydów lub leków znieczulających do kanału kręgowego albo w okolice nerwów obwodowych. Najczęściej wykonuje się je w bólach kręgosłupa z uciskiem korzeni nerwowych. Większość pobytów kończy się w dniu przyjęcia (mediana 0 dni).
+A27	Zabiegi w kanale kręgowym: odbarczenie kanału, uwolnienie korzeni nerwowych i foraminotomia. Wykonuje się je głównie w dyskopatii i zmianach zwyrodnieniowych kręgosłupa z uciskiem korzeni nerwowych. Większość pobytów kończy się w dniu przyjęcia (mediana 0 dni).
+A30	Szpitalna diagnostyka polineuropatii i chorób mięśni, m.in. miastenii. W większości pobytów wykonuje się elektroneurografię i elektromiografię. Pobyt trwa zwykle 5 dni (mediana).
+A31	Leczenie zachowawcze chorób nerwów obwodowych, np. polineuropatii. Pobyt trwa zwykle 4 dni (mediana).
+A32E	Leczenie chorób mięśni u pacjentów powyżej 65 roku życia. Pobyt trwa zwykle 6 dni (mediana).
+A32F	Leczenie chorób mięśni u pacjentów poniżej 66 roku życia. Pobyt trwa zwykle 3 dni (mediana).
+A33	Diagnostyka zawrotów głowy i zaburzeń równowagi: prawie zawsze z rozpoznaniem „zawroty głowy i odurzenie” (R42). Większość pacjentów ma tomografię komputerową głowy, część rezonans magnetyczny mózgu. Pobyt trwa zwykle 4 dni (mediana).
+A34C	Krótkie pobyty z powodu guzów mózgu i rdzenia kręgowego bez operacji, np. diagnostyka albo leczenie zachowawcze. Rozpoznania to m.in. guzy mózgu o nieokreślonym charakterze, przerzuty nowotworów do mózgu i torbiele mózgu. Pobyt trwa zwykle 2 dni (mediana).
+A34D	Pobyty dłuższe niż 3 dni z powodu guzów mózgu i rdzenia kręgowego bez operacji. Najczęstsze rozpoznania to guzy mózgu o nieokreślonym charakterze i przerzuty nowotworów do mózgu. Pobyt trwa zwykle 7 dni (mediana).
+A35C	Leczenie chorób zwyrodnieniowych układu nerwowego, najczęściej choroby Parkinsona (G20) i otępienia typu alzheimerowskiego. To krótszy wariant; pobyty powyżej 3 dni rozlicza się w A35D. Pobyt trwa zwykle 3 dni (mediana).
+A35D	Pobyty dłuższe niż 3 dni z powodu chorób zwyrodnieniowych układu nerwowego, głównie choroby Parkinsona (G20) i otępienia typu alzheimerowskiego. Pobyt trwa zwykle 5 dni (mediana).
+A36	Leczenie chorób demielinizacyjnych układu nerwowego, w większości stwardnienia rozsianego (G35). Pobyt trwa zwykle 4 dni (mediana).
+A45	Zachowawcze leczenie chorób naczyń mózgowych, najczęściej następstw przebytego zawału mózgu (I69.3); także zwężeń tętnicy szyjnej i niepękniętych tętniaków mózgu. Pobyt trwa zwykle 5 dni (mediana).
+A46	Leczenie przemijającego niedokrwienia mózgu (TIA), w tym zespołów tętnicy szyjnej i tętnicy kręgowo-podstawnej. Wariant z rozszerzoną diagnostyką to A47. Pobyt trwa zwykle 5 dni (mediana).
+A47	Przemijające niedokrwienie mózgu (TIA) z rozszerzoną diagnostyką. Rozpoznania jak w A46: m.in. zespoły tętnicy szyjnej i tętnicy kręgowo-podstawnej oraz przemijająca niepamięć całkowita. Pobyt trwa zwykle 5 dni (mediana).
+A48	Kompleksowe leczenie udaru niedokrwiennego mózgu w oddziale udarowym, gdy pobyt trwa ponad 7 dni. Najczęstsze rozpoznania to zawał mózgu wywołany przez zakrzep (I63.3) albo zator (I63.4) tętnic mózgowych. Pobyt trwa zwykle 9 dni (mediana).
+A48T	Kompleksowe leczenie udaru niedokrwiennego mózgu w oddziale udarowym przy pobycie od 4 do 7 dni. Najczęściej to zawał mózgu wywołany przez zator tętnic mózgowych (I63.4). Grupa jest mała.
+A49	Leczenie udaru niedokrwiennego mózgu poza warunkami kompleksowego leczenia w oddziale udarowym, gdy pobyt trwa ponad 3 dni. Najczęściej to zawał mózgu wywołany przez zakrzep (I63.3) albo zator (I63.4) tętnic mózgowych. Pobyt trwa zwykle 7 dni (mediana).
+A50	Krótkie leczenie udaru niedokrwiennego mózgu, do 3 dni pobytu. Rozpoznania jak w A49: zawał mózgu wywołany przez zakrzep albo zator tętnic mózgowych. Pobyt trwa zwykle 2 dni (mediana).
+A51	Leczenie trombolityczne udaru niedokrwiennego mózgu w oddziale udarowym przy pobycie ponad 7 dni. Rozpoznania to prawie wyłącznie zawał mózgu wywołany przez zakrzep albo zator tętnic mózgowych.
+A56	Leczenie chorób nerwów czaszkowych, m.in. neuralgii nerwu trójdzielnego (G50.0) i obrzęku tarczy nerwu wzrokowego. Pobyt trwa zwykle 4 dni (mediana).
+A57	Leczenie chorób zapalnych układu nerwowego, np. zapalenia opon mózgowych. Pobyt jest długi: zwykle 9 dni (mediana).
+A57A	Leczenie bakteryjnych ropni układu nerwowego: wewnątrz czaszki i w kanale kręgowym. Pobyt trwa zwykle 7 dni (mediana).
+A58	Diagnostyka i leczenie encefalopatii, w tym toksycznej i nadciśnieniowej. Większość pacjentów ma tomografię komputerową głowy, badanie EEG i ocenę psychologiczną. Pobyt trwa zwykle 9 dni (mediana).
+A59	Diagnostyka i leczenie bólów głowy, w tym migreny. Najczęstsze rozpoznanie to „inne określone zespoły bólu głowy” (G44.8). Pobyt trwa zwykle 3 dni (mediana).
+A66	Diagnostyka i leczenie padaczki przy krótszym pobycie. Pobyty ponad 3 dni rozlicza się w A67. Pobyt trwa zwykle 4 dni (mediana).
+A67	Diagnostyka i leczenie padaczki przy pobycie ponad 3 dni. Większość pacjentów ma tomografię komputerową głowy, część rezonans magnetyczny mózgu. Pobyt trwa zwykle 6 dni (mediana).
+A76	Zachowawcze leczenie urazów głowy z istotnym uszkodzeniem mózgu, np. urazowego krwotoku podtwardówkowego (S06.5) albo ogniskowego urazu mózgu (S06.3). Pobyt trwa zwykle 4 dni (mediana).
+A77	Zachowawcze leczenie urazów głowy bez istotnego uszkodzenia mózgu, najczęściej powierzchownych urazów głowy (S00.0). Pobyt trwa zwykle 1 dzień (mediana).
+A86	Leczenie chorób neuronu ruchowego, w większości stwardnienia bocznego zanikowego (G12.2). Pobyt trwa zwykle 3 dni (mediana).
+A87	Leczenie innych chorób układu nerwowego, które nie mieszczą się w pozostałych grupach sekcji A. Rozpoznania są bardzo różne. Pobyt trwa zwykle 4 dni (mediana).
+A87A	Inne choroby układu nerwowego u pacjentów powyżej 17 roku życia; najczęstsze rozpoznanie to dyskopatia lędźwiowa z uciskiem korzeni nerwowych (M51.1).
+A87B	Inne choroby układu nerwowego u dzieci i młodzieży poniżej 18 roku życia. Rozpoznania są bardzo różne.

@@ -52,17 +52,15 @@ describe("lejek śmiertelności", () => {
 });
 
 import { dataForYear } from "@/lib/jgpCard";
-import { familyFor, JGP_DESCRIPTIONS } from "@/lib/jgpGroupInfo";
+import { familyFor } from "@/lib/jgpGroupInfo";
+import type { JgpProfilesFile } from "@/lib/jgpDescription";
 import { buildJgpPageData } from "@/lib/jgpPage";
 import { extrasFixture, groupFileFixture } from "@/lib/__tests__/fixtures/jgpCardFixture";
 import { latestDatasetFixture, trendsFixture } from "@/lib/__tests__/fixtures/trendsFixture";
 
 describe("rodziny i opisy grup (E10, H52, H55)", () => {
-  it("każda grupa z nową kartą ma rodzinę i opis", () => {
-    for (const code of ["E10", "H52", "H55"]) {
-      expect(familyFor(code)?.codes).toContain(code);
-      expect(JGP_DESCRIPTIONS[code]?.length).toBeGreaterThan(40);
-    }
+  it("E10, H52 i H55 mają rodzinę", () => {
+    for (const code of ["E10", "H52", "H55"]) expect(familyFor(code)?.codes).toContain(code);
     expect(familyFor("H52")?.id).toBe(familyFor("H55")?.id);
     expect(familyFor("A01")).toBeNull();
   });
@@ -71,8 +69,11 @@ describe("rodziny i opisy grup (E10, H52, H55)", () => {
     // Te same dane co A01, ale produkty nazwane jak warianty OZW.
     const trends = { ...trendsFixture, products: trendsFixture.products.map((p, i) => i === 0 ? ["P1", "E10", "OZW - DIAGNOSTYKA INWAZYJNA *", p[3]] : i === 1 ? ["P2", "E11", "OZW - LECZENIE INWAZYJNE DWUETAPOWE > 3 DNI *", p[3]] : p) as typeof trendsFixture.products };
     const latest = { ...latestDatasetFixture, products: [["P1", "E10", "OZW - DIAGNOSTYKA INWAZYJNA *"]] as typeof latestDatasetFixture.products };
-    const data = buildJgpPageData(trends, latest, "E10")!;
-    expect(data.description).toBe(JGP_DESCRIPTIONS.E10);
+    const profiles: JgpProfilesFile = { version: 1, source: "test", icd10: { "I21.4": "Ostry zawał serca podwsierdziowy" }, icd9: {}, groups: { E10: ["2024", 90, 100, 4, [["I21.4", 57]], []] } };
+    expect(buildJgpPageData(trends, latest, "E10")!.description).toBeNull();
+    const data = buildJgpPageData(trends, latest, "E10", "min", 15, { profiles })!;
+    expect(data.description?.sentences[0]).toBe("Najczęstsze rozpoznania główne: ostry zawał serca podwsierdziowy (I21.4, 57%).");
+    expect(data.description?.sentences.at(-1)).toBe("Należy do rodziny „Ostry zespół wieńcowy (OZW)”; pozostałe warianty: E11, E12G, E15, E16 i E17G.");
     expect(data.family?.name).toBe("Ostry zespół wieńcowy (OZW)");
     expect(data.family?.variants.map((variant) => [variant.code, variant.values])).toEqual([["E10", [8, 8, 9]], ["E11", [0, 4, null]]]);
     expect(data.family?.variants[1].name).toBe("OZW - LECZENIE INWAZYJNE DWUETAPOWE > 3 DNI");

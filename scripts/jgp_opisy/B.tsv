@@ -1,0 +1,38 @@
+kod	opis
+B01	Leczenie wysiękowej postaci zwyrodnienia plamki związanego z wiekiem (AMD) werteporfiną w terapii fotodynamicznej. Zabieg polega na zniszczeniu zmiany w naczyniówce lub siatkówce. Pobyt trwa zwykle 1 dzień (mediana).
+B03	Leczenie werteporfiną w terapii fotodynamicznej, w której niszczy się zmianę w naczyniówce lub siatkówce. Najczęstsze rozpoznanie to oddzielenie warstw siatkówki (H35.7), rzadziej zwyrodnienie plamki. Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+B04	Przeszczep rogówki kategorii I: prawie zawsze przeszczep drążący z rogówki dawcy. Najczęściej wykonuje się go z powodu zaburzeń rogówki (H18.8), rzadziej wrzodu rogówki. Pobyt trwa zwykle 4 dni (mediana).
+B05	Przeszczep rogówki kategorii II, najliczniejszy wariant przeszczepu rogówki. Najczęściej to przeszczep drążący z rogówki dawcy, wykonywany z powodu zaburzeń rogówki (H18.8) albo zwyrodnienia pęcherzowego rogówki. Pobyt trwa zwykle 3 dni (mediana).
+B06	Przeszczep rogówki kategorii III, rzadko rozliczany. Wykonuje się go m.in. z powodu zaburzeń rogówki i wrzodu rogówki. Pobyt trwa zwykle 3 dni (mediana).
+B11	Złożone operacje oka łączące leczenie zaćmy i jaskry. Najczęstsze rozpoznania to jaskra pierwotna z otwartym kątem (H40.1), inne postacie jaskry i zaćma wikłająca; zabiegi obejmują m.in. wytworzenie przetoki twardówki. Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+B16	Witrektomia (usunięcie ciała szklistego) z wypełnieniem oka olejem silikonowym lub dekaliną. Najczęściej wykonuje się ją z powodu odwarstwienia siatkówki z przedarciem (H33.0) i innych chorób siatkówki. Pobyt trwa zwykle 1 dzień (mediana).
+B16G	Fakowitrektomia z użyciem oleju silikonowego lub dekaliny: w jednym zabiegu usuwa się zaćmę i ciało szkliste. Najczęstszy powód to odwarstwienie siatkówki z przedarciem (H33.0). Pobyt trwa zwykle 2 dni (mediana).
+B17	Witrektomia (usunięcie ciała szklistego) bez oleju silikonowego, także z innymi zabiegami. Wykonuje się ją m.in. przy chorobach siatkówki, zwyrodnieniu plamki i krwotoku do ciała szklistego. Pobyt trwa zwykle 1 dzień (mediana).
+B17G	Fakowitrektomia: usunięcie zaćmy i ciała szklistego w jednym zabiegu, bez oleju silikonowego. Wśród rozpoznań są choroby siatkówki i zaćma starcza. Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+B18	Usunięcie zaćmy powikłanej z jednoczesnym wszczepieniem sztucznej soczewki. Prawie zawsze zaćmę usuwa się przez rozdrobnienie soczewki i jej aspirację. Pobyt trwa zwykle 1 dzień (mediana).
+B18G	Usunięcie zaćmy kategorii I: prawie zawsze przez rozdrobnienie soczewki i jej aspirację. Najczęstsze rozpoznania to zaćma starcza (H25.8) i zaćma wikłająca (H26.2). Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+B19	Usunięcie zaćmy niepowikłanej z jednoczesnym wszczepieniem sztucznej soczewki, przez rozdrobnienie soczewki i aspirację. Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+B19G	Usunięcie zaćmy kategorii II, jedna z najliczniejszych grup JGP. Zaćmę usuwa się przez rozdrobnienie soczewki i aspirację, najczęściej z powodu zaćmy starczej (H25.8). Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+B23	Średnie zabiegi na soczewce: usunięcie zaćmy, wprowadzenie albo usunięcie sztucznej soczewki. Rozpoznania to m.in. zaćma starcza, zaćma wikłająca i przemieszczenie soczewki. Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+B24	Małe zabiegi na soczewce, głównie przecięcie albo rozdrobnienie błony, która powstaje po operacji zaćmy (zaćma wtórna). Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+B25	Wtórne wszczepienie sztucznej soczewki, najczęściej u pacjentów bez soczewki (bezsoczewkowość, H27.0). Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+B31	Duże rekonstrukcje powiek, często z przeszczepem lub płatem skóry. Najczęstszy powód to nowotwór złośliwy skóry powieki (C44.1); także opadnięcie powieki. Pobyt trwa zwykle 1 dzień (mediana).
+B32	Duże zabiegi na powiekach: korekcja podwinięcia lub wywinięcia powieki i operacje opadania powieki. Najczęstszy powód to opadnięcie powieki (H02.4). Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+B33	Średnie zabiegi na powiekach, najczęściej plastyka powieki z powodu zwiotczenia skóry powiek (H02.3). Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+B34	Małe zabiegi na powiekach i spojówce, głównie wycięcie gradówki. Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+B42	Duże zabiegi na oczodole i drogach łzowych, najczęściej zespolenie worka łzowego z jamą nosa, a także nacięcie oczodołu. Pobyt trwa zwykle 2 dni (mediana).
+B43	Średnie zabiegi na oczodole i gałce ocznej, m.in. zabiegi naprawcze wielu struktur oka i wycięcie zmian oczodołu. Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+B44	Małe zabiegi na drogach łzowych: prawie zawsze przywrócenie ich drożności. Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+B52	Duże zabiegi na rogówce i twardówce, m.in. naprawy rogówki. Najczęstsze rozpoznania to zaburzenia rogówki (H18.8) i wrzód rogówki. Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+B53	Średnie zabiegi na rogówce i twardówce: prawie zawsze wycięcie skrzydlika (H11.0), czasem z przeszczepem. Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+B63	Operacje zeza: cofnięcie, skrócenie albo operacja kilku mięśni okoruchowych. Najczęściej to zez rozbieżny (H50.1) albo zbieżny (H50.0). Pobyt trwa zwykle 1 dzień (mediana).
+B72	Duże operacje przeciwjaskrowe, które ułatwiają odpływ płynu z oka, m.in. przez wytworzenie przetoki twardówki. Wykonuje się je głównie w jaskrze pierwotnej z otwartym kątem (H40.1) i innych postaciach jaskry. Pobyt trwa zwykle 1 dzień (mediana).
+B73	Średnie zabiegi w jaskrze i na naczyniówce, najczęściej operacje ciałka rzęskowego. Wśród rozpoznań są różne postacie jaskry, także jaskra wtórna (H40.5). Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+B74	Małe zabiegi w jaskrze: cyklofotokoagulacja, opróżnienie komory przedniej oka i wstrzyknięcie leku do komory przedniej. Rozpoznania to głównie jaskra wtórna i inne postacie jaskry. Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+B81	Duże operacje siatkówki, głównie klamrowanie twardówki w odwarstwieniu siatkówki z przedarciem (H33.0). Część pobytów dotyczy nowotworu złośliwego naczyniówki. Pobyt trwa zwykle 2 dni (mediana).
+B82	Duże zabiegi na ciele szklistym, rzadko rozliczane. Pobyt trwa zwykle 1 dzień (mediana).
+B83	Średnie zabiegi witreoretinalne, np. usunięcie ciała szklistego albo ciała obcego z tylnej części oka. Wśród rozpoznań są rany drążące gałki ocznej z ciałem obcym. Grupa jest mała.
+B84	Małe zabiegi witreoretinalne, w prawie wszystkich pobytach wstrzyknięcie rekombinowanych białek. Najczęstsze rozpoznanie to zwyrodnienie plamki (H35.3); także inne choroby siatkówki i retinopatia cukrzycowa. Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+B94	Inne zabiegi okulistyczne, najczęściej wycięcie małych zmian powieki albo gradówki. Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+B98	Leczenie zachowawcze chorób oczu, bez zabiegu. Rozpoznania są różne: choroby siatkówki, podejrzenie jaskry, zez. Pobyt trwa zwykle 2 dni (mediana).
+B98A	Leczenie zachowawcze chorób oczu u dorosłych (powyżej 17 roku życia). Najczęstsze rozpoznania to zaburzenia widzenia (H53.9), jaskra, zapalenie nerwu wzrokowego (H46) i wrzód rogówki. Pobyt trwa zwykle 3 dni (mediana).

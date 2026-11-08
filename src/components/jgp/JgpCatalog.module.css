@@ -15,14 +15,14 @@
   padding: 8px 16px;
   border-bottom: 2px solid transparent;
   color: #475467;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: var(--fs-base);
+  font-weight: var(--fw-semibold);
 }
 
 .tab small {
   margin-left: 4px;
   color: #98a2b3;
-  font-weight: 500;
+  font-weight: var(--fw-medium);
 }
 
 .tabActive {
@@ -46,7 +46,7 @@
 .filters label {
   display: grid;
   gap: 4px;
-  font-size: 13px;
+  font-size: var(--fs-md);
 }
 
 .filters input[type="search"],
@@ -71,7 +71,7 @@
 
 .label {
   color: #667085;
-  font-size: 12px;
+  font-size: var(--fs-sm);
 }
 
 .filters .check {
@@ -89,8 +89,8 @@
   background: none;
   color: var(--color-primary);
   font: inherit;
-  font-size: 13px;
-  font-weight: 600;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-semibold);
   cursor: pointer;
 }
 
@@ -117,7 +117,7 @@
   width: 100%;
   table-layout: auto;
   border-collapse: collapse;
-  font-size: 13px;
+  font-size: var(--fs-md);
 }
 
 /* Globalne style tabel dashboardu ustawiają stałe szerokości kolumn — tu kolumny dopasowują się do treści. */
@@ -171,21 +171,21 @@
 
 .tableTitle {
   color: #172033;
-  font-size: 15px;
-  font-weight: 750;
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-bold);
 }
 
 .tableCount {
   margin-left: 8px;
   color: #667085;
-  font-size: 12px;
-  font-weight: 500;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
 }
 
 .table th {
   color: #667085;
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
   white-space: nowrap;
 }
 
@@ -213,7 +213,7 @@
 .code a,
 a.code {
   color: var(--color-primary);
-  font-weight: 750;
+  font-weight: var(--fw-bold);
   text-decoration: none;
   white-space: nowrap;
 }
@@ -232,7 +232,7 @@ a.code {
 .kind {
   display: block;
   color: #98a2b3;
-  font-size: 11px;
+  font-size: var(--fs-xs);
 }
 
 .badge {
@@ -241,8 +241,8 @@ a.code {
   border-radius: 4px;
   background: #f2f4f7;
   color: #475467;
-  font-size: 11px;
-  font-weight: 600;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
 }
 
 .badgeArchived {
@@ -279,7 +279,7 @@ a.code {
   gap: 12px;
   padding: 10px 12px;
   color: #667085;
-  font-size: 13px;
+  font-size: var(--fs-md);
 }
 
 .footer button {
@@ -289,7 +289,7 @@ a.code {
   background: var(--color-primary-soft);
   color: var(--color-primary-hover);
   font: inherit;
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
   cursor: pointer;
 }
 
@@ -315,7 +315,7 @@ a.code {
 
 .changeCard h2 {
   margin: 0 0 8px;
-  font-size: 15px;
+  font-size: var(--fs-lg);
 }
 
 .changeCard ol {
@@ -324,7 +324,7 @@ a.code {
   margin: 0;
   padding: 0;
   list-style: none;
-  font-size: 13px;
+  font-size: var(--fs-md);
 }
 
 .changeCard li {
@@ -345,13 +345,13 @@ a.code {
   grid-column: 1 / -1;
   margin: 0;
   color: #667085;
-  font-size: 12px;
+  font-size: var(--fs-sm);
 }
 
 .note {
   margin: 12px 0 0;
   color: #667085;
-  font-size: 12px;
+  font-size: var(--fs-sm);
 }
 
 @media (max-width: 760px) {

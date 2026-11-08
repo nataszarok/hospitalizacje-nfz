@@ -1,0 +1,41 @@
+kod	opis
+C01	Rozległe operacje nowotworów złośliwych jamy ustnej, gardła i krtani z rekonstrukcją. Obejmują m.in. wycięcie zmian dna jamy ustnej i wycięcie krtani z gardłem; nowotwory często przekraczają granice jednego narządu (np. krtani, języka, dna jamy ustnej). Pobyt jest długi: zwykle 14 dni (mediana).
+C05G	Wszczepienie albo wymiana implantu ślimakowego u pacjentów z głuchotą czuciowo-nerwową, najczęściej obustronną (H90.3). Pobyt trwa zwykle 4 dni (mediana).
+C05H	Wszczepienie implantu pniowego (słuchowego implantu do pnia mózgu). Grupa jest bardzo rzadka: w danych NFZ to pojedyncze pobyty.
+C06G	Wszczepienie albo wymiana implantu ucha środkowego u pacjentów z głuchotą przewodzeniową albo mieszaną. Pobyt trwa zwykle 3 dni (mediana).
+C06H	Wszczepienie innych elektronicznych protez słuchu, najczęściej u pacjentów z obustronną głuchotą mieszaną (H90.6). Pobyt trwa zwykle 3 dni (mediana).
+C07G	Wymiana procesora mowy implantu ślimakowego albo pniowego, prawie zawsze u pacjentów z obustronną głuchotą czuciowo-nerwową (H90.3). Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+C07H	Wymiana procesora mowy implantu ucha środkowego. Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+C07I	Wymiana przetwornika mowy implantu na przewodnictwo kostne, u pacjentów z głuchotą mieszaną albo przewodzeniową. Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+C11	Złożone operacje jamy ustnej, gardła i krtani, najczęściej radykalne usunięcie ślinianki (głównie z powodu niezłośliwego guza ślinianki przyusznej, D11.0) albo wycięcie strun głosowych. Pobyt trwa zwykle 3 dni (mediana).
+C11O	Złożone operacje jamy ustnej, gardła i krtani u pacjentów z nowotworem złośliwym, głównie ślinianki przyusznej (C07) i krtani. Najczęściej to radykalne usunięcie ślinianki albo wycięcie strun głosowych. Pobyt trwa zwykle 7 dni (mediana).
+C12	Duże zabiegi jamy ustnej, gardła i krtani o bardzo różnym zakresie, m.in. wycięcie zmian krtani. Pobyt trwa zwykle 2 dni (mediana).
+C13	Średnie zabiegi jamy ustnej, gardła i krtani u dzieci i młodzieży poniżej 18 roku życia. Pobyt trwa zwykle 2 dni (mediana).
+C14	Średnie zabiegi jamy ustnej, gardła i krtani u dorosłych. Rozpoznania są różne: guzy krtani i jamy ustnej o nieokreślonym charakterze, przewlekłe zapalenie krtani, bezdech senny (G47.3). Pobyt trwa zwykle 2 dni (mediana).
+C15	Małe zabiegi jamy ustnej, gardła i krtani, np. wycięcie zmian w jamie ustnej lub na języku i diagnostyka krtani. Najczęstsze rozpoznanie to guz jamy ustnej lub gardła o nieokreślonym charakterze (D37.0). Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+C21E	Złożone operacje szczękowo-twarzowe u pacjentów powyżej 65 roku życia: osteoplastyka kości twarzy, częściowe albo całkowite wycięcie szczęki. Wśród rozpoznań są nowotwory złośliwe jamy nosowej i zatok. Pobyt trwa zwykle 7 dni (mediana).
+C21F	Złożone operacje szczękowo-twarzowe u pacjentów poniżej 66 roku życia, głównie osteoplastyka kości twarzy w wadach zgryzu (nieprawidłowy wymiar szczęk, K07.0) i po złamaniach kości twarzoczaszki. Pobyt trwa zwykle 4 dni (mediana).
+C22	Duże zabiegi szczękowo-twarzowe, najczęściej usunięcie zmian kości twarzy, np. torbieli szczęk, oraz leczenie złamań żuchwy. Pobyt trwa zwykle 2 dni (mediana).
+C23	Średnie zabiegi szczękowo-twarzowe, głównie leczenie złamań żuchwy (S02.6) oraz kości jarzmowej i szczęki. Pobyt trwa zwykle 1 dzień (mediana).
+C24	Małe zabiegi szczękowo-twarzowe, przede wszystkim operacyjne usunięcie zębów zatrzymanych i wtopionych. Pobyt trwa zwykle 1 dzień (mediana).
+C25	Rozległe korekcje wrodzonych wad twarzoczaszki u dzieci, w tym jednoczasowa korekcja obustronnego rozszczepu wargi i podniebienia. Pobyt trwa zwykle 4 dni (mediana).
+C26	Kompleksowe korekcje wrodzonych wad twarzoczaszki u dzieci, m.in. plastyka wyrostka zębodołowego z przeszczepem w obustronnym rozszczepie wargi i podniebienia. Grupa jest bardzo rzadka.
+C27	Duże korekcje wrodzonych wad twarzoczaszki u dzieci, głównie operacje rozszczepu podniebienia i wargi. Pobyt trwa zwykle 2 dni (mediana).
+C28	Średnie korekcje wad wrodzonych u dzieci, prawie zawsze wycięcie torbieli bocznej szyi lub pozostałości szczeliny skrzelowej (Q18.0). Grupa jest mała.
+C29	Małe korekcje wad wrodzonych u dzieci, prawie zawsze wycięcie wędzidełka języka (przyrośnięcie języka i inne wady języka). Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+C31	Złożone operacje uszu, m.in. wycięcie zmian ucha środkowego i radykalne wycięcie zmian ucha zewnętrznego. Pobyt trwa zwykle 3 dni (mediana).
+C32	Duże zabiegi uszu: wycięcie zmian ucha środkowego lub zewnętrznego i plastyka błony bębenkowej. Najczęstsze rozpoznanie to zrosty w uchu środkowym (H74.1). Pobyt trwa zwykle 2 dni (mediana).
+C33	Średnie zabiegi uszu, np. wyłuszczenie lub wycięcie zmian ucha zewnętrznego, korekcja odstających uszu i plastyka błony bębenkowej. Pobyt trwa zwykle 1 dzień (mediana).
+C34	Małe zabiegi uszu, głównie nacięcie błony bębenkowej z założeniem drenu wentylacyjnego w przewlekłym zapaleniu ucha środkowego. Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+C41	Złożone operacje nosa i zatok, najczęściej otwarcie komórek sitowych w przewlekłym zapaleniu zatok (J32.8); także rekonstrukcja przegrody nosa. Pobyt trwa zwykle 3 dni (mediana).
+C42	Duże zabiegi nosa, w większości z powodu skrzywienia przegrody nosowej (J34.2). Pobyt trwa zwykle 2 dni (mediana).
+C43	Średnie zabiegi nosa, głównie endoskopowe wycięcie zmian nosa i inne operacje plastyczne nosa. Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+C44	Małe zabiegi nosa, m.in. w przeroście małżowin nosowych (J34.3), złamaniu kości nosowych i krwawieniu z nosa. Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+C45	Duże zabiegi endoskopowe nosa i zatok u dzieci, prawie zawsze endoskopowe otwarcie wielu zatok. Pobyt trwa zwykle 3 dni (mediana).
+C46	Średnie zabiegi endoskopowe u dzieci: endoskopia zatok i endoskopowe wycięcie zmian nosa. Pobyt trwa zwykle 1 dzień (mediana).
+C48	Leczenie ostrego zapalenia zatok przynosowych u dzieci i młodzieży, najczęściej komórek sitowych (J01.2). Pobyt trwa zwykle 7 dni (mediana).
+C56	Leczenie poważnych chorób uszu, nosa i gardła bez zabiegu, najczęściej obustronnej głuchoty czuciowo-nerwowej (H90.3) i zawrotów głowy pochodzenia ośrodkowego (H81.4). Pobyt trwa zwykle 1 dzień (mediana).
+C56A	Poważne choroby uszu, nosa i gardła u dorosłych, leczone bez zabiegu: głównie obustronna głuchota czuciowo-nerwowa (H90.3) i zawroty głowy pochodzenia ośrodkowego. Pobyt trwa zwykle 3 dni (mediana).
+C56B	Poważne choroby uszu, nosa i gardła u dzieci, leczone bez zabiegu: głównie obustronna głuchota czuciowo-nerwowa (H90.3) i guzki strun głosowych. Pobyt trwa zwykle 1 dzień (mediana).
+C57	Leczenie innych chorób uszu, nosa i gardła bez zabiegu. Rozpoznania są bardzo różne, np. ropień okołomigdałkowy, krwawienie z nosa, nagła głuchota. Pobyt trwa zwykle 2 dni (mediana).
+C64	Inne zabiegi jamy ustnej, gardła, krtani, nosa i uszu, głównie biopsje jamy ustnej, gardła i migdałków. Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).

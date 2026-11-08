@@ -23,22 +23,22 @@
 
 .kpiLabel {
   color: #667085;
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
 }
 
 .kpiValue {
   margin-top: 4px;
   color: #172033;
-  font-size: 24px;
-  font-weight: 700;
+  font-size: var(--fs-2xl);
+  font-weight: var(--fw-bold);
   font-variant-numeric: tabular-nums;
 }
 
 .kpiNote {
   margin-top: 2px;
   color: #667085;
-  font-size: 12px;
+  font-size: var(--fs-sm);
 }
 
 .chartCard {
@@ -56,13 +56,13 @@
 
 .chartHeader h2 {
   margin: 0;
-  font-size: 16px;
+  font-size: var(--fs-lg);
 }
 
 .chartHeader p {
   margin: 4px 0 0;
   color: #667085;
-  font-size: 13px;
+  font-size: var(--fs-md);
 }
 
 .controls {
@@ -77,7 +77,7 @@
   border-radius: 8px;
   background: #fff8eb;
   color: #7a4a06;
-  font-size: 13px;
+  font-size: var(--fs-md);
 }
 
 @media (max-width: 900px) {
