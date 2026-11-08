@@ -1,0 +1,56 @@
+kod	opis
+L00	Usunięcie nerki (nefrektomia) i inne duże otwarte operacje nerek, częściowe wycięcie nerki. Najczęściej z powodu raka nerki (C64). Pobyt trwa zwykle 5 dni (mediana).
+L03	Średnie otwarte operacje nerek, m.in. usunięcie kamieni przez nacięcie miedniczki nerkowej i wycięcie zmian nerki, w kamicy, torbielach i guzach nerki. Pobyt trwa zwykle 7 dni (mediana).
+L05	Duże zabiegi endoskopowe nerek: przezskórne rozkruszenie i usunięcie kamieni z nerki (PCNL) oraz laparoskopowe częściowe wycięcie nerki. Pobyt trwa zwykle 4 dni (mediana).
+L06	Średnie zabiegi endoskopowe nerek, głównie wytworzenie przetoki nerkowej przez nakłucie przy utrudnionym odpływie moczu i wodonerczu. Pobyt trwa zwykle 3 dni (mediana).
+L07	Leczenie zakażeń nerek i dróg moczowych, w większości zakażenia układu moczowego bez bliższego określenia (N39.0). Pobyt trwa zwykle 6 dni (mediana).
+L08	Leczenie nowotworów nerek i dróg moczowych bez operacji, głównie raka pęcherza moczowego (C67.9) i raka nerki. Pobyt trwa zwykle 1 dzień (mediana).
+L09	Małe zabiegi nerek, głównie wymiana cewnika w przetoce nerkowej i przezskórna biopsja nerki. Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+L104	Inne zabiegi układu moczowo-płciowego, najczęściej cystoskopia i operacja stulejki (N47). Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+L105	Cystoskopia diagnostyczna u dzieci i młodzieży. Pobyt trwa zwykle 2 dni (mediana).
+L12	Duże otwarte operacje moczowodu, m.in. częściowe wycięcie moczowodu z wszczepieniem do pęcherza, głównie w wodonerczu ze zwężeniem moczowodu. Pobyt trwa zwykle 7 dni (mediana).
+L13	Średnie otwarte operacje moczowodu: umieszczenie protezy w moczowodzie, usunięcie kamienia i wycięcie zmian moczowodu. Pobyt trwa zwykle 4 dni (mediana).
+L15	Duże zabiegi endoskopowe moczowodu: ureteroskopia z rozkruszeniem kamieni laserem, w kamicy moczowodu (N20.1) i nerki. Pobyt trwa zwykle 2 dni (mediana).
+L16	Średnie zabiegi endoskopowe moczowodu, głównie rozszerzenie ujścia moczowodu, w kamicy moczowodu i wodonerczu. Pobyt trwa zwykle 2 dni (mediana).
+L17	Małe zabiegi endoskopowe moczowodu, głównie założenie albo wymiana cewnika podwójnie zagiętego (typu „pigtail”, 2xJ) w kamicy i wodonerczu. Pobyt trwa zwykle 2 dni (mediana).
+L21	Złożone operacje pęcherza moczowego z wytworzeniem przetoki moczowej, głównie radykalne wycięcie pęcherza z powodu raka pęcherza (C67.9). Pobyt trwa zwykle 10 dni (mediana).
+L22	Duże otwarte operacje pęcherza moczowego, w tym plastyka, głównie radykalne wycięcie pęcherza w raku pęcherza (C67.9). Pobyt trwa zwykle 10 dni (mediana).
+L23	Średnie otwarte operacje pęcherza moczowego, najczęściej w kamicy pęcherza (N21.0). Pobyt trwa zwykle 4 dni (mediana).
+L24	Operacje przetok moczowych, najczęściej wycięcie przetoki pęcherzowo-pochwowej (N82.0). Grupa jest mała. Pobyt trwa zwykle 8 dni (mediana).
+L25	Duże zabiegi na pęcherzu moczowym, m.in. klinowa resekcja pęcherza, przy przeszkodzie w szyi pęcherza i guzach pęcherza. Grupa jest mała. Pobyt trwa zwykle 3 dni (mediana).
+L26	Średnie zabiegi endoskopowe na pęcherzu moczowym, głównie przezcewkowa elektroresekcja guzów pęcherza w raku pęcherza (C67.9). Pobyt trwa zwykle 2 dni (mediana).
+L27	Leczenie zaburzeń oddawania moczu: wysiłkowego nietrzymania moczu (N39.3) i zatrzymania moczu (R33). Pobyt trwa zwykle 1 dzień (mediana).
+L29	Leczenie chorób pęcherza moczowego i moczowodu bez zabiegu, m.in. dysfunkcji pęcherza i opieki nad przetoką moczową. Pobyt trwa zwykle 1 dzień (mediana).
+L30	Małe zabiegi pęcherza moczowego, głównie cystoskopia z biopsją, przy guzach pęcherza i krwiomoczu. Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+L31	Radykalne wycięcie gruczołu krokowego (prostatektomia) metodą otwartą z wycięciem węzłów chłonnych, zawsze w raku gruczołu krokowego (C61). Pobyt trwa zwykle 6 dni (mediana).
+L31L	Laparoskopowa radykalna prostatektomia z wycięciem węzłów chłonnych, zawsze w raku gruczołu krokowego (C61). Pobyt trwa zwykle 4 dni (mediana).
+L31R	Radykalna prostatektomia z użyciem robota chirurgicznego, zawsze w raku gruczołu krokowego (C61). Pobyt trwa zwykle 3 dni (mediana).
+L32	Otwarte operacje gruczołu krokowego, prawie zawsze usunięcie gruczolaka w rozroście gruczołu krokowego (N40). Pobyt trwa zwykle 7 dni (mediana).
+L43	Przezcewkowa resekcja gruczołu krokowego (TURP), wykonywana głównie w rozroście gruczołu krokowego. Pobyt trwa zwykle 3 dni (mediana).
+L45	Zabiegi endoskopowe gruczołu krokowego, głównie przezcewkowa termoterapia mikrofalowa i opanowanie krwawienia. Grupa jest mała. Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+L46	Leczenie chorób gruczołu krokowego bez zabiegu, w połowie pobytów raka gruczołu krokowego (C61); także rozrostu i zapalenia gruczołu. Pobyt trwa zwykle 1 dzień (mediana).
+L47	Biopsja gruczołu krokowego, prawie zawsze przezodbytnicza wielomiejscowa, przy podejrzeniu albo potwierdzeniu raka i w rozroście gruczołu. Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+L52	Duże otwarte operacje cewki moczowej, głównie plastyka zwężenia cewki, często z przeszczepem błony śluzowej jamy ustnej. Pobyt trwa zwykle 3 dni (mediana).
+L53	Średnie zabiegi cewki moczowej, głównie endoskopowe rozcięcie zwężenia cewki (uretrotomia). Pobyt trwa zwykle 2 dni (mediana).
+L54	Małe zabiegi cewki moczowej, m.in. rozszerzenie cewki i wycięcie zmian cewki. Pobyt trwa zwykle 2 dni (mediana).
+L62E	Duże i średnie operacje prącia u pacjentów powyżej 65 roku życia, głównie częściowe albo całkowite wycięcie prącia w raku prącia. Pobyt trwa zwykle 3 dni (mediana).
+L62F	Duże i średnie operacje prącia u pacjentów poniżej 66 roku życia, m.in. operacja skrzywienia prącia i wycięcie blaszki w chorobie Peyroniego (stwardnienie plastyczne). Pobyt trwa zwykle 2 dni (mediana).
+L64	Małe zabiegi prącia, w większości przy stulejce (N47), np. nacięcie napletka. Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+L69	Leczenie chorób prącia, jąder, najądrzy i cewki moczowej bez zabiegu, najczęściej zapalenia jądra i najądrza (N45.9). Pobyt trwa zwykle 2 dni (mediana).
+L72	Zabiegi moszny, jądra, najądrza i nasieniowodu, najczęściej w wodniaku jądra; także wycięcie jądra. Pobyt trwa zwykle 2 dni (mediana).
+L72A	Zabiegi moszny, jądra, najądrza i nasieniowodu u dorosłych, m.in. wycięcie jądra. Pobyt trwa zwykle 2 dni (mediana).
+L72B	Zabiegi moszny, jądra, najądrza i nasieniowodu u dzieci i młodzieży. Pobyt trwa zwykle 2 dni (mediana).
+L81	Leczenie powikłań dializoterapii u dorosłych, w większości ze schyłkową niewydolnością nerek (N18.0); prawie zawsze z hemodializą. Pobyt trwa zwykle 6 dni (mediana).
+L82	Leczenie ostrej niewydolności nerek (N17). Pobyt trwa zwykle 7 dni (mediana).
+L83	Leczenie przewlekłej niewydolności nerek, także schyłkowej (N18.0). Pobyt trwa zwykle 4 dni (mediana).
+L84E	Leczenie innych chorób nerek u pacjentów powyżej 65 roku życia, m.in. torbieli nerek i cukrzycowej choroby nerek (E11.2). Pobyt trwa zwykle 6 dni (mediana).
+L84F	Leczenie innych chorób nerek i dróg moczowych u pacjentów poniżej 66 roku życia, m.in. torbieli nerek i przewlekłego zapalenia nerek. Pobyt trwa zwykle 3 dni (mediana).
+L85	Leczenie kamicy moczowej bez zabiegu: kamicy moczowodu i nerki oraz kolki nerkowej. Pobyt trwa zwykle 2 dni (mediana).
+L86	Diagnostyka dróg moczowych, w większości z powodu krwiomoczu (R31). Pobyt trwa zwykle 3 dni (mediana).
+L87	Leczenie powikłań dializoterapii u dzieci, głównie dializy otrzewnowej. Pobyt trwa zwykle 1 dzień (mediana).
+L91	Wszczepienie albo wymiana sztucznego zwieracza cewki moczowej (AUS) w nietrzymaniu moczu, głównie wysiłkowym (N39.3). Pobyt trwa zwykle 3 dni (mediana).
+L92	Kruszenie kamieni falą uderzeniową spoza ciała (ESWL), prawie zawsze w kamicy nerki (N20.0). Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+L92A	Kruszenie kamieni falą uderzeniową spoza ciała (ESWL) u dzieci i młodzieży. Pobyt trwa zwykle 2 dni (mediana).
+L94	Przeszczepienie nerki u dorosłych ze schyłkową niewydolnością nerek (N18.0), w większości od dawcy zmarłego. Pobyt trwa zwykle 14 dni (mediana).
+L96	Przeszczepienie nerki u dzieci i młodzieży, w większości od dawcy zmarłego. Pobyt jest długi: zwykle 19 dni (mediana).
+L97	Jednoczesne przeszczepienie nerki i trzustki u pacjentów ze schyłkową niewydolnością nerek. Grupa jest bardzo mała. Pobyt trwa zwykle 20 dni (mediana).

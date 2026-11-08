@@ -1,13 +1,19 @@
-import { access, readFile } from "node:fs/promises";
+import { access, readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { gunzipSync } from "node:zlib";
+import type { FinancialRecordSummary, HospitalProfileSummary } from "@/lib/hospitalHomeStats";
 import type { RegionsMap } from "@/lib/jgpCard";
 import type { JgpGroupFile, JgpPagesIndex, JgpPeerPair } from "@/lib/jgpPage";
+import type { JgpProfilesFile } from "@/lib/jgpDescription";
+import { readJgpProse } from "@/lib/jgpProse";
 import { decodeValuations, type JgpValuation, type ValuationsFile } from "@/lib/valuations";
+import { decodeJgpGroupFile, decodeStaticDataset, decodeTrends, type JgpGroupFileColumns, type StaticDatasetFile, type TrendsFile } from "@/lib/hospitalizationCodec";
 import type { HospitalizationIndex, StaticDataset, TrendsDataset } from "@/lib/staticData";
 
 // Odczyt danych podczas budowania strony (statyczny eksport). Tylko dla komponentów serwerowych.
 const DATA_DIR = join(process.cwd(), "public", "data");
+// Dane czytane tylko podczas buildu (nie trafiają do `dist/`, bo leżą poza `public/`).
+const BUILD_DATA_DIR = join(process.cwd(), "build-data");
 const DEFAULT_DIR = join(DATA_DIR, "hospitalizations");
 
 export async function readHospitalizationIndexFromDisk(dir = DEFAULT_DIR): Promise<HospitalizationIndex> {
@@ -15,7 +21,7 @@ export async function readHospitalizationIndexFromDisk(dir = DEFAULT_DIR): Promi
 }
 
 export async function readStaticDatasetFromDisk(year: string, dir = DEFAULT_DIR): Promise<StaticDataset> {
-  return readGzipJson<StaticDataset>(join(dir, `${year}.json.gz`));
+  return readGzipJson(join(dir, `${year}.json.gz`), (file: StaticDatasetFile) => decodeStaticDataset(file));
 }
 
 /** Zbiory za wszystkie lata z `index.json`, od najstarszego. */
@@ -25,15 +31,15 @@ export async function readAllStaticDatasetsFromDisk(dir = DEFAULT_DIR): Promise<
 }
 
 export async function readTrendsFromDisk(dir = DEFAULT_DIR): Promise<TrendsDataset> {
-  return readGzipJson<TrendsDataset>(join(dir, "trends.json.gz"));
+  return readGzipJson(join(dir, "trends.json.gz"), (file: TrendsFile) => decodeTrends(file));
 }
 
-// Podczas budowania ~700 stron grup czyta te same duże pliki; każdy plik parsujemy raz na proces.
+// Podczas budowania ~700 stron grup czyta te same duże pliki; każdy plik parsujemy (i dekodujemy) raz na proces.
 const gzipCache = new Map<string, Promise<unknown>>();
-async function readGzipJson<T>(file: string): Promise<T> {
+async function readGzipJson<T, F = T>(file: string, decode: (raw: F) => T = (raw) => raw as unknown as T): Promise<T> {
   let promise = gzipCache.get(file);
   if (!promise) {
-    promise = readFile(file).then((buffer) => JSON.parse(gunzipSync(buffer).toString("utf8")) as unknown);
+    promise = readFile(file).then((buffer) => decode(JSON.parse(gunzipSync(buffer).toString("utf8")) as F));
     gzipCache.set(file, promise);
     promise.catch(() => gzipCache.delete(file));
   }
@@ -47,19 +53,33 @@ export function clearDiskCache() {
 }
 
 /** Grupy JGP ze stroną (`scripts/build_jgp_pages.py`). */
-export async function readJgpPagesIndexFromDisk(file = join(DATA_DIR, "jgp", "index.json")): Promise<JgpPagesIndex> {
+export async function readJgpPagesIndexFromDisk(file = join(BUILD_DATA_DIR, "jgp", "index.json")): Promise<JgpPagesIndex> {
   return JSON.parse(await readFile(file, "utf8")) as JgpPagesIndex;
 }
 
 /** Plik strony grupy (`scripts/build_jgp_pages.py`) albo `null`, gdy go jeszcze nie zbudowano. */
-export async function readJgpGroupFileFromDisk(jgpCode: string, dir = join(DATA_DIR, "jgp")): Promise<JgpGroupFile | null> {
+export async function readJgpGroupFileFromDisk(jgpCode: string, dir = join(BUILD_DATA_DIR, "jgp")): Promise<JgpGroupFile | null> {
   const file = join(dir, `${jgpCode}.json.gz`);
   try {
     await access(file);
   } catch {
     return null;
   }
-  return readGzipJson<JgpGroupFile>(file);
+  return readGzipJson(file, (raw: JgpGroupFileColumns) => decodeJgpGroupFile(raw));
+}
+
+/** Rozliczenia NFZ w zł (kraj w latach) ze wszystkich plików grup; `null`, gdy plików grup nie zbudowano. */
+export async function readJgpSettlementsFromDisk(dir = join(BUILD_DATA_DIR, "jgp")): Promise<Record<string, Record<string, number>> | null> {
+  let groups: string[];
+  try {
+    groups = (await readJgpPagesIndexFromDisk(join(dir, "index.json"))).groups;
+  } catch {
+    return null;
+  }
+  const files = await Promise.all(groups.map((code) => readJgpGroupFileFromDisk(code, dir)));
+  const out: Record<string, Record<string, number>> = {};
+  for (const file of files) if (file?.valuePln) out[file.jgp] = file.valuePln.national;
+  return Object.keys(out).length ? out : null;
 }
 
 /** Katalog wycen JGP (punkty) z rokiem katalogu. */
@@ -80,6 +100,30 @@ export async function readPeerPairsFromDisk(file = join(DATA_DIR, "peer_pairs_ab
   return promise;
 }
 
+/** Profile grup z API statystyk JGP (`scripts/build_jgp_profiles.py`) albo `null`, gdy pliku nie ma. Jeden odczyt na build. */
+const profilesCache = new Map<string, Promise<JgpProfilesFile | null>>();
+export async function readJgpProfilesFromDisk(file = join(BUILD_DATA_DIR, "jgp_profiles.json.gz")): Promise<JgpProfilesFile | null> {
+  let promise = profilesCache.get(file);
+  if (!promise) {
+    promise = access(file).then(() => readGzipJson<JgpProfilesFile>(file), () => null);
+    profilesCache.set(file, promise);
+  }
+  return promise;
+}
+
+/** Opisy grup prozą z `scripts/jgp_opisy/*.tsv` (kod → opis). Jeden odczyt na build. */
+const proseCache = new Map<string, Promise<Record<string, string>>>();
+export async function readJgpProseFromDisk(dir = join(process.cwd(), "scripts", "jgp_opisy")): Promise<Record<string, string>> {
+  let promise = proseCache.get(dir);
+  if (!promise) {
+    promise = readdir(dir)
+      .then((names) => Promise.all(names.filter((name) => name.endsWith(".tsv")).sort().map((name) => readFile(join(dir, name), "utf8"))))
+      .then(readJgpProse, () => ({}));
+    proseCache.set(dir, promise);
+  }
+  return promise;
+}
+
 /** Mapa województw (`scripts/build_regions_map.py`) albo `null`, gdy pliku nie ma. */
 export async function readRegionsMapFromDisk(file = join(DATA_DIR, "regions-map.json.gz")): Promise<RegionsMap | null> {
   try {
@@ -88,4 +132,22 @@ export async function readRegionsMapFromDisk(file = join(DATA_DIR, "regions-map.
     return null;
   }
   return readGzipJson<RegionsMap>(file);
+}
+
+/** Profile szpitali z RPWDL (pola dla strony głównej: łóżka, SOR). */
+export async function readHospitalProfilesFromDisk(file = join(DATA_DIR, "rpwdl_summary_profiles.json.gz")): Promise<HospitalProfileSummary[]> {
+  const data = await readGzipJson<{ records: HospitalProfileSummary[] }>(file);
+  return data.records.map(({ oz_nfz, nip, core, capabilities }) => ({ oz_nfz, nip, core: core ? { beds: core.beds } : null, capabilities: capabilities?.sor ? { sor: capabilities.sor } : null }));
+}
+
+/** NIP-y szpitali z sieci PSZ (`scripts/build_psz.py`). */
+export async function readPszNipsFromDisk(file = join(DATA_DIR, "psz.json.gz")): Promise<Set<string>> {
+  const data = await readGzipJson<{ rows: [string, number][] }>(file);
+  return new Set(data.rows.map(([nip]) => nip));
+}
+
+/** Wyniki finansowe podmiotów (NIP): przychód, wynik netto, marża. */
+export async function readFinancialResultsFromDisk(file = join(DATA_DIR, "financial_results.json.gz")): Promise<FinancialRecordSummary[]> {
+  const data = await readGzipJson<{ records: FinancialRecordSummary[] }>(file);
+  return data.records.map(({ nip, years }) => ({ nip, years: years.map(({ year, revenue, net_result, net_margin }) => ({ year, revenue, net_result, net_margin })) }));
 }

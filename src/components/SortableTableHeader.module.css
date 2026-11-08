@@ -9,7 +9,7 @@
   background: transparent;
   color: inherit;
   font: inherit;
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
   text-align: left;
   cursor: pointer;
 }
@@ -32,7 +32,7 @@
 .icon {
   flex: none;
   color: #98A2B3;
-  font-size: 11px;
+  font-size: var(--fs-xs);
   line-height: 1;
 }
 

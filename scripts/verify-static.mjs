@@ -1,12 +1,21 @@
-import { readFile, stat } from "node:fs/promises";
+import { readdir, readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import { gunzipSync } from "node:zlib";
 
 const DIR = "public/data/hospitalizations";
 const MAX_PAGES_FILE_BYTES = 25 * 1024 * 1024;
 const E10 = "5.51.01.0005010";
-// Punkty kontrolne: E10 w danym roku (metoda min). Nowy rok? Dopisz wartości po sprawdzeniu źródła.
+// Punkty kontrolne: E10 w danym roku (metoda min), policzone niezależnie z pliku źródłowego (awk).
+// Każdy rok w index.json musi mieć punkt kontrolny.
+// 2017: do września E10 obejmowało więcej przypadków (zmiana katalogu JGP od października 2017 r.).
 const E10_CHECKS = {
+  "2017": { facilities: 140, hospitalizations: 20596 },
+  "2018": { facilities: 138, hospitalizations: 10431 },
+  "2019": { facilities: 139, hospitalizations: 10643 },
+  "2020": { facilities: 139, hospitalizations: 8062 },
+  "2021": { facilities: 141, hospitalizations: 8352 },
+  "2022": { facilities: 139, hospitalizations: 8612 },
+  "2023": { facilities: 142, hospitalizations: 8534 },
   "2024": { facilities: 142, hospitalizations: 8236 },
   "2025": { facilities: 143, hospitalizations: 8326 },
 };
@@ -19,6 +28,26 @@ async function readGzipJson(file) {
   return { size, data: JSON.parse(gunzipSync(await readFile(file)).toString("utf8")) };
 }
 
+// Pliki w formacie słownikowo-kolumnowym (src/lib/hospitalizationCodec.ts): sprawdzamy indeksy i odtwarzamy wiersze.
+function rowsFromColumns(columns, keys, name) {
+  if (!columns || Array.isArray(columns)) throw new Error(`${name}: expected columns, got ${Array.isArray(columns) ? "rows" : "nothing"}.`);
+  const length = columns[keys[0]]?.length ?? 0;
+  for (const key of keys) if (columns[key]?.length !== length) throw new Error(`${name}: column ${key} has ${columns[key]?.length} values instead of ${length}.`);
+  return Array.from({ length }, (_, i) => keys.map((key) => columns[key][i]));
+}
+
+function lookup(list, i, name) {
+  if (list[i] === undefined) throw new Error(`${name}: index ${i} outside the dictionary.`);
+  return list[i];
+}
+
+const VALUE_KEYS = ["hSim", "hMin", "dSim", "dMin"];
+const MONTH_KEYS = ["year", "month", "product", "group", ...VALUE_KEYS];
+
+function monthlyRows(columns, years, groups, name) {
+  return rowsFromColumns(columns, MONTH_KEYS, name).map(([year, month, product, group, ...values]) => [lookup(years, year, name), month, product, lookup(groups, group, name), ...values]);
+}
+
 const index = JSON.parse(await readFile(path.join(DIR, "index.json"), "utf8"));
 if (!Array.isArray(index.years) || index.years.length === 0) throw new Error("index.json has no years.");
 if (index.latestYear !== [...index.years].sort().at(-1)) throw new Error("index.json latestYear is not the newest year.");
@@ -28,7 +57,13 @@ for (const year of index.years) {
   const { size, data } = await readGzipJson(path.join(DIR, `${year}.json.gz`));
   totalSize += size;
   if (data.analysisYear !== year) throw new Error(`${year}.json.gz has analysisYear ${data.analysisYear}.`);
-  if (!Array.isArray(data.facts) || data.facts.length === 0) throw new Error(`${year}: static dataset has no facts.`);
+  if (data.version !== 2) throw new Error(`${year}.json.gz has version ${data.version} instead of 2.`);
+  data.facts = rowsFromColumns(data.facts, ["facility", "product", "duration", "admission", ...VALUE_KEYS], `${year}.json.gz`)
+    .map(([facility, product, duration, admission, ...values]) => {
+      const [ow, nip] = lookup(data.facilities, facility, `${year}.json.gz`);
+      return [ow, nip, lookup(data.products, product, `${year}.json.gz`)[0], lookup(data.durations, duration, `${year}.json.gz`), lookup(data.admissions, admission, `${year}.json.gz`), ...values];
+    });
+  if (data.facts.length === 0) throw new Error(`${year}: static dataset has no facts.`);
   if (!Array.isArray(data.products) || data.products.length === 0) throw new Error(`${year}: static dataset has no products.`);
 
   const productCodes = new Set(data.products.map(([code]) => code));
@@ -44,6 +79,7 @@ for (const year of index.years) {
   }
 
   const check = E10_CHECKS[year];
+  if (!check) throw new Error(`${year}: no E10 checkpoint in E10_CHECKS (count E10 in the source file and add it).`);
   if (check && (e10Facilities.size !== check.facilities || e10Hospitalizations !== check.hospitalizations)) {
     throw new Error(`${year}: E10 verification failed: ${e10Facilities.size} facilities / ${e10Hospitalizations} hospitalizations.`);
   }
@@ -51,36 +87,51 @@ for (const year of index.years) {
 }
 
 const { size: trendsSize, data: trends } = await readGzipJson(path.join(DIR, "trends.json.gz"));
+if (trends.version !== 2) throw new Error(`trends.json.gz has version ${trends.version} instead of 2.`);
+trends.monthly = monthlyRows(trends.monthly, trends.years, trends.groups, "trends.json.gz");
+trends.regional = rowsFromColumns(trends.regional, ["year", "branch", "product", "group", ...VALUE_KEYS], "trends.json.gz")
+  .map(([year, branch, product, group, ...values]) => [lookup(trends.years, year, "trends.json.gz"), lookup(trends.branches, branch, "trends.json.gz"), product, lookup(trends.groups, group, "trends.json.gz"), ...values]);
 if (JSON.stringify(trends.years) !== JSON.stringify(index.years)) throw new Error("trends.json.gz years differ from index.json.");
 if (!trends.monthly?.length || !trends.regional?.length) throw new Error("trends.json.gz has no rows.");
 
 console.log(`Trends OK: ${trends.monthly.length.toLocaleString("en-US")} monthly rows, ${(trendsSize / 1024).toFixed(0)} KiB.`);
 
-// Trend miesięczny według OW NFZ musi sumować się do trendu krajowego.
-const { size: regionalSize, data: regionalTrends } = await readGzipJson(path.join(DIR, "trends-regions.json.gz"));
-if (JSON.stringify(regionalTrends.years) !== JSON.stringify(index.years)) throw new Error("trends-regions.json.gz years differ from index.json.");
+// Trend miesięczny według OW NFZ (plik na każdy OW) musi sumować się do trendu krajowego.
+const regionalDir = path.join(DIR, "trends-regions");
+const regionalSums = new Map();
+let regionalSize = 0;
+let regionalRows = 0;
+const regionCodes = (await readdir(regionalDir)).filter((name) => name.endsWith(".json.gz")).sort();
+if (regionCodes.length !== 16) throw new Error(`trends-regions/ has ${regionCodes.length} files instead of 16.`);
+for (const name of regionCodes) {
+  const { size, data: regional } = await readGzipJson(path.join(regionalDir, name));
+  regionalSize += size;
+  if (regional.version !== 3 || `${regional.owNfz}.json.gz` !== name) throw new Error(`trends-regions/${name} has a wrong header.`);
+  regional.rows = monthlyRows(regional.rows, regional.years, regional.groups, `trends-regions/${name}`);
+  if (JSON.stringify(regional.years) !== JSON.stringify(index.years)) throw new Error(`trends-regions/${name} years differ from index.json.`);
+  regionalRows += regional.rows.length;
+  for (const [year, month, product, group, hSim, hMin] of regional.rows) {
+    const key = `${year}|${month}|${product}|${group}`;
+    const sum = regionalSums.get(key) ?? [0, 0];
+    regionalSums.set(key, [sum[0] + hSim, sum[1] + hMin]);
+  }
+}
 const nationalSums = new Map();
 for (const [year, month, product, group, hSim, hMin] of trends.monthly) nationalSums.set(`${year}|${month}|${product}|${group}`, [hSim, hMin]);
-const regionalSums = new Map();
-for (const [year, month, , product, group, hSim, hMin] of regionalTrends.rows) {
-  const key = `${year}|${month}|${product}|${group}`;
-  const sum = regionalSums.get(key) ?? [0, 0];
-  regionalSums.set(key, [sum[0] + hSim, sum[1] + hMin]);
-}
-if (regionalSums.size !== nationalSums.size) throw new Error("trends-regions.json.gz covers different months or products than trends.json.gz.");
+if (regionalSums.size !== nationalSums.size) throw new Error("trends-regions/ covers different months or products than trends.json.gz.");
 for (const [key, [hSim, hMin]] of nationalSums) {
   const sum = regionalSums.get(key);
-  if (!sum || sum[0] !== hSim || sum[1] !== hMin) throw new Error(`trends-regions.json.gz does not add up to trends.json.gz for ${key}.`);
+  if (!sum || sum[0] !== hSim || sum[1] !== hMin) throw new Error(`trends-regions/ does not add up to trends.json.gz for ${key}.`);
 }
-console.log(`Regional trends OK: ${regionalTrends.rows.length.toLocaleString("en-US")} rows, ${(regionalSize / 1024).toFixed(0)} KiB.`);
+console.log(`Regional trends OK: ${regionCodes.length} files, ${regionalRows.toLocaleString("en-US")} rows, ${(regionalSize / 1024).toFixed(0)} KiB.`);
 console.log(`Hospitalization data OK: ${index.years.join(", ")}; ${((totalSize + trendsSize + regionalSize) / 1024 / 1024).toFixed(2)} MiB in total.`);
 
-// Pliki stron grup (scripts/build_jgp_pages.py, format v2): jeden na każdą grupę JGP z trendów,
+// Pliki stron grup (scripts/build_jgp_pages.py, format v3: wiersze kolumnami): jeden na każdą grupę JGP z trendów,
 // a ich hospitalizacje (metoda min) sumują się do trendu krajowego grupy w każdym miesiącu i trybie.
 {
-  const pagesIndex = JSON.parse(await readFile("public/data/jgp/index.json", "utf8"));
+  const pagesIndex = JSON.parse(await readFile("build-data/jgp/index.json", "utf8"));
   const trendGroups = [...new Set(trends.products.map(([, jgp]) => jgp).filter(Boolean))].sort();
-  if (JSON.stringify(pagesIndex.groups) !== JSON.stringify(trendGroups)) throw new Error("public/data/jgp/index.json groups differ from trends.json.gz.");
+  if (JSON.stringify(pagesIndex.groups) !== JSON.stringify(trendGroups)) throw new Error("build-data/jgp/index.json groups differ from trends.json.gz.");
   const ADMISSION = { p: 0, u: 1, o: 2 };
   const expected = new Map();
   for (const [year, month, product, admission, , hMin] of trends.monthly) {
@@ -91,12 +142,13 @@ console.log(`Hospitalization data OK: ${index.years.join(", ")}; ${((totalSize +
   let totalSize = 0;
   let largest = [0, ""];
   for (const code of pagesIndex.groups) {
-    const file = path.join("public/data/jgp", `${code}.json.gz`);
+    const file = path.join("build-data/jgp", `${code}.json.gz`);
     const { size, data: group } = await readGzipJson(file);
     totalSize += size;
     if (size > largest[0]) largest = [size, code];
-    if (group.version !== 2 || group.jgp !== code || JSON.stringify(group.years) !== JSON.stringify(index.years)) throw new Error(`${file} has a wrong header.`);
+    if (group.version !== 3 || group.jgp !== code || JSON.stringify(group.years) !== JSON.stringify(index.years)) throw new Error(`${file} has a wrong header.`);
     const actual = new Map();
+    group.rows = rowsFromColumns(group.rows, ["provider", "month", "admission", "hospitalizations", "deaths"], file);
     for (const [provider, month, admission, h] of group.rows) {
       if (!group.providers[provider]) throw new Error(`${file}: row points to a missing provider ${provider}.`);
       const key = `${code}|${month}|${admission}`;
@@ -130,4 +182,13 @@ console.log(`Hospitalization data OK: ${index.years.join(", ")}; ${((totalSize +
   const codes = valuations.rows.map((row) => row[valuations.fields.indexOf("kod_jgp")]);
   if (!codes.length || new Set(codes).size !== codes.length) throw new Error("wyceny_jgp_2025.json.gz has no rows or duplicate group codes.");
   console.log(`Valuations OK: ${codes.length} groups, ${(size / 1024).toFixed(1)} KiB.`);
+}
+
+// Sieć szpitali PSZ (scripts/build_psz.py): unikalne NIP-y, poziomy z listy.
+{
+  const { size, data: psz } = await readGzipJson("public/data/psz.json.gz");
+  const nips = psz.rows.map(([nip]) => nip);
+  if (psz.version !== 1 || nips.length < 400 || new Set(nips).size !== nips.length) throw new Error("psz.json.gz is not version 1, has too few rows or duplicate NIPs.");
+  if (psz.rows.some(([nip, level]) => !/^\d{10}$/.test(nip) || !psz.levels[level])) throw new Error("psz.json.gz has an invalid NIP or level.");
+  console.log(`PSZ OK: ${nips.length} providers (list ${psz.listDate}), ${(size / 1024).toFixed(1)} KiB.`);
 }

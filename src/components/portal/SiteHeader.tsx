@@ -16,8 +16,9 @@ import styles from "./SiteHeader.module.css";
 
 const links = [
   { label: "Start", href: "/", active: "start" },
+  { label: "Przegląd", href: DASHBOARD_HREFS.summary, active: "summary" },
   { label: "Grupy JGP", href: "/jgp", active: "groups" },
-  { label: "Analizy", href: DASHBOARD_HREFS.trend, active: "analyses" },
+  { label: "Eksplorator danych", href: DASHBOARD_HREFS.trend, active: "analyses" },
   { label: "Szpitale", href: DASHBOARD_HREFS.hospital, active: "hospitals" },
   { label: "Porównania", href: DASHBOARD_HREFS.comparison, active: "compare" },
   { label: "O danych", href: DASHBOARD_HREFS.methodology, active: "about" },
@@ -32,6 +33,7 @@ const analysisOptions = [
 
 function sectionForPath(pathname: string, search: string) {
   if (pathname === "/") return "start";
+  if (pathname.startsWith("/hospitalizacje")) return "summary";
   if (pathname.startsWith("/jgp")) return "groups";
   if (pathname.startsWith("/analizy")) return "analyses";
   if (pathname.startsWith("/szpitale")) return hospitalNavigationFromHref(`/szpitale${search}`)?.view === "comparison" ? "compare" : "hospitals";
@@ -62,6 +64,18 @@ export function SiteHeader() {
   const [currentAnalysisTab, setCurrentAnalysisTab] = useState<DashboardActiveTab | null>(null);
   const analysisMenuRef = useRef<HTMLDivElement>(null);
   const analysisTriggerRef = useRef<HTMLButtonElement>(null);
+  const headerRef = useRef<HTMLElement>(null);
+
+  // Wysokość nagłówka w `--atlas-header-height`: przypięte elementy stron (np. nagłówek tabeli) stają pod nim.
+  useEffect(() => {
+    const header = headerRef.current;
+    if (!header || typeof ResizeObserver === "undefined") return;
+    const sync = () => document.documentElement.style.setProperty("--atlas-header-height", `${Math.floor(header.getBoundingClientRect().height)}px`);
+    sync();
+    const observer = new ResizeObserver(sync);
+    observer.observe(header);
+    return () => observer.disconnect();
+  }, []);
 
   // Strony są właścicielami swojego stanu; nagłówek tylko odzwierciedla aktywną sekcję i widok.
   useEffect(() => {
@@ -115,11 +129,11 @@ export function SiteHeader() {
   // Strona główna ma duże pole wyszukiwania w hero, więc nagłówek go nie powtarza.
   const showSearch = pathname !== "/";
 
-  return <header className={styles.header}>
+  return <header ref={headerRef} className={styles.header}>
     <div className={styles.inner}>
       <Link className={styles.brand} href="/" onClick={() => { setIsOpen(false); setAnalysisOpen(false); setCurrentSection("start"); }} aria-label={`${SITE_NAME} — strona główna`}>
         <span className={styles.brandSymbol}><BrandMark /></span>
-        <span className={styles.brandText}><strong>{SITE_NAME}</strong><span>Hospitalizacje · Szpitale · JGP</span></span>
+        <span className={styles.brandText}>{SITE_NAME}</span>
       </Link>
       <nav id="portal-navigation" className={`${styles.nav} ${isOpen ? styles.navOpen : ""}`} aria-label="Nawigacja portalu">
         {links.map(({ href, label, active }) => active === "analyses" ? (
@@ -133,7 +147,7 @@ export function SiteHeader() {
               aria-haspopup="true"
               onClick={() => setAnalysisOpen((open) => !open)}
             >
-              Analizy <span className={`${styles.chevron} ${analysisOpen ? styles.chevronOpen : ""}`} aria-hidden="true" />
+              Eksplorator danych <span className={`${styles.chevron} ${analysisOpen ? styles.chevronOpen : ""}`} aria-hidden="true" />
             </button>
             {analysisOpen && <div id="analysis-navigation-menu" className={styles.analysisDropdown} aria-label="Wybierz rodzaj analizy">
               {analysisOptions.map((option) => <Link

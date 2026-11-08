@@ -81,7 +81,7 @@
 .hospital-analysis.hospital-subtab-summary .hospital-empty-inline{
   padding:12px;
   color:#98A2B3;
-  font-size:8px;
+  font-size:var(--fs-2xs);
 }
 
 
@@ -117,7 +117,7 @@
   color:#667085;
   font-size:clamp(10.5px,1.11cqw,12.5px);
   line-height:1.2;
-  font-weight:600;
+  font-weight:var(--fw-semibold);
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
@@ -129,7 +129,7 @@
   color:#101828;
   font-size:clamp(18px,1.93cqw,22px);
   line-height:1.1;
-  font-weight:650;
+  font-weight:var(--fw-semibold);
   letter-spacing:-.025em;
 }
 
@@ -140,7 +140,7 @@
   color:#667085;
   font-size:clamp(9px,.97cqw,11px);
   line-height:1.25;
-  font-weight:400;
+  font-weight:var(--fw-regular);
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
@@ -171,7 +171,7 @@
   border-radius:9px;
   background:#EEF4FF;
   color:var(--hp-blue);
-  font-size:14px;
+  font-size:var(--fs-base);
 }
 
 .hospital-analysis.hospital-subtab-summary .hospital-profile-section-icon svg{
@@ -189,7 +189,7 @@
   color:var(--hp-text);
   font-size:clamp(15px,1.08cqw,17px);
   line-height:1.15;
-  font-weight:600;
+  font-weight:var(--fw-semibold);
   letter-spacing:-.012em;
 }
 
@@ -198,7 +198,7 @@
   color:#718096;
   font-size:clamp(10px,.98cqw,11px);
   line-height:1.3;
-  font-weight:400;
+  font-weight:var(--fw-regular);
 }
 
 .hospital-analysis.hospital-subtab-summary .hospital-rpwdl-section-head{
@@ -255,7 +255,7 @@
   border-radius:8px;
   background:#E9F6F2;
   color:var(--primary);
-  font-size:13px;
+  font-size:var(--fs-md);
 }
 
 .hospital-analysis.hospital-subtab-summary .hospital-rpwdl-kpi-icon svg{width:1em;height:1em}
@@ -264,7 +264,7 @@
 .hospital-analysis.hospital-subtab-summary .hospital-rpwdl-kpi b{
   display:block;
   color:#101828;
-  font-size:21px;
+  font-size:var(--fs-2xl);
   line-height:1;
 }
 
@@ -274,7 +274,7 @@
   color:#344054;
   font-size:clamp(11px,1.12cqw,12.5px);
   line-height:1.25;
-  font-weight:700;
+  font-weight:var(--fw-bold);
 }
 
 .hospital-analysis.hospital-subtab-summary .hospital-rpwdl-kpi>div>small{
@@ -314,8 +314,8 @@
   background:#fff;
   color:#667085;
   font-family:inherit;
-  font-size:10px;
-  font-weight:700;
+  font-size:var(--fs-2xs);
+  font-weight:var(--fw-bold);
   line-height:1;
   cursor:help;
 }
@@ -341,7 +341,7 @@
   box-shadow:0 14px 34px rgba(16,24,40,.16);
   color:#344054;
   text-align:left;
-  font-weight:400;
+  font-weight:var(--fw-regular);
 }
 
 .hospital-analysis.hospital-subtab-summary .hospital-rpwdl-help:hover .hospital-rpwdl-help-popover,
@@ -352,7 +352,7 @@
 .hospital-analysis.hospital-subtab-summary .hospital-rpwdl-help-popover>strong{
   display:block;
   color:#101828;
-  font-size:12px;
+  font-size:var(--fs-sm);
   line-height:1.3;
 }
 
@@ -360,7 +360,7 @@
   display:block;
   margin:3px 0 9px;
   color:#667085;
-  font-size:10px;
+  font-size:var(--fs-2xs);
   line-height:1.35;
 }
 
@@ -372,7 +372,7 @@
 .hospital-analysis.hospital-subtab-summary .hospital-rpwdl-help-popover .hospital-rpwdl-help-note{
   margin:8px 0 0;
   color:#667085;
-  font-size:9.5px;
+  font-size:var(--fs-2xs);
   line-height:1.35;
 }
 
@@ -384,7 +384,7 @@
 .hospital-analysis.hospital-subtab-summary .hospital-rpwdl-location-table{
   width:100%;
   border-collapse:collapse;
-  font-size:10.5px;
+  font-size:var(--fs-xs);
   line-height:1.35;
 }
 
@@ -393,8 +393,8 @@
   border-bottom:1px solid #E6EBF2;
   background:#F8FAFC;
   color:#667085;
-  font-size:9px;
-  font-weight:750;
+  font-size:var(--fs-2xs);
+  font-weight:var(--fw-bold);
   text-transform:uppercase;
   letter-spacing:.025em;
   text-align:right;
@@ -424,7 +424,7 @@
 
 .hospital-analysis.hospital-subtab-summary .hospital-rpwdl-location-table td:first-child{
   color:#344054;
-  font-weight:650;
+  font-weight:var(--fw-semibold);
   text-align:left;
   white-space:normal;
 }
@@ -452,7 +452,7 @@
 .hospital-analysis.hospital-subtab-summary .hospital-rpwdl-present-head>span{
   color:#344054;
   font-size:clamp(10.5px,1.05cqw,12px);
-  font-weight:750;
+  font-weight:var(--fw-bold);
 }
 
 .hospital-analysis.hospital-subtab-summary .hospital-rpwdl-present-head>small{
@@ -482,7 +482,7 @@
 
 .hospital-analysis.hospital-subtab-summary .hospital-rpwdl-present-badges strong{font-size:clamp(9.5px,.96cqw,11px);line-height:1.25}
 .hospital-analysis.hospital-subtab-summary .hospital-rpwdl-present-badges small{color:#667085;font-size:clamp(9px,.9cqw,10px);line-height:1.25}
-.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-present-badges>em{color:#98A2B3;font-size:8px;font-style:normal}
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-present-badges>em{color:#98A2B3;font-size:var(--fs-2xs);font-style:normal}
 
 .hospital-analysis.hospital-subtab-summary .hospital-rpwdl-disclosures{
   display:grid;
@@ -532,7 +532,7 @@
 .hospital-analysis.hospital-subtab-summary .hospital-rpwdl-disclosure>button i{
   flex:0 0 auto;
   color:#667085;
-  font-size:17px;
+  font-size:var(--fs-xl);
   line-height:1;
   font-style:normal;
   transition:transform .16s ease;
@@ -582,7 +582,7 @@
   color:#667085;
   font-size:clamp(9.5px,.94cqw,10.5px);
   line-height:1.25;
-  font-weight:750;
+  font-weight:var(--fw-bold);
   text-align:left;
   text-transform:uppercase;
   letter-spacing:.035em;
@@ -611,7 +611,7 @@
 .hospital-analysis.hospital-subtab-summary .hospital-rpwdl-wards-table th:nth-child(3),
 .hospital-analysis.hospital-subtab-summary .hospital-rpwdl-wards-table td:nth-child(3){width:48%}
 
-.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-wards-table td strong{color:#344054;font-weight:700}
+.hospital-analysis.hospital-subtab-summary .hospital-rpwdl-wards-table td strong{color:#344054;font-weight:var(--fw-bold)}
 .hospital-analysis.hospital-subtab-summary .hospital-rpwdl-wards-table th .hospital-sort-header{width:100%;justify-content:flex-start}
 .hospital-analysis.hospital-subtab-summary .hospital-rpwdl-wards-table th.num .hospital-sort-header{justify-content:flex-end}
 
@@ -663,7 +663,7 @@
   background:linear-gradient(180deg,#EAF2FF,#DDEBFF);
   color:var(--hp-blue);
   box-shadow:inset 0 0 0 1px rgba(47,111,237,.07);
-  font-size:21px;
+  font-size:var(--fs-2xl);
   z-index:2;
 }
 
@@ -688,7 +688,7 @@
   color:#101828;
   font-size:clamp(16px,1.64cqw,18px);
   line-height:1.08;
-  font-weight:600;
+  font-weight:var(--fw-semibold);
   letter-spacing:-.018em;
   text-wrap:balance;
 }
@@ -701,7 +701,7 @@
   color:#718096;
   font-size:clamp(9px,.92cqw,10px);
   line-height:1.2;
-  font-weight:400;
+  font-weight:var(--fw-regular);
 }
 
 .hospital-analysis.hospital-subtab-summary .hospital-profile-topline .hospital-profile-identity-meta>span{
@@ -709,7 +709,7 @@
   align-items:center;
   margin:0;
   color:#667085;
-  font-size:11px;
+  font-size:var(--fs-xs);
 }
 
 .hospital-analysis.hospital-subtab-summary .hospital-profile-topline .hospital-profile-identity-meta>span:not(:last-child)::after{
@@ -724,7 +724,7 @@
   color:#475467;
   font-size:clamp(9.5px,.98cqw,10.5px);
   line-height:1.32;
-  font-weight:400;
+  font-weight:var(--fw-regular);
 }
 
 
@@ -777,7 +777,7 @@
   margin:0;
   font-size:clamp(10.5px,1.11cqw,12.5px);
   line-height:1.2;
-  font-weight:600;
+  font-weight:var(--fw-semibold);
   white-space:nowrap;
   overflow:visible;
   text-overflow:clip;
@@ -806,7 +806,7 @@
   padding:0;
   font-size:clamp(20px,1.5cqw,25px);
   line-height:1;
-  font-weight:650;
+  font-weight:var(--fw-semibold);
   letter-spacing:-.03em;
   white-space:nowrap;
   text-wrap:nowrap;
@@ -819,7 +819,7 @@
   color:#475467;
   font-size:clamp(10px,1.06cqw,12px);
   line-height:1.2;
-  font-weight:500;
+  font-weight:var(--fw-medium);
   white-space:nowrap;
 }
 
@@ -827,7 +827,7 @@
   display:block;
   margin-top:5px;
   color:#B54708;
-  font-size:8px;
+  font-size:var(--fs-2xs);
   font-style:normal;
 }
 
@@ -925,7 +925,7 @@
   color:#172033!important;
   font-size:clamp(13px,.96cqw,15px)!important;
   line-height:1.18!important;
-  font-weight:600!important;
+  font-weight:var(--fw-semibold)!important;
   letter-spacing:-.01em!important;
   white-space:nowrap;
 }
@@ -937,14 +937,14 @@
   color:#7B879B!important;
   font-size:clamp(7.5px,.50cqw,8.5px)!important;
   line-height:1.2!important;
-  font-weight:400!important;
+  font-weight:var(--fw-regular)!important;
   text-align:right;
 }
 
 .hospital-analysis.hospital-subtab-summary .hospital-jgp-profile-section .hospital-jgp-family-head>small b{
   color:#101828;
   font-size:clamp(9.5px,.66cqw,11px)!important;
-  font-weight:600!important;
+  font-weight:var(--fw-semibold)!important;
 }
 
 .hospital-analysis.hospital-subtab-summary .hospital-summary-redesign .hospital-jgp-code-bars,
@@ -966,16 +966,16 @@
 
 .hospital-analysis.hospital-subtab-summary .hospital-jgp-family-treemap text{
   pointer-events:none;
-  font-weight:600;
+  font-weight:var(--fw-semibold);
 }
 
 .hospital-analysis.hospital-subtab-summary .hospital-summary-redesign .hospital-jgp-code-bars .ytick text,
 .hospital-analysis.hospital-subtab-summary .hospital-summary-redesign .hospital-jgp-code-bars .xtick text{
-  font-weight:400!important;
+  font-weight:var(--fw-regular)!important;
 }
 
 .hospital-analysis.hospital-subtab-summary .hospital-summary-redesign .hospital-jgp-family-treemap .slicetext{
-  font-weight:500!important;
+  font-weight:var(--fw-medium)!important;
 }
 
 

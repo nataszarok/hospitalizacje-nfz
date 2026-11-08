@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { DASHBOARD_HREFS } from "@/lib/dashboardNavigation";
+import { SITE_NAME } from "@/lib/site";
 import styles from "./AboutDataPage.module.css";
 
 const HOSPITALIZATIONS_SOURCE_URL = "https://dane.gov.pl/en/dataset/3009,dane-dotyczace-hospitalizacji-rozliczonych-jgp-w-l/resource/2231001/table";
@@ -10,7 +11,7 @@ export function AboutDataPage({ yearFrom, yearTo }: { yearFrom: string; yearTo: 
   return <main className={styles.page}>
     <header className={styles.header}>
       <h1>O danych</h1>
-      <p>Skąd pochodzą liczby w Atlasie i jak je czytać.</p>
+      <p>Skąd pochodzą liczby w serwisie {SITE_NAME} i jak je czytać.</p>
     </header>
 
     <section className={styles.card}>
@@ -52,7 +53,7 @@ export function AboutDataPage({ yearFrom, yearTo }: { yearFrom: string; yearTo: 
     <section className={styles.card}>
       <h2>Jak czytać analizy</h2>
       <p>
-        Atlas pokazuje dane zagregowane. Różnice między świadczeniodawcami wynikają też z profilu pacjentów, zakresu działalności
+        {SITE_NAME} pokazuje dane zagregowane. Różnice między świadczeniodawcami wynikają też z profilu pacjentów, zakresu działalności
         i sposobu rozliczania, dlatego jedna liczba nie wystarcza do oceny jakości leczenia.
       </p>
       <p className={styles.links}>

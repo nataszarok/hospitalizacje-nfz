@@ -1,0 +1,32 @@
+kod	opis
+G01	Rozległe operacje wątroby: wycięcie 1–2 segmentów albo co najmniej 3 segmentów (hemihepatektomia). Najczęściej z powodu przerzutów nowotworów do wątroby (C78.7), rzadziej raka wątrobowokomórkowego. Pobyt trwa zwykle 7 dni (mediana).
+G11	Złożone zabiegi wątroby, często termoablacja zmian. Najczęściej z powodu przerzutów nowotworów do wątroby (C78.7) i raka wątrobowokomórkowego. Pobyt trwa zwykle 4 dni (mediana).
+G12	Duże zabiegi wątroby: zniszczenie albo wyłuszczenie zmian w wątrobie, m.in. przerzutów. Grupa jest mała. Pobyt trwa zwykle 4 dni (mediana).
+G13	Średnie zabiegi wątroby: otwarta biopsja wątroby i nacięcie ropnia wątroby. Rozpoznania to m.in. przerzuty do wątroby i ropień wątroby (K75.0). Pobyt trwa zwykle 5 dni (mediana).
+G14	Małe zabiegi wątroby: prawie zawsze przezskórna igłowa biopsja wątroby, najczęściej przy guzie wątroby lub dróg żółciowych o nieokreślonym charakterze (D37.6). Pobyt trwa zwykle 1 dzień (mediana).
+G15	Duże i średnie zabiegi wątroby, m.in. wprowadzenie protezy dróg żółciowych i zabiegi niszczące guzy wątroby (np. odcięcie ich ukrwienia). Pobyt trwa zwykle 4 dni (mediana).
+G16	Leczenie ostrych chorób wątroby, najczęściej diagnostyka nieprawidłowych wyników badań wątroby (R94.5) i toksycznej choroby wątroby. Pobyt trwa zwykle 4 dni (mediana).
+G17	Leczenie przewlekłych chorób wątroby z powikłaniami przy pobycie ponad 5 dni. W statystykach NFZ często współwystępują niedokrwistość i małopłytkowość. Pobyt trwa zwykle 8 dni (mediana).
+G18	Leczenie przewlekłych chorób wątroby bez powikłań, m.in. stłuszczenia i marskości wątroby (także alkoholowej). Pobyt trwa zwykle 3 dni (mediana).
+G18A	Leczenie przewlekłych chorób wątroby bez powikłań u dorosłych, m.in. przewlekłego wirusowego zapalenia wątroby typu C (B18.2) i marskości wątroby. Pobyt trwa zwykle 3 dni (mediana).
+G18B	Leczenie przewlekłych chorób wątroby u dzieci i młodzieży, m.in. zaburzeń przemian bilirubiny i zespołu Gilberta. Pobyt trwa zwykle 2 dni (mediana).
+G21	Złożone operacje dróg żółciowych, najczęściej zespolenie przewodu żółciowego z jelitem, m.in. w niedrożności dróg żółciowych. Pobyt trwa zwykle 10 dni (mediana).
+G22	Duże operacje dróg żółciowych, głównie w kamicy pęcherzyka i przewodów żółciowych. Pobyt trwa zwykle 3 dni (mediana).
+G25E	Wycięcie pęcherzyka żółciowego u pacjentów powyżej 65 roku życia, w kamicy żółciowej. Prawie zawsze metodą laparoskopową. Pobyt trwa zwykle 3 dni (mediana).
+G25F	Wycięcie pęcherzyka żółciowego u pacjentów poniżej 66 roku życia, w kamicy żółciowej. Prawie zawsze metodą laparoskopową. Pobyt trwa zwykle 2 dni (mediana).
+G26E	Leczenie chorób dróg żółciowych bez operacji u pacjentów powyżej 65 roku życia, głównie kamicy żółciowej i zapalenia dróg żółciowych. Pobyt trwa zwykle 5 dni (mediana).
+G26F	Leczenie chorób dróg żółciowych bez operacji u pacjentów poniżej 66 roku życia, głównie kamicy pęcherzyka i przewodów żółciowych. Pobyt trwa zwykle 3 dni (mediana).
+G28	Leczenie nowotworów dróg żółciowych bez operacji. W większości pobytów to guz wątroby lub dróg żółciowych o nieokreślonym charakterze (D37.6). Pobyt trwa zwykle 4 dni (mediana).
+G30	Przeszczepienie trzustki u chorych na cukrzycę insulinozależną z powikłaniami nerkowymi (E10.2). Grupa jest bardzo rzadka. Pobyt trwa zwykle 14 dni (mediana).
+G31	Złożone operacje trzustki, m.in. operacja Whipple'a i wycięcie ogona trzustki. Pobyt trwa zwykle 14 dni (mediana).
+G31G	Wycięcie części trzustki bez rekonstrukcji, prawie zawsze ogona z częścią trzonu. Najczęściej z powodu raka trzonu albo ogona trzustki. Pobyt trwa zwykle 9 dni (mediana).
+G31H	Złożone operacje trzustki z rekonstrukcją (pankreatoduodenektomie), najczęściej operacja Whipple'a. Rozpoznania to głównie rak głowy trzustki i brodawki Vatera. Pobyt trwa zwykle 14 dni (mediana).
+G31O	Pankreatoduodenektomie (najczęściej operacja Whipple'a) u pacjentów z nowotworem złośliwym, głównie rakiem głowy trzustki (C25.0). Pobyt trwa zwykle 13 dni (mediana).
+G32	Duże zabiegi trzustki, m.in. otwarta biopsja trzustki w raku trzustki. Pobyt trwa zwykle 6 dni (mediana).
+G33	Wprowadzenie protezy samorozprężalnej do dróg żółciowych, endoskopowo albo przezskórnie, m.in. w niedrożności przewodów żółciowych (K83.1). Pobyt trwa zwykle 4 dni (mediana).
+G34	Zabiegi endoskopowe dróg żółciowych i trzustki (ECPW): usuwanie kamieni z dróg żółciowych, wprowadzenie protezy, nacięcie brodawki. Najczęściej w kamicy przewodu żółciowego (K80.5). Pobyt trwa zwykle 3 dni (mediana).
+G35	Inne zabiegi dróg żółciowych i trzustki, głównie endosonografia (EUS) trzustki, np. przy torbielach i guzach trzustki. Pobyt trwa zwykle 1 dzień (mediana).
+G36	Leczenie ostrego zapalenia trzustki o ciężkim przebiegu, z diagnostyką obrazową (USG, tomografia jamy brzusznej). Często współwystępują wysięk opłucnowy, niedrożność porażenna jelit i torbiel rzekoma trzustki. Pobyt trwa zwykle 10 dni (mediana).
+G37	Leczenie ostrego zapalenia trzustki (K85). Pobyt trwa zwykle 6 dni (mediana).
+G38	Leczenie przewlekłych chorób trzustki bez operacji, m.in. przewlekłego zapalenia trzustki i raka trzustki. Pobyt trwa zwykle 4 dni (mediana).
+G42	Operacje śledziony, prawie zawsze całkowite usunięcie śledziony, najczęściej po urazie śledziony (S36.0). Pobyt trwa zwykle 7 dni (mediana).
