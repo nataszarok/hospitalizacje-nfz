@@ -1,0 +1,1221 @@
+<!doctype html>
+<html lang="pl">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Schemat kalibracji „&lt;5”</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Schemat decyzji kalibracji „<5” (metoda A / B) z przykładami E10, H55, J08. Te same tokeny co plan kalibracji. */
+:root {
+  --bg: #ffffff; --surface: #f5f8f7; --panel: #ffffff;
+  --ink: #172033; --ink-2: #475467; --ink-3: #667085; --line: #e2e8e6;
+  --brand: #087f75; --brand-soft: #e6f3f1; --on-brand: #ffffff;
+  --a: #2f6fb0; --a-soft: rgba(47, 111, 176, 0.10);
+  --b: #c65d2e; --b-soft: rgba(198, 93, 46, 0.10);
+  --ok: #2f7d4f; --ok-soft: rgba(47, 125, 79, 0.10);
+  --font: "Inter", ui-sans-serif, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1716; --surface: #15201e; --panel: #1a2624; --ink: #e8eeec; --ink-2: #b5c2be; --ink-3: #8b9a96; --line: #2a3936;
+    --brand: #4cc2b2; --brand-soft: #18322e; --on-brand: #0f1716;
+    --a: #7fb2e8; --a-soft: rgba(127, 178, 232, 0.13); --b: #e8895c; --b-soft: rgba(232, 137, 92, 0.14);
+    --ok: #6cc28e; --ok-soft: rgba(108, 194, 142, 0.12); color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1716; --surface: #15201e; --panel: #1a2624; --ink: #e8eeec; --ink-2: #b5c2be; --ink-3: #8b9a96; --line: #2a3936;
+  --brand: #4cc2b2; --brand-soft: #18322e; --on-brand: #0f1716;
+  --a: #7fb2e8; --a-soft: rgba(127, 178, 232, 0.13); --b: #e8895c; --b-soft: rgba(232, 137, 92, 0.14);
+  --ok: #6cc28e; --ok-soft: rgba(108, 194, 142, 0.12); color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 15px; line-height: 1.55; }
+.wrap { max-width: 1080px; margin: 0 auto; padding: 36px 16px 80px; display: grid; gap: 40px; }
+h1 { font-size: clamp(26px, 4vw, 34px); margin: 0; letter-spacing: -0.02em; line-height: 1.2; }
+h2 { font-size: 21px; margin: 0; }
+h3 { font-size: 15.5px; margin: 0; }
+p { margin: 0; max-width: 76ch; }
+code { font-size: 0.9em; background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; }
+.kicker { font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--brand); }
+.lead { font-size: 16.5px; color: var(--ink-2); }
+section { display: grid; gap: 14px; }
+.card { border: 1px solid var(--line); border-radius: 12px; background: var(--panel); padding: 16px 18px; display: grid; gap: 12px; min-width: 0; }
+.card.a { border-left: 4px solid var(--a); }
+.card.b { border-left: 4px solid var(--b); }
+.note { font-size: 12.5px; color: var(--ink-3); }
+.scroll-x { overflow-x: auto; }
+.formula { font-size: 15px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; font-variant-numeric: tabular-nums; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; font-variant-numeric: tabular-nums; }
+th { font-size: 11.5px; font-weight: 600; color: var(--ink-3); text-align: right; padding: 6px 7px; border-bottom: 1px solid var(--line); vertical-align: bottom; }
+td { padding: 6px 7px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; }
+td.wrap-cell { white-space: normal; text-align: left; min-width: 220px; }
+td.good { color: var(--ok); font-weight: 600; }
+td.A { color: var(--a); font-weight: 700; }
+td.B { color: var(--b); font-weight: 700; }
+tr.pick td { background: var(--ok-soft); font-weight: 600; }
+ul, ol { margin: 0; padding-left: 20px; display: grid; gap: 6px; font-size: 14px; color: var(--ink-2); max-width: 80ch; }
+li b { color: var(--ink); }
+.tag { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: 0.04em; border-radius: 999px; padding: 1px 8px; margin-right: 6px; vertical-align: 1px; }
+.tag.a { background: var(--a-soft); color: var(--a); }
+.tag.b { background: var(--b-soft); color: var(--b); }
+.tag.s { background: var(--brand-soft); color: var(--brand); }
+
+/* Schemat */
+.chart-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.chart-bar span { font-size: 13px; color: var(--ink-3); margin-right: 4px; }
+.chart-bar button { font: inherit; font-size: 13px; font-weight: 600; border: 1px solid var(--line); background: var(--panel); color: var(--ink-2); border-radius: 999px; padding: 4px 14px; cursor: pointer; }
+.chart-bar button[aria-pressed="true"] { background: var(--brand); border-color: var(--brand); color: var(--on-brand); }
+.flow-box { overflow-x: auto; }
+svg.flow { display: block; width: 100%; min-width: 660px; max-width: 900px; margin: 0 auto; height: auto; font-family: var(--font); }
+svg.flow .n rect, svg.flow .n polygon { fill: var(--panel); stroke: var(--line); stroke-width: 1.5; }
+svg.flow .n.s rect { fill: var(--surface); }
+svg.flow .n.dec polygon { fill: var(--brand-soft); stroke: var(--brand); }
+svg.flow .n.pa rect, svg.flow .n.pa polygon { fill: var(--a-soft); stroke: var(--a); }
+svg.flow .n.pb rect { fill: var(--b-soft); stroke: var(--b); }
+svg.flow text { fill: var(--ink); font-size: 13px; }
+svg.flow text.t { font-weight: 700; font-size: 13.5px; }
+svg.flow text.d { fill: var(--ink-2); font-size: 12px; }
+svg.flow text.v { font-size: 12px; font-weight: 700; fill: var(--brand); }
+svg.flow text.lab { font-size: 12.5px; font-weight: 700; }
+svg.flow text.lab.a { fill: var(--a); }
+svg.flow text.lab.b { fill: var(--b); }
+svg.flow .e { fill: none; stroke: var(--ink-3); stroke-width: 1.5; }
+svg.flow .e.pa { stroke: var(--a); }
+svg.flow .e.pb { stroke: var(--b); }
+svg.flow marker path { fill: var(--ink-3); }
+svg.flow .n, svg.flow .e, svg.flow .lab { transition: opacity 0.2s; }
+svg.flow[data-ex] .v { display: none; }
+svg.flow[data-ex="E10"] .v.E10, svg.flow[data-ex="H55"] .v.H55, svg.flow[data-ex="J08"] .v.J08 { display: inline; }
+svg.flow[data-ex="E10"] .pb, svg.flow[data-ex="H55"] .pa, svg.flow[data-ex="J08"] .pa { opacity: 0.22; }
+svg.flow:not([data-ex]) .v { display: none; }
+.charts { display: grid; gap: 22px; }
+.chart { display: grid; gap: 6px; min-width: 0; position: relative; }
+.chart h3 span { font-weight: 400; color: var(--ink-3); font-size: 13px; }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 12.5px; color: var(--ink-2); }
+.legend i { display: inline-block; width: 18px; height: 0; border-top: 2px solid; vertical-align: 4px; margin-right: 6px; }
+svg.line { display: block; width: 100%; height: auto; font-family: var(--font); overflow: visible; }
+svg.line .grid { stroke: var(--line); stroke-width: 1; }
+svg.line .axis { fill: var(--ink-3); font-size: 11px; }
+svg.line .s { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+svg.line .lbl { font-size: 11.5px; font-weight: 600; fill: var(--ink-2); }
+svg.line .cross { stroke: var(--ink-3); stroke-width: 1; stroke-dasharray: 3 3; }
+.tip { position: absolute; pointer-events: none; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; font-size: 12px; box-shadow: 0 4px 14px rgba(0,0,0,0.12); display: none; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tip b { display: block; margin-bottom: 2px; }
+details summary { cursor: pointer; font-size: 12.5px; color: var(--ink-3); }
+:root { --c-min: #667085; --c-sim: #c65d2e; --c-cal: #087f75; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --c-min: #8b9a96; --c-sim: #e8895c; --c-cal: #4cc2b2; } }
+:root[data-theme="dark"] { --c-min: #8b9a96; --c-sim: #e8895c; --c-cal: #4cc2b2; }
+.case.ok { border-left: 4px solid var(--brand); }
+.case.mid { border-left: 4px solid var(--a); }
+.case.bad { border-left: 4px solid var(--b); }
+.stepline { display: flex; gap: 10px; align-items: center; font-size: 14px; color: var(--ink-2); margin-top: 4px; }
+.stepline span { flex: none; width: 24px; height: 24px; border-radius: 50%; background: var(--brand-soft); color: var(--brand); font-weight: 700; font-size: 12.5px; display: grid; place-items: center; }
+.stepline b { color: var(--ink); }
+table.in td { color: var(--ink-2); }
+th.new, td.new { background: var(--a-soft); }
+th.res, td.res { background: var(--ok-soft); font-weight: 700; }
+tr.sum td { font-weight: 600; border-top: 2px solid var(--line); }
+tr.warnrow td { background: var(--b-soft); }
+table.calc th:nth-child(2) { text-align: left; }
+table.calc td:nth-child(2) { white-space: normal; text-align: left; min-width: 260px; }
+table.calc td:nth-child(3) { white-space: normal; }
+.tabs { gap: 14px; }
+.tablist { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; border-bottom: 1px solid var(--line); }
+.tablist button { flex: none; font: inherit; font-size: 12.5px; text-align: left; border: 1px solid var(--line); border-bottom: none; background: var(--surface); color: var(--ink-2); border-radius: 8px 8px 0 0; padding: 6px 10px; cursor: pointer; display: grid; gap: 1px; max-width: 190px; border-top: 3px solid var(--line); }
+.tablist button small { font-size: 11px; color: var(--ink-3); white-space: normal; line-height: 1.25; }
+.tablist button.ok { border-top-color: var(--brand); }
+.tablist button.mid { border-top-color: var(--a); }
+.tablist button.bad { border-top-color: var(--b); }
+.tablist button[aria-selected="true"] { background: var(--panel); color: var(--ink); box-shadow: 0 -1px 0 var(--panel) inset; }
+.tabpanel { display: grid; gap: 10px; }
+.tabpanel[hidden] { display: none; }
+th.new3, td.new3 { background: var(--b-soft); }
+th.res3, td.res3 { background: var(--a-soft); font-weight: 700; }
+.vbar { position: sticky; top: 0; z-index: 5; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px 12px; background: var(--bg); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+.vbar > span:first-child { font-size: 13px; font-weight: 600; color: var(--ink-2); }
+.vbar button { font: inherit; font-size: 13px; font-weight: 600; border: 1px solid var(--line); background: var(--panel); color: var(--ink-2); border-radius: 999px; padding: 4px 14px; cursor: pointer; }
+.vbar button[aria-selected="true"] { background: var(--brand); border-color: var(--brand); color: var(--on-brand); }
+.ver { display: grid; gap: 40px; }
+.ver[hidden] { display: none; }
+mark { background: var(--ok-soft); color: inherit; border-radius: 3px; padding: 0 2px; box-shadow: inset 0 -2px 0 var(--ok); }
+.nowe-box { border: 1px solid var(--ok); background: var(--ok-soft); border-radius: 10px; padding: 10px 14px; font-size: 14px; color: var(--ink-2); max-width: 80ch; }
+.nowe-box b { color: var(--ink); }
+.tag.n { background: var(--ok-soft); color: var(--ok); border: 1px solid var(--ok); }
+svg.flow .n.nw rect { stroke: var(--ok); stroke-width: 2.5; }
+svg.flow text.nwb { fill: var(--ok); font-size: 10.5px; font-weight: 800; letter-spacing: 0.04em; }
+svg.flow tspan.nw { fill: var(--ok); font-weight: 700; }
+</style>
+
+<div class="wrap">
+  <header style="display:grid;gap:10px">
+    <span class="kicker">Roadmapa · etap 4a · schemat · v2 i v4</span>
+    <h1>Kalibracja „&lt;5” krok po kroku: kiedy metoda A, kiedy B</h1>
+    <p class="lead">Jeden schemat całego procesu dla jednej grupy JGP w jednym roku i trzy grupy z 2024 r. przeprowadzone przez ten schemat: E10 (metoda A), H55 i J08 (metoda B). Potem jedenaście konkretnych komórek krok po kroku (zakładki), model v3 z rozkładami zamiast progów, jego ocena wobec v2 oraz v4 (v2 + najlepsze elementy v3). Na końcu wykresy miesięczne: dawna metoda <code>sim</code> wobec <code>cal</code>. Liczby pochodzą z przeliczenia 2024 z obiema poprawkami.</p>
+    <p class="note">Szczegóły i błędy dawnej wersji: <a href="kalibracja-metody-przyklady.html">kalibracja-metody-przyklady.html</a>. Plan i wyniki dla wszystkich grup: <a href="kalibracja-ponizej-5.html">kalibracja-ponizej-5.html</a>.</p>
+  </header>
+
+  <section>
+    <h2>1. Co liczymy</h2>
+    <div class="card">
+      <p>Plik hospitalizacji NFZ ukrywa małe liczby. Wiersz z wartością „&lt;5” to od 1 do 4 pobytów. Kalibracja ustala, ile pobytów i zgonów kryje się za wierszami „&lt;5” w każdej <b>komórce</b>. Komórka to jeden świadczeniodawca (OW NFZ + NIP) w jednym zakresie umowy i w jednej grupie JGP.</p>
+      <p>Dane wejściowe:</p>
+      <ul>
+        <li><b>Plik hospitalizacji</b>: wiersze jawne (≥ 5) i wiersze „&lt;5”, z długością pobytu i trybem wypisu.</li>
+        <li><b>Zestawienie świadczeń</b> dla komórki: punkty rozliczone przez NFZ i liczba pacjentów (czasem też „&lt;5”).</li>
+        <li><b>API NFZ (statystyki JGP)</b> dla całej grupy w kraju: liczba pobytów, liczba pacjentów, pobyty w zakresach i zgony.</li>
+        <li><b>Wycena JGP</b>: punkty za jeden pobyt. Zależy od długości pobytu. <b>U</b> to średnia wycena jednego pobytu w komórce.</li>
+      </ul>
+      <p>Wynik dla każdej komórki: liczba pobytów <code>h_cal</code> i liczba zgonów <code>d_cal</code>. Suma wszystkich komórek jest równa liczbom z API.</p>
+    </div>
+  </section>
+
+  <div class="vbar" role="tablist" aria-label="Wersja metody w sekcjach 2–7">
+    <span>Sekcje 2–7 pokazują wersję:</span>
+    <button type="button" role="tab" data-ver="v4" aria-selected="true">v4 (nowa)</button>
+    <button type="button" role="tab" data-ver="v2" aria-selected="false">v2 (poprzednia)</button>
+    <span class="note">Zielone wyróżnienia w v4 = elementy nowe względem v2.</span>
+  </div>
+  <div class="ver" data-ver="v4">
+  <section>
+    <h2>2. Schemat decyzji</h2>
+    <div class="card">
+      <div class="chart-bar" role="group" aria-label="Pokaż ścieżkę grupy">
+        <span>Pokaż ścieżkę:</span>
+        <button type="button" data-ex="" aria-pressed="true">Cały schemat</button>
+        <button type="button" data-ex="E10" aria-pressed="false">E10</button>
+        <button type="button" data-ex="H55" aria-pressed="false">H55</button>
+        <button type="button" data-ex="J08" aria-pressed="false">J08</button>
+      </div>
+      <div class="flow-box">
+      <svg class="flow" id="flow4" viewBox="0 0 760 1130" role="img" aria-label="Schemat kalibracji: kroki 1–3 wspólne, decyzja według ilorazu pobytów do pacjentów, gałąź A i gałąź B, potem kroki 5–7 wspólne">
+        <defs>
+          <marker id="arr4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z"/></marker>
+        </defs>
+
+        <!-- krawędzie -->
+        <path class="e" d="M380,66 V94" marker-end="url(#arr4)"/>
+        <path class="e" d="M380,160 V188" marker-end="url(#arr4)"/>
+        <path class="e" d="M380,254 V282" marker-end="url(#arr4)"/>
+        <path class="e" d="M380,348 V368" marker-end="url(#arr4)"/>
+        <path class="e pa" d="M210,428 H190 V488" marker-end="url(#arr4)"/>
+        <path class="e pb" d="M550,428 H570 V508" marker-end="url(#arr4)"/>
+        <path class="e pa" d="M60,560 H30 Q20,560 20,570 V618" marker-end="url(#arr4)"/>
+        <path class="e pa" d="M320,560 H350 Q360,560 360,570 V618" marker-end="url(#arr4)"/>
+        <path class="e pa" d="M102,718 V770" marker-end="url(#arr4)"/>
+        <path class="e pa" d="M278,718 V770" marker-end="url(#arr4)"/>
+        <path class="e pb" d="M570,632 V770" marker-end="url(#arr4)"/>
+        <path class="e pa" d="M190,838 V868" marker-end="url(#arr4)"/>
+        <path class="e pb" d="M570,838 V868" marker-end="url(#arr4)"/>
+        <path class="e" d="M380,934 V958" marker-end="url(#arr4)"/>
+        <path class="e" d="M380,1024 V1048" marker-end="url(#arr4)"/>
+
+        <!-- 0. wejście -->
+        <g class="n s">
+          <rect x="140" y="10" width="480" height="56" rx="10"/>
+          <text class="t" x="380" y="33" text-anchor="middle">Grupa JGP × rok</text>
+          <text class="d" x="380" y="53" text-anchor="middle">plik hospitalizacji · zestawienie świadczeń · API NFZ · wycena</text>
+        </g>
+
+        <!-- 1. komórki -->
+        <g class="n nw">
+          <rect x="120" y="96" width="520" height="64" rx="10"/>
+          <text class="t" x="136" y="118">1. Komórki i granice</text><text class="nwb" x="636" y="91" text-anchor="end">NOWE w v4</text>
+          <text class="d" x="136" y="138">lo = jawne + m · hi = jawne + 4m · <tspan class="nw">U: wycena pobytu z osobodniami</tspan></text>
+          <text class="d" x="136" y="153">
+            <tspan class="v E10">E10: 222 komórki · lo 8 236 · hi 31 648</tspan><tspan class="v H55">H55: 207 komórek · lo 26 089 · hi 44 941</tspan><tspan class="v J08">J08: 671 komórek · lo 7 834 · hi 23 707</tspan>
+          </text>
+        </g>
+
+        <!-- 2. poprawka 1 -->
+        <g class="n">
+          <rect x="120" y="190" width="520" height="64" rx="10"/>
+          <text class="t" x="136" y="212">2. Poprawka 1: górna granica z zestawienia</text>
+          <text class="d" x="136" y="232">pacjenci „&lt;5” w zestawieniu → hi2 = min(hi, ⌊4 × wiersze zestawienia × iloraz⌋)</text>
+          <text class="d" x="136" y="247">
+            <tspan class="v E10">E10: 19 komórek · hi2 razem 31 536</tspan><tspan class="v H55">H55: 43 komórki · hi2 razem 44 797</tspan><tspan class="v J08">J08: 494 komórki · hi2 razem 22 536</tspan>
+          </text>
+        </g>
+
+        <!-- 3. cele zakresów -->
+        <g class="n">
+          <rect x="120" y="284" width="520" height="64" rx="10"/>
+          <text class="t" x="136" y="306">3. Cele zakresów z API</text>
+          <text class="d" x="136" y="326">cel zakresu = pobyty zakresu w API · zakresy pominięte w API = jedna „reszta”</text>
+          <text class="d" x="136" y="341">
+            <tspan class="v E10">E10: 2 zakresy · reszta 0</tspan><tspan class="v H55">H55: 6 zakresów · reszta 247</tspan><tspan class="v J08">J08: 7 zakresów · reszta 196</tspan>
+          </text>
+        </g>
+
+        <!-- 4. decyzja -->
+        <g class="n dec">
+          <polygon points="380,370 550,428 380,486 210,428"/>
+          <text class="t" x="380" y="416" text-anchor="middle">4. iloraz = pobyty ÷ pacjenci</text>
+          <text class="d" x="380" y="434" text-anchor="middle">(API, cała grupa)</text>
+          <text class="d" x="380" y="452" text-anchor="middle">
+            <tspan class="v E10">8 995 ÷ 8 957 = 1,004</tspan><tspan class="v H55">30 971 ÷ 25 816 = 1,200</tspan><tspan class="v J08">9 465 ÷ 7 188 = 1,317</tspan>
+          </text>
+        </g>
+        <text class="lab a pa" x="40" y="420">&lt; 1,05 → metoda A</text>
+        <text class="lab b pb" x="578" y="420">≥ 1,05 → metoda B</text>
+
+        <!-- A1 decyzja w komórce -->
+        <g class="n pa">
+          <polygon points="190,490 320,560 190,630 60,560"/>
+          <text class="t" x="190" y="552" text-anchor="middle">A1. Komórka ma</text>
+          <text class="t" x="190" y="570" text-anchor="middle">jawnych pacjentów?</text>
+        </g>
+        <text class="lab a pa" x="24" y="550">tak</text>
+        <text class="lab a pa" x="332" y="550">nie</text>
+
+        <g class="n pa">
+          <rect x="10" y="620" width="184" height="98" rx="10"/>
+          <text class="t" x="22" y="642">A2. Z pacjentów</text>
+          <text class="d" x="22" y="662">n = ⌊pacjenci × iloraz⌋</text>
+          <text class="d" x="22" y="678">w granicach [lo, hi]</text>
+          <text class="d" x="22" y="702"><tspan class="v E10">E10: 203 komórki</tspan></text>
+        </g>
+        <g class="n pa">
+          <rect x="198" y="620" width="172" height="98" rx="10"/>
+          <text class="t" x="210" y="642">A3. Z punktów</text>
+          <text class="d" x="210" y="662">n w [lo, hi2], dla którego</text>
+          <text class="d" x="210" y="678">punkty ÷ (U·n) w 0,97–1,32,</text>
+          <text class="d" x="210" y="694">najbliżej mediany zakresu</text>
+          <text class="d" x="210" y="710"><tspan class="v E10">E10: 19 komórek</tspan></text>
+        </g>
+        <g class="n pa nw">
+          <rect x="10" y="772" width="360" height="66" rx="10"/>
+          <text class="t" x="22" y="794">A4. Dopasuj nadwyżkę w zakresie do celu</text><text class="nwb" x="368" y="767" text-anchor="end">NOWE w v4</text>
+          <text class="d" x="22" y="813">nadwyżka n − lo jak w v2, <tspan class="nw">nie poniżej pacjentów</tspan></text>
+          <text class="d" x="22" y="829"><tspan class="v E10">E10: 7 070 → 7 087 · 1 905 → 1 908</tspan></text>
+        </g>
+
+        <!-- B -->
+        <g class="n pb">
+          <rect x="400" y="510" width="350" height="122" rx="10"/>
+          <text class="t" x="414" y="532">B1. Współczynnik c dla każdego zakresu</text>
+          <text class="d" x="414" y="552">n = ⌊punkty ÷ (U × c)⌋, nie mniej niż jawni</text>
+          <text class="d" x="414" y="568">pacjenci, w granicach [lo, hi2]</text>
+          <text class="d" x="414" y="588">c zmieniamy (bisekcja), aż suma n w zakresie</text>
+          <text class="d" x="414" y="604">= cel zakresu z API</text>
+          <text class="d" x="414" y="624"><tspan class="v H55">H55: c od 0,92 do 1,04</tspan><tspan class="v J08">J08: c od 0,96 do 2,06 (v2: do 3,07)</tspan></text>
+        </g>
+        <g class="n pb nw">
+          <rect x="400" y="772" width="350" height="66" rx="10"/>
+          <text class="t" x="414" y="794">B2. Domknij zakres po zaokrągleniach</text><text class="nwb" x="748" y="767" text-anchor="end">NOWE w v4</text>
+          <text class="d" x="414" y="813">jak A4, <tspan class="nw">nie poniżej pacjentów</tspan></text>
+          <text class="d" x="414" y="829"><tspan class="v H55">H55: nie trzeba</tspan><tspan class="v J08">J08: chir. ogólna zostaje 208 (cel 206)</tspan></text>
+        </g>
+
+        <!-- 5–7 -->
+        <g class="n nw">
+          <rect x="120" y="870" width="520" height="64" rx="10"/>
+          <text class="t" x="136" y="892">5. Domknij sumę grupy = API</text><text class="nwb" x="420" y="865" text-anchor="middle">NOWE w v4</text>
+          <text class="d" x="136" y="912"><tspan class="nw">brak z jednego zakresu biorą komórki innych zakresów, z zapasem ponad pacjentów</tspan></text>
+          <text class="d" x="136" y="927"><tspan class="v E10">E10: 8 995 = API</tspan><tspan class="v H55">H55: 30 971 = API</tspan><tspan class="v J08">J08: opieka onkol. 3 571 → 3 569 · 9 465 = API</tspan></text>
+        </g>
+        <g class="n">
+          <rect x="120" y="960" width="520" height="64" rx="10"/>
+          <text class="t" x="136" y="982">6. Zgony</text>
+          <text class="d" x="136" y="1002">X = zgony API − zgony już znane · X dzielimy na komórki z wierszami „&lt;5” ze zgonem</text>
+          <text class="d" x="136" y="1017"><tspan class="v E10">E10: X = 1 → 347 = API</tspan><tspan class="v H55">H55: brak zgonów</tspan><tspan class="v J08">J08: X = 6 → 474 = API</tspan></text>
+        </g>
+        <g class="n s">
+          <rect x="120" y="1050" width="520" height="64" rx="10"/>
+          <text class="t" x="136" y="1072">7. Wynik</text>
+          <text class="d" x="136" y="1092">h_cal i d_cal dla każdej komórki · wiersze jawne bez zmian</text>
+          <text class="d" x="136" y="1107"><tspan class="v E10">E10: 8 995 pobytów · 347 zgonów</tspan><tspan class="v H55">H55: 30 971 pobytów · 0 zgonów</tspan><tspan class="v J08">J08: 9 465 pobytów · 474 zgony</tspan></text>
+        </g>
+      </svg>
+      </div>
+      <p class="note">Kliknij E10, H55 albo J08. Schemat pokaże ścieżkę grupy i jej liczby w każdym kroku. <span class="tag a">A</span> niebieskie kroki: metoda A. <span class="tag b">B</span> pomarańczowe kroki: metoda B. <span class="tag n">NOWE w v4</span> zielona ramka: krok zmieniony w v4.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>3. Dlaczego decyduje iloraz pobytów do pacjentów</h2>
+    <div class="card">
+      <p>API podaje dla całej grupy liczbę pobytów i liczbę pacjentów. Ich iloraz mówi, ile pobytów przypada na jednego pacjenta.</p>
+      <ul>
+        <li><b>Iloraz &lt; 1,05 → metoda A.</b> Prawie każdy pacjent ma jeden pobyt. Jawna liczba pacjentów w zestawieniu to więc prawie dokładna liczba pobytów. To najpewniejsze źródło, dlatego A używa go zawsze, gdy może.</li>
+        <li><b>Iloraz ≥ 1,05 → metoda B.</b> Pacjenci wracają do szpitala. Liczba pacjentów nie mówi, ile było pobytów: szpital może mieć 100 pacjentów i 110 albo 160 pobytów. Główne źródło to punkty: NFZ płaci za każdy pobyt, więc punkty ÷ wycena ≈ liczba pobytów.</li>
+      </ul>
+      <p><b>Punkty liczą się w obu metodach.</b> Metoda A też używa punktów, ale tylko w komórkach bez jawnych pacjentów (krok A3). Metoda B używa punktów we wszystkich komórkach. Jawni pacjenci są w B tylko dolną granicą: pobytów nie może być mniej niż pacjentów.</p>
+      <p>Punkty nie są dokładne. Szpital dostaje więcej punktów za długi pobyt (dopłata za osobodni), za tryb, za świadczenia dodatkowe. Dlatego dzielimy przez <b>współczynnik</b>: punkty ÷ (U × współczynnik). Współczynnik mówi, o ile średnio punkty są wyższe niż sama wycena pobytu. Liczymy go osobno w każdym zakresie.</p>
+      <div class="nowe-box"><span class="tag n">NOWE w v4</span> <b>Wycena U z osobodniami.</b> U to średnie punkty jednego pobytu według długości pobytu wierszy komórki. Dla pobytów 6+ dni v4 dolicza osobodnie: bierze rozkład dni z histogramu API dla grupy i liczy średnią wycenę w przedziale (J08: 3 090 pkt zamiast 2 067). Współczynnik mierzy wtedy tylko inne dopłaty, a nie długość pobytu (J08, choroby wewnętrzne: c = 2,06 zamiast 3,07).</div>
+      <div class="nowe-box"><span class="tag n">NOWE w v4</span> <b>Pacjenci jako dolna granica w każdym dopasowaniu.</b> Kroki A4, B2 i 5 nie schodzą poniżej max(lo, jawni pacjenci). Gdy zakres nie mieści pacjentów, nadmiar zostaje w zakresie, a brakujące pobyty oddają komórki innych zakresów, które mają zapas. Komórka schodzi poniżej pacjentów tylko wtedy, gdy cała grupa nie mieści pacjentów w sumie z API (8 grup, 249 komórek) albo plik ma za mało wierszy (6 komórek).</div>
+      <div class="scroll-x"><table>
+        <thead><tr><th></th><th>Metoda A</th><th>Metoda B</th></tr></thead>
+        <tbody>
+          <tr><td>Kiedy</td><td class="wrap-cell">iloraz &lt; 1,05</td><td class="wrap-cell">iloraz ≥ 1,05</td></tr>
+          <tr><td>Komórka z jawnymi pacjentami</td><td class="wrap-cell">⌊pacjenci × iloraz⌋</td><td class="wrap-cell">⌊punkty ÷ (U × c)⌋, nie mniej niż pacjenci</td></tr>
+          <tr><td>Komórka z pacjentami „&lt;5”</td><td class="wrap-cell">n z punktów: punkty ÷ (U × n) w oknie 0,97–1,32, najbliżej mediany zakresu</td><td class="wrap-cell">⌊punkty ÷ (U × c)⌋</td></tr>
+          <tr><td>Skąd współczynnik</td><td class="wrap-cell">mediana punkty ÷ (U × pacjenci × iloraz) z komórek z jawnymi pacjentami w zakresie</td><td class="wrap-cell">c dobrany tak, by suma zakresu = API zakresu</td></tr>
+          <tr><td>Wycena U</td><td class="wrap-cell" colspan="2"><mark>średnie punkty pobytu według długości pobytu, z osobodniami z histogramu dni API</mark></td></tr>
+          <tr><td>Dopasowanie do API zakresu</td><td class="wrap-cell">skalowanie nadwyżki ponad lo (A4), <mark>nie poniżej pacjentów</mark></td><td class="wrap-cell">przez wybór c (B1), reszta po zaokrągleniach (B2), <mark>nie poniżej pacjentów</mark></td></tr>
+          <tr><td>Gdy zakres nie mieści pacjentów</td><td class="wrap-cell" colspan="2"><mark>krok 5 bierze brakujące pobyty z innych zakresów grupy</mark></td></tr>
+        </tbody>
+      </table></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>4. Trzy grupy obok siebie</h2>
+    <div class="card">
+      <div class="scroll-x"><table>
+        <thead><tr><th>Krok</th><th>E10 · OZW – diagnostyka inwazyjna</th><th>H55 · zabiegi artroskopowe i przezskórne kręgosłupa</th><th>J08 · choroby piersi złośliwe</th></tr></thead>
+        <tbody>
+          <tr><td>API: pobyty / pacjenci</td><td>8 995 / 8 957</td><td>30 971 / 25 816</td><td>9 465 / 7 188</td></tr>
+          <tr><td>4. Iloraz → metoda</td><td class="A">1,004 → A</td><td class="B">1,200 → B</td><td class="B">1,317 → B</td></tr>
+          <tr><td>1. Komórki (w tym z jawnymi pacjentami)</td><td>222 (203)</td><td>207 (164)</td><td>671 (177)</td></tr>
+          <tr><td>1. Jawne + wiersze „&lt;5” = lo</td><td>432 + 7 804 = 8 236</td><td>19 805 + 6 284 = 26 089</td><td>2 543 + 5 291 = 7 834</td></tr>
+          <tr><td>2. Górna granica hi → hi2</td><td>31 648 → 31 536</td><td>44 941 → 44 797</td><td>23 707 → 22 536</td></tr>
+          <tr><td>3. Zakresy w API (reszta)</td><td>2 (0)</td><td>6 (247)</td><td>7 (196)</td></tr>
+          <tr><td>Współczynnik zakresu</td><td>mediana 1,02 i 1,11</td><td><mark>c od 0,92 do 1,04</mark></td><td><mark>c od 0,96 do 2,06</mark></td></tr>
+          <tr><td>Suma przed dopasowaniem (A2+A3 / B1)</td><td>8 975</td><td>30 971</td><td>9 467</td></tr>
+          <tr><td>Zakresy różne od API po kroku 5</td><td>0</td><td>0</td><td><mark>2 (chir. ogólna +2, opieka onkol. −2)</mark></td></tr>
+          <tr><td>Komórki zmienione względem v2</td><td><mark>2</mark></td><td><mark>29</mark></td><td><mark>81</mark></td></tr>
+          <tr><td>5. Wynik</td><td class="good">8 995 = API</td><td class="good">30 971 = API</td><td class="good">9 465 = API</td></tr>
+          <tr><td>6. Zgony</td><td class="good">347 = API</td><td class="good">0 = API</td><td class="good">474 = API</td></tr>
+        </tbody>
+      </table></div>
+      <p class="note">Nazwy grup skrócone. Kody produktów: E10 5.51.01.0005010, H55 5.51.01.0008055, J08 5.51.01.0009008. Liczby pacjentów i zgonów z API NFZ dla 2024 r.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>5. E10: ścieżka A</h2>
+    <div class="card a">
+      <p><span class="tag a">A</span>Iloraz 8 995 ÷ 8 957 = <b>1,004</b>. Prawie każdy pacjent ma jedną diagnostykę inwazyjną w roku. Wycena jest jedna dla wszystkich długości pobytu: U = 4 161 pkt.</p>
+      <h3>Kroki 1–3</h3>
+      <p>222 komórki. Plik ma 432 pobyty jawne i 7 804 wiersze „&lt;5”, więc dolna granica to 8 236, a górna 31 648. 19 komórek ma pacjentów „&lt;5” w zestawieniu: poprawka 1 ustawia ich hi2 na ⌊4 × 1 × 1,004⌋ = 4. Cele z API: kardiologia 7 087, opieka po zawale (KOS-zawał) 1 908.</p>
+      <h3>A2: komórka z jawnymi pacjentami (203 komórki)</h3>
+      <div class="formula">Nowa Sól, kardiologia: 642 pacjentów → ⌊642 × 1,004⌋ = <b>644</b> &nbsp;(granice 570–1 017)</div>
+      <h3>A3: komórka z pacjentami „&lt;5” (19 komórek)</h3>
+      <p>LUX MED Onkologia, Warszawa, kardiologia: 12 545 pkt, granice 3–12, hi2 = 4. Sprawdzamy każde n:</p>
+      <div class="scroll-x"><table>
+        <thead><tr><th>n</th><th>punkty ÷ (U × n)</th><th>W oknie 0,97–1,32?</th></tr></thead>
+        <tbody>
+          <tr class="pick"><td>3</td><td>12 545 ÷ (4 161 × 3) = 1,005</td><td>tak → wynik 3</td></tr>
+          <tr><td>4</td><td>12 545 ÷ (4 161 × 4) = 0,754</td><td>nie</td></tr>
+          <tr><td>5–12</td><td>—</td><td>poza hi2</td></tr>
+        </tbody>
+      </table></div>
+      <p>Gdy w oknie jest kilka n, wybieramy to, którego iloraz leży najbliżej mediany zakresu. Mediana kardiologii to 1,022, opieki po zawale 1,109.</p>
+      <h3>A4: dopasowanie do API zakresu</h3>
+      <p>Po krokach A2 i A3 kardiologia ma 7 070 pobytów, a API podaje 7 087. Brakuje 17. Rozdzielamy je proporcjonalnie do nadwyżki komórek ponad lo. Nowa Sól: 644 → <b>646</b>. Opieka po zawale: 1 905 → 1 908.</p>
+      <h3>Kroki 5–6</h3>
+      <p>Suma 8 995 = API. Zgony: brakuje 1 zgonu do 347 z API. Trafia do komórki z wierszem „&lt;5” ze zgonem.</p>
+      <div class="nowe-box"><span class="tag n">v4</span> E10 prawie się nie zmienia. Katalog ma jedną wycenę bez osobodni, więc U = 4 161 jak w v2. A2 daje ⌊pacjenci × 1,004⌋, czyli zawsze co najmniej tylu, ilu pacjentów, więc dolna granica z pacjentów nic tu nie zmienia. 2 komórki różnią się od v2 o 1 pobyt przez inny sposób zaokrąglania w A4 (Nowa Sól nadal 646).</div>
+    </div>
+  </section>
+
+  <section>
+    <h2>6. H55: ścieżka B, współczynnik bliski 1</h2>
+    <div class="card b">
+      <p><span class="tag b">B</span>Iloraz 30 971 ÷ 25 816 = <b>1,200</b>. Na 5 pacjentów przypada średnio 6 pobytów.</p>
+      <h3>Dlaczego nie liczyć z pacjentów</h3>
+      <p>Szpital Miejski w Miastku, chirurgia ogólna: 1 239 pacjentów. Z pacjentów wyszłoby ⌊1 239 × 1,2⌋ = 1 486 pobytów. Plik hospitalizacji pokazuje jednak co najmniej <b>1 669</b> pobytów (wiersze jawne + po 1 za każdy wiersz „&lt;5”). Wynik z pacjentów jest niemożliwy. Ten szpital ma średnio 1,37 pobytu na pacjenta, a nie 1,2.</p>
+      <h3>Kroki 1–3</h3>
+      <p>207 komórek. Plik ma 19 805 pobytów jawnych i 6 284 wiersze „&lt;5”: granice 26 089–44 941. 43 komórki mają pacjentów „&lt;5”, poprawka 1 obniża górną granicę do 44 797. API wymienia 6 zakresów. 247 pobytów jest w zakresach, których API nie wymienia: te komórki liczymy razem jako „resztę”.</p>
+      <h3>B1: współczynnik każdego zakresu</h3>
+      <div class="scroll-x"><table>
+        <thead><tr><th>Zakres</th><th>Komórki</th><th>Cel z API</th><th>c</th><th>Jeden c grupy (1,016) dawał</th></tr></thead>
+        <tbody>
+          <tr><td>Chirurgia ogólna</td><td>39</td><td>10 393</td><td><mark>1,035</mark></td><td>10 588</td></tr>
+          <tr><td>Neurochirurgia</td><td>48</td><td>9 593</td><td><mark>1,005</mark></td><td>9 492</td></tr>
+          <tr><td>Ortopedia</td><td>77</td><td>7 486</td><td><mark>1,022</mark></td><td>7 533</td></tr>
+          <tr><td>Chirurgia ogólna – chirurgia jednego dnia</td><td>11</td><td>1 674</td><td>0,921</td><td>1 615</td></tr>
+          <tr><td>Ortopedia – chirurgia jednego dnia</td><td>14</td><td>1 193</td><td>0,920</td><td>1 123</td></tr>
+          <tr><td>Ortopedia – planowa</td><td>6</td><td>385</td><td>0,995</td><td>378</td></tr>
+          <tr><td>Reszta (zakresy spoza API)</td><td>12</td><td>247</td><td><mark>0,992</mark></td><td>242</td></tr>
+          <tr><td><b>Razem</b></td><td>207</td><td><b>30 971</b></td><td></td><td>30 971</td></tr>
+        </tbody>
+      </table></div>
+      <p>Wszystkie c leżą blisko 1. Punkty ≈ wycena × liczba pobytów, bo pobyty są krótkie i prawie bez dopłat za dni. W chirurgii jednego dnia c &lt; 1: część pobytów ma niższą wycenę niż ta, którą przyjmujemy.</p>
+      <div class="formula">Miastko, chirurgia ogólna: ⌊6 373 199 ÷ (3 639 × 1,035)⌋ = <b>1 692</b> &nbsp;(granice 1 669–1 762; v2: 1 693; jeden c grupy: 1 724)</div>
+      <div class="formula">Słupsk, neurochirurgia, pacjenci „&lt;5”: ⌊7 278 ÷ (3 639 × 1,005)⌋ = 1 → dolna granica <b>2</b></div>
+      <h3>Kroki B2, 5, 6</h3>
+      <p>W każdym zakresie c trafia w cel dokładnie, więc B2 nic nie zmienia. Suma 30 971 = API. Grupa nie ma zgonów.</p>
+      <div class="nowe-box"><span class="tag n">v4</span> H55 nie ma osobodni w katalogu. Zmienia się tylko wycena pobytu 1–2 dni: v4 waży wycenę 1 dnia i 2 dni według histogramu dni API, a v2 brał ich średnią. Współczynniki zmieniają się o 0,001–0,009, a 29 komórek różni się od v2 o 1 pobyt.</div>
+    </div>
+  </section>
+
+  <section>
+    <h2>7. J08: ścieżka B, współczynniki bardzo różne</h2>
+    <div class="card b">
+      <p><span class="tag b">B</span>Iloraz 9 465 ÷ 7 188 = <b>1,317</b>. Pacjentki z nowotworem piersi wracają do szpitala kilka razy w roku. Wycena zależy od długości pobytu: 620 pkt (0 dni), 1 102 i 1 585 pkt (1–2 dni), 2 067 pkt (3 dni i więcej), po 8 dniach dopłata 236 pkt za osobodzień. U komórki to średnia z jej wierszy. <mark>v4: pobyt 6+ dni ma średnio 3 090 pkt (osobodnie według histogramu dni API), a nie 2 067.</mark></p>
+      <h3>Kroki 1–3</h3>
+      <p>671 komórek, z tego 494 z pacjentami „&lt;5”. Plik ma 2 543 pobyty jawne i 5 291 wierszy „&lt;5”: granice 7 834–23 707. Poprawka 1 obniża górną granicę do 22 536. API wymienia 7 zakresów, 196 pobytów to „reszta”.</p>
+      <h3>B1: jak działa bisekcja na jednym zakresie</h3>
+      <p>Choroby wewnętrzne: 268 komórek, cel z API 640. Dla każdego c liczymy n każdej komórki i dodajemy:</p>
+      <div class="scroll-x"><table>
+        <thead><tr><th>c</th><th>1,0</th><th>1,141</th><th>1,5</th><th>2,0</th><th>2,06</th></tr></thead>
+        <tbody>
+          <tr><td>Suma pobytów w zakresie</td><td>714</td><td>683</td><td>651</td><td>641</td><td class="good">640 ✓</td></tr>
+        </tbody>
+      </table></div>
+      <p>Większe c daje mniej pobytów. Komputer zaczyna od przedziału 0,05–20 i połowi go: suma za duża → c w górę, za mała → c w dół. Po 60 krokach c = <mark>2,06 (v2: 3,07)</mark>. Osobodnie są już w U, więc c mierzy tylko pozostałe dopłaty. Nadal jest duże: w chorobach wewnętrznych pobyty są dłuższe niż średnio w grupie, a histogram jest wspólny dla całej grupy.</p>
+      <div class="scroll-x"><table>
+        <thead><tr><th>Zakres</th><th>Komórki</th><th>Cel z API</th><th>c</th><th>Jeden c grupy (1,061) dawał</th></tr></thead>
+        <tbody>
+          <tr><td>Kompleksowa opieka onkologiczna (pierś)</td><td>36</td><td>3 571 <mark>(wynik 3 569)</mark></td><td><mark>1,13</mark></td><td>3 797</td></tr>
+          <tr><td>Onkologia kliniczna – diagnostyka i leczenie</td><td>64</td><td>2 971</td><td><mark>0,98</mark></td><td>2 790</td></tr>
+          <tr><td>Onkologia kliniczna</td><td>29</td><td>1 248</td><td><mark>0,96</mark></td><td>1 141</td></tr>
+          <tr><td>Choroby wewnętrzne</td><td>268</td><td>640</td><td><mark>2,06</mark></td><td>699</td></tr>
+          <tr><td>Chirurgia onkologiczna – diagnostyka i leczenie</td><td>45</td><td>538</td><td><mark>0,99</mark></td><td>520</td></tr>
+          <tr><td>Chirurgia ogólna – diagnostyka i leczenie</td><td>98</td><td>206 <mark>(wynik 208)</mark></td><td>brak (≥ 208)</td><td>219</td></tr>
+          <tr><td>Chirurgia onkologiczna</td><td>19</td><td>95</td><td><mark>1,08</mark></td><td>96</td></tr>
+          <tr><td>Reszta (zakresy spoza API)</td><td>112</td><td>196</td><td><mark>1,60</mark></td><td>203</td></tr>
+          <tr><td><b>Razem</b></td><td>671</td><td><b>9 465</b></td><td></td><td>9 465</td></tr>
+        </tbody>
+      </table></div>
+      <p>Jeden c grupy dawał dobrą sumę grupy, ale źle dzielił ją między zakresy. W v4 różnice są mniejsze niż w v2 (choroby wewnętrzne 699 zamiast 762, przy celu 640), bo osobodnie tłumaczą część różnic między zakresami.</p>
+      <div class="formula">Zielona Góra, onkologia kliniczna – diagnostyka i leczenie: 48 pacjentów, ⌊49 517 ÷ (<mark>794</mark> × 0,983)⌋ = <b>63</b> &nbsp;(v2 też 63; 48 × 1,317 = 63)</div>
+      <div class="formula">Sieradz, choroby wewnętrzne, pacjenci „&lt;5”: ⌊17 765 ÷ (<mark>3 090</mark> × 2,06)⌋ = 2 → dolna granica <b>3</b> &nbsp;(v2 też 3)</div>
+      <h3>B2 i krok 5: gdy zakres nie mieści pacjentów <span class="tag n">NOWE w v4</span></h3>
+      <p>Chirurgia ogólna – diagnostyka i leczenie ma cel 206. Koszalin i Płock mają po 8 jawnych pacjentów, więc zakres nie może zejść poniżej 208. v2 obcinał obie komórki do 7, poniżej pacjentów. <mark>v4 zostawia 208 w tym zakresie. Krok 5 zabiera 2 pobyty z zakresu, który ma zapas: kompleksowa opieka onkologiczna 3 571 → 3 569.</mark> Suma grupy po B1: 9 467, po kroku 5: 9 465 = API.</p>
+      <h3>Kroki 5–6</h3>
+      <p>Suma 9 465 = API. Zgony: brakuje 6 zgonów do 474 z API. Trafiają do komórek z wierszami „&lt;5” ze zgonem, proporcjonalnie do ich nadwyżki.</p>
+    </div>
+  </section>
+
+  </div>
+  <div class="ver" data-ver="v2" hidden>
+  <section>
+    <h2>2. Schemat decyzji</h2>
+    <div class="card">
+      <div class="chart-bar" role="group" aria-label="Pokaż ścieżkę grupy">
+        <span>Pokaż ścieżkę:</span>
+        <button type="button" data-ex="" aria-pressed="true">Cały schemat</button>
+        <button type="button" data-ex="E10" aria-pressed="false">E10</button>
+        <button type="button" data-ex="H55" aria-pressed="false">H55</button>
+        <button type="button" data-ex="J08" aria-pressed="false">J08</button>
+      </div>
+      <div class="flow-box">
+      <svg class="flow" id="flow" viewBox="0 0 760 1130" role="img" aria-label="Schemat kalibracji: kroki 1–3 wspólne, decyzja według ilorazu pobytów do pacjentów, gałąź A i gałąź B, potem kroki 5–7 wspólne">
+        <defs>
+          <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z"/></marker>
+        </defs>
+
+        <!-- krawędzie -->
+        <path class="e" d="M380,66 V94" marker-end="url(#arr)"/>
+        <path class="e" d="M380,160 V188" marker-end="url(#arr)"/>
+        <path class="e" d="M380,254 V282" marker-end="url(#arr)"/>
+        <path class="e" d="M380,348 V368" marker-end="url(#arr)"/>
+        <path class="e pa" d="M210,428 H190 V488" marker-end="url(#arr)"/>
+        <path class="e pb" d="M550,428 H570 V508" marker-end="url(#arr)"/>
+        <path class="e pa" d="M60,560 H30 Q20,560 20,570 V618" marker-end="url(#arr)"/>
+        <path class="e pa" d="M320,560 H350 Q360,560 360,570 V618" marker-end="url(#arr)"/>
+        <path class="e pa" d="M102,718 V770" marker-end="url(#arr)"/>
+        <path class="e pa" d="M278,718 V770" marker-end="url(#arr)"/>
+        <path class="e pb" d="M570,632 V770" marker-end="url(#arr)"/>
+        <path class="e pa" d="M190,838 V868" marker-end="url(#arr)"/>
+        <path class="e pb" d="M570,838 V868" marker-end="url(#arr)"/>
+        <path class="e" d="M380,934 V958" marker-end="url(#arr)"/>
+        <path class="e" d="M380,1024 V1048" marker-end="url(#arr)"/>
+
+        <!-- 0. wejście -->
+        <g class="n s">
+          <rect x="140" y="10" width="480" height="56" rx="10"/>
+          <text class="t" x="380" y="33" text-anchor="middle">Grupa JGP × rok</text>
+          <text class="d" x="380" y="53" text-anchor="middle">plik hospitalizacji · zestawienie świadczeń · API NFZ · wycena</text>
+        </g>
+
+        <!-- 1. komórki -->
+        <g class="n">
+          <rect x="120" y="96" width="520" height="64" rx="10"/>
+          <text class="t" x="136" y="118">1. Komórki i granice</text>
+          <text class="d" x="136" y="138">lo = jawne + m · hi = jawne + 4m   (m = liczba wierszy „&lt;5”)</text>
+          <text class="d" x="136" y="153">
+            <tspan class="v E10">E10: 222 komórki · lo 8 236 · hi 31 648</tspan><tspan class="v H55">H55: 207 komórek · lo 26 089 · hi 44 941</tspan><tspan class="v J08">J08: 671 komórek · lo 7 834 · hi 23 707</tspan>
+          </text>
+        </g>
+
+        <!-- 2. poprawka 1 -->
+        <g class="n">
+          <rect x="120" y="190" width="520" height="64" rx="10"/>
+          <text class="t" x="136" y="212">2. Poprawka 1: górna granica z zestawienia</text>
+          <text class="d" x="136" y="232">pacjenci „&lt;5” w zestawieniu → hi2 = min(hi, ⌊4 × wiersze zestawienia × iloraz⌋)</text>
+          <text class="d" x="136" y="247">
+            <tspan class="v E10">E10: 19 komórek · hi2 razem 31 536</tspan><tspan class="v H55">H55: 43 komórki · hi2 razem 44 797</tspan><tspan class="v J08">J08: 494 komórki · hi2 razem 22 536</tspan>
+          </text>
+        </g>
+
+        <!-- 3. cele zakresów -->
+        <g class="n">
+          <rect x="120" y="284" width="520" height="64" rx="10"/>
+          <text class="t" x="136" y="306">3. Cele zakresów z API</text>
+          <text class="d" x="136" y="326">cel zakresu = pobyty zakresu w API · zakresy pominięte w API = jedna „reszta”</text>
+          <text class="d" x="136" y="341">
+            <tspan class="v E10">E10: 2 zakresy · reszta 0</tspan><tspan class="v H55">H55: 6 zakresów · reszta 247</tspan><tspan class="v J08">J08: 7 zakresów · reszta 196</tspan>
+          </text>
+        </g>
+
+        <!-- 4. decyzja -->
+        <g class="n dec">
+          <polygon points="380,370 550,428 380,486 210,428"/>
+          <text class="t" x="380" y="416" text-anchor="middle">4. iloraz = pobyty ÷ pacjenci</text>
+          <text class="d" x="380" y="434" text-anchor="middle">(API, cała grupa)</text>
+          <text class="d" x="380" y="452" text-anchor="middle">
+            <tspan class="v E10">8 995 ÷ 8 957 = 1,004</tspan><tspan class="v H55">30 971 ÷ 25 816 = 1,200</tspan><tspan class="v J08">9 465 ÷ 7 188 = 1,317</tspan>
+          </text>
+        </g>
+        <text class="lab a pa" x="40" y="420">&lt; 1,05 → metoda A</text>
+        <text class="lab b pb" x="578" y="420">≥ 1,05 → metoda B</text>
+
+        <!-- A1 decyzja w komórce -->
+        <g class="n pa">
+          <polygon points="190,490 320,560 190,630 60,560"/>
+          <text class="t" x="190" y="552" text-anchor="middle">A1. Komórka ma</text>
+          <text class="t" x="190" y="570" text-anchor="middle">jawnych pacjentów?</text>
+        </g>
+        <text class="lab a pa" x="24" y="550">tak</text>
+        <text class="lab a pa" x="332" y="550">nie</text>
+
+        <g class="n pa">
+          <rect x="10" y="620" width="184" height="98" rx="10"/>
+          <text class="t" x="22" y="642">A2. Z pacjentów</text>
+          <text class="d" x="22" y="662">n = ⌊pacjenci × iloraz⌋</text>
+          <text class="d" x="22" y="678">w granicach [lo, hi]</text>
+          <text class="d" x="22" y="702"><tspan class="v E10">E10: 203 komórki</tspan></text>
+        </g>
+        <g class="n pa">
+          <rect x="198" y="620" width="172" height="98" rx="10"/>
+          <text class="t" x="210" y="642">A3. Z punktów</text>
+          <text class="d" x="210" y="662">n w [lo, hi2], dla którego</text>
+          <text class="d" x="210" y="678">punkty ÷ (U·n) w 0,97–1,32,</text>
+          <text class="d" x="210" y="694">najbliżej mediany zakresu</text>
+          <text class="d" x="210" y="710"><tspan class="v E10">E10: 19 komórek</tspan></text>
+        </g>
+        <g class="n pa">
+          <rect x="10" y="772" width="360" height="66" rx="10"/>
+          <text class="t" x="22" y="794">A4. Dopasuj nadwyżkę w zakresie do celu</text>
+          <text class="d" x="22" y="813">nadwyżka = n − lo, skalowana w każdym zakresie</text>
+          <text class="d" x="22" y="829"><tspan class="v E10">E10: 7 070 → 7 087 · 1 905 → 1 908</tspan></text>
+        </g>
+
+        <!-- B -->
+        <g class="n pb">
+          <rect x="400" y="510" width="350" height="122" rx="10"/>
+          <text class="t" x="414" y="532">B1. Współczynnik c dla każdego zakresu</text>
+          <text class="d" x="414" y="552">n = ⌊punkty ÷ (U × c)⌋, nie mniej niż jawni</text>
+          <text class="d" x="414" y="568">pacjenci, w granicach [lo, hi2]</text>
+          <text class="d" x="414" y="588">c zmieniamy (bisekcja), aż suma n w zakresie</text>
+          <text class="d" x="414" y="604">= cel zakresu z API</text>
+          <text class="d" x="414" y="624"><tspan class="v H55">H55: c od 0,92 do 1,03</tspan><tspan class="v J08">J08: c od 1,01 do 3,07</tspan></text>
+        </g>
+        <g class="n pb">
+          <rect x="400" y="772" width="350" height="66" rx="10"/>
+          <text class="t" x="414" y="794">B2. Domknij zakres po zaokrągleniach</text>
+          <text class="d" x="414" y="813">ta sama metoda co A4, gdy c nie trafia w cel</text>
+          <text class="d" x="414" y="829"><tspan class="v H55">H55: nie trzeba</tspan><tspan class="v J08">J08: 9 467 → 9 465</tspan></text>
+        </g>
+
+        <!-- 5–7 -->
+        <g class="n">
+          <rect x="120" y="870" width="520" height="64" rx="10"/>
+          <text class="t" x="136" y="892">5. Domknij sumę grupy = API</text>
+          <text class="d" x="136" y="912">potrzebne, gdy cel zakresu leży poza granicami jego komórek</text>
+          <text class="d" x="136" y="927"><tspan class="v E10">E10: 8 995 = API</tspan><tspan class="v H55">H55: 30 971 = API</tspan><tspan class="v J08">J08: 9 465 = API</tspan></text>
+        </g>
+        <g class="n">
+          <rect x="120" y="960" width="520" height="64" rx="10"/>
+          <text class="t" x="136" y="982">6. Zgony</text>
+          <text class="d" x="136" y="1002">X = zgony API − zgony już znane · X dzielimy na komórki z wierszami „&lt;5” ze zgonem</text>
+          <text class="d" x="136" y="1017"><tspan class="v E10">E10: X = 1 → 347 = API</tspan><tspan class="v H55">H55: brak zgonów</tspan><tspan class="v J08">J08: X = 6 → 474 = API</tspan></text>
+        </g>
+        <g class="n s">
+          <rect x="120" y="1050" width="520" height="64" rx="10"/>
+          <text class="t" x="136" y="1072">7. Wynik</text>
+          <text class="d" x="136" y="1092">h_cal i d_cal dla każdej komórki · wiersze jawne bez zmian</text>
+          <text class="d" x="136" y="1107"><tspan class="v E10">E10: 8 995 pobytów · 347 zgonów</tspan><tspan class="v H55">H55: 30 971 pobytów · 0 zgonów</tspan><tspan class="v J08">J08: 9 465 pobytów · 474 zgony</tspan></text>
+        </g>
+      </svg>
+      </div>
+      <p class="note">Kliknij E10, H55 albo J08. Schemat pokaże ścieżkę grupy i jej liczby w każdym kroku. <span class="tag a">A</span> niebieskie kroki: metoda A. <span class="tag b">B</span> pomarańczowe kroki: metoda B.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>3. Dlaczego decyduje iloraz pobytów do pacjentów</h2>
+    <div class="card">
+      <p>API podaje dla całej grupy liczbę pobytów i liczbę pacjentów. Ich iloraz mówi, ile pobytów przypada na jednego pacjenta.</p>
+      <ul>
+        <li><b>Iloraz &lt; 1,05 → metoda A.</b> Prawie każdy pacjent ma jeden pobyt. Jawna liczba pacjentów w zestawieniu to więc prawie dokładna liczba pobytów. To najpewniejsze źródło, dlatego A używa go zawsze, gdy może.</li>
+        <li><b>Iloraz ≥ 1,05 → metoda B.</b> Pacjenci wracają do szpitala. Liczba pacjentów nie mówi, ile było pobytów: szpital może mieć 100 pacjentów i 110 albo 160 pobytów. Główne źródło to punkty: NFZ płaci za każdy pobyt, więc punkty ÷ wycena ≈ liczba pobytów.</li>
+      </ul>
+      <p><b>Punkty liczą się w obu metodach.</b> Metoda A też używa punktów, ale tylko w komórkach bez jawnych pacjentów (krok A3). Metoda B używa punktów we wszystkich komórkach. Jawni pacjenci są w B tylko dolną granicą: pobytów nie może być mniej niż pacjentów.</p>
+      <p>Punkty nie są dokładne. Szpital dostaje więcej punktów za długi pobyt (dopłata za osobodni), za tryb, za świadczenia dodatkowe. Dlatego dzielimy przez <b>współczynnik</b>: punkty ÷ (U × współczynnik). Współczynnik mówi, o ile średnio punkty są wyższe niż sama wycena pobytu. Liczymy go osobno w każdym zakresie.</p>
+      <div class="scroll-x"><table>
+        <thead><tr><th></th><th>Metoda A</th><th>Metoda B</th></tr></thead>
+        <tbody>
+          <tr><td>Kiedy</td><td class="wrap-cell">iloraz &lt; 1,05</td><td class="wrap-cell">iloraz ≥ 1,05</td></tr>
+          <tr><td>Komórka z jawnymi pacjentami</td><td class="wrap-cell">⌊pacjenci × iloraz⌋</td><td class="wrap-cell">⌊punkty ÷ (U × c)⌋, nie mniej niż pacjenci</td></tr>
+          <tr><td>Komórka z pacjentami „&lt;5”</td><td class="wrap-cell">n z punktów: punkty ÷ (U × n) w oknie 0,97–1,32, najbliżej mediany zakresu</td><td class="wrap-cell">⌊punkty ÷ (U × c)⌋</td></tr>
+          <tr><td>Skąd współczynnik</td><td class="wrap-cell">mediana punkty ÷ (U × pacjenci × iloraz) z komórek z jawnymi pacjentami w zakresie</td><td class="wrap-cell">c dobrany tak, by suma zakresu = API zakresu</td></tr>
+          <tr><td>Dopasowanie do API zakresu</td><td class="wrap-cell">skalowanie nadwyżki ponad lo (A4)</td><td class="wrap-cell">przez wybór c (B1), reszta po zaokrągleniach (B2)</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>4. Trzy grupy obok siebie</h2>
+    <div class="card">
+      <div class="scroll-x"><table>
+        <thead><tr><th>Krok</th><th>E10 · OZW – diagnostyka inwazyjna</th><th>H55 · zabiegi artroskopowe i przezskórne kręgosłupa</th><th>J08 · choroby piersi złośliwe</th></tr></thead>
+        <tbody>
+          <tr><td>API: pobyty / pacjenci</td><td>8 995 / 8 957</td><td>30 971 / 25 816</td><td>9 465 / 7 188</td></tr>
+          <tr><td>4. Iloraz → metoda</td><td class="A">1,004 → A</td><td class="B">1,200 → B</td><td class="B">1,317 → B</td></tr>
+          <tr><td>1. Komórki (w tym z jawnymi pacjentami)</td><td>222 (203)</td><td>207 (164)</td><td>671 (177)</td></tr>
+          <tr><td>1. Jawne + wiersze „&lt;5” = lo</td><td>432 + 7 804 = 8 236</td><td>19 805 + 6 284 = 26 089</td><td>2 543 + 5 291 = 7 834</td></tr>
+          <tr><td>2. Górna granica hi → hi2</td><td>31 648 → 31 536</td><td>44 941 → 44 797</td><td>23 707 → 22 536</td></tr>
+          <tr><td>3. Zakresy w API (reszta)</td><td>2 (0)</td><td>6 (247)</td><td>7 (196)</td></tr>
+          <tr><td>Współczynnik zakresu</td><td>mediana 1,02 i 1,11</td><td>c od 0,92 do 1,03</td><td>c od 1,01 do 3,07</td></tr>
+          <tr><td>Suma przed dopasowaniem (A2+A3 / B1)</td><td>8 975</td><td>30 971</td><td>9 467</td></tr>
+          <tr><td>5. Wynik</td><td class="good">8 995 = API</td><td class="good">30 971 = API</td><td class="good">9 465 = API</td></tr>
+          <tr><td>6. Zgony</td><td class="good">347 = API</td><td class="good">0 = API</td><td class="good">474 = API</td></tr>
+        </tbody>
+      </table></div>
+      <p class="note">Nazwy grup skrócone. Kody produktów: E10 5.51.01.0005010, H55 5.51.01.0008055, J08 5.51.01.0009008. Liczby pacjentów i zgonów z API NFZ dla 2024 r.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>5. E10: ścieżka A</h2>
+    <div class="card a">
+      <p><span class="tag a">A</span>Iloraz 8 995 ÷ 8 957 = <b>1,004</b>. Prawie każdy pacjent ma jedną diagnostykę inwazyjną w roku. Wycena jest jedna dla wszystkich długości pobytu: U = 4 161 pkt.</p>
+      <h3>Kroki 1–3</h3>
+      <p>222 komórki. Plik ma 432 pobyty jawne i 7 804 wiersze „&lt;5”, więc dolna granica to 8 236, a górna 31 648. 19 komórek ma pacjentów „&lt;5” w zestawieniu: poprawka 1 ustawia ich hi2 na ⌊4 × 1 × 1,004⌋ = 4. Cele z API: kardiologia 7 087, opieka po zawale (KOS-zawał) 1 908.</p>
+      <h3>A2: komórka z jawnymi pacjentami (203 komórki)</h3>
+      <div class="formula">Nowa Sól, kardiologia: 642 pacjentów → ⌊642 × 1,004⌋ = <b>644</b> &nbsp;(granice 570–1 017)</div>
+      <h3>A3: komórka z pacjentami „&lt;5” (19 komórek)</h3>
+      <p>LUX MED Onkologia, Warszawa, kardiologia: 12 545 pkt, granice 3–12, hi2 = 4. Sprawdzamy każde n:</p>
+      <div class="scroll-x"><table>
+        <thead><tr><th>n</th><th>punkty ÷ (U × n)</th><th>W oknie 0,97–1,32?</th></tr></thead>
+        <tbody>
+          <tr class="pick"><td>3</td><td>12 545 ÷ (4 161 × 3) = 1,005</td><td>tak → wynik 3</td></tr>
+          <tr><td>4</td><td>12 545 ÷ (4 161 × 4) = 0,754</td><td>nie</td></tr>
+          <tr><td>5–12</td><td>—</td><td>poza hi2</td></tr>
+        </tbody>
+      </table></div>
+      <p>Gdy w oknie jest kilka n, wybieramy to, którego iloraz leży najbliżej mediany zakresu. Mediana kardiologii to 1,022, opieki po zawale 1,109.</p>
+      <h3>A4: dopasowanie do API zakresu</h3>
+      <p>Po krokach A2 i A3 kardiologia ma 7 070 pobytów, a API podaje 7 087. Brakuje 17. Rozdzielamy je proporcjonalnie do nadwyżki komórek ponad lo. Nowa Sól: 644 → <b>646</b>. Opieka po zawale: 1 905 → 1 908.</p>
+      <h3>Kroki 5–6</h3>
+      <p>Suma 8 995 = API. Zgony: brakuje 1 zgonu do 347 z API. Trafia do komórki z wierszem „&lt;5” ze zgonem.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>6. H55: ścieżka B, współczynnik bliski 1</h2>
+    <div class="card b">
+      <p><span class="tag b">B</span>Iloraz 30 971 ÷ 25 816 = <b>1,200</b>. Na 5 pacjentów przypada średnio 6 pobytów.</p>
+      <h3>Dlaczego nie liczyć z pacjentów</h3>
+      <p>Szpital Miejski w Miastku, chirurgia ogólna: 1 239 pacjentów. Z pacjentów wyszłoby ⌊1 239 × 1,2⌋ = 1 486 pobytów. Plik hospitalizacji pokazuje jednak co najmniej <b>1 669</b> pobytów (wiersze jawne + po 1 za każdy wiersz „&lt;5”). Wynik z pacjentów jest niemożliwy. Ten szpital ma średnio 1,37 pobytu na pacjenta, a nie 1,2.</p>
+      <h3>Kroki 1–3</h3>
+      <p>207 komórek. Plik ma 19 805 pobytów jawnych i 6 284 wiersze „&lt;5”: granice 26 089–44 941. 43 komórki mają pacjentów „&lt;5”, poprawka 1 obniża górną granicę do 44 797. API wymienia 6 zakresów. 247 pobytów jest w zakresach, których API nie wymienia: te komórki liczymy razem jako „resztę”.</p>
+      <h3>B1: współczynnik każdego zakresu</h3>
+      <div class="scroll-x"><table>
+        <thead><tr><th>Zakres</th><th>Komórki</th><th>Cel z API</th><th>c</th><th>Dawny c grupy dawał</th></tr></thead>
+        <tbody>
+          <tr><td>Chirurgia ogólna</td><td>39</td><td>10 393</td><td>1,034</td><td>10 591</td></tr>
+          <tr><td>Neurochirurgia</td><td>48</td><td>9 593</td><td>1,003</td><td>9 489</td></tr>
+          <tr><td>Ortopedia</td><td>77</td><td>7 486</td><td>1,021</td><td>7 532</td></tr>
+          <tr><td>Chirurgia ogólna – chirurgia jednego dnia</td><td>11</td><td>1 674</td><td>0,921</td><td>1 615</td></tr>
+          <tr><td>Ortopedia – chirurgia jednego dnia</td><td>14</td><td>1 193</td><td>0,920</td><td>1 124</td></tr>
+          <tr><td>Ortopedia – planowa</td><td>6</td><td>385</td><td>0,995</td><td>379</td></tr>
+          <tr><td>Reszta (zakresy spoza API)</td><td>12</td><td>247</td><td>0,983</td><td>240</td></tr>
+          <tr><td><b>Razem</b></td><td>207</td><td><b>30 971</b></td><td></td><td>30 970</td></tr>
+        </tbody>
+      </table></div>
+      <p>Wszystkie c leżą blisko 1. Punkty ≈ wycena × liczba pobytów, bo pobyty są krótkie i prawie bez dopłat za dni. W chirurgii jednego dnia c &lt; 1: część pobytów ma niższą wycenę niż ta, którą przyjmujemy.</p>
+      <div class="formula">Miastko, chirurgia ogólna: ⌊6 373 199 ÷ (3 639 × 1,034)⌋ = <b>1 693</b> &nbsp;(granice 1 669–1 762; dawny c grupy: 1 726)</div>
+      <div class="formula">Słupsk, neurochirurgia, pacjenci „&lt;5”: ⌊7 278 ÷ (3 639 × 1,003)⌋ = 1 → dolna granica <b>2</b></div>
+      <h3>Kroki B2, 5, 6</h3>
+      <p>W każdym zakresie c trafia w cel dokładnie, więc B2 nic nie zmienia. Suma 30 971 = API. Grupa nie ma zgonów.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>7. J08: ścieżka B, współczynniki bardzo różne</h2>
+    <div class="card b">
+      <p><span class="tag b">B</span>Iloraz 9 465 ÷ 7 188 = <b>1,317</b>. Pacjentki z nowotworem piersi wracają do szpitala kilka razy w roku. Wycena zależy od długości pobytu: 620 pkt (0 dni), 1 102 i 1 585 pkt (1–2 dni), 2 067 pkt (3 dni i więcej), po 8 dniach dopłata 236 pkt za osobodzień. U komórki to średnia z jej wierszy.</p>
+      <h3>Kroki 1–3</h3>
+      <p>671 komórek, z tego 494 z pacjentami „&lt;5”. Plik ma 2 543 pobyty jawne i 5 291 wierszy „&lt;5”: granice 7 834–23 707. Poprawka 1 obniża górną granicę do 22 536. API wymienia 7 zakresów, 196 pobytów to „reszta”.</p>
+      <h3>B1: jak działa bisekcja na jednym zakresie</h3>
+      <p>Choroby wewnętrzne: 268 komórek, cel z API 640. Dla każdego c liczymy n każdej komórki i dodajemy:</p>
+      <div class="scroll-x"><table>
+        <thead><tr><th>c</th><th>1,0</th><th>1,141 (dawny c grupy)</th><th>1,5</th><th>2,0</th><th>2,24</th><th>3,07</th></tr></thead>
+        <tbody>
+          <tr><td>Suma pobytów w zakresie</td><td>826</td><td>760</td><td>682</td><td>652</td><td>645</td><td class="good">640 ✓</td></tr>
+        </tbody>
+      </table></div>
+      <p>Większe c daje mniej pobytów. Komputer zaczyna od przedziału 0,05–20 i połowi go: suma za duża → c w górę, za mała → c w dół. Po 60 krokach c = 3,07. Duże c znaczy: punkty są trzy razy wyższe niż wycena. To długie pobyty z dopłatą za osobodni.</p>
+      <div class="scroll-x"><table>
+        <thead><tr><th>Zakres</th><th>Komórki</th><th>Cel z API</th><th>c</th><th>Dawny c grupy dawał</th></tr></thead>
+        <tbody>
+          <tr><td>Kompleksowa opieka onkologiczna (pierś)</td><td>36</td><td>3 571</td><td>1,20</td><td>3 761</td></tr>
+          <tr><td>Onkologia kliniczna – diagnostyka i leczenie</td><td>64</td><td>2 971</td><td>1,04</td><td>2 765</td></tr>
+          <tr><td>Onkologia kliniczna</td><td>29</td><td>1 248</td><td>1,01</td><td>1 133</td></tr>
+          <tr><td>Choroby wewnętrzne</td><td>268</td><td>640</td><td>3,07</td><td>762</td></tr>
+          <tr><td>Chirurgia onkologiczna – diagnostyka i leczenie</td><td>45</td><td>538</td><td>1,02</td><td>518</td></tr>
+          <tr><td>Chirurgia ogólna – diagnostyka i leczenie</td><td>98</td><td>206</td><td>brak (≥ 208)</td><td>221</td></tr>
+          <tr><td>Chirurgia onkologiczna</td><td>19</td><td>95</td><td>1,28</td><td>96</td></tr>
+          <tr><td>Reszta (zakresy spoza API)</td><td>112</td><td>196</td><td>1,72</td><td>209</td></tr>
+          <tr><td><b>Razem</b></td><td>671</td><td><b>9 465</b></td><td></td><td>9 465</td></tr>
+        </tbody>
+      </table></div>
+      <p>Dawny jeden c grupy (1,141) dawał dobrą sumę grupy, ale źle dzielił ją między zakresy. Choroby wewnętrzne dostawały 762 zamiast 640. Onkologia kliniczna dostawała za mało.</p>
+      <div class="formula">Zielona Góra, onkologia kliniczna – diagnostyka i leczenie: 48 pacjentów, ⌊49 517 ÷ (753 × 1,041)⌋ = <b>63</b> &nbsp;(dawniej 57; 48 × 1,317 = 63)</div>
+      <div class="formula">Sieradz, choroby wewnętrzne, pacjenci „&lt;5”: ⌊17 765 ÷ (2 067 × 3,07)⌋ = 2 → dolna granica <b>3</b> &nbsp;(dawna wersja 7; z samą poprawką 1: 5)</div>
+      <h3>B2: gdy c nie trafia w cel</h3>
+      <p>Chirurgia ogólna – diagnostyka i leczenie ma cel 206. Nawet bardzo duże c daje 208, bo dwie komórki nie mogą zejść poniżej jawnych pacjentów. B2 zabiera 2 pobyty z nadwyżki ponad lo. Suma grupy po B1: 9 467, po B2: 9 465.</p>
+      <h3>Kroki 5–6</h3>
+      <p>Suma 9 465 = API. Zgony: brakuje 6 zgonów do 474 z API. Trafiają do komórek z wierszami „&lt;5” ze zgonem, proporcjonalnie do ich nadwyżki.</p>
+    </div>
+  </section>
+
+  </div>
+
+  <section>
+    <h2>8. Konkretne komórki krok po kroku</h2>
+    <div class="card">
+      <p>Jedenaście komórek z 2024 r., od łatwych do problematycznych. Każda zakładka ma 4 kroki: wejście (wiersze pliku i zestawienie), kolumny pomocnicze, obliczenie, wynik w wierszach. Obok v2 (metody A/B) jest v3 (jeden model z rozkładem, sekcja 9).</p>
+      <div class="scroll-x"><table>
+        <thead><tr><th>Typ problemu (2024)</th><th>Komórki v2</th><th>Komórki v3</th><th>Przykład</th></tr></thead>
+        <tbody>
+          <tr><td>Wynik mniejszy niż jawni pacjenci</td><td>896 (brakuje 1 535 pobytów)</td><td class="good">365 (brakuje 825)</td><td class="wrap-cell">F21 Włocławek, F66 Toruń, J08 Koszalin</td></tr>
+          <tr><td>Punkty wskazują więcej, niż pozwala górna granica z zestawienia</td><td>3 624 (twarde obcięcie)</td><td>granica miękka</td><td class="wrap-cell">J08 Gorzów</td></tr>
+          <tr><td>Punkty nie pokrywają nawet dolnej granicy</td><td>1 379</td><td>1 379</td><td class="wrap-cell">J08 Sieradz (v2)</td></tr>
+          <tr><td>Punkty na pobyt &gt; 3 × wycena</td><td>304</td><td>304</td><td class="wrap-cell">F43E Warszawa</td></tr>
+          <tr><td>Zestawienie ma więcej pacjentów, niż plik może pomieścić</td><td>7</td><td>7</td><td class="wrap-cell">PZJ05 Jaworzno</td></tr>
+          <tr><td>Brak punktów w zestawieniu</td><td>81</td><td>81</td><td class="wrap-cell">A11 Kraków</td></tr>
+        </tbody>
+      </table></div>
+      <p class="note">Trzy ostatnie typy to niezgodność źródeł. Żaden model ich nie naprawi. Model może tylko zachować się przewidywalnie: zostać w granicach z pliku. <span class="tag s">łatwy</span> wynik pewny <span class="tag a">średni</span> wynik z ograniczenia, ale spójny <span class="tag b">problem</span> źródła się nie zgadzają albo metoda ma błąd.</p>
+    </div>
+    <div class="card tabs" id="przypadki">
+      <div class="tablist" role="tablist" aria-label="Komórki"><button type="button" role="tab" aria-selected="true" aria-controls="t0" class="ok"><b>E10</b> Kraków<small>Jawni pacjenci, iloraz ≈ 1</small></button><button type="button" role="tab" aria-selected="false" aria-controls="t1" class="ok"><b>E10</b> Warszawa<small>Pacjenci „&lt;5”, punkty jednoznaczne</small></button><button type="button" role="tab" aria-selected="false" aria-controls="t2" class="mid"><b>H55</b> Leszno<small>Punkty mniej niż pacjenci</small></button><button type="button" role="tab" aria-selected="false" aria-controls="t3" class="bad"><b>J08</b> Gorzów Wielkopolski<small>Punkty ponad górną granicę</small></button><button type="button" role="tab" aria-selected="false" aria-controls="t4" class="bad"><b>J08</b> Sieradz<small>Duży współczynnik zakresu</small></button><button type="button" role="tab" aria-selected="false" aria-controls="t5" class="bad"><b>J08</b> Koszalin<small>API zakresu poniżej liczby pacjentów</small></button><button type="button" role="tab" aria-selected="false" aria-controls="t6" class="bad"><b>F21</b> Włocławek<small>v2: wynik &lt; pacjenci (metoda A)</small></button><button type="button" role="tab" aria-selected="false" aria-controls="t7" class="bad"><b>F66</b> Toruń<small>v2: wynik &lt; pacjenci (metoda A)</small></button><button type="button" role="tab" aria-selected="false" aria-controls="t8" class="bad"><b>PZJ05</b> Jaworzno<small>Zestawienie ma więcej pacjentów niż plik</small></button><button type="button" role="tab" aria-selected="false" aria-controls="t9" class="bad"><b>F43E</b> Warszawa<small>Punkty ponad 3 × wycena</small></button><button type="button" role="tab" aria-selected="false" aria-controls="t10" class="bad"><b>A11</b> Kraków<small>Brak punktów</small></button></div>
+<div class="tabpanel" role="tabpanel" id="t0">
+      <h3><span class="tag s">łatwy</span>E10 · Kraków · Samodzielny Publiczny Zakład Opieki Zdrowotnej Szp</h3>
+      <p>Szpital podaje 8 pacjentów. Iloraz grupy 1,004, więc 8 pacjentów to 8 pobytów. Punkty to potwierdzają. v2 i v3 dają ten sam wynik.</p>
+      <div class="stepline"><span>1</span><b>Wejście</b> · zakres <code>03.4100.500.02</code> Kompleksowa opieka po zawale mięśnia ser…</div>
+      <div class="scroll-x"><table class="in"><thead><tr><th>Miesiąc</th><th>Tryb przyjęcia</th><th>Tryb wypisu</th><th>Płeć</th><th>Wiek</th><th>Długość pobytu</th><th>Liczba hosp.</th></tr></thead><tbody><tr><td>3</td><td>2</td><td>2</td><td>K</td><td>45-64</td><td>6 i więcej dni</td><td>&lt;5</td></tr><tr><td>4</td><td>2</td><td>2</td><td>M</td><td>45-64</td><td>3-5 dni</td><td>&lt;5</td></tr><tr><td>4</td><td>2</td><td>2</td><td>K</td><td>65 i więcej</td><td>3-5 dni</td><td>&lt;5</td></tr><tr><td>5</td><td>3</td><td>2</td><td>K</td><td>65 i więcej</td><td>3-5 dni</td><td>&lt;5</td></tr><tr><td>7</td><td>3</td><td>2</td><td>M</td><td>65 i więcej</td><td>6 i więcej dni</td><td>&lt;5</td></tr><tr><td>10</td><td>3</td><td>2</td><td>M</td><td>45-64</td><td>6 i więcej dni</td><td>&lt;5</td></tr><tr><td>12</td><td>2</td><td>2</td><td>M</td><td>65 i więcej</td><td>6 i więcej dni</td><td>&lt;5</td></tr></tbody></table></div>
+      <div class="scroll-x"><table class="in"><thead><tr><th>Zestawienie świadczeń</th><th>Pacjenci</th><th>Punkty</th><th>Iloraz grupy (API)</th></tr></thead><tbody><tr><td>wiersze zestawienia: 1</td><td>8</td><td>37 349</td><td>8 995 ÷ 8 957 = 1,004</td></tr></tbody></table></div>
+      <div class="stepline"><span>2</span><b>Kolumny pomocnicze</b> · wycena v2 bez osobodni, v3 z osobodniami (średnia w przedziale z histogramu dni API)</div>
+      <div class="scroll-x"><table><thead><tr><th>Miesiąc</th><th>Długość</th><th>Liczba</th><th class="new">min</th><th class="new">max</th><th class="new">wycena v2</th><th class="new3">punkty/pobyt v3</th></tr></thead>
+      <tbody><tr><td>3</td><td>6 i więcej dni</td><td>&lt;5</td><td class="new">1</td><td class="new">4</td><td class="new">4 161</td><td class="new3">4 161</td></tr><tr><td>4</td><td>3-5 dni</td><td>&lt;5</td><td class="new">1</td><td class="new">4</td><td class="new">4 161</td><td class="new3">4 161</td></tr><tr><td>4</td><td>3-5 dni</td><td>&lt;5</td><td class="new">1</td><td class="new">4</td><td class="new">4 161</td><td class="new3">4 161</td></tr><tr><td>5</td><td>3-5 dni</td><td>&lt;5</td><td class="new">1</td><td class="new">4</td><td class="new">4 161</td><td class="new3">4 161</td></tr><tr><td>7</td><td>6 i więcej dni</td><td>&lt;5</td><td class="new">1</td><td class="new">4</td><td class="new">4 161</td><td class="new3">4 161</td></tr><tr><td>10</td><td>6 i więcej dni</td><td>&lt;5</td><td class="new">1</td><td class="new">4</td><td class="new">4 161</td><td class="new3">4 161</td></tr><tr><td>12</td><td>6 i więcej dni</td><td>&lt;5</td><td class="new">1</td><td class="new">4</td><td class="new">4 161</td><td class="new3">4 161</td></tr><tr class="sum"><td>Komórka</td><td></td><td>7 wierszy</td><td class="new">lo = 7</td><td class="new">hi = 28</td><td class="new">U = 4 161</td><td class="new3">przy n = lo: 29 127</td></tr></tbody></table></div>
+      <div class="stepline"><span>3</span><b>Obliczenie</b> · v2: metoda A, przed dopasowaniem 8, wynik <b>8</b></div>
+      <p class="note">v3: rozkład liczby pobytów n. Oczekiwane punkty = 1,081 × (29 127 + (n − 7) × 4 161); rozrzut punktów 4% na placówkę + rozrzut pobytów. Pacjenci: jawni 8, iloraz zakresu 1,003, rozrzut ilorazu między placówkami 3%. Kolumny log-wiarygodności: 0 = najlepsze n, im bardziej ujemne, tym mniej prawdopodobne.</p>
+      <div class="scroll-x"><table><thead><tr><th>n</th><th>oczekiwane punkty</th><th>punkty (log)</th><th>pacjenci (log)</th><th>prawdopodob. komórki</th></tr></thead><tbody><tr class=""><td>7</td><td>31 486</td><td>-1,4</td><td>-9,0</td><td>0%</td></tr><tr class="pick"><td>8</td><td>35 984</td><td>0,0</td><td>0,0</td><td>76%</td></tr><tr class=""><td>9</td><td>40 482</td><td>-0,3</td><td>-0,8</td><td>24%</td></tr><tr class=""><td>10</td><td>44 980</td><td>-1,8</td><td>-3,3</td><td>0%</td></tr><tr class=""><td>11</td><td>49 478</td><td>-4,0</td><td>-7,6</td><td>0%</td></tr><tr class=""><td>12</td><td>53 976</td><td>-6,7</td><td>-13,5</td><td>0%</td></tr><tr class=""><td>13</td><td>58 475</td><td>-9,8</td><td>-21,1</td><td>0%</td></tr><tr class=""><td>14</td><td>62 973</td><td>-13,0</td><td>-30,5</td><td>0%</td></tr></tbody></table></div>
+      <p class="note">Najbardziej prawdopodobne n dla samej komórki: <b>8</b>. Wynik v3 po dopasowaniu do API zakresu: <b>8</b> (zaznaczony).</p>
+      <div class="stepline"><span>4</span><b>Wynik w wierszach</b> · nadwyżka po równo na wiersze „&lt;5”</div>
+      <div class="scroll-x"><table><thead><tr><th>Miesiąc</th><th>Długość</th><th>Liczba</th><th>h_min</th><th class="res">h_cal v2</th><th class="res3">h_cal v3</th></tr></thead>
+      <tbody><tr><td>3</td><td>6 i więcej dni</td><td>&lt;5</td><td>1</td><td class="res">2</td><td class="res3">2</td></tr><tr><td>4</td><td>3-5 dni</td><td>&lt;5</td><td>1</td><td class="res">1</td><td class="res3">1</td></tr><tr><td>4</td><td>3-5 dni</td><td>&lt;5</td><td>1</td><td class="res">1</td><td class="res3">1</td></tr><tr><td>5</td><td>3-5 dni</td><td>&lt;5</td><td>1</td><td class="res">1</td><td class="res3">1</td></tr><tr><td>7</td><td>6 i więcej dni</td><td>&lt;5</td><td>1</td><td class="res">1</td><td class="res3">1</td></tr><tr><td>10</td><td>6 i więcej dni</td><td>&lt;5</td><td>1</td><td class="res">1</td><td class="res3">1</td></tr><tr><td>12</td><td>6 i więcej dni</td><td>&lt;5</td><td>1</td><td class="res">1</td><td class="res3">1</td></tr><tr class="sum"><td>Komórka</td><td></td><td></td><td>7</td><td class="res">8</td><td class="res3">8</td></tr></tbody></table></div>
+    </div><div class="tabpanel" role="tabpanel" id="t1" hidden>
+      <h3><span class="tag s">łatwy</span>E10 · Warszawa · Lux Med Onkologia Spółka Z O.O.</h3>
+      <p>Pacjenci „&lt;5”. Punkty wystarczają na 3 pobyty. Obie wersje dają 3.</p>
+      <div class="stepline"><span>1</span><b>Wejście</b> · zakres <code>03.4100.130.02</code> Kardiologia - hospitalizacja e10, e11,e1…</div>
+      <div class="scroll-x"><table class="in"><thead><tr><th>Miesiąc</th><th>Tryb przyjęcia</th><th>Tryb wypisu</th><th>Płeć</th><th>Wiek</th><th>Długość pobytu</th><th>Liczba hosp.</th></tr></thead><tbody><tr><td>10</td><td>3</td><td>2</td><td>M</td><td>45-64</td><td>3-5 dni</td><td>&lt;5</td></tr><tr><td>11</td><td>3</td><td>2</td><td>K</td><td>45-64</td><td>1-2 dni</td><td>&lt;5</td></tr><tr><td>12</td><td>6</td><td>3</td><td>K</td><td>65 i więcej</td><td>1-2 dni</td><td>&lt;5</td></tr></tbody></table></div>
+      <div class="scroll-x"><table class="in"><thead><tr><th>Zestawienie świadczeń</th><th>Pacjenci</th><th>Punkty</th><th>Iloraz grupy (API)</th></tr></thead><tbody><tr><td>wiersze zestawienia: 1</td><td>&lt;5</td><td>12 545</td><td>8 995 ÷ 8 957 = 1,004</td></tr></tbody></table></div>
+      <div class="stepline"><span>2</span><b>Kolumny pomocnicze</b> · wycena v2 bez osobodni, v3 z osobodniami (średnia w przedziale z histogramu dni API)</div>
+      <div class="scroll-x"><table><thead><tr><th>Miesiąc</th><th>Długość</th><th>Liczba</th><th class="new">min</th><th class="new">max</th><th class="new">wycena v2</th><th class="new3">punkty/pobyt v3</th></tr></thead>
+      <tbody><tr><td>10</td><td>3-5 dni</td><td>&lt;5</td><td class="new">1</td><td class="new">4</td><td class="new">4 161</td><td class="new3">4 161</td></tr><tr><td>11</td><td>1-2 dni</td><td>&lt;5</td><td class="new">1</td><td class="new">4</td><td class="new">4 161</td><td class="new3">4 161</td></tr><tr><td>12</td><td>1-2 dni</td><td>&lt;5</td><td class="new">1</td><td class="new">4</td><td class="new">4 161</td><td class="new3">4 161</td></tr><tr class="sum"><td>Komórka</td><td></td><td>3 wierszy</td><td class="new">lo = 3</td><td class="new">hi = 12</td><td class="new">U = 4 161</td><td class="new3">przy n = lo: 12 483</td></tr></tbody></table></div>
+      <div class="stepline"><span>3</span><b>Obliczenie</b> · v2: metoda A, przed dopasowaniem 3, wynik <b>3</b> (hi2 = 4)</div>
+      <p class="note">v3: rozkład liczby pobytów n. Oczekiwane punkty = 1,063 × (12 483 + (n − 3) × 4 161); rozrzut punktów 4% na placówkę + rozrzut pobytów. Pacjenci: „&lt;5” = 1–4 na wiersz zestawienia, iloraz zakresu 1,004, rozrzut ilorazu między placówkami 3%. Kolumny log-wiarygodności: 0 = najlepsze n, im bardziej ujemne, tym mniej prawdopodobne.</p>
+      <div class="scroll-x"><table><thead><tr><th>n</th><th>oczekiwane punkty</th><th>punkty (log)</th><th>pacjenci (log)</th><th>prawdopodob. komórki</th></tr></thead><tbody><tr class="pick"><td>3</td><td>13 269</td><td>0,0</td><td>0,0</td><td>92%</td></tr><tr class=""><td>4</td><td>17 693</td><td>-2,5</td><td>-0,0</td><td>8%</td></tr><tr class=""><td>5</td><td>22 116</td><td>-6,7</td><td>-1,2</td><td>0%</td></tr><tr class=""><td>6</td><td>26 539</td><td>-11,5</td><td>-4,0</td><td>0%</td></tr><tr class=""><td>7</td><td>30 962</td><td>-16,6</td><td>-8,7</td><td>0%</td></tr><tr class=""><td>8</td><td>35 385</td><td>-21,7</td><td>-15,3</td><td>0%</td></tr><tr class=""><td>9</td><td>39 808</td><td>-26,7</td><td>-23,7</td><td>0%</td></tr><tr class=""><td>10</td><td>44 231</td><td>-31,6</td><td>-34,0</td><td>0%</td></tr></tbody></table></div>
+      <p class="note">Najbardziej prawdopodobne n dla samej komórki: <b>3</b>. Wynik v3 po dopasowaniu do API zakresu: <b>3</b> (zaznaczony).</p>
+      <div class="stepline"><span>4</span><b>Wynik w wierszach</b> · nadwyżka po równo na wiersze „&lt;5”</div>
+      <div class="scroll-x"><table><thead><tr><th>Miesiąc</th><th>Długość</th><th>Liczba</th><th>h_min</th><th class="res">h_cal v2</th><th class="res3">h_cal v3</th></tr></thead>
+      <tbody><tr><td>10</td><td>3-5 dni</td><td>&lt;5</td><td>1</td><td class="res">1</td><td class="res3">1</td></tr><tr><td>11</td><td>1-2 dni</td><td>&lt;5</td><td>1</td><td class="res">1</td><td class="res3">1</td></tr><tr><td>12</td><td>1-2 dni</td><td>&lt;5</td><td>1</td><td class="res">1</td><td class="res3">1</td></tr><tr class="sum"><td>Komórka</td><td></td><td></td><td>3</td><td class="res">3</td><td class="res3">3</td></tr></tbody></table></div>
+    </div><div class="tabpanel" role="tabpanel" id="t2" hidden>
+      <h3><span class="tag a">średni</span>H55 · Leszno · Niepubliczny Zakład Opieki Zdrowotnej Specjalistyc</h3>
+      <p>Punkty dają 7 pobytów, zestawienie podaje 8 pacjentów. Pobytów nie może być mniej niż pacjentów. Obie wersje dają 8.</p>
+      <div class="stepline"><span>1</span><b>Wejście</b> · zakres <code>03.4580.032.02</code> Ortopedia i traumatologia narządu ruchu …</div>
+      <div class="scroll-x"><table class="in"><thead><tr><th>Miesiąc</th><th>Tryb przyjęcia</th><th>Tryb wypisu</th><th>Płeć</th><th>Wiek</th><th>Długość pobytu</th><th>Liczba hosp.</th></tr></thead><tbody><tr><td>11</td><td>6</td><td>2</td><td>M</td><td>65 i więcej</td><td>0 dni</td><td>&lt;5</td></tr><tr><td>11</td><td>6</td><td>2</td><td>K</td><td>65 i więcej</td><td>0 dni</td><td>&lt;5</td></tr><tr><td>11</td><td>6</td><td>2</td><td>K</td><td>45-64</td><td>0 dni</td><td>&lt;5</td></tr></tbody></table></div>
+      <div class="scroll-x"><table class="in"><thead><tr><th>Zestawienie świadczeń</th><th>Pacjenci</th><th>Punkty</th><th>Iloraz grupy (API)</th></tr></thead><tbody><tr><td>wiersze zestawienia: 1</td><td>8</td><td>23 534</td><td>30 971 ÷ 25 816 = 1,200</td></tr></tbody></table></div>
+      <div class="stepline"><span>2</span><b>Kolumny pomocnicze</b> · wycena v2 bez osobodni, v3 z osobodniami (średnia w przedziale z histogramu dni API)</div>
+      <div class="scroll-x"><table><thead><tr><th>Miesiąc</th><th>Długość</th><th>Liczba</th><th class="new">min</th><th class="new">max</th><th class="new">wycena v2</th><th class="new3">punkty/pobyt v3</th></tr></thead>
+      <tbody><tr><td>11</td><td>0 dni</td><td>&lt;5</td><td class="new">1</td><td class="new">4</td><td class="new">3 639</td><td class="new3">3 639</td></tr><tr><td>11</td><td>0 dni</td><td>&lt;5</td><td class="new">1</td><td class="new">4</td><td class="new">3 639</td><td class="new3">3 639</td></tr><tr><td>11</td><td>0 dni</td><td>&lt;5</td><td class="new">1</td><td class="new">4</td><td class="new">3 639</td><td class="new3">3 639</td></tr><tr class="sum"><td>Komórka</td><td></td><td>3 wierszy</td><td class="new">lo = 3</td><td class="new">hi = 12</td><td class="new">U = 3 639</td><td class="new3">przy n = lo: 10 917</td></tr></tbody></table></div>
+      <div class="stepline"><span>3</span><b>Obliczenie</b> · v2: metoda B, przed dopasowaniem 8, wynik <b>8</b></div>
+      <p class="note">v3: rozkład liczby pobytów n. Oczekiwane punkty = 0,927 × (10 917 + (n − 3) × 3 639); rozrzut punktów 4% na placówkę + rozrzut pobytów. Pacjenci: jawni 8, iloraz zakresu 1,206, rozrzut ilorazu między placówkami 8%. Kolumny log-wiarygodności: 0 = najlepsze n, im bardziej ujemne, tym mniej prawdopodobne.</p>
+      <div class="scroll-x"><table><thead><tr><th>n</th><th>oczekiwane punkty</th><th>punkty (log)</th><th>pacjenci (log)</th><th>prawdopodob. komórki</th></tr></thead><tbody><tr class=""><td>3</td><td>10 120</td><td>-38,0</td><td>-65,5</td><td>0%</td></tr><tr class=""><td>4</td><td>13 493</td><td>-15,4</td><td>-48,5</td><td>0%</td></tr><tr class=""><td>5</td><td>16 867</td><td>-5,2</td><td>-33,5</td><td>0%</td></tr><tr class=""><td>6</td><td>20 240</td><td>-1,0</td><td>-20,5</td><td>0%</td></tr><tr class=""><td>7</td><td>23 613</td><td>0,0</td><td>-9,5</td><td>0%</td></tr><tr class="pick"><td>8</td><td>26 987</td><td>-0,9</td><td>-0,5</td><td>83%</td></tr><tr class=""><td>9</td><td>30 360</td><td>-3,0</td><td>-0,1</td><td>16%</td></tr><tr class=""><td>10</td><td>33 734</td><td>-5,7</td><td>0,0</td><td>1%</td></tr></tbody></table></div>
+      <p class="note">Najbardziej prawdopodobne n dla samej komórki: <b>8</b>. Wynik v3 po dopasowaniu do API zakresu: <b>8</b> (zaznaczony).</p>
+      <div class="stepline"><span>4</span><b>Wynik w wierszach</b> · nadwyżka po równo na wiersze „&lt;5”</div>
+      <div class="scroll-x"><table><thead><tr><th>Miesiąc</th><th>Długość</th><th>Liczba</th><th>h_min</th><th class="res">h_cal v2</th><th class="res3">h_cal v3</th></tr></thead>
+      <tbody><tr><td>11</td><td>0 dni</td><td>&lt;5</td><td>1</td><td class="res">3</td><td class="res3">3</td></tr><tr><td>11</td><td>0 dni</td><td>&lt;5</td><td>1</td><td class="res">3</td><td class="res3">3</td></tr><tr><td>11</td><td>0 dni</td><td>&lt;5</td><td>1</td><td class="res">2</td><td class="res3">2</td></tr><tr class="sum"><td>Komórka</td><td></td><td></td><td>3</td><td class="res">8</td><td class="res3">8</td></tr></tbody></table></div>
+    </div><div class="tabpanel" role="tabpanel" id="t3" hidden>
+      <h3><span class="tag b">problem</span>J08 · Gorzów Wielkopolski · Wielospecjalistyczny Szpital Wojewódzki W Gorzowie</h3>
+      <p>v2: punkty dają 6,56, a twarda granica z poprawki 1 obcina do 5. v3: jeden z dwóch wierszy to pobyt 6+ dni z osobodniami, więc z tych samych punktów wychodzi ok. 5,4. Rozkład komórki: 4 – 28%, 5 – 32%, 6 – 20%, 7 – 8%. Wynik 5 to najbardziej prawdopodobna wartość, a nie obcięcie. 6 i 7 zostają możliwe.</p>
+      <div class="stepline"><span>1</span><b>Wejście</b> · zakres <code>03.4240.030.02</code> Onkologia kliniczna - hospitalizacja</div>
+      <div class="scroll-x"><table class="in"><thead><tr><th>Miesiąc</th><th>Tryb przyjęcia</th><th>Tryb wypisu</th><th>Płeć</th><th>Wiek</th><th>Długość pobytu</th><th>Liczba hosp.</th></tr></thead><tbody><tr><td>7</td><td>3</td><td>1</td><td>K</td><td>65 i więcej</td><td>6 i więcej dni</td><td>&lt;5</td></tr><tr><td>7</td><td>11</td><td>1</td><td>K</td><td>65 i więcej</td><td>1-2 dni</td><td>&lt;5</td></tr></tbody></table></div>
+      <div class="scroll-x"><table class="in"><thead><tr><th>Zestawienie świadczeń</th><th>Pacjenci</th><th>Punkty</th><th>Iloraz grupy (API)</th></tr></thead><tbody><tr><td>wiersze zestawienia: 1</td><td>&lt;5</td><td>11 193</td><td>9 465 ÷ 7 188 = 1,317</td></tr></tbody></table></div>
+      <div class="stepline"><span>2</span><b>Kolumny pomocnicze</b> · wycena v2 bez osobodni, v3 z osobodniami (średnia w przedziale z histogramu dni API)</div>
+      <div class="scroll-x"><table><thead><tr><th>Miesiąc</th><th>Długość</th><th>Liczba</th><th class="new">min</th><th class="new">max</th><th class="new">wycena v2</th><th class="new3">punkty/pobyt v3</th></tr></thead>
+      <tbody><tr><td>7</td><td>6 i więcej dni</td><td>&lt;5</td><td class="new">1</td><td class="new">4</td><td class="new">2 067</td><td class="new3">3 090</td></tr><tr><td>7</td><td>1-2 dni</td><td>&lt;5</td><td class="new">1</td><td class="new">4</td><td class="new">1 343,5</td><td class="new3">1 299,1</td></tr><tr class="sum"><td>Komórka</td><td></td><td>2 wierszy</td><td class="new">lo = 2</td><td class="new">hi = 8</td><td class="new">U = 1 705,2</td><td class="new3">przy n = lo: 4 389</td></tr></tbody></table></div>
+      <div class="stepline"><span>3</span><b>Obliczenie</b> · v2: metoda B, przed dopasowaniem 5, wynik <b>5</b> (hi2 = 5)</div>
+      <p class="note">v3: rozkład liczby pobytów n. Oczekiwane punkty = 0,945 × (4 389 + (n − 2) × 2 194,6); rozrzut punktów 4% na placówkę + rozrzut pobytów. Pacjenci: „&lt;5” = 1–4 na wiersz zestawienia, iloraz zakresu 1,412, rozrzut ilorazu między placówkami 14%. Kolumny log-wiarygodności: 0 = najlepsze n, im bardziej ujemne, tym mniej prawdopodobne.</p>
+      <div class="scroll-x"><table><thead><tr><th>n</th><th>oczekiwane punkty</th><th>punkty (log)</th><th>pacjenci (log)</th><th>prawdopodob. komórki</th></tr></thead><tbody><tr class=""><td>2</td><td>4 148</td><td>-5,0</td><td>-0,1</td><td>0%</td></tr><tr class=""><td>3</td><td>6 222</td><td>-1,5</td><td>-0,0</td><td>8%</td></tr><tr class=""><td>4</td><td>8 295</td><td>-0,3</td><td>0,0</td><td>28%</td></tr><tr class="pick"><td>5</td><td>10 369</td><td>0,0</td><td>-0,2</td><td>32%</td></tr><tr class=""><td>6</td><td>12 443</td><td>-0,1</td><td>-0,5</td><td>20%</td></tr><tr class=""><td>7</td><td>14 517</td><td>-0,5</td><td>-1,1</td><td>8%</td></tr><tr class=""><td>8</td><td>16 591</td><td>-1,0</td><td>-1,9</td><td>2%</td></tr></tbody></table></div>
+      <p class="note">Najbardziej prawdopodobne n dla samej komórki: <b>5</b>. Wynik v3 po dopasowaniu do API zakresu: <b>5</b> (zaznaczony).</p>
+      <div class="stepline"><span>4</span><b>Wynik w wierszach</b> · nadwyżka po równo na wiersze „&lt;5”</div>
+      <div class="scroll-x"><table><thead><tr><th>Miesiąc</th><th>Długość</th><th>Liczba</th><th>h_min</th><th class="res">h_cal v2</th><th class="res3">h_cal v3</th></tr></thead>
+      <tbody><tr><td>7</td><td>6 i więcej dni</td><td>&lt;5</td><td>1</td><td class="res">3</td><td class="res3">3</td></tr><tr><td>7</td><td>1-2 dni</td><td>&lt;5</td><td>1</td><td class="res">2</td><td class="res3">2</td></tr><tr class="sum"><td>Komórka</td><td></td><td></td><td>2</td><td class="res">5</td><td class="res3">5</td></tr></tbody></table></div>
+    </div><div class="tabpanel" role="tabpanel" id="t4" hidden>
+      <h3><span class="tag b">problem</span>J08 · Sieradz · Szpital Wojewódzki Im. Prymasa Kardynała Stefana W</h3>
+      <p>v2: współczynnik zakresu 3,07 to średnia wszystkich komórek zakresu i daje 2 pobyty (poniżej 3 wierszy). v3: wszystkie 3 wiersze to pobyty 6+ dni (3 090 pkt na pobyt z osobodniami). Same punkty wskazują 5. Pacjenci „&lt;5” przy ilorazie zakresu 1,00 wskazują najwyżej 4. Razem najbardziej prawdopodobne jest 4 (52%). Dopasowanie do API zakresu zmniejsza wynik do 3.</p>
+      <div class="stepline"><span>1</span><b>Wejście</b> · zakres <code>03.4000.030.02</code> Choroby wewnętrzne - hospitalizacja</div>
+      <div class="scroll-x"><table class="in"><thead><tr><th>Miesiąc</th><th>Tryb przyjęcia</th><th>Tryb wypisu</th><th>Płeć</th><th>Wiek</th><th>Długość pobytu</th><th>Liczba hosp.</th></tr></thead><tbody><tr><td>8</td><td>2</td><td>1</td><td>K</td><td>65 i więcej</td><td>6 i więcej dni</td><td>&lt;5</td></tr><tr><td>8</td><td>3</td><td>4</td><td>K</td><td>45-64</td><td>6 i więcej dni</td><td>&lt;5</td></tr><tr><td>12</td><td>3</td><td>9 zgon</td><td>M</td><td>65 i więcej</td><td>6 i więcej dni</td><td>&lt;5</td></tr></tbody></table></div>
+      <div class="scroll-x"><table class="in"><thead><tr><th>Zestawienie świadczeń</th><th>Pacjenci</th><th>Punkty</th><th>Iloraz grupy (API)</th></tr></thead><tbody><tr><td>wiersze zestawienia: 1</td><td>&lt;5</td><td>17 765</td><td>9 465 ÷ 7 188 = 1,317</td></tr></tbody></table></div>
+      <div class="stepline"><span>2</span><b>Kolumny pomocnicze</b> · wycena v2 bez osobodni, v3 z osobodniami (średnia w przedziale z histogramu dni API)</div>
+      <div class="scroll-x"><table><thead><tr><th>Miesiąc</th><th>Długość</th><th>Liczba</th><th class="new">min</th><th class="new">max</th><th class="new">wycena v2</th><th class="new3">punkty/pobyt v3</th></tr></thead>
+      <tbody><tr><td>8</td><td>6 i więcej dni</td><td>&lt;5</td><td class="new">1</td><td class="new">4</td><td class="new">2 067</td><td class="new3">3 090</td></tr><tr><td>8</td><td>6 i więcej dni</td><td>&lt;5</td><td class="new">1</td><td class="new">4</td><td class="new">2 067</td><td class="new3">3 090</td></tr><tr><td>12</td><td>6 i więcej dni</td><td>&lt;5</td><td class="new">1</td><td class="new">4</td><td class="new">2 067</td><td class="new3">3 090</td></tr><tr class="sum"><td>Komórka</td><td></td><td>3 wierszy</td><td class="new">lo = 3</td><td class="new">hi = 12</td><td class="new">U = 2 067</td><td class="new3">przy n = lo: 9 270</td></tr></tbody></table></div>
+      <div class="stepline"><span>3</span><b>Obliczenie</b> · v2: metoda B, przed dopasowaniem 5, wynik <b>3</b> (hi2 = 5)</div>
+      <p class="note">v3: rozkład liczby pobytów n. Oczekiwane punkty = 1,150 × (9 270 + (n − 3) × 3 090); rozrzut punktów 4% na placówkę + rozrzut pobytów. Pacjenci: „&lt;5” = 1–4 na wiersz zestawienia, iloraz zakresu 1,000, rozrzut ilorazu między placówkami 14%. Kolumny log-wiarygodności: 0 = najlepsze n, im bardziej ujemne, tym mniej prawdopodobne.</p>
+      <div class="scroll-x"><table><thead><tr><th>n</th><th>oczekiwane punkty</th><th>punkty (log)</th><th>pacjenci (log)</th><th>prawdopodob. komórki</th></tr></thead><tbody><tr class="pick"><td>3</td><td>10 660</td><td>-1,0</td><td>0,0</td><td>22%</td></tr><tr class=""><td>4</td><td>14 214</td><td>-0,1</td><td>-0,0</td><td>52%</td></tr><tr class=""><td>5</td><td>17 768</td><td>0,0</td><td>-1,0</td><td>23%</td></tr><tr class=""><td>6</td><td>21 321</td><td>-0,3</td><td>-2,9</td><td>3%</td></tr><tr class=""><td>7</td><td>24 874</td><td>-0,7</td><td>-5,9</td><td>0%</td></tr><tr class=""><td>8</td><td>28 428</td><td>-1,3</td><td>-10,1</td><td>0%</td></tr><tr class=""><td>9</td><td>31 981</td><td>-2,0</td><td>-15,5</td><td>0%</td></tr><tr class=""><td>10</td><td>35 535</td><td>-2,7</td><td>-22,1</td><td>0%</td></tr></tbody></table></div>
+      <p class="note">Najbardziej prawdopodobne n dla samej komórki: <b>4</b>. Wynik v3 po dopasowaniu do API zakresu: <b>3</b> (zaznaczony).</p>
+      <div class="stepline"><span>4</span><b>Wynik w wierszach</b> · nadwyżka po równo na wiersze „&lt;5”</div>
+      <div class="scroll-x"><table><thead><tr><th>Miesiąc</th><th>Długość</th><th>Liczba</th><th>h_min</th><th class="res">h_cal v2</th><th class="res3">h_cal v3</th></tr></thead>
+      <tbody><tr><td>8</td><td>6 i więcej dni</td><td>&lt;5</td><td>1</td><td class="res">1</td><td class="res3">1</td></tr><tr><td>8</td><td>6 i więcej dni</td><td>&lt;5</td><td>1</td><td class="res">1</td><td class="res3">1</td></tr><tr><td>12</td><td>6 i więcej dni</td><td>&lt;5</td><td>1</td><td class="res">1</td><td class="res3">1</td></tr><tr class="sum"><td>Komórka</td><td></td><td></td><td>3</td><td class="res">3</td><td class="res3">3</td></tr></tbody></table></div>
+    </div><div class="tabpanel" role="tabpanel" id="t5" hidden>
+      <h3><span class="tag b">problem</span>J08 · Koszalin · Szpital Wojewódzki Im. Mikołaja Kopernika W Koszal</h3>
+      <p>Zakres ma w API 206 pobytów, a jawni pacjenci jego komórek dają razem co najmniej 208. Źródła się wykluczają. Sama komórka w v3 ma najbardziej prawdopodobne 8 (pacjenci). Suma zakresu z API wymusza cięcie: v3 zabiera pobyty tam, gdzie punkty najsłabiej je wspierają, i tu daje 6 (krótkie pobyty, punkty wystarczają na ok. 6). v2 daje 7. Obie wersje łamią regułę „pobyty ≥ pacjenci”, bo suma z API jest twarda. Takich konfliktów jest w v3 365 komórek (v2: 896).</p>
+      <div class="stepline"><span>1</span><b>Wejście</b> · zakres <code>03.4500.998.02</code> Chirurgia ogólna - hospitalizacja - świa…</div>
+      <div class="scroll-x"><table class="in"><thead><tr><th>Miesiąc</th><th>Tryb przyjęcia</th><th>Tryb wypisu</th><th>Płeć</th><th>Wiek</th><th>Długość pobytu</th><th>Liczba hosp.</th></tr></thead><tbody><tr><td>1</td><td>11</td><td>1</td><td>K</td><td>65 i więcej</td><td>1-2 dni</td><td>&lt;5</td></tr><tr><td>5</td><td>6</td><td>1</td><td>K</td><td>65 i więcej</td><td>1-2 dni</td><td>&lt;5</td></tr><tr><td>6</td><td>3</td><td>1</td><td>K</td><td>65 i więcej</td><td>0 dni</td><td>&lt;5</td></tr><tr><td>6</td><td>2</td><td>2</td><td>K</td><td>45-64</td><td>3-5 dni</td><td>&lt;5</td></tr><tr><td>8</td><td>3</td><td>1</td><td>K</td><td>65 i więcej</td><td>3-5 dni</td><td>&lt;5</td></tr><tr><td>12</td><td>3</td><td>1</td><td>K</td><td>18-44</td><td>6 i więcej dni</td><td>&lt;5</td></tr></tbody></table></div>
+      <div class="scroll-x"><table class="in"><thead><tr><th>Zestawienie świadczeń</th><th>Pacjenci</th><th>Punkty</th><th>Iloraz grupy (API)</th></tr></thead><tbody><tr><td>wiersze zestawienia: 1</td><td>8</td><td>10 802</td><td>9 465 ÷ 7 188 = 1,317</td></tr></tbody></table></div>
+      <div class="stepline"><span>2</span><b>Kolumny pomocnicze</b> · wycena v2 bez osobodni, v3 z osobodniami (średnia w przedziale z histogramu dni API)</div>
+      <div class="scroll-x"><table><thead><tr><th>Miesiąc</th><th>Długość</th><th>Liczba</th><th class="new">min</th><th class="new">max</th><th class="new">wycena v2</th><th class="new3">punkty/pobyt v3</th></tr></thead>
+      <tbody><tr><td>1</td><td>1-2 dni</td><td>&lt;5</td><td class="new">1</td><td class="new">4</td><td class="new">1 343,5</td><td class="new3">1 299,1</td></tr><tr><td>5</td><td>1-2 dni</td><td>&lt;5</td><td class="new">1</td><td class="new">4</td><td class="new">1 343,5</td><td class="new3">1 299,1</td></tr><tr><td>6</td><td>0 dni</td><td>&lt;5</td><td class="new">1</td><td class="new">4</td><td class="new">620</td><td class="new3">620</td></tr><tr><td>6</td><td>3-5 dni</td><td>&lt;5</td><td class="new">1</td><td class="new">4</td><td class="new">2 067</td><td class="new3">2 067</td></tr><tr><td>8</td><td>3-5 dni</td><td>&lt;5</td><td class="new">1</td><td class="new">4</td><td class="new">2 067</td><td class="new3">2 067</td></tr><tr><td>12</td><td>6 i więcej dni</td><td>&lt;5</td><td class="new">1</td><td class="new">4</td><td class="new">2 067</td><td class="new3">3 090</td></tr><tr class="sum"><td>Komórka</td><td></td><td>6 wierszy</td><td class="new">lo = 6</td><td class="new">hi = 24</td><td class="new">U = 1 584,7</td><td class="new3">przy n = lo: 10 442</td></tr></tbody></table></div>
+      <div class="stepline"><span>3</span><b>Obliczenie</b> · v2: metoda B, przed dopasowaniem 8, wynik <b>7</b></div>
+      <p class="note">v3: rozkład liczby pobytów n. Oczekiwane punkty = 1,040 × (10 442 + (n − 6) × 1 740,4); rozrzut punktów 4% na placówkę + rozrzut pobytów. Pacjenci: jawni 8, iloraz zakresu 1,000, rozrzut ilorazu między placówkami 14%. Kolumny log-wiarygodności: 0 = najlepsze n, im bardziej ujemne, tym mniej prawdopodobne.</p>
+      <div class="scroll-x"><table><thead><tr><th>n</th><th>oczekiwane punkty</th><th>punkty (log)</th><th>pacjenci (log)</th><th>prawdopodob. komórki</th></tr></thead><tbody><tr class="pick"><td>6</td><td>10 860</td><td>0,0</td><td>-20,0</td><td>0%</td></tr><tr class=""><td>7</td><td>12 670</td><td>-0,3</td><td>-9,0</td><td>0%</td></tr><tr class=""><td>8</td><td>14 480</td><td>-0,9</td><td>0,0</td><td>72%</td></tr><tr class=""><td>9</td><td>16 290</td><td>-1,7</td><td>-0,3</td><td>24%</td></tr><tr class=""><td>10</td><td>18 100</td><td>-2,7</td><td>-1,1</td><td>4%</td></tr><tr class=""><td>11</td><td>19 910</td><td>-3,7</td><td>-2,5</td><td>0%</td></tr><tr class=""><td>12</td><td>21 720</td><td>-4,8</td><td>-4,4</td><td>0%</td></tr><tr class=""><td>13</td><td>23 530</td><td>-6,0</td><td>-6,8</td><td>0%</td></tr></tbody></table></div>
+      <p class="note">Najbardziej prawdopodobne n dla samej komórki: <b>8</b>. Wynik v3 po dopasowaniu do API zakresu: <b>6</b> (zaznaczony).</p>
+      <div class="stepline"><span>4</span><b>Wynik w wierszach</b> · nadwyżka po równo na wiersze „&lt;5”</div>
+      <div class="scroll-x"><table><thead><tr><th>Miesiąc</th><th>Długość</th><th>Liczba</th><th>h_min</th><th class="res">h_cal v2</th><th class="res3">h_cal v3</th></tr></thead>
+      <tbody><tr><td>1</td><td>1-2 dni</td><td>&lt;5</td><td>1</td><td class="res">2</td><td class="res3">1</td></tr><tr><td>5</td><td>1-2 dni</td><td>&lt;5</td><td>1</td><td class="res">1</td><td class="res3">1</td></tr><tr><td>6</td><td>0 dni</td><td>&lt;5</td><td>1</td><td class="res">1</td><td class="res3">1</td></tr><tr><td>6</td><td>3-5 dni</td><td>&lt;5</td><td>1</td><td class="res">1</td><td class="res3">1</td></tr><tr><td>8</td><td>3-5 dni</td><td>&lt;5</td><td>1</td><td class="res">1</td><td class="res3">1</td></tr><tr><td>12</td><td>6 i więcej dni</td><td>&lt;5</td><td>1</td><td class="res">1</td><td class="res3">1</td></tr><tr class="sum"><td>Komórka</td><td></td><td></td><td>6</td><td class="res">7</td><td class="res3">6</td></tr></tbody></table></div>
+    </div><div class="tabpanel" role="tabpanel" id="t6" hidden>
+      <h3><span class="tag b">problem</span>F21 · Włocławek · Wojewódzki Szpital Specjalistyczny We Włocławku</h3>
+      <p>Nowy typ problemu. W metodzie A krok A4 skaluje nadwyżki w zakresie i obniża komórkę poniżej liczby pacjentów: 5 pacjentów → 4 pobyty. Dotyczy 882 komórek (brakuje 1 466 pobytów). v3 traktuje „pobyty ≥ pacjenci” jako bardzo silną karę i daje 5.</p>
+      <div class="stepline"><span>1</span><b>Wejście</b> · zakres <code>03.4500.930.02</code> Chirurgia ogólna - hospitalizacja - paki…</div>
+      <div class="scroll-x"><table class="in"><thead><tr><th>Miesiąc</th><th>Tryb przyjęcia</th><th>Tryb wypisu</th><th>Płeć</th><th>Wiek</th><th>Długość pobytu</th><th>Liczba hosp.</th></tr></thead><tbody><tr><td>2</td><td>6</td><td>2</td><td>K</td><td>65 i więcej</td><td>6 i więcej dni</td><td>&lt;5</td></tr><tr><td>2</td><td>6</td><td>2</td><td>M</td><td>65 i więcej</td><td>6 i więcej dni</td><td>&lt;5</td></tr><tr><td>6</td><td>3</td><td>2</td><td>M</td><td>65 i więcej</td><td>6 i więcej dni</td><td>&lt;5</td></tr><tr><td>10</td><td>6</td><td>2</td><td>K</td><td>65 i więcej</td><td>6 i więcej dni</td><td>&lt;5</td></tr></tbody></table></div>
+      <div class="scroll-x"><table class="in"><thead><tr><th>Zestawienie świadczeń</th><th>Pacjenci</th><th>Punkty</th><th>Iloraz grupy (API)</th></tr></thead><tbody><tr><td>wiersze zestawienia: 1</td><td>5</td><td>60 308</td><td>5 886 ÷ 5 827 = 1,010</td></tr></tbody></table></div>
+      <div class="stepline"><span>2</span><b>Kolumny pomocnicze</b> · wycena v2 bez osobodni, v3 z osobodniami (średnia w przedziale z histogramu dni API)</div>
+      <div class="scroll-x"><table><thead><tr><th>Miesiąc</th><th>Długość</th><th>Liczba</th><th class="new">min</th><th class="new">max</th><th class="new">wycena v2</th><th class="new3">punkty/pobyt v3</th></tr></thead>
+      <tbody><tr><td>2</td><td>6 i więcej dni</td><td>&lt;5</td><td class="new">1</td><td class="new">4</td><td class="new">11 830,2</td><td class="new3">12 419,6</td></tr><tr><td>2</td><td>6 i więcej dni</td><td>&lt;5</td><td class="new">1</td><td class="new">4</td><td class="new">11 830,2</td><td class="new3">12 419,6</td></tr><tr><td>6</td><td>6 i więcej dni</td><td>&lt;5</td><td class="new">1</td><td class="new">4</td><td class="new">11 830,2</td><td class="new3">12 419,6</td></tr><tr><td>10</td><td>6 i więcej dni</td><td>&lt;5</td><td class="new">1</td><td class="new">4</td><td class="new">11 830,2</td><td class="new3">12 419,6</td></tr><tr class="sum"><td>Komórka</td><td></td><td>4 wierszy</td><td class="new">lo = 4</td><td class="new">hi = 16</td><td class="new">U = 11 830,2</td><td class="new3">przy n = lo: 49 678</td></tr></tbody></table></div>
+      <div class="stepline"><span>3</span><b>Obliczenie</b> · v2: metoda A, przed dopasowaniem 5, wynik <b>4</b></div>
+      <p class="note">v3: rozkład liczby pobytów n. Oczekiwane punkty = 1,009 × (49 678 + (n − 4) × 12 419,6); rozrzut punktów 4% na placówkę + rozrzut pobytów. Pacjenci: jawni 5, iloraz zakresu 1,000, rozrzut ilorazu między placówkami 3%. Kolumny log-wiarygodności: 0 = najlepsze n, im bardziej ujemne, tym mniej prawdopodobne.</p>
+      <div class="scroll-x"><table><thead><tr><th>n</th><th>oczekiwane punkty</th><th>punkty (log)</th><th>pacjenci (log)</th><th>prawdopodob. komórki</th></tr></thead><tbody><tr class=""><td>4</td><td>50 125</td><td>-0,4</td><td>-9,0</td><td>0%</td></tr><tr class="pick"><td>5</td><td>62 656</td><td>0,0</td><td>0,0</td><td>85%</td></tr><tr class=""><td>6</td><td>75 188</td><td>-0,8</td><td>-1,0</td><td>15%</td></tr><tr class=""><td>7</td><td>87 719</td><td>-2,2</td><td>-3,8</td><td>0%</td></tr><tr class=""><td>8</td><td>100 251</td><td>-3,9</td><td>-8,6</td><td>0%</td></tr><tr class=""><td>9</td><td>112 782</td><td>-5,9</td><td>-15,4</td><td>0%</td></tr><tr class=""><td>10</td><td>125 313</td><td>-7,9</td><td>-24,0</td><td>0%</td></tr><tr class=""><td>11</td><td>137 845</td><td>-10,1</td><td>-34,5</td><td>0%</td></tr></tbody></table></div>
+      <p class="note">Najbardziej prawdopodobne n dla samej komórki: <b>5</b>. Wynik v3 po dopasowaniu do API zakresu: <b>5</b> (zaznaczony).</p>
+      <div class="stepline"><span>4</span><b>Wynik w wierszach</b> · nadwyżka po równo na wiersze „&lt;5”</div>
+      <div class="scroll-x"><table><thead><tr><th>Miesiąc</th><th>Długość</th><th>Liczba</th><th>h_min</th><th class="res">h_cal v2</th><th class="res3">h_cal v3</th></tr></thead>
+      <tbody><tr><td>2</td><td>6 i więcej dni</td><td>&lt;5</td><td>1</td><td class="res">1</td><td class="res3">2</td></tr><tr><td>2</td><td>6 i więcej dni</td><td>&lt;5</td><td>1</td><td class="res">1</td><td class="res3">1</td></tr><tr><td>6</td><td>6 i więcej dni</td><td>&lt;5</td><td>1</td><td class="res">1</td><td class="res3">1</td></tr><tr><td>10</td><td>6 i więcej dni</td><td>&lt;5</td><td>1</td><td class="res">1</td><td class="res3">1</td></tr><tr class="sum"><td>Komórka</td><td></td><td></td><td>4</td><td class="res">4</td><td class="res3">5</td></tr></tbody></table></div>
+    </div><div class="tabpanel" role="tabpanel" id="t7" hidden>
+      <h3><span class="tag b">problem</span>F66 · Toruń · Spzoz Specjalistyczny Szpital Miejski Im. M. Koper</h3>
+      <p>Ten sam mechanizm co we Włocławku: 5 pacjentów, v2 daje 4, v3 daje 5.</p>
+      <div class="stepline"><span>1</span><b>Wejście</b> · zakres <code>03.4000.030.02</code> Choroby wewnętrzne - hospitalizacja</div>
+      <div class="scroll-x"><table class="in"><thead><tr><th>Miesiąc</th><th>Tryb przyjęcia</th><th>Tryb wypisu</th><th>Płeć</th><th>Wiek</th><th>Długość pobytu</th><th>Liczba hosp.</th></tr></thead><tbody><tr><td>9</td><td>3</td><td>1</td><td>M</td><td>65 i więcej</td><td>6 i więcej dni</td><td>&lt;5</td></tr><tr><td>9</td><td>2</td><td>1</td><td>M</td><td>65 i więcej</td><td>6 i więcej dni</td><td>&lt;5</td></tr><tr><td>11</td><td>3</td><td>1</td><td>K</td><td>65 i więcej</td><td>6 i więcej dni</td><td>&lt;5</td></tr><tr><td>12</td><td>2</td><td>1</td><td>M</td><td>65 i więcej</td><td>6 i więcej dni</td><td>&lt;5</td></tr></tbody></table></div>
+      <div class="scroll-x"><table class="in"><thead><tr><th>Zestawienie świadczeń</th><th>Pacjenci</th><th>Punkty</th><th>Iloraz grupy (API)</th></tr></thead><tbody><tr><td>wiersze zestawienia: 1</td><td>5</td><td>44 644</td><td>12 596 ÷ 12 105 = 1,041</td></tr></tbody></table></div>
+      <div class="stepline"><span>2</span><b>Kolumny pomocnicze</b> · wycena v2 bez osobodni, v3 z osobodniami (średnia w przedziale z histogramu dni API)</div>
+      <div class="scroll-x"><table><thead><tr><th>Miesiąc</th><th>Długość</th><th>Liczba</th><th class="new">min</th><th class="new">max</th><th class="new">wycena v2</th><th class="new3">punkty/pobyt v3</th></tr></thead>
+      <tbody><tr><td>9</td><td>6 i więcej dni</td><td>&lt;5</td><td class="new">1</td><td class="new">4</td><td class="new">2 395,4</td><td class="new3">3 182,6</td></tr><tr><td>9</td><td>6 i więcej dni</td><td>&lt;5</td><td class="new">1</td><td class="new">4</td><td class="new">2 395,4</td><td class="new3">3 182,6</td></tr><tr><td>11</td><td>6 i więcej dni</td><td>&lt;5</td><td class="new">1</td><td class="new">4</td><td class="new">2 395,4</td><td class="new3">3 182,6</td></tr><tr><td>12</td><td>6 i więcej dni</td><td>&lt;5</td><td class="new">1</td><td class="new">4</td><td class="new">2 395,4</td><td class="new3">3 182,6</td></tr><tr class="sum"><td>Komórka</td><td></td><td>4 wierszy</td><td class="new">lo = 4</td><td class="new">hi = 16</td><td class="new">U = 2 395,4</td><td class="new3">przy n = lo: 12 731</td></tr></tbody></table></div>
+      <div class="stepline"><span>3</span><b>Obliczenie</b> · v2: metoda A, przed dopasowaniem 5, wynik <b>4</b></div>
+      <p class="note">v3: rozkład liczby pobytów n. Oczekiwane punkty = 1,353 × (12 731 + (n − 4) × 3 182,6); rozrzut punktów 4% na placówkę + rozrzut pobytów. Pacjenci: jawni 5, iloraz zakresu 1,005, rozrzut ilorazu między placówkami 15%. Kolumny log-wiarygodności: 0 = najlepsze n, im bardziej ujemne, tym mniej prawdopodobne.</p>
+      <div class="scroll-x"><table><thead><tr><th>n</th><th>oczekiwane punkty</th><th>punkty (log)</th><th>pacjenci (log)</th><th>prawdopodob. komórki</th></tr></thead><tbody><tr class=""><td>4</td><td>17 225</td><td>-4,9</td><td>-9,0</td><td>0%</td></tr><tr class="pick"><td>5</td><td>21 531</td><td>-2,7</td><td>0,0</td><td>21%</td></tr><tr class=""><td>6</td><td>25 837</td><td>-1,4</td><td>-0,4</td><td>49%</td></tr><tr class=""><td>7</td><td>30 143</td><td>-0,7</td><td>-1,8</td><td>26%</td></tr><tr class=""><td>8</td><td>34 449</td><td>-0,2</td><td>-4,1</td><td>4%</td></tr><tr class=""><td>9</td><td>38 755</td><td>-0,0</td><td>-7,4</td><td>0%</td></tr><tr class=""><td>10</td><td>43 061</td><td>0,0</td><td>-11,6</td><td>0%</td></tr><tr class=""><td>11</td><td>47 367</td><td>-0,1</td><td>-16,7</td><td>0%</td></tr></tbody></table></div>
+      <p class="note">Najbardziej prawdopodobne n dla samej komórki: <b>6</b>. Wynik v3 po dopasowaniu do API zakresu: <b>5</b> (zaznaczony).</p>
+      <div class="stepline"><span>4</span><b>Wynik w wierszach</b> · nadwyżka po równo na wiersze „&lt;5”</div>
+      <div class="scroll-x"><table><thead><tr><th>Miesiąc</th><th>Długość</th><th>Liczba</th><th>h_min</th><th class="res">h_cal v2</th><th class="res3">h_cal v3</th></tr></thead>
+      <tbody><tr><td>9</td><td>6 i więcej dni</td><td>&lt;5</td><td>1</td><td class="res">1</td><td class="res3">2</td></tr><tr><td>9</td><td>6 i więcej dni</td><td>&lt;5</td><td>1</td><td class="res">1</td><td class="res3">1</td></tr><tr><td>11</td><td>6 i więcej dni</td><td>&lt;5</td><td>1</td><td class="res">1</td><td class="res3">1</td></tr><tr><td>12</td><td>6 i więcej dni</td><td>&lt;5</td><td>1</td><td class="res">1</td><td class="res3">1</td></tr><tr class="sum"><td>Komórka</td><td></td><td></td><td>4</td><td class="res">4</td><td class="res3">5</td></tr></tbody></table></div>
+    </div><div class="tabpanel" role="tabpanel" id="t8" hidden>
+      <h3><span class="tag b">problem</span>PZJ05 · Jaworzno · Szpital Wielospecjalistyczny W Jaworznie</h3>
+      <p>Nowy typ. Zestawienie podaje 31 pacjentów, a plik hospitalizacji ma dla tej komórki tylko 1 wiersz „&lt;5” (najwyżej 4 pobyty). Źródła się nie zgadzają: prawdopodobnie pobyty są w pliku pod innym kodem zakresu albo innym produktem. Dotyczy 7 komórek. Obie wersje dają 4 (górna granica z pliku).</p>
+      <div class="stepline"><span>1</span><b>Wejście</b> · zakres <code>03.4501.030.02</code> Chirurgia dziecięca - hospitalizacja</div>
+      <div class="scroll-x"><table class="in"><thead><tr><th>Miesiąc</th><th>Tryb przyjęcia</th><th>Tryb wypisu</th><th>Płeć</th><th>Wiek</th><th>Długość pobytu</th><th>Liczba hosp.</th></tr></thead><tbody><tr><td>3</td><td>6</td><td>2</td><td>M</td><td>0-17</td><td>1-2 dni</td><td>&lt;5</td></tr></tbody></table></div>
+      <div class="scroll-x"><table class="in"><thead><tr><th>Zestawienie świadczeń</th><th>Pacjenci</th><th>Punkty</th><th>Iloraz grupy (API)</th></tr></thead><tbody><tr><td>wiersze zestawienia: 1</td><td>31</td><td>64 667</td><td>5 102 ÷ 4 838 = 1,055</td></tr></tbody></table></div>
+      <div class="stepline"><span>2</span><b>Kolumny pomocnicze</b> · wycena v2 bez osobodni, v3 z osobodniami (średnia w przedziale z histogramu dni API)</div>
+      <div class="scroll-x"><table><thead><tr><th>Miesiąc</th><th>Długość</th><th>Liczba</th><th class="new">min</th><th class="new">max</th><th class="new">wycena v2</th><th class="new3">punkty/pobyt v3</th></tr></thead>
+      <tbody><tr><td>3</td><td>1-2 dni</td><td>&lt;5</td><td class="new">1</td><td class="new">4</td><td class="new">1 958</td><td class="new3">1 958</td></tr><tr class="sum"><td>Komórka</td><td></td><td>1 wierszy</td><td class="new">lo = 1</td><td class="new">hi = 4</td><td class="new">U = 1 958</td><td class="new3">przy n = lo: 1 958</td></tr></tbody></table></div>
+      <div class="stepline"><span>3</span><b>Obliczenie</b> · v2: metoda B, przed dopasowaniem 4, wynik <b>4</b></div>
+      <p class="note">v3: rozkład liczby pobytów n. Oczekiwane punkty = 1,091 × (1 958 + (n − 1) × 1 958); rozrzut punktów 4% na placówkę + rozrzut pobytów. Pacjenci: jawni 31, iloraz zakresu 1,059, rozrzut ilorazu między placówkami 5%. Kolumny log-wiarygodności: 0 = najlepsze n, im bardziej ujemne, tym mniej prawdopodobne.</p>
+      <div class="scroll-x"><table><thead><tr><th>n</th><th>oczekiwane punkty</th><th>punkty (log)</th><th>pacjenci (log)</th><th>prawdopodob. komórki</th></tr></thead><tbody><tr class=""><td>1</td><td>2 136</td><td>-5 417,0</td><td>-195,0</td><td>0%</td></tr><tr class=""><td>2</td><td>4 272</td><td>-1 780,2</td><td>-128,0</td><td>0%</td></tr><tr class=""><td>3</td><td>6 409</td><td>-585,5</td><td>-63,0</td><td>0%</td></tr><tr class="pick"><td>4</td><td>8 545</td><td>0,0</td><td>0,0</td><td>100%</td></tr></tbody></table></div>
+      <p class="note">Najbardziej prawdopodobne n dla samej komórki: <b>4</b>. Wynik v3 po dopasowaniu do API zakresu: <b>4</b> (zaznaczony).</p>
+      <div class="stepline"><span>4</span><b>Wynik w wierszach</b> · nadwyżka po równo na wiersze „&lt;5”</div>
+      <div class="scroll-x"><table><thead><tr><th>Miesiąc</th><th>Długość</th><th>Liczba</th><th>h_min</th><th class="res">h_cal v2</th><th class="res3">h_cal v3</th></tr></thead>
+      <tbody><tr><td>3</td><td>1-2 dni</td><td>&lt;5</td><td>1</td><td class="res">4</td><td class="res3">4</td></tr><tr class="sum"><td>Komórka</td><td></td><td></td><td>1</td><td class="res">4</td><td class="res3">4</td></tr></tbody></table></div>
+    </div><div class="tabpanel" role="tabpanel" id="t9" hidden>
+      <h3><span class="tag b">problem</span>F43E · Warszawa · Szpital Czerniakowski Spółka Z Ograniczoną Odpowie</h3>
+      <p>Nowy typ. 1 wiersz „&lt;5”, a punkty to 4,8 wyceny. Pobyt był bardzo drogi albo punkty zawierają rozliczenia spoza pobytu. Dotyczy 304 komórek. Sama komórka ma w obu wersjach 2 pobyty. Dopasowanie do API zakresu zmniejsza wynik do 1 w obu wersjach. Rozkład w v3 pokazuje dużą niepewność: 2 ma 36%, 3 ma 33%, 4 ma 23%, a 1 tylko 8%. Wynik 1 to skutek sumy zakresu z API, nie danych komórki.</p>
+      <div class="stepline"><span>1</span><b>Wejście</b> · zakres <code>03.4540.930.02</code> Chirurgia onkologiczna - hospitalizacja …</div>
+      <div class="scroll-x"><table class="in"><thead><tr><th>Miesiąc</th><th>Tryb przyjęcia</th><th>Tryb wypisu</th><th>Płeć</th><th>Wiek</th><th>Długość pobytu</th><th>Liczba hosp.</th></tr></thead><tbody><tr><td>11</td><td>3</td><td>2</td><td>K</td><td>65 i więcej</td><td>6 i więcej dni</td><td>&lt;5</td></tr></tbody></table></div>
+      <div class="scroll-x"><table class="in"><thead><tr><th>Zestawienie świadczeń</th><th>Pacjenci</th><th>Punkty</th><th>Iloraz grupy (API)</th></tr></thead><tbody><tr><td>wiersze zestawienia: 1</td><td>&lt;5</td><td>21 479</td><td>5 211 ÷ 4 907 = 1,062</td></tr></tbody></table></div>
+      <div class="stepline"><span>2</span><b>Kolumny pomocnicze</b> · wycena v2 bez osobodni, v3 z osobodniami (średnia w przedziale z histogramu dni API)</div>
+      <div class="scroll-x"><table><thead><tr><th>Miesiąc</th><th>Długość</th><th>Liczba</th><th class="new">min</th><th class="new">max</th><th class="new">wycena v2</th><th class="new3">punkty/pobyt v3</th></tr></thead>
+      <tbody><tr><td>11</td><td>6 i więcej dni</td><td>&lt;5</td><td class="new">1</td><td class="new">4</td><td class="new">4 471</td><td class="new3">7 828,2</td></tr><tr class="sum"><td>Komórka</td><td></td><td>1 wierszy</td><td class="new">lo = 1</td><td class="new">hi = 4</td><td class="new">U = 4 471</td><td class="new3">przy n = lo: 7 828</td></tr></tbody></table></div>
+      <div class="stepline"><span>3</span><b>Obliczenie</b> · v2: metoda B, przed dopasowaniem 2, wynik <b>1</b></div>
+      <p class="note">v3: rozkład liczby pobytów n. Oczekiwane punkty = 0,981 × (7 828 + (n − 1) × 7 828,2); rozrzut punktów 4% na placówkę + rozrzut pobytów. Pacjenci: „&lt;5” = 1–4 na wiersz zestawienia, iloraz zakresu 1,000, rozrzut ilorazu między placówkami 16%. Kolumny log-wiarygodności: 0 = najlepsze n, im bardziej ujemne, tym mniej prawdopodobne.</p>
+      <div class="scroll-x"><table><thead><tr><th>n</th><th>oczekiwane punkty</th><th>punkty (log)</th><th>pacjenci (log)</th><th>prawdopodob. komórki</th></tr></thead><tbody><tr class="pick"><td>1</td><td>7 679</td><td>-1,2</td><td>-0,3</td><td>8%</td></tr><tr class=""><td>2</td><td>15 359</td><td>0,0</td><td>0,0</td><td>36%</td></tr><tr class=""><td>3</td><td>23 038</td><td>-0,0</td><td>-0,0</td><td>33%</td></tr><tr class=""><td>4</td><td>30 718</td><td>-0,4</td><td>-0,1</td><td>23%</td></tr></tbody></table></div>
+      <p class="note">Najbardziej prawdopodobne n dla samej komórki: <b>2</b>. Wynik v3 po dopasowaniu do API zakresu: <b>1</b> (zaznaczony).</p>
+      <div class="stepline"><span>4</span><b>Wynik w wierszach</b> · nadwyżka po równo na wiersze „&lt;5”</div>
+      <div class="scroll-x"><table><thead><tr><th>Miesiąc</th><th>Długość</th><th>Liczba</th><th>h_min</th><th class="res">h_cal v2</th><th class="res3">h_cal v3</th></tr></thead>
+      <tbody><tr><td>11</td><td>6 i więcej dni</td><td>&lt;5</td><td>1</td><td class="res">1</td><td class="res3">1</td></tr><tr class="sum"><td>Komórka</td><td></td><td></td><td>1</td><td class="res">1</td><td class="res3">1</td></tr></tbody></table></div>
+    </div><div class="tabpanel" role="tabpanel" id="t10" hidden>
+      <h3><span class="tag b">problem</span>A11 · Kraków · 5 Wojskowy Szpital Kliniczny Z Polikliniką - Samod</h3>
+      <p>Nowy typ. Komórka ma 0 punktów w zestawieniu (rozliczenie korygujące albo inny okres). Punkty nic nie mówią. Dotyczy 81 komórek. Obie wersje dają dolną granicę: 1.</p>
+      <div class="stepline"><span>1</span><b>Wejście</b> · zakres <code>03.4610.998.02</code> Otorynolaryngologia - hospitalizacja - ś…</div>
+      <div class="scroll-x"><table class="in"><thead><tr><th>Miesiąc</th><th>Tryb przyjęcia</th><th>Tryb wypisu</th><th>Płeć</th><th>Wiek</th><th>Długość pobytu</th><th>Liczba hosp.</th></tr></thead><tbody><tr><td>6</td><td>6</td><td>2</td><td>M</td><td>18-44</td><td>6 i więcej dni</td><td>&lt;5</td></tr></tbody></table></div>
+      <div class="scroll-x"><table class="in"><thead><tr><th>Zestawienie świadczeń</th><th>Pacjenci</th><th>Punkty</th><th>Iloraz grupy (API)</th></tr></thead><tbody><tr><td>wiersze zestawienia: 1</td><td>&lt;5</td><td>0</td><td>8 002 ÷ 7 744 = 1,033</td></tr></tbody></table></div>
+      <div class="stepline"><span>2</span><b>Kolumny pomocnicze</b> · wycena v2 bez osobodni, v3 z osobodniami (średnia w przedziale z histogramu dni API)</div>
+      <div class="scroll-x"><table><thead><tr><th>Miesiąc</th><th>Długość</th><th>Liczba</th><th class="new">min</th><th class="new">max</th><th class="new">wycena v2</th><th class="new3">punkty/pobyt v3</th></tr></thead>
+      <tbody><tr><td>6</td><td>6 i więcej dni</td><td>&lt;5</td><td class="new">1</td><td class="new">4</td><td class="new">16 544</td><td class="new3">16 975,7</td></tr><tr class="sum"><td>Komórka</td><td></td><td>1 wierszy</td><td class="new">lo = 1</td><td class="new">hi = 4</td><td class="new">U = 16 544</td><td class="new3">przy n = lo: 16 976</td></tr></tbody></table></div>
+      <div class="stepline"><span>3</span><b>Obliczenie</b> · v2: metoda A, przed dopasowaniem 1, wynik <b>1</b></div>
+      <p class="note">v3: rozkład liczby pobytów n. Oczekiwane punkty = 1,036 × (16 976 + (n − 1) × 16 975,7); rozrzut punktów 4% na placówkę + rozrzut pobytów. Pacjenci: „&lt;5” = 1–4 na wiersz zestawienia, iloraz zakresu 1,000, rozrzut ilorazu między placówkami 2%. Kolumny log-wiarygodności: 0 = najlepsze n, im bardziej ujemne, tym mniej prawdopodobne.</p>
+      <div class="scroll-x"><table><thead><tr><th>n</th><th>oczekiwane punkty</th><th>punkty (log)</th><th>pacjenci (log)</th><th>prawdopodob. komórki</th></tr></thead><tbody><tr class="pick"><td>1</td><td>17 587</td><td>0,0</td><td>-0,3</td><td>99%</td></tr><tr class=""><td>2</td><td>35 174</td><td>-5,1</td><td>-0,0</td><td>1%</td></tr><tr class=""><td>3</td><td>52 761</td><td>-9,8</td><td>0,0</td><td>0%</td></tr><tr class=""><td>4</td><td>70 348</td><td>-14,3</td><td>-0,0</td><td>0%</td></tr></tbody></table></div>
+      <p class="note">Najbardziej prawdopodobne n dla samej komórki: <b>1</b>. Wynik v3 po dopasowaniu do API zakresu: <b>1</b> (zaznaczony).</p>
+      <div class="stepline"><span>4</span><b>Wynik w wierszach</b> · nadwyżka po równo na wiersze „&lt;5”</div>
+      <div class="scroll-x"><table><thead><tr><th>Miesiąc</th><th>Długość</th><th>Liczba</th><th>h_min</th><th class="res">h_cal v2</th><th class="res3">h_cal v3</th></tr></thead>
+      <tbody><tr><td>6</td><td>6 i więcej dni</td><td>&lt;5</td><td>1</td><td class="res">1</td><td class="res3">1</td></tr><tr class="sum"><td>Komórka</td><td></td><td></td><td>1</td><td class="res">1</td><td class="res3">1</td></tr></tbody></table></div>
+    </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>9. Model v3: rozkłady zamiast progów</h2>
+    <div class="card">
+      <p>v3 zastępuje metody A i B, okno 0,97–1,32 i twardą granicę z poprawki 1 jednym mechanizmem. Każda komórka dostaje rozkład prawdopodobieństwa liczby pobytów n. Rozkład składa się z trzech części:</p>
+      <ol>
+        <li><b>Punkty z długością pobytu.</b> Każdy wiersz ma oczekiwane punkty na pobyt według swojej długości pobytu. Dla „6+ dni” liczymy osobodnie: średnia z histogramu dni z API dla tej grupy (J08: 3 090 pkt zamiast 2 067). Komórka z samymi długimi pobytami dostaje więc mniej pobytów z tych samych punktów (Sieradz, Gorzów). Mnożnik zakresu (inne dopłaty) liczymy z sumy punktów zakresu i sumy z API.</li>
+        <li><b>Niepewność zależy od wielkości próby.</b> Punkty komórki to suma n pobytów o różnej wartości. Przy małym n względny rozrzut jest duży, przy dużym n mały. Dodatkowo placówki różnią się średnio o ok. 4,5% punktów na pobyt (szacunek z grup z ilorazem ≈ 1, gdzie n ≈ pacjenci). Mała placówka ma więc szeroki rozkład, a duża wąski.</li>
+        <li><b>Pacjenci jako rozkład.</b> n = pacjenci + ponowne pobyty. Iloraz liczymy dla zakresu (API zakresu ÷ szacunek pacjentów zakresu, skurczony do ilorazu grupy), nie dla całej grupy. Rozrzut ilorazu między placówkami szacujemy z danych grupy (E10: 3%, H55: 8%, J08: 14%). Pacjenci „&lt;5” to 1–4 na wiersz zestawienia: mieszanina zamiast twardej granicy. „Pobyty ≥ pacjenci” to bardzo silna kara, nie twarda granica.</li>
+      </ol>
+      <p><b>Dopasowanie do API.</b> Suma zakresu musi być równa API. v3 wybiera układ o największym łącznym prawdopodobieństwie. W praktyce kolejne pobyty trafiają tam, gdzie najmniej obniżają prawdopodobieństwo. Komórki pewne (duże, z wąskim rozkładem) prawie się nie ruszają. Różnicę do API przejmują komórki niepewne, w kierunku, który wskazują ich własne dane. To jest pomysł „pewne placówki tłumaczą część średniej, reszta idzie do małych”.</p>
+      <p><b>Twarde granice zostają tylko z pliku:</b> lo = jawne + wiersze „&lt;5”, hi = jawne + 4 × wiersze „&lt;5”.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>10. Ocena: czy v3 jest lepszy od v2 (2024, 695 grup)</h2>
+    <div class="card">
+      <p>Obie wersje mają sumy pobytów i zgonów równe API (zgony: 3 grupy +1 w obu wersjach, niezgodność plików). Porównujemy więc na danych, których model nie używa.</p>
+      <div class="scroll-x"><table>
+        <thead><tr><th>Test</th><th>Miara</th><th>v2</th><th>v3</th><th>Wynik</th></tr></thead>
+        <tbody>
+          <tr><td class="wrap-cell">1. Podział na zakresy: model dopasowany tylko do sumy grupy, porównany z API zakresów (643 grupy)</td><td>błąd mediana / p90 / ważony</td><td>0,22% / 1,04% / 0,39%</td><td>0,25% / 1,20% / 0,46%</td><td class="B">v2 lepszy</td></tr>
+          <tr><td class="wrap-cell">&nbsp;&nbsp;grupy z ilorazem &lt; 1,05 (385)</td><td>mediana / p90</td><td>0,14% / 0,63%</td><td>0,16% / 0,85%</td><td class="B">v2 lepszy</td></tr>
+          <tr><td class="wrap-cell">&nbsp;&nbsp;grupy z ilorazem ≥ 1,05 (258)</td><td>mediana / p90</td><td>0,41% / 1,49%</td><td>0,50% / 1,60%</td><td class="B">v2 lepszy</td></tr>
+          <tr><td class="wrap-cell">2. Ukrycie pacjentów: 54 189 komórek z jawnymi pacjentami w grupach z ilorazem ≈ 1; ile pobytów wynika z samych punktów (prawda ≈ pacjenci × iloraz)</td><td>błąd mediana / p90</td><td>1,9% / 9,9%</td><td>1,9% / 9,3%</td><td class="good">v3 trochę lepszy</td></tr>
+          <tr><td class="wrap-cell">3. Rozkład krajowy długości pobytu (histogram API)</td><td>różnica udziałów, mediana / ważona</td><td>1,29% / 1,58%</td><td>1,32% / 1,58%</td><td>remis</td></tr>
+          <tr><td class="wrap-cell">4. Rozkład krajowy trybu przyjęcia</td><td>mediana / ważona</td><td>1,15% / 1,56%</td><td>1,15% / 1,57%</td><td>remis</td></tr>
+          <tr><td class="wrap-cell">5. Rozkład krajowy płci</td><td>mediana / ważona</td><td>0,59% / 0,71%</td><td>0,58% / 0,70%</td><td>remis</td></tr>
+          <tr><td class="wrap-cell">6. Spójność: wynik mniejszy niż jawni pacjenci</td><td>komórki (brakujące pobyty)</td><td>896 (1 535)</td><td>365 (825)</td><td class="good">v3 lepszy</td></tr>
+        </tbody>
+      </table></div>
+      <p class="note">Dla porównania w testach 3–5: metoda <code>sim</code> ma 1,87% / 1,92% / 0,64% (mediana), a <code>min</code> 1,43% / 1,31% / 0,56%. Obie kalibracje są lepsze od <code>sim</code>. Testy 3–5 słabo rozróżniają v2 i v3, bo obie wersje dzielą nadwyżkę komórki po równo na wiersze. v3 zmienia 44 159 komórek (21%) i przesuwa 58 849 pobytów (0,84%) względem v2.</p>
+      <h3>Wniosek</h3>
+      <ul>
+        <li><b>v3 nie jest wyraźnie lepszy od v2.</b> Wygrywa w spójności z pacjentami i trochę w ogonie testu punktów. Przegrywa w teście podziału na zakresy. W rozkładach krajowych jest remis.</li>
+        <li><b>Długość pobytu pomaga, ale mało.</b> Bez osobodni (v3 bez histogramu) błąd ważony w teście 1 rośnie o ok. 0,01–0,03 pp, a p90 w teście 2 rośnie z 9,3% do 9,5%. Część zysku w teście 2 daje więc sam model rozkładu, a część osobodnie. Osobodnie zmieniają wynik głównie w małych komórkach z długimi pobytami (Sieradz, Gorzów).</li>
+        <li><b>Najsłabszy element v3 to iloraz pobytów do pacjentów bez API zakresów.</b> W teście 1 v3 szacuje iloraz zakresu z punktów i to daje gorszy podział niż jeden współczynnik grupy w v2. W trybie produkcyjnym iloraz zakresu pochodzi z API, więc ten test jest dla v3 surowszy niż praca na pełnych danych.</li>
+        <li><b>Rekomendacja:</b> nie wymieniać v2 na v3 w całości (zrobione jako v4, sekcja 11). Przenieść do v2 dwie zmiany, które nie pogarszają testów: (1) „pobyty ≥ pacjenci” jako dolna granica w kroku dopasowania A4/B2, (2) wycenę z osobodniami według histogramu dni API. Rozkład v3 zostawić jako miarę niepewności komórki (np. do oznaczenia komórek z szerokim rozkładem w UI).</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2>11. v4: v2 + najlepsze elementy v3</h2>
+    <div class="card">
+      <p>v4 zostawia schemat v2 (metody A i B, okno, poprawki 1 i 2) i dodaje z v3 tylko dwie rzeczy:</p>
+      <ol>
+        <li><b>Wycena z osobodniami.</b> U komórki to średnia punktów pobytu według długości pobytu wierszy. Dla „6+ dni” dolicza osobodnie: średnia z histogramu dni z API (J08: 3 090 pkt zamiast 2 067). Ta sama U działa w metodzie A (okno), w metodzie B (współczynnik c) i w poprawce 2.</li>
+        <li><b>Dopasowanie nie schodzi poniżej jawnych pacjentów.</b> Kroki A4, B2 i domknięcie grupy mają dolną granicę max(lo, pacjenci). Komórka spada poniżej pacjentów tylko wtedy, gdy bez tego nie da się uzyskać sumy grupy z API.</li>
+      </ol>
+      <p>Nie przeniosłem rozkładu v3 (przegrywał w teście zakresów) ani ilorazu zakresu w granicy z poprawki 1. Iloraz zakresu sprawdziłem jako wariant: zmienia 64 komórki i nie zmienia wyników testów (różnice poniżej 0,001 pp), więc v4 zostaje przy ilorazie grupy.</p>
+      <div class="scroll-x"><table>
+        <thead><tr><th>Test (2024, te same co w sekcji 10)</th><th>v2</th><th>v3</th><th>v4</th></tr></thead>
+        <tbody>
+          <tr><td class="wrap-cell">1. Podział na zakresy bez celów z API: mediana / p90 / ważony</td><td>0,22% / 1,04% / 0,39%</td><td>0,25% / 1,20% / 0,46%</td><td class="good">0,20% / 0,91% / 0,37%</td></tr>
+          <tr><td class="wrap-cell">&nbsp;&nbsp;grupy z ilorazem &lt; 1,05: mediana / p90</td><td>0,14% / 0,63%</td><td>0,16% / 0,85%</td><td class="good">0,12% / 0,54%</td></tr>
+          <tr><td class="wrap-cell">&nbsp;&nbsp;grupy z ilorazem ≥ 1,05: mediana / p90</td><td>0,41% / 1,49%</td><td>0,50% / 1,60%</td><td class="good">0,38% / 1,45%</td></tr>
+          <tr><td class="wrap-cell">2. Ukrycie pacjentów: błąd mediana / p90</td><td>1,86% / 9,94%</td><td>1,90% / 9,32%</td><td>1,90% / 9,32%</td></tr>
+          <tr><td class="wrap-cell">3. Długość pobytu: mediana / p90 / ważona</td><td>1,29% / 2,99% / 1,58%</td><td>1,32% / 3,00% / 1,58%</td><td class="good">1,26% / 2,91% / 1,56%</td></tr>
+          <tr><td class="wrap-cell">4. Tryb przyjęcia: mediana / p90 / ważona</td><td>1,15% / 2,91% / 1,56%</td><td>1,15% / 2,90% / 1,57%</td><td class="good">1,11% / 2,89% / 1,55%</td></tr>
+          <tr><td class="wrap-cell">5. Płeć: mediana / p90 / ważona</td><td>0,59% / 2,29% / 0,71%</td><td>0,58% / 2,28% / 0,70%</td><td class="good">0,57% / 2,22% / 0,70%</td></tr>
+          <tr><td class="wrap-cell">6. Wynik mniejszy niż jawni pacjenci: komórki (brakujące pobyty)</td><td>896 (1 535)</td><td>365 (825)</td><td class="good">255 (502)</td></tr>
+          <tr><td class="wrap-cell">Sumy pobytów = API / zgony = API</td><td>695 / 692</td><td>695 / 692</td><td>695 / 692</td></tr>
+        </tbody>
+      </table></div>
+      <p class="note">Test 1 dla v4 bez osobodni: mediana 0,21%, p90 1,00%, ważony 0,39%. Test 1 dla v4 bez granicy z pacjentów: 0,21% / 0,94% / 0,37%. Dopasowanie w v4 rozdziela nadwyżkę jak v2 (proporcjonalnie do nadwyżki ponad lo), a pacjenci są tylko dolną granicą; pierwsza wersja liczyła nadwyżkę od pacjentów i przesuwała pobyty do dużych komórek (Nowa Sól 661 zamiast 646). Osobodnie pomagają głównie w grupach z ilorazem ≥ 1,05, granica z pacjentów w grupach z ilorazem &lt; 1,05. v4 zmienia względem v2 8 285 komórek (4%) i przesuwa 8 819 pobytów (0,13%). Zgony: te same 3 grupy z różnicą 1 co w v2 (niezgodność plików).</p>
+      <h3>Komórki z zakładek w trzech wersjach</h3>
+      <div class="scroll-x"><table>
+        <thead><tr><th>Komórka</th><th>Pacjenci</th><th>v2</th><th>v3</th><th>v4</th></tr></thead>
+        <tbody><tr><td>E10 · Kraków</td><td>8 pacjentów</td><td>8</td><td>8</td><td class="">8</td></tr><tr><td>E10 · Warszawa</td><td>pacjenci „&lt;5”</td><td>3</td><td>3</td><td class="">3</td></tr><tr><td>H55 · Leszno</td><td>8 pacjentów</td><td>8</td><td>8</td><td class="">8</td></tr><tr><td>J08 · Gorzów Wlkp.</td><td>pacjenci „&lt;5”</td><td>5</td><td>5</td><td class="">5</td></tr><tr><td>J08 · Sieradz</td><td>pacjenci „&lt;5”</td><td>3</td><td>3</td><td class="">3</td></tr><tr><td>J08 · Koszalin</td><td>8 pacjentów</td><td>7</td><td>6</td><td class="good">8</td></tr><tr><td>F21 · Włocławek</td><td>5 pacjentów</td><td>4</td><td>5</td><td class="good">5</td></tr><tr><td>F66 · Toruń</td><td>5 pacjentów</td><td>4</td><td>5</td><td class="good">5</td></tr><tr><td>K39 · Warszawa</td><td>7 pacjentów</td><td>6</td><td>6</td><td class="good">7</td></tr><tr><td>PZJ05 · Jaworzno</td><td>31 pacjentów</td><td>4</td><td>4</td><td class="">4</td></tr><tr><td>F43E · Warszawa</td><td>pacjenci „&lt;5”</td><td>1</td><td>1</td><td class="">1</td></tr><tr><td>A11 · Kraków</td><td>pacjenci „&lt;5”</td><td>1</td><td>1</td><td class="">1</td></tr></tbody>
+      </table></div>
+      <h3>Wniosek</h3>
+      <ul>
+        <li><b>v4 jest lepszy od v2 we wszystkich testach poza medianą testu 2</b> (1,90% wobec 1,86%; p90 lepsze: 9,32% wobec 9,94%). Zyski są małe, ale mają ten sam kierunek w każdym teście.</li>
+        <li>v4 naprawia wszystkie przypadki „wynik &lt; pacjenci”, które nie wynikają z sumy API (Włocławek, Toruń, Koszalin, K39 Warszawa). Zostaje 255 komórek, w których suma pacjentów przekracza sumę z API.</li>
+        <li>Sieradz i Gorzów mają w v4 ten sam wynik co w v2 (3 i 5), ale z innego powodu: Sieradz z wyższej wyceny długich pobytów, nie z dolnej granicy. Gorzów nadal ma twardą granicę 5 z poprawki 1, a v3 pokazał, że 6–7 też są możliwe.</li>
+        <li><b>Rekomendacja:</b> wdrożyć v4 jako metodę <code>cal</code>. Rozkład z v3 może później służyć jako miara niepewności komórki.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2>12. Miesiące: <code>sim</code> a <code>cal</code></h2>
+    <div class="card">
+      <p>Każdy wykres pokazuje liczbę pobytów w kolejnych miesiącach 2024 r. dla jednej grupy. Trzy linie to trzy sposoby liczenia wierszy „&lt;5”:</p>
+      <ul>
+        <li><b>min</b>: każdy wiersz „&lt;5” = 1 pobyt. To dolna granica.</li>
+        <li><b>sim</b> (dawna metoda, dziś w portalu): każdy wiersz „&lt;5” dostaje losową wartość od 1 do 4. Wagi maleją jak e<sup>−x</sup>, więc średnio wychodzi ok. 1,5 pobytu na wiersz, w każdej grupie tak samo.</li>
+        <li><b>cal</b>: wynik kalibracji z tego dokumentu. Suma roku = API.</li>
+      </ul>
+      <p>Kalibracja daje liczbę pobytów dla całej komórki, bez podziału na miesiące. Do wykresu nadwyżkę komórki (cal − min) dzielimy na miesiące proporcjonalnie do liczby wierszy „&lt;5” w miesiącu. To reguła tymczasowa: kształt linii <code>cal</code> w ciągu roku jest więc zbliżony do <code>min</code>, a poziom wynika z API.</p>
+      <div class="chart-bar" role="group" aria-label="Skala osi pionowej">
+        <span>Oś pionowa:</span>
+        <button type="button" data-scale="zero" aria-pressed="true">Od zera</button>
+        <button type="button" data-scale="fit" aria-pressed="false">Dopasowana</button>
+      </div>
+      <div class="charts" id="charts"></div>
+      <p class="note">Najedź na wykres, aby zobaczyć liczby miesiąca. Tabela pod każdym wykresem ma te same liczby.</p>
+    </div>
+    <div class="card">
+      <h3>Co pokazują wykresy</h3>
+      <ul>
+        <li><b>E10 (metoda A):</b> <code>sim</code> daje 12 173 pobyty, o 35% więcej niż API (8 995). Prawie każdy wiersz „&lt;5” to tu 1 pobyt, bo iloraz wynosi 1,004, a losowanie dodaje średnio 0,5 pobytu do każdego z 7 804 wierszy. <code>cal</code> leży tuż nad <code>min</code>.</li>
+        <li><b>H55 (metoda B):</b> <code>sim</code> daje 29 239 pobytów, o 5,6% mniej niż API (30 971). Wiersze „&lt;5” kryją tu średnio więcej niż 1,5 pobytu. <code>cal</code> leży nad <code>sim</code> w każdym miesiącu.</li>
+        <li><b>J08 (metoda B):</b> <code>sim</code> daje 10 551 pobytów, o 11,5% więcej niż API (9 465). <code>cal</code> leży między <code>min</code> a <code>sim</code>.</li>
+        <li>Błąd <code>sim</code> ma różny znak w różnych grupach. Nie da się go poprawić jednym mnożnikiem dla wszystkich grup. Kalibracja ustala poziom osobno dla każdej grupy i zakresu.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2>13. Podsumowanie</h2>
+    <div class="card">
+      <ol>
+        <li>Kroki 1–3 są takie same dla każdej grupy: granice komórek, poprawka 1, cele zakresów z API.</li>
+        <li>Krok 4 wybiera metodę według ilorazu pobytów do pacjentów z API dla całej grupy.</li>
+        <li>Metoda A liczy z pacjentów, gdzie są jawni, a z punktów tylko w komórkach z pacjentami „&lt;5”.</li>
+        <li>Metoda B liczy z punktów w każdej komórce. Współczynnik c dobiera osobno w każdym zakresie.</li>
+        <li>Kroki 5–7 są znowu wspólne: suma grupy i zgony równe API.</li>
+      </ol>
+      <p class="note">Źródło liczb: przeliczenie 2024 skryptem kalibracji v2 (6.11.2026), dane NFZ: plik hospitalizacji 2024, zestawienie świadczeń 2024, API statystyk JGP, katalogi wycen 2024.</p>
+    </div>
+  </section>
+</div>
+
+<script>
+// Przełącznik ścieżki: wygasza gałąź, której grupa nie używa, i pokazuje liczby grupy w węzłach.
+(function () {
+  document.querySelectorAll(".chart-bar").forEach((bar) => {
+    const btns = bar.querySelectorAll("button[data-ex]");
+    if (!btns.length) return;
+    const svg = bar.closest(".card").querySelector("svg.flow");
+    btns.forEach((btn) => btn.addEventListener("click", () => {
+      btns.forEach((b) => b.setAttribute("aria-pressed", String(b === btn)));
+      if (btn.dataset.ex) svg.dataset.ex = btn.dataset.ex;
+      else delete svg.dataset.ex;
+    }));
+  });
+  // Wersja metody w sekcjach 2–7.
+  const vb = document.querySelectorAll(".vbar button[data-ver]");
+  vb.forEach((btn) => btn.addEventListener("click", () => {
+    vb.forEach((b) => b.setAttribute("aria-selected", String(b === btn)));
+    document.querySelectorAll(".ver").forEach((v) => { v.hidden = v.dataset.ver !== btn.dataset.ver; });
+  }));
+})();
+</script>
+<script>
+// Wykresy miesięczne min / sim / cal (2024). Dane: trends.json.gz (min, sim) i kalibracja v2 (cal).
+(function () {
+  const DATA = {"E10": {"sim": [1112, 1064, 1014, 969, 1076, 985, 970, 879, 958, 1133, 970, 1043], "mn": [787, 694, 686, 678, 709, 665, 641, 594, 654, 756, 662, 710], "cal": [873, 760, 761, 735, 773, 723, 704, 647, 707, 826, 716, 770]}, "H55": {"sim": [2102, 2733, 2276, 2607, 2468, 2330, 2348, 2394, 2558, 2791, 2414, 2218], "mn": [1834, 2470, 2025, 2357, 2216, 2059, 2085, 2145, 2275, 2514, 2156, 1953], "cal": [2225, 2880, 2424, 2755, 2626, 2478, 2519, 2531, 2697, 2945, 2570, 2321]}, "J08": {"sim": [847, 846, 856, 891, 801, 849, 952, 864, 864, 975, 964, 842], "mn": [613, 627, 637, 661, 602, 621, 706, 643, 620, 755, 710, 639], "cal": [748, 763, 788, 796, 730, 756, 854, 770, 752, 889, 850, 769]}};
+  const META = {
+    E10: { name: "OZW – diagnostyka inwazyjna", api: 8995, method: "A" },
+    H55: { name: "zabiegi artroskopowe i przezskórne kręgosłupa", api: 30971, method: "B" },
+    J08: { name: "choroby piersi złośliwe", api: 9465, method: "B" },
+  };
+  const SERIES = [
+    { key: "mn", label: "min", color: "var(--c-min)", dash: "5 4" },
+    { key: "sim", label: "sim", color: "var(--c-sim)" },
+    { key: "cal", label: "cal", color: "var(--c-cal)" },
+  ];
+  const MONTHS = ["sty", "lut", "mar", "kwi", "maj", "cze", "lip", "sie", "wrz", "paź", "lis", "gru"];
+  const fmt = (v) => String(v).replace(/\B(?=(\d{3})+(?!\d))/g, "\u00a0");
+  const sum = (a) => a.reduce((x, y) => x + y, 0);
+  const W = 720, H = 240, L = 52, R = 46, T = 12, B = 26;
+  const root = document.getElementById("charts");
+  let scale = "zero";
+
+  function niceMax(v) {
+    const p = Math.pow(10, Math.floor(Math.log10(v)));
+    for (const m of [1, 1.2, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10]) if (m * p >= v) return m * p;
+    return v;
+  }
+
+  function draw() {
+    root.innerHTML = "";
+    for (const g of Object.keys(DATA)) {
+      const d = DATA[g], meta = META[g];
+      const all = SERIES.flatMap((s) => d[s.key]);
+      const hi = niceMax(Math.max(...all) * 1.04);
+      let lo = 0;
+      if (scale === "fit") { const step = hi / 5; lo = Math.max(0, Math.floor((Math.min(...all) * 0.96) / step) * step); }
+      const x = (i) => L + (i * (W - L - R)) / 11;
+      const y = (v) => T + (1 - (v - lo) / (hi - lo)) * (H - T - B);
+      const ticks = Array.from({ length: 6 }, (_, i) => lo + ((hi - lo) * i) / 5);
+      const box = document.createElement("div");
+      box.className = "chart";
+      const tot = (k) => fmt(sum(d[k]));
+      box.innerHTML = `<h3>${g} · ${meta.name} <span>(metoda ${meta.method}; rok: min ${tot("mn")}, sim ${tot("sim")}, cal ${tot("cal")} = API)</span></h3>
+        <div class="legend">${SERIES.map((s) => `<span><i style="border-top-color:${s.color};${s.dash ? "border-top-style:dashed" : ""}"></i>${s.label}</span>`).join("")}</div>`;
+      let svg = `<svg class="line" viewBox="0 0 ${W} ${H}" role="img" aria-label="${g}: pobyty w miesiącach 2024, metody min, sim i cal">`;
+      for (const t of ticks) svg += `<line class="grid" x1="${L}" x2="${W - R}" y1="${y(t)}" y2="${y(t)}"/><text class="axis" x="${L - 8}" y="${y(t) + 4}" text-anchor="end">${fmt(Math.round(t))}</text>`;
+      MONTHS.forEach((m, i) => (svg += `<text class="axis" x="${x(i)}" y="${H - 6}" text-anchor="middle">${m}</text>`));
+      for (const s of SERIES) {
+        const pts = d[s.key].map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
+        svg += `<polyline class="s" points="${pts}" stroke="${s.color}" ${s.dash ? `stroke-dasharray="${s.dash}"` : ""}/>`;
+      }
+      // Etykiety na końcu linii, rozsunięte, gdy są za blisko.
+      const ends = SERIES.map((s) => ({ s, yy: y(d[s.key][11]) })).sort((a, b) => a.yy - b.yy);
+      for (let i = 1; i < ends.length; i++) if (ends[i].yy - ends[i - 1].yy < 13) ends[i].yy = ends[i - 1].yy + 13;
+      for (const e of ends) svg += `<text class="lbl" x="${W - R + 6}" y="${e.yy + 4}">${e.s.label}</text>`;
+      svg += `<line class="cross" x1="0" x2="0" y1="${T}" y2="${H - B}" style="display:none"/><rect x="${L - 20}" y="0" width="${W - L - R + 40}" height="${H}" fill="transparent"/></svg>`;
+      box.insertAdjacentHTML("beforeend", svg + `<div class="tip"></div>`);
+      box.insertAdjacentHTML("beforeend", `<details><summary>Tabela</summary><div class="scroll-x"><table><thead><tr><th>Miesiąc</th>${SERIES.map((s) => `<th>${s.label}</th>`).join("")}<th>cal − sim</th></tr></thead><tbody>${MONTHS.map((m, i) => `<tr><td>${m}</td>${SERIES.map((s) => `<td>${fmt(d[s.key][i])}</td>`).join("")}<td>${fmt(d.cal[i] - d.sim[i])}</td></tr>`).join("")}<tr><td><b>Rok</b></td>${SERIES.map((s) => `<td><b>${tot(s.key)}</b></td>`).join("")}<td><b>${fmt(sum(d.cal) - sum(d.sim))}</b></td></tr></tbody></table></div></details>`);
+      root.appendChild(box);
+      const el = box.querySelector("svg"), cross = el.querySelector(".cross"), tip = box.querySelector(".tip");
+      el.addEventListener("pointermove", (ev) => {
+        const r = el.getBoundingClientRect();
+        const px = ((ev.clientX - r.left) / r.width) * W;
+        const i = Math.max(0, Math.min(11, Math.round(((px - L) / (W - L - R)) * 11)));
+        cross.setAttribute("x1", x(i)); cross.setAttribute("x2", x(i)); cross.style.display = "";
+        tip.innerHTML = `<b>${MONTHS[i]} 2024</b>` + SERIES.slice().reverse().map((s) => `<span style="color:${s.color}">■</span> ${s.label}: ${fmt(d[s.key][i])}`).join("<br>");
+        tip.style.display = "block";
+        const bx = box.getBoundingClientRect();
+        let left = ev.clientX - bx.left + 14;
+        if (left + tip.offsetWidth > bx.width) left = ev.clientX - bx.left - tip.offsetWidth - 14;
+        tip.style.left = left + "px";
+        tip.style.top = el.offsetTop + 10 + "px";
+      });
+      el.addEventListener("pointerleave", () => { cross.style.display = "none"; tip.style.display = "none"; });
+    }
+  }
+  document.querySelectorAll("[data-scale]").forEach((btn) => btn.addEventListener("click", () => {
+    scale = btn.dataset.scale;
+    document.querySelectorAll("[data-scale]").forEach((b) => b.setAttribute("aria-pressed", String(b === btn)));
+    draw();
+  }));
+  draw();
+})();
+</script>
+<script>
+// Zakładki z komórkami.
+document.querySelectorAll(".tabs").forEach((box) => {
+  const btns = box.querySelectorAll('[role="tab"]');
+  btns.forEach((b) => b.addEventListener("click", () => {
+    btns.forEach((x) => { const on = x === b; x.setAttribute("aria-selected", String(on)); document.getElementById(x.getAttribute("aria-controls")).hidden = !on; });
+  }));
+});
+</script>

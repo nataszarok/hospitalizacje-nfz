@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="pl">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Test wsteczny 2022–2023</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Test wsteczny metod bez zestawienia świadczeń (2023 i 2022 ze strukturą 2024). Te same tokeny co plan kalibracji. */
+:root {
+  --bg: #ffffff; --surface: #f5f8f7; --panel: #ffffff;
+  --ink: #172033; --ink-2: #475467; --ink-3: #667085; --line: #e2e8e6;
+  --brand: #087f75; --brand-soft: #e6f3f1; --on-brand: #ffffff;
+  --hi: #c65d2e; --hi-soft: rgba(198, 93, 46, 0.10); --ok: #2f7d4f; --ok-soft: rgba(47, 125, 79, 0.10);
+  --font: "Inter", ui-sans-serif, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1716; --surface: #15201e; --panel: #1a2624; --ink: #e8eeec; --ink-2: #b5c2be; --ink-3: #8b9a96; --line: #2a3936;
+    --brand: #4cc2b2; --brand-soft: #18322e; --on-brand: #0f1716; --hi: #e8895c; --hi-soft: rgba(232, 137, 92, 0.14); --ok: #6cc28e; --ok-soft: rgba(108, 194, 142, 0.12); color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1716; --surface: #15201e; --panel: #1a2624; --ink: #e8eeec; --ink-2: #b5c2be; --ink-3: #8b9a96; --line: #2a3936;
+  --brand: #4cc2b2; --brand-soft: #18322e; --on-brand: #0f1716; --hi: #e8895c; --hi-soft: rgba(232, 137, 92, 0.14); --ok: #6cc28e; --ok-soft: rgba(108, 194, 142, 0.12); color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 15px; line-height: 1.55; }
+.wrap { max-width: 1080px; margin: 0 auto; padding: 36px 16px 80px; display: grid; gap: 40px; }
+h1 { font-size: clamp(26px, 4vw, 34px); margin: 0; letter-spacing: -0.02em; line-height: 1.2; }
+h2 { font-size: 21px; margin: 0; }
+h3 { font-size: 15.5px; margin: 0; }
+p { margin: 0; max-width: 76ch; }
+code { font-size: 0.9em; background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; }
+.kicker { font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--brand); }
+.lead { font-size: 16.5px; color: var(--ink-2); }
+section { display: grid; gap: 14px; }
+.card { border: 1px solid var(--line); border-radius: 12px; background: var(--panel); padding: 16px 18px; display: grid; gap: 12px; min-width: 0; }
+.card.warn { border-color: var(--hi); background: var(--hi-soft); }
+.note { font-size: 12.5px; color: var(--ink-3); }
+.scroll-x { overflow-x: auto; }
+.formula { font-size: 15px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; font-variant-numeric: tabular-nums; }
+.parts { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.part { border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; display: grid; gap: 4px; font-size: 13.5px; color: var(--ink-2); align-content: start; }
+.part b { color: var(--ink); }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+.fact { border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; display: grid; gap: 2px; }
+.fact b { font-size: 24px; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
+.fact span { font-size: 12.5px; color: var(--ink-3); }
+table { border-collapse: collapse; width: 100%; font-size: 13px; font-variant-numeric: tabular-nums; }
+th { font-size: 11.5px; font-weight: 600; color: var(--ink-3); text-align: right; padding: 6px 7px; border-bottom: 1px solid var(--line); vertical-align: bottom; }
+td { padding: 6px 7px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; }
+td.wrap-cell { white-space: normal; text-align: left; min-width: 260px; }
+td.bad { color: var(--hi); font-weight: 600; }
+td.good { color: var(--ok); font-weight: 600; }
+ul, ol { margin: 0; padding-left: 20px; display: grid; gap: 6px; font-size: 14px; color: var(--ink-2); max-width: 80ch; }
+li b { color: var(--ink); }
+.tag { display: inline-block; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; border-radius: 999px; padding: 1px 8px; margin-right: 6px; vertical-align: 1px; }
+.tag.hi { background: var(--hi-soft); color: var(--hi); }
+.tag.mid { background: var(--brand-soft); color: var(--brand); }
+.tag.lo { background: var(--surface); color: var(--ink-3); border: 1px solid var(--line); }
+.step { display: grid; grid-template-columns: 30px 1fr; gap: 10px; align-items: start; }
+.step > span { width: 26px; height: 26px; border-radius: 50%; background: var(--brand-soft); color: var(--brand); font-weight: 700; font-size: 13px; display: grid; place-items: center; }
+tr.pick td { background: var(--ok-soft); font-weight: 600; }
+tr.wrong td { background: var(--hi-soft); }
+</style>
+
+<div class="wrap">
+  <header style="display:grid;gap:10px">
+    <span class="kicker">Roadmapa · etap 4a · test wsteczny</span>
+    <h1>Czy struktura v4 z 2024 r. odtwarza lata 2023 i 2022 bez zestawienia świadczeń?</h1>
+    <p class="lead">Test przygotowujący lata 2017–2018. Dla 2023 i 2022 udajemy, że nie mamy zestawienia (punktów i pacjentów), i liczymy wynik tylko z pliku hospitalizacji, tabel API danego roku i wyniku v4 z 2024 r. Porównujemy go z v4 policzonym dla tego roku z zestawieniem.</p>
+    <p class="note">Powiązane: <a href="kalibracja-2017-2018-koncepcja.html">koncepcja 2017–2018</a>, <a href="kalibracja-schemat-decyzji.html">schemat v4</a>. Liczby: 7.11.2026, skrypt testu w scratchpadzie sesji (do przeniesienia do repo przy wdrożeniu).</p>
+  </header>
+
+  <section>
+    <h2>1. Układ testu</h2>
+    <div class="card">
+      <ul>
+        <li><b>Prawda:</b> v4 roku testu (z zestawieniem). To też szacunek, ale najlepszy, jaki mamy; test mierzy, ile tracimy bez zestawienia.</li>
+        <li><b>Test A:</b> rok 2023, struktura z 2024 (1 rok różnicy) — odpowiednik 2018 ← 2019.</li>
+        <li><b>Test B:</b> rok 2022, struktura z 2024 (2 lata różnicy) — odpowiednik 2017 ← 2019.</li>
+        <li><b>Komórka:</b> OW NFZ + NIP + kod zakresu + produkt JGP. „Z odpowiednikiem” = ta sama komórka jest w 2024 r.</li>
+        <li><b>Nazwy zakresów</b> (do łączenia z tabelami API) bierzemy z roku struktury (2024), tak jak dla 2017–2018 weźmiemy je z 2019 r.</li>
+      </ul>
+      <h3>Metody</h3>
+      <div class="scroll-x"><table>
+        <thead><tr><th>Metoda</th><th>Co wie o szpitalu</th><th>Jak liczy</th></tr></thead>
+        <tbody>
+          <tr><td>min</td><td>nic</td><td class="wrap-cell">każdy wiersz „&lt;5” = 1</td></tr>
+          <tr><td>sim</td><td>nic</td><td class="wrap-cell">losowo 1–4 (średnio 1,43), jak dziś w serwisie</td></tr>
+          <tr><td>M1</td><td>nic</td><td class="wrap-cell">nadwyżka zakresu z API (pobyty zakresu − min) po równo na wiersze „&lt;5” zakresu</td></tr>
+          <tr><td>M2</td><td>struktura 2024</td><td class="wrap-cell">nadwyżka na wiersz „&lt;5” komórki z v4 2024; komórka bez odpowiednika dostaje średnią zakresu; potem skalowanie do pobytów zakresu z API roku testu</td></tr>
+          <tr><td>M3</td><td>struktura 2024</td><td class="wrap-cell">M2 jako start, potem raking wierszy „&lt;5” (wartości 1–4) do tabel API roku testu: zakresy, długość pobytu (histogram), tryb przyjęcia, płeć</td></tr>
+          <tr><td>M4</td><td>nic</td><td class="wrap-cell">sam raking, start = 1 na wiersz</td></tr>
+        </tbody>
+      </table></div>
+      <h3>Miara główna: błąd nadwyżki</h3>
+      <div class="formula">błąd nadwyżki = Σ<sub>komórki</sub> |n − n<sub>v4</sub>| ÷ Σ<sub>komórki</sub> (n<sub>v4</sub> − min)</div>
+      <p>0% = wynik identyczny z v4; 100% = tak daleko od v4 jak metoda min. Pobyty, które trafiły do złej komórki, to w przybliżeniu połowa licznika (bo każdy przesunięty pobyt brakuje w jednej komórce i jest w nadmiarze w innej).</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>2. Test A: 2023 ze strukturą 2024 (1 rok)</h2>
+    <div class="card">
+      <p>Nadwyżka v4 (pobyty ukryte w „&lt;5” ponad min): 1 119 943. Komórki z wierszami „&lt;5”: 202 117, z odpowiednikiem w 2024 r.: 163 266. Komórki bez odpowiednika mają tylko 1,2% nadwyżki.</p>
+      <div class="scroll-x"><table>
+        <thead><tr><th>Metoda</th><th>Suma pobytów</th><th>Błąd nadwyżki</th><th>… komórki z odpowiednikiem w 2024</th><th>… bez odpowiednika</th><th>Błąd komórki: mediana / p90</th><th>Komórki bliżej v4 niż min</th></tr></thead>
+        <tbody><tr><td>min (1 na wiersz)</td><td>5 653 495</td><td><b>100,0%</b></td><td>100,0%</td><td>100,0%</td><td>0,0% / 24,7%</td><td>—</td></tr><tr><td>sim (losowo 1–4)</td><td>7 457 520</td><td><b>94,3%</b></td><td>91,9%</td><td>298,2%</td><td>50,7% / 50,7%</td><td>45,0%</td></tr><tr><td>M1 równo w zakresie</td><td>6 764 655</td><td><b>47,8%</b></td><td>47,1%</td><td>107,9%</td><td>8,4% / 26,8%</td><td>78,4%</td></tr><tr class="pick"><td>M2 start z 2024 + zakresy</td><td>6 763 325</td><td><b>33,8%</b></td><td>32,9%</td><td>107,2%</td><td>2,1% / 19,6%</td><td>69,6%</td></tr><tr><td>M3 = M2 + raking do tabel API</td><td>6 773 434</td><td><b>34,3%</b></td><td>33,5%</td><td>98,7%</td><td>2,9% / 18,0%</td><td>89,9%</td></tr><tr><td>M4 sam raking (bez startu)</td><td>6 773 420</td><td><b>46,8%</b></td><td>46,2%</td><td>100,9%</td><td>7,1% / 26,2%</td><td>79,1%</td></tr></tbody>
+      </table></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>3. Test B: 2022 ze strukturą 2024 (2 lata)</h2>
+    <div class="card">
+      <p>Nadwyżka v4: 1 026 915. Komórki z wierszami „&lt;5”: 198 468, z odpowiednikiem w 2024 r.: 150 225. Komórki bez odpowiednika mają 5,7% nadwyżki.</p>
+      <div class="scroll-x"><table>
+        <thead><tr><th>Metoda</th><th>Suma pobytów</th><th>Błąd nadwyżki</th><th>… komórki z odpowiednikiem w 2024</th><th>… bez odpowiednika</th><th>Błąd komórki: mediana / p90</th><th>Komórki bliżej v4 niż min</th></tr></thead>
+        <tbody><tr><td>min (1 na wiersz)</td><td>5 291 576</td><td><b>100,0%</b></td><td>100,0%</td><td>100,0%</td><td>0,0% / 24,1%</td><td>—</td></tr><tr><td>sim (losowo 1–4)</td><td>6 978 333</td><td><b>97,2%</b></td><td>94,0%</td><td>149,8%</td><td>50,7% / 50,7%</td><td>44,7%</td></tr><tr><td>M1 równo w zakresie</td><td>6 221 587</td><td><b>52,3%</b></td><td>51,3%</td><td>69,1%</td><td>7,6% / 26,4%</td><td>73,0%</td></tr><tr><td>M2 start z 2024 + zakresy</td><td>6 219 484</td><td><b>46,3%</b></td><td>45,0%</td><td>69,1%</td><td>2,7% / 22,0%</td><td>60,8%</td></tr><tr class="pick"><td>M3 = M2 + raking do tabel API</td><td>6 318 730</td><td><b>43,8%</b></td><td>42,3%</td><td>67,7%</td><td>3,6% / 21,6%</td><td>86,3%</td></tr><tr><td>M4 sam raking (bez startu)</td><td>6 318 713</td><td><b>49,1%</b></td><td>48,0%</td><td>67,7%</td><td>6,8% / 26,4%</td><td>79,3%</td></tr></tbody>
+      </table></div>
+      <p class="note">Błąd komórki = |n − n<sub>v4</sub>| ÷ n<sub>v4</sub>. „Bliżej v4 niż min” liczone dla komórek, w których v4 ma nadwyżkę. M1 i M2 mają sumę trochę niższą niż API, bo komórki na górnej granicy nie przyjmują więcej; M3 i M4 dopasowują sumę.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>4. Wnioski</h2>
+    <div class="card">
+      <ul>
+        <li><b>sim nie jest lepszy od min.</b> Błąd nadwyżki 94–97%: losowanie trafia w złe komórki tak samo często, jak min nie trafia w żadne. To potwierdza, że kalibracja ma sens także dla lat bez zestawienia.</li>
+        <li><b>Sama wiedza z API (M1, M4) zmniejsza błąd o połowę</b> (47–52%): pobyty trafiają do właściwych zakresów i typów wierszy, choć nie do właściwych szpitali.</li>
+        <li><b>Struktura z innego roku dokłada najwięcej.</b> Przy 1 roku różnicy M2 i M3 mają błąd ok. 34% (2023), przy 2 latach 44–46% (2022). Pobyty w złej komórce: ok. 2,8% wszystkich pobytów w 2023 r. i 3,5% w 2022 r.</li>
+        <li><b>Raking (M3) opłaca się przy większej różnicy lat</b> i dla komórek bez odpowiednika (2022: 43,8% zamiast 46,3%), a w 2023 r. daje wynik prawie taki sam jak M2. M3 ma też sumy zgodne z API i najwięcej komórek bliżej v4 niż min (86–90%).</li>
+        <li><b>Komórki bez odpowiednika</b> są szacowane tak słabo jak min (błąd 68–108%). W 2017 r. takich wierszy „&lt;5” będzie więcej (15% wobec 3–7% w teście), więc błąd dla 2017 r. będzie wyższy niż w teście B.</li>
+        <li><b>Rekomendacja dla 2017–2018:</b> M3 ze strukturą v4 z 2019 r. (najbliższy rok z zestawieniem). Spodziewany błąd nadwyżki: 2018 ok. 35–45%, 2017 ok. 45–55% (szacunek na podstawie testów i gorszego pokrycia). To ok. połowę mniej niż min i sim.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2>5. Co dalej</h2>
+    <div class="card">
+      <ol>
+        <li>v4 dla 2019–2021 (tabele API 2019–2021; wyceny są).</li>
+        <li>Test C: 2019 ze strukturą 2021 i 2021 ze strukturą 2019, żeby sprawdzić wpływ COVID na przenoszenie struktury.</li>
+        <li>Wdrożenie M3 w <code>build_hospitalizations.py</code> dla lat bez zestawienia (2017–2018), z oznaczeniem metody w <code>index.json</code>.</li>
+      </ol>
+    </div>
+  </section>
+</div>
