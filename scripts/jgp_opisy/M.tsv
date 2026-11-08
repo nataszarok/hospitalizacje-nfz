@@ -1,0 +1,25 @@
+kod	opis
+M01	Radykalne wycięcie sromu w raku sromu (C51), u pacjentek bez powikłań. Grupa jest mała. Pobyt trwa zwykle 8 dni (mediana).
+M02	Duże zabiegi pochwy i krocza, głównie plastyka i podwieszenie pochwy przy wypadaniu macicy i pochwy (obniżeniu narządu rodnego). Pobyt trwa zwykle 3 dni (mediana).
+M03	Średnie zabiegi szyjki macicy i pochwy, głównie chirurgiczna konizacja szyjki macicy. Pobyt trwa zwykle 1 dzień (mediana).
+M04	Małe zabiegi szyjki macicy, pochwy i sromu, m.in. biopsja szyjki macicy przy dysplazji i nacięcie ropnia gruczołu przedsionkowego. Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+M05	Operacje wysiłkowego nietrzymania moczu u kobiet (N39.3), najczęściej z użyciem taśmy przezpochwowej. Pobyt trwa zwykle 2 dni (mediana).
+M06	Złożone zabiegi sromu i pochwy u pacjentek z powikłaniami lub chorobami współistniejącymi (np. chorobą nadciśnieniową serca, cukrzycą). Grupa jest mała. Pobyt trwa zwykle 9 dni (mediana).
+M11	Złożone operacje macicy i przydatków bez powikłań, głównie radykalne wycięcie macicy w raku trzonu macicy i raku jajnika. Pobyt trwa zwykle 5 dni (mediana).
+M12	Bardzo duże operacje macicy bez powikłań, głównie poszerzone wycięcie macicy w raku trzonu macicy i raku jajnika. Pobyt trwa zwykle 5 dni (mediana).
+M13	Duże operacje macicy i przydatków o różnym zakresie, m.in. wycięcie jajowodów, wyłuszczenie guza jajnika i nadszyjkowe wycięcie macicy. Pobyt trwa zwykle 3 dni (mediana).
+M14	Średnie zabiegi macicy, najczęściej usunięcie polipa trzonu macicy (N84.0). Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+M15	Małe zabiegi macicy, głównie diagnostyczne łyżeczkowanie jamy macicy przy nieprawidłowych krwawieniach i rozroście błony śluzowej macicy. Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+M16	Leczenie poronienia zagrażającego i dokonanego oraz zakończenie ciąży obumarłej (poronienia chybionego). Pobyt trwa zwykle 1 dzień (mediana).
+M17	Indukcja poronienia, najczęściej farmakologiczna (podanie preparatu kończącego ciążę albo prostaglandyny). Pobyt trwa zwykle 1 dzień (mediana).
+M18	Leczenie zachowawcze zakażeń szyjki macicy, pochwy i sromu, m.in. zapalenia szyjki macicy i ropnia sromu. Pobyt trwa zwykle 1 dzień (mediana).
+M19	Leczenie zachowawcze obniżenia i wypadania narządu rodnego (N81). Pobyt trwa zwykle 1 dzień (mediana).
+M20	Złożone operacje macicy i przydatków u pacjentek z powikłaniami lub chorobami współistniejącymi; najczęściej zmodyfikowane radykalne wycięcie macicy. Pobyt trwa zwykle 6 dni (mediana).
+M21	Bardzo duże operacje macicy u pacjentek z powikłaniami, głównie poszerzone wycięcie macicy w raku trzonu macicy i raku jajnika. Grupa jest mała. Pobyt trwa zwykle 5 dni (mediana).
+M22R	Operacje raka trzonu macicy z użyciem robota chirurgicznego: zawsze zmodyfikowane radykalne wycięcie macicy. Pobyt trwa zwykle 3 dni (mediana).
+M26	Leczenie zachowawcze chorób macicy, głównie nieprawidłowych krwawień z macicy, polipów i mięśniaków. Pobyt trwa zwykle 1 dzień (mediana).
+M27	Leczenie zachowawcze chorób jajników, jajowodów i miednicy mniejszej, m.in. zapalenia przydatków i ciąży pozamacicznej. Pobyt trwa zwykle 4 dni (mediana).
+M28	Leczenie zachowawcze nowotworów złośliwych narządu rodnego u pacjentek z powikłaniami przy pobycie ponad 4 dni. Pobyt trwa zwykle 7 dni (mediana).
+M29	Leczenie zachowawcze nowotworów złośliwych narządu rodnego bez powikłań, najczęściej raka jajnika (C56). Pobyt trwa zwykle 1 dzień (mediana).
+M30	Leczenie zachowawcze innych chorób narządu rodnego, m.in. niezłośliwych guzów jajnika (D27) i zespołu policystycznych jajników. Pobyt trwa zwykle 2 dni (mediana).
+M31	Diagnostyka i leczenie niepłodności kobiecej (N97). Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).

@@ -7,7 +7,7 @@
 
 .breadcrumbs {
   color: #667085;
-  font-size: 13px;
+  font-size: var(--fs-md);
 }
 
 .breadcrumbs a {
@@ -25,16 +25,16 @@
 
 .eyebrow {
   color: #667085;
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 
 .header h1 {
   margin: 4px 0 6px;
-  font-size: 28px;
-  line-height: 1.25;
+  font-size: var(--fs-title);
+  line-height: 1.15;
 }
 
 .code {
@@ -44,14 +44,14 @@
 .header p {
   margin: 0;
   color: #475467;
-  font-size: 14px;
+  font-size: var(--fs-base);
 }
 
 .table {
   width: 100%;
   table-layout: auto;
   border-collapse: collapse;
-  font-size: 13px;
+  font-size: var(--fs-md);
 }
 
 /* Globalne style tabel dashboardu ustawiają stałe szerokości kolumn — tu kolumny dopasowują się do treści. */
@@ -75,8 +75,8 @@
 
 .table th {
   color: #667085;
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
 }
 
 .num {
@@ -88,7 +88,7 @@
   margin: 0;
   padding: 10px 12px;
   color: #667085;
-  font-size: 12px;
+  font-size: var(--fs-sm);
 }
 
 .bar {
@@ -101,7 +101,7 @@
   margin: 0;
   padding: 12px 12px 4px;
   color: #172033;
-  font-size: 14px;
+  font-size: var(--fs-base);
 }
 
 .legend {
@@ -112,7 +112,7 @@
   padding: 8px 12px;
   list-style: none;
   color: #475467;
-  font-size: 12px;
+  font-size: var(--fs-sm);
 }
 
 .legend li {
@@ -180,24 +180,24 @@
 
 .selectedMetrics dt {
   color: #667085;
-  font-size: 12px;
+  font-size: var(--fs-sm);
 }
 
 .selectedMetrics dd {
   margin: 0;
-  font-size: 20px;
-  font-weight: 700;
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-bold);
   font-variant-numeric: tabular-nums;
 }
 
 .selectedMetrics span {
   color: #667085;
-  font-size: 12px;
+  font-size: var(--fs-sm);
 }
 
 .rowSelected td {
   background: #fff1e8;
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
 }
 
 @media (max-width: 760px) {
@@ -220,8 +220,8 @@
   background: var(--color-primary-soft);
   color: var(--color-primary-hover);
   font: inherit;
-  font-size: 13px;
-  font-weight: 600;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-semibold);
   cursor: pointer;
 }
 
@@ -240,8 +240,8 @@
   background: transparent;
   color: #344054;
   font: inherit;
-  font-size: 13px;
-  font-weight: 600;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-semibold);
   cursor: pointer;
 }
 
@@ -266,7 +266,7 @@
 .chartTitle {
   margin: 0;
   padding: 12px 12px 0;
-  font-size: 15px;
+  font-size: var(--fs-lg);
 }
 
 .scaleGradient {
@@ -280,7 +280,7 @@
   background: none;
   color: var(--color-primary);
   font: inherit;
-  font-weight: 600;
+  font-weight: var(--fw-semibold);
   text-decoration: underline;
   cursor: pointer;
 }
@@ -312,7 +312,7 @@
   gap: 4px;
   margin-top: 8px;
   color: #667085;
-  font-size: 12px;
+  font-size: var(--fs-sm);
 }
 
 .scale i {
@@ -362,8 +362,8 @@
 
 .regionLabel {
   fill: #ffffff;
-  font-size: 26px;
-  font-weight: 700;
+  font-size: var(--fs-3xl);
+  font-weight: var(--fw-bold);
   text-anchor: middle;
   dominant-baseline: middle;
   pointer-events: none;

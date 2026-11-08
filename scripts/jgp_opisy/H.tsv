@@ -1,0 +1,68 @@
+kod	opis
+H01	Wszczepienie endoprotezy łokcia, barku, nadgarstka lub stawu skokowego oraz częściowej (jednoprzedziałowej) endoprotezy kolana. Najczęściej to endoproteza kolana w chorobie zwyrodnieniowej i endoproteza barku, także po złamaniu kości ramiennej. Pobyt trwa zwykle 4 dni (mediana).
+H02	Częściowa endoproteza stawu biodrowego z wymianą elementu udowego, prawie zawsze po złamaniu szyjki kości udowej (S72.0). Grupa jest mała. Pobyt trwa zwykle 7 dni (mediana).
+H09	Operacje rewizyjne endoprotez z powodu obluzowania bez zakażenia albo złamania kości wokół protezy. Najczęściej dotyczą stawu biodrowego. Pobyt trwa zwykle 10 dni (mediana).
+H10	Operacje rewizyjne endoprotez biodra i kolana z powodu zakażenia wokół protezy (T84.5). Pobyt jest długi: zwykle 16 dni (mediana).
+H11	Wycięcie zmian nowotworowych lub guzowatych kości z wszczepieniem endoprotezy oraz operacje rewizyjne z użyciem protez poresekcyjnych. Najczęściej to powikłania wcześniejszych protez, także złamania patologiczne i przerzuty do kości. Pobyt trwa zwykle 8 dni (mediana).
+H12	Leczenie zakażenia wokół endoprotezy (T84.5) czasowym wypełniaczem stawu (spacerem cementowym) uwalniającym antybiotyk. Pobyt jest długi: zwykle 16 dni (mediana).
+H13	Pierwotna endoprotezoplastyka stawu biodrowego, najczęściej po złamaniu szyjki kości udowej (S72.0). Wszczepia się endoprotezę bipolarną (częściową) albo całkowitą. Pobyt trwa zwykle 7 dni (mediana).
+H14	Pierwotna całkowita endoproteza stawu biodrowego, w tym z rekonstrukcją kostną lub trzpieniem przynasadowym, głównie w chorobie zwyrodnieniowej biodra (koksartroza). Pobyt trwa zwykle 5 dni (mediana).
+H15	Pierwotna całkowita endoproteza stawu kolanowego w chorobie zwyrodnieniowej kolana (gonartroza). Prawie zawsze to endoproteza dwuprzedziałowa. Pobyt trwa zwykle 5 dni (mediana).
+H16	Częściowa operacja rewizyjna endoprotezy biodra, np. wymiana głowy albo trzpienia, najczęściej z powodu mechanicznego powikłania protezy (T84.0). Pobyt trwa zwykle 8 dni (mediana).
+H17	Całkowita operacja rewizyjna endoprotezy biodra albo wymiana panewki i głowy, głównie z powodu mechanicznego powikłania protezy (T84.0). Pobyt trwa zwykle 8 dni (mediana).
+H18	Częściowa operacja rewizyjna endoprotezy kolana, najczęściej wymiana wkładki piszczelowej z powodu mechanicznego powikłania protezy (T84.0). Pobyt trwa zwykle 5 dni (mediana).
+H19	Całkowita operacja rewizyjna endoprotezy kolana z wymianą wszystkich elementów, najczęściej z powodu mechanicznego powikłania protezy (T84.0). Pobyt trwa zwykle 7 dni (mediana).
+H21	Artroskopowa rekonstrukcja stawu z implantami mocującymi, głównie plastyka więzadeł krzyżowych i innych struktur kolana przy uszkodzeniach łąkotki i niestabilności kolana. Pobyt trwa zwykle 2 dni (mediana).
+H22	Artroskopia lecznicza, głównie kolana: usunięcie łąkotki, wycięcie zmian w stawie i wycięcie błony maziowej. Pobyt trwa zwykle 2 dni (mediana).
+H23	Artroskopia diagnostyczno-lecznicza, w większości kolana, rzadziej barku. Pobyt trwa zwykle 2 dni (mediana).
+H31E	Złożone zabiegi kończyny dolnej i miednicy u pacjentów powyżej 65 roku życia, najczęściej rekonstrukcja uszkodzeń wielu tkanek kończyny dolnej, m.in. po złamaniach i w paluchu koślawym. Pobyt trwa zwykle 4 dni (mediana).
+H31F	Złożone zabiegi kończyny dolnej i miednicy u pacjentów poniżej 66 roku życia, głównie rekonstrukcje kolana po urazach i w niestabilności kolana. Pobyt trwa zwykle 2 dni (mediana).
+H32	Duże zabiegi kończyny dolnej i miednicy, m.in. korekcja palucha koślawego (osteotomia kości stopy) i wycięcie zmian kości udowej. Pobyt trwa zwykle 2 dni (mediana).
+H33	Średnie zabiegi kończyny dolnej, najczęściej usunięcie zespolenia po wyleczonym złamaniu (T93.2) i korekcja palucha koślawego. Pobyt trwa zwykle 2 dni (mediana).
+H40	Replantacja (przyszycie) palców, kciuka, ręki albo przedramienia po urazowej amputacji. Grupa jest mała. Pobyt trwa zwykle 8 dni (mediana).
+H41	Rekonstrukcja funkcji ręki, także mikrochirurgiczna, najczęściej po urazach kończyny górnej. Pobyt trwa zwykle 2 dni (mediana).
+H42	Duże zabiegi kończyny górnej, m.in. w uszkodzeniach barku, następstwach złamań i przykurczu Dupuytrena. Pobyt trwa zwykle 2 dni (mediana).
+H43	Średnie zabiegi kończyny górnej, głównie uwolnienie kanału nadgarstka w zespole cieśni nadgarstka (G56.0). Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+H44	Wprowadzenie do stawu lub tkanek czynników wzrostu pochodzenia autogenicznego (z krwi pacjenta), m.in. w chorobie zwyrodnieniowej kolana i przeciążeniach tkanek miękkich. Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+H51	Złożone operacje korekcyjne kręgosłupa, najczęściej spondylodeza (usztywnienie) odcinka lędźwiowego, m.in. w dyskopatii z uciskiem korzeni nerwowych i złamaniach kręgów. To najbardziej złożony wariant rodziny zabiegów na kręgosłupie. Pobyt trwa zwykle 5 dni (mediana).
+H52	Operacje kręgosłupa z użyciem implantów, najczęściej spondylodeza szyjna z dojścia przedniego albo lędźwiowa, wykonywane głównie w dyskopatii szyjnej (M50.1) i lędźwiowej z uciskiem korzeni nerwowych. Pozostałe warianty rodziny to zabiegi bez implantów (H53), zabiegi przezskórne (H55) i złożone korekcje (H51). Pobyt trwa zwykle 3 dni (mediana).
+H53	Operacje kręgosłupa bez implantów, m.in. wertebroplastyka i odbarczenie kanału kręgowego, w dyskopatii lędźwiowej i złamaniach kręgów. Pobyt trwa zwykle 2 dni (mediana).
+H55	Małoinwazyjne zabiegi na kręgosłupie wykonywane przezskórnie: prawie zawsze przezskórne odnerwienie stawów międzywyrostkowych kręgosłupa (03.96). Wykonuje się je głównie w dyskopatii i zmianach zwyrodnieniowych kręgosłupa. Większość pobytów kończy się w dniu przyjęcia (mediana 0 dni).
+H56C	Leczenie zespołów bólowych kręgosłupa bez zabiegu przy pobycie poniżej 4 dni, głównie w zmianach zwyrodnieniowych i bólu okolicy lędźwiowo-krzyżowej. Pobyt trwa zwykle 1 dzień (mediana).
+H56D	Leczenie zespołów bólowych kręgosłupa bez zabiegu przy pobycie ponad 3 dni, głównie w zmianach zwyrodnieniowych i bólu okolicy lędźwiowo-krzyżowej. Pobyt trwa zwykle 6 dni (mediana).
+H60	Operacyjne leczenie złamań miednicy (otwarte nastawienie ze stabilizacją) u pacjentów z powikłaniami, najczęściej złamań panewki stawu biodrowego (S32.4). Pobyt jest długi: zwykle 12 dni (mediana).
+H61	Operacyjne leczenie złamań miednicy bez powikłań, najczęściej złamań panewki stawu biodrowego (S32.4). Pobyt trwa zwykle 10 dni (mediana).
+H62E	Operacyjne leczenie złamań i zwichnięć miednicy lub kończyny dolnej u pacjentów powyżej 65 roku życia; głównie złamanie przezkrętarzowe kości udowej (S72.1) zespalane wewnętrznie. Pobyt trwa zwykle 6 dni (mediana).
+H62F	Operacyjne leczenie złamań i zwichnięć miednicy lub kończyny dolnej u pacjentów poniżej 66 roku życia, najczęściej złamań podudzia i kostki. Pobyt trwa zwykle 4 dni (mediana).
+H63	Operacyjne leczenie złamań i zwichnięć kończyny górnej, najczęściej złamania dalszej nasady kości promieniowej (S52.5). Pobyt trwa zwykle 2 dni (mediana).
+H64	Leczenie mniejszych złamań i zwichnięć, głównie zamknięte nastawienie zwichnięcia barku albo biodra. Pobyt trwa zwykle 1 dzień (mediana).
+H66	Czynnościowe leczenie złamań przy pobycie ponad 10 dni, głównie wyciągiem szkieletowym za kończynę dolną. Pobyt jest długi: zwykle 17 dni (mediana).
+H67	Czynnościowe leczenie złamań kości długich, miednicy i kręgosłupa, m.in. wyciągiem szkieletowym, najczęściej przy złamaniach bliższego końca kości udowej. Pobyt trwa zwykle 5 dni (mediana).
+H72	Rozległe i duże amputacje kończyny dolnej (uda albo podudzia), w większości z powodu miażdżycy tętnic kończyn (I70.2) i powikłań cukrzycy. Pobyt trwa zwykle 9 dni (mediana).
+H74E	Mniejsze amputacje (palców, części stopy lub ręki) u pacjentów powyżej 65 roku życia, głównie w miażdżycy tętnic i cukrzycy z powikłaniami naczyniowymi. Pobyt trwa zwykle 4 dni (mediana).
+H74F	Mniejsze amputacje (palców, części ręki lub stopy) u pacjentów poniżej 66 roku życia, m.in. po urazach i w cukrzycy z powikłaniami naczyniowymi. Pobyt trwa zwykle 2 dni (mediana).
+H80	Otwarcie stawu (artrotomia) w chorobach zapalnych i nowotworowych kości i stawów, najczęściej barku przy zapaleniu kaletek maziowych (M75.5). Pobyt trwa zwykle 2 dni (mediana).
+H81	Złożone zabiegi w zakażeniach i nowotworach kości i stawów przy pobycie ponad 10 dni, najczęściej w przewlekłym zapaleniu kości i szpiku. Pobyt jest długi: zwykle 16 dni (mediana).
+H82	Duże zabiegi w chorobach zapalnych i nowotworowych kości i tkanek miękkich, najczęściej usunięcie niezłośliwych guzów tkanek miękkich. Pobyt trwa zwykle 2 dni (mediana).
+H83	Średnie zabiegi na tkankach miękkich i stawach o różnym zakresie, m.in. w przykurczu Dupuytrena, palcu zatrzaskującym i uszkodzeniach łąkotki. Pobyt trwa zwykle 2 dni (mediana).
+H83O	Średnie zabiegi na tkankach miękkich u pacjentów z mięsakiem tkanek miękkich, najczęściej kończyny dolnej (C49.2). Pobyt trwa zwykle 4 dni (mediana).
+H84	Mniejsze zabiegi układu ruchu i tkanek miękkich, m.in. wycięcie zmian tkanek miękkich, ganglionu i zabiegi w palcu zatrzaskującym. Pobyt trwa zwykle 1 dzień (mediana).
+H84O	Mniejsze zabiegi układu ruchu u pacjentów z nowotworem złośliwym tkanek miękkich lub przerzutami do kości, m.in. biopsja kości. Pobyt trwa zwykle 2 dni (mediana).
+H85E	Leczenie urazów (bez uszkodzenia mózgu) u pacjentów powyżej 65 roku życia, np. urazów głowy i kończyn. Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+H85F	Leczenie urazów (bez uszkodzenia mózgu) u dorosłych poniżej 66 roku życia, głównie urazów kończyn i głowy. Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+H86	Leczenie chorób tkanek miękkich bez zabiegu, m.in. uszkodzeń barku i przeciążeń. Pobyt trwa zwykle 1 dzień (mediana).
+H87	Leczenie zapalnych chorób stawów i tkanki łącznej, m.in. łuszczycowego i reumatoidalnego zapalenia stawów. Pobyt trwa zwykle 5 dni (mediana).
+H87C	Leczenie zapalnych chorób stawów przy pobycie poniżej 4 dni, m.in. łuszczycy stawowej i reumatoidalnego zapalenia stawów. Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+H87D	Leczenie zapalnych chorób stawów przy pobycie ponad 3 dni, najczęściej reumatoidalnego zapalenia stawów (M05.8). Pobyt trwa zwykle 6 dni (mediana).
+H88	Leczenie zakażeń kości i stawów, w tym zapalenia stawów w boreliozie (M01.2). Pobyt trwa zwykle 7 dni (mediana).
+H89	Leczenie niezapalnych chorób kości i stawów bez zabiegu, głównie choroby zwyrodnieniowej stawów. Pobyt trwa zwykle 2 dni (mediana).
+H89C	Leczenie niezapalnych chorób kości i stawów przy pobycie poniżej 4 dni, głównie choroby zwyrodnieniowej kolan i bioder. Pobyt trwa zwykle 1 dzień (mediana).
+H89D	Leczenie niezapalnych chorób kości i stawów przy pobycie ponad 3 dni, głównie uogólnionej choroby zwyrodnieniowej stawów. Pobyt trwa zwykle 6 dni (mediana).
+H90	Intensywne leczenie zapaleń stawów i układowych chorób tkanki łącznej przy pobycie ponad 10 dni, z monitorowaniem ciśnienia tętniczego i badaniami tomograficznymi; często współwystępuje niewydolność nerek. Pobyt jest długi: zwykle 14 dni (mediana).
+H92	Rekonstrukcja wrodzonych i nabytych deformacji kości i stawów u dzieci, m.in. stopy i kości długich. Pobyt trwa zwykle 3 dni (mediana).
+H95	Kompleksowa diagnostyka chorób reumatologicznych, m.in. tocznia, zespołu Sjögrena i łuszczycy stawowej, z badaniami obrazowymi (tomografia, rezonans). Pobyt trwa zwykle 2 dni (mediana).
+H96C	Leczenie układowych chorób tkanki łącznej, m.in. tocznia rumieniowatego i twardziny. Pobyt trwa zwykle 2 dni (mediana).
+H96CE	Leczenie układowych chorób tkanki łącznej u pacjentów powyżej 65 roku życia, m.in. polimialgii reumatycznej i twardziny. Pobyt trwa zwykle 4 dni (mediana).
+H96CF	Leczenie układowych chorób tkanki łącznej u pacjentów poniżej 66 roku życia, m.in. tocznia i twardziny. Pobyt trwa zwykle 2 dni (mediana).
+H96D	Leczenie układowych chorób tkanki łącznej przy pobycie ponad 3 dni, z badaniami tomograficznymi, m.in. w zespole Sjögrena i toczniu. Pobyt trwa zwykle 6 dni (mediana).
+H98	Leczenie krystalopatii, głównie dny moczanowej (M10.0, M10.9). Pobyt trwa zwykle 5 dni (mediana).

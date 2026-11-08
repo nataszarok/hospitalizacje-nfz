@@ -1,0 +1,55 @@
+kod	opis
+F01	Najbardziej złożone operacje przełyku: częściowe albo całkowite wycięcie przełyku z zespoleniem przełyku z żołądkiem. Pobyt jest długi: zwykle 14 dni (mediana).
+F02	Duże zabiegi przełyku, w tym wszczepianie protez (stentów), m.in. w achalazji, niedrożności przełyku, przepuklinie rozworu przełykowego i żylakach przełyku. Pobyt trwa zwykle 3 dni (mediana).
+F03	Średnie i endoskopowe zabiegi przełyku: rozszerzanie przełyku, endoskopowe usuwanie zmian i nastrzykiwanie żylaków przełyku. Pobyt trwa zwykle 1 dzień (mediana).
+F04	Diagnostyka i małe zabiegi przewodu pokarmowego, m.in. przy refluksie i ciele obcym w przełyku. Pobyt trwa zwykle 1 dzień (mediana).
+F05	Diagnostyka i małe zabiegi endoskopowe górnego odcinka przewodu pokarmowego, np. usuwanie polipów żołądka. Często u pacjentów z niedokrwistością i chorobami serca. Pobyt trwa zwykle 1 dzień (mediana).
+F06	Średnie i endoskopowe zabiegi górnego odcinka przewodu pokarmowego, najczęściej u pacjentów z zaburzeniami połykania (dysfagia, R13) i z gastrostomią. Pobyt trwa zwykle 2 dni (mediana).
+F07E	Leczenie chorób przełyku bez zabiegu u pacjentów powyżej 65 roku życia, głównie refluksu żołądkowo-przełykowego i zapalenia przełyku. Pobyt trwa zwykle 3 dni (mediana).
+F07F	Leczenie chorób przełyku bez zabiegu u pacjentów poniżej 66 roku życia, głównie refluksu żołądkowo-przełykowego i zapalenia przełyku. Pobyt trwa zwykle 2 dni (mediana).
+F11E	Złożone operacje żołądka i dwunastnicy u pacjentów powyżej 65 roku życia: radykalne, częściowe albo całkowite wycięcie żołądka, prawie zawsze z powodu raka żołądka. Pobyt trwa zwykle 12 dni (mediana).
+F11F	Złożone operacje żołądka i dwunastnicy u pacjentów poniżej 66 roku życia: radykalne, częściowe albo całkowite wycięcie żołądka, głównie z powodu raka żołądka. Pobyt trwa zwykle 9 dni (mediana).
+F12	Duże operacje żołądka i dwunastnicy, najczęściej zaszycie wrzodu żołądka lub dwunastnicy, a także miejscowe wycięcie zmian żołądka. Pobyt trwa zwykle 6 dni (mediana).
+F13	Zabiegi lecznicze żołądka, głównie endoskopowe wytworzenie przetoki żołądkowej do żywienia (PEG) u pacjentów z zaburzeniami połykania i endoskopowe usuwanie polipów żołądka. Pobyt trwa zwykle 1 dzień (mediana).
+F14	Chirurgiczne leczenie otyłości (E66.0): najczęściej rękawowa resekcja żołądka (sleeve), rzadziej bypass żołądkowy. Pobyt trwa zwykle 3 dni (mediana).
+F16E	Leczenie chorób żołądka i dwunastnicy bez zabiegu u pacjentów powyżej 65 roku życia, głównie zapalenia żołądka. Pobyt trwa zwykle 3 dni (mediana).
+F16F	Leczenie chorób żołądka i dwunastnicy bez zabiegu u pacjentów poniżej 66 roku życia, głównie zapalenia żołądka i dwunastnicy. Pobyt trwa zwykle 2 dni (mediana).
+F21	Złożone operacje jelita cienkiego z zespoleniem jelit, m.in. w niedrożności jelit i zrostach. Pobyt trwa zwykle 9 dni (mediana).
+F22	Duże i endoskopowe zabiegi jelita cienkiego, najczęściej uwolnienie jelita cienkiego w jamie brzusznej, rzadziej częściowa resekcja jelita albo wyłonienie ileostomii. Pobyt trwa zwykle 6 dni (mediana).
+F26E	Leczenie chorób jelita cienkiego (bez chorób zapalnych) u pacjentów powyżej 65 roku życia, m.in. choroby uchyłkowej i zaburzeń wchłaniania. Pobyt trwa zwykle 4 dni (mediana).
+F26F	Leczenie chorób jelita cienkiego (bez chorób zapalnych) u pacjentów poniżej 66 roku życia, m.in. celiakii (K90.0) i zaburzeń wchłaniania. Pobyt trwa zwykle 3 dni (mediana).
+F30	Duże i złożone operacje jelita grubego, głównie z powodu raka odbytnicy (C20) i okrężnicy: hemikolektomia i przednia resekcja odbytnicy. Pobyt trwa zwykle 8 dni (mediana).
+F31	Złożone operacje jelita grubego z powodu raka odbytnicy (C20) i okrężnicy: najczęściej hemikolektomia prawostronna i przednia resekcja odbytnicy. Pobyt trwa zwykle 8 dni (mediana).
+F31A	Złożone operacje jelita grubego u dorosłych: hemikolektomia i przednia resekcja odbytnicy. Pobyt trwa zwykle 10 dni (mediana).
+F31B	Złożone operacje jelita grubego u dzieci i młodzieży, m.in. resekcje odbytnicy. Grupa jest bardzo mała. Pobyt trwa zwykle 13 dni (mediana).
+F32	Duże i endoskopowe zabiegi jelita grubego, najczęściej endoskopowe usunięcie guza jelita grubego o nieokreślonym charakterze (D37.4); także wycięcie esicy. Pobyt trwa zwykle 3 dni (mediana).
+F32O	Duże i endoskopowe zabiegi jelita grubego u pacjentów z rakiem odbytnicy lub esicy, m.in. wyłonienie kolostomii. Pobyt trwa zwykle 4 dni (mediana).
+F34	Średnie i endoskopowe zabiegi przewodu pokarmowego, najczęściej kolonoskopia przy chorobie uchyłkowej i polipach jelita grubego. Pobyt trwa zwykle 1 dzień (mediana).
+F36	Leczenie chorób jelita grubego bez operacji, m.in. diagnostyka guzów okrężnicy i odbytnicy. Pobyt trwa zwykle 2 dni (mediana).
+F37	Diagnostyka i małe zabiegi dolnego odcinka przewodu pokarmowego: kolonoskopia, endoskopowe usunięcie polipa i biopsja jelita grubego. Pobyt trwa zwykle 1 dzień (mediana).
+F38	Średnie i endoskopowe zabiegi dolnego odcinka przewodu pokarmowego, głównie endoskopowe usunięcie guzów jelita grubego. Pobyt trwa zwykle 1 dzień (mediana).
+F42	Duże operacje jamy brzusznej, m.in. wycięcie tkanek otrzewnej. Pobyt trwa zwykle 4 dni (mediana).
+F42O	Duże operacje jamy brzusznej u pacjentów z nowotworem złośliwym, głównie raka odbytnicy (C20) i esicy. Pobyt trwa zwykle 8 dni (mediana).
+F43E	Średnie zabiegi jamy brzusznej u pacjentów powyżej 65 roku życia, m.in. laparotomia zwiadowcza przy wodobrzuszu, zapaleniu otrzewnej i niedrożności. Pobyt trwa zwykle 7 dni (mediana).
+F43F	Średnie zabiegi jamy brzusznej u pacjentów poniżej 66 roku życia, najczęściej laparoskopia z powodu bólu podbrzusza (R10.3). Pobyt trwa zwykle 3 dni (mediana).
+F44	Zabiegi diagnostyczne i lecznicze jamy brzusznej, w większości przezskórna biopsja igłowa narządów jamy brzusznej. Pobyt trwa zwykle 1 dzień (mediana).
+F45R	Operacje raka jelita grubego z użyciem robota chirurgicznego, najczęściej przednia resekcja odbytnicy z powodu raka odbytnicy (C20). Pobyt trwa zwykle 6 dni (mediana).
+F46	Diagnostyka i leczenie chorób jamy brzusznej bez operacji, najczęściej bólów brzucha. Pobyt trwa zwykle 3 dni (mediana).
+F47E	Leczenie zakaźnych chorób jelit u pacjentów powyżej 65 roku życia, m.in. salmonellozy i zakażeń rotawirusowych. Pobyt trwa zwykle 6 dni (mediana).
+F47F	Leczenie zakaźnych chorób jelit u pacjentów poniżej 66 roku życia, m.in. zakażeń wirusowych, salmonellozy i zakażeń Campylobacter. Pobyt trwa zwykle 4 dni (mediana).
+F51	Złożone operacje w nieswoistych chorobach zapalnych jelit (wrzodziejące zapalenie jelita grubego, choroba Crohna), m.in. całkowite wycięcie okrężnicy. Pobyt trwa zwykle 10 dni (mediana).
+F52	Duże i endoskopowe zabiegi w chorobach zapalnych jelit, najczęściej operacja przetoki okołoodbytniczej. Pobyt trwa zwykle 2 dni (mediana).
+F58E	Leczenie zapalnych chorób jelit u pacjentów powyżej 65 roku życia; w połowie pobytów to zakażenie Clostridium difficile (A04.7). Pobyt trwa zwykle 8 dni (mediana).
+F58F	Leczenie zapalnych chorób jelit u pacjentów poniżej 66 roku życia, m.in. wrzodziejącego zapalenia jelita grubego i choroby Crohna. Pobyt trwa zwykle 3 dni (mediana).
+F61	Złożone operacje w krwawieniu z przewodu pokarmowego, m.in. częściowe wycięcie żołądka i podwiązanie żylaków. Grupa jest mała. Pobyt trwa zwykle 15 dni (mediana).
+F62	Endoskopowe leczenie krwawienia z przewodu pokarmowego: gastroskopia i endoskopowe opanowanie krwawienia z żołądka lub dwunastnicy. Pobyt trwa zwykle 5 dni (mediana).
+F66	Zachowawcze leczenie krwawienia z przewodu pokarmowego. Pobyt trwa zwykle 4 dni (mediana).
+F72	Operacje przepukliny z wszczepieniem siatki, w większości przepukliny pachwinowej (K40.9). Pobyt trwa zwykle 2 dni (mediana).
+F73	Operacje przepuklin brzusznych, najczęściej przepukliny pępkowej (K42.9). Pobyt trwa zwykle 2 dni (mediana).
+F82	Wycięcie wyrostka robaczkowego w powikłanym zapaleniu, z rozlanym zapaleniem otrzewnej albo ropniem. Najczęściej laparoskopowo. Pobyt trwa zwykle 4 dni (mediana).
+F83	Wycięcie wyrostka robaczkowego w ostrym zapaleniu, najczęściej laparoskopowo. Pobyt trwa zwykle 3 dni (mediana).
+F86E	Leczenie chorób wyrostka robaczkowego bez operacji u pacjentów powyżej 65 roku życia, m.in. guzów jelita ślepego i zapalenia wyrostka. Pobyt trwa zwykle 5 dni (mediana).
+F86F	Leczenie chorób wyrostka robaczkowego bez operacji u pacjentów poniżej 66 roku życia. Pobyt trwa zwykle 4 dni (mediana).
+F93	Średnie zabiegi odbytu, najczęściej wycięcie hemoroidów albo torbieli pilonidalnej, rzadziej przetoki odbytu. Pobyt trwa zwykle 2 dni (mediana).
+F94	Małe zabiegi odbytu i odbytnicy, głównie nacięcie ropnia okołoodbytowego i usunięcie polipa odbytu. Pobyt trwa zwykle 2 dni (mediana).
+F96	Leczenie chorób odbytu bez zabiegu, m.in. zapalenia jelita grubego i ropni odbytu. Pobyt trwa zwykle 4 dni (mediana).

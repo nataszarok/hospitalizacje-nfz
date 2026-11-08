@@ -1,9 +1,11 @@
-import { access, readFile } from "node:fs/promises";
+import { access, readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { gunzipSync } from "node:zlib";
 import type { FinancialRecordSummary, HospitalProfileSummary } from "@/lib/hospitalHomeStats";
 import type { RegionsMap } from "@/lib/jgpCard";
 import type { JgpGroupFile, JgpPagesIndex, JgpPeerPair } from "@/lib/jgpPage";
+import type { JgpProfilesFile } from "@/lib/jgpDescription";
+import { readJgpProse } from "@/lib/jgpProse";
 import { decodeValuations, type JgpValuation, type ValuationsFile } from "@/lib/valuations";
 import { decodeJgpGroupFile, decodeStaticDataset, decodeTrends, type JgpGroupFileColumns, type StaticDatasetFile, type TrendsFile } from "@/lib/hospitalizationCodec";
 import type { HospitalizationIndex, StaticDataset, TrendsDataset } from "@/lib/staticData";
@@ -66,6 +68,20 @@ export async function readJgpGroupFileFromDisk(jgpCode: string, dir = join(BUILD
   return readGzipJson(file, (raw: JgpGroupFileColumns) => decodeJgpGroupFile(raw));
 }
 
+/** Rozliczenia NFZ w zł (kraj w latach) ze wszystkich plików grup; `null`, gdy plików grup nie zbudowano. */
+export async function readJgpSettlementsFromDisk(dir = join(BUILD_DATA_DIR, "jgp")): Promise<Record<string, Record<string, number>> | null> {
+  let groups: string[];
+  try {
+    groups = (await readJgpPagesIndexFromDisk(join(dir, "index.json"))).groups;
+  } catch {
+    return null;
+  }
+  const files = await Promise.all(groups.map((code) => readJgpGroupFileFromDisk(code, dir)));
+  const out: Record<string, Record<string, number>> = {};
+  for (const file of files) if (file?.valuePln) out[file.jgp] = file.valuePln.national;
+  return Object.keys(out).length ? out : null;
+}
+
 /** Katalog wycen JGP (punkty) z rokiem katalogu. */
 export async function readValuationsFromDisk(file = join(DATA_DIR, "wyceny_jgp_2025.json.gz")): Promise<{ year: string; rows: JgpValuation[] }> {
   const data = await readGzipJson<ValuationsFile>(file);
@@ -80,6 +96,30 @@ export async function readPeerPairsFromDisk(file = join(DATA_DIR, "peer_pairs_ab
     promise = readGzipJson<{ rows: JgpPeerPair[] }>(file)
       .then((data) => data.rows.map(({ a, b, peer_grade_pred, distance_score }) => ({ a, b, peer_grade_pred, distance_score })));
     peerPairsCache.set(file, promise);
+  }
+  return promise;
+}
+
+/** Profile grup z API statystyk JGP (`scripts/build_jgp_profiles.py`) albo `null`, gdy pliku nie ma. Jeden odczyt na build. */
+const profilesCache = new Map<string, Promise<JgpProfilesFile | null>>();
+export async function readJgpProfilesFromDisk(file = join(BUILD_DATA_DIR, "jgp_profiles.json.gz")): Promise<JgpProfilesFile | null> {
+  let promise = profilesCache.get(file);
+  if (!promise) {
+    promise = access(file).then(() => readGzipJson<JgpProfilesFile>(file), () => null);
+    profilesCache.set(file, promise);
+  }
+  return promise;
+}
+
+/** Opisy grup prozą z `scripts/jgp_opisy/*.tsv` (kod → opis). Jeden odczyt na build. */
+const proseCache = new Map<string, Promise<Record<string, string>>>();
+export async function readJgpProseFromDisk(dir = join(process.cwd(), "scripts", "jgp_opisy")): Promise<Record<string, string>> {
+  let promise = proseCache.get(dir);
+  if (!promise) {
+    promise = readdir(dir)
+      .then((names) => Promise.all(names.filter((name) => name.endsWith(".tsv")).sort().map((name) => readFile(join(dir, name), "utf8"))))
+      .then(readJgpProse, () => ({}));
+    proseCache.set(dir, promise);
   }
   return promise;
 }

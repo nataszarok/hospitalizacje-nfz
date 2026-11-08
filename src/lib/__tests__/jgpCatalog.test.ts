@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { activeRanges, availabilityLabel, biggestChanges, buildJgpCatalog, limitSeriesToActiveYears, type JgpCatalogRow } from "@/lib/jgpCatalog";
+import { activeRanges, availabilityLabel, biggestChanges, buildJgpCatalog, limitSeriesToActiveYears, settlementYears, type JgpCatalogRow } from "@/lib/jgpCatalog";
 import { trendsFixture } from "./fixtures/trendsFixture";
 
 describe("buildJgpCatalog", () => {
@@ -13,6 +13,24 @@ describe("buildJgpCatalog", () => {
     expect(a01.changePct).toBeCloseTo(12.5);
     expect(a01.series).toHaveLength(36);
     expect(a01.series[24]).toBe(9);
+  });
+
+  it("dodaje rozliczenia NFZ z ostatniego roku z kwotami i zmianę od pierwszego; bez kwot pola są puste", () => {
+    const settlements = { A01: { "2024": 400, "2025": 500 }, F99: { "2025": 50 }, X01: { "2026": 1 } };
+    const withValues = buildJgpCatalog(trendsFixture, settlements);
+    expect(withValues.settlements).toEqual({ firstYear: "2024", year: "2025" });
+    expect(withValues.rows.find((row) => row.code === "A01")).toMatchObject({ valuePln: 500, valueChangePct: 25 });
+    // Grupa bez kwot w pierwszym roku: kwota jest, zmiany nie ma.
+    expect(withValues.rows.find((row) => row.code === "F99")).toMatchObject({ valuePln: 50, valueChangePct: null });
+    expect(withValues.rows.find((row) => row.code === "F04")).toMatchObject({ valuePln: null, valueChangePct: null });
+    expect(catalog.settlements).toBeNull();
+    expect(catalog.rows[0]).toMatchObject({ valuePln: null, valueChangePct: null });
+  });
+
+  it("wybiera lata kwot tylko z zakresu danych o hospitalizacjach", () => {
+    expect(settlementYears({ A: { "2018": 1, "2026": 1 }, B: { "2020": 1, "2025": 1 } }, ["2019", "2020", "2025"])).toEqual({ firstYear: "2020", year: "2025" });
+    expect(settlementYears({ A: { "2026": 1 } }, ["2025"])).toBeNull();
+    expect(settlementYears(null, ["2025"])).toBeNull();
   });
 
   it("oznacza grupy wycofane i nowe; śmiertelność z najnowszego roku", () => {
@@ -92,7 +110,7 @@ describe("activeRanges i availabilityLabel", () => {
 
 describe("biggestChanges", () => {
   const row = (code: string, previous: number, changePct: number | null, discontinued = false): JgpCatalogRow => ({
-    code, name: code, procedural: false, previous, latest: 0, changePct, mortalityPct: 0, series: [], discontinued, added: false, ranges: [], lastYearTotal: 0,
+    code, name: code, procedural: false, previous, latest: 0, changePct, mortalityPct: 0, series: [], discontinued, added: false, ranges: [], lastYearTotal: 0, valuePln: null, valueChangePct: null,
   });
 
   it("wybiera wzrosty i spadki wśród grup z progiem poprzedniego roku", () => {

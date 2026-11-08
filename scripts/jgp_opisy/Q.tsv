@@ -1,0 +1,31 @@
+kod	opis
+Q01	Wewnątrznaczyniowe zaopatrzenie tętniaka aorty (stentgraft), najczęściej tętniaka aorty brzusznej bez pęknięcia (I71.4). Pobyt trwa zwykle 4 dni (mediana).
+Q02	Operacje naczyń jamy brzusznej i reoperacje u pacjentów z powikłaniami, głównie w miażdżycy tętnic kończyn (I70.2) i tętniaku aorty brzusznej. Pobyt trwa zwykle 6 dni (mediana).
+Q03	Operacje naczyń w obrębie jamy brzusznej, m.in. usunięcie zatoru z tętnic, w miażdżycy tętnic kończyn i tętniaku aorty brzusznej. Pobyt trwa zwykle 6 dni (mediana).
+Q11	Zabiegi hybrydowe na tętnicach obwodowych (operacja połączona z zabiegiem wewnątrznaczyniowym), głównie pomosty naczyniowe w miażdżycy tętnic kończyn (I70.2). Pobyt trwa zwykle 6 dni (mediana).
+Q12	Operacje tętnic kończyn dolnych, m.in. usunięcie zatoru i udrożnienie tętnic, w miażdżycy tętnic kończyn (I70.2) i zatorach tętnic. Pobyt trwa zwykle 5 dni (mediana).
+Q13	Pomostowanie tętnic obwodowych, prawie zawsze pomost udowo-podkolanowy w miażdżycy tętnic kończyn (I70.2). Pobyt trwa zwykle 7 dni (mediana).
+Q14	Rekonstrukcje tętnic poza czaszką i kończyn górnych, głównie udrożnienie tętnicy szyjnej (endarterektomia) w jej zwężeniu (I65.2). Pobyt trwa zwykle 4 dni (mediana).
+Q15	Zabiegi na naczyniach szyi i kończyn górnych, głównie u pacjentów ze schyłkową niewydolnością nerek (N18.0), m.in. trombektomia; także w zatorach tętnic kończyn górnych. Pobyt trwa zwykle 1 dzień (mediana).
+Q16E	Inne zabiegi na naczyniach u pacjentów powyżej 65 roku życia, m.in. usunięcie ciała obcego z naczynia, często u pacjentów dializowanych. Pobyt trwa zwykle 3 dni (mediana).
+Q16F	Inne zabiegi na naczyniach u pacjentów poniżej 66 roku życia, m.in. usunięcie ciała obcego z naczynia, często u pacjentów dializowanych. Pobyt trwa zwykle 2 dni (mediana).
+Q17	Sympatektomia (przecięcie lub wycięcie zwojów współczulnych), m.in. w miażdżycy tętnic kończyn, zespole Raynauda i nadmiernej potliwości. Grupa jest mała. Pobyt trwa zwykle 3 dni (mediana).
+Q18	Duże zabiegi na węzłach chłonnych, głównie wycięcie węzłów chłonnych pachowych w raku piersi; także w czerniaku. Pobyt trwa zwykle 4 dni (mediana).
+Q19	Średnie zabiegi na węzłach chłonnych, głównie w czerniaku skóry (C43), m.in. wycięcie węzła wartowniczego. Pobyt trwa zwykle 2 dni (mediana).
+Q20	Małe zabiegi na węzłach chłonnych, głównie w diagnostyce powiększonych węzłów chłonnych. Pobyt trwa zwykle 1 dzień (mediana).
+Q22	Operacyjne leczenie zakrzepowego zapalenia żył: podwiązanie i wycięcie żylaków. Pobyt trwa zwykle 2 dni (mediana).
+Q23	Operacje żylaków kończyn dolnych (I83.9) z usunięciem żyły odpiszczelowej (safenektomią). Pobyt trwa zwykle 2 dni (mediana).
+Q24	Operacje żylaków kończyn dolnych (I83.9) bez usunięcia żyły odpiszczelowej. Pobyt trwa zwykle 2 dni (mediana).
+Q31	Wewnątrznaczyniowe leczenie tętniaków mózgu ze stentem przebudowującym naczynie, głównie tętniaków niepękniętych (I67.1). Pobyt trwa zwykle 3 dni (mediana).
+Q32	Duże wewnątrznaczyniowe leczenie tętniaków mózgu, niepękniętych i po krwotoku podpajęczynówkowym. Pobyt trwa zwykle 4 dni (mediana).
+Q33	Średnie wewnątrznaczyniowe zabiegi naczyń mózgu, głównie w tętniakach niepękniętych (I67.1) i naczyniakach tętniczo-żylnych mózgu. Pobyt trwa zwykle 4 dni (mediana).
+Q41	Zabiegi wewnątrznaczyniowe grupy 1, głównie przezskórna angioplastyka (PTA) tętnic kończyn dolnych w miażdżycy (I70.2). Pobyt trwa zwykle 2 dni (mediana).
+Q42G	Zabiegi wewnątrznaczyniowe grup 2 i 3, głównie przezskórna angioplastyka (PTA) tętnic biodrowych, udowych i podkolanowych w miażdżycy tętnic kończyn. Pobyt trwa zwykle 2 dni (mediana).
+Q44	Zabiegi wewnątrznaczyniowe grupy 4, prawie zawsze przezskórna angioplastyka (PTA) tętnic kończyn dolnych w miażdżycy (I70.2). Pobyt trwa zwykle 2 dni (mediana).
+Q45	Zabiegi wewnątrznaczyniowe grupy 5, głównie embolizacja narządowa (m.in. żylaków powrózka nasiennego i miednicy) i stenty uwalniające lek. Pobyt trwa zwykle 2 dni (mediana).
+Q46	Zabiegi wewnątrznaczyniowe grupy 6, m.in. zaopatrzenie tętniaków stentem krytym. Pobyt trwa zwykle 2 dni (mediana).
+Q47	Zabiegi wewnątrznaczyniowe grupy 7, głównie wszczepienie stentu do tętnicy szyjnej w jej zwężeniu (I65.2). Pobyt trwa zwykle 2 dni (mediana).
+Q48	Diagnostyczne badania radiologii zabiegowej, głównie arteriografia naczyń mózgowych i tętnic kończyn. Pobyt trwa zwykle 2 dni (mediana).
+Q51	Wytworzenie dostępu naczyniowego do dializ z użyciem protezy naczyniowej, u pacjentów ze schyłkową niewydolnością nerek (N18.0). Grupa jest mała. Pobyt trwa zwykle 2 dni (mediana).
+Q52	Wytworzenie dostępu naczyniowego do dializ (przetoki z własnych naczyń albo cewnika permanentnego) u pacjentów z niewydolnością nerek. Pobyt trwa zwykle 1 dzień (mediana).
+Q66	Leczenie chorób naczyń bez zabiegu, głównie miażdżycy (I70) i przewlekłej niewydolności żylnej. Pobyt trwa zwykle 4 dni (mediana).

@@ -3,20 +3,23 @@
 .wide { grid-column: 1 / -1; }
 /* Na szerokiej karcie wykres nie rośnie ponad czytelny rozmiar. */
 .wide .chart { width: 100%; max-width: 760px; margin-inline: auto; }
-.kicker { font-size: 11px; font-weight: 750; letter-spacing: .1em; text-transform: uppercase; color: var(--color-text-tertiary); }
-.title { font-size: 19px; letter-spacing: -.02em; line-height: 1.25; margin: 6px 0 6px; }
-.lead { margin: 0 0 14px; font-size: 14px; line-height: 1.55; color: var(--color-text-secondary); }
-.lead strong { color: #1B3D78; font-size: 16px; }
+.kicker { font-size: var(--fs-xs); font-weight: var(--fw-bold); letter-spacing: .1em; text-transform: uppercase; color: var(--color-text-tertiary); }
+.title { font-size: var(--fs-xl); letter-spacing: -.02em; line-height: 1.25; margin: 6px 0 6px; }
+.lead { margin: 0 0 14px; font-size: var(--fs-base); line-height: 1.55; color: var(--color-text-secondary); }
+.lead strong { color: #1B3D78; font-size: var(--fs-lg); }
 .chart { flex: 1; display: flex; flex-direction: column; justify-content: center; min-width: 0; }
-.description { margin: 14px 0 0; font-size: 13.5px; line-height: 1.6; color: var(--color-text-secondary); }
+.chartStart { justify-content: flex-start; }
+/* Karty obok siebie z listami od góry: wstęp zajmuje zawsze dwie linie, więc listy zaczynają się na tej samej wysokości. */
+.alignStart .lead { min-height: calc(2 * 1.55em + 4px); }
+.description { margin: 14px 0 0; font-size: var(--fs-base); line-height: 1.6; color: var(--color-text-secondary); }
 .description p { margin: 0 0 6px; }
 .description b { color: var(--color-text); }
 .footer { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--color-border); }
-.badge { font-size: 10.5px; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; padding: 3px 7px; border-radius: 4px; background: #FFF4E0; color: #8A5300; cursor: help; }
-.source { font-size: 12.5px; color: var(--color-text-tertiary); }
-.link { margin-left: auto; color: var(--color-primary-hover); font-size: 14px; font-weight: 750; display: inline-flex; gap: 6px; align-items: center; text-decoration: none; white-space: nowrap; }
+.badge { font-size: var(--fs-xs); font-weight: var(--fw-bold); letter-spacing: .08em; text-transform: uppercase; padding: 3px 7px; border-radius: 4px; background: #FFF4E0; color: #8A5300; cursor: help; }
+.source { font-size: var(--fs-md); color: var(--color-text-tertiary); }
+.link { margin-left: auto; color: var(--color-primary-hover); font-size: var(--fs-base); font-weight: var(--fw-bold); display: inline-flex; gap: 6px; align-items: center; text-decoration: none; white-space: nowrap; }
 .link:hover { text-decoration: underline; }
-.legend { display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; margin-top: 8px; font-size: 12px; color: var(--color-text-secondary); }
+.legend { display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; margin-top: 8px; font-size: var(--fs-sm); color: var(--color-text-secondary); }
 .legend span { display: inline-flex; align-items: center; gap: 6px; }
 .legend i { width: 12px; height: 12px; border-radius: 2px; display: inline-block; }
 @media (max-width: 550px) { .card { padding: 18px 16px 14px; } .link { margin-left: 0; } }

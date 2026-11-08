@@ -1,19 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { availabilityLabel, biggestChanges, inCatalogYear, type JgpCatalog as Catalog, type JgpCatalogRow } from "@/lib/jgpCatalog";
 import {
   DEFAULT_CATALOG_STATE, MIN_LATEST_OPTIONS, defaultSortDesc, hasActiveFilters, jgpCatalogUrlSearch, readJgpCatalogUrlState,
   type CatalogKind, type CatalogSortKey, type JgpCatalogUrlState,
 } from "@/lib/jgpCatalogUrlState";
+import { formatPln } from "@/lib/formatters";
 import { tokenize } from "@/lib/search";
 import styles from "./JgpCatalog.module.css";
 
 const integer = (value: number) => Math.round(value).toLocaleString("pl-PL");
 const decimal = (value: number) => value.toLocaleString("pl-PL", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 const signedPct = (value: number) => `${value > 0 ? "+" : ""}${decimal(value)}%`;
-const millions = (value: number) => `${(value / 1_000_000).toLocaleString("pl-PL", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} mln`;
+const signedIntegerPct = (value: number) => `${value > 0 ? "+" : ""}${integer(value)}%`;
 const PAGE = 50;
 
 const CHANGE_MIN_PREVIOUS = 1000;
@@ -72,6 +73,7 @@ export function JgpCatalogView({ catalog }: { catalog: Catalog }) {
   const [limit, setLimit] = useState(PAGE);
   const update = (patch: Partial<JgpCatalogUrlState>) => { write({ ...state, ...patch }); setLimit(PAGE); };
   const changes = useMemo(() => biggestChanges(catalog.rows, CHANGE_MIN_PREVIOUS), [catalog.rows]);
+  const value = catalog.settlements;
 
   const rows = useMemo(() => {
     const tokens = tokenize(query);
@@ -81,6 +83,8 @@ export function JgpCatalogView({ catalog }: { catalog: Catalog }) {
       && (showDiscontinued || !row.discontinued));
     const value = (row: JgpCatalogRow) => sort.key === "change" ? row.changePct ?? -Infinity
       : sort.key === "mortality" ? row.mortalityPct
+      : sort.key === "value" ? row.valuePln ?? -Infinity
+      : sort.key === "valueChange" ? row.valueChangePct ?? -Infinity
       : sort.key === "code" ? 0
       : row.latest;
     // Grupy wycofane nie mają danych w najnowszym roku, więc przy sortowaniu po liczbach idą na górę
@@ -92,7 +96,7 @@ export function JgpCatalogView({ catalog }: { catalog: Catalog }) {
       : byDiscontinued(a, b) || (value(b) - value(a)) * (sort.desc ? 1 : -1) || a.code.localeCompare(b.code));
   }, [catalog.rows, query, kind, minLatest, showDiscontinued, sort]);
 
-  const header = (key: CatalogSortKey, label: string, numeric = true) => <th className={numeric ? styles.num : undefined} aria-sort={sort.key === key ? (sort.desc ? "descending" : "ascending") : "none"}>
+  const header = (key: CatalogSortKey, label: ReactNode, numeric = true, title?: string) => <th className={numeric ? styles.num : undefined} title={title} aria-sort={sort.key === key ? (sort.desc ? "descending" : "ascending") : "none"}>
     <button type="button" className={styles.sortButton} onClick={() => update({ sort: { key, desc: sort.key === key ? !sort.desc : defaultSortDesc(key) } })}>
       {label}{sort.key === key ? (sort.desc ? " ↓" : " ↑") : ""}
     </button>
@@ -105,13 +109,6 @@ export function JgpCatalogView({ catalog }: { catalog: Catalog }) {
       <span className={`${styles.tab} ${styles.tabActive}`} role="tab" aria-selected="true">Grupy <small>{integer(catalog.totals.all)}</small></span>
       <span className={`${styles.tab} ${styles.tabSoon}`} role="tab" aria-selected="false" aria-disabled="true">Rodziny <small>wkrótce</small></span>
     </div>
-
-    <dl className={styles.kpis}>
-      <div><dt>Grupy aktywne w {catalog.latestYear} r.</dt><dd>{integer(catalog.totals.groups)}</dd><span>z {integer(catalog.totals.all)} grup w latach {catalog.years[0]}–{catalog.latestYear}</span></div>
-      <div><dt>Hospitalizacje w {catalog.latestYear} r.</dt><dd>{millions(catalog.totals.latest)}</dd>{catalog.previousYear ? <span>w {catalog.previousYear} r.: {millions(catalog.totals.previous)}</span> : null}</div>
-      <div><dt>Nowe grupy w {catalog.latestYear} r.</dt><dd>{integer(catalog.totals.added)}</dd>{catalog.previousYear ? <span>bez kodu w katalogu {catalog.previousYear} r.</span> : null}</div>
-      <div><dt>Grupy wycofane</dt><dd>{integer(catalog.totals.discontinued)}</dd><span>bez kodu w katalogu {catalog.latestYear} r.</span></div>
-    </dl>
 
     <div className={styles.filters}>
       <label className={styles.search}>
@@ -144,7 +141,7 @@ export function JgpCatalogView({ catalog }: { catalog: Catalog }) {
         <table className={styles.table}>
           <thead>
             <tr className={styles.titleRow}>
-              <th colSpan={catalog.previousYear ? 7 : 6}>
+              <th colSpan={(catalog.previousYear ? 7 : 6) + (value ? 2 : 0)}>
                 <span className={styles.tableTitle}>Grupy JGP</span>
                 <span className={styles.tableCount}>{integer(rows.length)} z {integer(catalog.totals.all)}</span>
               </th>
@@ -157,6 +154,8 @@ export function JgpCatalogView({ catalog }: { catalog: Catalog }) {
               {header("latest", catalog.latestYear)}
               {header("change", "r/r")}
               {header("mortality", "Śmiertelność")}
+              {value ? header("value", <>Rozliczenia<br />NFZ {value.year}</>, true, `Wartość świadczeń rozliczonych przez NFZ w ${value.year} r.`) : null}
+              {value ? header("valueChange", <>Zmiana<br />od {value.firstYear}</>, true, `Zmiana wartości rozliczeń NFZ ${value.firstYear}–${value.year}`) : null}
             </tr>
           </thead>
           <tbody>
@@ -172,6 +171,8 @@ export function JgpCatalogView({ catalog }: { catalog: Catalog }) {
               <td className={styles.num}>{count(row, catalog.latestYear, row.latest)}</td>
               <td className={`${styles.num} ${row.changePct !== null && row.changePct < 0 ? styles.down : ""}`}>{row.changePct === null ? "—" : signedPct(row.changePct)}</td>
               <td className={styles.num}>{row.latest ? `${decimal(row.mortalityPct)}%` : "—"}</td>
+              {value ? <td className={styles.num}>{row.valuePln === null ? "—" : formatPln(row.valuePln)}</td> : null}
+              {value ? <td className={`${styles.num} ${row.valueChangePct !== null && row.valueChangePct < 0 ? styles.down : ""}`}>{row.valueChangePct === null ? "—" : signedIntegerPct(row.valueChangePct)}</td> : null}
             </tr>; })}
           </tbody>
         </table>
@@ -192,6 +193,7 @@ export function JgpCatalogView({ catalog }: { catalog: Catalog }) {
       Mini-wykres: skala każdego wiersza od jego minimum do maksimum (kształt, nie wielkość); przerwa — grupy nie było w katalogu.
       „—” w kolumnach lat: grupy nie było w katalogu w tym roku; 0: grupa była w katalogu, ale bez hospitalizacji.
       Hospitalizacje metodą konserwatywną (wartości &lt;5 liczone jako 1).
+      {value ? <> Rozliczenia NFZ: wartość świadczeń rozliczonych w grupie (zestawienie NFZ od {value.firstYear} r.); „—”: brak kwot w tym roku.</> : null}
     </p>
   </>;
 }
