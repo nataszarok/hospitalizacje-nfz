@@ -413,7 +413,7 @@ function RegionsSection({ data, pool, map, regions, onToggle, onYear, onRegionYe
                 {heat.map((year) => {
                   const value = year.values.get(row.owNfz) ?? 0;
                   const pos = position(value, year.national);
-                  return <td key={year.year} data-year={year.year} className={styles.heatCell} style={{ background: scaleColor(pos), color: pos > 0.15 ? "#fff" : "#172033" }}>
+                  return <td key={year.year} data-year={year.year} className={styles.heatCell} style={{ background: scaleColor(pos), color: pos > 0.15 ? "#fff" : CHART_COLORS.text }}>
                     <button type="button" className={styles.heatButton} onClick={() => onRegionYear(row.owNfz, year.year)} title={`${names.get(row.owNfz)} ${year.year}: ${integer(value)} na 100 tys. — kliknij, żeby pokazać ten rok i województwo`}>{integer(value)}</button>
                   </td>;
                 })}

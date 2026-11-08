@@ -61,7 +61,7 @@ describe("tokeny kolorów", () => {
     const tokenValue = (token: string) => globals.match(new RegExp(`${token}\\s*:\\s*(#[0-9A-Fa-f]{6})`))?.[1]?.toUpperCase();
     const pairs: [keyof typeof CHART_COLORS, string][] = [
       ["text", "--color-text"], ["textSecondary", "--color-text-secondary"], ["textTertiary", "--color-text-tertiary"],
-      ["border", "--color-border"], ["borderStrong", "--color-border-strong"], ["grid", "--color-chart-grid"], ["background", "--color-background"],
+      ["border", "--color-border"], ["borderStrong", "--color-border-strong"], ["grid", "--color-chart-grid"], ["background", "--color-background"], ["backgroundMuted", "--color-background-muted"],
       ["dataStrong", "--color-data-strong"], ["data", "--color-data"], ["dataSoft", "--color-data-soft"], ["dataMuted", "--color-data-muted"],
       ["dataFaint", "--color-data-faint"], ["signal", "--color-signal"], ["positive", "--color-positive"],
     ];

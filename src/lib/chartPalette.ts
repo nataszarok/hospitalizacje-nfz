@@ -10,6 +10,7 @@ export const CHART_COLORS = {
   borderStrong: "#B9CEC9",
   grid: "#E6EFEC",
   background: "#FFFFFF",
+  backgroundMuted: "#EDF4F1",
   dataStrong: "#1B3D78",
   data: "#2856A3",
   dataSoft: "#9DB4DB",

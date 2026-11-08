@@ -216,7 +216,7 @@ export function HospitalizationSummaryPage({ summary }: { summary: Hospitalizati
             cta="Tryb przyjęcia"
           >
             <AdmissionBars years={years} />
-            <Legend items={[{ label: "Nagłe (%)", color: CHART_COLORS.data }, { label: "Planowe", color: CHART_COLORS.dataMuted }, { label: "Pozostałe", color: CHART_COLORS.dataFaint, border: "#D3DCEA" }]} />
+            <Legend items={[{ label: "Nagłe (%)", color: CHART_COLORS.data }, { label: "Planowe", color: CHART_COLORS.dataMuted }, { label: "Pozostałe", color: CHART_COLORS.dataFaint, border: CHART_COLORS.border }]} />
           </DataCard>
           <DataCard
             id="summary-mortality"
