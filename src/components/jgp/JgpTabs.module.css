@@ -882,21 +882,33 @@
   }
 }
 
-/* Wybrany ośrodek: gwiazdka (ten sam znak na wykresach, w tabeli, pasku i legendzie). */
-.star {
-  color: #d92d20;
-  font-size: var(--fs-lg);
-  line-height: 1;
+/* Wybrany ośrodek: kropka w kolorze sygnału (jak linia na wykresie „Ile?” i punkt na wykresie nagłych),
+   na lejku grafitowy punkt z białą obwódką (DESIGN.md, 6.2a). */
+.selectedDot,
+.graphiteDot {
+  display: inline-block;
+  flex: none;
+  width: 10px;
+  height: 10px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: var(--color-signal);
+  box-shadow: 0 0 0 2px #fff, 0 0 0 3px var(--color-signal);
+  vertical-align: 0;
+}
+.graphiteDot {
+  background: var(--color-text);
+  box-shadow: 0 0 0 2px #fff, 0 0 0 3px var(--color-text);
 }
 
-.nameCell .star,
+.nameCell .selectedDot,
 .nameCell .dot {
   margin-right: 6px;
   vertical-align: 1px;
 }
 
 .rankSelected td:first-child {
-  box-shadow: inset 3px 0 0 #d92d20;
+  box-shadow: inset 3px 0 0 var(--color-signal);
 }
 
 /* Przełącznik „Miesiące / Lata” w nagłówku sekcji „Ile?”: rozmiar etykiety `.tag`, więc nagłówek ma tę samą wysokość. */

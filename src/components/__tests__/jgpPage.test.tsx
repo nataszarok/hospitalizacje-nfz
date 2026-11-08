@@ -14,7 +14,6 @@ vi.mock("@/components/jgp/GroupLineChart", () => ({
   GroupLineChart: ({ lines }: { lines: { key: string; name: string }[] }) => <ul aria-label="Linie wykresu">{lines.map((line) => <li key={line.key}>{line.name}</li>)}</ul>,
 }));
 vi.mock("@/components/jgp/ProviderScatter", () => ({
-  STAR_COLOR: "#D92D20",
   ProviderScatter: ({ ariaLabel }: { ariaLabel: string }) => <div role="group" aria-label={ariaLabel} />,
 }));
 

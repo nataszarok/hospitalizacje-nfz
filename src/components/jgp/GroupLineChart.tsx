@@ -70,9 +70,9 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
   /** Najechanie na serię i zjechanie z wykresu (`null`). */
   onHover?: (key: string | null) => void;
   height?: number;
-  /** Kolor linii wybranego ośrodka (domyślnie pomarańczowy). */
+  /** Kolor linii wybranego ośrodka (domyślnie kolor sygnału). */
   selectedColor?: string;
-  /** Podpis na końcu linii wybranego ośrodka, np. „★ nazwa”. */
+  /** Podpis na końcu linii wybranego ośrodka (nazwa). */
   selectedLabel?: string;
   /** Rok wyróżniony tłem (jak pasek „wybrany rok” w dokumencie karty), np. rok wybrany na karcie. */
   highlightYear?: string;
