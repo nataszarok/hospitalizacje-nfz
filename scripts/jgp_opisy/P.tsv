@@ -1,0 +1,53 @@
+kod	opis
+P01	Leczenie astmy i trudności w oddychaniu u dzieci, głównie astmy alergicznej (J45.0), z pulsoksymetrią i spirometrią. Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+P03	Leczenie chorób górnych dróg oddechowych u dzieci, m.in. ostrych zakażeń, zapalenia krtani i nieżytu nosa. Pobyt trwa zwykle 2 dni (mediana).
+P04	Leczenie chorób dolnych dróg oddechowych u dzieci, w większości zapalenia płuc (J18.8) i zapalenia oskrzeli. Pobyt trwa zwykle 4 dni (mediana).
+P05	Leczenie poważnych zakażeń u dzieci, w tym chorób immunologicznych. Pobyt trwa zwykle 6 dni (mediana).
+P06	Leczenie mniejszych zakażeń u dzieci, najczęściej zakażeń wirusowych (B34.9), zakażeń układu moczowego i mononukleozy. Pobyt trwa zwykle 2 dni (mediana).
+P07	Leczenie nowotworów u dzieci, m.in. ostrej białaczki limfoblastycznej (C91.0). Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+P08	Leczenie drgawek gorączkowych u dzieci (R56). Pobyt trwa zwykle 2 dni (mediana).
+P09	Leczenie chorób układu nerwowego u dzieci; rozpoznania są bardzo różne. Pobyt trwa zwykle 3 dni (mediana).
+P10	Diagnostyka i leczenie chorób dokrewnych u dzieci (bez cukrzycy), głównie niskorosłości (E34.3) i niedoczynności przysadki. Pobyt trwa zwykle 2 dni (mediana).
+P11	Leczenie poważnych chorób przewodu pokarmowego i przemiany materii u dzieci, m.in. celiakii (K90.0) i zaburzeń wchłaniania. Pobyt trwa zwykle 1 dzień (mediana).
+P12	Leczenie innych zaburzeń przewodu pokarmowego u dzieci, najczęściej bólu brzucha, nudności i wymiotów, zaparć i odwodnienia. Pobyt trwa zwykle 2 dni (mediana).
+P13	Leczenie alergii u dzieci, m.in. odczulanie. Pobyt trwa zwykle 2 dni (mediana).
+P14	Leczenie urazów bez uszkodzenia mózgu u dzieci, w połowie powierzchownych urazów głowy (S00.0). Pobyt trwa zwykle 2 dni (mediana).
+P15	Diagnostyka zaburzeń zachowania i emocji u dzieci, m.in. autyzmu dziecięcego (F84.0). Pobyt trwa zwykle 1 dzień (mediana).
+P16	Diagnostyka i leczenie chorób genetycznych i wad wrodzonych u dzieci; rozpoznania są bardzo różne. Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+P17	Leczenie chorób układu moczowo-płciowego u dzieci, m.in. kamicy nerki i nietrzymania moczu. Pobyt trwa zwykle 1 dzień (mediana).
+P18	Leczenie chorób nerek u dzieci, m.in. przewlekłej niewydolności nerek i zespołu nerczycowego. Pobyt trwa zwykle 1 dzień (mediana).
+P19	Leczenie chorób krwi u dzieci, m.in. niedokrwistości z niedoboru żelaza i małopłytkowości. Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+P20	Leczenie chorób skóry, układu ruchu i tkanki łącznej u dzieci, głównie atopowego zapalenia skóry i pokrzywki. Pobyt trwa zwykle 1 dzień (mediana).
+P21	Diagnostyka chorób serca u dzieci, najczęściej po omdleniach (R55), przy bólu w klatce piersiowej i nadciśnieniu. Pobyt trwa zwykle 2 dni (mediana).
+P22	Leczenie zapalenia żołądka i jelit u dzieci, zakaźnego i niezakaźnego (m.in. biegunki zakaźnej, A09, i zakażeń rotawirusowych). Pobyt trwa zwykle 2 dni (mediana).
+P23	Diagnostyka i leczenie padaczki u dzieci. Pobyt trwa zwykle 2 dni (mediana).
+P24	Leczenie cukrzycy u dzieci, w większości typu 1 bez powikłań (E10.9). Pobyt trwa zwykle 3 dni (mediana).
+P25	Leczenie urazów głowy z urazem mózgu u dzieci, w większości wstrząśnienia mózgu (S06.0). Pobyt trwa zwykle 2 dni (mediana).
+P26	Leczenie nowotworów u dzieci z powikłaniami przy pobycie ponad 7 dni, m.in. agranulocytozy i małopłytkowości. Grupa jest bardzo mała. Pobyt trwa zwykle 11 dni (mediana).
+P27	Leczenie guzów litych układu nerwowego u dzieci, m.in. nowotworów móżdżku i mózgu. Pobyt trwa zwykle 1 dzień (mediana).
+P28	Leczenie nowotworów u dzieci, najczęściej ostrej białaczki limfoblastycznej (C91.0); także guzów nerki i nadnerczy. Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+P29	Diagnostyka i leczenie bólów głowy u dzieci przy pobycie ponad 3 dni, z badaniem EEG i rezonansem magnetycznym. Pobyt trwa zwykle 3 dni (mediana).
+P30	Leczenie określonych zakażeń wirusowych u dzieci, m.in. zakażeń wirusem RS, COVID-19 i grypy. Pobyt trwa zwykle 3 dni (mediana).
+P31	Leczenie ostrych stanów alergicznych u dzieci, m.in. wstrząsu anafilaktycznego i obrzęku naczynioruchowego. Pobyt trwa zwykle 1 dzień (mediana).
+P32	Odczulanie na alergeny u dzieci (Z51.6), w większości szczepionką na jady owadów. Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+P33	Leczenie cukrzycy typu 1 z kwasicą ketonową (E10.1) albo śpiączką u dzieci. Pobyt trwa zwykle 8 dni (mediana).
+P34	Leczenie cukrzycy typu 1 u dzieci bez kwasicy ketonowej i śpiączki. Pobyt trwa zwykle 2 dni (mediana).
+P35	Zachowawcze leczenie urazów u dzieci, głównie powierzchownych urazów głowy i wstrząśnienia mózgu. Pobyt trwa zwykle 2 dni (mediana).
+P36	Leczenie poważnych chorób uszu, nosa i gardła u dzieci, głównie obustronnej głuchoty czuciowo-nerwowej (H90.3) i guzków strun głosowych. Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+P37	Leczenie zaburzeń rytmu serca u niemowląt i u dzieci z powikłaniami. Pobyt trwa zwykle 2 dni (mediana).
+P38	Leczenie wrodzonych wad serca u niemowląt i u dzieci z powikłaniami, m.in. z niewydolnością serca i sinicą. Pobyt trwa zwykle 2 dni (mediana).
+P39	Leczenie wrodzonych wad serca u dzieci powyżej 1 roku życia, m.in. ubytków przegród serca, tetralogii Fallota i zwężenia cieśni aorty. Pobyt trwa zwykle 2 dni (mediana).
+P40	Leczenie innych chorób układu krążenia u niemowląt i u dzieci z powikłaniami, często z niewydolnością serca. Pobyt trwa zwykle 3 dni (mediana).
+P41	Leczenie nieswoistych chorób zapalnych jelit u dzieci: wrzodziejącego zapalenia jelita grubego i choroby Crohna. Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+P42	Leczenie przewlekłych chorób wątroby u dzieci, m.in. zespołu Gilberta i zaburzeń przemian bilirubiny. Pobyt trwa zwykle 1 dzień (mediana).
+P43	Leczenie ciężkich oparzeń u dzieci przy pobycie ponad 10 dni, z oczyszczaniem ran. Grupa jest bardzo mała. Pobyt trwa zwykle 13 dni (mediana).
+P44	Leczenie średnich oparzeń i odmrożeń u dzieci przy pobycie ponad 5 dni. Grupa jest mała. Pobyt trwa zwykle 7 dni (mediana).
+P45	Leczenie lekkich oparzeń i odmrożeń u dzieci. Pobyt trwa zwykle 3 dni (mediana).
+P46	Leczenie dużych zakażeń skóry u dzieci, m.in. zapalenia tkanki łącznej i półpaśca. Grupa jest bardzo mała.
+P47	Leczenie zaburzeń odżywienia u dzieci, m.in. niedoboru witaminy D, otyłości i trudności w karmieniu. Pobyt trwa zwykle 1 dzień (mediana).
+P48	Intensywne leczenie ostrych białaczek u dzieci, głównie ostrej białaczki limfoblastycznej (C91.0). Pobyt jest bardzo długi: zwykle 35 dni (mediana).
+P49	Leczenie zachowawcze chorób oczu u dzieci, m.in. zeza i niedowidzenia. Pobyt trwa zwykle 1 dzień (mediana).
+P50	Diagnostyka i leczenie chorób układu nerwowego u dzieci; rozpoznania są bardzo różne, często nieokreślone zaburzenia układu nerwowego. Pobyt trwa zwykle 1 dzień (mediana).
+P51	Zachowawcze leczenie ciężkiej posocznicy (sepsy) u dzieci. Pobyt trwa zwykle 10 dni (mediana).
+P52	Leczenie wrodzonych zaburzeń przemiany materii u dzieci. Pobyt trwa zwykle 1 dzień (mediana).
+P99	Leczenie innych chorób dzieci, które nie mieszczą się w pozostałych grupach; rozpoznania są bardzo różne. Pobyt trwa zwykle 1 dzień (mediana).

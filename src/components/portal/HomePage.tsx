@@ -91,13 +91,13 @@ export function HomePage({ highlights, stats, hospitals }: { highlights: Dataset
     <LegacyDashboardRedirect />
     <main id="main-content" className={styles.home}>
       <section className={styles.hero} aria-labelledby="hero-title">
-        <div className={styles.heroPhoto} role="img" aria-label="Ilustracja: droga pacjenta przez szpital — karetka, szpital, łóżko z kroplówką, monitor EKG i dni pobytu" />
+        <div className={styles.heroPhoto} role="img" aria-label="Ilustracja: sala operacyjna w szpitalu" />
         <div className={styles.heroShade} aria-hidden="true" />
         <div className={styles.container}>
           <div className={styles.heroContent}>
             <span className={styles.eyebrow}><span className={styles.eyebrowLine} /> Publiczna ochrona zdrowia · Dane NFZ</span>
             <h1 id="hero-title">Publiczna ochrona<br />zdrowia w liczbach.</h1>
-            <p>Sprawdź, jak wyglądały hospitalizacje, porównuj publiczne szpitale i poznaj system wycen JGP. Czytaj analizy i artykuły, m.in. o kontrolach NFZ.</p>
+            <p>Sprawdź, jak wyglądały hospitalizacje, porównuj publiczne szpitale i poznaj system wycen JGP. Czytaj analizy i artykuły.</p>
             <div className={styles.heroSearch}>
               <SearchBox variant="hero" />
               <p className={styles.searchHint}>Np. <b>E10</b>, <b>ozw</b>, <b>Nowa Sól</b> albo <b>E10 Nowa Sól na tle innych</b>. <Link href="#odkrywaj">Albo wybierz temat ↓</Link></p>

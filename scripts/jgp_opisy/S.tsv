@@ -1,0 +1,35 @@
+kod	opis
+S01	Intensywna chemioterapia ostrych białaczek u dorosłych, głównie ostrej białaczki szpikowej (C92.0). Pobyt jest bardzo długi: zwykle 29 dni (mediana).
+S02	Leczenie chorób krwi i układu odpornościowego przy pobycie ponad 10 dni, m.in. szpiczaka mnogiego, ostrej białaczki szpikowej i chłoniaków. Pobyt trwa zwykle 17 dni (mediana).
+S03	Leczenie chorób krwi i układu odpornościowego przy pobycie ponad 1 dzień, m.in. zespołu mielodysplastycznego, szpiczaka i białaczek. Pobyt trwa zwykle 4 dni (mediana).
+S04	Krótkie pobyty (do 1 dnia) w chorobach krwi i układu odpornościowego, m.in. szpiczaku mnogim (C90.0) i nowotworach szpiku. Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+S05	Leczenie zaburzeń krzepnięcia i innych chorób krwi i śledziony przy pobycie ponad 10 dni. Pobyt trwa zwykle 14 dni (mediana).
+S06	Leczenie zaburzeń krzepnięcia i innych chorób krwi i śledziony przy pobycie ponad 1 dzień, m.in. niedokrwistości. Pobyt trwa zwykle 4 dni (mediana).
+S07	Krótkie pobyty (do 1 dnia) w chorobach krwi, głównie niedokrwistości, także z niedoboru żelaza. Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+S08	Intensywna chemioterapia ostrych białaczek u dzieci. Pobyt jest bardzo długi: zwykle 36 dni (mediana).
+S11	Leczenie skaz krwotocznych w okresie urazu lub zabiegu, m.in. u pacjentów z hemofilią i zmianami w stawach (M36.2). Grupa jest mała. Pobyt trwa zwykle 12 dni (mediana).
+S12	Leczenie skaz krwotocznych w okresie urazu. W danych NFZ to pojedyncze pobyty.
+S13	Kompleksowa ocena stanu zdrowia pacjentów ze skazą krwotoczną, np. chorobą von Willebranda. W danych NFZ to pojedyncze pobyty.
+S15	Rozszerzona ocena stanu zdrowia pacjentów ze skazą krwotoczną (choroba von Willebranda). W danych NFZ to pojedyncze pobyty.
+S16	Ocena stanu zdrowia pacjentów ze skazą krwotoczną: hemofilią A (D66) albo chorobą von Willebranda. W danych NFZ to pojedyncze pobyty.
+S21	Przeszczepienie własnych (autologicznych) komórek krwiotwórczych, najczęściej w szpiczaku mnogim (C90.0); także w chłoniakach. Pobyt jest bardzo długi: zwykle 22 dni (mediana).
+S22	Przeszczepienie komórek krwiotwórczych od rodzeństwa zgodnego w HLA, najczęściej w ostrej białaczce szpikowej (C92.0). Pobyt jest bardzo długi: zwykle 40 dni (mediana).
+S23	Przeszczepienie komórek krwiotwórczych od dawcy alternatywnego (niespokrewnionego), najczęściej w ostrej białaczce szpikowej (C92.0). Pobyt jest bardzo długi: zwykle 40 dni (mediana).
+S33	Leczenie chorób alergicznych u dorosłych, w większości odczulanie (Z51.6), głównie szczepionką na jady owadów. Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+S34	Diagnostyka i leczenie ciężkich alergii u dorosłych, m.in. po wstrząsie anafilaktycznym (T78.2), z testami alergicznymi i odczulaniem. Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+S40	Intensywne leczenie zatruć, m.in. lekami psychotropowymi. Grupa jest mała. Pobyt trwa zwykle 11 dni (mediana).
+S41E	Leczenie ciężkich zatruć u pacjentów powyżej 65 roku życia, m.in. lekami przeciwkrzepliwymi, tlenkiem węgla i lekami uspokajającymi. Pobyt trwa zwykle 6 dni (mediana).
+S41F	Leczenie ciężkich zatruć u pacjentów poniżej 66 roku życia, m.in. paracetamolem, lekami psychotropowymi i alkoholem; często z podaniem odtrutki. Pobyt trwa zwykle 3 dni (mediana).
+S42E	Leczenie średnich zatruć u pacjentów powyżej 65 roku życia, głównie lekami przeciwkrzepliwymi (T45.5) i alkoholem. Pobyt trwa zwykle 5 dni (mediana).
+S42F	Leczenie średnich zatruć u pacjentów poniżej 66 roku życia, głównie alkoholem etylowym (T51.0) i lekami psychotropowymi. Pobyt trwa zwykle 3 dni (mediana).
+S43	Leczenie lekkich zatruć, m.in. alkoholem, jadem owadów i lekami. Pobyt trwa zwykle 1 dzień (mediana).
+S44	Leczenie innych stanów toksykologicznych, w większości alkoholowego zespołu abstynencyjnego (F10.3). Pobyt trwa zwykle 5 dni (mediana).
+S51	Leczenie pełnoobjawowej choroby wywołanej przez HIV (AIDS). Pobyt trwa zwykle 3 dni (mediana).
+S51C	Leczenie pełnoobjawowej choroby wywołanej przez HIV (AIDS) przy pobycie poniżej 6 dni. Pobyt trwa zwykle 1 dzień (mediana).
+S51D	Leczenie pełnoobjawowej choroby wywołanej przez HIV (AIDS) przy pobycie ponad 5 dni. Pobyt trwa zwykle 9 dni (mediana).
+S52	Diagnostyka i leczenie niedoborów odporności innych niż HIV/AIDS. Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+S55E	Diagnostyka gorączki niejasnego pochodzenia (R50) u pacjentów powyżej 65 roku życia. Pobyt trwa zwykle 7 dni (mediana).
+S55F	Diagnostyka gorączki niejasnego pochodzenia (R50) u pacjentów poniżej 66 roku życia. Pobyt trwa zwykle 3 dni (mediana).
+S56	Leczenie ciężkiej posocznicy (sepsy), w połowie pobytów wywołanej przez bakterie Gram-ujemne (A41.5), także przez gronkowce. Pobyt trwa zwykle 11 dni (mediana).
+S57	Leczenie innych chorób wirusowych, w połowie pobytów COVID-19 (U07.1); także grypy i mononukleozy. Pobyt trwa zwykle 5 dni (mediana).
+S60	Leczenie niewirusowych chorób zakaźnych, m.in. róży (A46) i boreliozy (A69.2). Pobyt trwa zwykle 5 dni (mediana).

@@ -1,7 +1,8 @@
 import { isProceduralJgpName, productTrend, type StaticDataset, type TrendsDataset } from "@/lib/staticData";
 import { regionalBreakdown, type RegionRow } from "@/lib/regions";
 import { productCodesForJgp } from "@/lib/trends";
-import { familyFor, JGP_DESCRIPTIONS } from "@/lib/jgpGroupInfo";
+import { familyFor } from "@/lib/jgpGroupInfo";
+import { buildJgpDescription, type JgpDescription, type JgpProfilesFile } from "@/lib/jgpDescription";
 import type { EstimationMethod } from "@/lib/types";
 
 /** Model par A/B: pary klasy A z dystansem do tej wartości (jak domyślnie w widoku „Porównanie”). */
@@ -46,6 +47,10 @@ export interface JgpPageExtras {
   allYearProviders?: boolean;
   /** Nazwy ośrodków z wcześniejszych lat (słowniki starszych plików roku). */
   facilities?: StaticDataset["facilities"];
+  /** Profile grup z API statystyk JGP NFZ (`build-data/jgp_profiles.json.gz`): opis grupy. */
+  profiles?: JgpProfilesFile | null;
+  /** Opisy grup prozą (`scripts/jgp_opisy/*.tsv`, `readJgpProse`). */
+  prose?: Record<string, string>;
 }
 
 /** Rodzina grupy: udziały wariantów w latach (hospitalizacje z trendów, w kolejności `catalogYears`). */
@@ -129,8 +134,8 @@ export interface JgpPageData {
   valuePln: { year: string; value: number }[];
   /** Rodzina wariantów (lista ręczna w `jgpGroupInfo.ts`) albo `null`. */
   family: JgpFamilyData | null;
-  /** Opis redakcyjny grupy albo `null`. */
-  description: string | null;
+  /** Opis grupy z danych NFZ (`buildJgpDescription`) albo `null`, gdy API nie ma danych grupy. */
+  description: JgpDescription | null;
 }
 
 const round2 = (value: number) => Math.round(value * 100) / 100;
@@ -289,6 +294,6 @@ export function buildJgpPageData(trends: TrendsDataset, latest: StaticDataset, j
     } : null,
     valuePln: Object.entries(file?.valuePln?.national ?? {}).sort(([a], [b]) => a.localeCompare(b)).map(([year, pln]) => ({ year, value: pln })),
     family,
-    description: JGP_DESCRIPTIONS[jgpCode] ?? null,
+    description: buildJgpDescription(jgpCode, extras.profiles, familyDefinition, extras.prose?.[jgpCode]),
   };
 }

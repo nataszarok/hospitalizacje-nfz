@@ -1,0 +1,65 @@
+kod	opis
+E02	Inne operacje kardiochirurgiczne u dorosłych, np. zabiegi naprawcze serca i osierdzia (otwarte lub przezskórne) i nakłucie worka osierdziowego. Najczęstszy powód to płyn w worku osierdziowym (I31.3). Pobyt trwa zwykle 7 dni (mediana).
+E03	Inne operacje kardiochirurgiczne u dzieci, najczęściej otwarte zamknięcie przewodu tętniczego Botalla. Grupa jest mała. Pobyt trwa zwykle 6 dni (mediana).
+E04	Pomostowanie naczyń wieńcowych (bypassy) połączone z plastyką, najczęściej pomost z tętnicy piersiowej wewnętrznej. Wykonuje się je w chorobie wieńcowej w przebiegu miażdżycy (I25.0), dusznicy niestabilnej i po zawale. Pobyt jest długi: zwykle 13 dni (mediana).
+E05	Pomostowanie naczyń wieńcowych (bypassy) u pacjentów powyżej 69 roku życia lub z powikłaniami i chorobami współistniejącymi. Najczęstsze rozpoznanie to choroba wieńcowa w przebiegu miażdżycy (I25.0). Pobyt trwa zwykle 9 dni (mediana).
+E05G	Pomostowanie naczyń wieńcowych (bypassy) u pacjentów z co najmniej dwoma powikłaniami lub chorobami współistniejącymi. Najczęściej to pomost z tętnicy piersiowej wewnętrznej, często razem z pomostami aortalno-wieńcowymi. Pobyt trwa zwykle 10 dni (mediana).
+E06	Pomostowanie naczyń wieńcowych (bypassy) u pacjentów poniżej 70 roku życia bez powikłań. Najczęstsze rozpoznanie to choroba wieńcowa w przebiegu miażdżycy (I25.0). Pobyt trwa zwykle 9 dni (mediana).
+E06G	Pomostowanie naczyń wieńcowych (bypassy) bez powikłań i chorób współistniejących. Najczęściej to pomost z tętnicy piersiowej wewnętrznej, wykonywany głównie w chorobie wieńcowej w przebiegu miażdżycy (I25.0). Pobyt trwa zwykle 9 dni (mediana).
+E07	Pomostowanie naczyń wieńcowych u pacjentów powyżej 75 roku życia przy pobycie ponad 16 dni. Grupa jest mała. Pobyt trwa zwykle 23 dni (mediana).
+E10	Hospitalizacja z powodu ostrego zawału serca, w której wykonano diagnostykę inwazyjną – prawie zawsze koronarografię – ale nie zabieg udrożnienia tętnic wieńcowych. Inne warianty rodziny OZW obejmują leczenie inwazyjne (angioplastykę ze stentem) i leczenie zachowawcze. Pobyt trwa zwykle 4 dni (mediana).
+E11	Leczenie inwazyjne ostrego zawału serca w dwóch etapach przy pobycie ponad 3 dni: angioplastyka tętnic wieńcowych, najczęściej ze stentem uwalniającym lek. Pobyt trwa zwykle 5 dni (mediana).
+E12G	Leczenie inwazyjne ostrego zawału serca: angioplastyka tętnic wieńcowych, często ze stentem uwalniającym lek. To najliczniejsza grupa rodziny OZW. Pobyt trwa zwykle 4 dni (mediana).
+E15	Leczenie inwazyjne ostrego zawału serca (angioplastyka wieńcowa) przy pobycie ponad 7 dni u pacjentów z powikłaniami lub chorobami współistniejącymi. Pobyt trwa zwykle 10 dni (mediana).
+E16	Leczenie ostrego zespołu wieńcowego bez zabiegu u pacjentów powyżej 69 roku życia lub z powikłaniami. W statystykach NFZ często współwystępują migotanie przedsionków i niewydolność serca. Pobyt trwa zwykle 4 dni (mediana).
+E17G	Leczenie zachowawcze ostrego zespołu wieńcowego, bez koronarografii i angioplastyki. Najczęściej z powodu dusznicy niestabilnej (I20.0) albo zawału serca. Pobyt trwa zwykle 2 dni (mediana).
+E21	Przezskórne zamknięcie nieprawidłowych połączeń w sercu u dorosłych, najczęściej ubytku przegrody międzyprzedsionkowej (Q21.1) za pomocą zapinki (parasola). Pobyt trwa zwykle 2 dni (mediana).
+E22E	Przezskórna balonowa walwuloplastyka u pacjentów powyżej 65 roku życia, głównie w zwężeniu zastawki aortalnej (I35.0). Pobyt trwa zwykle 6 dni (mediana).
+E22F	Przezskórna balonowa walwuloplastyka u pacjentów od 18 do 65 roku życia, m.in. w zwężeniu zastawki aortalnej i po tetralogii Fallota. Pobyt trwa zwykle 5 dni (mediana).
+E23G	Planowa angioplastyka tętnicy wieńcowej z wszczepieniem jednego stentu, najczęściej w przewlekłej chorobie wieńcowej w przebiegu miażdżycy (I25.0). Pobyt trwa zwykle 1 dzień (mediana).
+E24G	Angioplastyka wieńcowa z wszczepieniem co najmniej dwóch stentów albo w kilku naczyniach, głównie w chorobie wieńcowej w przebiegu miażdżycy (I25.0). Pobyt trwa zwykle 2 dni (mediana).
+E26	Angioplastyka wieńcowa samym balonem, bez stentu, głównie w chorobie wieńcowej w przebiegu miażdżycy (I25.0). Pobyt trwa zwykle 2 dni (mediana).
+E27	Koronarografia i inne badania inwazyjne serca bez zabiegu udrożnienia tętnic, jedna z najliczniejszych grup kardiologicznych. Najczęstsze rozpoznanie to choroba wieńcowa w przebiegu miażdżycy (I25.0). Pobyt trwa zwykle 1 dzień (mediana).
+E29	Angioplastyka wieńcowa balonem uwalniającym lek (DEB), wykonywana głównie w chorobie wieńcowej w przebiegu miażdżycy (I25.0). Pobyt trwa zwykle 2 dni (mediana).
+E31	Wszczepienie albo wymiana rozrusznika jednojamowego. W większości pobytów to pierwsze wszczepienie, w części wymiana urządzenia. Pobyt trwa zwykle 2 dni (mediana).
+E31G	Przezcewnikowe wszczepienie bezelektrodowego rozrusznika jednojamowego, najczęściej w zupełnym bloku przedsionkowo-komorowym (I44.2) i zespole chorej zatoki. Pobyt trwa zwykle 4 dni (mediana).
+E32	Wszczepienie albo wymiana rozrusznika dwujamowego, jedna z najczęstszych procedur elektrofizjologicznych. W większości pobytów to pierwsze wszczepienie. Pobyt trwa zwykle 2 dni (mediana).
+E33	Wszczepienie albo wymiana układu resynchronizującego serce bez funkcji defibrylacji (CRT-P). Pobyt trwa zwykle 3 dni (mediana).
+E34	Wszczepienie albo wymiana kardiowertera-defibrylatora (ICD) jedno- lub dwujamowego, najczęściej u pacjentów z niewydolnością serca (I50.1, I50.0) i częstoskurczem komorowym. Pobyt trwa zwykle 2 dni (mediana).
+E34G	Wszczepienie albo wymiana całkowicie podskórnego kardiowertera-defibrylatora, głównie u pacjentów z niewydolnością serca i kardiomiopatią przerostową. Pobyt trwa zwykle 5 dni (mediana).
+E36	Wszczepienie albo wymiana układu resynchronizującego serce z funkcją defibrylacji (CRT-D) u dorosłych z niewydolnością serca (I50.1, I50.0). Pobyt trwa zwykle 3 dni (mediana).
+E37	Naprawa, zmiana położenia albo wymiana elektrod oraz rewizja loży rozrusznika lub defibrylatora. Pobyt trwa zwykle 3 dni (mediana).
+E37G	Wymiana elektrod kardiowertera-defibrylatora (ICD) jedno- lub dwujamowego. Grupa jest mała. Pobyt trwa zwykle 3 dni (mediana).
+E37H	Wymiana elektrod układu resynchronizującego z defibrylatorem (CRT-D), u pacjentów z niewydolnością serca. Grupa jest mała. Pobyt trwa zwykle 3 dni (mediana).
+E39	Zabiegowe leczenie zaburzeń rytmu serca u dzieci, głównie ablacja przezcewnikowa. Pobyt trwa zwykle 4 dni (mediana).
+E43	Ablacja przezcewnikowa zaburzeń rytmu serca, najczęściej częstoskurczu nadkomorowego (I47.1) albo migotania i trzepotania przedsionków (I48). Pobyt trwa zwykle 2 dni (mediana).
+E44	Inwazyjna diagnostyka zaburzeń rytmu serca: zawsze badanie elektrofizjologiczne (EPS). Wykonuje się je m.in. w częstoskurczu nadkomorowym, migotaniu przedsionków i po omdleniach. Pobyt trwa zwykle 2 dni (mediana).
+E46	Prosta ablacja zaburzeń rytmu z użyciem trójwymiarowego systemu elektroanatomicznego, najczęściej w dodatkowych pobudzeniach komorowych (I49.3) i częstoskurczu nadkomorowym. Pobyt trwa zwykle 2 dni (mediana).
+E47	Złożona ablacja zaburzeń rytmu z użyciem trójwymiarowego systemu elektroanatomicznego, wykonywana przezcewnikowo. Pobyt trwa zwykle 2 dni (mediana).
+E48	Ablacja migotania przedsionków (I48) przez izolację żył płucnych, prawie zawsze przezcewnikowa. Pobyt trwa zwykle 2 dni (mediana).
+E50	Leczenie ostrej albo zdekompensowanej niewydolności serca w oddziale intensywnej opieki kardiologicznej. Rozpoznania to niewydolność serca zastoinowa i lewokomorowa. Pobyt trwa zwykle 8 dni (mediana).
+E51	Leczenie zapalenia wsierdzia, najczęściej zakaźnego (I33.0). Pobyt jest bardzo długi: zwykle 20 dni (mediana).
+E52	Leczenie zaawansowanej niewydolności serca, często z dożylnym wlewem leków inotropowych albo rozszerzających naczynia. Pobyt trwa zwykle 7 dni (mediana).
+E53G	Leczenie niewydolności serca, jedna z najliczniejszych grup JGP. W większości rozpoznanie to niewydolność serca bez bliższego określenia (I50.9). Pobyt trwa zwykle 6 dni (mediana).
+E55	Leczenie zakrzepicy żył głębokich kończyn dolnych. Pobyt trwa zwykle 5 dni (mediana).
+E56	Leczenie choroby niedokrwiennej serca bez zabiegu u pacjentów powyżej 69 roku życia lub z powikłaniami. W statystykach NFZ często współwystępują migotanie przedsionków i niewydolność serca. Pobyt trwa zwykle 4 dni (mediana).
+E57	Leczenie choroby niedokrwiennej serca bez zabiegu u pacjentów od 18 do 69 roku życia bez powikłań, najczęściej choroby wieńcowej w przebiegu miażdżycy (I25.0). Pobyt trwa zwykle 3 dni (mediana).
+E59	Leczenie po nagłym zatrzymaniu krążenia, także po skutecznej resuscytacji (I46.0). Pobyt trwa zwykle 2 dni (mediana).
+E61	Leczenie zaburzeń rytmu serca u pacjentów powyżej 69 roku życia lub z powikłaniami. Pobyt trwa zwykle 2 dni (mediana).
+E62	Leczenie zaburzeń rytmu serca u pacjentów od 18 do 69 roku życia bez powikłań, w większości migotania i trzepotania przedsionków (I48). Pobyt trwa zwykle 1 dzień (mediana).
+E63	Leczenie zaburzeń rytmu serca u niemowląt i u dzieci z powikłaniami, najczęściej częstoskurczu nadkomorowego (I47.1). Pobyt trwa zwykle 4 dni (mediana).
+E64	Leczenie zaburzeń rytmu serca u dzieci powyżej 1 roku życia, m.in. dodatkowych pobudzeń komorowych i zespołu preekscytacji. Pobyt trwa zwykle 3 dni (mediana).
+E71	Diagnostyka i leczenie omdleń i zapaści (R55). Pobyt trwa zwykle 3 dni (mediana).
+E72	Nieinwazyjna diagnostyka bólu w klatce piersiowej u dorosłych. Pobyt trwa zwykle 2 dni (mediana).
+E73	Leczenie chorób zastawek serca bez zabiegu u dorosłych, najczęściej niedomykalności zastawki mitralnej (I34.0) i zwężenia zastawki aortalnej (I35.0). Pobyt trwa zwykle 3 dni (mediana).
+E74E	Leczenie wrodzonych wad serca u pacjentów powyżej 65 roku życia, najczęściej ubytku przegrody międzyprzedsionkowej (Q21.1). Pobyt trwa zwykle 2 dni (mediana).
+E74F	Leczenie wrodzonych wad serca u dorosłych poniżej 66 roku życia, najczęściej ubytku przegrody międzyprzedsionkowej (Q21.1) i po tetralogii Fallota. Pobyt trwa zwykle 1 dzień (mediana).
+E75	Leczenie wrodzonych wad serca u niemowląt i u dzieci z powikłaniami, m.in. ubytków przegrody międzyprzedsionkowej i międzykomorowej. Pobyt trwa zwykle 3 dni (mediana).
+E76	Leczenie wrodzonych wad serca u dzieci powyżej 1 roku życia, m.in. ubytków przegród serca i tetralogii Fallota. Pobyt trwa zwykle 3 dni (mediana).
+E77	Leczenie innych chorób układu krążenia u dorosłych, często diagnostyka nieprawidłowych wyników badań serca. Pobyt trwa zwykle 4 dni (mediana).
+E78	Leczenie innych chorób układu krążenia u niemowląt i u dzieci z powikłaniami, m.in. kardiomiopatii. Pobyt trwa zwykle 3 dni (mediana).
+E79	Leczenie innych chorób układu krążenia u dzieci powyżej 1 roku życia, najczęściej omdleń (R55), bólu w klatce piersiowej i nadciśnienia. Pobyt trwa zwykle 3 dni (mediana).
+E86	Diagnostyka nadciśnienia opornego na leczenie i wtórnego: w większości pobytów całodobowy pomiar ciśnienia (Holter), część z badaniami hormonów i USG tętnic nerkowych. Pobyt trwa zwykle 9 dni (mediana).
+E87	Diagnostyka ciężkiego nadciśnienia tętniczego u dorosłych, w większości z całodobowym pomiarem ciśnienia (Holter). Pobyt trwa zwykle 4 dni (mediana).
+E88	Leczenie nadciśnienia tętniczego u dorosłych, w większości samoistnego (I10). Pobyt trwa zwykle 3 dni (mediana).
+E89	Kompleksowa diagnostyka kardiologiczna: w większości pobytów EKG, część z próbą wysiłkową na bieżni. Pobyt trwa zwykle 1 dzień (mediana).
