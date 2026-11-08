@@ -1,15 +1,15 @@
 # DESIGN.md — funduszdanych.pl
 
 System wizualny portalu w jednym miejscu: zasady, tokeny, wzorce komponentów i wykresów.
-Dla ludzi i agentów, którzy zmieniają UI. Wersja robocza 0.1 (listopad 2026).
+Dla ludzi i agentów, którzy zmieniają UI. Wersja robocza 0.2 (listopad 2026).
 
 - Idea, znak, paleta z uzasadnieniem: [`brand/brandbook.html`](brand/brandbook.html)
 - Język i ton tekstów: [`brand/brand-voice.md`](brand/brand-voice.md)
 - Banery: [`brand/baner.html`](brand/baner.html), PNG w `brand/`
 
-Status tokenów w tabelach:
-**jest** — token istnieje w kodzie;
-**propozycja** — tokenu jeszcze nie ma, kolor dziś jest literałem w plikach.
+Wszystkie tokeny z tabel istnieją w kodzie: jeden zestaw `--color-*`, `--radius-*`, `--shadow-*` na `:root`
+w `src/app/globals.css`. Plotly i atrybuty SVG nie czytają zmiennych CSS, więc te same wartości są w
+`CHART_COLORS` i `DEVIATION_COLORS` (`src/lib/chartPalette.ts`). Zgodność pilnuje `src/app/__tests__/designTokens.test.ts`.
 
 ---
 
@@ -23,7 +23,7 @@ Status tokenów w tabelach:
 4. **Liczba z podpisem.** Każda liczba ma jednostkę, okres i źródło. Szacunki mają plakietkę „szacunek”.
 5. **Pytanie, liczba, kontekst.** Karta danych: tytuł-pytanie, liczba z wnioskiem, wykres, link do pełnego widoku.
 6. **Tokeny, nie literały.** Kolor, rozmiar tekstu i grubość tylko z tokenów.
-   Nowa wartość = nowy token w `globals.css` / `portal.css`, nie wartość w pliku komponentu.
+   Nowa wartość = nowy token w `globals.css` (i stała w `chartPalette.ts`, jeśli czyta ją wykres), nie wartość w pliku komponentu.
 7. **Komponenty niezależne od strony.** Komponent działa w eksploratorze, na karcie JGP i na stronie głównej
    (wzór: `TrendView`). Układ strony należy do strony, wygląd do komponentu.
 
@@ -33,38 +33,45 @@ Status tokenów w tabelach:
 
 ### 2.1 Rdzeń: sterylność (interfejs)
 
-| Token | Wartość | Nazwa | Użycie | Status |
-|---|---|---|---|---|
-| `--color-primary` | `#087F75` | Zieleń operacyjna | Znak, aktywna zakładka, ikony, przyciski | jest |
-| `--color-primary-hover` | `#076B63` | | Tekst linków, hover | jest |
-| `--color-primary-active` | `#055850` | | Stan wciśnięty | jest |
-| `--color-primary-soft` | `#E9F6F2` | | Tło ikon, aktywny wiersz, hover chipów | jest |
-| `--color-primary-outline` | `#B9DDD4` | | Obrys elementów aktywnych | jest |
-| `--color-focus-ring` | `rgba(8,127,117,.22)` | | Pierścień fokusu | jest |
-| `--color-background` | `#FFFFFF` | Biel fartucha | Tło treści i kart | jest |
-| `--color-background-soft` | `#F3F8F7` | Kafel | Hero, stopka, panel boczny | jest |
-| `--color-background-muted` | `#EDF4F1` | | Elementy nieaktywne, plakietka „Planowane” | jest |
-| `--color-text` | `#253B3A` | Grafit | Tekst główny | jest |
-| `--color-text-secondary` | `#536C68` | | Opisy, wstępy | jest |
-| `--color-text-tertiary` | `#6C827E` | | Etykiety, przypisy | jest |
-| `--color-border` | `#D9E6E3` | | Ramki kart, linie tabel | jest |
-| `--color-border-strong` | `#B9CEC9` | | Chipy, separatory faktów | jest |
-| `--color-error` / `-soft` | `#B42318` / `#FFF4F2` | Alarm | Tylko błędy | jest |
+| Token | Wartość | Nazwa | Użycie |
+|---|---|---|---|
+| `--color-primary` | `#087F75` | Zieleń operacyjna | Znak, aktywna zakładka, ikony, przyciski |
+| `--color-primary-hover` | `#076B63` | | Tekst linków, hover |
+| `--color-primary-active` | `#055850` | | Stan wciśnięty |
+| `--color-primary-soft` | `#E9F6F2` | | Tło ikon, aktywny wiersz, hover chipów |
+| `--color-primary-outline` | `#B9DDD4` | | Obrys elementów aktywnych |
+| `--color-focus-ring` | `rgba(8,127,117,.22)` | | Pierścień fokusu |
+| `--color-background` | `#FFFFFF` | Biel fartucha | Tło treści i kart |
+| `--color-background-soft` | `#F3F8F7` | Kafel | Hero, stopka, panel boczny |
+| `--color-background-muted` | `#EDF4F1` | | Elementy nieaktywne, plakietka „Planowane” |
+| `--color-text` | `#253B3A` | Grafit | Tekst główny (jedyny kolor tekstu) |
+| `--color-heading` | `#1C3534` | | `h1` |
+| `--color-text-secondary` | `#536C68` | | Opisy, wstępy |
+| `--color-text-tertiary` | `#6C827E` | | Etykiety, przypisy |
+| `--color-border` | `#D9E6E3` | | Ramki kart, linie tabel |
+| `--color-border-strong` | `#B9CEC9` | | Chipy, separatory faktów, ramka dymka, podstawa wykresu |
+| `--color-border-subtle` | `#E6EFEC` | | Linie wewnątrz kart i tabel (= `--color-chart-grid`) |
+| `--color-error` / `-soft` / `-border` | `#B42318` / `#FFF4F2` / `#F0C8C3` | Alarm | Tylko błędy |
+
+Szarości mają jedną rodzinę z odcieniem zieleni. Chłodne szarości dawnego dashboardu (`#667085`, `#344054`…) nie wracają:
+pilnuje tego test `designTokens.test.ts`.
 
 Mantine: paleta `atlas` w `src/app/layout.tsx` (odcienie 0–9, `primaryShade: 7` = `#087F75`).
 
 ### 2.2 Rozszerzenie: uniformy (dane i wyróżnienia)
 
-| Token | Wartość | Nazwa (źródło) | Użycie | Status |
-|---|---|---|---|---|
-| `--color-data-strong` | `#1B3D78` | Granat pielęgniarski | Liczby kluczowe (`.compareFacts dd`), seria nr 1 skali | propozycja |
-| `--color-data` | `#2856A3` | Błękit danych | Główna seria wykresów, przyjęcia nagłe, „zysk” | propozycja (`--data` w `globals.css`) |
-| `--color-data-soft` | `#9DB4DB` | Błękit fartucha | Druga seria, wartości tła | propozycja |
-| `--color-data-muted` | `#B5C7E6` | | Przyjęcia planowe | propozycja |
-| `--color-data-faint` | `#E4EAF4` | | Pozostałe, tło słupków | propozycja |
-| `--color-signal` | `#C65D2E` | Sygnał ratowniczy | Wybrany ośrodek, ostatni rok, „strata” | propozycja |
-| `--color-estimate-bg` / `-fg` | `#FFF4E0` / `#8A5300` | | Plakietka „szacunek” | propozycja |
-| `--color-positive` | `#1D6B3A` | | Zmiana na plus w tekście | propozycja |
+| Token | Wartość | Nazwa (źródło) | Użycie |
+|---|---|---|---|
+| `--color-data-strong` | `#1B3D78` | Granat pielęgniarski | Liczby kluczowe (`.compareFacts dd`), seria nr 1 skali |
+| `--color-data` | `#2856A3` | Błękit danych | Główna seria wykresów, przyjęcia nagłe, „zysk” |
+| `--color-data-soft` | `#9DB4DB` | Błękit fartucha | Druga seria, wartości tła |
+| `--color-data-muted` | `#B5C7E6` | | Przyjęcia planowe |
+| `--color-data-faint` | `#E4EAF4` | | Pozostałe, tło słupków |
+| `--color-signal` | `#C65D2E` | Sygnał ratowniczy | Wybrany ośrodek, ostatni rok, „strata” |
+| `--color-signal-soft` | `#FBEEE7` | | Tło wiersza wybranego szpitala |
+| `--color-deviation-up` | `#B4441B` | | Różnica w górę (tekst), lejek poza 99,8% |
+| `--color-estimate-bg` / `-fg` | `#FFF4E0` / `#8A5300` | | Plakietka „szacunek” |
+| `--color-positive` | `#1D6B3A` | | Zmiana na plus w tekście |
 
 ### 2.3 Kolory serii do porównań
 
@@ -126,9 +133,15 @@ Reguły:
 | `--atlas-workspace-max` | 1680px | Eksplorator i raporty z wykresami |
 | `--atlas-page-gutter` | 40 / 26 / 16px | Margines boczny (>1100 / ≤1100 / ≤550 px) |
 | `--atlas-workspace-gap` | 24px | Odstęp panelu bocznego od treści |
+| `--radius-badge` | 4px | Plakietki, słupki |
+| `--radius-control` | 9px | Pola, przyciski, przełączniki, dymki |
 | `--radius-card` | 12px | Karty, kafelki faktów, ramki wykresów |
-| `--radius-control` | 9px | Pola, przyciski, przełączniki |
+| `--radius-pill` | 999px | Chipy |
 | `--shadow-soft` | `0 2px 8px rgba(22,58,52,.055)` | Karty nad tłem |
+| `--shadow-float` | `0 12px 32px rgba(22,58,52,.14), 0 2px 6px rgba(22,58,52,.06)` | Element unoszący się: menu, dymek, arkusz |
+
+Promień tylko z tokenów (albo `0`, `50%`), cień tylko z tokenów (poza obrysami: pierścień fokusu, linia `inset`).
+Pilnuje tego `designTokens.test.ts`.
 
 - Odstępy sekcji strony głównej: 64 px (48 px na telefonie). Siatka odstępów: wielokrotności 4 px.
 - Karta (ramka + promień + cień) tylko dla obiektu, który czytelnik traktuje osobno: karta danych, kafelek faktu.
@@ -153,12 +166,13 @@ Reguły:
 ## 6. Wykresy
 
 - Biblioteki: Plotly (`plotly.js-dist-min`) w widokach analitycznych; własne SVG na stronie głównej (`HomeCharts`).
-- Docelowo jeden motyw Plotly w `src/lib/plotlyChart.ts` (dziś `getCommonPlotLayout` mają tylko `MortalityChart`
-  i `AdmissionChart`; pozostałe wykresy ustawiają kolory same).
+- Jeden motyw Plotly w `src/lib/plotlyChart.ts`: `chartLayout()` (separatory, krój, jasny dymek, `closest`),
+  `measureAxis()` / `categoryAxis()` (siatka tylko na osi-mierze), `axisTitle()`, `paddedRange()` (−6% / +10%),
+  `baselineShape()` (podstawa pod danymi), `referenceShape()`, `hoverTemplate()`. Wykres nie wpisuje kolorów osi i dymka sam.
 - Seria główna: `--color-data` (`#2856A3`). Skala sekwencyjna: granat → błękit → błękit fartucha → `#E4EAF4`.
 - Wyróżnienie: `--color-signal`, jedno na wykres.
 - Oś wartości od zera dla słupków. Tekst osi i legend: `--fs-sm` / `--fs-xs`, kolor `--color-text-tertiary`.
-- Dymek (hover): tło `--color-text`, biały tekst 13 px, liczby po polsku.
+- Dymek (hover): jasny (6.3), tekst 13 px, liczby po polsku.
 - Pod wykresem: źródło, jednostka, uwaga o szacunku. Legenda jest dodatkiem: seria ma też podpis przy linii lub w tytule.
 - Mapy: skala błękitów dla wartości, kolory `REGION_PICK_COLORS` dla wybranych obszarów.
 - Kolor nie jest jedynym nośnikiem informacji (daltonizm): podpis, kształt lub pozycja.
@@ -187,9 +201,10 @@ Linia pionowa jest siatką osi-miary albo znacznikiem zdarzenia (granica roku, z
 ### 6.2a Status i wyróżnienie
 
 - **Skala odchylenia** (lejek, różnica wobec podobnych): w górę `#E3A27F` (poza 95%) i `#B4441B` (poza 99,8%),
-  w dół `#8FB0DD` i `#2856A3`, w granicach `#9DB4DB`. Dziś `FUNNEL_COLORS` w `JgpTabbedCard.tsx`. Zawsze z legendą albo statusem w dymku.
+  w dół `#8FB0DD` i `#2856A3`, w granicach `#9DB4DB`. Stała `DEVIATION_COLORS` w `chartPalette.ts`. Zawsze z legendą albo statusem w dymku.
 - **Sygnał albo skala odchylenia, nie oba.** Wyróżnienie („ten szpital”) na wykresie bez skali odchylenia: `--color-signal`.
-  Na wykresie ze skalą odchylenia: punkt `--color-text` (grafit) z białą obwódką 2,5 px, większy o połowę, z podpisem.
+  Na wykresie ze skalą odchylenia: punkt `--color-text` (grafit) z białą obwódką 2,5 px, większy o połowę, z podpisem
+  (`ProviderScatter`, `marker="graphite"`; poza lejkiem `marker="signal"`).
 - **Bez legendy** (baner, miniatura, podgląd linku): trzy stopnie błękitu z dużym odstępem jasności — w granicach `#C3D2EB`,
   poza 95% `#6A8FCB`, poza 99,8% `#1B3D78`; w obie strony tak samo.
 
@@ -215,7 +230,7 @@ Jeden wzór dla dymków Plotly i HTML (profil szpitala, mapa „Gdzie”, karta 
   4. Plotly: bez `hovermode: "x unified"` nad danymi. Dymki HTML liczy jedna funkcja pozycji z prostokątem obiektu
      (`getBoundingClientRect` punktu, słupka, kafla), nie tylko z pozycji kursora.
   5. Telefon: arkusz od dołu; wykres przewija się tak, że obiekt jest nad arkuszem.
-- Docelowo wspólny helper w `plotlyChart.ts`, który buduje szablon z listy `{ label, value, format }` (dziś każdy wykres pisze `hovertemplate` sam).
+- Szablon dymka Plotly buduje `hoverTemplate({ title, context, rows, footer })` w `plotlyChart.ts`.
 
 #### Dymek rozszerzony (porównanie, profil szpitala, mapa drzewa)
 
@@ -227,32 +242,32 @@ Gdy dymek porównuje dwa obiekty (szpital i podobne) albo rozkłada wartość na
 4. Najwyżej 2 sekcje z tytułem (`--fs-xs`, wersaliki).
 5. Przypis metody (`--fs-sm`, `--color-text-tertiary`).
 
-- Granice: szerokość 280–340 px, do 10 wierszy razem, tekst min. 12 px (dziś wiersze mają `--fs-2xs` = 10 px).
+- Granice: szerokość 280–340 px, do 10 wierszy razem, tekst min. 12 px.
   Więcej treści = panel boczny albo profil, nie dymek.
 - Zachowanie: najechanie pokazuje; kliknięcie przypina (dopiero wtedy linki są klikalne); Esc i klik obok zamykają.
   Telefon: dotknięcie otwiera arkusz od dołu (wzór: `AreaStatsPopover`, nagłówek mobilny).
-- Pozycja: jedna funkcja (dziś 4 kopie: `popupTooltipPosition`, `benchmarkTooltipPosition`, `tooltipPosition`,
-  `treemapTooltipPosition`). Dymek po stronie z większym miejscem, nigdy poza oknem.
+- Pozycja: jedna funkcja `placeTooltip` (`src/lib/tooltipPosition.ts`) z prostokąta obiektu (`plotlyObjectBox`:
+  punkt, słupek, kafel). Dymek po pierwszej stronie, na której się mieści, nigdy poza oknem.
 - Kolory: wartości grafitem, wartość kluczowa granatem, różnica w kolorze lejka ze znakiem (+ `#B4441B`, − `#2856A3`).
   Zieleń tylko dla linku. Wybrany szpital według 6.2a, nie czerwień błędu.
-- Komponent docelowy: `ChartTooltip` (HTML) z częściami `Head`, `KeyValue`, `CompareTable`, `Section`, `Note`;
-  klasy `.hospital-peer-tooltip-*` przechodzą na niego.
+- Komponent: `ChartTooltip` (`src/components/ChartTooltip.tsx`) z częściami `TooltipHead`, `TooltipKeyValue`,
+  `TooltipCompareTable`, `TooltipSection`, `TooltipNote`. Klasy `.hospital-peer-tooltip-*` zostały tylko w odłączonym
+  `HospitalComparisonLegacyTab`.
 
 ### 6.4 Osie, liczby i zero
 
 | Wartość | Na osi | W dymku | Ustawienie |
 |---|---|---|---|
-| Liczba całkowita | 1 800 · 10 000 | 1 245 | `separators: ", "` w **każdym** layoucie, `tickformat: ",.0f"` |
+| Liczba całkowita | 1 800 · 10 000 | 1 245 | `separators: ", "` w każdym layoucie (`chartLayout`), `tickformat: ",.0f"` |
 | Duża liczba (≥ 100 000) | 150 · 300, tytuł osi „(tys.)” | 142 tys. | przeliczenie wartości; bez skrótów SI („150k”) |
 | Udział, śmiertelność | 0% · 10% · 20% | 11,5% (2 miejsca, gdy < 1%) | `percentAxis` (krok 1/2/5 × 10ᵏ, miejsca z kroku) |
-| Różnica udziałów | −2 pp · +2 pp | +1,4 pp | minus `−`, znak „+” przy dodatnich |
+| Różnica udziałów | −2 pp · +2 pp | +1,4 pp | minus `−`, znak „+” przy dodatnich (`formatSigned`) |
 | Kwota | 0 · 2 · 4 mln zł | 1,49 mld zł | jednostka w tytule osi lub `ticksuffix` |
 
 Krawędzie i zero:
 
 1. Oś wartości od −6% rozpiętości do +10% nad maksimum: `countAxis`, `percentAxis`. Ten sam margines na obu osiach wykresu punktowego.
-2. Siatka i podstawa pod danymi. `zeroline: false`; podstawę rysuje `shapes` z `layer: "below"` w kolorze `--color-border-strong`.
-   Bez linii zero grubości 3 px w kolorze siatki jako maski (dziś `MortalityChart`).
+2. Siatka i podstawa pod danymi. `zeroline: false`; podstawę rysuje `baselineShape()` (`layer: "below"`, `--color-border-strong`).
 3. `cliponaxis: false` dla punktów i etykiet tekstowych: znacznik przy krawędzi nie jest ucinany.
 4. Zero to wartość: punkt na zerze jest widoczny. Brak danych to `null` (przerwa w linii), nie 0.
 5. Słupek o wartości 0: kreska 2 px na podstawie (odróżnia zero od braku danych).
@@ -266,10 +281,11 @@ Krawędzie i zero:
 |---|---|---|
 | `PageHeader` | `portal/PageHeader` | `h1` modułu + jedno zdanie wstępu. Bez ikon i ilustracji |
 | `DataCard` | `portal/DataCard` | Etykieta → tytuł-pytanie → liczba z wnioskiem → wykres → link |
-| Kafelek faktu | `HomePage` `.fact` | Ikona w kaflu + liczba `--fs-2xl` + podpis `--fs-md` |
+| Kafelek faktu | `HomePage` `.fact` | Ikona w kaflu + liczba `--fs-2xl` + podpis `--fs-md`. Szacunek konserwatywny (metoda min) jako dolna granica: „ponad 49 mln” (`formatAtLeastCount`) |
 | Ścieżka | `HomePage` `.path` | Numer tylko, gdy kolejność coś znaczy |
 | Wiersz działu | `HomePage` `.sectionRow` | Ikona, nazwa, opis, strzałka. Planowany moduł: bez `href`, plakietka „Planowane” |
-| Plakietka „szacunek” | `DataCard` `.badge` | Wersaliki `--fs-xs`, tło `#FFF4E0` (docelowo token) |
+| Plakietka „szacunek” | `portal/EstimateBadge` | Wersaliki `--fs-xs`, tokeny `--color-estimate-*`, `--radius-badge` |
+| Dymek rozszerzony | `ChartTooltip` | 6.3; pozycja z `placeTooltip` |
 | Zakładki | `.tabs` | Aktywna: kolor i dolna linia 2 px `--color-primary` |
 | Przełącznik | Mantine `SegmentedControl` | Paleta `atlas` |
 | Hero | `HomePage` `.hero` | Zdjęcie przechodzi w kafel gradientem; tekst na kaflu, nie na zdjęciu |
@@ -302,45 +318,11 @@ Ruch: przejścia do .35 s; płynne przewijanie tylko przy `prefers-reduced-motio
 
 ## 10. Do uporządkowania (dług wizualny)
 
-Kolejność według wagi. Każdy punkt to osobny, mały PR.
+Punkty 1–17 z wersji 0.1 są wdrożone (branch `feature/design-cleanup`): jedna rodzina szarości i jeden kolor tekstu,
+tokeny danych, sygnału, plakietki, promieni i cieni na `:root`, `EstimateBadge`, jedna metoda liczenia na stronie głównej (min),
+wspólny motyw Plotly, jasne dymki z jedną funkcją pozycji, „podobne szpitale” zamiast „peer”, grafitowe wyróżnienie na lejku.
 
-1. **Dwie rodziny szarości.** `globals.css` i część komponentów używa chłodnych szarości
-   (`#667085` ok. 90 razy, `#344054`, `#475467`, `#98A2B3`). Zamień na `--color-text-*` i `--color-border*`.
-2. **Trzy kolory tekstu.** `--text: #172033` (`globals.css`), `--color-text: #253B3A` (`portal.css`),
-   `h1 { color: #1c3534 }`. Zostaw jeden: `--color-text` (dla `h1` ewentualnie wariant `--color-heading`).
-3. **Kolory danych jako literały.** `#2856A3`, `#1B3D78`, `#C65D2E` w TSX i CSS.
-   Dodaj tokeny z sekcji 2.2 i stałe w `chartPalette.ts` (Plotly nie czyta zmiennych CSS).
-4. **Plakietka „szacunek”** w trzech plikach (`DataCard`, `Explorer`, `HospitalizationSummaryPage`).
-   Jeden komponent i token `--color-estimate-*`.
-5. **Klasy dawnego dashboardu** w `globals.css`: `.kpi-card` (nieużywana), `.sidebar-brand` z gradientem.
-   Usuń nieużywane, resztę przenieś na tokeny.
-6. **Dwa zestawy tokenów** (`:root` w `globals.css`: `--primary`, `--data`, `--text`…; `.atlas-portal` w `portal.css`: `--color-*`).
-   Docelowo jeden zestaw `--color-*` na `:root`.
-7. **Dwie metody liczenia na stronie głównej.** Pasek faktów (`datasetHighlights`) sumuje metodą sim: 65,3 mln.
-   Wykres lat pod nim (`buildHomeStats`) liczy metodą min: suma 49,6 mln. Oba mają podpis „hospitalizacje JGP”.
-   Jedna metoda na stronie albo podpis metody przy liczbie.
-8. **Motyw wykresów.** Siatka (`#EEF1F5`), osie (`#D0D5DD`, `#344054`), legendy i dymki (tła `#5F6672`, `#344054`)
-   są wpisane osobno w `HospitalAnalysisTab`, `HospitalComparisonShared`, `MortalityChart`, `AdmissionChart`,
-   `ProviderScatter`, `GroupLineChart`. Jeden motyw w `plotlyChart.ts` według sekcji 6.
-9. **Promienie narożników.** 12 wartości od 2 do 14 px; tokeny `--radius-*` użyte 8 razy.
-   Docelowo 4 tokeny: 4 px (plakietka), 9 px (kontrolka), 12 px (karta), 999 px (chip).
-10. **Cienie.** 51 różnych deklaracji `box-shadow`; `--shadow-soft` użyty 4 razy.
-    Docelowo 2 tokeny: karta nad tłem, element unoszący się (menu, dymek).
-11. **Separator tysięcy i przecinek dziesiętny.** `separators: ", "` mają tylko `ProviderScatter` i `GroupLineChart`.
-    `MortalityChart`, `AdmissionChart` (przez `getCommonPlotLayout`), `HospitalComparisonShared` i `HospitalAnalysisTab`
-    pokazują format angielski: „10,000” na osi, „11.46%” w dymku. Najprostsza poprawka: `separators` w `getCommonPlotLayout`
-    i we wspólnym motywie z punktu 8.
-12. **Dwa style dymków.** Plotly: ciemne tła w 3 odcieniach (`#5F6672`, `#344054`). HTML (profil szpitala): białe karty
-    (`.hospital-peer-tooltip`). Kolejność pól też różna (eksplorator zaczyna od NIP, karta JGP od wartości). Wzór: 6.3.
-13. **Marginesy osi.** Dół osi: −2% (`MortalityChart`), −3% i −6% (`ProviderScatter`), −6% (`countAxis`).
-    `MortalityChart` maskuje linię zero (grubość 3 px w kolorze siatki). Wzór: 6.4.
-14. **Dymki w „Porównaniu”.** Wiersze 10 px, liczby w zieleni (`--primary`), potrójny podpis obiektu
-    („Placówka główna” / „Wybrany szpital” / „Placówka: …”), 4 kopie funkcji pozycji, wybrany szpital na czerwono (`#D92D20`).
-    Wzór: 6.3, dymek rozszerzony.
-15. **Język w „Porównaniu”.** W UI są słowa „peer”, „Peery łącznie”, „Mapa peerów” i notatka dla programisty
-    („Tooltip jest liczony niezależnie od hoveru Plotly”, `HospitalComparisonShared.tsx`). Według `brand/brand-voice.md`:
-    „podobne szpitale”, „grupa porównawcza”; notatki techniczne usunąć.
-16. **Wyróżnienie na lejku.** Karta JGP: wybrany ośrodek `#C65D2E` (albo gwiazdka `#D92D20`, `STAR_COLOR`) ginie wśród
-    punktów `#B4441B` / `#E3A27F`. Według 6.2a: grafitowy punkt z obwódką i podpisem.
-17. **Pozycja dymków.** 3 z 4 funkcji pozycji liczą miejsce z kursora, nie z obiektu (wyjątek: `treemapTooltipPosition`); dymek może zasłonić punkt albo kafel. Wzór: 6.3.
-18. **Motyw ciemny:** na później. Warunek: punkty 1–17 gotowe.
+1. **Motyw ciemny:** na później. Tokeny są już w jednym miejscu (`:root` w `globals.css` i `CHART_COLORS`), więc ciemny
+   motyw to drugi zestaw wartości pod `@media (prefers-color-scheme: dark)` i wariant `CHART_COLORS`.
+2. **Przypięcie dymka rozszerzonego** (kliknięcie przypina, Esc zamyka, arkusz od dołu na telefonie z przewinięciem wykresu)
+   z 6.3 — jeszcze nie ma; dziś dymek tylko podąża za najechaniem, a na telefonie stoi przy dolnej krawędzi.
