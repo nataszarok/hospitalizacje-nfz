@@ -1,0 +1,35 @@
+kod	opis
+J01	Radykalne odjęcie piersi (mastektomia), często z wycięciem węzłów chłonnych, połączone z rekonstrukcją piersi. Pobyt trwa zwykle 4 dni (mediana).
+J01G	Radykalne leczenie raka piersi z rekonstrukcją z tkanek własnych pacjentki, m.in. z użyciem technik onkoplastycznych. Pobyt trwa zwykle 2 dni (mediana).
+J01H	Mastektomia z rekonstrukcją piersi protezą albo ekspanderem; część zabiegów to chirurgia profilaktyczna u osób z podwyższonym ryzykiem raka (Z40.0). Pobyt trwa zwykle 3 dni (mediana).
+J02	Złożone operacje piersi, głównie w raku piersi (C50): wycięcie guza z użyciem technik onkoplastycznych. Pobyt trwa zwykle 3 dni (mediana).
+J03E	Duże operacje piersi u pacjentek powyżej 65 roku życia, głównie oszczędzające wycięcie guza w raku piersi. Pobyt trwa zwykle 3 dni (mediana).
+J03F	Duże operacje piersi u pacjentek poniżej 66 roku życia, m.in. mastektomia i mammoplastyka zmniejszająca. Pobyt trwa zwykle 2 dni (mediana).
+J03O	Duże operacje piersi u pacjentek poniżej 66 roku życia z rakiem piersi, m.in. resekcja kwadrantu piersi. Pobyt trwa zwykle 3 dni (mediana).
+J04	Rekonstrukcja piersi, najczęściej wymiana ekspandera na endoprotezę albo wprowadzenie ekspandera. Pobyt trwa zwykle 3 dni (mediana).
+J04G	Rekonstrukcja piersi płatem z tkanek własnych (skórno-mięśniowym), głównie po leczeniu raka piersi. Pobyt trwa zwykle 3 dni (mediana).
+J04H	Rekonstrukcja piersi protezą albo ekspanderem, głównie po leczeniu raka piersi; najczęściej wymiana ekspandera na endoprotezę. Pobyt trwa zwykle 3 dni (mediana).
+J05	Średnie zabiegi piersi, najczęściej resekcja kwadrantu piersi przy guzach o nieokreślonym charakterze i guzkach piersi. Pobyt trwa zwykle 2 dni (mediana).
+J06	Małe zabiegi piersi: miejscowe wycięcie zmiany, biopsja gruboigłowa i nacięcie piersi. Pobyt trwa zwykle 1 dzień (mediana).
+J07	Leczenie łagodnych chorób piersi bez zabiegu, m.in. guzków i stanów zapalnych piersi. Pobyt trwa zwykle 2 dni (mediana).
+J08	Leczenie raka piersi bez operacji, np. diagnostyka i kwalifikacja do leczenia. Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+J10	Biopsja mammotomiczna: gruboigłowa biopsja piersi wspomagana próżnią, najczęściej pod kontrolą USG, przy guzkach piersi o nieokreślonym charakterze. Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+J22	Leczenie chirurgiczne najcięższych oparzeń (III stopnia) przy pobycie ponad 15 dni: wycięcie martwiczych tkanek i przeszczepy skóry. Grupa jest bardzo mała. Pobyt jest bardzo długi: zwykle 23 dni (mediana).
+J23	Leczenie chirurgiczne ciężkich oparzeń przy pobycie ponad 10 dni, głównie oparzeń III stopnia wielu okolic ciała: wycięcie martwicy i przeszczepy skóry. Pobyt jest bardzo długi: zwykle 22 dni (mediana).
+J24	Leczenie chirurgiczne średnich oparzeń i odmrożeń przy pobycie ponad 5 dni, z wycięciem martwiczych tkanek i przeszczepami skóry. Pobyt trwa zwykle 11 dni (mediana).
+J25	Leczenie najcięższych oparzeń bez operacji przy pobycie ponad 15 dni. W danych NFZ to pojedyncze pobyty.
+J26	Leczenie ciężkich oparzeń bez operacji przy pobycie ponad 10 dni, m.in. z oczyszczaniem ran. Pobyt trwa zwykle 12 dni (mediana).
+J27	Leczenie średnich oparzeń i odmrożeń bez operacji przy pobycie ponad 5 dni. Pobyt trwa zwykle 9 dni (mediana).
+J28	Leczenie lekkich oparzeń i odmrożeń, w większości obejmujących małą część powierzchni ciała (poniżej jednej dziesiątej). Pobyt trwa zwykle 3 dni (mediana).
+J29	Leczenie oparzeń i odmrożeń przed przeniesieniem pacjenta do oddziału specjalistycznego. Pobyt trwa zwykle 1 dzień (mediana).
+J31	Zabiegi z przeszczepem skóry, najczęściej po wycięciu raka skóry twarzy (C44.3); także w owrzodzeniach kończyny dolnej. Pobyt trwa zwykle 2 dni (mediana).
+J32	Duże zabiegi skórne z zamknięciem ubytku płatem skórnym, głównie po wycięciu nowotworów skóry twarzy. Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+J33	Średnie zabiegi skórne, np. wycięcie zmian skóry. Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+J34	Chirurgiczne leczenie zmian troficznych stopy (stopa cukrzycowa, niedokrwienie): wycięcie martwicy i amputacje palców, głównie w cukrzycy z powikłaniami naczyniowymi i miażdżycy tętnic kończyn. Pobyt trwa zwykle 8 dni (mediana).
+J35	Leczenie naczyniaków i innych anomalii naczyniowych u dzieci laserem pulsacyjno-barwnikowym. Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+J37	Leczenie owrzodzeń skóry: głównie owrzodzeń kończyny dolnej (L97) i odleżyn (L89). Pobyt trwa zwykle 8 dni (mediana).
+J38	Leczenie ciężkich chorób skóry, m.in. osutek polekowych, zapaleń skóry po spożytych substancjach i pemfigoidu pęcherzowego. Pobyt trwa zwykle 3 dni (mediana).
+J39	Leczenie dużych chorób skóry, np. łuszczycy i chłoniaków skóry. Pobyt trwa zwykle 3 dni (mediana).
+J46	Leczenie dużych zakażeń skóry, głównie zapalenia tkanki łącznej (ropowicy) kończyn i tułowia. Pobyt trwa zwykle 6 dni (mediana).
+J47	Leczenie dużych nowotworów skóry, głównie raka skóry twarzy (C44.3) i czerniaka. Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).
+J49	Leczenie łagodnych chorób skóry, m.in. żylaków, tłuszczaków i rogowacenia słonecznego. Pobyt zwykle kończy się w dniu przyjęcia (mediana 0 dni).

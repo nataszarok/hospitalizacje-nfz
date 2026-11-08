@@ -17,6 +17,7 @@ vi.mock("@/lib/staticData", () => ({
 vi.mock("@mantine/core", () => ({
   Select: () => <span data-testid="mock-select" />,
   SegmentedControl: () => <span data-testid="mock-segmented" />,
+  Slider: () => <span data-testid="mock-slider" />,
 }));
 vi.mock("plotly.js-dist-min", () => ({
   default: { react: vi.fn().mockResolvedValue(undefined), restyle: vi.fn().mockResolvedValue(undefined), purge: vi.fn() },
@@ -24,7 +25,7 @@ vi.mock("plotly.js-dist-min", () => ({
 
 const props = {
   hospitalKey: "07|1234567890", setHospitalKey: vi.fn(), hospitalSubtab: "summary" as const,
-  setHospitalSubtab: vi.fn(), peerThreshold: 75, setPeerThreshold: vi.fn(), method: "sim" as const, products,
+  setHospitalSubtab: vi.fn(), peerThreshold: 75, setPeerThreshold: vi.fn(), peerDistance: 10.01, setPeerDistance: vi.fn(), method: "sim" as const, products,
 };
 
 beforeEach(() => {

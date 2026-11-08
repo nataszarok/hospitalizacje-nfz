@@ -8,8 +8,8 @@
 
 .label {
   color: #667085;
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
   line-height: 1;
   white-space: nowrap;
 }
@@ -24,8 +24,8 @@
 
 .segmented :global(.mantine-SegmentedControl-label) {
   padding: 5px 10px;
-  font-size: 11.5px;
-  font-weight: 600;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
   line-height: 1.35;
   color: #475467;
 }

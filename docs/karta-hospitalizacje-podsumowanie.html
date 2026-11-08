@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="pl">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Karta: hospitalizacje ogółem</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Dokument propozycji: karta podsumowania hospitalizacji (cel linku z wykresu „Ile hospitalizacji…” na stronie głównej). Tokeny jak w karta-jgp-pytania.html. */
+:root {
+  --bg: #ffffff; --surface: #f5f8f7; --panel: #ffffff;
+  --ink: #172033; --ink-2: #475467; --ink-3: #667085; --line: #e2e8e6;
+  --brand: #087f75; --brand-soft: #e6f3f1;
+  --chart: #2856a3; --chart-soft: #9db4db; --chart-2: #c65d2e;
+  --rem: #b54708; --rem-bg: #fef3e2;
+  --font: "Inter", ui-sans-serif, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1716; --surface: #15201e; --panel: #1a2624; --ink: #e8eeec; --ink-2: #b5c2be; --ink-3: #8b9a96; --line: #2a3936;
+    --brand: #4cc2b2; --brand-soft: #18322e; --chart: #7ea3e6; --chart-soft: #3f5f96; --chart-2: #e8895c; --rem: #f0b46a; --rem-bg: #3a2a14; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1716; --surface: #15201e; --panel: #1a2624; --ink: #e8eeec; --ink-2: #b5c2be; --ink-3: #8b9a96; --line: #2a3936;
+  --brand: #4cc2b2; --brand-soft: #18322e; --chart: #7ea3e6; --chart-soft: #3f5f96; --chart-2: #e8895c; --rem: #f0b46a; --rem-bg: #3a2a14; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 15px; line-height: 1.6; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 40px 16px 80px; display: grid; gap: 56px; }
+h1, h2, h3, h4 { text-wrap: balance; margin: 0; line-height: 1.25; }
+h1 { font-size: clamp(28px, 4vw, 38px); font-weight: 700; letter-spacing: -0.02em; }
+h2 { font-size: 23px; font-weight: 650; letter-spacing: -0.01em; }
+h3 { font-size: 16px; font-weight: 600; }
+h4 { font-size: 14.5px; font-weight: 600; }
+p { margin: 0; max-width: 72ch; }
+code { font-family: var(--mono); font-size: 0.88em; background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; }
+.kicker { font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--brand); }
+.head { display: grid; gap: 12px; }
+.lead { font-size: 17px; color: var(--ink-2); }
+.badge { justify-self: start; font-size: 12px; font-weight: 600; color: var(--rem); background: var(--rem-bg); border-radius: 999px; padding: 3px 12px; }
+section { display: grid; gap: 18px; }
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+.box { border: 1px solid var(--line); border-radius: 12px; background: var(--panel); padding: 18px 20px; display: grid; gap: 10px; align-content: start; min-width: 0; }
+.box p, .box li { font-size: 14px; color: var(--ink-2); }
+.box ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.tag { justify-self: start; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; border-radius: 6px; padding: 2px 8px; white-space: nowrap; }
+.tag.ok { color: var(--brand); background: var(--brand-soft); }
+.tag.new { color: var(--rem); background: var(--rem-bg); }
+.scroll-x { overflow-x: auto; }
+table.doc { border-collapse: collapse; width: 100%; font-size: 13.5px; min-width: 720px; }
+table.doc th { text-align: left; font-size: 12px; font-weight: 600; color: var(--ink-3); border-bottom: 1px solid var(--line); padding: 8px 10px; }
+table.doc td { border-bottom: 1px solid var(--line); padding: 9px 10px; vertical-align: top; color: var(--ink-2); }
+table.doc td:first-child { color: var(--ink); font-weight: 600; white-space: nowrap; }
+.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.up { color: var(--brand); font-weight: 600; } .down { color: var(--chart-2); font-weight: 600; }
+.note { font-size: 12.5px; color: var(--ink-3); }
+.chart { width: 100%; height: auto; display: block; }
+.chart .axis { stroke: var(--line); stroke-width: 1.5; }
+.chart .lab { font-size: 12px; fill: var(--ink); }
+.chart .val, .chart .tick, .spark .tick { font-size: 11px; fill: var(--ink-3); font-variant-numeric: tabular-nums; }
+.chart .pos { fill: var(--chart); } .chart .neg { fill: var(--chart-2); }
+svg text { font-family: var(--font); }
+.fams { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+.fam { border: 1px solid var(--line); border-radius: 12px; background: var(--panel); padding: 14px 16px; display: grid; gap: 4px; }
+.fam h4 { display: flex; justify-content: space-between; gap: 8px; }
+.spark { width: 100%; height: auto; }
+.spark .bar { fill: var(--chart-soft); } .spark .last { fill: var(--chart); }
+.steps { margin: 0; padding: 0; list-style: none; display: grid; gap: 12px; counter-reset: s; }
+.steps li { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 12px; font-size: 14.5px; color: var(--ink-2); }
+.steps li::before { counter-increment: s; content: counter(s); width: 24px; height: 24px; border-radius: 50%; background: var(--brand-soft); color: var(--brand); font-weight: 700; font-size: 12px; display: grid; place-items: center; }
+.steps b { color: var(--ink); font-weight: 600; }
+.mock { border: 1px solid var(--line); border-radius: 14px; background: var(--surface); padding: 16px; display: grid; gap: 12px; }
+.mock .url { font-family: var(--mono); font-size: 12px; color: var(--ink-3); }
+.mock .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+.mock .tile { border: 1px dashed var(--line); background: var(--panel); border-radius: 10px; padding: 10px 12px; font-size: 13px; color: var(--ink-2); display: grid; gap: 4px; }
+.mock .tile b { color: var(--ink); }
+.mock .wide { grid-column: 1 / -1; }
+</style>
+<body>
+<main class="wrap">
+
+<header class="head">
+  <span class="kicker">Dokument propozycji · strona główna → karta</span>
+  <h1>Karta „Hospitalizacje ogółem”</h1>
+  <p class="lead">Strona główna pokazuje teraz dwa wykresy w sekcji „Liczby, które warto znać”. Pierwszy, „Ile hospitalizacji rozlicza NFZ w roku?”, ma prowadzić do karty podsumowania hospitalizacji. Tej karty jeszcze nie ma. Dokument opisuje, co karta ma pokazać, i zawiera pierwszą analizę: które sekcje i rodziny grup JGP wzrosły, a które spadły w latach 2017–2025.</p>
+  <span class="badge">Zbudowane: /hospitalizacje (karta „Hospitalizacje w Polsce”)</span>
+</header>
+
+<section aria-labelledby="h-cel">
+  <span class="kicker">1 · Cel</span>
+  <h2 id="h-cel">Po co osobna karta</h2>
+  <div class="two">
+    <div class="box">
+      <h3>Dziś</h3>
+      <p>Wykres lat na stronie głównej prowadzi do eksploratora (<code>/analizy</code>, widok „W czasie”). Eksplorator to narzędzie: kontekst, filtry, wybór grup. Osoba z pytaniem „jak zmieniają się hospitalizacje w Polsce?” musi sama złożyć odpowiedź.</p>
+      <p>Wykresy mapy, trybu przyjęcia i zmian r/r zniknęły ze strony głównej. Nie prowadziły do konkretnej podstrony. Komponenty zostają w kodzie (<code>HomeCharts.tsx</code>) i wracają na tej karcie.</p>
+    </div>
+    <div class="box">
+      <h3>Propozycja</h3>
+      <p>Karta obiektu „hospitalizacje ogółem”, na wzór karty grupy JGP: stały adres, lista pytań, każda sekcja z wykresem i linkiem w głąb (do eksploratora, katalogu, kart grup).</p>
+      <ul>
+        <li>Adres roboczy: <code>/hospitalizacje</code>.</li>
+        <li>Po zbudowaniu karty link „W czasie” na stronie głównej zmienia się na „Podsumowanie”.</li>
+        <li>Dane: tylko <code>trends.json.gz</code> i pliki roku. Bez nowych plików w <code>public/data/</code>.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section aria-labelledby="h-pytania">
+  <span class="kicker">2 · Zakres</span>
+  <h2 id="h-pytania">Karta jako lista pytań</h2>
+  <p>Kolejność od ogółu do szczegółu. „Gotowe” = komponent jest w repo i działa na danych bez zmian.</p>
+  <div class="scroll-x">
+  <table class="doc">
+    <thead><tr><th>Pytanie</th><th>Wykres</th><th>Link w głąb</th><th>Stan</th></tr></thead>
+    <tbody>
+      <tr><td>Ile hospitalizacji?</td><td>Słupki lat (<code>YearBars</code>) + miesiące z porównaniem lat (<code>TrendView</code> dla wszystkich grup). 2017: 6,0 mln, 2025: 6,0 mln (−0,5%), dołek w 2020: 4,3 mln.</td><td><code>/analizy?t=w</code></td><td><span class="tag ok">Gotowe</span></td></tr>
+      <tr><td>Jak przyjmowani są pacjenci?</td><td>Słupki 100% trybu przyjęcia w latach (<code>AdmissionBars</code>). Przyjęcia nagłe: 47% → 38%.</td><td><code>/analizy?t=a</code></td><td><span class="tag ok">Gotowe</span></td></tr>
+      <tr><td>Gdzie leczą najwięcej?</td><td>Mapa województw na 100 tys. mieszkańców wobec średniej (<code>RegionsMiniMap</code>), województwo → widok „Gdzie” z filtrem.</td><td><code>/analizy?t=g&amp;ow=…</code></td><td><span class="tag ok">Gotowe</span></td></tr>
+      <tr><td>Co leczą szpitale?</td><td>Sekcje katalogu JGP: udział w ostatnim roku i zmiana od 2017 r. (słupki rozbieżne, jak w części 3).</td><td><code>/jgp?…</code> z filtrem sekcji</td><td><span class="tag new">Nowe</span></td></tr>
+      <tr><td>Co rośnie, co maleje?</td><td>Rodziny grup JGP: największe wzrosty i spadki 2017–2025 (część 4). Rodzina → karta grupy albo lista kodów.</td><td><code>/jgp/[kod]</code></td><td><span class="tag new">Nowe</span></td></tr>
+      <tr><td>Co zmieniło się w ostatnim roku?</td><td>Największe zmiany r/r (<code>ChangeList</code>).</td><td><code>/jgp?sort=zmiana</code></td><td><span class="tag ok">Gotowe</span></td></tr>
+      <tr><td>Ilu pacjentów umiera w szpitalu?</td><td>Odsetek zgonów w latach: 2,4% w 2017, 3,1% w 2020, 2,4% w 2025. Z ostrzeżeniem: wskaźnik zależy od struktury przypadków.</td><td><code>/analizy?t=k</code></td><td><span class="tag new">Nowe</span></td></tr>
+      <tr><td>Kto leczy?</td><td>Liczba świadczeniodawców w latach i koncentracja (udział 10% największych). Dane są w plikach roku.</td><td><code>/szpitale</code></td><td><span class="tag new">Nowe</span></td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section aria-labelledby="h-sekcje">
+  <span class="kicker">3 · Analiza</span>
+  <h2 id="h-sekcje">Sekcje katalogu JGP: zmiana 2017 → 2025</h2>
+  <p>Sekcja = pierwsza litera kodu JGP. Nazwy sekcji są robocze (z nazw grup); przed publikacją sprawdź je w katalogu NFZ. Metoda konserwatywna (wartości „&lt;5” = 1), wszystkie tryby przyjęcia.</p>
+  <div class="box"><svg viewBox="0 0 640 472" role="img" aria-label="Zmiana liczby hospitalizacji 2017–2025 według sekcji katalogu JGP" class="chart"><line x1="330" x2="330" y1="0" y2="442" class="axis"/><text x="338" y="17" class="lab" text-anchor="start">N · Ciąża, poród, noworodki</text><rect x="177.4" y="5" width="152.6" height="16" rx="3" class="neg"/><text x="171.4" y="17" class="val" text-anchor="end">−51%</text><text x="338" y="43" class="lab" text-anchor="start">T · Urazy wielonarządowe</text><rect x="238.8" y="31" width="91.2" height="16" rx="3" class="neg"/><text x="232.8" y="43" class="val" text-anchor="end">−30%</text><text x="338" y="69" class="lab" text-anchor="start">C · Jama ustna, gardło, krtań, nos, ucho</text><rect x="281.3" y="57" width="48.7" height="16" rx="3" class="neg"/><text x="275.3" y="69" class="val" text-anchor="end">−16%</text><text x="338" y="95" class="lab" text-anchor="start">Q · Naczynia</text><rect x="290.0" y="83" width="40.0" height="16" rx="3" class="neg"/><text x="284.0" y="95" class="val" text-anchor="end">−13%</text><text x="338" y="121" class="lab" text-anchor="start">A · Układ nerwowy</text><rect x="292.8" y="109" width="37.2" height="16" rx="3" class="neg"/><text x="286.8" y="121" class="val" text-anchor="end">−12%</text><text x="338" y="147" class="lab" text-anchor="start">E · Układ krążenia</text><rect x="300.2" y="135" width="29.8" height="16" rx="3" class="neg"/><text x="294.2" y="147" class="val" text-anchor="end">−10%</text><text x="338" y="173" class="lab" text-anchor="start">L · Nerki i drogi moczowe (z prostatą)</text><rect x="311.6" y="161" width="18.4" height="16" rx="3" class="neg"/><text x="305.6" y="173" class="val" text-anchor="end">−6%</text><text x="338" y="199" class="lab" text-anchor="start">D · Układ oddechowy</text><rect x="311.9" y="187" width="18.1" height="16" rx="3" class="neg"/><text x="305.9" y="199" class="val" text-anchor="end">−6%</text><text x="338" y="225" class="lab" text-anchor="start">K · Układ hormonalny, metabolizm</text><rect x="315.4" y="213" width="14.6" height="16" rx="3" class="neg"/><text x="309.4" y="225" class="val" text-anchor="end">−5%</text><text x="322" y="251" class="lab" text-anchor="end">J · Skóra, tkanka podskórna, pierś</text><rect x="330.0" y="239" width="6.2" height="16" rx="3" class="pos"/><text x="342.2" y="251" class="val" text-anchor="start">+2%</text><text x="322" y="277" class="lab" text-anchor="end">F · Układ pokarmowy</text><rect x="330.0" y="265" width="8.2" height="16" rx="3" class="pos"/><text x="344.2" y="277" class="val" text-anchor="start">+3%</text><text x="322" y="303" class="lab" text-anchor="end">M · Narząd rodny kobiety (ginekologia)</text><rect x="330.0" y="291" width="10.3" height="16" rx="3" class="pos"/><text x="346.3" y="303" class="val" text-anchor="start">+3%</text><text x="322" y="329" class="lab" text-anchor="end">G · Wątroba, drogi żółciowe, trzustka</text><rect x="330.0" y="317" width="24.2" height="16" rx="3" class="pos"/><text x="360.2" y="329" class="val" text-anchor="start">+8%</text><text x="322" y="355" class="lab" text-anchor="end">H · Układ mięśniowo-szkieletowy</text><rect x="330.0" y="343" width="35.5" height="16" rx="3" class="pos"/><text x="371.5" y="355" class="val" text-anchor="start">+12%</text><text x="322" y="381" class="lab" text-anchor="end">B · Oko</text><rect x="330.0" y="369" width="110.7" height="16" rx="3" class="pos"/><text x="446.7" y="381" class="val" text-anchor="start">+37%</text><text x="322" y="407" class="lab" text-anchor="end">S · Krew i układ krwiotwórczy</text><rect x="330.0" y="395" width="155.4" height="16" rx="3" class="pos"/><text x="491.4" y="407" class="val" text-anchor="start">+52%</text><text x="322" y="433" class="lab" text-anchor="end">P · Pediatria</text><rect x="330.0" y="421" width="236.4" height="16" rx="3" class="pos"/><text x="572.4" y="433" class="val" text-anchor="start">+79%</text><text x="330" y="464" class="tick" text-anchor="middle">0 (zmiana 2017→2025)</text></svg></div>
+  <div class="scroll-x">
+  <table class="doc">
+    <thead><tr><th>Sekcja</th><th>Obszar</th><th class="num">2017</th><th class="num">2025</th><th class="num">Zmiana</th><th class="num">Udział 2025</th><th>Co stoi za zmianą</th></tr></thead>
+    <tbody><tr><td>P</td><td>Pediatria</td><td class="num">351 346</td><td class="num">628 191</td><td class="num up">+79%</td><td class="num">10,5%</td><td>Skok w 2019 r. (351 tys. → 540 tys.) przy spadku sekcji A i C: prawdopodobnie nowe grupy pediatryczne w katalogu (np. PZC03). Do sprawdzenia w katalogu NFZ.</td></tr><tr><td>E</td><td>Układ krążenia</td><td class="num">677 645</td><td class="num">610 330</td><td class="num down">−10%</td><td class="num">10,2%</td><td>Rodzina OZW −41%; część przesunięć to zmiana kodowania wewnątrz sekcji (E10 → E11, E12G).</td></tr><tr><td>H</td><td>Układ mięśniowo-szkieletowy</td><td class="num">510 764</td><td class="num">571 207</td><td class="num up">+12%</td><td class="num">9,6%</td><td>Zabiegi na kręgosłupie (H51–H55) ×2,4; kompleksowe zabiegi kończyny dolnej (H31) ×4.</td></tr><tr><td>F</td><td>Układ pokarmowy</td><td class="num">546 655</td><td class="num">561 609</td><td class="num up">+3%</td><td class="num">9,4%</td><td></td></tr><tr><td>B</td><td>Oko</td><td class="num">380 750</td><td class="num">521 291</td><td class="num up">+37%</td><td class="num">8,7%</td><td>Zaćma (B18, B19 → B19G) +28%; zabiegi witreoretinalne (B84) prawie ×6.</td></tr><tr><td>M</td><td>Narząd rodny kobiety (ginekologia)</td><td class="num">412 333</td><td class="num">426 478</td><td class="num up">+3%</td><td class="num">7,1%</td><td></td></tr><tr><td>N</td><td>Ciąża, poród, noworodki</td><td class="num">826 953</td><td class="num">406 223</td><td class="num down">−51%</td><td class="num">6,8%</td><td>Poród (N01, N02) −55%, noworodki (N20–N26) −51%. Spadek urodzeń, nie zmiana kodowania.</td></tr><tr><td>L</td><td>Nerki i drogi moczowe (z prostatą)</td><td class="num">375 602</td><td class="num">352 563</td><td class="num down">−6%</td><td class="num">5,9%</td><td></td></tr><tr><td>D</td><td>Układ oddechowy</td><td class="num">366 150</td><td class="num">344 067</td><td class="num down">−6%</td><td class="num">5,8%</td><td></td></tr><tr><td>A</td><td>Układ nerwowy</td><td class="num">356 601</td><td class="num">312 347</td><td class="num down">−12%</td><td class="num">5,2%</td><td>Bóle głowy (A59) −72%; część grup przeszła do pediatrii (2019).</td></tr><tr><td>S</td><td>Krew i układ krwiotwórczy</td><td class="num">195 989</td><td class="num">297 542</td><td class="num up">+52%</td><td class="num">5,0%</td><td>Wzrost w grupach zaburzeń krzepliwości i chorób krwi (S05 +317%, S06 +134%).</td></tr><tr><td>G</td><td>Wątroba, drogi żółciowe, trzustka</td><td class="num">230 920</td><td class="num">249 539</td><td class="num up">+8%</td><td class="num">4,2%</td><td></td></tr><tr><td>C</td><td>Jama ustna, gardło, krtań, nos, ucho</td><td class="num">220 168</td><td class="num">184 426</td><td class="num down">−16%</td><td class="num">3,1%</td><td>Spadek w 2019 r. (podział na grupy dla dzieci); duże zabiegi jamy ustnej i gardła (C12) ×6.</td></tr><tr><td>J</td><td>Skóra, tkanka podskórna, pierś</td><td class="num">164 436</td><td class="num">167 820</td><td class="num up">+2%</td><td class="num">2,8%</td><td></td></tr><tr><td>K</td><td>Układ hormonalny, metabolizm</td><td class="num">172 277</td><td class="num">163 878</td><td class="num down">−5%</td><td class="num">2,7%</td><td></td></tr><tr><td>Q</td><td>Naczynia</td><td class="num">152 452</td><td class="num">132 122</td><td class="num down">−13%</td><td class="num">2,2%</td><td></td></tr><tr><td>T</td><td>Urazy wielonarządowe</td><td class="num">60 671</td><td class="num">42 237</td><td class="num down">−30%</td><td class="num">0,7%</td><td>Mniej hospitalizacji z urazami wielonarządowymi.</td></tr></tbody>
+  </table>
+  </div>
+  <p class="note">Poziom sekcji jest odporny na zmiany kodów wewnątrz sekcji (np. B19 → B19G). Nie jest odporny na przesunięcia między sekcjami: w 2019 r. część hospitalizacji dzieci przeszła do sekcji P.</p>
+</section>
+
+<section aria-labelledby="h-rodziny">
+  <span class="kicker">4 · Analiza</span>
+  <h2 id="h-rodziny">Rodziny grup JGP: co wzrosło, co spadło</h2>
+  <p>Zmiana na poziomie pojedynczej grupy jest często artefaktem katalogu. Przykład: B19 (zaćma niepowikłana) „spada do zera”, bo od 2019 r. ta sama operacja ma kod B19G. Dlatego porównanie 2017–2025 robimy na rodzinach. Poniżej dwie definicje rodziny.</p>
+
+  <h3>A. Rodziny ręczne (zalecane)</h3>
+  <p>Lista kodów, między którymi przesuwa się kodowanie tego samego problemu. Ten sam mechanizm co <code>JGP_FAMILIES</code> w <code>src/lib/jgpGroupInfo.ts</code> (dziś: OZW i zabiegi na kręgosłupie). Poniżej sześć rodzin jako próba.</p>
+  <div class="fams"><div class="fam"><h4>Zaćma <span class="up">+28%</span></h4><p class="note">B18, B18G, B19, B19G · 283 550 → 364 183</p><svg viewBox="0 0 220 64" class="spark" aria-hidden="true"><rect x="4.2" y="15.7" width="16.1" height="34.3" rx="2" class="bar"/><rect x="28.6" y="13.9" width="16.1" height="36.1" rx="2" class="bar"/><rect x="53.0" y="8.3" width="16.1" height="41.7" rx="2" class="bar"/><rect x="77.5" y="22.7" width="16.1" height="27.3" rx="2" class="bar"/><rect x="101.9" y="18.4" width="16.1" height="31.6" rx="2" class="bar"/><rect x="126.4" y="14.2" width="16.1" height="35.8" rx="2" class="bar"/><rect x="150.8" y="11.8" width="16.1" height="38.2" rx="2" class="bar"/><rect x="175.3" y="9.1" width="16.1" height="40.9" rx="2" class="bar"/><rect x="199.7" y="6.0" width="16.1" height="44.0" rx="2" class="last"/><text x="2" y="63" class="tick">2017</text><text x="218" y="63" class="tick" text-anchor="end">2025</text></svg></div><div class="fam"><h4>OZW <span class="down">−41%</span></h4><p class="note">E10, E11, E12G, E15, E16, E17G · 98 094 → 58 187</p><svg viewBox="0 0 220 64" class="spark" aria-hidden="true"><rect x="4.2" y="6.0" width="16.1" height="44.0" rx="2" class="bar"/><rect x="28.6" y="17.4" width="16.1" height="32.6" rx="2" class="bar"/><rect x="53.0" y="17.4" width="16.1" height="32.6" rx="2" class="bar"/><rect x="77.5" y="23.3" width="16.1" height="26.7" rx="2" class="bar"/><rect x="101.9" y="23.4" width="16.1" height="26.6" rx="2" class="bar"/><rect x="126.4" y="22.2" width="16.1" height="27.8" rx="2" class="bar"/><rect x="150.8" y="22.4" width="16.1" height="27.6" rx="2" class="bar"/><rect x="175.3" y="23.5" width="16.1" height="26.5" rx="2" class="bar"/><rect x="199.7" y="23.9" width="16.1" height="26.1" rx="2" class="last"/><text x="2" y="63" class="tick">2017</text><text x="218" y="63" class="tick" text-anchor="end">2025</text></svg></div><div class="fam"><h4>Zabiegi na kręgosłupie <span class="up">+136%</span></h4><p class="note">H51, H52, H53, H55 · 25 275 → 59 680</p><svg viewBox="0 0 220 64" class="spark" aria-hidden="true"><rect x="4.2" y="31.4" width="16.1" height="18.6" rx="2" class="bar"/><rect x="28.6" y="29.7" width="16.1" height="20.3" rx="2" class="bar"/><rect x="53.0" y="29.1" width="16.1" height="20.9" rx="2" class="bar"/><rect x="77.5" y="32.0" width="16.1" height="18.0" rx="2" class="bar"/><rect x="101.9" y="27.2" width="16.1" height="22.8" rx="2" class="bar"/><rect x="126.4" y="19.4" width="16.1" height="30.6" rx="2" class="bar"/><rect x="150.8" y="12.9" width="16.1" height="37.1" rx="2" class="bar"/><rect x="175.3" y="7.0" width="16.1" height="43.0" rx="2" class="bar"/><rect x="199.7" y="6.0" width="16.1" height="44.0" rx="2" class="last"/><text x="2" y="63" class="tick">2017</text><text x="218" y="63" class="tick" text-anchor="end">2025</text></svg></div><div class="fam"><h4>Poród <span class="down">−55%</span></h4><p class="note">N01, N02 · 282 738 → 128 193</p><svg viewBox="0 0 220 64" class="spark" aria-hidden="true"><rect x="4.2" y="6.0" width="16.1" height="44.0" rx="2" class="bar"/><rect x="28.6" y="9.4" width="16.1" height="40.6" rx="2" class="bar"/><rect x="53.0" y="12.0" width="16.1" height="38.0" rx="2" class="bar"/><rect x="77.5" y="15.3" width="16.1" height="34.7" rx="2" class="bar"/><rect x="101.9" y="19.5" width="16.1" height="30.5" rx="2" class="bar"/><rect x="126.4" y="22.9" width="16.1" height="27.1" rx="2" class="bar"/><rect x="150.8" y="26.6" width="16.1" height="23.4" rx="2" class="bar"/><rect x="175.3" y="28.6" width="16.1" height="21.4" rx="2" class="bar"/><rect x="199.7" y="30.1" width="16.1" height="19.9" rx="2" class="last"/><text x="2" y="63" class="tick">2017</text><text x="218" y="63" class="tick" text-anchor="end">2025</text></svg></div><div class="fam"><h4>Noworodki <span class="down">−50%</span></h4><p class="note">N20, N21, N21A, N22, N22A, N23, N24, N25, N26 · 355 944 → 176 802</p><svg viewBox="0 0 220 64" class="spark" aria-hidden="true"><rect x="4.2" y="6.0" width="16.1" height="44.0" rx="2" class="bar"/><rect x="28.6" y="9.2" width="16.1" height="40.8" rx="2" class="bar"/><rect x="53.0" y="11.5" width="16.1" height="38.5" rx="2" class="bar"/><rect x="77.5" y="15.4" width="16.1" height="34.6" rx="2" class="bar"/><rect x="101.9" y="18.6" width="16.1" height="31.4" rx="2" class="bar"/><rect x="126.4" y="21.5" width="16.1" height="28.5" rx="2" class="bar"/><rect x="150.8" y="24.7" width="16.1" height="25.3" rx="2" class="bar"/><rect x="175.3" y="27.0" width="16.1" height="23.0" rx="2" class="bar"/><rect x="199.7" y="28.1" width="16.1" height="21.9" rx="2" class="last"/><text x="2" y="63" class="tick">2017</text><text x="218" y="63" class="tick" text-anchor="end">2025</text></svg></div><div class="fam"><h4>Zabiegi witreoretinalne <span class="up">+476%</span></h4><p class="note">B82, B83, B84 · 13 373 → 76 997</p><svg viewBox="0 0 220 64" class="spark" aria-hidden="true"><rect x="4.2" y="42.4" width="16.1" height="7.6" rx="2" class="bar"/><rect x="28.6" y="38.2" width="16.1" height="11.8" rx="2" class="bar"/><rect x="53.0" y="30.2" width="16.1" height="19.8" rx="2" class="bar"/><rect x="77.5" y="29.9" width="16.1" height="20.1" rx="2" class="bar"/><rect x="101.9" y="17.9" width="16.1" height="32.1" rx="2" class="bar"/><rect x="126.4" y="13.8" width="16.1" height="36.2" rx="2" class="bar"/><rect x="150.8" y="10.0" width="16.1" height="40.0" rx="2" class="bar"/><rect x="175.3" y="6.1" width="16.1" height="43.9" rx="2" class="bar"/><rect x="199.7" y="6.0" width="16.1" height="44.0" rx="2" class="last"/><text x="2" y="63" class="tick">2017</text><text x="218" y="63" class="tick" text-anchor="end">2025</text></svg></div></div>
+
+  <h3>B. Rodziny automatyczne: wspólny rdzeń kodu</h3>
+  <p>Rdzeń = litera i numer bez sufiksu (B19G → B19, A87A → A87). Bez pracy ręcznej, ale łączy tylko warianty z tym samym numerem. Tabela: rodziny z co najmniej 5 000 hospitalizacji w obu latach (195 rodzin).</p>
+  <div style="display:grid;gap:16px">
+    <div class="box scroll-x"><h4 class="up">Największe wzrosty</h4>
+      <table class="doc" style="min-width:520px"><thead><tr><th>Rdzeń</th><th>Nazwa</th><th>Kody</th><th class="num">2017</th><th class="num">2025</th><th class="num">Zmiana</th></tr></thead><tbody><tr><td>C12</td><td>Duże zabiegi jamy ustnej, gardła i krtani</td><td>C12</td><td class="num">6 201</td><td class="num">39 569</td><td class="num up">+538%</td></tr><tr><td>B84</td><td>Małe zabiegi witreoretinalne</td><td>B84</td><td class="num">13 307</td><td class="num">76 975</td><td class="num up">+478%</td></tr><tr><td>H31</td><td>Kompleksowe zabiegi w zakresie kończyny dolnej i miednicy &gt; 65 r.ż.</td><td>H31E, H31F</td><td class="num">7 479</td><td class="num">31 277</td><td class="num up">+318%</td></tr><tr><td>S05</td><td>Zaburzenia krzepliwości, inne choroby krwi i śledziony &gt; 10 dni</td><td>S05</td><td class="num">11 021</td><td class="num">46 000</td><td class="num up">+317%</td></tr><tr><td>P21</td><td>Choroby serca</td><td>P21</td><td class="num">8 956</td><td class="num">32 492</td><td class="num up">+263%</td></tr><tr><td>N24</td><td>Noworodek wymagający szczególnej opieki</td><td>N24</td><td class="num">23 569</td><td class="num">76 530</td><td class="num up">+225%</td></tr><tr><td>K53</td><td>Nadczynność gruczołów dokrewnych poza hiperprolaktynemią, nadczynności</td><td>K53E, K53F</td><td class="num">8 063</td><td class="num">23 934</td><td class="num up">+197%</td></tr><tr><td>G35</td><td>Inne zabiegi dróg żółciowych i trzustki</td><td>G35</td><td class="num">7 901</td><td class="num">20 711</td><td class="num up">+162%</td></tr></tbody></table></div>
+    <div class="box scroll-x"><h4 class="down">Największe spadki</h4>
+      <table class="doc" style="min-width:520px"><thead><tr><th>Rdzeń</th><th>Nazwa</th><th>Kody</th><th class="num">2017</th><th class="num">2025</th><th class="num">Zmiana</th></tr></thead><tbody><tr><td>B18</td><td>Usunięcie zaćmy powikłanej z jednoczesnym wszczepieniem soczewki</td><td>B18, B18G</td><td class="num">119 677</td><td class="num">22 273</td><td class="num down">−81%</td></tr><tr><td>H22</td><td>Artroskopia lecznicza</td><td>H22</td><td class="num">37 039</td><td class="num">7 471</td><td class="num down">−80%</td></tr><tr><td>B98</td><td>Leczenie zachowawcze okulistyczne</td><td>B98, B98A, B98B</td><td class="num">30 039</td><td class="num">8 021</td><td class="num down">−73%</td></tr><tr><td>A59</td><td>Bóle głowy</td><td>A59</td><td class="num">20 142</td><td class="num">5 688</td><td class="num down">−72%</td></tr><tr><td>L47</td><td>Małe zabiegi gruczołu krokowego lub pęcherza moczowego</td><td>L47</td><td class="num">17 891</td><td class="num">6 007</td><td class="num down">−66%</td></tr><tr><td>H64</td><td>Mniejsze złamania lub zwichnięcia</td><td>H64</td><td class="num">17 059</td><td class="num">5 980</td><td class="num down">−65%</td></tr><tr><td>N12</td><td>Patologia ciąży i połogu-diagnostyka, obserwacja, leczenie &lt;12 dni</td><td>N12</td><td class="num">76 718</td><td class="num">27 898</td><td class="num down">−64%</td></tr><tr><td>K28</td><td>Wrodzone wady metaboliczne &gt; 65 r.ż.</td><td>K28E, K28F</td><td class="num">21 413</td><td class="num">7 957</td><td class="num down">−63%</td></tr></tbody></table></div>
+  </div>
+  <p class="note">Pułapki metody B widać w tabeli. B18 (zaćma powikłana) −81%: te operacje przeszły do B19G, czyli do innego rdzenia. E10 (OZW, diagnostyka inwazyjna) −60%: część przesunęła się do E11 i E12G. Rodzina ręczna OZW daje −41%, a zaćma +28%.</p>
+
+  <div class="box">
+    <h3>Wnioski do karty</h3>
+    <ul>
+      <li>Największe realne spadki: <b>porody i noworodki</b> (ok. −55% i −50%). To demografia, nie kodowanie.</li>
+      <li>Największe realne wzrosty: <b>okulistyka zabiegowa</b> (zaćma +28%, witreoretinalne prawie ×6), <b>zabiegi na kręgosłupie</b> (×2,4), <b>hematologia</b> (S05, S06).</li>
+      <li>OZW −41%: spadek ostrych zespołów wieńcowych w szpitalach. Wymaga sprawdzenia, czy część nie przeszła do grup spoza listy.</li>
+      <li>Sekcja „Co rośnie, co maleje” powinna pokazywać rodziny ręczne. Metoda B może służyć jako lista kandydatów do przeglądu.</li>
+    </ul>
+  </div>
+</section>
+
+<section aria-labelledby="h-makieta">
+  <span class="kicker">5 · Układ</span>
+  <h2 id="h-makieta">Szkic karty</h2>
+  <div class="mock" role="img" aria-label="Szkic układu karty Hospitalizacje ogółem">
+    <span class="url">/hospitalizacje?rok=2025</span>
+    <div class="grid">
+      <div class="tile wide"><b>Nagłówek</b>Hospitalizacje w Polsce · 2017–2025 · wybór roku (jak na karcie JGP) · 4 liczby: hospitalizacje, zmiana r/r, przyjęcia nagłe, odsetek zgonów</div>
+      <div class="tile"><b>Ile?</b>Słupki lat + miesiące rok do roku</div>
+      <div class="tile"><b>Jak przyjmowani?</b>Tryb przyjęcia w latach</div>
+      <div class="tile"><b>Gdzie?</b>Mapa województw na 100 tys.</div>
+      <div class="tile"><b>Co leczą?</b>Sekcje JGP: udział i zmiana</div>
+      <div class="tile wide"><b>Co rośnie, co maleje?</b>Rodziny: wzrosty | spadki, 2017–2025, z mini-wykresem lat</div>
+      <div class="tile"><b>Ostatni rok</b>Największe zmiany r/r</div>
+      <div class="tile"><b>Zgony w szpitalu</b>Odsetek w latach + zastrzeżenie</div>
+      <div class="tile"><b>Kto leczy?</b>Świadczeniodawcy i koncentracja</div>
+    </div>
+  </div>
+</section>
+
+<section aria-labelledby="h-wdrozenie">
+  <span class="kicker">6 · Wdrożenie</span>
+  <h2 id="h-wdrozenie">Kroki</h2>
+  <ol class="steps">
+    <li><span><b>Rodziny.</b> Rozszerz <code>JGP_FAMILIES</code> o rodziny z części 4A i sprawdź je w katalogu NFZ (kody historyczne: <code>data/jgp_benefits_nfz.json</code>).</span></li>
+    <li><span><b>Logika.</b> Dodaj <code>src/lib/hospitalizationSummary.ts</code>: sumy lat, sekcje, rodziny, zgony. Część jest już w <code>homeStats.ts</code>.</span></li>
+    <li><span><b>Strona.</b> Dodaj <code>src/app/hospitalizacje/page.tsx</code> i komponent karty. Użyj gotowych wykresów z <code>HomeCharts.tsx</code> i <code>TrendView</code>.</span></li>
+    <li><span><b>Linki.</b> Zmień link wykresu lat na stronie głównej na kartę. Dodaj kartę do nagłówka i wyszukiwarki („hospitalizacje”).</span></li>
+    <li><span><b>Testy.</b> Testy logiki na fixture trendów; test strony: sekcje, linki w głąb.</span></li>
+  </ol>
+</section>
+
+<section aria-labelledby="h-decyzje">
+  <span class="kicker">7 · Decyzje</span>
+  <h2 id="h-decyzje">Pytania przed budową</h2>
+  <div class="two">
+    <div class="box"><h3>Adres i nazwa</h3><p><code>/hospitalizacje</code> czy <code>/analizy/podsumowanie</code>? Pierwszy pasuje do modelu „karta obiektu”, drugi do obecnego menu „Analizy”.</p></div>
+    <div class="box"><h3>Definicja rodzin</h3><p>Lista ręczna (dokładna, wymaga przeglądu katalogu) czy rdzeń kodu (automatyczny, z błędami jak B18)? Zalecenie: ręczna dla ok. 20 największych rodzin, rdzeń jako zapas.</p></div>
+    <div class="box"><h3>Rok niepełny</h3><p>Gdy ostatni rok ma mniej niż 12 miesięcy, karta porównuje te same miesiące rok wcześniej. Pole <code>months</code> w <code>HomeYear</code> już to wykrywa.</p></div>
+    <div class="box"><h3>Zgony</h3><p>Pokazywać odsetek zgonów na karcie ogólnej? Wskaźnik bez standaryzacji (wiek, ciężkość) łatwo źle odczytać. Propozycja: tak, z zastrzeżeniem i linkiem do metodologii.</p></div>
+  </div>
+</section>
+
+<p class="note">Dane: <code>public/data/hospitalizations/trends.json.gz</code>, metoda konserwatywna, lata 2017–2025. Analiza jednorazowa do dokumentu: liczby w tabelach policzono skryptem poza aplikacją.</p>
+</main>
+</body>
+</html>

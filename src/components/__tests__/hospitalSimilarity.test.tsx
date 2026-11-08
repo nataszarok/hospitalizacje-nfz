@@ -150,4 +150,24 @@ describe("HospitalSimilarityTab — porównanie modelu par", () => {
     expect(screen.getByRole("dialog")).toBeInTheDocument();
     expect(screen.getByRole("dialog")).toHaveTextContent("SZPITAL PORÓWNAWCZY");
   });
+
+  it("przy zmianie dystansu zostawia poprzedni wynik do czasu przeliczenia", async () => {
+    const { rerender } = render(<HospitalSimilarityTab {...props} gradeScope="A" maxDistance={10} />);
+    await screen.findByText(/Jak ten szpital wygląda na tle wybranych peerów/);
+    rerender(<HospitalSimilarityTab {...props} gradeScope="AB" maxDistance={12} />);
+    expect(screen.queryByText(/Ładowanie analizy porównawczej/)).not.toBeInTheDocument();
+    expect(screen.getByTestId("peer-charts")).toBeInTheDocument();
+    expect(screen.getByTestId("peer-charts").closest(".hospital-comparison-subtab")).toHaveClass("is-updating");
+    await waitFor(() => expect(screen.getByTestId("peer-charts").closest(".hospital-comparison-subtab")).not.toHaveClass("is-updating"));
+    const selection = mocks.hospitalPeerBenchmarkFromDataset.mock.lastCall![5] as Map<string, unknown>;
+    expect([...selection.keys()]).toEqual([pairA.b, pairB.b]);
+  });
+
+  it("przy zmianie szpitala nie pokazuje wyniku poprzedniej placówki", async () => {
+    const { rerender } = render(<HospitalSimilarityTab {...props} />);
+    await screen.findByText(/Jak ten szpital wygląda na tle wybranych peerów/);
+    rerender(<HospitalSimilarityTab {...props} hospitalKey={pairA.b} />);
+    expect(screen.getByText(/Ładowanie analizy porównawczej/)).toBeInTheDocument();
+    expect(screen.queryByTestId("peer-charts")).not.toBeInTheDocument();
+  });
 });

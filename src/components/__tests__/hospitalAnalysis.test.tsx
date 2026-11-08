@@ -3,7 +3,7 @@
 import "@testing-library/jest-dom/vitest";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { HospitalAnalysisTab } from "@/components/HospitalAnalysisTab";
+import { HospitalAnalysisTab, PEER_DISTANCE_LIVE_DELAY } from "@/components/HospitalAnalysisTab";
 import type { HospitalAnalysis } from "@/lib/types";
 import { products, sampleAnalysis } from "./fixtures/hospitalFixtures";
 
@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   loadStaticDataset: vi.fn(),
   hospitalDirectoryFromDataset: vi.fn(),
   hospitalAnalysisFromDataset: vi.fn(),
+  similarityProps: vi.fn(),
 }));
 
 vi.mock("@/lib/staticData", () => ({
@@ -38,6 +39,23 @@ vi.mock("@mantine/core", () => ({
       {data.map((entry) => <option value={entry.value} key={entry.value}>{entry.label}</option>)}
     </select>
   ),
+  // Zmiana = przeciąganie (onChange), blur = puszczenie suwaka (onChangeEnd).
+  Slider: ({ value, min, max, step, onChange, onChangeEnd, ...props }: {
+    value: number; min: number; max: number; step: number;
+    onChange: (value: number) => void; onChangeEnd: (value: number) => void; "aria-label": string;
+  }) => (
+    <input
+      type="range" aria-label={props["aria-label"]} value={value} min={min} max={max} step={step}
+      onChange={(e) => onChange(Number(e.target.value))}
+      onBlur={(e) => onChangeEnd(Number(e.target.value))}
+    />
+  ),
+}));
+vi.mock("@/components/HospitalSimilarityTab", () => ({
+  HospitalSimilarityTab: (props: { gradeScope?: string; maxDistance?: number }) => {
+    mocks.similarityProps(props);
+    return <div data-testid="similarity-tab">{props.gradeScope} {props.maxDistance}</div>;
+  },
 }));
 vi.mock("plotly.js-dist-min", () => ({
   default: { react: vi.fn().mockResolvedValue(undefined), restyle: vi.fn().mockResolvedValue(undefined), purge: vi.fn() },
@@ -48,6 +66,7 @@ const altKey = "07|2222222222";
 const baseProps = {
   hospitalKey: key, setHospitalKey: vi.fn(), hospitalSubtab: "summary" as const,
   setHospitalSubtab: vi.fn(), peerThreshold: 75, setPeerThreshold: vi.fn(),
+  peerDistance: 10.01, setPeerDistance: vi.fn(),
   method: "sim" as const, products,
 };
 
@@ -192,5 +211,75 @@ describe("HospitalAnalysisTab — profil szpitala", () => {
     expect(within(view).getAllByRole("option").map((option) => option.textContent)).toEqual(["Profil", "Porównanie"]);
     fireEvent.change(view, { target: { value: "comparison" } });
     expect(setHospitalSubtab).toHaveBeenCalledWith("comparison");
+  });
+});
+
+describe("HospitalAnalysisTab — suwak podobieństwa par", () => {
+  it("nie pokazuje suwaka w widoku Profil", async () => {
+    render(<HospitalAnalysisTab {...baseProps} />);
+    await screen.findByRole("heading", { name: "Szpital Miejski w Warszawie" });
+    expect(screen.queryByRole("slider", { name: "Maksymalny dystans par" })).not.toBeInTheDocument();
+  });
+
+  it("domyślnie przekazuje do porównania tylko pary A do granicy A", async () => {
+    render(<HospitalAnalysisTab {...baseProps} hospitalSubtab="comparison" />);
+    const slider = await screen.findByRole("slider", { name: "Maksymalny dystans par" });
+    expect(slider).toHaveValue("10.01");
+    expect(screen.getByText("Tylko pary A")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Przywróć domyślny zakres/ })).not.toBeInTheDocument();
+    await screen.findByTestId("similarity-tab");
+    expect(mocks.similarityProps).toHaveBeenLastCalledWith(expect.objectContaining({ gradeScope: "A", maxDistance: 10.01 }));
+  });
+
+  it("za granicą A dołącza pary B i zapisuje dystans dopiero po puszczeniu suwaka", async () => {
+    const setPeerDistance = vi.fn();
+    render(<HospitalAnalysisTab {...baseProps} hospitalSubtab="comparison" setPeerDistance={setPeerDistance} />);
+    const slider = await screen.findByRole("slider", { name: "Maksymalny dystans par" });
+    fireEvent.change(slider, { target: { value: "13.41" } });
+    expect(screen.getByText("Pary A + B")).toBeInTheDocument();
+    expect(screen.getByText(/maks\. dystans 13,41/)).toBeInTheDocument();
+    expect(setPeerDistance).not.toHaveBeenCalled();
+    fireEvent.blur(slider);
+    expect(setPeerDistance).toHaveBeenCalledWith(13.41);
+  });
+
+  it("przekazuje zawężony zakres A i przywraca domyślny zakres", async () => {
+    const setPeerDistance = vi.fn();
+    render(<HospitalAnalysisTab {...baseProps} hospitalSubtab="comparison" peerDistance={6.51} setPeerDistance={setPeerDistance} />);
+    await screen.findByTestId("similarity-tab");
+    expect(screen.getByText("Tylko pary A")).toBeInTheDocument();
+    expect(mocks.similarityProps).toHaveBeenLastCalledWith(expect.objectContaining({ gradeScope: "A", maxDistance: 6.51 }));
+    fireEvent.click(screen.getByRole("button", { name: "Przywróć domyślny zakres (A)" }));
+    expect(setPeerDistance).toHaveBeenCalledWith(10.01);
+  });
+
+  it("dla dystansu powyżej granicy A przekazuje zakres A + B", async () => {
+    render(<HospitalAnalysisTab {...baseProps} hospitalSubtab="comparison" peerDistance={15} />);
+    await screen.findByTestId("similarity-tab");
+    expect(mocks.similarityProps).toHaveBeenLastCalledWith(expect.objectContaining({ gradeScope: "AB", maxDistance: 15 }));
+  });
+
+  it("w czasie przeciągania przelicza wynik najwyżej co PEER_DISTANCE_LIVE_DELAY ms", async () => {
+    const setPeerDistance = vi.fn();
+    render(<HospitalAnalysisTab {...baseProps} hospitalSubtab="comparison" setPeerDistance={setPeerDistance} />);
+    const slider = await screen.findByRole("slider", { name: "Maksymalny dystans par" });
+    vi.useFakeTimers();
+    try {
+      fireEvent.change(slider, { target: { value: "11.01" } });
+      fireEvent.change(slider, { target: { value: "12.01" } });
+      expect(setPeerDistance).not.toHaveBeenCalled();
+      vi.advanceTimersByTime(PEER_DISTANCE_LIVE_DELAY);
+      expect(setPeerDistance).toHaveBeenCalledTimes(1);
+      expect(setPeerDistance).toHaveBeenLastCalledWith(12.01);
+      fireEvent.change(slider, { target: { value: "12.51" } });
+      vi.advanceTimersByTime(PEER_DISTANCE_LIVE_DELAY);
+      expect(setPeerDistance).toHaveBeenCalledTimes(2);
+      expect(setPeerDistance).toHaveBeenLastCalledWith(12.51);
+      fireEvent.blur(slider);
+      vi.advanceTimersByTime(PEER_DISTANCE_LIVE_DELAY);
+      expect(setPeerDistance).toHaveBeenCalledTimes(3);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

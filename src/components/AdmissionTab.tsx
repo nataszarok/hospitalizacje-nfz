@@ -6,6 +6,7 @@ import { AreaStatsPopover } from "@/components/AreaStatsPopover";
 import { ChartScaleControl } from "@/components/ChartScaleControl";
 import { MortalityDisplayControl } from "@/components/MortalityDisplayControl";
 import { SortableTableHeader } from "@/components/SortableTableHeader";
+import { JgpCodeLinks, ProviderLink } from "@/components/TableLinks";
 import {
   admissionRowsPerJgp,
   aggregateAdmissionRowsByProvider,
@@ -164,17 +165,16 @@ export function AdmissionTab({
             <tbody>
               {sortedRows.slice(0, 500).map((row) => {
                 const jgpCodes = row.productCodes
-                  .map((code) => productByCode.get(code)?.jgpCode ?? code)
-                  .join(", ");
+                  .map((code) => productByCode.get(code)?.jgpCode ?? code);
 
                 return (
                   <tr key={effectiveDisplayMode === "combined"
                     ? `${row.owNfz}-${row.nip}`
                     : `${row.owNfz}-${row.nip}-${row.productCode}`}
                   >
-                    <td title={row.providerName}>{row.providerName}</td>
+                    <td title={row.providerName}><ProviderLink owNfz={row.owNfz} nip={row.nip} name={row.providerName} /></td>
                     <td>{row.nip}</td>
-                    <td>{jgpCodes || "—"}</td>
+                    <td><JgpCodeLinks codes={jgpCodes} /></td>
                     <td title={row.voivodeship}>{row.voivodeship}</td>
                     <td title={formatCityName(row.city)}>{formatCityName(row.city)}</td>
                     <td>{Math.round(row.plannedAdmissions).toLocaleString("pl-PL")}</td>

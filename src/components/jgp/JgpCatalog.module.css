@@ -1,0 +1,371 @@
+.page {
+  padding: 0 0 56px;
+  color: #172033;
+}
+
+.tabs {
+  display: flex;
+  gap: 2px;
+  margin: 24px 0 16px;
+  border-bottom: 1px solid #e4e7ec;
+}
+
+.tab {
+  margin-bottom: -1px;
+  padding: 8px 16px;
+  border-bottom: 2px solid transparent;
+  color: #475467;
+  font-size: var(--fs-base);
+  font-weight: var(--fw-semibold);
+}
+
+.tab small {
+  margin-left: 4px;
+  color: #98a2b3;
+  font-weight: var(--fw-medium);
+}
+
+.tabActive {
+  border-bottom-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.tabSoon {
+  color: #98a2b3;
+  cursor: not-allowed;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px 14px;
+  margin-bottom: 12px;
+}
+
+.filters label {
+  display: grid;
+  gap: 4px;
+  font-size: var(--fs-md);
+}
+
+.filters input[type="search"],
+.filters select {
+  min-height: 38px;
+  padding: 0 10px;
+  border: 1px solid #d0d5dd;
+  border-radius: 8px;
+  background: #fff;
+  font: inherit;
+}
+
+.filters input:focus,
+.filters select:focus {
+  outline: 2px solid var(--color-focus-ring);
+  border-color: var(--color-primary);
+}
+
+.search {
+  flex: 1 1 320px;
+}
+
+.label {
+  color: #667085;
+  font-size: var(--fs-sm);
+}
+
+.filters .check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 38px;
+}
+
+.clear {
+  min-height: 38px;
+  margin-left: auto;
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: var(--color-primary);
+  font: inherit;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-semibold);
+  cursor: pointer;
+}
+
+.clear:hover {
+  text-decoration: underline;
+}
+
+/* Przycisk jest zawsze na miejscu (układ filtrów się nie przesuwa); bez aktywnych filtrów jest wyszarzony. */
+.clear:disabled {
+  color: #98a2b3;
+  text-decoration: none;
+  cursor: default;
+}
+
+.card {
+  /* `clip`, a nie `hidden`: zaokrąglone rogi bez kontenera przewijania, więc nagłówek tabeli może być przypięty. */
+  overflow: clip;
+  border: 1px solid #e4e7ec;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.table {
+  width: 100%;
+  table-layout: auto;
+  border-collapse: collapse;
+  font-size: var(--fs-md);
+}
+
+/* Globalne style tabel dashboardu ustawiają stałe szerokości kolumn — tu kolumny dopasowują się do treści. */
+.table th:nth-child(n),
+.table td:nth-child(n) {
+  position: static;
+  width: auto;
+}
+
+.table td.name {
+  min-width: 320px;
+  white-space: normal;
+}
+
+.table th,
+.table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid #eef1f5;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.table tbody tr:hover td {
+  background: #f8fafc;
+}
+
+/*
+ * Nagłówek tabeli (tytuł i nazwy kolumn) przypięty pod nagłówkiem strony (wysokość ustawia `SiteHeader`).
+ * Białe tło jak reszta strony; od wierszy oddziela go linia w kolorze marki.
+ */
+.table thead {
+  position: sticky;
+  top: var(--atlas-header-height, 75px);
+  z-index: 2;
+}
+
+.table thead th {
+  background: #fff;
+}
+
+/* Cień zamiast obramowania: przy `border-collapse` obramowanie nie zostaje z przypiętym nagłówkiem. */
+.table thead tr:last-child th {
+  border-bottom: 0;
+  box-shadow: inset 0 -2px 0 var(--color-primary);
+}
+
+.table .titleRow th {
+  padding: 12px 12px 4px;
+  border-bottom: 0;
+}
+
+.tableTitle {
+  color: #172033;
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-bold);
+}
+
+.tableCount {
+  margin-left: 8px;
+  color: #667085;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+}
+
+.table th {
+  color: #667085;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  white-space: nowrap;
+}
+
+.num {
+  text-align: right !important;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.sortButton {
+  padding: 0;
+  text-align: inherit;
+  line-height: 1.25;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.sortButton:hover {
+  color: var(--color-primary);
+}
+
+.code a,
+a.code {
+  color: var(--color-primary);
+  font-weight: var(--fw-bold);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.name a {
+  color: #172033;
+  text-decoration: underline;
+  text-decoration-color: #c7ced9;
+  text-underline-offset: 2px;
+}
+
+.name a:hover {
+  color: var(--color-primary);
+}
+
+.kind {
+  display: block;
+  color: #98a2b3;
+  font-size: var(--fs-xs);
+}
+
+.badge {
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: #f2f4f7;
+  color: #475467;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+}
+
+.badgeArchived {
+  border: 1px dashed #98a2b3;
+  background: #fff;
+  color: #667085;
+}
+
+.spark {
+  display: block;
+  width: 120px;
+  height: 26px;
+}
+
+.spark path {
+  fill: none;
+  stroke: var(--data);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+
+.down {
+  color: #b42318;
+}
+
+.up {
+  color: #067647;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  color: #667085;
+  font-size: var(--fs-md);
+}
+
+.footer button {
+  padding: 6px 12px;
+  border: 1px solid var(--color-primary-outline);
+  border-radius: 8px;
+  background: var(--color-primary-soft);
+  color: var(--color-primary-hover);
+  font: inherit;
+  font-weight: var(--fw-semibold);
+  cursor: pointer;
+}
+
+.empty {
+  margin: 0;
+  padding: 16px 12px;
+  color: #667085;
+}
+
+.changes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.changeCard {
+  padding: 14px;
+  border: 1px solid #e4e7ec;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.changeCard h2 {
+  margin: 0 0 8px;
+  font-size: var(--fs-lg);
+}
+
+.changeCard ol {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--fs-md);
+}
+
+.changeCard li {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.changeName {
+  overflow: hidden;
+  color: #475467;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.changesNote {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: #667085;
+  font-size: var(--fs-sm);
+}
+
+.note {
+  margin: 12px 0 0;
+  color: #667085;
+  font-size: var(--fs-sm);
+}
+
+@media (max-width: 760px) {
+  .changes {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* Telefon: tylko kod i nazwa; liczby są na karcie grupy. */
+  .table th:nth-child(n + 3),
+  .table td:nth-child(n + 3) {
+    display: none;
+  }
+
+  .table td.name {
+    min-width: 0;
+  }
+}
