@@ -1,6 +1,6 @@
 "use client";
 
-import { formatCityName } from "@/lib/formatters";
+import { formatCityName, formatSigned as signed } from "@/lib/formatters";
 import { decodeValuations, VALUATIONS_PATH, type JgpValuation, type ValuationsFile } from "@/lib/valuations";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type * as React from "react";
@@ -15,8 +15,6 @@ import "./HospitalComparison.css";
 export const nf = new Intl.NumberFormat("pl-PL", { maximumFractionDigits: 0 });
 export const pf = new Intl.NumberFormat("pl-PL", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 export const pct = (v: number) => `${pf.format(v)}%`;
-/** Różnica ze znakiem (minus „−”), np. „+5,7 pp”, „−1,2”. */
-export const signed = (v: number, unit = "") => `${v > 0 ? "+" : v < 0 ? "−" : ""}${pf.format(Math.abs(v))}${unit}`;
 
 export async function parseMaybeGzip(r: Response) {
   if (!r.ok) throw new Error(`Nie udało się pobrać danych (${r.status})`);
@@ -235,36 +233,36 @@ export function JgpMortalityDifferenceTable({ benchmark, products, valuationByJg
 
       const points=((selectedRow as MortalityDisplayRow & {peerPoints?:MortalityPeerPoint[]}).peerPoints ?? [])
         .filter((p)=>p.hospitalizations>0);
-      const peerName=(p:(typeof points)[number])=>displayHospitalName(String(p?.name ?? "Peer"));
+      const peerName=(p:(typeof points)[number])=>displayHospitalName(String(p?.name ?? "Podobny szpital"));
       const selectedName=displayHospitalName(benchmark.selected.providerName);
 
       await Plotly.react(popupPlotRef.current,[
         {
-          type:"scatter",mode:"markers",name:"Peery",
+          type:"scatter",mode:"markers",name:"Podobne szpitale",
           x:points.map((p)=>p.mortalityPct),
           y:points.map(()=>selectedRow.jgpCode),
           customdata:points.map((p)=>[peerName(p),p.hospitalizations,p.deaths]),
           marker:{size:9,color:BASE_POINT,line:{width:.7,color:"#fff"}},
           hoverinfo:pairMode ? "none" : undefined,
-          hovertemplate:pairMode ? undefined : "<b>%{customdata[0]}</b><br>Śmiertelność: <b>%{x:.1f}%</b><br>Hospitalizacje: %{customdata[1]:,.0f}<br>Zgony: %{customdata[2]:,.0f}<extra>Peer</extra>"
+          hovertemplate:pairMode ? undefined : "<b>%{customdata[0]}</b><br>Śmiertelność: <b>%{x:.1f}%</b><br>Hospitalizacje: %{customdata[1]:,.0f}<br>Zgony: %{customdata[2]:,.0f}<extra></extra>"
         },
         {
-          type:"scatter",mode:"markers",name:"Wybrany szpital",
+          type:"scatter",mode:"markers",name:"Ten szpital",
           x:[selectedRow.targetMortalityPct],
           y:[selectedRow.jgpCode],
           customdata:[[selectedRow.targetHospitalizations,selectedRow.targetDeaths]],
           marker:{size:13,color:CHART_COLORS.signal,line:{width:1.5,color:"#fff"}},
           hoverinfo:pairMode ? "none" : undefined,
-          hovertemplate:pairMode ? undefined : "<b>Wybrany szpital</b><br>Śmiertelność: <b>%{x:.1f}%</b><br>Hospitalizacje: %{customdata[0]:,.0f}<br>Zgony: %{customdata[1]:,.0f}<extra></extra>"
+          hovertemplate:pairMode ? undefined : "<b>Ten szpital</b><br>Śmiertelność: <b>%{x:.1f}%</b><br>Hospitalizacje: %{customdata[0]:,.0f}<br>Zgony: %{customdata[1]:,.0f}<extra></extra>"
         },
         {
-          type:"scatter",mode:"markers",name:"Peery łącznie",
+          type:"scatter",mode:"markers",name:"Grupa porównawcza",
           x:[selectedRow.peerMortalityPct],
           y:[selectedRow.jgpCode],
           customdata:[[selectedRow.peerHospitalizations,selectedRow.peerDeaths,selectedRow.peerHospitals]],
           marker:{size:13,color:CHART_COLORS.text,symbol:"x",line:{width:2,color:CHART_COLORS.text}},
           hoverinfo:pairMode ? "none" : undefined,
-          hovertemplate:pairMode ? undefined : "<b>Peery łącznie</b><br>Śmiertelność ważona: <b>%{x:.1f}%</b><br>Hospitalizacje: %{customdata[0]:,.0f}<br>Zgony: %{customdata[1]:,.0f}<br>Peerów: %{customdata[2]}<extra></extra>"
+          hovertemplate:pairMode ? undefined : "<b>Grupa porównawcza</b><br>Śmiertelność ważona: <b>%{x:.1f}%</b><br>Hospitalizacje: %{customdata[0]:,.0f}<br>Zgony: %{customdata[1]:,.0f}<br>Szpitale w grupie: %{customdata[2]}<extra></extra>"
         }
       ],{
         ...chartLayout(),
@@ -353,8 +351,8 @@ export function JgpMortalityDifferenceTable({ benchmark, products, valuationByJg
     <div className="hospital-peer-chart-head">
       <div><span>Kontrola różnic JGP</span><h3>Porównanie JGP</h3></div>
       <div className="hospital-jgp-table-controls">
-        <small>JGP &gt;10 hospitalizacji · min. 2 peery z danym JGP</small>
-        <button type="button" className={`hospital-jgp-filter-chip${largeDifferencesOnly?" is-active":""}`} onClick={()=>setLargeDifferencesOnly(v=>!v)} aria-pressed={largeDifferencesOnly} title="Duże różnice: bezwzględna różnica śmiertelności ≥2,0 pp i jednocześnie różnica względna ≥50% względem peerów.">Duże różnice</button>
+        <small>JGP &gt;10 hospitalizacji · min. 2 podobne szpitale z danym JGP</small>
+        <button type="button" className={`hospital-jgp-filter-chip${largeDifferencesOnly?" is-active":""}`} onClick={()=>setLargeDifferencesOnly(v=>!v)} aria-pressed={largeDifferencesOnly} title="Duże różnice: bezwzględna różnica śmiertelności ≥2,0 pp i jednocześnie różnica względna ≥50% wobec grupy porównawczej.">Duże różnice</button>
       </div>
     </div>
     <div className="hospital-jgp-table-viewport"><div className="hospital-jgp-table-scroll">
@@ -362,18 +360,18 @@ export function JgpMortalityDifferenceTable({ benchmark, products, valuationByJg
         <thead><tr>
           {renderHeader("jgp", "JGP")}{renderHeader("name", "Nazwa")}
           {renderHeader("targetHosp", "Hosp.", true)}{renderHeader("targetDeaths", "Zgony", true)}{renderHeader("targetMortality", "Śmiert. szpitala", true)}
-          {renderHeader("peerHosp", "Hosp. peerów", true)}{renderHeader("peerDeaths", "Zgony peerów", true)}{renderHeader("peerMortality", "Śmiert. peerów", true)}
+          {renderHeader("peerHosp", "Hosp. grupy", true)}{renderHeader("peerDeaths", "Zgony grupy", true)}{renderHeader("peerMortality", "Śmiert. grupy", true)}
           {renderHeader("diff", "Różnica", true)}{renderHeader("expected", "Oczek. zgony", true)}{renderHeader("excess", "Nadmiar", true)}
-          {renderHeader("peerCount", "Peery z JGP", true)}{renderHeader("valuation", "Wycena", true)}
+          {renderHeader("peerCount", "Podobne z JGP", true)}{renderHeader("valuation", "Wycena", true)}
         </tr></thead>
         <tbody>{rows.map((x)=><tr key={x.productCode} className="hospital-jgp-clickable-row" tabIndex={0} onClick={()=>{setPopupPlotMounted(false);setSelectedRow(x)}} onKeyDown={e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();setPopupPlotMounted(false);setSelectedRow(x)}}}>
           <td><b>{x.jgpCode}</b></td><td className="name">{x.displayName}</td>
           <td className="num">{nf.format(x.targetHospitalizations)}</td><td className="num">{nf.format(x.targetDeaths)}</td>
           <td className="num">{pct(x.targetMortalityPct)}</td><td className="num">{nf.format(x.peerHospitalizations)}</td>
           <td className="num">{nf.format(x.peerDeaths)}</td><td className="num">{pct(x.peerMortalityPct)}</td>
-          <td className={`num ${x.diff>0?"bad":x.diff<0?"good":""}`}>{x.diff>=0?"+":""}{pf.format(x.diff)} pp</td>
+          <td className={`num ${x.diff>0?"bad":x.diff<0?"good":""}`}>{signed(x.diff," pp")}</td>
           <td className="num">{pf.format(x.expectedDeaths)}</td>
-          <td className={`num ${x.excessDeaths>0?"bad":x.excessDeaths<0?"good":""}`}>{x.excessDeaths>=0?"+":""}{pf.format(x.excessDeaths)}</td>
+          <td className={`num ${x.excessDeaths>0?"bad":x.excessDeaths<0?"good":""}`}>{signed(x.excessDeaths)}</td>
           <td className="num">{nf.format(x.peerHospitals)}</td><td className="num">{x.valuation==null?"—":`${pf.format(x.valuation)} pkt`}</td>
         </tr>)}</tbody>
       </table>
@@ -383,7 +381,7 @@ export function JgpMortalityDifferenceTable({ benchmark, products, valuationByJg
   {selectedRow ? <div className="hospital-jgp-modal-backdrop" onMouseDown={()=>setSelectedRow(null)}>
     <section className="hospital-jgp-modal" role="dialog" aria-modal="true" onMouseDown={e=>e.stopPropagation()}>
       <div className="hospital-jgp-modal-head"><div><span>{selectedRow.jgpCode}</span><h3>{selectedRow.displayName}</h3></div><button type="button" onClick={()=>setSelectedRow(null)} aria-label="Zamknij">×</button></div>
-      <div className="hospital-jgp-modal-stats"><span>Szpital <b>{pct(selectedRow.targetMortalityPct)}</b></span><span>Peery łącznie <b>{pct(selectedRow.peerMortalityPct)}</b></span><span>Różnica <b>{selectedRow.diff>=0?"+":""}{pf.format(selectedRow.diff)} pp</b></span><span>Nadmiar <b>{selectedRow.excessDeaths>=0?"+":""}{pf.format(selectedRow.excessDeaths)}</b></span></div>
+      <div className="hospital-jgp-modal-stats"><span>Szpital <b>{pct(selectedRow.targetMortalityPct)}</b></span><span>Grupa porównawcza <b>{pct(selectedRow.peerMortalityPct)}</b></span><span>Różnica <b>{signed(selectedRow.diff," pp")}</b></span><span>Nadmiar <b>{signed(selectedRow.excessDeaths)}</b></span></div>
       <div ref={popupPlotShellRef} className="hospital-standard-plot-shell hospital-jgp-modal-plot-shell">
         <div ref={el=>{popupPlotRef.current=el;if(el) setPopupPlotMounted(true)}} className="hospital-jgp-modal-plot"/>
         {pairMode && popupTooltip ? (()=>{
@@ -592,7 +590,7 @@ export function PeerComparisonCharts({ benchmark, hoveredPeerKey, onHoverPeer, p
       if(mapRef.current) {
         await Plotly.react(mapRef.current,[
           {
-            type:"scatter",mode:"markers",name:"Peery",
+            type:"scatter",mode:"markers",name:"Podobne szpitale",
             x:peers.map(p=>p.coreBeds),
             y:peers.map(p=>p.hospitalizations),
             text:peers.map(p=>displayHospitalName(p.providerName)),
@@ -616,14 +614,14 @@ export function PeerComparisonCharts({ benchmark, hoveredPeerKey, onHoverPeer, p
             marker:{size:17,opacity:1,color:CHART_COLORS.dataStrong,line:{width:2,color:"#FFFFFF"}}
           },
           {
-            type:"scatter",mode:"markers",name:"Wybrany szpital",
+            type:"scatter",mode:"markers",name:"Ten szpital",
             x:[base.coreBeds],y:[base.hospitalizations],
             marker:{size:16,color:CHART_COLORS.signal,line:{width:3,color:"#FFFFFF"}},
             customdata:[[base.coreWards,base.cellCount,base.clinicCount,base.hospitalizations]],
             hoverinfo:pairMode ? "skip" : undefined,
             hovertemplate:pairMode
               ? undefined
-              : "<b>Wybrany szpital</b><br><br>Łóżka na głównych oddziałach: %{x:,.0f}<br>Istotne JGP >10: %{y:,.0f}<br>Główne i wspierające oddziały: %{customdata[0]}<br>Komórki: %{customdata[1]}<br>Poradnie: %{customdata[2]}<br>Hospitalizacje: %{customdata[3]:,.0f}<extra></extra>"
+              : "<b>Ten szpital</b><br><br>Łóżka na głównych oddziałach: %{x:,.0f}<br>Istotne JGP >10: %{y:,.0f}<br>Główne i wspierające oddziały: %{customdata[0]}<br>Komórki: %{customdata[1]}<br>Poradnie: %{customdata[2]}<br>Hospitalizacje: %{customdata[3]:,.0f}<extra></extra>"
           }
         ],{
           ...chartLayout(),
@@ -672,13 +670,13 @@ export function PeerComparisonCharts({ benchmark, hoveredPeerKey, onHoverPeer, p
           // Skala odchylenia: więcej zgonów niż w grupie porównawczej — ciepły, mniej — błękit.
           marker:{color:top.map(x=>x.excessDeaths>=0?DEVIATION_COLORS.up998:DEVIATION_COLORS.down998)},
           hoverinfo:pairMode ? "none" : undefined,
-          hovertemplate:pairMode ? undefined : "<b>%{y}</b><br>%{customdata[0]}<br>Nadmiar: <b>%{customdata[4]}</b><br>Śmiertelność szpitala: %{customdata[6]:.1f}%<br>Śmiertelność peerów łącznie: %{customdata[7]:.1f}%<br>Zgony: %{customdata[1]:.0f} · oczekiwane: %{customdata[2]:.1f}<br>Peery z tym JGP: %{customdata[5]:.0f}<br>Wycena: %{customdata[3]:.1f} pkt<extra></extra>"
+          hovertemplate:pairMode ? undefined : "<b>%{y}</b><br>%{customdata[0]}<br>Nadmiar: <b>%{customdata[4]}</b><br>Śmiertelność szpitala: %{customdata[6]:.1f}%<br>Śmiertelność grupy porównawczej: %{customdata[7]:.1f}%<br>Zgony: %{customdata[1]:.0f} · oczekiwane: %{customdata[2]:.1f}<br>Podobne szpitale z tym JGP: %{customdata[5]:.0f}<br>Wycena: %{customdata[3]:.1f} pkt<extra></extra>"
         }],{
           ...chartLayout(),
           autosize:true,height:320,showlegend:false,
           margin:{l:42,r:8,t:4,b:40},
           // Wartości ujemne i dodatnie: zero zawsze w zakresie, podstawa na zerze (DESIGN.md 6.4, pkt 6).
-          xaxis:measureAxis({title:axisTitle("Zgony nadmiarowe vs peery",3),range:paddedRange(top.map(x=>x.excessDeaths))}),
+          xaxis:measureAxis({title:axisTitle("Zgony nadmiarowe wobec grupy porównawczej",3),range:paddedRange(top.map(x=>x.excessDeaths))}),
           yaxis:categoryAxis({title:axisTitle("Kod JGP",3)}),
           shapes:[baselineShape("x")]
         },PLOTLY_CONFIG);
@@ -725,7 +723,7 @@ export function PeerComparisonCharts({ benchmark, hoveredPeerKey, onHoverPeer, p
   },[benchmark,plotHighlightKey,onHoverPeer,pairMode,jgpNameByCode,valuationByJgp]);
   return <div className="hospital-peer-charts">
     <section className="hospital-peer-chart-card hospital-surface-card">
-      <div className="hospital-peer-chart-head"><div><span>Mapa peerów</span><h3>Realna skala struktury vs zakres leczenia</h3></div><small>Pomarańczowy punkt: ten szpital · niebieskie: podobne szpitale.</small></div>
+      <div className="hospital-peer-chart-head"><div><span>Mapa podobnych szpitali</span><h3>Realna skala struktury vs zakres leczenia</h3></div><small>Pomarańczowy punkt: ten szpital · niebieskie: podobne szpitale.</small></div>
       <div
         ref={pairMapShellRef}
         className="hospital-peer-map-shell"
@@ -805,7 +803,7 @@ export function PeerComparisonCharts({ benchmark, hoveredPeerKey, onHoverPeer, p
     {benchmark.peers.length>0 ? <section className="hospital-peer-chart-card hospital-surface-card">
       <div className="hospital-peer-chart-head">
         <div><span>Różnice w wynikach JGP</span><h3>Gdzie występuje największa różnica liczby zgonów?</h3></div>
-        <small><b>{benchmark.totalExcessDeaths>=0?"+":""}{pf.format(benchmark.totalExcessDeaths)}</b> {benchmark.totalExcessDeaths>=0 ? "zgonów nadmiarowych" : "zgonów mniej niż oczekiwano"} łącznie względem peerów</small>
+        <small><b>{signed(benchmark.totalExcessDeaths)}</b> {benchmark.totalExcessDeaths>=0 ? "zgonów nadmiarowych" : "zgonów mniej niż oczekiwano"} łącznie wobec grupy porównawczej</small>
       </div>
       <div ref={benchmarkShellRef} className="hospital-standard-plot-shell">
         <div ref={benchmarkRef} className="hospital-peer-chart-plot"/>

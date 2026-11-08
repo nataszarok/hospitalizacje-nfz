@@ -28,6 +28,15 @@ export function formatAtLeastCount(value: number): string {
   return integerFormat.format(value);
 }
 
+/**
+ * Różnica ze znakiem i polskim minusem „−”, 1 miejsce po przecinku: 5.74 → „+5,7”, −1.2 → „−1,2”, 0 → „0,0”.
+ * `unit` dopisujemy po liczbie, np. „ pp”.
+ */
+export function formatSigned(value: number, unit = ""): string {
+  const sign = value > 0 ? "+" : value < 0 ? "−" : "";
+  return `${sign}${compactFormat.format(Math.abs(value))}${unit}`;
+}
+
 export function formatPln(value: number): string {
   const abs = Math.abs(value);
   if (abs >= 1_000_000_000) return `${compactFormat.format(value / 1_000_000_000)} mld zł`;
