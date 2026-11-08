@@ -96,7 +96,7 @@ export function JgpCatalogView({ catalog }: { catalog: Catalog }) {
       : byDiscontinued(a, b) || (value(b) - value(a)) * (sort.desc ? 1 : -1) || a.code.localeCompare(b.code));
   }, [catalog.rows, query, kind, minLatest, showDiscontinued, sort]);
 
-  const header = (key: CatalogSortKey, label: ReactNode, numeric = true, title?: string) => <th className={numeric ? styles.num : undefined} title={title} aria-sort={sort.key === key ? (sort.desc ? "descending" : "ascending") : "none"}>
+  const header = (key: CatalogSortKey, label: ReactNode, numeric = true, title?: string, priority?: 2 | 3) => <th className={[numeric ? styles.num : "", priority ? `col-p${priority}` : ""].filter(Boolean).join(" ") || undefined} title={title} aria-sort={sort.key === key ? (sort.desc ? "descending" : "ascending") : "none"}>
     <button type="button" className={styles.sortButton} onClick={() => update({ sort: { key, desc: sort.key === key ? !sort.desc : defaultSortDesc(key) } })}>
       {label}{sort.key === key ? (sort.desc ? " ↓" : " ↑") : ""}
     </button>
@@ -137,42 +137,40 @@ export function JgpCatalogView({ catalog }: { catalog: Catalog }) {
     </div>
 
     <section className={styles.card} aria-label="Grupy JGP">
-      <div>
+      {/* 7 kolumn (DESIGN.md 7.1): kod w komórce nazwy, poprzedni rok w dymku r/r; w wąskim kontenerze zostają grupa i liczba. */}
+      <div className="priority-table">
         <table className={styles.table}>
           <thead>
             <tr className={styles.titleRow}>
-              <th colSpan={(catalog.previousYear ? 7 : 6) + (value ? 2 : 0)}>
+              <th colSpan={5 + (value ? 2 : 0)}>
                 <span className={styles.tableTitle}>Grupy JGP</span>
                 <span className={styles.tableCount}>{integer(rows.length)} z {integer(catalog.totals.all)}</span>
               </th>
             </tr>
             <tr>
-              {header("code", "Kod", false)}
-              <th>Nazwa</th>
-              <th>Miesięcznie {catalog.years[0]}–{catalog.latestYear}</th>
-              {catalog.previousYear ? <th className={styles.num}>{catalog.previousYear}</th> : null}
+              {header("code", "Grupa JGP", false)}
+              <th className="col-p3">Miesięcznie {catalog.years[0]}–{catalog.latestYear}</th>
               {header("latest", catalog.latestYear)}
-              {header("change", "r/r")}
-              {header("mortality", "Śmiertelność")}
-              {value ? header("value", <>Rozliczenia<br />NFZ {value.year}</>, true, `Wartość świadczeń rozliczonych przez NFZ w ${value.year} r.`) : null}
-              {value ? header("valueChange", <>Zmiana<br />od {value.firstYear}</>, true, `Zmiana wartości rozliczeń NFZ ${value.firstYear}–${value.year}`) : null}
+              {header("change", "r/r", true, catalog.previousYear ? `Zmiana wobec ${catalog.previousYear} r.` : undefined, 2)}
+              {header("mortality", "Śmiertelność", true, undefined, 2)}
+              {value ? header("value", <>Rozliczenia<br />NFZ {value.year}</>, true, `Wartość świadczeń rozliczonych przez NFZ w ${value.year} r.`, 3) : null}
+              {value ? header("valueChange", <>Zmiana<br />od {value.firstYear}</>, true, `Zmiana wartości rozliczeń NFZ ${value.firstYear}–${value.year}`, 3) : null}
             </tr>
           </thead>
           <tbody>
             {rows.slice(0, limit).map((row) => { const availability = availabilityLabel(row.ranges, catalog.years); return <tr key={row.code}>
-              <td className={styles.code}><Link href={`/jgp/${encodeURIComponent(row.code)}`}>{row.code}</Link></td>
               <td className={styles.name}>
+                <Link href={`/jgp/${encodeURIComponent(row.code)}`} className={styles.code}>{row.code}</Link>{" "}
                 <Link href={`/jgp/${encodeURIComponent(row.code)}`}>{row.name}</Link>
                 {availability ? <span className={`${styles.badge} ${row.discontinued ? styles.badgeArchived : ""}`} title={row.discontinued ? "Grupa wycofana z katalogu" : "Lata, w których grupa jest w katalogu"}>{availability}</span> : null}
                 <span className={styles.kind}>{row.procedural ? "zabiegowa" : "zachowawcza"}</span>
               </td>
-              <td><Sparkline values={row.series} /></td>
-              {catalog.previousYear ? <td className={styles.num}>{count(row, catalog.previousYear, row.previous)}</td> : null}
+              <td className="col-p3"><Sparkline values={row.series} /></td>
               <td className={styles.num}>{count(row, catalog.latestYear, row.latest)}</td>
-              <td className={`${styles.num} ${row.changePct !== null && row.changePct < 0 ? styles.down : ""}`}>{row.changePct === null ? "—" : signedPct(row.changePct)}</td>
-              <td className={styles.num}>{row.latest ? `${decimal(row.mortalityPct)}%` : "—"}</td>
-              {value ? <td className={styles.num}>{row.valuePln === null ? "—" : formatPln(row.valuePln)}</td> : null}
-              {value ? <td className={`${styles.num} ${row.valueChangePct !== null && row.valueChangePct < 0 ? styles.down : ""}`}>{row.valueChangePct === null ? "—" : signedIntegerPct(row.valueChangePct)}</td> : null}
+              <td className={`${styles.num} col-p2 ${row.changePct !== null && row.changePct < 0 ? styles.down : ""}`} title={catalog.previousYear ? `${catalog.previousYear}: ${count(row, catalog.previousYear, row.previous)}` : undefined}>{row.changePct === null ? "—" : signedPct(row.changePct)}</td>
+              <td className={`${styles.num} col-p2`}>{row.latest ? `${decimal(row.mortalityPct)}%` : "—"}</td>
+              {value ? <td className={`${styles.num} col-p3`}>{row.valuePln === null ? "—" : formatPln(row.valuePln)}</td> : null}
+              {value ? <td className={`${styles.num} col-p3 ${row.valueChangePct !== null && row.valueChangePct < 0 ? styles.down : ""}`}>{row.valueChangePct === null ? "—" : signedIntegerPct(row.valueChangePct)}</td> : null}
             </tr>; })}
           </tbody>
         </table>

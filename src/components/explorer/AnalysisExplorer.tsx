@@ -328,7 +328,6 @@ export function AnalysisExplorer() {
   return <main className={`${styles.page} ${focus ? styles.focus : ""}`}>
     <Collapsible open={!focus}>
       <PageHeader
-        wide
         compact
         eyebrow={<>Hospitalizacje · grupy JGP · {range}</>}
         title="Eksplorator danych"

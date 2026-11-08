@@ -89,3 +89,24 @@ describe("tokeny kształtu", () => {
   });
 });
 
+describe("tabele bez przewijania w poziomie (DESIGN.md 7.1)", () => {
+  it("globals.css ukrywa kolumny priorytetu 3 poniżej 900 px i priorytetu 2 poniżej 640 px kontenera", () => {
+    expect(globals).toMatch(/\.priority-table\s*\{[^}]*container-type:\s*inline-size/);
+    expect(globals).toMatch(/@container \(max-width: 899px\)\s*\{\s*\.priority-table \.col-p3\s*\{\s*display:\s*none/);
+    expect(globals).toMatch(/@container \(max-width: 639px\)\s*\{\s*\.priority-table \.col-p2\s*\{\s*display:\s*none/);
+  });
+
+  it("żadna tabela nie wymusza szerokości większej niż kontener", () => {
+    // Dawne `min-width: 1280px` (porównanie JGP) i `min-width: 620px` (oddziały) dawały przewijanie w poziomie.
+    // Minimalna szerokość komórki nazwy (np. 260–320 px) jest dozwolona; tabela szersza niż telefon i tablet — nie.
+    const forced = files.flatMap(({ name, css }) => [...css.matchAll(/table[^{]*\{[^}]*min-width:\s*(\d{3,})px/g)]
+      .filter((m) => Number(m[1]) >= 600)
+      .map((m) => `${name}: ${m[1]}px`));
+    expect(forced).toEqual([]);
+  });
+
+  it("jedna szerokość strony: bez dawnego obszaru roboczego 1680 px", () => {
+    expect(files.filter(({ css }) => css.includes("--atlas-workspace-max")).map(({ name }) => name)).toEqual([]);
+    expect(globals).toMatch(/--atlas-sidebar-width:\s*300px/);
+  });
+});

@@ -199,8 +199,8 @@ function PairBenchmarkPanel({ benchmark, hoveredPeerKey, onHoverPeer, method, gr
     }
   };
 
-  const renderPeerGroupHeader=(sortKey:PeerGroupSortKey,children:React.ReactNode,num=false)=>
-    <th className={num?"num":undefined} aria-sort={peerGroupSortKey===sortKey?(peerGroupSortDir==="asc"?"ascending":"descending"):"none"}>
+  const renderPeerGroupHeader=(sortKey:PeerGroupSortKey,children:React.ReactNode,num=false,priority?:2|3)=>
+    <th className={[num?"num":"",priority?`col-p${priority}`:""].filter(Boolean).join(" ")||undefined} aria-sort={peerGroupSortKey===sortKey?(peerGroupSortDir==="asc"?"ascending":"descending"):"none"}>
       <button
         type="button"
         className={`hospital-sort-header${peerGroupSortKey===sortKey?" is-active":""}`}
@@ -275,18 +275,18 @@ function PairBenchmarkPanel({ benchmark, hoveredPeerKey, onHoverPeer, method, gr
           <button type="button" onClick={()=>setPeerGroupOpen(false)} aria-label="Zamknij">×</button>
         </div>
 
-        <div className="hospital-peer-group-table-wrap">
+        <div className="hospital-peer-group-table-wrap priority-table">
           <table className="hospital-peer-group-table">
             <thead>
               <tr>
+                {/* Do 7 kolumn (DESIGN.md 7.1): klasa pary w drugiej linii nazwy, kolumny drugorzędne znikają w wąskim kontenerze. */}
                 <th className="hospital-peer-group-provider-col">Placówka</th>
-                {renderPeerGroupHeader("grade", "Klasa")}
                 {renderPeerGroupHeader("distance", "Dystans", true)}
                 {renderPeerGroupHeader("hospitalizations", "Hospitalizacje", true)}
-                {renderPeerGroupHeader("beds", "Łóżka główne", true)}
-                {renderPeerGroupHeader("coreTypes", "Główne oddziały", true)}
-                {renderPeerGroupHeader("sharedJgp", "Wspólne JGP", true)}
-                {renderPeerGroupHeader("jgpFamilySimilarity", "Podobieństwo rodzin JGP", true)}
+                {renderPeerGroupHeader("beds", "Łóżka główne", true, 2)}
+                {renderPeerGroupHeader("coreTypes", "Główne oddziały", true, 3)}
+                {renderPeerGroupHeader("sharedJgp", "Wspólne JGP", true, 2)}
+                {renderPeerGroupHeader("jgpFamilySimilarity", "Podobieństwo rodzin JGP", true, 3)}
               </tr>
             </thead>
 
@@ -295,16 +295,15 @@ function PairBenchmarkPanel({ benchmark, hoveredPeerKey, onHoverPeer, method, gr
                 <td>
                   <div className="hospital-peer-group-provider">
                     <b>{displayHospitalName(benchmark.selected.providerName)}</b>
-                    <small>Ten szpital · punkt odniesienia</small>
+                    <small><span className="hospital-peer-group-main-badge">GŁÓWNA</span> Ten szpital · punkt odniesienia</small>
                   </div>
                 </td>
-                <td><span className="hospital-peer-group-main-badge">GŁÓWNA</span></td>
                 <td className="num">—</td>
                 <td className="num">{nf.format(mainModelStats.hospitalizations)}</td>
-                <td className="num">{nf.format(mainModelStats.beds)}</td>
-                <td className="num">{nf.format(mainModelStats.coreTypes)}</td>
-                <td className="num">{pf.format(mainModelStats.sharedJgpPct)}%</td>
-                <td className="num">{pf.format(mainModelStats.jgpFamilySimilarityPct)}%</td>
+                <td className="num col-p2">{nf.format(mainModelStats.beds)}</td>
+                <td className="num col-p3">{nf.format(mainModelStats.coreTypes)}</td>
+                <td className="num col-p2">{pf.format(mainModelStats.sharedJgpPct)}%</td>
+                <td className="num col-p3">{pf.format(mainModelStats.jgpFamilySimilarityPct)}%</td>
               </tr>
             </tbody>
 
@@ -318,16 +317,15 @@ function PairBenchmarkPanel({ benchmark, hoveredPeerKey, onHoverPeer, method, gr
                 <td>
                   <div className="hospital-peer-group-provider">
                     <b>{p.name}</b>
-                    <small>{[p.city,p.voivodeship].filter(Boolean).join(" · ")}</small>
+                    <small><span className={`hospital-peer-grade hospital-peer-grade-${p.grade.toLowerCase()}`} title={`Klasa ${p.grade}`}>{p.grade}</span> {[p.city,p.voivodeship].filter(Boolean).join(" · ")}</small>
                   </div>
                 </td>
-                <td><span className={`hospital-peer-grade hospital-peer-grade-${p.grade.toLowerCase()}`}>{p.grade}</span></td>
                 <td className="num">{p.distance==null?"—":pf.format(p.distance)}</td>
                 <td className="num">{nf.format(p.hospitalizations)}</td>
-                <td className="num">{nf.format(p.beds)}</td>
-                <td className="num">{nf.format(p.coreTypes)}</td>
-                <td className="num">{pf.format(p.sharedJgpPct)}%</td>
-                <td className="num">{pf.format(p.jgpFamilySimilarityPct)}%</td>
+                <td className="num col-p2">{nf.format(p.beds)}</td>
+                <td className="num col-p3">{nf.format(p.coreTypes)}</td>
+                <td className="num col-p2">{pf.format(p.sharedJgpPct)}%</td>
+                <td className="num col-p3">{pf.format(p.jgpFamilySimilarityPct)}%</td>
               </tr>)}
             </tbody>
           </table>

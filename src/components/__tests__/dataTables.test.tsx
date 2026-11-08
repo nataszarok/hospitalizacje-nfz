@@ -124,39 +124,28 @@ describe("MortalityTab data table", () => {
 
     const table = screen.getByRole("table");
     const headers = within(table).getAllByRole("columnheader");
-    expect(headers).toHaveLength(8);
+    // 4 kolumny (DESIGN.md 7.1): kod JGP, miasto i województwo w drugiej linii nazwy, NIP w dymku.
+    expect(headers).toHaveLength(4);
 
-    for (const label of [
-      "Świadczeniodawca",
-      "NIP",
-      "KODY JGP",
-      "Województwo",
-      "Miasto",
-      "Hospitalizacje",
-      "Zgony",
-      "Śmiertelność",
-    ]) {
+    for (const label of ["Świadczeniodawca", "Hospitalizacje", "Zgony", "Śmiertelność"]) {
       expect(within(table).getByRole("button", { name: label })).toBeInTheDocument();
     }
 
-    const cells = within(table).getAllByRole("cell").map((cell) => cell.textContent);
-    expect(cells).toEqual([
-      "Szpital Testowy",
-      "1234567890",
-      "E10",
-      "Mazowieckie",
-      "Warszawa",
+    const cells = within(table).getAllByRole("cell");
+    expect(cells.map((cell) => cell.textContent)).toEqual([
+      "Szpital TestowyE10 · Warszawa · Mazowieckie",
       (12_345).toLocaleString("pl-PL"),
       (322).toLocaleString("pl-PL"),
       "2.6%",
     ]);
+    expect(cells[0]).toHaveAttribute("title", "Szpital Testowy · NIP 1234567890");
   });
 
   it("uses the public JGP code and exposes the product label as a title", () => {
     render(<MortalityTab {...commonProps} data={mortalityPayload([mortalityRow()])} />);
 
-    const jgpCell = screen.getByText("E10").closest("td");
-    expect(jgpCell).toHaveAttribute("title", "E10 · Produkt E10");
+    const jgpLabel = screen.getByText("E10").closest("span[title]");
+    expect(jgpLabel).toHaveAttribute("title", "E10 · Produkt E10");
     // E10 ma stronę grupy JGP, więc kod jest linkiem.
     expect(screen.getByRole("link", { name: "E10" })).toHaveAttribute("href", "/jgp/E10");
     expect(screen.queryByText("P1")).not.toBeInTheDocument();
@@ -195,7 +184,7 @@ describe("MortalityTab data table", () => {
     expect(within(table).getAllByRole("row")).toHaveLength(2);
 
     const cells = within(table).getAllByRole("cell").map((cell) => cell.textContent);
-    expect(cells).toContain("E10, A01");
+    expect(cells[0]).toContain("E10, A01");
     expect(cells).toContain((150).toLocaleString("pl-PL"));
     expect(cells).toContain((5).toLocaleString("pl-PL"));
     expect(cells).toContain("3.3%");
@@ -289,28 +278,15 @@ describe("AdmissionTab data table", () => {
 
     const table = screen.getByRole("table");
     const headers = within(table).getAllByRole("columnheader");
-    expect(headers).toHaveLength(8);
+    expect(headers).toHaveLength(4);
 
-    for (const label of [
-      "Świadczeniodawca",
-      "NIP",
-      "Kody JGP",
-      "Województwo",
-      "Miasto",
-      "Planowane (6)",
-      "Nagłe (2+3)",
-      "Planowane + nagłe",
-    ]) {
+    for (const label of ["Świadczeniodawca", "Planowane (6)", "Nagłe (2+3)", "Planowane + nagłe"]) {
       expect(within(table).getByRole("button", { name: label })).toBeInTheDocument();
     }
 
     const cells = within(table).getAllByRole("cell").map((cell) => cell.textContent);
     expect(cells).toEqual([
-      "Szpital Testowy",
-      "1234567890",
-      "E10",
-      "Mazowieckie",
-      "Warszawa",
+      "Szpital TestowyE10 · Warszawa · Mazowieckie",
       (12_345).toLocaleString("pl-PL"),
       (2_346).toLocaleString("pl-PL"),
       (14_691).toLocaleString("pl-PL"),
@@ -339,7 +315,7 @@ describe("AdmissionTab data table", () => {
     expect(within(table).getAllByRole("row")).toHaveLength(2);
 
     const cells = within(table).getAllByRole("cell").map((cell) => cell.textContent);
-    expect(cells).toContain("E10, A01");
+    expect(cells[0]).toContain("E10, A01");
     expect(cells).toContain((150).toLocaleString("pl-PL"));
     expect(cells).toContain((30).toLocaleString("pl-PL"));
     expect(cells).toContain((180).toLocaleString("pl-PL"));

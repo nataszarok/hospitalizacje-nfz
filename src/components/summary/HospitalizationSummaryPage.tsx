@@ -5,7 +5,7 @@ import { PageHeader, pageContainerClass } from "@/components/portal/PageHeader";
 import { PortalIcon } from "@/components/portal/PortalIcon";
 import { formatPln, MonthLines, SectionChanges, STAY_COLORS, StayShares, TrendRows, ValueBars, ValueRows } from "@/components/summary/SummaryCharts";
 import { DASHBOARD_HREFS } from "@/lib/dashboardNavigation";
-import { formatYearRange } from "@/lib/formatters";
+import { formatYearRange, plnScale } from "@/lib/formatters";
 import { STAY_BUCKETS, TREND_MIN_HOSPITALIZATIONS, type HospitalizationSummary } from "@/lib/hospitalizationSummary";
 import styles from "./HospitalizationSummaryPage.module.css";
 import { CHART_COLORS } from "@/lib/chartPalette";
@@ -55,6 +55,8 @@ export function HospitalizationSummaryPage({ summary }: { summary: Hospitalizati
   const { settlements, trendChanges } = summary;
   const firstTotal = settlements?.totals[0];
   const latestTotal = settlements?.totals.at(-1);
+  // Jedna jednostka dla wszystkich słupków kwot (DESIGN.md 3.1).
+  const totalsScale = plnScale((settlements?.totals ?? []).map((t) => t.valuePln));
   const hospitalizationsByYear = new Map(years.map((y) => [y.year, y.hospitalizations]));
   const perStay = (settlements?.totals ?? []).flatMap(({ year, valuePln }) => {
     const count = hospitalizationsByYear.get(year);
@@ -124,7 +126,7 @@ export function HospitalizationSummaryPage({ summary }: { summary: Hospitalizati
             title="Kwoty NFZ za hospitalizacje JGP w latach"
             lead={<><strong>{formatPln(latestTotal.valuePln)}</strong> w {latestTotal.year} r.{valueChange !== null ? <> ({signedPct(valueChange)} od {firstTotal.year} r.)</> : null}. Pod rokiem: zmiana r/r.</>}
             description={<>
-              <p>Słupek to wartość świadczeń rozliczonych przez NFZ we wszystkich grupach JGP w roku, w miliardach zł. Zestawienie rozliczeń NFZ zaczyna się w {firstTotal.year} r.</p>
+              <p>Słupek to wartość świadczeń rozliczonych przez NFZ we wszystkich grupach JGP w roku, w {totalsScale.unit}. Zestawienie rozliczeń NFZ zaczyna się w {firstTotal.year} r.</p>
               <p>Kwoty rosną szybciej niż liczba hospitalizacji. Na wzrost wpływają m.in. wyższe wyceny punktów i grup JGP, wzrost wynagrodzeń w ochronie zdrowia i inflacja.</p>
             </>}
             href="/jgp?sort=kwota"
@@ -134,10 +136,10 @@ export function HospitalizationSummaryPage({ summary }: { summary: Hospitalizati
           >
             <ValueBars
               years={settlements.totals.map((t) => t.year)}
-              values={settlements.totals.map((t) => t.valuePln / 1_000_000_000)}
-              format={decimal}
+              values={settlements.totals.map((t) => t.valuePln)}
+              format={totalsScale.format}
               notes={settlements.totals.map((t, i) => (i ? signedPct(((t.valuePln - settlements.totals[i - 1].valuePln) / settlements.totals[i - 1].valuePln) * 100) : ""))}
-              label="Kwoty NFZ w latach (mld zł)"
+              label={`Kwoty NFZ w latach (${totalsScale.unit})`}
             />
           </DataCard>
           {perStay.length ? <DataCard
@@ -156,9 +158,9 @@ export function HospitalizationSummaryPage({ summary }: { summary: Hospitalizati
             <ValueBars
               years={perStay.map((y) => y.year)}
               values={perStay.map((y) => y.value)}
-              format={(v) => `${decimal(v / 1000)}`}
+              format={integer}
               notes={perStay.map((y, i) => (i ? signedPct(((y.value - perStay[i - 1].value) / perStay[i - 1].value) * 100) : ""))}
-              label="Średnia kwota na hospitalizację w latach (tys. zł)"
+              label="Średnia kwota na hospitalizację w latach (zł)"
             />
           </DataCard> : null}
         </div>

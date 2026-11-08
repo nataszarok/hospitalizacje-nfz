@@ -92,12 +92,30 @@ describe("JgpMortalityDifferenceTable — odchylenia JGP", () => {
   it("sortuje odchylenia według nadmiaru zgonów i przełącza kierunek sortowania", () => {
     render(<JgpMortalityDifferenceTable benchmark={withOutliers()} products={products} valuationByJgp={new Map()} />);
     const table = screen.getByRole("table");
-    const order = () => within(table).getAllByRole("row").slice(1).map((row) => within(row).getAllByRole("cell")[0].textContent);
+    // Kod JGP jest pogrubiony na początku komórki z nazwą.
+    const order = () => within(table).getAllByRole("row").slice(1).map((row) => row.querySelector("td b")?.textContent);
     expect(order()).toEqual(["A01", "B02"]);
     const header = within(table).getByRole("button", { name: /Nadmiar/ });
     fireEvent.click(header);
     expect(order()).toEqual(["B02", "A01"]);
     expect(header.closest("th")).toHaveAttribute("aria-sort", "ascending");
+  });
+
+  it("ma 6 kolumn z priorytetami, a zgony, dane grupy i oczekiwane zgony pokazuje w oknie wiersza", () => {
+    render(<JgpMortalityDifferenceTable benchmark={withOutliers()} products={products} valuationByJgp={new Map()} />);
+    const table = screen.getByRole("table");
+    const headers = within(table).getAllByRole("columnheader");
+    expect(headers.map((th) => th.textContent?.replace(/[↕↑↓]/g, "").trim())).toEqual([
+      "Grupa JGP", "Hosp.", "Śmiert. szpitala", "Śmiert. grupy", "Różnica", "Nadmiar zgonów",
+    ]);
+    expect(headers.map((th) => (th.classList.contains("col-p2") ? 2 : th.classList.contains("col-p3") ? 3 : 1))).toEqual([1, 2, 1, 3, 1, 2]);
+    expect(table.closest(".priority-table")).not.toBeNull();
+    fireEvent.click(within(table).getByText("A01").closest("tr")!);
+    const dialog = screen.getByRole("dialog");
+    expect(dialog).toHaveTextContent(/Hospitalizacje: szpital \d/);
+    expect(dialog).toHaveTextContent(/Zgony: szpital \d/);
+    expect(dialog).toHaveTextContent("Oczekiwane zgony");
+    expect(dialog).toHaveTextContent("Podobne szpitale z tą grupą");
   });
 
   it("filtruje JGP po dużych różnicach śmiertelności i zmienia aria-pressed", () => {
@@ -115,10 +133,13 @@ describe("JgpMortalityDifferenceTable — odchylenia JGP", () => {
   it("pokazuje wycenę JGP, a dla brakujących wycen myślnik", () => {
     render(<JgpMortalityDifferenceTable benchmark={withOutliers()} products={products}
       valuationByJgp={new Map([["A01", { kod_jgp: "A01", kod_produktu: "P1", pkt_hospitalizacja: 123.5 }]])} />);
+    // Wycena jest w oknie wiersza, nie w kolumnie tabeli (DESIGN.md 7.1).
     const table = screen.getByRole("table");
-    const rows = within(table).getAllByRole("row").slice(1);
-    expect(rows[0]).toHaveTextContent("123,5 pkt");
-    expect(rows[1].querySelector("td:last-child")).toHaveTextContent("—");
+    fireEvent.click(within(table).getByText("A01").closest("tr")!);
+    expect(screen.getByRole("dialog")).toHaveTextContent("Wycena 123,5 pkt");
+    fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Zamknij" }));
+    fireEvent.click(within(table).getByText("B02").closest("tr")!);
+    expect(screen.getByRole("dialog")).toHaveTextContent("Wycena —");
   });
 
   it("otwiera szczegóły JGP po kliknięciu wiersza i pozwala je zamknąć", () => {

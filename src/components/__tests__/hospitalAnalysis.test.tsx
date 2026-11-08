@@ -141,7 +141,7 @@ describe("HospitalAnalysisTab — profil szpitala", () => {
   it("pokazuje stratę finansową, normalizuje NIP i informuje o danych z wcześniejszego roku", async () => {
     render(<HospitalAnalysisTab {...baseProps} />);
     expect(await screen.findByText("Strata netto (2024)")).toBeInTheDocument();
-    expect(screen.getByText(/-12 mln zł/)).toBeInTheDocument();
+    expect(screen.getByText(/−12 mln zł/)).toBeInTheDocument();
     expect(screen.getByText(/Brak danych za 2025/)).toBeInTheDocument();
     expect(screen.getByText(/Przychód 210 mln zł/)).toBeInTheDocument();
   });

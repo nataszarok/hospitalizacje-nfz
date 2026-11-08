@@ -215,8 +215,8 @@ export function JgpMortalityDifferenceTable({ benchmark, products, valuationByJg
     if(sortKey===key) setSortDir(v=>v==="asc"?"desc":"asc");
     else { setSortKey(key); setSortDir("desc"); }
   };
-  const renderHeader=(k:SortKey,children:React.ReactNode,num=false)=>
-    <th className={num?"num":undefined} aria-sort={sortKey===k?(sortDir==="asc"?"ascending":"descending"):"none"}>
+  const renderHeader=(k:SortKey,children:React.ReactNode,num=false,priority?:2|3)=>
+    <th className={[num?"num":"",priority?`col-p${priority}`:""].filter(Boolean).join(" ")||undefined} aria-sort={sortKey===k?(sortDir==="asc"?"ascending":"descending"):"none"}>
       <button type="button" className={`hospital-sort-header${sortKey===k?" is-active":""}`} onClick={()=>sort(k)}>
         <span>{children}</span><span className="hospital-sort-icon">{sortKey===k?(sortDir==="asc"?"↑":"↓"):"↕"}</span>
       </button>
@@ -355,24 +355,21 @@ export function JgpMortalityDifferenceTable({ benchmark, products, valuationByJg
         <button type="button" className={`hospital-jgp-filter-chip${largeDifferencesOnly?" is-active":""}`} onClick={()=>setLargeDifferencesOnly(v=>!v)} aria-pressed={largeDifferencesOnly} title="Duże różnice: bezwzględna różnica śmiertelności ≥2,0 pp i jednocześnie różnica względna ≥50% wobec grupy porównawczej.">Duże różnice</button>
       </div>
     </div>
-    <div className="hospital-jgp-table-viewport"><div className="hospital-jgp-table-scroll">
+    <div className="hospital-jgp-table-viewport"><div className="hospital-jgp-table-scroll priority-table">
       <table className="hospital-jgp-outlier-table">
         <thead><tr>
-          {renderHeader("jgp", "JGP")}{renderHeader("name", "Nazwa")}
-          {renderHeader("targetHosp", "Hosp.", true)}{renderHeader("targetDeaths", "Zgony", true)}{renderHeader("targetMortality", "Śmiert. szpitala", true)}
-          {renderHeader("peerHosp", "Hosp. grupy", true)}{renderHeader("peerDeaths", "Zgony grupy", true)}{renderHeader("peerMortality", "Śmiert. grupy", true)}
-          {renderHeader("diff", "Różnica", true)}{renderHeader("expected", "Oczek. zgony", true)}{renderHeader("excess", "Nadmiar", true)}
-          {renderHeader("peerCount", "Podobne z JGP", true)}{renderHeader("valuation", "Wycena", true)}
+          {/* 6 kolumn (DESIGN.md 7.1); zgony, dane grupy, oczekiwane zgony, liczba podobnych i wycena są w oknie wiersza. */}
+          {renderHeader("name", "Grupa JGP")}
+          {renderHeader("targetHosp", "Hosp.", true, 2)}{renderHeader("targetMortality", "Śmiert. szpitala", true)}
+          {renderHeader("peerMortality", "Śmiert. grupy", true, 3)}{renderHeader("diff", "Różnica", true)}{renderHeader("excess", "Nadmiar zgonów", true, 2)}
         </tr></thead>
         <tbody>{rows.map((x)=><tr key={x.productCode} className="hospital-jgp-clickable-row" tabIndex={0} onClick={()=>{setPopupPlotMounted(false);setSelectedRow(x)}} onKeyDown={e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();setPopupPlotMounted(false);setSelectedRow(x)}}}>
-          <td><b>{x.jgpCode}</b></td><td className="name">{x.displayName}</td>
-          <td className="num">{nf.format(x.targetHospitalizations)}</td><td className="num">{nf.format(x.targetDeaths)}</td>
-          <td className="num">{pct(x.targetMortalityPct)}</td><td className="num">{nf.format(x.peerHospitalizations)}</td>
-          <td className="num">{nf.format(x.peerDeaths)}</td><td className="num">{pct(x.peerMortalityPct)}</td>
+          <td className="name"><b>{x.jgpCode}</b> {x.displayName}</td>
+          <td className="num col-p2">{nf.format(x.targetHospitalizations)}</td>
+          <td className="num">{pct(x.targetMortalityPct)}</td>
+          <td className="num col-p3">{pct(x.peerMortalityPct)}</td>
           <td className={`num ${x.diff>0?"bad":x.diff<0?"good":""}`}>{signed(x.diff," pp")}</td>
-          <td className="num">{pf.format(x.expectedDeaths)}</td>
-          <td className={`num ${x.excessDeaths>0?"bad":x.excessDeaths<0?"good":""}`}>{signed(x.excessDeaths)}</td>
-          <td className="num">{nf.format(x.peerHospitals)}</td><td className="num">{x.valuation==null?"—":`${pf.format(x.valuation)} pkt`}</td>
+          <td className={`num col-p2 ${x.excessDeaths>0?"bad":x.excessDeaths<0?"good":""}`}>{signed(x.excessDeaths)}</td>
         </tr>)}</tbody>
       </table>
     </div></div>
@@ -382,6 +379,13 @@ export function JgpMortalityDifferenceTable({ benchmark, products, valuationByJg
     <section className="hospital-jgp-modal" role="dialog" aria-modal="true" onMouseDown={e=>e.stopPropagation()}>
       <div className="hospital-jgp-modal-head"><div><span>{selectedRow.jgpCode}</span><h3>{selectedRow.displayName}</h3></div><button type="button" onClick={()=>setSelectedRow(null)} aria-label="Zamknij">×</button></div>
       <div className="hospital-jgp-modal-stats"><span>Szpital <b>{pct(selectedRow.targetMortalityPct)}</b></span><span>Grupa porównawcza <b>{pct(selectedRow.peerMortalityPct)}</b></span><span>Różnica <b>{signed(selectedRow.diff," pp")}</b></span><span>Nadmiar <b>{signed(selectedRow.excessDeaths)}</b></span></div>
+      <div className="hospital-jgp-modal-stats hospital-jgp-modal-stats-detail">
+        <span>Hospitalizacje: szpital <b>{nf.format(selectedRow.targetHospitalizations)}</b>, grupa <b>{nf.format(selectedRow.peerHospitalizations)}</b></span>
+        <span>Zgony: szpital <b>{nf.format(selectedRow.targetDeaths)}</b>, grupa <b>{nf.format(selectedRow.peerDeaths)}</b></span>
+        <span>Oczekiwane zgony <b>{pf.format(selectedRow.expectedDeaths)}</b></span>
+        <span>Podobne szpitale z tą grupą <b>{nf.format(selectedRow.peerHospitals)}</b></span>
+        <span>Wycena <b>{selectedRow.valuation==null?"—":`${pf.format(selectedRow.valuation)} pkt`}</b></span>
+      </div>
       <div ref={popupPlotShellRef} className="hospital-standard-plot-shell hospital-jgp-modal-plot-shell">
         <div ref={el=>{popupPlotRef.current=el;if(el) setPopupPlotMounted(true)}} className="hospital-jgp-modal-plot"/>
         {pairMode && popupTooltip ? (()=>{

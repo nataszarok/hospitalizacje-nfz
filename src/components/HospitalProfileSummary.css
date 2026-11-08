@@ -369,7 +369,6 @@
 
 .hospital-analysis.hospital-subtab-summary .hospital-rpwdl-location-table-wrap{
   display:block;
-  overflow-x:auto;
 }
 
 .hospital-analysis.hospital-subtab-summary .hospital-rpwdl-location-table{
@@ -556,7 +555,6 @@
 
 .hospital-analysis.hospital-subtab-summary .hospital-rpwdl-table-wrap{
   padding:0;
-  overflow-x:auto;
 }
 
 .hospital-analysis.hospital-subtab-summary .hospital-rpwdl-wards-table{
@@ -1036,8 +1034,10 @@
     grid-template-columns:1fr;
   }
 
-  .hospital-analysis.hospital-subtab-summary .hospital-rpwdl-wards-table{
-    min-width:620px;
+  /* Trzy kolumny mieszczą się na telefonie: nazwy i dziedziny się zawijają (DESIGN.md 7.1). */
+  .hospital-analysis.hospital-subtab-summary .hospital-rpwdl-wards-table :is(th, td){
+    padding-inline:6px;
+    overflow-wrap:anywhere;
   }
 }
 

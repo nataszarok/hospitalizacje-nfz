@@ -2,7 +2,7 @@ import Link from "next/link";
 import { LegacyDashboardRedirect } from "@/components/portal/LegacyDashboardRedirect";
 import { DASHBOARD_HREFS } from "@/lib/dashboardNavigation";
 import { SITE_NAME } from "@/lib/site";
-import { formatAtLeastCount, formatCompactCount, formatYearRange } from "@/lib/formatters";
+import { formatAtLeastCount, formatCompactCount, formatPln, formatYearRange } from "@/lib/formatters";
 import type { DatasetHighlights } from "@/lib/staticData";
 import type { HomeStats } from "@/lib/homeStats";
 import type { HospitalHomeStats } from "@/lib/hospitalHomeStats";
@@ -78,7 +78,6 @@ const paths: readonly Path[] = [
 const integer = (value: number) => Math.round(value).toLocaleString("pl-PL");
 const decimal = (value: number) => value.toLocaleString("pl-PL", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 const signedPct = (value: number) => `${value > 0 ? "+" : value < 0 ? "−" : ""}${decimal(Math.abs(value))}%`;
-const billions = (value: number) => `${value < 0 ? "−" : ""}${decimal(Math.abs(value) / 1_000_000_000)} mld zł`;
 
 export function HomePage({ highlights, stats, hospitals }: { highlights: DatasetHighlights; stats: HomeStats; hospitals: HospitalHomeStats }) {
   const latest = stats.years.at(-1);
@@ -190,7 +189,7 @@ export function HomePage({ highlights, stats, hospitals }: { highlights: Dataset
             id="hospitals-finance"
             kicker={`Finanse · ${finance.year} · szpitale PSZ`}
             title="Ile szpitali PSZ kończy rok ze stratą?"
-            lead={<><strong>{integer(finance.loss)} z {integer(finance.reported)}</strong> szpitali z sieci PSZ ({Math.round((finance.loss / finance.reported) * 100)}%) miało stratę netto w {finance.year} r. Łączny wynik: <strong>{billions(finance.netResult)}</strong>. Oś: marża netto w % (przedziały po 2,5 p.p.).</>}
+            lead={<><strong>{integer(finance.loss)} z {integer(finance.reported)}</strong> szpitali z sieci PSZ ({Math.round((finance.loss / finance.reported) * 100)}%) miało stratę netto w {finance.year} r. Łączny wynik: <strong>{formatPln(finance.netResult)}</strong>. Oś: marża netto w % (przedziały po 2,5 p.p.).</>}
             href={exampleHref}
             cta="Przykładowy profil"
             source="Sprawozdania finansowe; wykaz PSZ (NFZ)"

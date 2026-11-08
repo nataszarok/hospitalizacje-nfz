@@ -17,7 +17,6 @@ export function formatCompactCount(value: number): string {
   return integerFormat.format(value);
 }
 
-/** Kwota w zł w skrócie: od 1 mld w mld (1 miejsce po przecinku), od 100 mln w pełnych mln, od 1 mln w mln z 1 miejscem, niżej w tys. */
 /**
  * Dolna granica liczby w skrócie, dla szacunków konserwatywnych (metoda min): 49 613 383 → „ponad 49 mln”,
  * 48 200 → „ponad 48 tys.”, 833 → „833”. Część jednostki obcinamy w dół, więc „ponad” jest zawsze prawdą.
@@ -37,12 +36,42 @@ export function formatSigned(value: number, unit = ""): string {
   return `${sign}${compactFormat.format(Math.abs(value))}${unit}`;
 }
 
+const billionFormat = new Intl.NumberFormat("pl-PL", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+/** Jednostka kwot w zł (DESIGN.md 3.1): tys. i mln bez miejsc dziesiętnych, mld z 2 miejscami. */
+export interface PlnScale {
+  unit: "tys. zł" | "mln zł" | "mld zł";
+  /** Sama liczba w jednostce, z polskim minusem: 1 403 200 000 → „1,40”. */
+  format: (value: number) => string;
+}
+
+const PLN_SCALES: Record<PlnScale["unit"], { divisor: number; format: Intl.NumberFormat }> = {
+  "tys. zł": { divisor: 1_000, format: integerFormat },
+  "mln zł": { divisor: 1_000_000, format: integerFormat },
+  "mld zł": { divisor: 1_000_000_000, format: billionFormat },
+};
+
+function plnUnit(abs: number): PlnScale["unit"] {
+  // Próg liczymy po zaokrągleniu: 999,6 mln to już „1,00 mld zł”, nie „1 000 mln zł”.
+  if (Math.round(abs / 1_000_000) >= 1_000) return "mld zł";
+  if (Math.round(abs / 1_000) >= 1_000) return "mln zł";
+  return "tys. zł";
+}
+
+/**
+ * Wspólna jednostka dla zestawu kwot (słupki, kolumna tabeli, oś): dobiera ją największa wartość.
+ * Jednostka idzie do podpisu lub nagłówka, w komórkach same liczby z `format`.
+ */
+export function plnScale(values: readonly number[]): PlnScale {
+  const unit = plnUnit(Math.max(0, ...values.map((value) => Math.abs(value))));
+  const { divisor, format } = PLN_SCALES[unit];
+  return { unit, format: (value) => `${value < 0 ? "−" : ""}${format.format(Math.abs(value) / divisor)}` };
+}
+
+/** Kwota w zł w skrócie: 1 403 200 000 → „1,40 mld zł”, 274 400 000 → „274 mln zł”, 450 400 → „450 tys. zł”. */
 export function formatPln(value: number): string {
-  const abs = Math.abs(value);
-  if (abs >= 1_000_000_000) return `${compactFormat.format(value / 1_000_000_000)} mld zł`;
-  if (abs >= 100_000_000) return `${integerFormat.format(value / 1_000_000)} mln zł`;
-  if (abs >= 1_000_000) return `${compactFormat.format(value / 1_000_000)} mln zł`;
-  return `${integerFormat.format(value / 1_000)} tys. zł`;
+  const scale = plnScale([value]);
+  return `${scale.format(value)} ${scale.unit}`;
 }
 
 /** Zakres lat: „2025” dla jednego roku, „2019–2025” dla wielu. */

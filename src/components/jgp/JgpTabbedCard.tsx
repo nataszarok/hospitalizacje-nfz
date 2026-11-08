@@ -6,7 +6,7 @@ import { GroupLineChart, type ChartLine } from "@/components/jgp/GroupLineChart"
 import { RegionMap, regionTitle } from "@/components/jgp/RegionMap";
 import { ProviderScatter, type ScatterCurve, type ScatterPoint } from "@/components/jgp/ProviderScatter";
 import { ProviderLink } from "@/components/TableLinks";
-import { formatCityName } from "@/lib/formatters";
+import { formatCityName, formatPln, plnScale } from "@/lib/formatters";
 import {
   cartogramCells, dataForYear, defaultCardYear, funnelCurves, funnelStatus, limitToCatalogYears, MAX_REGIONS, MIN_FUNNEL_DEATHS, poolStats, providerPool, providerYearTotals, scaleColor, selectedIndex,
   structureShares, sumSeries, unpackPageData, yearChangePct, type ChartPeriod, type CompareScope, type PackedJgpPageData, type RegionsMap,
@@ -23,7 +23,15 @@ const decimal = (value: number, digits = 1) => value.toLocaleString("pl-PL", { m
 const pct = (value: number, digits = 1) => `${decimal(value, digits)}%`;
 const signedPct = (value: number) => `${value > 0 ? "+" : ""}${decimal(value)}%`;
 const signedPp = (value: number, digits = 1) => `${value > 0 ? "+" : ""}${decimal(value, digits)} pp`;
-const millions = (value: number) => `${decimal(value / 1_000_000)} mln zł`;
+
+/**
+ * Kolumna roku w mapie ciepła (DESIGN.md 7.1, wyjątek dla mapy ciepła): w wąskim kontenerze zostają ostatnie lata.
+ * 4 ostatnie lata zawsze, 5.–6. od końca od 420 px, starsze od 560 px (progi w `.heatWrap`).
+ */
+function heatYearPriority(index: number, count: number): string {
+  const fromEnd = count - index;
+  return fromEnd <= 4 ? "" : fromEnd <= 6 ? styles.heatYearMid : styles.heatYearOld;
+}
 
 /** Parametry adresu: zakładka (`widok=osrodki`), wybrany ośrodek, porównanie z podobnymi, województwa, rok. */
 /** Wybrany ośrodek (`?osrodek=OW|NIP`), np. z linku na profilu szpitala. */
@@ -254,7 +262,7 @@ function CardHeader({ data, regions, onClearRegion }: { data: JgpPageData; regio
     </div>
     <dl className={styles.kpis} aria-label="Liczby grupy">
       <div><dt>Hospitalizacje {data.year}</dt><dd>{integer(data.hospitalizations)}</dd><span>{change === null ? "pierwszy rok" : `${signedPct(change)} r/r`}</span></div>
-      <div><dt>Kwota świadczeń NFZ {data.year}</dt><dd>{value ? millions(value.value) : "—"}</dd><span>{value && valuePrevious ? `${signedPct(((value.value - valuePrevious.value) / valuePrevious.value) * 100)} r/r` : "brak poprzedniego roku"}</span></div>
+      <div><dt>Kwota świadczeń NFZ {data.year}</dt><dd>{value ? formatPln(value.value) : "—"}</dd><span>{value && valuePrevious ? `${signedPct(((value.value - valuePrevious.value) / valuePrevious.value) * 100)} r/r` : "brak poprzedniego roku"}</span></div>
       <div><dt>Śmiertelność</dt><dd>{latestRate === null ? "—" : pct(latestRate, latestRate < 1 ? 2 : 1)}</dd><span>{latestRate !== null && previousRate !== null ? `${signedPp(latestRate - previousRate, latestRate < 1 ? 2 : 1)} r/r` : "zgony w szpitalu"}</span></div>
       <div><dt>Ośrodki</dt><dd>{integer(data.providerCount)}</dd><span>{previousProviders === null ? "w roku danych" : `${data.providerCount - previousProviders >= 0 ? "+" : ""}${data.providerCount - previousProviders} r/r`}</span></div>
     </dl>
@@ -398,7 +406,7 @@ function RegionsSection({ data, pool, map, regions, onToggle, onYear, onRegionYe
         <table ref={heatRef} className={`${styles.heat} ${compact ? styles.heatCompact : ""}`}>
           <thead><tr>
             <th>Województwo</th>
-            {heat.map((year) => <th key={year.year} className={`${base.num} ${styles.yearCell}`} data-year={year.year}>
+            {heat.map((year, i) => <th key={year.year} className={`${base.num} ${styles.yearCell} ${heatYearPriority(i, heat.length)}`} data-year={year.year}>
               <button type="button" className={`${styles.yearHead} ${year.year === data.year ? styles.heatOn : ""}`} aria-pressed={year.year === data.year} onClick={() => onYear(year.year)} title={`Pokaż mapę za ${year.year} r.`}>{compact ? `’${year.year.slice(2)}` : year.year}</button>
             </th>)}
             {heat.length > 1 ? <th className={`${base.num} ${styles.heatChange}`}>{first?.year.slice(2)}→{last?.year.slice(2)}</th> : null}
@@ -410,10 +418,10 @@ function RegionsSection({ data, pool, map, regions, onToggle, onYear, onRegionYe
               const change = a ? ((b - a) / a) * 100 : null;
               return <tr key={row.owNfz} className={regions.includes(row.owNfz) ? base.rowSelected : undefined}>
                 <td><button type="button" className={styles.linkCell} aria-pressed={regions.includes(row.owNfz)} onClick={() => onToggle(row.owNfz)} title={titles.get(row.owNfz)}>{names.get(row.owNfz)}</button></td>
-                {heat.map((year) => {
+                {heat.map((year, i) => {
                   const value = year.values.get(row.owNfz) ?? 0;
                   const pos = position(value, year.national);
-                  return <td key={year.year} data-year={year.year} className={styles.heatCell} style={{ background: scaleColor(pos), color: pos > 0.15 ? "#fff" : CHART_COLORS.text }}>
+                  return <td key={year.year} data-year={year.year} className={`${styles.heatCell} ${heatYearPriority(i, heat.length)}`} style={{ background: scaleColor(pos), color: pos > 0.15 ? "#fff" : CHART_COLORS.text }}>
                     <button type="button" className={styles.heatButton} onClick={() => onRegionYear(row.owNfz, year.year)} title={`${names.get(row.owNfz)} ${year.year}: ${integer(value)} na 100 tys. — kliknij, żeby pokazać ten rok i województwo`}>{integer(value)}</button>
                   </td>;
                 })}
@@ -433,6 +441,8 @@ function CostSection({ data, onYear }: { data: JgpPageData; onYear: (year: strin
   const cardYears = new Set(data.admissions.map((row) => row.year));
   const bars = data.valuePln;
   const max = Math.max(...bars.map((item) => item.value), 1);
+  // Jedna jednostka dla wszystkich słupków (DESIGN.md 3.1): mld zł, gdy największa kwota ≥ 1 mld.
+  const scale = plnScale(bars.map((item) => item.value));
   const at = bars.findIndex((item) => item.year === data.year);
   const latest = at >= 0 ? bars[at] : bars.at(-1);
   const previous = at > 0 ? bars[at - 1] : undefined;
@@ -441,19 +451,19 @@ function CostSection({ data, onYear }: { data: JgpPageData; onYear: (year: strin
     <SectionHead id="s-koszt" question="Za ile?" context="Wycena i kwota świadczeń NFZ, wszystkie lata" tag="Lata" />
     <dl className={styles.costFacts}>
       <div><dt>Wycena (katalog {data.valuation?.year ?? ""})</dt><dd>{data.valuation?.points ? `${integer(data.valuation.points)} pkt` : "—"}</dd><span>za hospitalizację</span></div>
-      <div><dt>Kwota świadczeń {latest?.year ?? ""}</dt><dd>{latest ? millions(latest.value) : "—"}</dd><span>{change === null ? "brak poprzedniego roku" : `${signedPct(change)} r/r`}</span></div>
+      <div><dt>Kwota świadczeń {latest?.year ?? ""}</dt><dd>{latest ? formatPln(latest.value) : "—"}</dd><span>{change === null ? "brak poprzedniego roku" : `${signedPct(change)} r/r`}</span></div>
     </dl>
-    {bars.length ? <div className={styles.costBars} role="img" aria-label={`Kwota świadczeń NFZ za ${data.jgpCode}: ${bars.map((item) => `${item.year} ${millions(item.value)}`).join(", ")}`}>
+    {bars.length ? <div className={styles.costBars} role="img" aria-label={`Kwota świadczeń NFZ za ${data.jgpCode}: ${bars.map((item) => `${item.year} ${formatPln(item.value)}`).join(", ")}`}>
       {bars.map((item) => {
         const pick = cardYears.has(item.year);
-        return <div key={item.year} className={`${styles.costBar} ${pick ? styles.costBarPick : ""}`} onClick={pick ? () => onYear(item.year) : undefined} title={`${item.year}: ${millions(item.value)}${pick ? " · kliknij, żeby pokazać ten rok" : ""}`}>
-          <span className={styles.costValue}>{decimal(item.value / 1_000_000)}</span>
+        return <div key={item.year} className={`${styles.costBar} ${pick ? styles.costBarPick : ""}`} onClick={pick ? () => onYear(item.year) : undefined} title={`${item.year}: ${formatPln(item.value)}${pick ? " · kliknij, żeby pokazać ten rok" : ""}`}>
+          <span className={styles.costValue}>{scale.format(item.value)}</span>
           <span className={styles.costTrack}><span className={`${styles.costFill} ${item.year === data.year ? styles.costFillOn : ""}`} style={{ height: `${(item.value / max) * 100}%` }} /></span>
           <span className={`${styles.costYear} ${item.year === data.year ? styles.costYearOn : ""}`}>{item.year}</span>
         </div>;
       })}
     </div> : <p className={base.note}>Brak danych o rozliczeniach w złotych.</p>}
-    <p className={base.note}>Słupki: kwota świadczeń rozliczonych przez NFZ w mln zł (zestawienie produktów JGP). Kliknięcie słupka zmienia rok karty. Karta nie dzieli kwoty przez liczbę hospitalizacji: zestawienie NFZ liczy pacjentów, a pacjent może mieć kilka hospitalizacji.</p>
+    <p className={base.note}>Słupki: kwota świadczeń rozliczonych przez NFZ w {scale.unit} (zestawienie produktów JGP). Kliknięcie słupka zmienia rok karty. Karta nie dzieli kwoty przez liczbę hospitalizacji: zestawienie NFZ liczy pacjentów, a pacjent może mieć kilka hospitalizacji.</p>
   </section>;
 }
 
@@ -623,7 +633,7 @@ function ProviderDetails({ data, row, comparison, scope, onScope }: { data: JgpP
       <div><dt>Hospitalizacje</dt><dd>{integer(row.hospitalizations)}</dd><span>{pct(group.hospitalizations ? (row.hospitalizations / group.hospitalizations) * 100 : 0)} {scope === "peers" ? "podobnych" : "grupy"}</span></div>
       <div><dt>Przyjęcia nagłe</dt><dd>{pct(row.urgentPct)}</dd><span>{label}: {pct(group.urgentPct)}</span></div>
       <div><dt>Śmiertelność</dt><dd>{pct(row.mortalityPct)}</dd><span>{label}: {pct(group.mortalityPct)}</span></div>
-      {row.valuePln !== null ? <div><dt>Rozliczenia NFZ za {data.jgpCode}</dt><dd>{millions(row.valuePln)}</dd><span>{nationalValue ? `${pct((row.valuePln / nationalValue) * 100)} kraju` : ""}</span></div> : null}
+      {row.valuePln !== null ? <div><dt>Rozliczenia NFZ za {data.jgpCode}</dt><dd>{formatPln(row.valuePln)}</dd><span>{nationalValue ? `${pct((row.valuePln / nationalValue) * 100)} kraju` : ""}</span></div> : null}
     </dl>
     <p className={base.note}>{row.peers.length ? `Podobne szpitale: ${row.peers.length} z modelu par (klasa A), które leczą w tej grupie.` : "Model par nie wskazał podobnych szpitali w tej grupie."} <Link href={hospitalHref(row.owNfz, row.nip)}>Profil szpitala →</Link></p>
   </div>;
@@ -663,13 +673,13 @@ function RankingSection({ data, pool, selectedRow, filtered, regionColor, onSele
       </div>
       <p className={styles.structText}><span><b>{integer(pool.length)}</b> ośrodków{filtered ? " po filtrach karty" : ""}</span>{shares.map((item) => <span key={item.label}>{item.label}: <b>{pct(item.share)}</b></span>)}</p>
     </div>
-    <div ref={scrollRef} className={base.scrollTable} tabIndex={0} role="region" aria-label={`Lista ośrodków: ${pool.length}`} onMouseLeave={() => onHover(null)}>
+    <div ref={scrollRef} className={`${base.scrollTable} priority-table`} tabIndex={0} role="region" aria-label={`Lista ośrodków: ${pool.length}`} onMouseLeave={() => onHover(null)}>
       <table className={base.table}>
         <thead><tr>
-          <th>#</th><th>Ośrodek</th>
-          {previousYear ? <th className={base.num}>{previousYear}</th> : null}
-          <th className={base.num}>{data.year}</th><th className={base.num}>r/r</th><th className={base.num}>Udział</th><th>Trend</th>
-          <th className={base.num}>Nagłe</th><th className={base.num}>Śmiertelność</th>
+          {/* 7 kolumn (DESIGN.md 7.1): miejsce w kraju w drugiej linii nazwy, poprzedni rok w dymku r/r. */}
+          <th>Ośrodek</th>
+          <th className={base.num}>{data.year}</th><th className={`${base.num} col-p2`}>r/r</th><th className={`${base.num} col-p3`}>Udział</th><th className="col-p3">Trend</th>
+          <th className={`${base.num} col-p2`}>Nagłe</th><th className={base.num}>Śmiertelność</th>
         </tr></thead>
         <tbody>
           {visible.map((row) => {
@@ -685,25 +695,23 @@ function RankingSection({ data, pool, selectedRow, filtered, regionColor, onSele
               onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onSelect(row.key); } }}
               onMouseEnter={() => onHover(row.key)}
             >
-              <td>{data.providers.indexOf(row) + 1}</td>
               <td className={styles.nameCell}>
                 {/* Znak jak na wykresach: kropka sygnału = wybrany ośrodek, kropka = kolor województwa. */}
                 {isSelected ? <i className={styles.selectedDot} role="img" aria-label="wybrany ośrodek" /> : regionColor.has(row.owNfz) ? <i className={styles.dot} style={{ background: regionColor.get(row.owNfz) }} aria-hidden /> : null}
-                <ProviderLink owNfz={row.owNfz} nip={row.nip} name={row.name} /><small>{formatCityName(row.city)} · {row.voivodeship}</small>
+                <ProviderLink owNfz={row.owNfz} nip={row.nip} name={row.name} /><small>nr {data.providers.indexOf(row) + 1} · {formatCityName(row.city)} · {row.voivodeship}</small>
               </td>
-              {previousYear ? <td className={base.num}>{row.previousHospitalizations === null ? "—" : integer(row.previousHospitalizations)}</td> : null}
               <td className={base.num}>{integer(row.hospitalizations)}</td>
-              <td className={base.num}>{row.previousHospitalizations === 0 ? "nowy" : change === null ? "—" : signedPct(change)}</td>
-              <td className={base.num}>{pct(total ? (row.hospitalizations / total) * 100 : 0)}</td>
-              <td><Spark values={row.series} /></td>
-              <td className={base.num}>{pct(row.urgentPct, 0)}</td>
+              <td className={`${base.num} col-p2`} title={previousYear && row.previousHospitalizations !== null ? `${previousYear}: ${integer(row.previousHospitalizations)}` : undefined}>{row.previousHospitalizations === 0 ? "nowy" : change === null ? "—" : signedPct(change)}</td>
+              <td className={`${base.num} col-p3`}>{pct(total ? (row.hospitalizations / total) * 100 : 0)}</td>
+              <td className="col-p3"><Spark values={row.series} /></td>
+              <td className={`${base.num} col-p2`}>{pct(row.urgentPct, 0)}</td>
               <td className={base.num}>{pct(row.mortalityPct)}</td>
             </tr>;
           })}
         </tbody>
       </table>
     </div>
-    <p className={base.note}>Wszystkie ośrodki z hospitalizacjami w {data.year} r.; przewijanie w tabeli. Numer = miejsce w kraju. Kliknięcie wiersza wybiera ośrodek (nazwa prowadzi do profilu szpitala). Mini-trend: miesiące wszystkich lat, skala wiersza.</p>
+    <p className={base.note}>Wszystkie ośrodki z hospitalizacjami w {data.year} r.; przewijanie w tabeli. „nr” = miejsce w kraju; liczba z poprzedniego roku w dymku przy r/r. Kliknięcie wiersza wybiera ośrodek (nazwa prowadzi do profilu szpitala). Mini-trend: miesiące wszystkich lat, skala wiersza.</p>
   </section>;
 }
 

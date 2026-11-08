@@ -153,15 +153,12 @@ export function MortalityTab({
 
       <details className="data-details">
         <summary>Tabela danych · liczba hospitalizacji a śmiertelność</summary>
-        <div className="table-wrap">
-          <table>
+        <div className="table-wrap priority-table">
+          {/* 4 kolumny (DESIGN.md 7.1): kod JGP, miasto i województwo w drugiej linii nazwy, NIP w dymku. */}
+          <table className="provider-table">
             <thead>
               <tr>
                 <SortableTableHeader label="Świadczeniodawca" active={sortState?.key === "providerName"} direction={sortState?.direction} onSort={() => sortBy("providerName")} />
-                <SortableTableHeader label="NIP" active={sortState?.key === "nip"} direction={sortState?.direction} onSort={() => sortBy("nip")} />
-                <SortableTableHeader label={effectiveDisplayMode === "combined" ? "KODY JGP" : "KOD JGP"} active={sortState?.key === "jgp"} direction={sortState?.direction} onSort={() => sortBy("jgp")} />
-                <SortableTableHeader label="Województwo" active={sortState?.key === "voivodeship"} direction={sortState?.direction} onSort={() => sortBy("voivodeship")} />
-                <SortableTableHeader label="Miasto" active={sortState?.key === "city"} direction={sortState?.direction} onSort={() => sortBy("city")} />
                 <SortableTableHeader label="Hospitalizacje" active={sortState?.key === "hospitalizations"} direction={sortState?.direction} onSort={() => sortBy("hospitalizations")} />
                 <SortableTableHeader label="Zgony" active={sortState?.key === "deaths"} direction={sortState?.direction} onSort={() => sortBy("deaths")} />
                 <SortableTableHeader label="Śmiertelność" active={sortState?.key === "mortalityPct"} direction={sortState?.direction} onSort={() => sortBy("mortalityPct")} />
@@ -180,11 +177,10 @@ export function MortalityTab({
                     ? `${row.owNfz}-${row.nip}`
                     : `${row.owNfz}-${row.nip}-${row.productCode}`}
                   >
-                    <td title={row.providerName}><ProviderLink owNfz={row.owNfz} nip={row.nip} name={row.providerName} /></td>
-                    <td>{row.nip}</td>
-                    <td title={jgpLabels}><JgpCodeLinks codes={jgpCodes} /></td>
-                    <td title={row.voivodeship}>{row.voivodeship}</td>
-                    <td title={formatCityName(row.city)}>{formatCityName(row.city)}</td>
+                    <td className="provider-cell" title={`${row.providerName} · NIP ${row.nip}`}>
+                      <ProviderLink owNfz={row.owNfz} nip={row.nip} name={row.providerName} />
+                      <small><span title={jgpLabels}><JgpCodeLinks codes={jgpCodes} /></span> · {formatCityName(row.city)} · {row.voivodeship}</small>
+                    </td>
                     <td>{Math.round(row.hospitalizations).toLocaleString("pl-PL")}</td>
                     <td>{Math.round(row.deaths).toLocaleString("pl-PL")}</td>
                     <td>{row.mortalityPct.toFixed(1)}%</td>

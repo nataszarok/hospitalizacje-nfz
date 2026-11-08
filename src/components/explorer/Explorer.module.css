@@ -99,13 +99,13 @@
 }
 
 
-/* Obszar roboczy: szerokość jak nagłówek (`PageHeader wide`). */
+/* Obszar roboczy: szerokość strony jak nagłówek portalu (DESIGN.md 4.1), panel o stałej szerokości. */
 .workspace {
   display: grid;
-  grid-template-columns: clamp(300px, 22vw, 360px) minmax(0, 1fr);
+  grid-template-columns: var(--atlas-sidebar-width) minmax(0, 1fr);
   gap: var(--atlas-workspace-gap);
   align-items: start;
-  width: min(calc(100% - var(--atlas-page-gutter) - var(--atlas-page-gutter)), var(--atlas-workspace-max));
+  width: min(calc(100% - var(--atlas-page-gutter) - var(--atlas-page-gutter)), var(--atlas-page-max));
   margin: 24px auto 0;
 }
 

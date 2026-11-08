@@ -7,14 +7,13 @@ export interface PageHeaderKpi { label: ReactNode; value: ReactNode; note?: Reac
 /**
  * Nagłówek strony modułu (np. „Hospitalizacje w Polsce”, „Grupy JGP”): kolorowy pas na całą szerokość,
  * etykieta nad tytułem, tytuł, wstęp i pola z liczbami. `children`: elementy pod liczbami (spis treści, metoda).
- * `wide`: szerokość obszaru roboczego (eksplorator), żeby nagłówek trzymał linię z sidebarem i wykresami.
  * `compact`: niższy pas i mniejszy tytuł (narzędzia, w których liczy się miejsce na wykres); `actions`: przyciski obok tytułu.
  */
-export function PageHeader({ eyebrow, title, lead, kpis, wide, compact, actions, children }: {
-  eyebrow: ReactNode; title: ReactNode; lead?: ReactNode; kpis?: PageHeaderKpi[]; wide?: boolean; compact?: boolean; actions?: ReactNode; children?: ReactNode;
+export function PageHeader({ eyebrow, title, lead, kpis, compact, actions, children }: {
+  eyebrow: ReactNode; title: ReactNode; lead?: ReactNode; kpis?: PageHeaderKpi[]; compact?: boolean; actions?: ReactNode; children?: ReactNode;
 }) {
   return <header className={`${styles.header} ${compact ? styles.compact : ""}`}>
-    <div className={wide ? styles.wideContainer : styles.container}>
+    <div className={styles.container}>
       <span className={styles.eyebrow}>{eyebrow}</span>
       {actions ? <div className={styles.titleRow}><h1 className={styles.title}>{title}</h1><div className={styles.actions}>{actions}</div></div> : <h1 className={styles.title}>{title}</h1>}
       {lead ? <div className={styles.lead}>{lead}</div> : null}

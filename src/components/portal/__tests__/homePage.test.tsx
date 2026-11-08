@@ -126,7 +126,7 @@ describe("Strona główna", () => {
     expect(beds).not.toHaveTextContent("Szacunek");
 
     const finance = within(section).getByRole("article", { name: "Ile szpitali PSZ kończy rok ze stratą?" });
-    expect(finance).toHaveTextContent("286 z 631 szpitali z sieci PSZ (45%) miało stratę netto w 2025 r. Łączny wynik: −1,2 mld zł.");
+    expect(finance).toHaveTextContent("286 z 631 szpitali z sieci PSZ (45%) miało stratę netto w 2025 r. Łączny wynik: −1,16 mld zł.");
     expect(within(finance).getByRole("img", { name: /−2,5…0 % — 137, 0…2,5 % — 218/ })).toBeInTheDocument();
     expect(within(finance).getByRole("link", { name: /Przykładowy profil/ })).toHaveAttribute("href", "/szpitale?hospital=04%7C9251723350");
   });
