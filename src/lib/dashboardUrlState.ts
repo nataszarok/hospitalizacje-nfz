@@ -1,4 +1,4 @@
-import { COUNTRY_AREA, type AnalysisArea } from "@/lib/area";
+import { MAX_AREAS, type AnalysisArea } from "@/lib/area";
 import type { AxisMode, EstimationMethod, GeographyMode, ReferencePayload } from "@/lib/types";
 
 /** Widoki-pytania eksploratora: W czasie, Kto leczy, Tryb przyjęcia, Gdzie. */
@@ -15,8 +15,8 @@ export type DashboardUrlState = {
   highlightedRegions: string[];
   highlightedCities: string[];
   activeTab: DashboardActiveTab;
-  /** Obszar analizy: `ow` (OW NFZ) albo `mc` (miasto) w adresie; brak = cała Polska. */
-  area: AnalysisArea;
+  /** Obszary analizy (do 5): `ow` (OW NFZ) i `mc` (miasto) w adresie, powtarzalne; brak = cała Polska. */
+  areas: AnalysisArea[];
   /** Rok danych z parametru `y`; poprawność sprawdza Dashboard na liście lat. */
   year?: string;
 };
@@ -77,13 +77,10 @@ export function readDashboardUrlState(reference: ReferencePayload, search: strin
       ? "regions"
       : "trend";
 
-  const regionParam = params.get("ow");
-  const cityParam = params.get("mc");
-  const area: AnalysisArea = regionParam && regionCodes.has(regionParam)
-    ? { kind: "region", owNfz: regionParam }
-    : cityParam && cityValues.has(cityParam)
-      ? { kind: "city", city: cityParam }
-      : COUNTRY_AREA;
+  const areas: AnalysisArea[] = [
+    ...validValues(params.getAll("ow"), regionCodes).map((owNfz): AnalysisArea => ({ kind: "region", owNfz })),
+    ...validValues(params.getAll("mc"), cityValues).map((city): AnalysisArea => ({ kind: "city", city })),
+  ].slice(0, MAX_AREAS);
 
   return {
     selectedProducts,
@@ -96,7 +93,7 @@ export function readDashboardUrlState(reference: ReferencePayload, search: strin
     highlightedRegions: validValues(params.getAll("r"), regionCodes, 10),
     highlightedCities: validValues(params.getAll("c"), cityValues, 10),
     activeTab,
-    area,
+    areas,
     year: params.get("y")?.trim() || undefined,
   };
 }
@@ -127,8 +124,10 @@ export function dashboardUrlSearch(reference: ReferencePayload, state: Dashboard
     });
   }
 
-  if (state.area.kind === "region") params.set("ow", state.area.owNfz);
-  if (state.area.kind === "city") params.set("mc", state.area.city);
+  state.areas.forEach((area) => {
+    if (area.kind === "region") params.append("ow", area.owNfz);
+    if (area.kind === "city") params.append("mc", area.city);
+  });
   state.durations.forEach((value) => params.append("d", value));
   if (state.method !== "min") params.set("m", state.method);
   if (state.minHosp > 0) params.set("n", String(Math.floor(state.minHosp)));

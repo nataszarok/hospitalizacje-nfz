@@ -173,6 +173,44 @@ console.log(`Hospitalization data OK: ${index.years.join(", ")}; ${((totalSize +
   console.log(`Regions map OK: ${map.regions.length} voivodeships, ${(size / 1024).toFixed(1)} KiB.`);
 }
 
+// Placówki × lata (scripts/build_facility_years.py) i długość pobytu × lata (scripts/build_duration_years.py):
+// suma hospitalizacji roku = suma faktów pliku roku.
+for (const [folder, script] of [["facilities", "build_facility_years.py"], ["durations", "build_duration_years.py"]]) {
+  const sections = (await readdir(path.join(DIR, folder))).filter((name) => name.endsWith(".json.gz"));
+  if (!sections.length) throw new Error(`${folder}/ is empty (run scripts/${script}).`);
+  const totals = new Map(index.years.map((year) => [year, 0]));
+  let size = 0;
+  for (const name of sections) {
+    const file = await readGzipJson(path.join(DIR, folder, name));
+    size += file.size;
+    file.data.rows.year.forEach((year, i) => totals.set(index.years[year], totals.get(index.years[year]) + file.data.rows.hMin[i]));
+  }
+  for (const year of [index.years[0], index.latestYear]) {
+    const { data } = await readGzipJson(path.join(DIR, `${year}.json.gz`));
+    const expected = data.facts.hMin.reduce((sum, value) => sum + value, 0);
+    if (totals.get(year) !== expected) throw new Error(`${folder}/: ${year} sums to ${totals.get(year)} hospitalizations, year file has ${expected}.`);
+  }
+  console.log(`${folder} OK: ${sections.length} sections, ${(size / 1024).toFixed(0)} KiB.`);
+}
+{
+  const facilityIndex = JSON.parse(await readFile(path.join(DIR, "facilities", "index.json"), "utf8"));
+  if (facilityIndex.version !== 1 || facilityIndex.years.join() !== index.years.join() || facilityIndex.facilities.length !== facilityIndex.active.length) {
+    throw new Error("facilities/index.json: wrong version, years or active list.");
+  }
+}
+
+// Punkty miast na mapie eksploratora (scripts/build_cities_map.py): ten sam rzut co mapa województw.
+{
+  const { size, data: cities } = await readGzipJson("public/data/cities-map.json.gz");
+  const { data: map } = await readGzipJson("public/data/regions-map.json.gz");
+  if (cities.version !== 1 || cities.viewBox.join() !== map.viewBox.join()) throw new Error("cities-map.json.gz: wrong version or viewBox differs from regions-map.json.gz.");
+  const codes = new Set(map.regions.map(([ow]) => ow));
+  const bad = cities.cities.find(([name, ow, x, y, population]) => !name || !codes.has(ow) || !(x >= 0 && x <= cities.viewBox[0] && y >= 0 && y <= cities.viewBox[1]) || !(population > 0));
+  if (bad) throw new Error(`cities-map.json.gz: invalid city ${JSON.stringify(bad)}.`);
+  if (cities.cities.length < 300) throw new Error(`cities-map.json.gz: only ${cities.cities.length} cities.`);
+  console.log(`Cities map OK: ${cities.cities.length} cities, ${(size / 1024).toFixed(1)} KiB.`);
+}
+
 // Wyceny JGP (scripts/build_valuations.py): format krotek, unikalne kody grup.
 {
   const { size, data: valuations } = await readGzipJson("public/data/wyceny_jgp_2025.json.gz");

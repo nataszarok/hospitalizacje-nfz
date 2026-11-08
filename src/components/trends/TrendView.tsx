@@ -1,38 +1,52 @@
 "use client";
 
-import { SegmentedControl } from "@mantine/core";
 import { useEffect, useMemo, useState } from "react";
-import { TrendChart, type TrendGranularity, type TrendMeasure } from "@/components/trends/TrendChart";
-import { loadRegionalTrends, loadTrends, productTrend, trendsForRegion, type RegionalTrendsDataset, type TrendsDataset } from "@/lib/staticData";
-import { incompleteCoverage, trendSummary } from "@/lib/trends";
+import { MortalityDisplayControl } from "@/components/MortalityDisplayControl";
+import { GroupLineChart, type ChartLine } from "@/components/jgp/GroupLineChart";
+import { REGION_PICK_COLORS } from "@/lib/chartPalette";
+import type { ChartPeriod } from "@/lib/jgpCard";
+import type { MortalityDisplayMode } from "@/lib/mortality";
+import { citySection, durationYears, type DurationYearsSection } from "@/lib/regions";
+import { loadDurationYearsSection, loadRegionalTrends, loadTrends, productTrend, trendsForRegions, type RegionalTrendsDataset, type TrendsDataset } from "@/lib/staticData";
+import { TREND_METRICS, type TrendMetric } from "@/lib/trendMetrics";
+import { durationChartData, incompleteCoverage, trendChartLines, trendMonths } from "@/lib/trends";
 import type { EstimationMethod } from "@/lib/types";
 import styles from "./TrendView.module.css";
 
+const NO_REGIONS: string[] = [];
+const NO_DURATIONS: string[] = [];
 const integer = (value: number) => Math.round(value).toLocaleString("pl-PL");
-const pct = (value: number, signed = false) =>
-  `${signed && value > 0 ? "+" : ""}${value.toLocaleString("pl-PL", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`;
+const pct = (value: number) => `${value.toLocaleString("pl-PL", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`;
+/** Kolory grup w zestawieniu „Per JGP”: niebieski danych, potem paleta wyróżnień z karty grupy JGP. */
+const GROUP_COLORS = ["#2856A3", ...REGION_PICK_COLORS];
 
 export type TrendViewProps = {
   productCodes: string[];
   method: EstimationMethod;
-  /** OW NFZ: trend tylko dla świadczeniodawców z tego województwa (brak = cała Polska). */
-  region?: string | null;
+  /** OW NFZ: trend tylko dla świadczeniodawców z tych województw, suma (pusta lista = cała Polska). */
+  regions?: string[];
+  /** Filtr długości pobytu: wtedy wykres pokazuje lata (trend miesięczny nie ma podziału na długość pobytu). */
+  durations?: string[];
   /** Nazwa obszaru w opisie wykresu, np. „woj. mazowieckie”. */
   areaLabel?: string;
   /** Dodatkowa uwaga o obszarze, np. gdy dla miasta pokazujemy województwo. */
   areaNote?: string | null;
+  /** Zestawienie JGP: „Zbiorczo” (suma) albo „Per JGP” (seria na grupę). Przełącznik tylko przy ≥ 2 grupach i z `onDisplayModeChange`. */
+  displayMode?: MortalityDisplayMode;
+  onDisplayModeChange?: (value: MortalityDisplayMode) => void;
 };
 
 /**
- * Widok „W czasie”: trend hospitalizacji dla wybranych produktów we wszystkich latach.
- * Niezależny od układu dashboardu — używa go zakładka w /analizy i strona grupy JGP.
+ * Widok „W czasie”: hospitalizacje, śmiertelność i udział przyjęć nagłych wybranych grup we wszystkich latach.
+ * Wykres jak na karcie grupy JGP (`GroupLineChart`): kropka = miesiąc, linia = średnia z 3 miesięcy.
  */
-export function TrendView({ productCodes, method, region = null, areaLabel, areaNote }: TrendViewProps) {
+export function TrendView({ productCodes, method, regions = NO_REGIONS, areaLabel, areaNote, durations = NO_DURATIONS, displayMode = "combined", onDisplayModeChange }: TrendViewProps) {
   const [national, setNational] = useState<TrendsDataset | null>(null);
-  const [regional, setRegional] = useState<RegionalTrendsDataset | null>(null);
+  const [regional, setRegional] = useState<{ key: string; files: RegionalTrendsDataset[] } | null>(null);
+  const [durationData, setDurationData] = useState<{ key: string; files: DurationYearsSection[] } | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [granularity, setGranularity] = useState<TrendGranularity>("month");
-  const [measure, setMeasure] = useState<TrendMeasure>("hospitalizations");
+  const [period, setPeriod] = useState<ChartPeriod>("month");
+  const [metric, setMetric] = useState<TrendMetric>("hospitalizations");
 
   useEffect(() => {
     let cancelled = false;
@@ -42,82 +56,126 @@ export function TrendView({ productCodes, method, region = null, areaLabel, area
     return () => { cancelled = true; };
   }, []);
 
-  // Plik województwa pobieramy dopiero przy jego wyborze (osobny plik na każdy OW NFZ).
+  // Pliki województw pobieramy dopiero przy ich wyborze (osobny plik na każdy OW NFZ).
+  const regionKey = regions.join(",");
   useEffect(() => {
-    if (!region || regional?.owNfz === region) return;
+    if (!regionKey) return;
     let cancelled = false;
-    loadRegionalTrends(region)
-      .then((data) => { if (!cancelled) setRegional(data); })
+    Promise.all(regionKey.split(",").map(loadRegionalTrends))
+      .then((files) => { if (!cancelled) setRegional({ key: regionKey, files }); })
       .catch((err: unknown) => { if (!cancelled) setError(err instanceof Error ? err.message : "Błąd pobierania trendów regionalnych."); });
     return () => { cancelled = true; };
-  }, [region, regional]);
+  }, [regionKey]);
 
   const trends = useMemo(() => {
     if (!national) return null;
-    if (!region) return national;
-    return regional?.owNfz === region ? trendsForRegion(national, regional) : null;
-  }, [national, regional, region]);
+    if (!regionKey) return national;
+    return regional?.key === regionKey ? trendsForRegions(national, regional.files) : null;
+  }, [national, regional, regionKey]);
 
+  // Filtr długości pobytu: pliki lat według długości pobytu, tylko sekcje katalogu JGP wybranych grup.
+  const filtered = durations.length > 0;
+  const sectionKey = useMemo(() => {
+    if (!national || !filtered) return "";
+    const jgpCodes = new Map(national.products.map(([code, jgpCode]) => [code, jgpCode]));
+    return [...new Set(productCodes.map((code) => citySection(jgpCodes.get(code))))].sort().join(",");
+  }, [national, filtered, productCodes]);
+  useEffect(() => {
+    if (!sectionKey) return;
+    let cancelled = false;
+    Promise.all(sectionKey.split(",").map(loadDurationYearsSection))
+      .then((files) => { if (!cancelled) setDurationData({ key: sectionKey, files }); })
+      .catch((err: unknown) => { if (!cancelled) setError(err instanceof Error ? err.message : "Błąd pobierania danych długości pobytu."); });
+    return () => { cancelled = true; };
+  }, [sectionKey]);
+  const durationSeries = useMemo(() => national && filtered && durationData?.key === sectionKey
+    ? durationYears(durationData.files, national.years, productCodes, method, durations, regions)
+    : null, [national, filtered, durationData, sectionKey, productCodes, method, durations, regions]);
+
+  const canBreakdown = Boolean(onDisplayModeChange) && productCodes.length >= 2;
+  const perGroup = canBreakdown && displayMode === "per_jgp";
   const trend = useMemo(() => trends && productCodes.length ? productTrend(trends, productCodes, method) : null, [trends, productCodes, method]);
   const gaps = useMemo(() => trends ? incompleteCoverage(trends, productCodes) : [], [trends, productCodes]);
-  const summary = useMemo(() => trend ? trendSummary(trend, gaps) : null, [trend, gaps]);
+  const chart = useMemo((): { months: string[]; lines: ChartLine[] } => {
+    if (!trends || !productCodes.length) return { months: [], lines: [] };
+    let data: { months: string[]; lines: { key: string; name: string; values: number[]; base?: number[] }[] };
+    if (filtered) {
+      if (!durationSeries) return { months: [], lines: [] };
+      data = durationChartData(durationSeries, trends.years, metric, perGroup, new Map(trends.products.map(([code, jgpCode]) => [code, jgpCode])));
+    } else {
+      const months = trendMonths(trends, productCodes);
+      data = { months, lines: trendChartLines(trends, productCodes, method, metric, perGroup, months) };
+    }
+    return { months: data.months, lines: data.lines.map((line, i) => perGroup
+      ? { ...line, color: GROUP_COLORS[i % GROUP_COLORS.length] }
+      : { ...line, tone: "primary" as const }) };
+  }, [trends, productCodes, method, metric, perGroup, filtered, durationSeries]);
+  const { months, lines } = chart;
+  // Lata tabeli: z filtrem długości pobytu suma produktów z pliku długości pobytu (bez planowych).
+  const yearlyRows = useMemo(() => {
+    if (!trends || !trend) return [];
+    if (!filtered) return trend.yearly.map((point) => point ? { ...point, planned: point.planned as number | null } : null);
+    if (!durationSeries) return trends.years.map(() => null);
+    return trends.years.map((year, i) => {
+      const parts = [...durationSeries.values()].map((points) => points[i]).filter((p): p is NonNullable<typeof p> => p !== null);
+      return parts.length ? { year, hospitalizations: parts.reduce((s, p) => s + p.hospitalizations, 0), deaths: parts.reduce((s, p) => s + p.deaths, 0), urgent: parts.reduce((s, p) => s + p.urgent, 0), planned: null as number | null } : null;
+    });
+  }, [trends, trend, filtered, durationSeries]);
 
   if (error) return <div className="alert">{error}</div>;
-  if (!productCodes.length) return <div className="empty-chart">Wybierz co najmniej jeden produkt.</div>;
-  if (!trends || !trend) return <div className="empty-chart">Ładowanie trendów…</div>;
+  if (!productCodes.length) return <div className="empty-chart">Wybierz co najmniej jedną grupę JGP.</div>;
+  if (!trends || !trend || (filtered && !durationSeries)) return <div className="empty-chart">Ładowanie trendów…</div>;
 
   const years = trends.years;
-  const range = `${years[0]}–${years.at(-1)}`;
-  const cards = summary ? [
-    { label: `Hospitalizacje ${summary.year}`, value: integer(summary.hospitalizations), note: `łącznie ${range}: ${integer(trend.yearly.reduce((s, p) => s + (p?.hospitalizations ?? 0), 0))}` },
-    { label: "Zmiana rok do roku", value: summary.changePct === null ? "—" : pct(summary.changePct, true), note: !summary.previousYear ? "brak roku do porównania" : summary.changePct === null ? "inny zestaw grup JGP w porównywanych latach" : `względem ${summary.previousYear}` },
-    { label: `Zgony ${summary.year}`, value: integer(summary.deaths), note: `śmiertelność ${pct(summary.mortalityPct)}` },
-    { label: `Przyjęcia nagłe ${summary.year}`, value: pct(summary.urgentPct), note: "udział w hospitalizacjach" },
-  ] : [];
+  const shown = TREND_METRICS[metric];
+  const range = months.length ? `${months[0].slice(0, 4)}–${months.at(-1)!.slice(0, 4)}` : `${years[0]}–${years.at(-1)}`;
+  // Z filtrem długości pobytu tylko lata: dane miesięczne nie mają podziału na długość pobytu.
+  const shownPeriod: ChartPeriod = filtered ? "year" : period;
+  const periodWord = shownPeriod === "year" ? "rocznie" : "miesięcznie";
 
   return <div className={styles.view}>
-    <div className={styles.kpis}>
-      {cards.map((card) => <section key={card.label} className={styles.kpi}>
-        <div className={styles.kpiLabel}>{card.label}</div>
-        <div className={styles.kpiValue}>{card.value}</div>
-        <div className={styles.kpiNote}>{card.note}</div>
-      </section>)}
-    </div>
-
     <section className={styles.chartCard}>
+      <div className={styles.metricTabs} role="tablist" aria-label="Miara">
+        {(Object.keys(TREND_METRICS) as TrendMetric[]).map((key) => <button
+          key={key}
+          type="button"
+          role="tab"
+          aria-selected={metric === key}
+          className={metric === key ? styles.metricTabActive : undefined}
+          onClick={() => setMetric(key)}
+        >{TREND_METRICS[key].title}</button>)}
+      </div>
+
       <div className={styles.chartHeader}>
         <div>
-          <h2>Hospitalizacje w latach {range}</h2>
-          <p>{granularity === "month" ? "Liczba w kolejnych miesiącach." : "Suma w kolejnych latach."} Wszystkie wybrane produkty razem{areaLabel ? ` · ${areaLabel}` : ""}.</p>
+          <h2>{shown.title} {periodWord} · {range}</h2>
+          <p>{perGroup ? "Każda grupa JGP osobno" : "Wszystkie wybrane grupy razem"}{areaLabel ? ` · ${areaLabel}` : ""}{filtered ? ` · długość pobytu: ${durations.join(", ")}` : ""}.</p>
           {areaNote ? <p className={styles.areaNote}>{areaNote}</p> : null}
         </div>
         <div className={styles.controls}>
-          <SegmentedControl
-            aria-label="Miara"
-            value={measure}
-            onChange={(value) => setMeasure(value as TrendMeasure)}
-            data={[
-              { value: "hospitalizations", label: "Hospitalizacje" },
-              { value: "admission", label: "Tryb przyjęcia" },
-              { value: "deaths", label: "Zgony" },
-            ]}
-            size="xs"
-          />
-          <SegmentedControl
-            aria-label="Okres"
-            value={granularity}
-            onChange={(value) => setGranularity(value as TrendGranularity)}
-            data={[{ value: "month", label: "Miesiące" }, { value: "year", label: "Lata" }]}
-            size="xs"
-          />
+          {canBreakdown ? <MortalityDisplayControl value={displayMode} onChange={onDisplayModeChange!} /> : null}
+          <div className={styles.periodToggle} role="group" aria-label="Okres na wykresie">
+            <button type="button" aria-pressed={shownPeriod === "month"} disabled={filtered} title={filtered ? "Dane miesięczne nie mają podziału na długość pobytu" : undefined} onClick={() => setPeriod("month")}>Miesiące</button>
+            <button type="button" aria-pressed={shownPeriod === "year"} onClick={() => setPeriod("year")}>Lata</button>
+          </div>
         </div>
       </div>
 
-      <TrendChart trend={trend} years={years} granularity={granularity} measure={measure} />
+      <GroupLineChart
+        months={months}
+        lines={lines}
+        valueLabel={shown.unit}
+        legend={perGroup}
+        height={400}
+        fitAxis={!perGroup && metric === "urgent"}
+        note={shown.note[shownPeriod]}
+        period={shownPeriod}
+        ariaLabel={`Wykres liniowy: ${shown.title.toLowerCase()} ${periodWord} w latach ${range}`}
+      />
 
       {gaps.length ? <ul className={styles.gaps} aria-label="Zmiany katalogu JGP">
         {gaps.map((gap) => <li key={gap.code}>
-          Grupa <strong>{gap.jgpCode ?? gap.code}</strong> występuje w danych tylko w latach: {gap.years.join(", ")} (zmiana katalogu JGP). Lata bez tej grupy są przerwą na wykresie, nie zerem.
+          Grupa <strong>{gap.jgpCode ?? gap.code}</strong> występuje w danych tylko w latach: {gap.years.join(", ")} (zmiana katalogu JGP). W latach bez tej grupy wykres pokazuje zero.
         </li>)}
       </ul> : null}
     </section>
@@ -129,14 +187,14 @@ export function TrendView({ productCodes, method, region = null, areaLabel, area
           <thead><tr><th>Rok</th><th>Hospitalizacje</th><th>Zgony</th><th>Śmiertelność</th><th>Planowe</th><th>Nagłe</th></tr></thead>
           <tbody>
             {years.map((year, i) => {
-              const point = trend.yearly[i];
+              const point = yearlyRows[i];
               return <tr key={year}>
                 <td>{year}</td>
                 {point ? <>
                   <td>{integer(point.hospitalizations)}</td>
                   <td>{integer(point.deaths)}</td>
                   <td>{pct(point.hospitalizations ? (point.deaths / point.hospitalizations) * 100 : 0)}</td>
-                  <td>{integer(point.planned)}</td>
+                  <td>{point.planned === null ? "—" : integer(point.planned)}</td>
                   <td>{integer(point.urgent)}</td>
                 </> : <td colSpan={5}>brak wybranych grup w katalogu JGP</td>}
               </tr>;

@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
-type IconName = "heart" | "bed" | "hospital" | "compare" | "arrow" | "book" | "database" | "calendar" | "shield" | "menu" | "close" | "external" | "chart" | "chevron" | "search";
+type IconName = "heart" | "bed" | "hospital" | "compare" | "arrow" | "book" | "database" | "calendar" | "shield" | "menu" | "close" | "external" | "chart" | "chevron" | "search" | "pin" | "expand" | "collapse";
+export type PortalIconName = IconName;
 
 const paths: Record<IconName, ReactNode> = {
   heart: <><path d="M20.8 4.8a5.4 5.4 0 0 0-7.6 0L12 6l-1.2-1.2a5.4 5.4 0 0 0-7.6 7.6L12 21l8.8-8.6a5.4 5.4 0 0 0 0-7.6Z"/><path d="M3 12h5l2-3 3.2 6 1.8-3H21"/></>,
@@ -18,6 +19,9 @@ const paths: Record<IconName, ReactNode> = {
   chart: <><path d="M3 3v18h18M6 16l5-6 4 3 5-7"/></>,
   chevron: <><path d="m9 18 6-6-6-6"/></>,
   search: <><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></>,
+  expand: <><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></>,
+  collapse: <><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></>,
+  pin: <><path d="M12 21s7-6.2 7-12a7 7 0 0 0-14 0c0 5.8 7 12 7 12Z"/><circle cx="12" cy="9" r="2.5"/></>,
 };
 
 export function PortalIcon({ name, size = 24, className }: { name: IconName; size?: number; className?: string }) {

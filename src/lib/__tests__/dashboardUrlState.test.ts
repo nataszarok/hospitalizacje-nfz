@@ -29,7 +29,7 @@ const defaults: DashboardUrlState = {
   highlightedRegions: [],
   highlightedCities: [],
   activeTab: "trend",
-  area: { kind: "country" },
+  areas: [],
 };
 
 describe("dashboard URL state", () => {
@@ -53,20 +53,22 @@ describe("dashboard URL state", () => {
       highlightedRegions: ["07"],
       highlightedCities: ["Warszawa"],
       activeTab: "admissions",
-      area: { kind: "region", owNfz: "12" },
+      areas: [{ kind: "region", owNfz: "12" }, { kind: "city", city: "Warszawa" }],
     };
     expect(readDashboardUrlState(reference, dashboardUrlSearch(reference, state))).toEqual(state);
   });
 
-  it("serializes the analysis area as ow or mc", () => {
-    expect(dashboardUrlSearch(reference, { ...defaults, area: { kind: "region", owNfz: "07" } })).toBe("?ow=07");
-    expect(dashboardUrlSearch(reference, { ...defaults, area: { kind: "city", city: "Kraków" } })).toBe("?mc=Krak%C3%B3w");
-    expect(readDashboardUrlState(reference, "?mc=Krak%C3%B3w").area).toEqual({ kind: "city", city: "Kraków" });
+  it("serializes analysis areas as repeated ow and mc", () => {
+    expect(dashboardUrlSearch(reference, { ...defaults, areas: [{ kind: "region", owNfz: "07" }] })).toBe("?ow=07");
+    expect(dashboardUrlSearch(reference, { ...defaults, areas: [{ kind: "city", city: "Kraków" }] })).toBe("?mc=Krak%C3%B3w");
+    expect(dashboardUrlSearch(reference, { ...defaults, areas: [{ kind: "region", owNfz: "07" }, { kind: "region", owNfz: "12" }, { kind: "city", city: "Kraków" }] }))
+      .toBe("?ow=07&ow=12&mc=Krak%C3%B3w");
+    expect(readDashboardUrlState(reference, "?mc=Krak%C3%B3w&ow=07").areas).toEqual([{ kind: "region", owNfz: "07" }, { kind: "city", city: "Kraków" }]);
   });
 
-  it("falls back to the whole country for unknown areas", () => {
-    expect(readDashboardUrlState(reference, "?ow=99").area).toEqual({ kind: "country" });
-    expect(readDashboardUrlState(reference, "?mc=Gdynia").area).toEqual({ kind: "country" });
+  it("drops unknown areas and keeps at most five", () => {
+    expect(readDashboardUrlState(reference, "?ow=99").areas).toEqual([]);
+    expect(readDashboardUrlState(reference, "?mc=Gdynia&ow=07").areas).toEqual([{ kind: "region", owNfz: "07" }]);
   });
 
   it("still reads legacy full product-code links", () => {
