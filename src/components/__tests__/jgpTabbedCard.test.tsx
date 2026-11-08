@@ -17,7 +17,8 @@ vi.mock("@/components/jgp/GroupLineChart", () => ({
   </ul>,
 }));
 vi.mock("@/components/jgp/ProviderScatter", () => ({
-  ProviderScatter: ({ points, ariaLabel, curves }: { points: { key: string; name: string; color?: string; label?: string }[]; ariaLabel: string; curves?: unknown[] }) => <div role="group" aria-label={ariaLabel} data-curves={curves?.length ?? 0}>
+  NO_CURVES: [],
+  ProviderScatter: ({ points, ariaLabel, curves, yCap }: { points: { key: string; name: string; color?: string; label?: string }[]; ariaLabel: string; curves?: unknown[]; yCap?: number | null }) => <div role="group" aria-label={ariaLabel} data-curves={curves?.length ?? 0} data-cap={yCap ?? ""}>
     {points.map((point) => <span key={point.key} data-color={point.color ?? ""} data-label={point.label ?? ""}>{point.name}</span>)}
   </div>,
 }));
@@ -326,5 +327,36 @@ describe("Karta w zakładkach — linie województw w „Ile?”", () => {
     fireEvent.click(within(screen.getByRole("group", { name: "Rok karty" })).getByRole("button", { name: "2024" }));
     expect(screen.getByRole("list", { name: "Linie wykresu" }).textContent).toBe(before);
     expect(before).toBe("Mazowieckie: 17");
+  });
+});
+
+describe("Karta w zakładkach — powiększenie wykresów", () => {
+  it("każdy wykres Przeglądu ma przycisk powiększenia; okno prowadzi do widoku eksploratora z grupą", () => {
+    renderCard();
+    const panel = screen.getByRole("tabpanel");
+    const buttons = within(panel).getAllByRole("button", { name: /^Powiększ wykres:/ });
+    // Ile?, Gdzie?, Za ile?, tryb przyjęcia (fixture bez rodziny).
+    expect(buttons.map((button) => button.getAttribute("aria-label"))).toEqual([
+      expect.stringMatching(/^Powiększ wykres: A01: hospitalizacje miesięcznie/),
+      "Powiększ wykres: A01: hospitalizacje na 100 tys. mieszkańców w województwach",
+      "Powiększ wykres: A01: kwota świadczeń NFZ w latach",
+      "Powiększ wykres: A01: tryb przyjęcia w latach",
+    ]);
+    fireEvent.click(buttons[0]);
+    const dialog = screen.getByRole("dialog");
+    expect(within(dialog).getByRole("list", { name: "Linie wykresu" })).toBeInTheDocument();
+    expect(within(dialog).getByRole("link", { name: /W czasie w eksploratorze/ })).toHaveAttribute("href", "/analizy?jgp=A01");
+  });
+
+  it("w Ośrodkach: linie i oba wykresy punktowe mają powiększenie z linkiem do „Kto leczy” albo „Tryb przyjęcia”", () => {
+    open("?widok=osrodki");
+    renderCard();
+    const buttons = screen.getAllByRole("button", { name: /^Powiększ wykres:/ });
+    expect(buttons).toHaveLength(3);
+    fireEvent.click(buttons[1]);
+    expect(within(screen.getByRole("dialog")).getByRole("link", { name: /Tryb przyjęcia w eksploratorze/ })).toHaveAttribute("href", `/analizy?t=a&jgp=A01&y=${data.year}`);
+    fireEvent.keyDown(document, { key: "Escape" });
+    fireEvent.click(buttons[2]);
+    expect(within(screen.getByRole("dialog")).getByRole("link", { name: /Kto leczy w eksploratorze/ })).toHaveAttribute("href", `/analizy?t=k&jgp=A01&y=${data.year}`);
   });
 });

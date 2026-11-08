@@ -254,6 +254,21 @@ export function providerYearTotals(row: JgpProviderRow): number[] {
   return row.yearly.map(([planned, urgent, other]) => planned + urgent + other);
 }
 
+/** Ośrodki z mniejszą liczbą hospitalizacji nie wyznaczają skali osi Y wykresu punktowego (`outlierCap`). */
+export const OUTLIER_MIN_HOSPITALIZATIONS = 10;
+
+/**
+ * Koniec skali osi Y wykresu punktowego, gdy mały ośrodek ma skrajną wartość (np. 1 hospitalizacja i 1 zgon = 100%).
+ * Skala sięga 15% ponad największą wartość ośrodków z co najmniej `minN` hospitalizacjami (zaokrąglone w górę do 5).
+ * `null`: żaden punkt nie wychodzi ponad skalę albo nie ma ośrodków z `minN` hospitalizacjami.
+ */
+export function outlierCap(points: { x: number; y: number }[], minN = OUTLIER_MIN_HOSPITALIZATIONS): number | null {
+  const stable = points.filter((p) => p.x >= minN).map((p) => p.y);
+  if (!stable.length) return null;
+  const cap = Math.max(5, Math.ceil((Math.max(...stable) * 1.15) / 5) * 5);
+  return points.some((p) => p.y > cap) ? cap : null;
+}
+
 /** Lejek śmiertelności pokazujemy tylko, gdy grupa ma co najmniej tyle zgonów w roku. */
 export const MIN_FUNNEL_DEATHS = 30;
 /** Granice lejka: 95% (z = 1,96) i 99,8% (z = 3,09). */

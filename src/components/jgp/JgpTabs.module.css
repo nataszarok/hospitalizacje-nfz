@@ -612,6 +612,8 @@
   gap: 6px;
   height: 200px;
 }
+/* W powiększeniu (`ChartExpand`) słupki są wyższe. */
+.costBarsLarge { height: min(480px, 60vh); }
 
 .costBar {
   flex: 1 1 0;
@@ -904,21 +906,19 @@
   vertical-align: 0;
 }
 
-/* Wybrany ośrodek na wykresach punktowych: gwiazda jak na wykresie (DESIGN.md, 6.2a). */
-.selectedStar,
-.graphiteStar {
+/* Wybrany ośrodek na wykresach punktowych i w tabeli: grafitowa gwiazda jak na wykresie (DESIGN.md, 6.2a). */
+.selectedStar {
   display: inline-block;
   flex: none;
   width: 14px;
   height: 14px;
   margin-right: 6px;
-  background: var(--color-signal);
+  background: var(--color-text);
   clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
   vertical-align: -2px;
 }
-.graphiteStar { background: var(--color-text); }
 
-.nameCell .selectedDot,
+.nameCell .selectedStar,
 .nameCell .dot {
   margin-right: 6px;
   vertical-align: 1px;

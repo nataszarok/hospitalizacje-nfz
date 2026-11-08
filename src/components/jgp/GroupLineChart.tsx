@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { ChartTooltip, TooltipHead, TooltipLines } from "@/components/ChartTooltip";
 import { monthYears, movingAverage, movingRatio, ratioSeries, sumByYear, type ChartPeriod } from "@/lib/jgpCard";
 import { baselineShape, categoryAxis, chartLayout, countAxis, makeHoverTrace, measureAxis, monthAxis, percentAxis, PLOTLY_CONFIG, wrapChartLabel, type PlotElement } from "@/lib/plotlyChart";
 import { loadPlotly } from "@/lib/plotlyLoader";
+import { plotlyDataBox, plotlyDataPixel, type Box } from "@/lib/tooltipPosition";
 import { CHART_COLORS } from "@/lib/chartPalette";
 
 const MONTHS = ["sty", "lut", "mar", "kwi", "maj", "cze", "lip", "sie", "wrz", "paź", "lis", "gru"];
@@ -50,10 +52,14 @@ const yearlyLine = (line: ChartLine, months: string[]): ChartLine => ({ ...line,
  * na początku serii średnia z dostępnych miesięcy).
  * Najechanie: wskazana kropka rośnie i zmienia kolor (osobna seria-znacznik, jak w `attachHoverMarker`),
  * a cała seria ośrodka jest rysowana na wierzchu w jego kolorze. Zmieniamy tylko serie nakładki.
+ * Dymek HTML (`ChartTooltip` + `placeTooltip`, DESIGN.md 6.3): obok kropki, może wyjść poza wykres, cała nazwa.
+ * Wybrany ośrodek (`tone: "selected"`): reaguje na najechanie tylko jego linia, pozostałe są przygaszone i bez dymka.
+ * Kliknięcie przy dowolnej linii wybiera najbliższą linię (własna obsługa kliknięcia: Plotly nie zgłasza kliknięć
+ * serii bez najechania).
  * Wszystkie serie są typu `scattergl` (jak w eksploratorze): `restyle` serii SVG w trakcie najechania
  * przerysowuje dymek podpowiedzi, wywołuje kolejne najechanie i przepełnia stos.
  */
-export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = false, onSelect, onHover, height = 400, selectedColor = SELECTED, selectedLabel, hoverSelectedOnly = false, highlightYear, note, fitAxis = false, period = "month" }: {
+export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = false, onSelect, onHover, height = 400, selectedColor = SELECTED, selectedLabel, highlightYear, note, fitAxis = false, period = "month", modeBar = true }: {
   /** Miesiące jako „RRRR-MM”. */
   months: string[];
   /** „year”: suma każdego roku zamiast miesięcy (te same wymiary wykresu). */
@@ -74,14 +80,16 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
   selectedColor?: string;
   /** Podpis na końcu linii wybranego ośrodka (nazwa; długa w kilku liniach). */
   selectedLabel?: string;
-  /** Gdy jest wybrany ośrodek, dymek i najechanie działają tylko na jego linii. */
-  hoverSelectedOnly?: boolean;
   /** Rok wyróżniony tłem (jak pasek „wybrany rok” w dokumencie karty), np. rok wybrany na karcie. */
   highlightYear?: string;
   /** Objaśnienie pod osią X, wewnątrz wykresu (zamiast osobnego akapitu pod nim). */
   note?: string;
+  /** Pasek narzędzi Plotly; bez niego, gdy wykres ma przycisk powiększenia (`ChartExpand`) w tym samym rogu. */
+  modeBar?: boolean;
 }) {
   const chartRef = useRef<HTMLDivElement>(null);
+  const shellRef = useRef<HTMLDivElement>(null);
+  const [tip, setTip] = useState<{ anchor: Box; title: string; context: string; lines: string[] } | null>(null);
   // Funkcje z rodzica trzymamy w refach: nowa funkcja po rerenderze nie przerysowuje wykresu.
   const selectRef = useRef(onSelect);
   const hoverRef = useRef(onHover);
@@ -105,40 +113,51 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
       const ordered = [...lines.filter((line) => line.tone !== "selected"), ...lines.filter((line) => line.tone === "selected")].map((line) => yearly ? yearlyLine(line, months) : line);
       const emphasized = (line: ChartLine) => Boolean(line.tone || line.color) && !line.thin;
       const color = (line: ChartLine) => line.tone === "selected" ? selectedColor : line.color ?? (line.tone === "primary" ? PRIMARY : BASE);
-      const opacity = (line: ChartLine) => emphasized(line) ? 1 : 0.5;
+      const hasSelected = ordered.some((line) => line.tone === "selected");
+      // Przy wybranym ośrodku pozostałe linie są tłem: mocniej przygaszone i bez najechania.
+      const opacity = (line: ChartLine) => emphasized(line) ? 1 : hasSelected ? 0.3 : 0.5;
+      const hoverable = (line: ChartLine) => !hasSelected || line.tone === "selected";
       const width = (line: ChartLine) => emphasized(line) ? 2.5 : 1.5;
       const markerSize = (line: ChartLine) => (emphasized(line) ? 7 : 5) + (yearly ? 2 : 0);
       const percent = ordered.some((line) => line.base);
       const series = new Map(ordered.map((line) => [line.key, seriesOf(line, period)]));
-      const hasSelected = ordered.some((line) => line.tone === "selected");
-      const hoverable = (line: ChartLine) => !hoverSelectedOnly || !hasSelected || line.tone === "selected";
       const shown = (value: number | null) => value === null ? "—" : percent ? `${value.toLocaleString("pl-PL", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%` : Math.round(value).toLocaleString("pl-PL");
       // Dwie serie na linię: kropki (wartości) i średnia 3M. Indeks serii = indeks śladu / 2.
+      // Dymek rysuje `ChartTooltip`: Plotly tylko zgłasza najechanie („none”); linie tła pomija („skip”).
       const traces = ordered.flatMap((line) => {
         const { points, average } = series.get(line.key)!;
-        const custom = labels.map((label, i) => [label, wrapChartLabel(line.name), line.detail ?? "", shown(average[i]), integer(line.values[i]), integer(line.base?.[i] ?? 0)]);
-        const head = `<b>%{customdata[1]}</b><br>${line.detail ? "%{customdata[2]}<br>" : ""}%{customdata[0]}`;
-        // Udział: procent z liczbami, z których powstał (np. „2,4% (3 z 125 hosp.)”).
-        const value = percent ? `%{y:.1f}% (%{customdata[4]} ${valueLabel} z %{customdata[5]} hosp.)` : `%{y:,.0f} ${valueLabel}`;
+        const hover = hoverable(line) ? "none" : "skip";
         return [
           {
             type: "scattergl", mode: "markers", name: line.name, legendgroup: line.key, showlegend: legend,
-            x, y: points, customdata: custom,
+            x, y: points,
             marker: { color: color(line), size: markerSize(line), line: { color: "#FFFFFF", width: 1 } },
             opacity: opacity(line),
-            hovertemplate: `${head}: ${value}${yearly ? "" : "<br>średnia 3M: %{customdata[3]}"}<extra></extra>`,
-            ...(hoverable(line) ? {} : { hoverinfo: "skip" }),
+            hoverinfo: hover,
           },
           {
             type: "scattergl", mode: "lines", name: yearly ? line.name : `${line.name} · średnia 3M`, legendgroup: line.key, showlegend: false,
-            x, y: average, customdata: custom, connectgaps: false,
+            x, y: average, connectgaps: false,
             line: { color: color(line), width: width(line) },
             opacity: opacity(line),
-            hovertemplate: yearly ? `${head}: ${value}<extra></extra>` : `${head}<br>średnia 3M: %{customdata[3]}${percent ? "" : ` ${valueLabel}`}<extra></extra>`,
-            ...(hoverable(line) ? {} : { hoverinfo: "skip" }),
+            hoverinfo: hover,
           },
         ];
       });
+      // Treść dymka punktu `i` linii: nazwa, miejscowość i okres, wartość (udział z liczbami), średnia 3M.
+      const tipFor = (line: ChartLine, i: number, anchor: Box) => {
+        const { points, average } = series.get(line.key)!;
+        const value = points[i];
+        const main = value === null ? "brak danych" : percent
+          ? `${shown(value)} (${integer(line.values[i])} ${valueLabel} z ${integer(line.base?.[i] ?? 0)} hosp.)`
+          : `${shown(value)} ${valueLabel}`;
+        return {
+          anchor,
+          title: line.name,
+          context: [line.detail, labels[i]].filter(Boolean).join(" · "),
+          lines: yearly ? [main] : [main, `średnia 3M: ${shown(average[i])}${percent ? "" : ` ${valueLabel}`}`],
+        };
+      };
       // Nakładka: wyróżniona seria (kropki + średnia) i znacznik wskazanego punktu. Na start puste.
       const overlayStart = traces.length;
       const empty = { x: [null], y: [null] };
@@ -185,27 +204,46 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
           : measureAxis({ ...monthAxis(x.length), ...(x.length > 72 ? {} : { showgrid: false }) }),
         // Margines pod zerem i całkowita podziałka także przy bardzo małych liczbach (np. pojedyncze zgony).
         yaxis: measureAxis(yAxis),
-      }, PLOTLY_CONFIG);
+      }, modeBar ? PLOTLY_CONFIG : { ...PLOTLY_CONFIG, displayModeBar: false });
       if (cancelled) return;
       const overlay = [overlayStart, overlayStart + 1, overlayStart + 2];
       plot.removeAllListeners("plotly_hover");
       plot.removeAllListeners("plotly_unhover");
       plot.removeAllListeners("plotly_click");
-      plot.on("plotly_click", (event) => {
-        const point = event?.points?.[0];
-        if (!point || point.curveNumber >= overlayStart) return;
-        selectRef.current?.(ordered[Math.floor(point.curveNumber / 2)].key);
-      });
+      // Kliknięcie: najbliższa linia (kropka albo punkt średniej) w promieniu 16 px od kursora.
+      plot.onclick = (event: MouseEvent) => {
+        if (!selectRef.current) return;
+        const rect = plot.getBoundingClientRect();
+        const cx = event.clientX - rect.left;
+        const cy = event.clientY - rect.top;
+        let best: { key: string; distance: number } | null = null;
+        for (const line of ordered) {
+          const { points, average } = series.get(line.key)!;
+          x.forEach((xi, i) => {
+            for (const value of [points[i], average[i]]) {
+              if (value === null || value === undefined) continue;
+              const pixel = plotlyDataPixel(plot, xi, value);
+              if (!pixel) continue;
+              const distance = Math.hypot(pixel.x - cx, pixel.y - cy);
+              if (distance <= 16 && (!best || distance < best.distance)) best = { key: line.key, distance };
+            }
+          });
+        }
+        if (best) selectRef.current((best as { key: string }).key);
+      };
       let restyleInProgress = false;
       plot.on("plotly_hover", (event) => {
         const point = event?.points?.[0];
         if (restyleInProgress || !point || point.curveNumber >= overlayStart) return;
         const line = ordered[Math.floor(point.curveNumber / 2)];
+        if (!hoverable(line)) return;
         hoverRef.current?.(line.key);
         const highlight = line.tone === "selected" ? selectedColor : line.color ?? line.accent ?? PRIMARY;
         // Kropka wskazanego miesiąca (także przy najechaniu na linię średniej).
         const { points, average } = series.get(line.key)!;
         const y = points[point.pointNumber] ?? null;
+        const anchor = plotlyDataBox(plot, x[point.pointNumber], y ?? average[point.pointNumber] ?? 0, 14);
+        setTip(anchor ? tipFor(line, point.pointNumber, anchor) : null);
         restyleInProgress = true;
         void Plotly.restyle(plot, {
           x: [x, x, [point.x]],
@@ -218,6 +256,7 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
       plot.on("plotly_unhover", () => {
         if (restyleInProgress) return;
         hoverRef.current?.(null);
+        setTip(null);
         restyleInProgress = true;
         void Plotly.restyle(plot, { x: [[null], [null], [null]], y: [[null], [null], [null]] }, overlay);
         restyleInProgress = false;
@@ -225,8 +264,14 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
     };
     void render();
     return () => { cancelled = true; };
-  }, [months, lines, valueLabel, legend, height, selectedColor, selectedLabel, hoverSelectedOnly, highlightYear, note, fitAxis, period]);
+  }, [months, lines, valueLabel, legend, height, selectedColor, selectedLabel, highlightYear, note, fitAxis, period, modeBar]);
 
   // Wysokość zarezerwowana od razu: wykres rysuje się asynchronicznie i nie przesuwa treści pod nim.
-  return <div ref={chartRef} role="img" aria-label={ariaLabel} style={{ minHeight: height }} />;
+  return <div ref={shellRef} style={{ position: "relative" }}>
+    <div ref={chartRef} role="img" aria-label={ariaLabel} style={{ minHeight: height }} />
+    {tip ? <ChartTooltip anchor={tip.anchor} container={shellRef}>
+      <TooltipHead title={tip.title} context={tip.context} />
+      <TooltipLines lines={tip.lines} />
+    </ChartTooltip> : null}
+  </div>;
 }
