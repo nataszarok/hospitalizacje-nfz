@@ -1,0 +1,27 @@
+kod	opis
+N01	Poród pojedynczy: w większości samoistny, w części przez cięcie cesarskie (planowe albo ze wskazań nagłych). To jedna z najliczniejszych grup JGP. Pobyt trwa zwykle 3 dni (mediana).
+N02	Poród mnogi albo przedwczesny, w większości przedwczesny (O60); siłami natury albo przez cięcie cesarskie. Pobyt trwa zwykle 4 dni (mediana).
+N03	Poród powikłany patologią ciąży lub płodu przy pobycie ponad 5 dni, m.in. przy słabej czynności skurczowej macicy i cukrzycy ciążowej; często cięcie cesarskie. Pobyt trwa zwykle 7 dni (mediana).
+N06	Diagnostyka i leczenie patologii ciąży i połogu przy pobycie ponad 11 dni, najczęściej zagrażającego porodu przedwczesnego. Pobyt trwa zwykle 14 dni (mediana).
+N07C	Rozszerzona diagnostyka i leczenie ciężkiej patologii ciąży przy pobycie poniżej 5 dni, m.in. zagrażającego porodu przedwczesnego i cukrzycy ciążowej. Pobyt trwa zwykle 2 dni (mediana).
+N07D	Rozszerzona diagnostyka i leczenie ciężkiej patologii ciąży przy pobycie ponad 4 dni, m.in. zagrażającego porodu przedwczesnego, nieprawidłowości płodu i niewydolności szyjki macicy. Pobyt trwa zwykle 6 dni (mediana).
+N08	Diagnostyka i leczenie ciężkiej patologii płodu, w większości opieka z powodu podejrzewanej nieprawidłowości płodu (O35.8). Pobyt trwa zwykle 1 dzień (mediana).
+N08A	Terapia wewnątrzmaciczna płodu kategorii 1, głównie zabiegi z użyciem fetoskopii i lasera, m.in. w zespole przetoczenia między płodami. Grupa jest bardzo mała. Pobyt trwa zwykle 7 dni (mediana).
+N08B	Terapia wewnątrzmaciczna płodu kategorii 2, m.in. odbarczanie zbiorników płynu i wszczepianie zastawek (shuntów) u płodu. Grupa jest mała. Pobyt trwa zwykle 4 dni (mediana).
+N09	Poród w ciężkiej patologii ciąży z rozszerzoną diagnostyką przy pobycie ponad 6 dni, m.in. przy cukrzycy ciążowej, chorobach dokrewnych i porodzie przedwczesnym. Pobyt trwa zwykle 9 dni (mediana).
+N11	Poród w ciężkiej patologii ciąży z powikłaniami przy pobycie ponad 10 dni; w statystykach NFZ często współwystępuje niedoczynność tarczycy. Pobyt trwa zwykle 14 dni (mediana).
+N12	Diagnostyka, obserwacja i leczenie patologii ciąży i połogu przy pobycie poniżej 12 dni, najczęściej zagrażającego porodu przedwczesnego (O47.0). Pobyt trwa zwykle 2 dni (mediana).
+N13	Poród zabiegowy w ciężkiej patologii ciąży przy pobycie ponad 3 dni, m.in. przy chorobach dokrewnych i cukrzycy ciążowej. Pobyt trwa zwykle 4 dni (mediana).
+N20	Opieka nad zdrowym noworodkiem urodzonym w szpitalu (Z38.0). Pobyt trwa zwykle 3 dni (mediana).
+N21	Leczenie ciężkiej patologii noworodka przy pobycie ponad 30 dni, głównie wcześniaków, z oddychaniem wspomaganym (CPAP) i podawaniem surfaktantu. Pobyt jest bardzo długi: zwykle 44 dni (mediana).
+N21A	Leczenie ciężkiej patologii wcześniaka przy pobycie ponad 30 dni, z oddychaniem wspomaganym (CPAP), surfaktantem i często długotrwałą wentylacją mechaniczną. Pobyt jest bardzo długi: zwykle 78 dni (mediana).
+N22	Intensywna terapia noworodka, głównie w niewydolności oddechowej (P28.5) i wcześniactwie, z monitorowaniem ciśnienia tętniczego. Pobyt trwa zwykle 7 dni (mediana).
+N22A	Intensywne monitorowanie i specjalistyczna opieka nad noworodkiem, w większości wcześniakiem (P07.3). Pobyt trwa zwykle 6 dni (mediana).
+N23	Intensywna opieka nad noworodkiem, głównie wcześniakiem, prawie zawsze z echokardiografią. Pobyt trwa zwykle 15 dni (mediana).
+N24	Szczególna opieka nad noworodkiem, m.in. leczenie żółtaczki fototerapią. Pobyt trwa zwykle 3 dni (mediana).
+N25	Wzmożony nadzór nad noworodkiem z badaniami laboratoryjnymi i gazometrią. Pobyt trwa zwykle 3 dni (mediana).
+N26	Intensywna terapia noworodka z zabiegiem chirurgicznym, m.in. wszczepieniem zastawki komorowo-otrzewnowej w wodogłowiu i zespoleniem jelit. Pobyt jest długi: zwykle 27 dni (mediana).
+N31	Złożone operacje u noworodków i niemowląt, m.in. wszczepienie zastawki komorowo-otrzewnowej. Pobyt trwa zwykle 9 dni (mediana).
+N32	Duże operacje u noworodków i niemowląt, m.in. plastyka połączenia miedniczkowo-moczowodowego i operacje jelit. Pobyt trwa zwykle 8 dni (mediana).
+N33	Średnie operacje u noworodków i niemowląt, głównie przepukliny pachwinowej i sprowadzenie jądra niezstąpionego do moszny. Pobyt trwa zwykle 2 dni (mediana).
+N34	Małe zabiegi u noworodków i niemowląt, m.in. wycięcie wrodzonej zastawki cewki moczowej. Pobyt trwa zwykle 2 dni (mediana).

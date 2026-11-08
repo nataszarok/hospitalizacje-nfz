@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   aggregateMortalityRowsByProvider,
+  mortalityInsights,
   mortalityRowsPerJgp,
 } from "@/lib/mortality";
 import type { MortalityRow } from "@/lib/types";
@@ -85,5 +86,31 @@ describe("mortalityRowsPerJgp", () => {
 
     expect(result).toHaveLength(2);
     expect(result.map((item) => item.productCodes)).toEqual([["P1"], ["P2"]]);
+  });
+});
+
+describe("mortalityInsights", () => {
+  const row = (nip: string, productCode: string, hospitalizations: number, deaths: number) => ({
+    owNfz: "07", nip, productCode, providerName: nip, city: "", voivodeship: "", population: 0,
+    hospitalizations, deaths, mortalityPct: 0, hospitalizationsPer100k: 0,
+  });
+
+  it("liczy średnią śmiertelność, koncentrację i śmiertelność według wielkości ośrodka", () => {
+    const rows = [
+      ...Array.from({ length: 11 }, (_, i) => row(`L${i}`, "P1", 100, 2)),
+      row("S1", "P1", 5, 1),
+      row("S1", "P2", 5, 1),
+      row("S2", "P1", 4, 0),
+    ];
+    const insights = mortalityInsights(rows)!;
+    expect(insights).toMatchObject({ providers: 13, hospitalizations: 1114, deaths: 24, topCount: 10, medianHospitalizations: 100 });
+    expect(insights.topSharePct).toBeCloseTo((1000 / 1114) * 100);
+    expect(insights.smallMortalityPct).toBeCloseTo((2 / 14) * 100);
+    expect(insights.largeMortalityPct).toBeCloseTo(2);
+  });
+
+  it("nie dzieli na małe i duże ośrodki przy jednym świadczeniodawcy", () => {
+    expect(mortalityInsights([row("A", "P1", 10, 1)])).toMatchObject({ topCount: 1, topSharePct: 100, smallMortalityPct: null, largeMortalityPct: null });
+    expect(mortalityInsights([])).toBeNull();
   });
 });

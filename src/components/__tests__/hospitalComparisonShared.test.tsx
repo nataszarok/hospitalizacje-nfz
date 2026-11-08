@@ -42,9 +42,9 @@ beforeEach(() => {
   vi.stubGlobal("requestAnimationFrame", (fn: FrameRequestCallback) => { fn(0); return 1; });
   vi.stubGlobal("cancelAnimationFrame", vi.fn());
   vi.stubGlobal("fetch", vi.fn().mockResolvedValue(rawResponse({
-    jgp: [{ kod_jgp: "A01", kod_produktu: "P1", nazwa: "Diagnostyka",
-      pkt_hospitalizacja: 100, pkt_hospitalizacja_planowa: null,
-      pkt_jeden_dzien: null, pkt_hospitalizacja_1_dniowa: null, pkt_hospitalizacja_2_dniowa: null }],
+    version: 2, year: "2025", source: "test",
+    fields: ["kod_jgp", "kod_produktu", "pkt_hospitalizacja", "dni_finansowane_grupa"],
+    rows: [["A01", "P1", 100, null]],
   })));
 });
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
@@ -66,9 +66,9 @@ describe("HospitalComparisonShared — nazwy i pobieranie danych", () => {
       .rejects.toThrow("Nie udało się pobrać danych (404)");
   });
 
-  it("pobiera wyceny JGP i udostępnia listę rekordów", async () => {
+  it("pobiera wyceny JGP (krotki) i udostępnia listę rekordów", async () => {
     const result = await loadJgpValuations();
-    expect(result[0]).toEqual(expect.objectContaining({ kod_jgp: "A01", pkt_hospitalizacja: 100 }));
+    expect(result[0]).toEqual({ kod_jgp: "A01", kod_produktu: "P1", pkt_hospitalizacja: 100, dni_finansowane_grupa: null });
     expect(fetch).toHaveBeenCalledWith("/data/wyceny_jgp_2025.json.gz", { cache: "force-cache" });
   });
 });
@@ -114,9 +114,7 @@ describe("JgpMortalityDifferenceTable — odchylenia JGP", () => {
 
   it("pokazuje wycenę JGP, a dla brakujących wycen myślnik", () => {
     render(<JgpMortalityDifferenceTable benchmark={withOutliers()} products={products}
-      valuationByJgp={new Map([["A01", { kod_jgp: "A01", kod_produktu: "P1", nazwa: "Diagnostyka",
-        pkt_hospitalizacja: 123.5, pkt_hospitalizacja_planowa: null, pkt_jeden_dzien: null,
-        pkt_hospitalizacja_1_dniowa: null, pkt_hospitalizacja_2_dniowa: null }]])} />);
+      valuationByJgp={new Map([["A01", { kod_jgp: "A01", kod_produktu: "P1", pkt_hospitalizacja: 123.5 }]])} />);
     const table = screen.getByRole("table");
     const rows = within(table).getAllByRole("row").slice(1);
     expect(rows[0]).toHaveTextContent("123,5 pkt");

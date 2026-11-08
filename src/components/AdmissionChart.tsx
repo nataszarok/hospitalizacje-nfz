@@ -214,7 +214,7 @@ export function AdmissionChart({
               ? "Przyjęcia planowane na 100 tys. mieszkańców (kod 6)"
               : "Liczba przyjęć planowanych (kod 6)",
             standoff: 18,
-            font: { size: 15, color: "#344054" },
+            font: { size: 14, color: "#344054" },
           },
           gridcolor: "#EEF1F5",
           zerolinecolor: "#EEF1F5",
@@ -226,7 +226,7 @@ export function AdmissionChart({
               ? "Przyjęcia nagłe na 100 tys. mieszkańców (kody 2 + 3)"
               : "Liczba przyjęć nagłych (kody 2 + 3)",
             standoff: 18,
-            font: { size: 15, color: "#344054" },
+            font: { size: 14, color: "#344054" },
           },
           tickfont: { size: 11, color: "#667085" },
           gridcolor: "#EEF1F5",

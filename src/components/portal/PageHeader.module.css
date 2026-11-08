@@ -1,0 +1,16 @@
+/* Nagłówek strony modułu: pas koloru, tytuł krojem display, wstęp i pola z liczbami. */
+.container { width: min(calc(100% - var(--atlas-page-gutter) - var(--atlas-page-gutter)), var(--atlas-page-max)); margin-inline: auto; }
+.header { background: #eaf4f2; padding: 40px 0 28px; border-bottom: 1px solid var(--color-border); color: var(--color-text); }
+.eyebrow { color: var(--color-primary-hover); text-transform: uppercase; font-weight: var(--fw-bold); letter-spacing: .10em; font-size: var(--fs-sm); }
+.title { font-size: var(--fs-display); line-height: 1.02; margin: 12px 0 12px; letter-spacing: -.04em; }
+.lead { max-width: 720px; font-size: var(--fs-lg); line-height: 1.65; color: #455d59; margin: 0 0 22px; }
+.lead p { margin: 0; }
+.lead p + p { margin-top: 10px; }
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 0 0 20px; }
+.kpis div { background: #fff; border: 1px solid var(--color-border); border-radius: 12px; padding: 14px 16px; min-width: 0; }
+.kpis dt { font-size: var(--fs-sm); text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-tertiary); }
+.kpis dd { margin: 4px 0 2px; font-size: var(--fs-3xl); font-weight: var(--fw-bold); letter-spacing: -.03em; color: #1B3D78; font-variant-numeric: tabular-nums; }
+.kpis span { font-size: var(--fs-md); color: var(--color-text-secondary); }
+.header > .container > :last-child { margin-bottom: 0; }
+@media (max-width: 900px) { .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 550px) { .header { padding-top: 28px; } .kpis dd { font-size: var(--fs-2xl); } }

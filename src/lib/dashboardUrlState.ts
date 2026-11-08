@@ -1,7 +1,8 @@
+import { COUNTRY_AREA, type AnalysisArea } from "@/lib/area";
 import type { AxisMode, EstimationMethod, GeographyMode, ReferencePayload } from "@/lib/types";
-import { PEER_DISTANCE_A_LIMIT, clampPeerDistance } from "@/lib/peerDistance";
 
-export type DashboardActiveTab = "mortality" | "admissions" | "hospital" | "methodology";
+/** Widoki-pytania eksploratora: W czasie, Kto leczy, Tryb przyjęcia, Gdzie. */
+export type DashboardActiveTab = "trend" | "mortality" | "admissions" | "regions";
 
 export type DashboardUrlState = {
   selectedProducts: string[];
@@ -14,10 +15,10 @@ export type DashboardUrlState = {
   highlightedRegions: string[];
   highlightedCities: string[];
   activeTab: DashboardActiveTab;
-  hospitalKey?: string;
-  hospitalSubtab?: "summary" | "comparison";
-  peerThreshold?: number;
-  peerDistance?: number;
+  /** Obszar analizy: `ow` (OW NFZ) albo `mc` (miasto) w adresie; brak = cała Polska. */
+  area: AnalysisArea;
+  /** Rok danych z parametru `y`; poprawność sprawdza Dashboard na liście lat. */
+  year?: string;
 };
 
 function defaultProductSelection(reference: ReferencePayload) {
@@ -67,13 +68,22 @@ export function readDashboardUrlState(reference: ReferencePayload, search: strin
       : defaultProductSelection(reference);
 
   const tabParam = params.get("t");
+  // Bez `t` (i dawne `t=w`): W czasie. `t=k` — Kto leczy, `t=a` — Tryb przyjęcia, `t=g` — Gdzie.
   const activeTab: DashboardActiveTab = tabParam === "a"
     ? "admissions"
-    : tabParam === "h"
-      ? "hospital"
-    : tabParam === "m"
-      ? "methodology"
-      : "mortality";
+    : tabParam === "k"
+      ? "mortality"
+    : tabParam === "g"
+      ? "regions"
+      : "trend";
+
+  const regionParam = params.get("ow");
+  const cityParam = params.get("mc");
+  const area: AnalysisArea = regionParam && regionCodes.has(regionParam)
+    ? { kind: "region", owNfz: regionParam }
+    : cityParam && cityValues.has(cityParam)
+      ? { kind: "city", city: cityParam }
+      : COUNTRY_AREA;
 
   return {
     selectedProducts,
@@ -86,11 +96,8 @@ export function readDashboardUrlState(reference: ReferencePayload, search: strin
     highlightedRegions: validValues(params.getAll("r"), regionCodes, 10),
     highlightedCities: validValues(params.getAll("c"), cityValues, 10),
     activeTab,
-    hospitalKey: params.get("hospital") ?? "",
-    // "s" to dawny link do zakładki Podobieństwo, która jest teraz zakładką Porównanie.
-    hospitalSubtab: params.get("hv") === "c" || params.get("hv") === "s" ? "comparison" : "summary",
-    peerThreshold: Math.min(90, Math.max(70, nonNegativeInteger(params.get("peer")) || 75)),
-    peerDistance: params.has("pd") ? clampPeerDistance(Number(params.get("pd"))) : PEER_DISTANCE_A_LIMIT,
+    area,
+    year: params.get("y")?.trim() || undefined,
   };
 }
 
@@ -98,8 +105,15 @@ function sameArray(left: string[], right: string[]) {
   return left.length === right.length && left.every((value, index) => value === right[index]);
 }
 
-export function dashboardUrlSearch(reference: ReferencePayload, state: DashboardUrlState) {
+/** Rok z adresu, jeśli jest na liście lat; w przeciwnym razie najnowszy rok. */
+export function resolveDashboardYear(requested: string | undefined, years: string[], latestYear: string) {
+  return requested && years.includes(requested) ? requested : latestYear;
+}
+
+// `latestYear`: najnowszy rok nie trafia do adresu, żeby link bez `y` zawsze pokazywał aktualne dane.
+export function dashboardUrlSearch(reference: ReferencePayload, state: DashboardUrlState, latestYear?: string) {
   const params = new URLSearchParams();
+  if (state.year && state.year !== latestYear) params.set("y", state.year);
   const defaultProducts = defaultProductSelection(reference);
 
   if (state.selectedProducts.length === 0) {
@@ -113,6 +127,8 @@ export function dashboardUrlSearch(reference: ReferencePayload, state: Dashboard
     });
   }
 
+  if (state.area.kind === "region") params.set("ow", state.area.owNfz);
+  if (state.area.kind === "city") params.set("mc", state.area.city);
   state.durations.forEach((value) => params.append("d", value));
   if (state.method !== "min") params.set("m", state.method);
   if (state.minHosp > 0) params.set("n", String(Math.floor(state.minHosp)));
@@ -121,16 +137,31 @@ export function dashboardUrlSearch(reference: ReferencePayload, state: Dashboard
   state.highlightedCities.forEach((value) => params.append("c", value));
   if (state.axisMode === "per_100k") params.set("x", "100k");
   if (state.admissionAxisMode === "per_100k") params.set("ax", "100k");
+  if (state.activeTab === "mortality") params.set("t", "k");
   if (state.activeTab === "admissions") params.set("t", "a");
-  if (state.activeTab === "hospital") params.set("t", "h");
-  if (state.activeTab === "methodology") params.set("t", "m");
-  if (state.hospitalKey) params.set("hospital", state.hospitalKey);
-  if (state.hospitalSubtab === "comparison") params.set("hv", "c");
-  const peerThreshold = state.peerThreshold ?? 75;
-  if (peerThreshold !== 75) params.set("peer", String(Math.min(90, Math.max(70, Math.floor(peerThreshold)))));
-  const peerDistance = clampPeerDistance(state.peerDistance ?? PEER_DISTANCE_A_LIMIT);
-  if (peerDistance !== PEER_DISTANCE_A_LIMIT) params.set("pd", String(peerDistance));
+  if (state.activeTab === "regions") params.set("t", "g");
 
   const search = params.toString();
   return search ? `?${search}` : "";
+}
+
+/**
+ * Dawne adresy zakładek, które opuściły /analizy: profil szpitala (`t=h`) jest pod /szpitale,
+ * metodologia (`t=m`) pod /o-danych. Zwraca nowy adres albo `null`.
+ */
+export function legacyAnalysisRedirect(search: string): string | null {
+  const params = new URLSearchParams(search);
+  const tab = params.get("t");
+  if (tab === "m") return "/o-danych";
+  if (tab !== "h") return null;
+  const target = new URLSearchParams();
+  const hospital = params.get("hospital");
+  if (hospital) target.set("hospital", hospital);
+  const view = params.get("hv");
+  if (view === "c" || view === "s") target.set("hv", "c");
+  if (params.get("m") === "sim") target.set("m", "sim");
+  const peerDistance = params.get("pd");
+  if (peerDistance) target.set("pd", peerDistance);
+  const query = target.toString();
+  return `/szpitale${query ? `?${query}` : ""}`;
 }

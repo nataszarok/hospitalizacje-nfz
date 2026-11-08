@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="pl">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Koncepcja Analiz</title>
+<style>
+:root { --bg: #f6f7f5; --panel: #ffffff; --ink: #1d2422; --ink-2: #46514d; --ink-3: #6f7a76; --line: #dfe4e1; --brand: #1f8a70; --brand-bg: #e3f3ee; --warn-bg: #fbf1dc; --warn: #8a5a0b; --todo-bg: #eef1fb; --todo: #2f4fa3; --mono: ui-monospace, SFMono-Regular, Menlo, monospace; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #141a19; --panel: #1c2422; --ink: #e8eeeb; --ink-2: #b9c4bf; --ink-3: #8a9792; --line: #2e3a37; --brand: #5ccaa8; --brand-bg: #1d3a32; --warn-bg: #3a2f17; --warn: #e8c070; --todo-bg: #1f2740; --todo: #9fb4f0; } }
+:root[data-theme="dark"] { --bg: #141a19; --panel: #1c2422; --ink: #e8eeeb; --ink-2: #b9c4bf; --ink-3: #8a9792; --line: #2e3a37; --brand: #5ccaa8; --brand-bg: #1d3a32; --warn-bg: #3a2f17; --warn: #e8c070; --todo-bg: #1f2740; --todo: #9fb4f0; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif; }
+main { max-width: 980px; margin: 0 auto; padding: 32px 16px 64px; display: grid; gap: 28px; }
+h1 { font-size: 28px; line-height: 1.2; margin: 0; }
+h2 { font-size: 21px; margin: 0 0 10px; }
+h3 { font-size: 16px; margin: 18px 0 6px; }
+p { margin: 0 0 10px; }
+a { color: var(--brand); }
+code { font-family: var(--mono); font-size: 0.88em; background: var(--brand-bg); padding: 1px 4px; border-radius: 4px; }
+.lead { color: var(--ink-2); max-width: 70ch; }
+.kicker { display: block; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--brand); margin-bottom: 4px; }
+section { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 20px 22px; min-width: 0; }
+nav.toc { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13.5px; }
+.scroll-x { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; vertical-align: top; padding: 7px 10px; border-bottom: 1px solid var(--line); }
+th { font-size: 12.5px; color: var(--ink-3); font-weight: 600; }
+pre { font-family: var(--mono); font-size: 12.5px; line-height: 1.45; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; overflow-x: auto; margin: 0 0 10px; }
+ul, ol { margin: 0 0 10px; padding-left: 22px; }
+li { margin: 3px 0; }
+.callout { border-left: 3px solid var(--brand); background: var(--brand-bg); padding: 12px 16px; margin: 10px 0; }
+.callout p:last-child { margin: 0; }
+.docs { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; margin: 10px 0; }
+.docs a { display: block; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; text-decoration: none; color: var(--ink); background: var(--bg); }
+.docs a b { display: block; color: var(--brand); font-family: var(--mono); font-size: 13px; font-weight: 600; }
+.docs a span { font-size: 13.5px; color: var(--ink-2); }
+.docs a.main { border: 2px solid var(--brand); }
+.phase { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 14px; padding: 14px 0; border-top: 1px solid var(--line); }
+.phase:first-of-type { border-top: 0; }
+.mark { display: grid; justify-items: start; align-content: start; gap: 4px; }
+.num { font-size: 22px; font-weight: 700; color: var(--ink-3); line-height: 1; }
+.state { font-size: 11.5px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; background: var(--line); color: var(--ink-2); }
+.done .state { background: var(--brand-bg); color: var(--brand); }
+.now .state { background: var(--warn-bg); color: var(--warn); }
+.next .state { background: var(--todo-bg); color: var(--todo); }
+.now { border-left: 3px solid var(--warn); padding-left: 10px; }
+.phase h3 { margin: 0 0 4px; }
+.phase .goal { color: var(--ink-2); }
+.facts { font-size: 13px; color: var(--ink-3); }
+.facts div { margin: 2px 0; }
+@media (max-width: 600px) { .phase { grid-template-columns: 1fr; gap: 6px; } .mark { grid-auto-flow: column; justify-content: start; align-items: center; } }
+/* Zrobiony punkt w otwartym etapie: zielony znak ✓ zamiast kropki */
+li.ok { list-style: none; position: relative; }
+li.ok::before { content: "✓"; position: absolute; left: -1.25em; color: var(--brand); font-weight: 700; }
+</style>
+<body>
+<main>
+
+<header>
+  <span class="kicker">FunduszDanych · dokument roboczy</span>
+  <h1>Koncepcja modułu Analizy i kart grup JGP</h1>
+  <p class="lead">Stan na 2 listopada 2026 r. Dokument opisuje, na jakie pytania odpowiada moduł, jak są ułożone strony i dane oraz co jest zrobione, a co czeka na przebudowę. Zastępuje plik <code>docs/koncepcja-analiz.md</code>.</p>
+  <nav class="toc" aria-label="Spis treści">
+    <a href="#pytania">Pytania</a><a href="#architektura">Architektura</a><a href="#eksplorator">Eksplorator</a><a href="#karta-jgp">Karta /jgp/[kod]</a><a href="#dane">Dane</a><a href="#roadmapa">Roadmapa</a><a href="#decyzje">Do decyzji</a><a href="#historia">Punkt wyjścia</a>
+  </nav>
+</header>
+
+<section id="pytania" aria-labelledby="h-pytania">
+  <span class="kicker">1 · Dla kogo</span>
+  <h2 id="h-pytania">Dla kogo i jakie pytania</h2>
+  <div class="scroll-x">
+    <table>
+      <thead><tr><th>Kto</th><th>Typowe pytanie</th></tr></thead>
+      <tbody>
+        <tr><td>Dziennikarz, obywatel</td><td>Ile było hospitalizacji z powodu X i jak to się zmienia? Gdzie leczy się najwięcej?</td></tr>
+        <tr><td>Dyrektor szpitala</td><td>Jak wypadam na tle podobnych szpitali? Jaki mam udział przyjęć nagłych?</td></tr>
+        <tr><td>Analityk, badacz</td><td>Jak zmieniła się liczba hospitalizacji w grupie JGP po zmianie katalogu lub wyceny?</td></tr>
+        <tr><td>Płatnik, administracja</td><td>Gdzie koncentruje się wolumen i śmiertelność w danej grupie? Który ośrodek realizuje grupę inaczej niż inne?</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Pytania, na które portal odpowiada wprost:</p>
+  <ol>
+    <li><b>Jak to się zmieniało w czasie?</b> Liczba hospitalizacji i zgonów rok po roku i miesiąc po miesiącu.</li>
+    <li><b>Kto leczy i z jakim wynikiem?</b> Świadczeniodawcy: wolumen, tryb przyjęcia, śmiertelność.</li>
+    <li><b>Planowo czy w trybie nagłym?</b> Struktura trybu przyjęcia.</li>
+    <li><b>Gdzie?</b> Województwa i miasta, także na 100 tys. mieszkańców.</li>
+    <li><b>Wszystko o jednej grupie JGP</b>: karta grupy <code>/jgp/[kod]</code>.</li>
+    <li><b>Wszystko o jednym szpitalu</b>: profil i porównanie z podobnymi.</li>
+    <li><b>Kto odstaje od grupy?</b> Ośrodki, które realizują grupę inaczej niż podobne (nowe, zakładka „Sygnały”).</li>
+  </ol>
+</section>
+
+<section id="architektura" aria-labelledby="h-arch">
+  <span class="kicker">2 · Architektura</span>
+  <h2 id="h-arch">Architektura informacji</h2>
+<pre>FunduszDanych
+├─ /                        Strona główna: wyszukiwarka, pasek faktów, ścieżki, wykresy, działy
+├─ /analizy                 Eksplorator: wspólny kontekst + widoki-pytania
+│   ├─ W czasie             t=w (domyślny)
+│   ├─ Kto leczy            t=k
+│   ├─ Tryb przyjęcia       t=a
+│   └─ Gdzie                t=g
+├─ /hospitalizacje          Karta „Hospitalizacje w Polsce”: podsumowanie wszystkich grup i lat
+├─ /jgp                     Katalog grup JGP
+├─ /jgp/[kod]               Karta grupy (ok. 700 stron statycznych)
+├─ /szpitale                Profil szpitala + Porównanie (hv=c); docelowo /szpitale/[id]
+├─ /szukaj.json             Indeks wyszukiwarki (budowany statycznie)
+└─ /o-danych                Metodologia, źródła, zmiany katalogu</pre>
+  <p><b>Eksplorator</b> odpowiada na pytania o dowolny zakres. <b>Karty obiektów</b> odpowiadają na pytanie „pokaż mi wszystko o X”: mają stały adres, można je linkować w artykułach i są indeksowane przez wyszukiwarki. Każdy wiersz tabeli w eksploratorze prowadzi do karty szpitala albo grupy JGP.</p>
+</section>
+
+<section id="eksplorator" aria-labelledby="h-eks">
+  <span class="kicker">3 · /analizy</span>
+  <h2 id="h-eks">Eksplorator: wspólny kontekst</h2>
+  <p>Kontekst ustawia się raz, na górze, i obowiązuje we wszystkich widokach:</p>
+  <ul>
+    <li><b>Zakres JGP</b>: jedna lub kilka grup (później także całe sekcje katalogu);</li>
+    <li><b>Obszar</b>: cały kraj, województwo (<code>ow=07</code>) albo miasto siedziby (<code>mc=…</code>); obszar filtruje wszystkie widoki;</li>
+    <li><b>Okres</b>: rok (<code>y</code>); widok „W czasie” pokazuje wszystkie lata.</li>
+  </ul>
+  <p>Ustawienia zaawansowane (metoda <code>&lt;5</code>, próg minimalnej liczby hospitalizacji, wyróżnianie) są w panelu „Więcej filtrów” i pokazują się tylko tam, gdzie działają. Cały stan jest w adresie URL.</p>
+<pre>┌──────────────────────────────────────────────────────────────────────────┐
+│ Analizy hospitalizacji                                                   │
+│ [Zakres JGP: E10 ×] [Obszar: cała Polska ▾] [2025 ▾]    Więcej filtrów ▸ │
+├──────────────────────────────────────────────────────────────────────────┤
+│ W czasie │ Kto leczy │ Tryb przyjęcia │ Gdzie                            │
+├──────────────────────────────────────────────────────────────────────────┤
+│  Hospitalizacje   Zmiana r/r   Zgony   Udział nagłych                    │
+│  Hospitalizacje miesięcznie                         [Rok ▾|Miesiąc]      │
+│  ⚠ Grupa F04 występuje tylko do 2024 r. (zmiana katalogu JGP).           │
+└──────────────────────────────────────────────────────────────────────────┘</pre>
+  <p>Lata, w których grupy nie ma w katalogu, są przerwą na wykresie, a nie zerem. Szczegóły widoków opisuje etap 3 roadmapy.</p>
+</section>
+
+<section id="karta-jgp" aria-labelledby="h-karta">
+  <span class="kicker">4 · /jgp/[kod]</span>
+  <h2 id="h-karta">Karta grupy JGP</h2>
+  <h3>Dziś w aplikacji</h3>
+  <p>Karta istnieje dla każdej grupy z danych (ok. 700 stron, <code>generateStaticParams</code> z <code>build-data/jgp/index.json</code>). Jedna długa strona z sekcjami: „Jak to się zmieniało w czasie”, „Gdzie”, „Kto leczy najwięcej” (ranking, tryb przyjęcia w ośrodkach, wolumen a śmiertelność), „Planowo czy w trybie nagłym”, „Wycena i wartość rozliczeń”. Parametry: <code>?osrodek=OW|NIP</code>, <code>porownanie=podobne</code>, <code>ow=</code>. Kod: <code>src/components/jgp/JgpCard.tsx</code>, dane: <code>scripts/build_jgp_pages.py</code>.</p>
+
+  <h3>Nowy kształt karty</h3>
+  <div class="callout">
+    <p><b>Docelowy układ karty opisuje <a href="karta-jgp-pytania.html">docs/karta-jgp-pytania.html</a></b> (dokument 3, z działającą makietą E10 i zakładką „Sygnały” na realnych danych H52). Ten dokument ma pierwszeństwo przed makietą z poprzedniej wersji tej koncepcji.</p>
+  </div>
+  <p>Dokumenty pomocnicze:</p>
+  <div class="docs">
+    <a class="main" href="karta-jgp-pytania.html"><b>karta-jgp-pytania.html</b><span>Docelowa karta: zakładki Przegląd, Ośrodki, Sygnały; metodyka „Sygnałów”; decyzje.</span></a>
+    <a href="karta-jgp-rok-i-historia.html"><b>karta-jgp-rok-i-historia.html</b><span>Dokument 2: wybór roku i pełna historia; przypadki brzegowe (grupa wycofana, nowa, mała).</span></a>
+    <a href="karta-jgp-h55.html"><b>karta-jgp-h55.html</b><span>Ta sama karta dla H55 (grupa jednodniowa, wskaźnik „&gt; 0 dni”).</span></a>
+    <a href="sygnaly-0-dni-scenariusze.html"><b>sygnaly-0-dni-scenariusze.html</b><span>Scenariusze reguły sygnału dla „0 dni”: iteracja, wagi, zbieżność.</span></a>
+    <a href="sygnaly-65-scenariusze.html"><b>sygnaly-65-scenariusze.html</b><span>Te same scenariusze dla wskaźnika 65+.</span></a>
+    <a href="sygnaly-udzial-scenariusze.html"><b>sygnaly-udzial-scenariusze.html</b><span>Udział grupy w szpitalu: grupy porównawcze A/P/i.</span></a>
+    <a href="sygnaly-szara-strefa.html"><b>sygnaly-szara-strefa.html</b><span>Szara strefa wokół progu sygnału (przykład: Piła, 65+).</span></a>
+  </div>
+</section>
+
+<section id="dane" aria-labelledby="h-dane">
+  <span class="kicker">5 · Dane</span>
+  <h2 id="h-dane">Dane</h2>
+  <div class="scroll-x">
+    <table>
+      <thead><tr><th>Warstwa</th><th>Plik</th><th>Zawartość</th><th>Stan</th></tr></thead>
+      <tbody>
+        <tr><td>Spis lat</td><td><code>hospitalizations/index.json</code></td><td>lata, najnowszy rok</td><td>jest (2017–2025)</td></tr>
+        <tr><td>1. Trendy</td><td><code>trends.json.gz</code></td><td>JGP × rok × miesiąc / OW × tryb</td><td>jest</td></tr>
+        <tr><td>1a. Trendy według OW</td><td><code>trends-regions/&lt;OW&gt;.json.gz</code></td><td>JGP × rok × miesiąc, plik na każdy OW; tylko przy filtrze obszaru i tylko dla wybranego OW</td><td>jest</td></tr>
+        <tr><td>2. Szczegóły roku</td><td><code>&lt;rok&gt;.json.gz</code></td><td>OW, NIP, produkt, długość, tryb</td><td>jest</td></tr>
+        <tr><td>3. Karta grupy</td><td><code>jgp/&lt;KOD&gt;.json.gz</code> (format v2)</td><td>krotki świadczeniodawca × miesiąc × tryb; rozliczenia w zł</td><td>jest</td></tr>
+        <tr><td>4. Sygnały</td><td><code>signals/&lt;KOD&gt;.json.gz</code></td><td>ośrodek × rok × kwartał: n, 0 dni, 65+, nagłe, zgony, szpital ogółem; rodziny specjalności</td><td>planowane (makieta liczy z danych H52)</td></tr>
+        <tr><td>4a. Grupy profilowe</td><td><code>signals/profiles.json.gz</code></td><td>15 najbliższych szpitali według struktury specjalności, w latach</td><td>planowane</td></tr>
+        <tr><td>Szpitale</td><td><code>szpitale/&lt;id&gt;.json.gz</code></td><td>wszystkie lata dla jednej placówki</td><td>planowane</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <ul>
+    <li>Wszystko, co trafia do aplikacji, ma skrypt w <code>scripts/</code> i dane w <code>public/data/</code> (<code>npm run generate:data</code>, sprawdzenie: <code>verify-static.mjs</code>).</li>
+    <li>Pliki źródłowe 2017–2025 są w <code>data/</code> (plik „2019_2021” zawiera lata 2017–2021). Skrypty czytają go na miejscu, bez zmian w <code>data/</code>. Aplikacja używa wszystkich lat 2017–2025.</li>
+    <li><b>Zmiany katalogu JGP.</b> Kody spoza <code>data/kody_produktu_jgp.csv</code> pochodzą ze słownika API NFZ (<code>data/jgp_benefits_nfz.json</code>). Otwarte: mapowanie następców, żeby trend rodziny był ciągły.</li>
+  </ul>
+</section>
+
+<section id="roadmapa" aria-labelledby="h-road">
+  <span class="kicker">6 · Roadmapa</span>
+  <h2 id="h-road">Etapy: zrobione i do przebudowy</h2>
+  <p>Każdy etap kończy się działającym portalem. Kolejność wynika z zależności. Wcześniejsza wersja roadmapy jest w dokumencie „Przebudowa Atlasu Zdrowia”; ta sekcja ją zastępuje.</p>
+
+  <div class="phase done">
+    <div class="mark"><span class="num">0</span><span class="state">Zrobione</span></div>
+    <div>
+      <h3>Fundament</h3>
+      <p class="goal">Dane wieloletnie, nowe <code>/analizy</code>, szpitale poza eksploratorem.</p>
+      <ul>
+        <li>Dane wieloletnie: plik na rok, trendy miesięczne, trend według województw (od etapu 5: 2017–2025).</li>
+        <li><code>/analizy</code> jako eksplorator pytań: W czasie, Kto leczy, Tryb przyjęcia, Gdzie; filtr obszaru.</li>
+        <li>Profil i porównanie szpitala pod <code>/szpitale</code>, metodologia pod <code>/o-danych</code>, przekierowania starych adresów.</li>
+      </ul>
+      <div class="facts"><div>Commity: <code>735e947</code>, <code>a8b1195</code>, <code>e4fc085</code>, <code>4c0a2da</code> (branch <code>feature/analizy-redesign</code>).</div></div>
+    </div>
+  </div>
+
+  <div class="phase done">
+    <div class="mark"><span class="num">1</span><span class="state">Zrobione</span></div>
+    <div>
+      <h3>Wyszukiwarka</h3>
+      <p class="goal">Jedno pole na stronie głównej i w nagłówku prowadzi do karty grupy albo szpitala.</p>
+      <div class="facts"><div>Commit: <code>89da7a4</code> (<code>feature/portal-search</code>). Indeks <code>/szukaj.json</code>, logika <code>src/lib/search.ts</code>.</div></div>
+    </div>
+  </div>
+
+  <div class="phase done">
+    <div class="mark"><span class="num">1a</span><span class="state">Zrobione</span></div>
+    <div>
+      <h3>Strona główna: nawigacja po danych</h3>
+      <p class="goal">Część pod hero i paskiem faktów prowadzi od pytania do danych (wzór nawigacji: zarobkilekarzy.pl). Bez nowych modułów: tylko to, co działa, plus dotychczasowe kafle „Planowane”.</p>
+      <ul>
+        <li class="ok"><b>Zrobione (4.11, branch <code>feature/homepage-navigation</code>):</b> „Od czego zacząć”: trzy numerowane ścieżki (leczenie → katalog i karty JGP, szpital → profil i porównanie, analiza → eksplorator), każda z odnośnikami na skróty. „Liczby, które warto znać”: karty z wykresem, liczbą, źródłem z oznaczeniem „Szacunek” i linkiem do pełnego widoku: hospitalizacje w latach (→ W czasie), najczęstsze grupy JGP (→ karty grup), mapa województw na 100 tys. wobec średniej Polski (województwo → Gdzie z filtrem <code>ow</code>), tryb przyjęcia w latach (→ Tryb przyjęcia), największe zmiany r/r (→ karty grup, katalog z <code>sort=zmiana</code>). „Wszystkie działy”: lista modułów zamiast kafli; sekcja „Dla analityków” usunięta (jest w ścieżce 03).</li>
+        <li class="ok"><b>Dane:</b> liczone podczas budowania (<code>src/lib/homeStats.ts</code>, metoda konserwatywna jak w eksploratorze); wykresy jako SVG bez Plotly i bez JavaScriptu w przeglądarce (<code>HomeCharts.tsx</code>). Nazwy grup w formie zdania: <code>formatJgpName</code>.</li>
+        <li class="ok"><b>Poprawki (4.11):</b> „Liczby, które warto znać” zawężone do dwóch wykresów: hospitalizacje w latach i najczęstsze grupy JGP. Mapa, tryb przyjęcia i zmiany r/r nie prowadziły do konkretnej podstrony; komponenty zostają w <code>HomeCharts.tsx</code> dla przyszłej karty. Nowe sekcje: „Szpitale publiczne” (histogram łóżek z RPWDL, odsetek SOR, marża netto i liczba podmiotów ze stratą → <code>/szpitale</code> i przykładowy profil) oraz „Porównanie placówek” (trzy kroki, liczba par klasy A, najbliższe szpitale przykładu Nowa Sól → profil i <code>hv=c</code>). Dane: <code>src/lib/hospitalHomeStats.ts</code>.</li>
+        <li class="ok"><b>Karta „Hospitalizacje w Polsce” (4.11):</b> <code>/hospitalizacje</code> według układu z <code>docs/karta-hospitalizacje-podsumowanie.html</code>: nagłówek z czterema liczbami i spisem treści, sekcje Ile? (lata, miesiące), Tryb przyjęcia, Gdzie?, Co leczą? (sekcje katalogu, najczęstsze grupy), Co rośnie, co maleje? (rodziny ręczne <code>SUMMARY_FAMILIES</code>, zmiany r/r), Zgony, Kto leczy? (świadczeniodawcy, udział 10% największych). Każdy wykres ma opis „jak czytać” i link w głąb. Logika: <code>src/lib/hospitalizationSummary.ts</code>; wykres lat na stronie głównej prowadzi do karty.</li>
+        <li class="ok"><b>Karta „Hospitalizacje w Polsce”, rozbudowa (4.11):</b> nowa sekcja „Jak długo trwa pobyt?” (przedziały długości pobytu w latach; NFZ nie podaje liczby dni, więc bez osobodni), tryb przyjęcia i zgony w jednym rzędzie, mapa województw na 100 tys. mieszkańców z suwakiem roku i odtwarzaniem (<code>RegionsTimelineMap</code>, wspólna skala dla lat), sekcja „Za co NFZ płaci najwięcej?” (kwoty NFZ według sekcji i 10 grup z kwotą na hospitalizację, z <code>valuePln</code> plików grup), „Co rośnie, co maleje?”: 7 wzrostów i 7 spadków od pierwszego roku (rodziny liczone razem, próg 1000 hospitalizacji). Karta zmian r/r usunięta. Poprawki: wiersze wzrostów i spadków na tej samej wysokości (<code>chartAlign="start"</code> w <code>DataCard</code>), kwoty od 1 mld w mld zł i kolumna zmiany kwoty od pierwszego roku rozliczeń (2019; zestawienie NFZ nie ma lat 2017–2018), linia 2017 na wykresie miesięcy, długość pobytu jako udziały (%) w latach (tylko 0 dni i 6+ dni, w jednym rzędzie z „Kto leczy?”), sekcje „Obszary leczenia” (hospitalizacje i kwoty sekcji) i „Grupy JGP” (najczęstsze i z największą kwotą), płynne przewijanie do kotwic (<code>scroll-behavior: smooth</code>, <code>data-scroll-behavior</code> w <code>layout.tsx</code>). Katalog <code>/jgp</code>: kolumny „Rozliczenia NFZ” i „Zmiana rozliczeń od 2019” z sortowaniem (<code>sort=kwota|zmiana-kwoty</code>), kwoty z plików grup (<code>readJgpSettlementsFromDisk</code>). Dalej: sekcja „Ile NFZ płaci za hospitalizacje?” (kwoty w latach ze zmianą r/r, średnia kwota na hospitalizację), listy kwot w układzie list obok (bez dopisków), wspólny nagłówek modułu <code>portal/PageHeader</code> na <code>/hospitalizacje</code> i <code>/jgp</code>. Mapa województw w latach (<code>RegionsTimelineMap</code>) odłączona od karty, zostaje w repo. Nagłówek portalu (5.11): nazwa <code>funduszdanych.pl</code> bez podtytułu, znak serca z linią EKG, pozycja menu „Przegląd” zamiast „Hospitalizacje”. Do zrobienia: rodziny w kwotach NFZ (lista <code>SUMMARY_FAMILIES</code> ma tylko 6 rodzin).</li>
+        <li class="ok"><b>Nawigacja (4.11):</b> nowa pozycja „Hospitalizacje”; „Analizy” → „Eksplorator danych”. Menu pod przyciskiem od 1060 px.</li>
+        <li class="ok"><b>Poprawki strony głównej (4.11):</b> nowa ilustracja hero (droga pacjenta: karetka, szpital, łóżko z kroplówką, monitor EKG, dni pobytu); łóżka liczone dla 833 świadczeniodawców (121 bez łóżek w RPWDL, głównie kliniki jednego dnia); SOR jako liczba oddziałów (249) w podmiotach (243); marża netto jako histogram po 2,5 p.p.; ekran ładowania <code>.center-state</code> niższy niż okno, więc link z połowy strony otwiera <code>/szpitale</code> od góry.</li>
+        <li class="ok"><b>Poprawki (4.11, wieczór):</b> nazwa serwisu „FunduszDanych” (<code>SITE_NAME</code>); finanse na stronie głównej tylko dla szpitali z sieci PSZ (nowy plik <code>psz.json.gz</code> ← <code>scripts/build_psz.py</code> z wykazu NFZ, 557 NIP); tytuły w kroju Inter Tight 400 (<code>--font-display</code>); przykład porównania z 5 parami (równa wysokość kolumn); „hospitalizacje JGP” w tytułach, bo NFZ rozlicza też pobyty poza JGP.</li>
+        <li class="ok"><b>Typografia (5.11, branch <code>feature/typography-tokens</code>):</b> jedna skala w <code>globals.css</code>: rozmiary <code>--fs-*</code> (10–28 px oraz tytuły <code>--fs-title</code>, <code>--fs-section</code>, <code>--fs-display</code>, <code>--fs-hero</code>), cztery grubości <code>--fw-*</code> (400/500/600/700) zamiast 29 rozmiarów i 11 grubości. Kroje przez zmienne <code>--font-body</code> (Inter) i <code>--font-display</code> (Inter Tight). Wszystkie h1 krojem display 400; Mantine <code>headings</code> też. Wyjątek: płynne rozmiary (<code>clamp</code> z <code>cqw</code>) w profilu szpitala. Test <code>typographyTokens.test.ts</code> pilnuje skali.</li>
+        <li class="ok"><b>Poprawka (5.11):</b> rząd lat na karcie JGP (<code>.years</code>) poszerzał stronę na telefonie do ok. 700 px. Poniżej 700 px rząd przewija się poziomo (zanikające brzegi), a wybrany rok jest przewijany do widoku.</li>
+        <li class="ok"><b>Ikona karty przeglądarki (5.11, branch <code>feature/favicon</code>):</b> znak serca z linią EKG na zielonym tle (<code>src/app/icon.svg</code>, jak <code>BrandMark</code> w nagłówku) i <code>src/app/apple-icon.png</code> 180 px dla ekranu głównego iOS. Next dodaje linki w <code>&lt;head&gt;</code> sam (konwencja plików metadanych).</li>
+        <li><b>Dalej:</b> więcej rodzin w <code>SUMMARY_FAMILIES</code> (przegląd katalogu NFZ); weryfikacja nazw sekcji JGP.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="phase done">
+    <div class="mark"><span class="num">2</span><span class="state">Zrobione</span></div>
+    <div>
+      <h3>Kompletna karta grupy na E10</h3>
+      <p class="goal">Karta E10 z trendem, rankingiem, mapą województw, trybem przyjęcia, wykresami punktowymi i wyceną; parametr <code>?osrodek=</code>.</p>
+      <div class="facts"><div>Commity: <code>c5f1901</code> do <code>17e16ba</code> (<code>feature/jgp-card-complete</code>): mapa z PRG, dane budowane skryptami, paleta (zielony interfejs, niebieskie dane).</div></div>
+    </div>
+  </div>
+
+  <div class="phase done">
+    <div class="mark"><span class="num">3</span><span class="state">Zrobione</span></div>
+    <div>
+      <h3>Cały katalog</h3>
+      <p class="goal">Karty wszystkich ok. 700 grup i katalog <code>/jgp</code>.</p>
+      <div class="facts"><div>Commity: <code>d123c6d</code>, <code>20d590b</code> (oś liniowa na wykresach punktowych). Dokumenty koncepcyjne kart: <code>7729234</code>, <code>743b25a</code>.</div></div>
+      <ul>
+        <li class="ok"><b>Zrobione (3.11): mini-wykresy w katalogu tylko w okresie istnienia kodu.</b> Lata bez kodu w katalogu (286 z 780 grup) są przerwą, a nie zerem; w roku wejścia i wycofania kodu linia zaczyna się od pierwszej i kończy na ostatniej hospitalizacji (<code>limitSeriesToActiveYears</code>). Oś zostaje wspólna dla wszystkich wierszy 2017–2025, bez przerywanej linii w środku.</li>
+        <li class="ok"><b>Zrobione (3.11): lata kodu i grupy wycofane w katalogu.</b> Przy nazwie badge „od 2019”, „do 2018”, „2019–2022” (<code>availabilityLabel</code>); kod obecny przez cały okres nie ma badge. „Pokaż grupy wycofane” pokazuje je na górze listy (od największej liczby hospitalizacji w roku wycofania). Zakładka „Grupy” podaje liczbę wszystkich grup (780), a nie tylko aktywnych w ostatnim roku.</li>
+        <li class="ok"><b>Zrobione (3.11): czytelność katalogu.</b> Cztery KPI (aktywne, hospitalizacje, nowe, wycofane osobno); „—” = grupy nie było w katalogu w danym roku, 0 = była bez hospitalizacji; filtry i sortowanie w adresie (<code>jgpCatalogUrlState.ts</code>: <code>q</code>, <code>rodzaj</code>, <code>min</code>, <code>wycofane</code>, <code>sort</code>, <code>kier</code>); Commit <code>3e096ee</code>. „Wyczyść filtry” (zawsze na miejscu, nieaktywny bez filtrów); licznik wyników; listy zmian z latami i progiem; podświetlenie wiersza; nagłówek tabeli z paskiem „Grupy JGP” przypięty pod nagłówkiem strony (<code>--atlas-header-height</code> z <code>SiteHeader</code>); na telefonie tylko kod i nazwa.</li>
+        <li><b>Do decyzji:</b> przywracanie pozycji przewijania i liczby wczytanych wierszy po powrocie z karty; klikalny cały wiersz (odradzone).</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="phase done">
+    <div class="mark"><span class="num">3a</span><span class="state">Zrobione</span></div>
+    <div>
+      <h3>Scalenie łańcucha do <code>feature/homepage</code></h3>
+      <p class="goal">Łańcuch od <code>feature/analizy-redesign</code> do <code>feature/jgp-scatter-linear-axis</code> trafia do otwartego branchu <code>feature/homepage</code>, a nie do <code>main</code>. Do <code>main</code> idzie później <code>feature/homepage</code> w całości. Opis zależności: <a href="branche.md">docs/branche.md</a>.</p>
+      <ul>
+        <li class="ok"><b>Zrobione (2.11):</b> <code>main</code> z PR #18 (suwak par) dołączony do łańcucha. Konflikty: <code>Dashboard.tsx</code> i test stanu szpitala w eksploratorze usunięte (łańcuch przeniósł profil pod <code>/szpitale</code>); parametr <code>pd</code> (dystans par) przeniesiony do <code>hospitalUrlState.ts</code>, <code>HospitalsPage</code> i przekierowania dawnych adresów <code>/analizy?t=h</code>.</li>
+        <li class="ok"><b>Zrobione (2.11):</b> typecheck, lint, testy (45 plików, 358 testów) i build (statyczny eksport, ponad 700 kart grup) przechodzą po scaleniu.</li>
+        <li class="ok"><b>Zrobione:</b> PR z <code>feature/jgp-scatter-linear-axis</code> do <code>feature/homepage</code>. Scalenie z #18 zostaje (decyzja 2.11): <code>feature/homepage</code> i tak trafi do <code>main</code>.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="phase done">
+    <div class="mark"><span class="num">4</span><span class="state">Zrobione</span></div>
+    <div>
+      <h3>Przebudowa karty grupy według dokumentu 3</h3>
+      <p class="goal">Karta z obecnej długiej strony zmienia się w układ z <a href="karta-jgp-pytania.html">karta-jgp-pytania.html</a>, na razie z dwiema zakładkami: Przegląd i Ośrodki. Zakładka „Sygnały” to osobny etap 7.</p>
+      <p class="goal"><b>Stan (4.11, branch <code>feature/jgp-tabbed-card-all</code>):</b> nowa karta (<code>JgpTabbedCard</code>) działa dla wszystkich 780 grup; stara karta usunięta.</p>
+      <ul>
+        <li class="ok"><b>Zrobione:</b> nagłówek 2×2 (hospitalizacje, kwota NFZ, śmiertelność, ośrodki z r/r) i obszar; przyklejony pasek zakładek na całą szerokość, złączony z nagłówkiem portalu, z kodem i nazwą grupy po przewinięciu; zakładka w adresie <code>widok=osrodki</code>; link z <code>?osrodek=</code> otwiera „Ośrodki”.</li>
+        <li class="ok"><b>Zrobione, Przegląd:</b> Ile? (miesiące, miary: hospitalizacje, śmiertelność w % i % nagłych jako udziały z 3 miesięcy; tytuł sekcji zmienia się z miarą; wyższy wykres z objaśnieniem pod osią) → Gdzie? (mapa roku i mapa ciepła lat, bez ramki „podaż, nie potrzeby”; rok w tabeli zmienia mapę (klikalny cały nagłówek roku, wąskie kolumny lat równej szerokości, tło roku nie wchodzi na sąsiednią kolumnę, polskie dzielenie nazw województw na telefonie), przycisk „Ośrodki w wybranych województwach” (otwiera tabelę „Kto leczy?”), „Wyczyść wybór”, kontrastowe obwódki wyboru) → Za ile? (kwota NFZ w latach, średnio na hospitalizację, liczby po prawej) → Jak przyjmowani są pacjenci? (tryb i śmiertelność w latach).</li>
+        <li class="ok"><b>Zrobione, Ośrodki:</b> linie 15 największych ośrodków z najechaniem i wyborem kliknięciem, zwarty pasek ośrodka ze „Szczegółami”; pasek struktury i pełny ranking z r/r, udziałem i mini-trendem; „Jak leczą?” (tryb w ośrodkach i śmiertelność; granice lejka przy co najmniej 30 zgonach, poniżej same punkty; zawsze wszystkie ośrodki, przy wybranych województwach ich ośrodki w kolorach z mapy, reszta szara). Wybrany ośrodek: czerwona gwiazdka ★ na wykresach punktowych (opis tylko w podpowiedzi, po najechaniu gwiazdka rośnie), czerwona linia z podpisem na wykresie 15 ośrodków (pozostałe linie szare), ★ w tabeli, pasku i legendzie; kolory województw spójne na mapie, wykresach punktowych i w tabeli (kropka przy nazwie); ośrodek przestaje być wybrany, gdy jego województwo przestaje być aktywne; kolory województw bez czerwieni i pomarańczu, czerwona gwiazdka z cienką białą obwódką; tło wybranego roku na wykresach liniowych („Ile?” w obu zakładkach) i jedno tło kolumny roku w mapie ciepła; linie województw w „Ile?” liczone z ośrodków wszystkich lat (nie zmieniają się po zmianie roku).</li>
+        <li class="ok"><b>Zrobione (2.11):</b> „Jak wygląda rodzina?” dla E10, H52 i H55 (rodziny OZW: E10, E11, E12G, E15, E16, E17G; zabiegi na kręgosłupie: H51, H52, H53, H55; lista redakcyjna w <code>src/lib/jgpGroupInfo.ts</code>, udziały z trendów); opis grupy w nagłówku (opis redakcyjny, bo słownik NFZ podaje tylko nazwy); wybór roku na pasku (<code>rok=</code> w adresie): liczby, mapa, ranking i wykresy ośrodków dla wybranego roku, ośrodki z wcześniejszych lat z pliku grupy.</li>
+        <li class="ok"><b>Zrobione (5.11, branch <code>feature/jgp-card-sections</code>, według <a href="karta-jgp-pytania.html">karta-jgp-pytania.html</a>):</b> „Za ile?” i „Jak przyjmowani są pacjenci?” w jednym wierszu, 2 kolumny (na wąskim ekranie jedna pod drugą); „Za ile?”: wycena i kwota z r/r nad słupkami, kwota w mln zł nad słupkiem, bez „Średnio na hospitalizację” i bez wartości pod słupkami (kwoty NFZ są liczone na pacjenta); „Jak przyjmowani są pacjenci?” bez śmiertelności (jest w „Ile?”). Mapa ciepła „Gdzie?”: liczby na 100 tys. bez miejsc dziesiętnych.</li>
+        <li><b>Przeniesione do etapu 8 (5.11):</b> „Jak wygląda rodzina?” jako 2 wykresy (zmiana liczby i udziału wariantów).</li>
+        <li class="ok"><b>Zrobione (3.11): grupy E i H na nowej karcie.</b> Grupa wycofana albo nowa pokazuje tylko lata, w których jest w katalogu (np. E03: 2017–2018, HK11: 2025), i otwiera się na ostatnim roku grupy (<code>limitToCatalogYears</code>, <code>defaultCardYear</code>). „% nagłych” w „Ile?” ma oś dopasowaną do danych, nie od zera. Mapa ciepła z 9 latami jest ścieśniona (lata „’17”, wąskie kolumny) i mieści się obok mapy.</li>
+        <li class="ok"><b>Naprawione (4.11, branch <code>bugfix/jgp-card-scroll-jumps</code>): skoki strony w zakładce „Ośrodki”.</b> Zmiana roku przesuwała stronę w górę (do ok. 230 px), gdy widok był przy dolnych wykresach. Przyczyna: przeglądarka wybierała wiersz tabeli „Kto leczy?” jako kotwicę przewijania strony, a nowy rok zmienia kolejność wierszy. Poprawka: <code>overflow-anchor: none</code> na <code>.scrollTable</code>. Ten sam mechanizm jest prawdopodobną przyczyną drżenia ekranu przy najechaniu na szpital w tabeli po przycisku „Ośrodki w wybranych województwach” (zgłoszenie 4.11; nie odtworzone w Chrome, do sprawdzenia w przeglądarce zgłaszającego).</li>
+        <li class="ok"><b>Zrobione (4.11, branch <code>feature/jgp-tabbed-card-all</code>): nowa karta dla wszystkich 780 grup.</b> Sekcje A–D, F, G, J–T i Z mają kartę w zakładkach; stara karta <code>JgpCard</code> usunięta razem z elementami z listy „Do usunięcia” i ok. 420 liniami nieużywanych stylów. Mapa województw w <code>RegionMap.tsx</code>; z <code>src/lib/jgpCard.ts</code> usunięte <code>topShare</code> i <code>poolAdmissions</code>. Strona grupy w <code>dist/</code>: 230–500 KB HTML (każda karta ma ośrodki ze wszystkich lat).</li>
+        <li class="ok"><b>Zrobione (4.11): „Ile?” w miesiącach albo latach.</b> Przełącznik „Miesiące / Lata” w nagłówku sekcji „Ile?” (w miejscu etykiety „Lata”) w obu zakładkach; okres wspólny dla zakładek, w adresie <code>okres=lata</code> (bez parametru: miesiące). Rok = suma miesięcy (udział z sum roku), punkt w połowie roku, podpis roku pod punktem; rok niepełny ma w podpowiedzi liczbę miesięcy. Wykres ma tę samą wysokość w obu okresach (objaśnienie pod osią ma tyle samo zdań).</li>
+        <li><b>Zamknięte (5.11).</b> Dalej: rodziny (w tym 2 wykresy „Jak wygląda rodzina?”): etap 8; opisy grup: etapy 4b i 4c; „Sygnały”: etap 7.</li>
+      </ul>
+      <p class="goal">Pierwotny zakres:</p>
+      <ul>
+        <li class="ok"><b>Nagłówek:</b> opis grupy, wycena, obszar po lewej; cztery liczby 2×2 po prawej. Pasek zakładek i lat przyklejony przy przewijaniu; miejsce na trzecią zakładkę.</li>
+        <li class="ok"><b>Zakładka „Przegląd”:</b> tytuły-pytania; kolejność Ile? → Gdzie? (mapa roku i heatmapa lat) → Za ile? (wykres po lewej, liczby po prawej) → Jak przyjmowani są pacjenci? (tryb i śmiertelność w jednej tabeli) → Jak wygląda rodzina? (udziały w latach).</li>
+        <li class="ok"><b>Zakładka „Ośrodki”:</b> linie 15 największych ośrodków z wyborem kliknięciem i zwartym paskiem ośrodka; pasek struktury i pełny ranking z mini-trendem; „Jak leczą?” (tryb w ośrodkach, lejek śmiertelności).</li>
+        <li class="ok"><b>Usunięte (4.11):</b> „Ośrodki w czasie”, kafelki koncentracji, zwykły wykres wolumen a śmiertelność, sekcja „Najważniejsze”, pole „Pokaż ośrodek”.</li>
+      </ul>
+      <div class="facts"><div>Zależy od: nic (etap 3a zamknięty). Karta działa na latach z danych (od etapu 5: 2017–2025).</div><div>Otwarte decyzje: sekcja 7.</div></div>
+    </div>
+  </div>
+
+  <div class="phase next">
+    <div class="mark"><span class="num">4a</span><span class="state">Następny</span></div>
+    <div>
+      <h3>Kalibracja estymacji wartości „&lt;5”</h3>
+      <p class="goal">Liczby portalu różnią się od sum NFZ, bo małe komórki „&lt;5” liczymy jako 1 (metoda min, na kartach) albo losujemy 1–4 (metoda sim).</p>
+      <ul>
+        <li><b>Stan (2.11):</b> porównanie z API statystyk JGP NFZ za 2024 r. (tabela „Dane ogólne”): E10 – NFZ 8 995, min 8 236 (92%), sim 12 173 (135%); H52 – NFZ 23 531, min 17 545 (75%), sim 24 072 (102%); H55 – NFZ 30 971, min 26 089 (84%), sim 29 239 (94%).</li>
+        <li><b>Do zrobienia:</b> skrypt w <code>scripts/</code> porównujący sumy NFZ z min i sim dla wszystkich grup i lat; ocena wzoru różnic (małe i duże grupy, udział komórek „&lt;5”); wybór metody: kalibracja „&lt;5” do sumy NFZ w roku albo sumy NFZ na karcie obok liczb z danych szczegółowych; wpływ na rankingi ośrodków.</li>
+      </ul>
+      <div class="facts"><div>Zależy od: nic (analiza danych). Wpływa na: etap 4 (liczby na kartach) i etap 7 (sygnały liczone z tych samych danych).</div></div>
+    </div>
+  </div>
+
+  <div class="phase now">
+    <div class="mark"><span class="num">4b</span><span class="state">Teraz</span></div>
+    <div>
+      <h3>Rozpoznania i procedury grup z API NFZ</h3>
+      <p class="goal">Co obejmuje każda grupa JGP, z oficjalnego źródła: API statystyk JGP NFZ (<code>app-stat-api-jgp</code>), dla każdej grupy i roku (dostępne 2013–2024).</p>
+      <ul>
+        <li><b>Tabele w API:</b> rozpoznania ICD-10 (rozpoznanie główne, do 10 najczęstszych), procedury ICD-9 z listy kierunkowej (kwalifikujące pobyt do grupy; pobyt może mieć kilka, więc suma może przekroczyć 100%), wszystkie procedury ICD-9 (także badania i EKG), dane ogólne (liczba hospitalizacji i pacjentów, mediana pobytu). Procent = udział pobytów z danym kodem we wszystkich hospitalizacjach grupy.</li>
+        <li><b>Skrypt i dane:</b> <code>scripts/build_jgp_profiles.py</code> pobiera tabele dla wszystkich grup i lat (z przerwami między zapytaniami) i zapisuje <code>public/data/jgp_profiles.json.gz</code> w krotkach; nazwy kodów ze słowników NFZ (ICD-9 PL, ICD-10) są w odpowiedzi API.</li>
+        <li><b>W aplikacji:</b> opis grupy z danych zamiast prozy redakcyjnej (każde zdanie ze źródłem: rozpoznania, procedury kwalifikujące, mediana pobytu; zdanie o rodzinie z katalogu NFZ); sekcja „Co obejmuje grupa?” na karcie z tabelami rozpoznań i procedur w latach; wyszukiwarka po kodach ICD (np. „I21.4”, „koronarografia”) prowadzi do grup.</li>
+        <li class="ok"><b>Zrobione (5.11, branch <code>feature/jgp-card-sections</code>): dane najnowszego roku grupy.</b> <code>scripts/build_jgp_profiles.py</code> pobiera dla każdej grupy najnowszy rok w API (API ma lata do 2024; grupy wycofane: ich ostatni rok, np. E03 – 2018): dane ogólne, rozpoznania ICD-10 i procedury ICD-9 z listy kierunkowej (do 10 kodów). Odpowiedzi w cache <code>data/nfz_jgp_stats/</code>; wynik <code>build-data/jgp_profiles.json.gz</code> (98 KB, czyta tylko build). Pokrycie: 771 z 780 grup (695 z 2024 r.); 229 grup ma w API tylko rozpoznania z listy kierunkowej (zamiast wszystkich rozpoznań głównych), 250 nie ma procedur z listy kierunkowej, każda ma co najmniej jedną tabelę ICD. Bez danych API: A05, A68, B07, B98B, H03, HK11, HK16, M23, PZA04. API wymaga nagłówka <code>User-Agent</code> (bez niego CDN zwraca HTML). Pobieranie: ok. 3 tys. zapytań, ok. 15 min; uruchamiać przez <code>caffeinate -i</code> (macOS spowalnia pauzy procesów w tle). Skryptu nie ma w <code>generate:data</code>, bo wymaga sieci.</li>
+        <li><b>Do zrobienia:</b> tabele wszystkich lat (sekcja „Co obejmuje grupa?” na karcie, rozpoznania i procedury w latach); wyszukiwarka po kodach ICD; sumy z „Danych ogólnych” do etapu 4a.</li>
+        <li><b>Przykłady (2024):</b> E10 – zawał serca I21.4 57% i I21.9 34%, koronarografia w 99% pobytów; H52 – spondylodeza szyjna 26% i lędźwiowa 20%, odbarczenie kanału kręgowego; H55 – przezskórne odnerwienie powierzchni stawowej wyrostka kręgu w 98% pobytów.</li>
+      </ul>
+      <div class="facts"><div>Zależy od: nic. Zastępuje opisy redakcyjne z etapu 4 (decyzja 6). Sumy z „Danych ogólnych” służą też etapowi 4a.</div></div>
+    </div>
+  </div>
+
+  <div class="phase done">
+    <div class="mark"><span class="num">4c</span><span class="state">Zrobione</span></div>
+    <div>
+      <h3>Poprawa opisów grup: proza ze źródłem</h3>
+      <p class="goal">Czytelny opis grupy (2–4 zdania prozy) zamiast suchej listy kodów, ale każde zdanie musi mieć pokrycie w źródle. Obecne opisy redakcyjne E10, H52 i H55 pochodzą z ogólnej wiedzy i są do wymiany (np. opis H55 jest zbyt ogólny: dane pokazują jeden zabieg w 98% pobytów).</p>
+      <ul>
+        <li><b>Źródła zdań:</b> tabele NFZ z etapu 4b (rozpoznania, procedury kwalifikujące z udziałami, mediana pobytu), katalog grup NFZ (nazwy wariantów i rodzin), dane portalu (np. udział pobytów „0 dni”, przyjęć nagłych). Bez wiedzy spoza tych źródeł.</li>
+        <li><b>Szablon:</b> zdania budowane automatycznie z danych dla każdej grupy, np. „Najczęściej z powodu …; w X% pobytów wykonano …; mediana pobytu …”; zdanie o rodzinie („leczenie inwazyjne rozlicza się w E11, E12G, E15”) z definicji rodzin.</li>
+        <li><b>Redakcja:</b> opcjonalne zdanie redakcyjne dla wybranych grup, sprawdzane z danymi przed publikacją; pod opisem wiersz źródła („NFZ, statystyki JGP 2024; katalog grup NFZ”).</li>
+        <li class="ok"><b>Zrobione (5.11, branch <code>feature/jgp-card-sections</code>): opis z szablonu dla wszystkich grup z danymi API (771 z 780).</b> <code>src/lib/jgpDescription.ts</code> (<code>buildJgpDescription</code>): rozpoznania główne albo rozpoznania z listy kierunkowej (zależnie od tabeli w API), procedury z listy kierunkowej z udziałem w pobytach, mediana pobytu („0 dni” z objaśnieniem), liczba hospitalizacji i pacjentów z odmianą, zdanie o rodzinie z <code>JGP_FAMILIES</code>. Pod opisem wiersz źródła z rokiem i tylko tymi tabelami, z których powstały zdania. Pierwsze zdanie trafia do opisu strony (meta description). Opisy redakcyjne E10, H52 i H55 usunięte. Grupy bez danych API nie mają opisu.</li>
+        <li class="ok"><b>Ustalone:</b> rok danych = najnowszy rok grupy w API (zwykle 2024, inny niż rok karty; podany w wierszu źródła); kod od 5% pobytów, najwyżej 3 w zdaniu (gdy żadne rozpoznanie nie ma 5%: zdanie „rozpoznania są rozproszone” z najczęstszym); udział każdej procedury podany osobno („w X% pobytów”), bez sumowania.</li>
+        <li class="ok"><b>Zrobione (5.11): proza dla wszystkich 771 grup z danymi NFZ.</b> Szablon zdań okazał się za suchy (same statystyki), więc każda grupa ma 2–3 zdania prozy w <code>scripts/jgp_opisy/&lt;sekcja&gt;.tsv</code> (kod, opis), napisane na podstawie nazwy grupy, tabel NFZ (rozpoznania, procedury z listy kierunkowej, mediana pobytu) i nazw wariantów rodziny. Test <code>jgpProse.test.ts</code> sprawdza każdy opis z danymi grupy: kody ICD-10 i ICD-9, procenty (±1 pp) i medianę pobytu; oraz że każda grupa z danymi ma opis. Karta pokazuje prozę z wierszem „Opis na podstawie: NFZ, statystyki JGP &lt;rok&gt; (…)”; szablon zostaje dla grup bez prozy. Pierwsze zdanie prozy trafia do opisu strony.</li>
+        <li><b>Do sprawdzenia:</b> kilkanaście grup ma w API mało danych (np. tylko jedno rozpoznanie poniżej 5%); ich opisy opierają się głównie na nazwie grupy i medianie pobytu.</li>
+      </ul>
+      <div class="facts"><div>Zależy od: etap 4b (dane ICD w aplikacji) i definicje rodzin (etap 8). Rozstrzyga decyzję 6 (opis grupy).</div></div>
+    </div>
+  </div>
+
+  <div class="phase now">
+    <div class="mark"><span class="num">5</span><span class="state">Teraz</span></div>
+    <div>
+      <h3>Historia 2017–2023</h3>
+      <p class="goal">Przesunięte wyżej, bo nowa karta i „Sygnały” zakładają wszystkie lata. Branch <code>feature/history-2017-2025</code>.</p>
+      <ul>
+        <li class="ok"><b>Zrobione (2.11): dane 2017–2025.</b> <code>build_hospitalizations.py</code> i <code>build_jgp_pages.py</code> domyślnie budują wszystkie lata. Lata 2017–2021 czytamy na miejscu z <code>data/hospitalizacje_2019_2021.csv</code> (bez nagłówka, wartości ze spacjami, Windows-1250; <code>MULTI_YEAR_SOURCES</code>), bez zmian w <code>data/</code>. Pliki 2024 i 2025 wyszły identyczne jak wcześniej. Plik roku: 2,5–2,8 MB.</li>
+        <li class="ok"><b>Zrobione (2.11): trend według OW w plikach na OW.</b> <code>trends-regions/&lt;OW&gt;.json.gz</code>: 16 plików, razem 8,4 MB (0,4–1 MB na plik) zamiast jednego pliku ok. 9 MB. Przeglądarka pobiera tylko plik wybranego województwa (<code>loadRegionalTrends(ow)</code>). Klucz świadczeniodawcy OW + NIP bez zmian.</li>
+        <li class="ok"><b>Zrobione (2.11): nazwy kodów JGP 2017–2025.</b> 5976 par rok × kod: 5683 z bieżącego katalogu, 288 ze słownika NFZ, 5 z listy ręcznej <code>scripts/jgp_kody_uzupelnienie.csv</code> (2 kody: <code>5.51.01.0016070</code> z 2018 r. i <code>5.58.01.0000001</code> z lat 2020–2023, brak w słownikach NFZ, kilkadziesiąt wierszy „&lt;5”). <code>build_hospitalizations.py</code> czyta też nazwy z zestawienia świadczeń NFZ: dla lat 2017–2025 nic nie dodaje, ale ma już kody 2026 (np. HK01–HK15).</li>
+        <li class="ok"><b>Zrobione (2.11): punkty kontrolne E10 dla każdego roku</b> w <code>verify-static.mjs</code>, liczone niezależnie z plików źródłowych; brak punktu dla roku = błąd.</li>
+        <li class="ok"><b>Zrobione (2.11): karta i eksplorator z 9 latami.</b> Pasek lat 2017–2025 na karcie grupy; oś X wykresów miesięcznych podpisuje kwartały do 3 lat, półrocza do 6 lat, dalej tylko lata (<code>monthAxis</code>); od 5 lat mapa ciepła „Gdzie?” jest ścieśniona i zostaje obok mapy. Strony grup: 780 (grupy historyczne też mają kartę), razem 32,7 MB, największy plik E53G 361 KB.</li>
+        <li class="ok"><b>Zrobione (4.11): nazwy świadczeniodawców z lat wcześniejszych.</b> 111 par OW + NIP (103 NIP-y) bez nazwy dostało nazwę i miejscowość z listy ręcznej, sprawdzonej w źródłach publicznych (NFZ, KRS, rejestry). Lista jest w <code>data/szpitale_uzupelnienie.csv</code> (jak pozostałe uzupełnienia; nowe kolumny: źródło i status identyfikacji). Po przebudowie żaden rok nie ma nazwy zastępczej „Świadczeniodawca NIP …”; liczby w plikach lat bez zmian. Do sprawdzenia: 22 pozycje ze statusem „wymaga weryfikacji NFZ”.</li>
+        <li><b>Do zrobienia: mapowanie zmian katalogu JGP</b> (następcy kodów, rodziny). Przykład: E10 do września 2017 r. ma ok. 2 razy więcej hospitalizacji miesięcznie niż od października 2017 r. (zmiana katalogu), więc trend E10 ma skok w 2017 r.</li>
+        <li class="ok"><b>Zrobione (4.11): lżejszy format plików hospitalizacji.</b> Pliki lat (v2), <code>trends.json.gz</code> (v2) i <code>trends-regions/</code> (v3): słowniki zamiast powtarzanych tekstów i zapis kolumnowy; <code>src/lib/hospitalizationCodec.ts</code> odtwarza wiersze w przeglądarce i w buildzie, <code>verify-static.mjs</code> sprawdza indeksy. <code>hospitalizations/</code>: 34,7 → 17,5 MB (plik roku 2,8 → 1,3 MB, <code>trends.json.gz</code> 2,5 → 1,4 MB); dane po dekodowaniu identyczne. Raport: <a href="dane-public-strony.html">dane-public-strony.html</a> (które pliki z <code>public/</code> czyta build, a które przeglądarka, na której podstronie).</li>
+        <li class="ok"><b>Zrobione (4.11): pliki grup JGP kolumnami.</b> <code>build-data/jgp/&lt;KOD&gt;.json.gz</code> w formacie v3 (wiersze jako kolumny, <code>decodeJgpGroupFile</code>): 32,7 → 15,9 MB, największy E53G 361 → 163 KB; dane i strony grup bez zmian.</li>
+        <li class="ok"><b>Zrobione (4.11): dane grup JGP poza <code>public/</code>.</b> <code>build-data/jgp/</code> (781 plików, 16 MB): czyta je tylko build, więc nie trafiają do <code>dist/</code> ani na serwer (<code>dist/</code> ma ok. 780 plików mniej). Zostają osobne pliki grup (uzasadnienie w raporcie, sekcja 6a). <code>regions-map.json.gz</code> też czyta tylko build; na razie zostaje w <code>public/</code>.</li>
+        <li><b>Do decyzji:</b> pliki danych w historii gita: ok. 117 MB; każda przebudowa dodaje kilkadziesiąt MB (do decyzji: Git LFS albo dane budowane w CI).</li>
+        <li><b>Do sprawdzenia:</b> <code>trends.json.gz</code> (zawsze ładowany w „W czasie” i „Gdzie”) urósł z 0,6 do 2,4 MB; ludność województw tylko z 2024 r. (wskaźnik na 100 tys. w starszych latach liczony z ludności 2024).</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="phase">
+    <div class="mark"><span class="num">6</span><span class="state">Potem</span></div>
+    <div>
+      <h3>Karty szpitali</h3>
+      <p class="goal">Katalog <code>/szpitale</code> i statyczne <code>/szpitale/[id]</code> w układzie karty grupy: grupy JGP z miejscem w kraju, tryb przyjęcia, oddziały, rozliczenia i finanse, porównanie na dole. Kody JGP prowadzą do karty grupy z tym szpitalem.</p>
+    </div>
+  </div>
+
+  <div class="phase">
+    <div class="mark"><span class="num">7</span><span class="state">Potem</span></div>
+    <div>
+      <h3>Zakładka „Sygnały” na karcie grupy</h3>
+      <p class="goal">Trzecia zakładka karty, widoczna tylko wtedy, gdy co najmniej jeden ośrodek odstaje od grupy. Metodyka: sekcje 4–5 w <a href="karta-jgp-pytania.html">karta-jgp-pytania.html</a>.</p>
+      <ul>
+        <li>Siatka ośrodek × wskaźnik × rok, liczona po latach i kwartałach (kreski I–IV pod komórką); lejek kwartałów wybranego roku; małe wykresy ośrodka w kwartałach.</li>
+        <li>Wskaźniki: „0 dni” (albo „&gt; 0 dni”), 65+, nagłe, śmiertelność (gdy grupa &gt; 2%), udział grupy w szpitalu z grupą porównawczą A/P/i; ocena oddziałów z RPWDL (2024–2025).</li>
+        <li>Nowy skrypt <code>scripts/build_signals.py</code> i dane z sekcji 5 (warstwy 4 i 4a); opis metody na <code>/o-danych</code>.</li>
+        <li>Ośrodek z sygnałem prowadzi do karty szpitala (etap 6).</li>
+      </ul>
+      <div class="facts"><div>Zależy od: etap 4 (układ z zakładkami), etap 5 (historia), etap 6 (karty szpitali, linki z sygnałów). Przed wdrożeniem: decyzje 1–5 z sekcji 7 (karta grupy).</div></div>
+    </div>
+  </div>
+
+  <div class="phase">
+    <div class="mark"><span class="num">8</span><span class="state">Potem</span></div>
+    <div>
+      <h3>Rodziny grup</h3>
+      <p class="goal">Karta <code>/jgp/rodziny/[nazwa]</code>: struktura rodziny w czasie i szpital na tle mediany. Sekcja „Jak wygląda rodzina?” na karcie grupy jest pierwszym krokiem.</p>
+      <ul>
+        <li><b>Do zrobienia (z etapu 4, koncepcja 2.11 w <a href="karta-jgp-pytania.html">karta-jgp-pytania.html</a>):</b> „Jak wygląda rodzina?” na karcie grupy jako 2 wykresy: zmiana liczby hospitalizacji wariantów (nominalnie i w %, z wierszem „Razem”) i zmiana udziału, oba od pierwszego do wybranego roku.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="phase">
+    <div class="mark"><span class="num">9</span><span class="state">Opcja</span></div>
+    <div>
+      <h3>Wyszukiwarka z AI i nowe moduły</h3>
+      <p class="goal">Tłumacz luźnych pytań na adresy kart (liczby zawsze z plików portalu); moduły Wyceny i Artykuły.</p>
+    </div>
+  </div>
+</section>
+
+<section id="decyzje" aria-labelledby="h-dec">
+  <span class="kicker">7 · Do decyzji</span>
+  <h2 id="h-dec">Otwarte decyzje</h2>
+  <h3>Eksplorator</h3>
+  <ol>
+    <li>Czy „Kto leczy” i „Tryb przyjęcia” zostają osobnymi widokami, czy łączymy je w jeden widok z przełącznikiem miary?</li>
+    <li>Czy profil szpitala ma pokazywać wybrany rok? Dziś zawsze najnowszy, bo finanse i model par są liczone dla najnowszego roku.</li>
+    <li>Jak prezentować grupy, które zmieniły się w katalogu: przerwa w trendzie czy łączenie w rodziny?</li>
+  </ol>
+  <h3>Karta grupy i „Sygnały”</h3>
+  <ol>
+    <li>Sygnały z nazwami szpitali: na karcie publicznej czy w widoku analitycznym?</li>
+    <li>Niezgodności z RPWDL: pokazywać jako „niezgodność danych” z opisem źródła?</li>
+    <li>Odniesienie wskaźnika udziału: dziś tylko podobne szpitale z co najmniej 30 hospitalizacjami grupy. Propozycja: podobne szpitale z co najmniej 1 hospitalizacją; próg 30 tylko dla szpitala ocenianego (szczegóły w dokumencie 3).</li>
+    <li>Poziom „i” (brak podobnych szpitali): pokazywać wartość z opisem czy ukryć wskaźnik?</li>
+    <li>Próg sygnału: |z| &gt; 3 i nadwyżka ≥ 20 hospitalizacji; sprawdzić na innych grupach, czy próg 20 nie gubi małych ośrodków (alternatywa: 11, jak w PEPPER).</li>
+    <li>Opis grupy: słownik NFZ ma tylko nazwy. Na start opisy redakcyjne dla E10, H52 i H55; czy pisać je dla kolejnych grup ręcznie (np. dla największych)?</li>
+    <li>Tytuły sekcji jako pytania czy jako nazwy?</li>
+  </ol>
+</section>
+
+<section id="historia" aria-labelledby="h-hist">
+  <span class="kicker">8 · Tło</span>
+  <h2 id="h-hist">Punkt wyjścia</h2>
+  <p>Pierwsze <code>/analizy</code> to przeniesiony dashboard z POC: panel filtrów po lewej i karty, z których każda pokazywała jeden wykres albo profil szpitala. Problemy, które rozwiązała przebudowa:</p>
+  <ul>
+    <li>karty były nazwane od wykresu, a nie od pytania;</li>
+    <li>na pierwszym planie były ustawienia techniczne (metoda estymacji <code>&lt;5</code>);</li>
+    <li>wybór JGP żył w panelu, a nie jako wspólny kontekst modułu;</li>
+    <li>nie było osi czasu, a przy wielu latach to najważniejszy wymiar;</li>
+    <li>każdy nowy przypadek użycia oznaczał kolejną kartę z kolejnym wykresem.</li>
+  </ul>
+</section>
+
+</main>
+</body>
+</html>
