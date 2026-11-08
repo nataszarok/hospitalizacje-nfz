@@ -44,7 +44,7 @@ describe("Karta „Hospitalizacje w Polsce”", () => {
     renderPage(withExtras());
     expect(screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent)).toEqual([
       "Ile hospitalizacji JGP?", "Ile NFZ płaci za hospitalizacje?", "Jak długo trwa pobyt i kto leczy?", "Jak przyjmowani są pacjenci i ilu umiera w szpitalu?",
-      "Obszary leczenia: co leczą szpitale i za ile?", "Grupy JGP: najczęstsze i z największą kwotą", "Co rośnie, co maleje?",
+      "Obszary leczenia: co leczą szpitale i za ile?", "Ile grup JGP rozlicza NFZ?", "Grupy JGP: najczęstsze i z największą kwotą", "Co rośnie, co maleje?",
     ]);
     for (const card of screen.getAllByRole("article")) {
       expect(card.querySelector("footer a")).not.toBeNull();
@@ -65,7 +65,20 @@ describe("Karta „Hospitalizacje w Polsce”", () => {
     const cardsOf = (name: string) => within(screen.getByRole("region", { name })).getAllByRole("article").map((card) => card.getAttribute("aria-labelledby"));
     expect(cardsOf("Jak długo trwa pobyt i kto leczy?")).toEqual(["summary-stays", "summary-providers"]);
     expect(cardsOf("Obszary leczenia: co leczą szpitale i za ile?")).toEqual(["summary-sections", "summary-value-sections"]);
+    expect(cardsOf("Ile grup JGP rozlicza NFZ?")).toEqual(["summary-jgp-active", "summary-jgp-cohorts"]);
     expect(cardsOf("Grupy JGP: najczęstsze i z największą kwotą")).toEqual(["summary-groups", "summary-value-groups"]);
+  });
+
+  it("pokazuje aktywne grupy JGP w latach oraz grupy stałe i nowe", () => {
+    renderPage();
+    const active = screen.getByRole("article", { name: "Aktywne grupy JGP w latach" });
+    expect(active).toHaveTextContent("Aktywnych grup: 2 w 2025 r., 1 w 2023 r.");
+    expect(within(active).getByRole("img", { name: "Aktywne grupy JGP w latach: 2023 — 1, 2024 — 2 (+1), 2025 — 2 (0)" })).toBeInTheDocument();
+    const cohorts = screen.getByRole("article", { name: "Grupy stałe i nowe" });
+    expect(cohorts).toHaveTextContent("1 z 3 grup było aktywnych w każdym roku 2023–2025.");
+    // Remis (po 1 nowej grupie w 2024 i 2025 r.): pierwszy rok z największą liczbą.
+    expect(cohorts).toHaveTextContent("Najwięcej nowych grup było w 2024 r.: 1. W tym samym roku przestało być aktywnych: 0.");
+    expect(within(cohorts).getByText("Nowe w roku")).toBeInTheDocument();
   });
 
   it("pokazuje wzrosty po lewej i spadki po prawej; rodzina prowadzi do karty głównej grupy", () => {
@@ -102,7 +115,9 @@ describe("Karta „Hospitalizacje w Polsce”", () => {
 
   it("pokazuje kwoty NFZ: sumę, sekcje i grupy z linkiem do karty", () => {
     renderPage(withExtras());
-    expect(screen.getByRole("article", { name: "Kwoty według obszarów leczenia" })).toHaveTextContent("NFZ rozliczył 1 tys. zł za hospitalizacje JGP w 2025 r. (+100,0% od 2024 r.)");
+    expect(screen.getByRole("article", { name: "Kwoty według obszarów leczenia" })).toHaveTextContent("NFZ rozliczył 1 tys. zł za hospitalizacje JGP w 2025 r. (+100,0% od 2024 r.). Średnio 100 zł za hospitalizację.");
+    // Średnia sekcji: A — 900 zł / 9 hospitalizacji.
+    expect(screen.getByRole("list", { name: /według sekcji katalogu JGP/ })).toHaveTextContent("AUkład nerwowy1 tys. zł100 zł");
     const groups = screen.getByRole("list", { name: /Grupy JGP z największą kwotą/ });
     expect(within(groups).getAllByRole("link")[0]).toHaveAttribute("href", "/jgp/A01");
     expect(groups).not.toHaveTextContent("na hospitalizację");

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildHospitalizationSummary, JGP_SECTION_LABELS } from "@/lib/hospitalizationSummary";
+import { buildHospitalizationSummary, JGP_SECTION_LABELS, jgpActivity } from "@/lib/hospitalizationSummary";
 import type { RegionsMap } from "@/lib/jgpCard";
 import type { StaticDataset, TrendsDataset } from "@/lib/staticData";
 import { latestDatasetFixture, trendsFixture } from "./fixtures/trendsFixture";
@@ -59,6 +59,32 @@ describe("buildHospitalizationSummary", () => {
     expect(up[0]).toMatchObject({ family: true, codes: ["B19", "B19G"], series: [1000, 1200, 1500], mainCode: "B19G" });
     expect(up[1]).toMatchObject({ family: false, name: "UDAR", mainCode: "A48" });
     expect(down.map(({ id, changePct }) => [id, changePct])).toEqual([["porod", -50]]);
+  });
+
+  it("liczy aktywne grupy JGP: stałe, wcześniejsze, nowe i te, które zniknęły", () => {
+    // Fixture: A01 we wszystkich latach, F04 do 2024 r., F99 od 2025 r.
+    expect(summary.jgpActivity).toEqual({
+      core: 1,
+      total: 3,
+      years: [
+        { year: "2023", active: 1, core: 1, earlier: 0, new: 0, gone: 0 },
+        { year: "2024", active: 2, core: 1, earlier: 0, new: 1, gone: 0 },
+        { year: "2025", active: 2, core: 1, earlier: 0, new: 1, gone: 1 },
+      ],
+    });
+  });
+
+  it("grupa, która wraca po przerwie, nie jest nowa; grupa bez hospitalizacji nie jest aktywna", () => {
+    const groups = new Map([["A", [1, 1, 1]], ["B", [2, 0, 3]], ["C", [0, 0, 0]], ["D", [5, 5, 0]]]);
+    expect(jgpActivity(["2023", "2024", "2025"], groups)).toEqual({
+      core: 1,
+      total: 3,
+      years: [
+        { year: "2023", active: 3, core: 1, earlier: 2, new: 0, gone: 0 },
+        { year: "2024", active: 2, core: 1, earlier: 1, new: 0, gone: 1 },
+        { year: "2025", active: 2, core: 1, earlier: 1, new: 0, gone: 1 },
+      ],
+    });
   });
 
   it("liczy hospitalizacje w przedziałach długości pobytu z plików roku", () => {

@@ -90,6 +90,22 @@ export interface SummaryValueRow {
   changePct: number | null;
 }
 
+/**
+ * Aktywne grupy JGP w roku: grupy z co najmniej jedną hospitalizacją (metoda konserwatywna).
+ * `core`: grupy aktywne w każdym roku zakresu, `earlier`: pozostałe grupy aktywne już wcześniej,
+ * `new`: grupy, które w tym roku pojawiają się w danych pierwszy raz (w pierwszym roku 0), `gone`: grupy aktywne
+ * w poprzednim roku, a w tym nie.
+ */
+export interface SummaryJgpYear { year: string; active: number; core: number; earlier: number; new: number; gone: number }
+
+export interface SummaryJgpActivity {
+  years: SummaryJgpYear[];
+  /** Grupy aktywne w każdym roku zakresu. */
+  core: number;
+  /** Wszystkie grupy aktywne w co najmniej jednym roku. */
+  total: number;
+}
+
 /** Hospitalizacje na 100 tys. mieszkańców w województwach, rok po roku (wartości w kolejności `regions`). */
 export interface SummaryRegionTimeline {
   map: RegionsMap;
@@ -105,6 +121,7 @@ export interface HospitalizationSummary extends HomeStats {
   /** Miesiące pierwszego, poprzedniego i ostatniego roku (12 wartości; brak danych = `null`). */
   months: { year: string; values: (number | null)[] }[];
   sections: SummarySection[];
+  jgpActivity: SummaryJgpActivity;
   /** Największe wzrosty i spadki od pierwszego roku (rodziny liczone razem). */
   trendChanges: { up: SummaryTrendRow[]; down: SummaryTrendRow[] };
   stays: SummaryStayYear[];
@@ -159,6 +176,30 @@ function regionTimeline(trends: TrendsDataset, datasets: StaticDataset[], map: R
     return { year, national, per100k: regions.map(([owNfz]) => rows.get(owNfz)?.per100k ?? 0) };
   });
   return { map, regions, years };
+}
+
+/** Aktywność grup JGP w latach z serii hospitalizacji grup (kolejność lat jak `years`). */
+export function jgpActivity(years: string[], groups: Map<string, number[]>): SummaryJgpActivity {
+  const series = [...groups.values()].filter((values) => values.some((value) => value > 0));
+  const firstActive = series.map((values) => values.findIndex((value) => value > 0));
+  const isCore = series.map((values) => values.every((value) => value > 0));
+  const core = isCore.filter(Boolean).length;
+  return {
+    core,
+    total: series.length,
+    years: years.map((year, i): SummaryJgpYear => {
+      let active = 0;
+      let added = 0;
+      let gone = 0;
+      series.forEach((values, g) => {
+        if (values[i] > 0) {
+          active++;
+          if (i > 0 && firstActive[g] === i) added++;
+        } else if (i > 0 && values[i - 1] > 0) gone++;
+      });
+      return { year, active, core, earlier: active - core - added, new: added, gone };
+    }),
+  };
 }
 
 function valueRow(code: string, label: string, valuePln: number, firstValuePln: number, hospitalizations: number, total: number): SummaryValueRow {
@@ -249,6 +290,7 @@ export function buildHospitalizationSummary(trends: TrendsDataset, datasets: Sta
     summaryYears,
     months,
     sections: sectionRows,
+    jgpActivity: jgpActivity(years, groups),
     trendChanges,
     stays: stayYears(datasets),
     settlements: settlementSummary(settlements, years, groups, names),

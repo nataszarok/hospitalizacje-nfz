@@ -3,7 +3,7 @@ import { DataCard, Legend } from "@/components/portal/DataCard";
 import { AdmissionBars, GroupBars, YearBars } from "@/components/portal/HomeCharts";
 import { PageHeader, pageContainerClass } from "@/components/portal/PageHeader";
 import { PortalIcon } from "@/components/portal/PortalIcon";
-import { formatPln, MonthLines, SectionChanges, STAY_COLORS, StayShares, TrendRows, ValueBars, ValueRows } from "@/components/summary/SummaryCharts";
+import { formatPln, JGP_ACTIVITY_COLORS, JgpActivityBars, MonthLines, SectionChanges, STAY_COLORS, StayShares, TrendRows, ValueBars, ValueRows } from "@/components/summary/SummaryCharts";
 import { DASHBOARD_HREFS } from "@/lib/dashboardNavigation";
 import { formatYearRange, plnScale } from "@/lib/formatters";
 import { STAY_BUCKETS, TREND_MIN_HOSPITALIZATIONS, type HospitalizationSummary } from "@/lib/hospitalizationSummary";
@@ -27,6 +27,7 @@ const TOC = [
   { id: "dni", label: "Długość pobytu i kto leczy" },
   { id: "tryb", label: "Tryb przyjęcia i zgony" },
   { id: "co", label: "Obszary leczenia" },
+  { id: "aktywne", label: "Ile grup JGP?" },
   { id: "grupy", label: "Grupy JGP" },
   { id: "zmiany", label: "Co rośnie, co maleje?" },
 ];
@@ -62,8 +63,14 @@ export function HospitalizationSummaryPage({ summary }: { summary: Hospitalizati
     const count = hospitalizationsByYear.get(year);
     return count ? [{ year, value: valuePln / count }] : [];
   });
+  const settlementsPerStay = perStay.find((y) => y.year === settlements?.year);
   const valueChange = firstTotal && latestTotal && firstTotal.valuePln ? ((latestTotal.valuePln - firstTotal.valuePln) / firstTotal.valuePln) * 100 : null;
-  const toc = TOC.filter((item) => (item.id !== "kwoty" || settlements) && (item.id !== "zmiany" || trendChanges.up.length || trendChanges.down.length));
+  const activity = summary.jgpActivity;
+  const firstActivity = activity.years[0];
+  const latestActivity = activity.years.at(-1);
+  const mostNew = activity.years.slice(1).reduce<(typeof activity.years)[number] | null>((max, y) => (!max || y.new > max.new ? y : max), null);
+  const signedCount = (value: number) => (value > 0 ? `+${value}` : value < 0 ? `−${-value}` : "0");
+  const toc = TOC.filter((item) => (item.id !== "kwoty" || settlements) && (item.id !== "zmiany" || trendChanges.up.length || trendChanges.down.length) && (item.id !== "aktywne" || latestActivity));
 
   return <main id="main-content" className={styles.page}>
     <PageHeader
@@ -259,9 +266,9 @@ export function HospitalizationSummaryPage({ summary }: { summary: Hospitalizati
             id="summary-value-sections"
             kicker={`Rozliczenia NFZ · ${settlements.year}`}
             title="Kwoty według obszarów leczenia"
-            lead={latestTotal ? <>NFZ rozliczył <strong>{formatPln(latestTotal.valuePln)}</strong> za hospitalizacje JGP w {settlements.year} r.{valueChange !== null && firstTotal ? <> ({signedPct(valueChange)} od {firstTotal.year} r.)</> : null}</> : null}
+            lead={latestTotal ? <>NFZ rozliczył <strong>{formatPln(latestTotal.valuePln)}</strong> za hospitalizacje JGP w {settlements.year} r.{valueChange !== null && firstTotal ? <> ({signedPct(valueChange)} od {firstTotal.year} r.).</> : null}{settlementsPerStay ? <> Średnio <strong>{integer(settlementsPerStay.value)} zł</strong> za hospitalizację.</> : null}</> : null}
             description={<>
-              <p>Kwota to wartość świadczeń rozliczonych przez NFZ w grupach JGP, zsumowana dla sekcji katalogu (pierwsza litera kodu). Ostatnia kolumna: zmiana kwoty od {settlements.firstYear} r., pierwszego roku w zestawieniu rozliczeń NFZ.</p>
+              <p>Kwota to wartość świadczeń rozliczonych przez NFZ w grupach JGP, zsumowana dla sekcji katalogu (pierwsza litera kodu). Kolumna „Na hosp.”: kwota sekcji podzielona przez liczbę hospitalizacji sekcji w {settlements.year} r. Ostatnia kolumna: zmiana kwoty od {settlements.firstYear} r., pierwszego roku w zestawieniu rozliczeń NFZ.</p>
               <p>Kwota to przychód szpitala z NFZ, a nie zysk. Dane nie zawierają kosztów leczenia, więc nie pokazują, które leczenie jest dla szpitala opłacalne.</p>
             </>}
             href="/jgp"
@@ -274,6 +281,51 @@ export function HospitalizationSummaryPage({ summary }: { summary: Hospitalizati
           </DataCard> : null}
         </div>
       </section>
+
+      {firstActivity && latestActivity ? <section id="aktywne" className={styles.section} aria-labelledby="aktywne-title">
+        <h2 id="aktywne-title" className={styles.sectionTitle}>Ile grup JGP rozlicza NFZ?</h2>
+        <div className={styles.grid}>
+          <DataCard
+            id="summary-jgp-active"
+            kicker={`Grupy JGP · ${range}`}
+            title="Aktywne grupy JGP w latach"
+            lead={<>Aktywnych grup: <strong>{integer(latestActivity.active)}</strong> w {latestYear} r., {integer(firstActivity.active)} w {firstActivity.year} r. Pod rokiem: zmiana r/r.</>}
+            description={<>
+              <p>Grupa aktywna to grupa JGP z co najmniej jedną hospitalizacją rozliczoną w roku. Grupa z katalogu bez hospitalizacji nie jest aktywna.</p>
+              <p>Liczba grup zmienia się głównie ze zmianami katalogu JGP: NFZ dodaje grupy, dzieli je i zastępuje stare kody nowymi.{partial ? <> Rok {latestYear} ma dane za {latest!.months} mies., więc rzadkie grupy mogą jeszcze nie mieć hospitalizacji.</> : null}</p>
+            </>}
+            href="/jgp"
+            cta="Katalog grup JGP"
+          >
+            <ValueBars
+              years={activity.years.map((y) => y.year)}
+              values={activity.years.map((y) => y.active)}
+              format={integer}
+              notes={activity.years.map((y, i) => (i ? signedCount(y.active - activity.years[i - 1].active) : ""))}
+              label="Aktywne grupy JGP w latach"
+            />
+          </DataCard>
+          <DataCard
+            id="summary-jgp-cohorts"
+            kicker={`Grupy JGP · ${range}`}
+            title="Grupy stałe i nowe"
+            lead={<><strong>{integer(activity.core)}</strong> z {integer(activity.total)} grup było aktywnych w każdym roku {range}. Pod rokiem: grupy nowe (+) i grupy, które przestały być aktywne (−).</>}
+            description={<>
+              <p>Słupek to aktywne grupy roku. Dół słupka to grupy aktywne w każdym roku. Środek to pozostałe grupy aktywne już wcześniej. Góra to grupy, które w tym roku pierwszy raz mają hospitalizacje.</p>
+              {mostNew && mostNew.new ? <p>Najwięcej nowych grup było w {label(mostNew.year)}: {integer(mostNew.new)}. W tym samym roku przestało być aktywnych: {integer(mostNew.gone)}. Duża zmiana w jednym roku to zwykle nowy katalog JGP.</p> : null}
+            </>}
+            href="/jgp"
+            cta="Katalog grup JGP"
+          >
+            <JgpActivityBars years={activity.years} />
+            <Legend items={[
+              { label: `W każdym roku ${range}`, color: JGP_ACTIVITY_COLORS.core },
+              { label: "Aktywne wcześniej", color: JGP_ACTIVITY_COLORS.earlier },
+              { label: "Nowe w roku", color: JGP_ACTIVITY_COLORS.new },
+            ]} />
+          </DataCard>
+        </div>
+      </section> : null}
 
       <section id="grupy" className={styles.section} aria-labelledby="grupy-title">
         <h2 id="grupy-title" className={styles.sectionTitle}>Grupy JGP: najczęstsze i z największą kwotą</h2>

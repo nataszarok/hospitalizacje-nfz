@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { formatJgpName, formatPln, shortenName } from "@/lib/formatters";
-import { STAY_BUCKETS, type SummaryStayYear, type SummarySection, type SummaryTrendRow, type SummaryValueRow } from "@/lib/hospitalizationSummary";
+import { STAY_BUCKETS, type SummaryJgpYear, type SummaryStayYear, type SummarySection, type SummaryTrendRow, type SummaryValueRow } from "@/lib/hospitalizationSummary";
 import { jgpHref } from "@/lib/portalLinks";
 import styles from "./SummaryCharts.module.css";
 import { CHART_COLORS } from "@/lib/chartPalette";
@@ -36,6 +36,45 @@ export function ValueBars({ years, values, format, label, notes }: { years: stri
         <text x={x + barWidth / 2} y={height - bottom - barHeight - 7} className={`${styles.value} ${latest ? styles.valueStrong : ""}`}>{format(value)}</text>
         <text x={x + barWidth / 2} y={height - bottom + 18} className={styles.tick}>{shortYear(years[i])}</text>
         {notes?.[i] ? <text x={x + barWidth / 2} y={height - 4} className={`${styles.note} ${notes[i].startsWith("−") ? styles.noteDown : styles.noteUp}`}>{notes[i]}</text> : null}
+      </g>;
+    })}
+  </svg>;
+}
+
+/** Kolory części słupka aktywnych grup JGP: od grup stałych (ciemny) do nowych (sygnał). */
+export const JGP_ACTIVITY_COLORS = { core: CHART_COLORS.data, earlier: CHART_COLORS.dataSoft, new: CHART_COLORS.signal } as const;
+
+/**
+ * Aktywne grupy JGP w roku, w trzech częściach: aktywne w każdym roku (dół), pozostałe aktywne już wcześniej, nowe w roku (góra).
+ * Nad słupkiem liczba aktywnych grup, pod rokiem: grupy nowe (+) i grupy, które zniknęły (−).
+ */
+export function JgpActivityBars({ years }: { years: SummaryJgpYear[] }) {
+  const width = 520;
+  const top = 26;
+  const bottom = 40;
+  const height = 166 + bottom;
+  const max = Math.max(...years.map((y) => y.active), 1);
+  const step = width / Math.max(years.length, 1);
+  const barWidth = Math.min(38, step * 0.62);
+  const scale = (value: number) => ((height - top - bottom) * value) / max;
+  const parts = ["core", "earlier", "new"] as const;
+  const describe = (y: SummaryJgpYear, i: number) => `${y.year} — ${y.active} (w każdym roku ${y.core}, wcześniejsze ${y.earlier}${i ? `, nowe ${y.new}, zniknęło ${y.gone}` : ""})`;
+  return <svg className={styles.chart} viewBox={`0 0 ${width} ${height}`} role="img" aria-label={`Aktywne grupy JGP w latach: ${years.map(describe).join(", ")}`}>
+    <line x1="0" x2={width} y1={height - bottom} y2={height - bottom} className={styles.axis} />
+    {years.map((y, i) => {
+      const x = i * step + (step - barWidth) / 2;
+      let base = height - bottom;
+      return <g key={y.year}>
+        {parts.map((part) => {
+          const h = scale(y[part]);
+          base -= h;
+          return h > 0 ? <rect key={part} x={x} y={base} width={barWidth} height={h} fill={JGP_ACTIVITY_COLORS[part]} /> : null;
+        })}
+        <text x={x + barWidth / 2} y={height - bottom - scale(y.active) - 7} className={styles.value}>{integer(y.active)}</text>
+        <text x={x + barWidth / 2} y={height - bottom + 18} className={styles.tick}>{shortYear(y.year)}</text>
+        {i ? <text x={x + barWidth / 2} y={height - 4} className={styles.note}>
+          <tspan className={styles.noteNew}>+{y.new}</tspan> <tspan className={styles.noteGone}>−{y.gone}</tspan>
+        </text> : null}
       </g>;
     })}
   </svg>;
@@ -154,7 +193,7 @@ export function StayShares({ stays, buckets = STAY_BUCKETS.map((_, i) => i) }: {
 
 /**
  * Kwoty NFZ: wiersze od największej kwoty z paskiem względem największej i zmianą od `firstYear`.
- * Sekcje (bez linków) mają układ listy obszarów leczenia, grupy (z linkami) — listy najczęstszych grup.
+ * Sekcje (bez linków) mają układ listy obszarów leczenia (pasek pod nazwą) i średnią kwotę na hospitalizację, grupy (z linkami) — listy najczęstszych grup.
  */
 export function ValueRows({ rows, label, firstYear, linkGroups = false }: { rows: SummaryValueRow[]; label: string; firstYear: string; linkGroups?: boolean }) {
   const max = Math.max(...rows.map((row) => row.valuePln), 1);
@@ -173,11 +212,12 @@ export function ValueRows({ rows, label, firstYear, linkGroups = false }: { rows
     </ol>;
   }
   return <ol className={styles.rows} aria-label={label}>
-    <li className={`${styles.sectionRow} ${styles.valueSectionRow} ${styles.headRow}`} aria-hidden="true"><span /><span>Obszar leczenia</span><span>Kwota</span><span>od {firstYear}</span></li>
-    {rows.map((row) => <li key={row.code} className={`${styles.sectionRow} ${styles.valueSectionRow}`} title={row.perStayPln === null ? undefined : `${integer(row.perStayPln)} zł na hospitalizację`}>
+    <li className={`${styles.sectionRow} ${styles.valueSectionRow} ${styles.headRow}`} aria-hidden="true"><span /><span>Obszar leczenia</span><span>Kwota</span><span>Na hosp.</span><span>od {firstYear}</span></li>
+    {rows.map((row) => <li key={row.code} className={`${styles.sectionRow} ${styles.valueSectionRow}`}>
       <span className={styles.letter}>{row.code}</span>
-      <span className={styles.label}>{row.label}</span>
-      <span className={styles.share}>{bar(row)}{formatPln(row.valuePln)}</span>
+      <span className={styles.label}>{row.label}{bar(row)}</span>
+      <span className={styles.valueAmount}>{formatPln(row.valuePln)}</span>
+      <span className={styles.perStay} title="Średnia kwota na hospitalizację">{row.perStayPln === null ? "—" : `${integer(row.perStayPln)} zł`}</span>
       {change(row)}
     </li>)}
   </ol>;
