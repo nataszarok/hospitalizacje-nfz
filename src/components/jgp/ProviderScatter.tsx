@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ChartTooltip, TooltipHead, TooltipLines } from "@/components/ChartTooltip";
-import { attachHoverMarker, axisTitle, baselineShape, chartLayout, makeHoverTrace, measureAxis, paddedRange, PLOTLY_CONFIG, referenceShape, wrapChartLabel, type PlotElement, type PlotlyHoverEvent } from "@/lib/plotlyChart";
+import { attachHoverMarker, axisTitle, baselineShape, chartLayout, makeHoverTrace, measureAxis, paddedRange, PLOTLY_CONFIG, referenceShape, type PlotElement, type PlotlyHoverEvent } from "@/lib/plotlyChart";
 import { CHART_COLORS, BASE_POINT } from "@/lib/chartPalette";
 import { loadPlotly } from "@/lib/plotlyLoader";
 import { plotlyDataBox, type Box } from "@/lib/tooltipPosition";
@@ -20,13 +20,18 @@ export interface ScatterPoint {
 }
 
 /**
- * Wybrany ośrodek (DESIGN.md, 6.2a): na każdym wykresie punktowym ta sama grafitowa gwiazda z białą obwódką,
- * ponad dwa razy większa od punktu, z podpisem (nazwą). Grafit, bo ciepłe kolory i błękity zajmuje skala odchylenia lejka.
+ * Wybrany ośrodek (DESIGN.md, 6.2a; brandbook, „Sygnał albo skala odchylenia, nie oba”): gwiazda z białą obwódką,
+ * ponad dwa razy większa od punktu, bez podpisu (nazwa jest w legendzie i w dymku). Kolor: „signal” — kolor sygnału,
+ * na wykresie bez skali odchylenia; „graphite” — grafit, na lejku (ciepłe kolory i błękity zajmuje tam skala odchylenia).
  */
+export type SelectedMarker = "signal" | "graphite";
 const POINT_SIZE = 9;
 const STAR_SIZE = 20;
-/** Punkt powyżej skali osi Y (`yCap`): trójkąt na górnej krawędzi wykresu. */
+const STAR_COLORS: Record<SelectedMarker, string> = { signal: CHART_COLORS.signal, graphite: CHART_COLORS.text };
+/** Punkt powyżej skali osi Y (`yCap`): mały szary trójkąt na górnej krawędzi wykresu, niewyróżniający się. */
 const ABOVE_SYMBOL = "triangle-up";
+const ABOVE_COLOR = CHART_COLORS.borderStrong;
+const ABOVE_SIZE = 7;
 
 /** Linia tła wykresu, np. granica lejka. */
 export interface ScatterCurve { x: number[]; y: number[]; color: string; dash?: "dot" | "dash" | "solid" }
@@ -39,7 +44,7 @@ export const NO_CURVES: ScatterCurve[] = [];
  * z prostokąta punktu, więc dymek nie zasłania punktu i może wyjść poza wykres (DESIGN.md, 6.3).
  * Kliknięcie wybiera ośrodek na całej karcie.
  */
-export function ProviderScatter({ points, xTitle, yTitle, ySuffix, reference, onSelect, ariaLabel, curves = NO_CURVES, height = 360, yCap, modeBar = true }: {
+export function ProviderScatter({ points, xTitle, yTitle, ySuffix, reference, onSelect, ariaLabel, curves = NO_CURVES, height = 360, yCap, modeBar = true, marker = "signal" }: {
   points: ScatterPoint[];
   xTitle: string;
   yTitle: string;
@@ -54,6 +59,8 @@ export function ProviderScatter({ points, xTitle, yTitle, ySuffix, reference, on
    * dymek pokazuje ich prawdziwą wartość. Jeden mały ośrodek (1 hospitalizacja, 1 zgon = 100%) nie spłaszcza wtedy wykresu.
    */
   yCap?: number | null;
+  /** Kolor gwiazdy wybranego ośrodka: „signal” (bez skali odchylenia) albo „graphite” (lejek). */
+  marker?: SelectedMarker;
   /** Pasek narzędzi Plotly; bez niego, gdy wykres ma przycisk powiększenia (`ChartExpand`) w tym samym rogu. */
   modeBar?: boolean;
 }) {
@@ -89,11 +96,19 @@ export function ProviderScatter({ points, xTitle, yTitle, ySuffix, reference, on
           y: group.map(shownY),
           customdata: group.map((p) => [p.key]),
           marker: own
-            ? { color: CHART_COLORS.text, size: STAR_SIZE, symbol: "star", line: { color: "#FFFFFF", width: 1.5 } }
-            : {
-              color: colors[i] || BASE_POINT, size: colors[i] ? POINT_SIZE : 8, line: { color: "#FFFFFF", width: 1 },
-              ...(group.some(above) ? { symbol: group.map((p) => (above(p) ? ABOVE_SYMBOL : "circle")) } : {}),
-            },
+            ? { color: STAR_COLORS[marker], size: STAR_SIZE, symbol: "star", line: { color: "#FFFFFF", width: 1.5 } }
+            : (() => {
+              const color = colors[i] || BASE_POINT;
+              const size = colors[i] ? POINT_SIZE : 8;
+              const base = { color, size, line: { color: "#FFFFFF", width: 1 } };
+              if (!group.some(above)) return base;
+              return {
+                ...base,
+                color: group.map((p) => (above(p) ? ABOVE_COLOR : color)),
+                size: group.map((p) => (above(p) ? ABOVE_SIZE : size)),
+                symbol: group.map((p) => (above(p) ? ABOVE_SYMBOL : "circle")),
+              };
+            })(),
           // Dymek rysuje `ChartTooltip`; Plotly zgłasza tylko najechanie.
           hoverinfo: "none",
         };
@@ -107,15 +122,8 @@ export function ProviderScatter({ points, xTitle, yTitle, ySuffix, reference, on
       const yMax = Math.max(...points.map(shownY), reference?.y ?? 0, 1);
       const curveMax = Math.max(0, ...curves.flatMap((curve) => curve.y));
       const plot = chartRef.current as PlotElement;
-      // Podpis wybranego ośrodka przy punkcie: po stronie z większym miejscem, długa nazwa w kilku liniach.
-      const selected = points.find((p) => p.selected);
       // Linia odniesienia (np. średnia grupy) tylko powyżej zera: na zerze pokrywa się z podstawą.
       const line = reference && reference.y > 0 ? reference : null;
-      const selectedLabel = selected ? [{
-        x: selected.x, y: shownY(selected), text: wrapChartLabel(selected.name), showarrow: false, align: selected.x > xMax * 0.6 ? "right" : "left",
-        xanchor: selected.x > xMax * 0.6 ? "right" : "left", xshift: selected.x > xMax * 0.6 ? -12 : 12,
-        font: { size: 12, color: CHART_COLORS.text }, bgcolor: "rgba(255,255,255,0.85)",
-      }] : [];
       await Plotly.react(plot, traces, {
         ...chartLayout(),
         height,
@@ -127,7 +135,6 @@ export function ProviderScatter({ points, xTitle, yTitle, ySuffix, reference, on
         shapes: [baselineShape("y"), baselineShape("x"), ...(line ? [referenceShape(line.y)] : [])],
         annotations: [
           ...(line ? [{ xref: "paper", x: 1, y: line.y, xanchor: "right", yanchor: "bottom", showarrow: false, text: line.label, font: { size: 12, color: CHART_COLORS.textSecondary } }] : []),
-          ...selectedLabel,
         ],
       }, modeBar ? PLOTLY_CONFIG : { ...PLOTLY_CONFIG, displayModeBar: false });
       if (cancelled) return;
@@ -140,7 +147,7 @@ export function ProviderScatter({ points, xTitle, yTitle, ySuffix, reference, on
         if (!hovered || hovered.curveNumber < pointStart || hovered.curveNumber >= hoverTraceIndex) return;
         const point = groups[hovered.curveNumber - pointStart]?.[hovered.pointNumber];
         // Prostokąt znacznika najechanego punktu (`attachHoverMarker`: rozmiar punktu + 4 px, co najmniej 13 px).
-        const size = Math.max(13, (point?.selected ? STAR_SIZE : POINT_SIZE) + 4);
+        const size = Math.max(13, (point?.selected ? STAR_SIZE : point && above(point) ? ABOVE_SIZE : POINT_SIZE) + 4);
         const anchor = point ? plotlyDataBox(plot, point.x, shownY(point), size) : null;
         if (point && anchor) setHover({ point, anchor });
       });
@@ -154,7 +161,7 @@ export function ProviderScatter({ points, xTitle, yTitle, ySuffix, reference, on
     };
     void render();
     return () => { cancelled = true; };
-  }, [points, xTitle, yTitle, ySuffix, reference, curves, height, yCap, modeBar]);
+  }, [points, xTitle, yTitle, ySuffix, reference, curves, height, yCap, modeBar, marker]);
 
   // Wysokość zarezerwowana od razu (wykres rysuje się asynchronicznie).
   return <div ref={shellRef} style={{ position: "relative" }}>

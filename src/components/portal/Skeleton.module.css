@@ -1,0 +1,18 @@
+/* Szkielet ładowania: kafel z delikatnym przejściem jasności; bez animacji przy „ograniczonym ruchu”. */
+.block {
+  display: block;
+  border-radius: var(--radius-control);
+  background: linear-gradient(90deg, var(--color-background-muted) 0%, var(--color-background) 50%, var(--color-background-muted) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+@keyframes shimmer {
+  from { background-position: 100% 0; }
+  to { background-position: -100% 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .block { animation: none; background: var(--color-background-muted); }
+}
+
+/* Komunikat „ładowanie” tylko dla czytników ekranu: widać szkielet, czytnik słyszy tekst. */
+.status { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }

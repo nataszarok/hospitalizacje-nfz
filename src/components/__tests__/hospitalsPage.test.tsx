@@ -68,6 +68,15 @@ describe("HospitalsPage", () => {
     expect(screen.getByText(/widok: comparison/)).toBeInTheDocument();
   });
 
+  it("w czasie pobierania pokazuje szkielet strony (panel i nagłówek), nie komunikat na środku", () => {
+    loadStaticDataset.mockReturnValueOnce(new Promise(() => {}));
+    const { container } = render(<HospitalsPage />);
+    expect(container.querySelector(".app-shell")).toHaveAttribute("aria-busy", "true");
+    expect(screen.getByRole("heading", { name: "Profil szpitala" })).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent("Ładowanie profili szpitali…");
+    expect(container.querySelector(".center-state")).toBeNull();
+  });
+
   it("pokazuje błąd pobierania danych", async () => {
     loadStaticDataset.mockRejectedValueOnce(new Error("Brak danych."));
     render(<HospitalsPage />);

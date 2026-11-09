@@ -26,11 +26,11 @@ const points: ScatterPoint[] = [
   { key: "a", name: "Szpital A", lines: ["Ciechanów · OW Mazowieckie", "100 hosp."], x: 100, y: 5 },
   { key: "b", name, lines: ["Ciechanów · OW Mazowieckie", "200 hosp. · nagłe 80,0%"], x: 200, y: 8, selected: true },
 ];
-type Trace = { marker: { symbol?: string; size: number; color: string }; hoverinfo?: string; hovertemplate?: string };
+type Trace = { marker: { symbol?: string | string[]; size: number | number[]; color: string | string[] }; hoverinfo?: string; hovertemplate?: string };
 type Layout = { annotations: { text: string }[]; shapes: unknown[]; yaxis: { range: number[] } };
 
-async function draw(props: { yCap?: number | null; reference?: { y: number; label: string }; list?: ScatterPoint[] } = {}) {
-  render(<ProviderScatter points={props.list ?? points} xTitle="x" yTitle="y" ySuffix="%" ariaLabel="wykres" yCap={props.yCap} reference={props.reference} />);
+async function draw(props: { yCap?: number | null; reference?: { y: number; label: string }; list?: ScatterPoint[]; marker?: "signal" | "graphite" } = {}) {
+  render(<ProviderScatter points={props.list ?? points} xTitle="x" yTitle="y" ySuffix="%" ariaLabel="wykres" yCap={props.yCap} reference={props.reference} marker={props.marker} />);
   await waitFor(() => expect(react).toHaveBeenCalled());
   await waitFor(() => expect(handlers.plotly_hover?.length).toBe(2));
   const [, traces, layout] = react.mock.calls.at(-1) as unknown as [unknown, Trace[], Layout];
@@ -39,13 +39,12 @@ async function draw(props: { yCap?: number | null; reference?: { y: number; labe
 const hover = (curveNumber: number, pointNumber: number) => act(() => { for (const fn of handlers.plotly_hover) fn({ points: [{ curveNumber, pointNumber, x: 0, y: 0 }] }); });
 
 describe("ProviderScatter — wybrany ośrodek", () => {
-  it("znacznik to grafitowa gwiazda, ponad dwa razy większa od punktu, z podpisem", async () => {
-    const { other, selected, layout } = await draw();
-    expect(selected.marker).toMatchObject({ symbol: "star", color: "#253B3A" });
-    expect(selected.marker.size).toBeGreaterThanOrEqual(2 * other.marker.size);
+  it.each([["signal", "#C65D2E"], ["graphite", "#253B3A"]] as const)("znacznik %s to gwiazda w kolorze z DESIGN.md 6.2a, ponad dwa razy większa od punktu, bez podpisu", async (marker, color) => {
+    const { other, selected, layout } = await draw({ marker });
+    expect(selected.marker).toMatchObject({ symbol: "star", color });
+    expect(selected.marker.size).toBeGreaterThanOrEqual(2 * (other.marker.size as number));
     expect(other.marker.symbol).toBeUndefined();
-    // Długa nazwa w podpisie łamana, nie skracana.
-    expect(layout.annotations.at(-1)!.text).toBe("SPECJALISTYCZNY SZPITAL<br>WOJEWÓDZKI W CIECHANOWIE");
+    expect(layout.annotations.map((a) => a.text).join(" ")).not.toContain("CIECHANOWIE");
   });
 });
 
@@ -58,7 +57,10 @@ describe("ProviderScatter — skala osi i odniesienie", () => {
   it("punkt powyżej `yCap` stoi na górnej krawędzi jako trójkąt; oś kończy się na `yCap`", async () => {
     const { other, layout } = await draw({ yCap: 25, list });
     expect((other as unknown as { y: number[] }).y).toEqual([25, 20]);
+    // Trójkąt mały i szary, nie w kolorze punktu.
     expect(other.marker.symbol).toEqual(["triangle-up", "circle"]);
+    expect(other.marker.size).toEqual([7, 8]);
+    expect(other.marker.color).toEqual(["#B9CEC9", "rgba(40, 86, 163, 0.55)"]);
     expect(layout.yaxis.range[1]).toBeLessThan(30);
     // Dymek pokazuje prawdziwą wartość.
     hover(0, 0);

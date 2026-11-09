@@ -206,37 +206,58 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
         yaxis: measureAxis(yAxis),
       }, modeBar ? PLOTLY_CONFIG : { ...PLOTLY_CONFIG, displayModeBar: false });
       if (cancelled) return;
+      // Nowy rysunek (np. inny wybrany ośrodek): bez dymka starego punktu.
+      setTip(null);
       const overlay = [overlayStart, overlayStart + 1, overlayStart + 2];
       plot.removeAllListeners("plotly_hover");
       plot.removeAllListeners("plotly_unhover");
       plot.removeAllListeners("plotly_click");
-      // Kliknięcie: najbliższa linia (kropka albo punkt średniej) w promieniu 16 px od kursora.
-      plot.onclick = (event: MouseEvent) => {
-        if (!selectRef.current) return;
-        const rect = plot.getBoundingClientRect();
-        const cx = event.clientX - rect.left;
-        const cy = event.clientY - rect.top;
-        let best: { key: string; distance: number } | null = null;
-        for (const line of ordered) {
-          const { points, average } = series.get(line.key)!;
-          x.forEach((xi, i) => {
-            for (const value of [points[i], average[i]]) {
-              if (value === null || value === undefined) continue;
-              const pixel = plotlyDataPixel(plot, xi, value);
-              if (!pixel) continue;
-              const distance = Math.hypot(pixel.x - cx, pixel.y - cy);
-              if (distance <= 16 && (!best || distance < best.distance)) best = { key: line.key, distance };
-            }
-          });
-        }
-        if (best) selectRef.current((best as { key: string }).key);
-      };
       let restyleInProgress = false;
+      // Linia pod kursorem (podświetlona, z dymkiem); kliknięcie wybiera właśnie ją.
+      let hovered: ChartLine | null = null;
+      const clearHover = () => {
+        hovered = null;
+        hoverRef.current?.(null);
+        setTip(null);
+        restyleInProgress = true;
+        void Plotly.restyle(plot, { x: [[null], [null], [null]], y: [[null], [null], [null]] }, overlay);
+        restyleInProgress = false;
+      };
+      // Kliknięcie: linia podświetlona, a bez podświetlenia (linie tła przy wybranym ośrodku) najbliższa linia
+      // (kropka albo punkt średniej) w promieniu 16 px od kursora. Podświetlenie i dymek znikają od razu,
+      // więc po zmianie wyboru nie zostają dwie wyróżnione linie.
+      plot.onclick = (event: MouseEvent) => {
+        if (cancelled || !selectRef.current) return;
+        let key = hovered?.key ?? null;
+        if (!key) {
+          const rect = plot.getBoundingClientRect();
+          const cx = event.clientX - rect.left;
+          const cy = event.clientY - rect.top;
+          let best = Infinity;
+          for (const line of ordered) {
+            const { points, average } = series.get(line.key)!;
+            x.forEach((xi, i) => {
+              for (const value of [points[i], average[i]]) {
+                if (value === null || value === undefined) continue;
+                const pixel = plotlyDataPixel(plot, xi, value);
+                if (!pixel) continue;
+                const distance = Math.hypot(pixel.x - cx, pixel.y - cy);
+                if (distance <= 16 && distance < best) { best = distance; key = line.key; }
+              }
+            });
+          }
+        }
+        if (!key) return;
+        clearHover();
+        selectRef.current(key);
+      };
+      // Zdarzenia starego rysunku (`cancelled`) nie przywracają podświetlenia po zmianie wyboru.
       plot.on("plotly_hover", (event) => {
         const point = event?.points?.[0];
-        if (restyleInProgress || !point || point.curveNumber >= overlayStart) return;
+        if (cancelled || restyleInProgress || !point || point.curveNumber >= overlayStart) return;
         const line = ordered[Math.floor(point.curveNumber / 2)];
         if (!hoverable(line)) return;
+        hovered = line;
         hoverRef.current?.(line.key);
         const highlight = line.tone === "selected" ? selectedColor : line.color ?? line.accent ?? PRIMARY;
         // Kropka wskazanego miesiąca (także przy najechaniu na linię średniej).
@@ -254,12 +275,8 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
         restyleInProgress = false;
       });
       plot.on("plotly_unhover", () => {
-        if (restyleInProgress) return;
-        hoverRef.current?.(null);
-        setTip(null);
-        restyleInProgress = true;
-        void Plotly.restyle(plot, { x: [[null], [null], [null]], y: [[null], [null], [null]] }, overlay);
-        restyleInProgress = false;
+        if (cancelled || restyleInProgress) return;
+        clearHover();
       });
     };
     void render();

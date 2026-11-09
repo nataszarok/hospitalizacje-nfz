@@ -9,6 +9,7 @@ import { RegionView } from "@/components/explorer/RegionView";
 import { ExplorerKpis, type ExplorerKpi } from "@/components/explorer/ExplorerKpis";
 import { MortalityTab } from "@/components/MortalityTab";
 import { PageHeader } from "@/components/portal/PageHeader";
+import { LoadingStatus, Skeleton } from "@/components/portal/Skeleton";
 import { PortalIcon, type PortalIconName } from "@/components/portal/PortalIcon";
 import { TrendView } from "@/components/trends/TrendView";
 import { areaLabel, areasLabel, dominantRegionForCity, type AnalysisArea } from "@/lib/area";
@@ -313,7 +314,8 @@ export function AnalysisExplorer() {
     window.scrollTo({ top: 0 });
   };
 
-  if (!reference && loading) return <main className="center-state">Ładowanie analiz…</main>;
+  // Szkielet strony zamiast komunikatu na środku: ten sam nagłówek, panel i miejsce na wyniki, bez przeskoku po załadowaniu.
+  if (!reference && loading) return <ExplorerSkeleton />;
   if (!reference) return <main className="center-state error">{error ?? "Brak konfiguracji."}</main>;
 
   const range = years.length > 1 ? `${years[0]}–${years.at(-1)}` : reference.analysisYear;
@@ -331,7 +333,7 @@ export function AnalysisExplorer() {
         compact
         eyebrow={<>Hospitalizacje · grupy JGP · {range}</>}
         title="Eksplorator danych"
-        lead={<p>Własne analizy hospitalizacji NFZ: wybierz grupy JGP, obszar i rok, a eksplorator policzy wyniki łącznie dla całego wyboru.</p>}
+        lead={EXPLORER_LEAD}
         actions={<button
           type="button"
           className={styles.headerButton}
@@ -462,4 +464,28 @@ function Collapsible({ open, children }: { open: boolean; children: ReactNode })
   return <div className={`${styles.collapsible} ${open ? "" : styles.collapsed}`} aria-hidden={!open} inert={!open}>
     <div className={styles.collapsibleInner}>{children}</div>
   </div>;
+}
+
+const EXPLORER_LEAD = <p>Własne analizy hospitalizacji NFZ: wybierz grupy JGP, obszar i rok, a eksplorator policzy wyniki łącznie dla całego wyboru.</p>;
+
+/** Szkielet eksploratora na czas pierwszego pobrania danych: układ strony jak po załadowaniu (nagłówek, panel, widoki, liczby, wykres). */
+function ExplorerSkeleton() {
+  return <main className={styles.page} aria-busy="true">
+    <PageHeader compact eyebrow={<>Hospitalizacje · grupy JGP</>} title="Eksplorator danych" lead={EXPLORER_LEAD} />
+    <div className={styles.workspace}>
+      <aside className={styles.sidebar}>
+        <Skeleton height={120} />
+        <Skeleton height={86} style={{ marginTop: 12 }} />
+        <Skeleton height={140} style={{ marginTop: 12 }} />
+      </aside>
+      <section className={styles.content} aria-label="Wyniki analizy">
+        <LoadingStatus>Ładowanie analiz…</LoadingStatus>
+        <Skeleton height={44} />
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, marginTop: 16 }}>
+          {[0, 1, 2, 3].map((i) => <Skeleton key={i} height={84} />)}
+        </div>
+        <Skeleton height={420} style={{ marginTop: 16 }} />
+      </section>
+    </div>
+  </main>;
 }

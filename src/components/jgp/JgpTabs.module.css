@@ -906,17 +906,20 @@
   vertical-align: 0;
 }
 
-/* Wybrany ośrodek na wykresach punktowych i w tabeli: grafitowa gwiazda jak na wykresie (DESIGN.md, 6.2a). */
-.selectedStar {
+/* Wybrany ośrodek: gwiazda jak na wykresach punktowych (DESIGN.md, 6.2a). Kolor sygnału (tabela, legenda,
+   wykres nagłych); na lejku grafit (`.graphiteStar`), bo ciepłe kolory zajmuje tam skala odchylenia. */
+.selectedStar,
+.graphiteStar {
   display: inline-block;
   flex: none;
   width: 14px;
   height: 14px;
   margin-right: 6px;
-  background: var(--color-text);
+  background: var(--color-signal);
   clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
   vertical-align: -2px;
 }
+.graphiteStar { background: var(--color-text); }
 
 .nameCell .selectedStar,
 .nameCell .dot {

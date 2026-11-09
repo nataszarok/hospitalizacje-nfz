@@ -5,6 +5,7 @@ import { HospitalAnalysisTab } from "@/components/HospitalAnalysisTab";
 import { HOSPITAL_VIEW_CHANGED_EVENT, HOSPITAL_VIEW_NAVIGATE_EVENT, type HospitalNavigation } from "@/lib/dashboardNavigation";
 import { hospitalUrlSearch, readHospitalUrlState, type HospitalView } from "@/lib/hospitalUrlState";
 import { PEER_DISTANCE_A_LIMIT } from "@/lib/peerDistance";
+import { LoadingStatus, Skeleton } from "@/components/portal/Skeleton";
 import { loadStaticDataset, referenceFromDataset } from "@/lib/staticData";
 import type { ProductOption } from "@/lib/types";
 
@@ -54,7 +55,8 @@ export function HospitalsPage() {
   }, [ready, hospitalKey, view, peerDistance]);
 
   if (error) return <main className="center-state error">{error}</main>;
-  if (!ready) return <main className="center-state">Ładowanie profili szpitali…</main>;
+  // Szkielet strony zamiast komunikatu na środku: panel i nagłówek jak po załadowaniu, bez przeskoku.
+  if (!ready) return <HospitalsSkeleton comparison={view === "comparison"} />;
 
   return <div className="app-shell">
     <aside className="sidebar">
@@ -75,7 +77,7 @@ export function HospitalsPage() {
     <main className="main">
       <header className="page-header">
         <h1>{view === "comparison" ? "Porównanie szpitali" : "Profil szpitala"}</h1>
-        <p>Oddziały, łóżka, świadczenia i finanse szpitala oraz porównanie z podobnymi placówkami · dane NFZ {year}</p>
+        <p>{HOSPITALS_LEAD} · dane NFZ {year}</p>
       </header>
       <HospitalAnalysisTab
         method={METHOD}
@@ -89,6 +91,36 @@ export function HospitalsPage() {
         peerDistance={peerDistance}
         setPeerDistance={setPeerDistance}
       />
+    </main>
+  </div>;
+}
+
+const HOSPITALS_LEAD = "Oddziały, łóżka, świadczenia i finanse szpitala oraz porównanie z podobnymi placówkami";
+
+/** Szkielet strony na czas pierwszego pobrania danych: panel, nagłówek i miejsca na profil, jak po załadowaniu. */
+function HospitalsSkeleton({ comparison }: { comparison: boolean }) {
+  return <div className="app-shell" aria-busy="true">
+    <aside className="sidebar">
+      <div className="sidebar-brand">
+        <div>
+          <div className="sidebar-eyebrow">NFZ</div>
+          <div className="sidebar-title">Szpitale publiczne</div>
+        </div>
+      </div>
+      <Skeleton height={92} />
+      <Skeleton height={84} style={{ marginTop: 12 }} />
+    </aside>
+    <main className="main">
+      <header className="page-header">
+        <h1>{comparison ? "Porównanie szpitali" : "Profil szpitala"}</h1>
+        <p>{HOSPITALS_LEAD}</p>
+      </header>
+      <LoadingStatus>Ładowanie profili szpitali…</LoadingStatus>
+      <Skeleton height={96} />
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12, marginTop: 16 }}>
+        {[0, 1, 2, 3].map((i) => <Skeleton key={i} height={92} />)}
+      </div>
+      <Skeleton height={320} style={{ marginTop: 16 }} />
     </main>
   </div>;
 }

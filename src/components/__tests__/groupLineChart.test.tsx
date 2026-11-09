@@ -122,6 +122,17 @@ describe("GroupLineChart — wybrany ośrodek", () => {
     expect(onSelect).not.toHaveBeenCalled();
   });
 
+  it("kliknięcie wybiera linię podświetloną (pod kursorem), nie najbliższą; dymek znika od razu", async () => {
+    const onSelect = vi.fn();
+    const { plot } = await draw(lines.map((line) => ({ ...line, tone: undefined })), { onSelect });
+    // Podświetlona linia „b” (wybrany ośrodek bez wyróżnienia), kliknięcie tuż przy linii „a”.
+    hover(2, 5);
+    expect(screen.getByRole("tooltip")).toBeInTheDocument();
+    fireEvent.click(plot, { clientX: 52, clientY: 96 });
+    expect(onSelect).toHaveBeenLastCalledWith("b");
+    expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
+  });
+
   it("długą nazwę w podpisie łamie na linie, bez skracania", async () => {
     const { layout } = await draw(lines, { selectedLabel: name });
     expect(layout.annotations[0].text).toBe("SZPITAL WOJEWÓDZKI IM. MIKOŁAJA<br>KOPERNIKA W KOSZALINIE");

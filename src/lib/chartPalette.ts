@@ -21,10 +21,11 @@ export const CHART_COLORS = {
 } as const;
 
 /**
- * Skala odchylenia (lejek, różnica wobec podobnych): ciepłe w górę, błękity w dół, w granicach błękit fartucha.
+ * Skala odchylenia (lejek, różnica wobec podobnych): ciepłe w górę, w granicach błękit fartucha, poniżej 95% neutralna
+ * szarość z zielenią (niższa śmiertelność bez pewności nie przyciąga wzroku), poniżej 99,8% granat.
  * Na wykresie z tą skalą wyróżnienie jest grafitowe, nie w kolorze sygnału (DESIGN.md, 6.2a).
  */
-export const DEVIATION_COLORS = { up95: "#E3A27F", up998: "#B4441B", down95: "#8FB0DD", down998: "#2856A3", within: "#9DB4DB" } as const;
+export const DEVIATION_COLORS = { up95: "#E3A27F", up998: "#B4441B", down95: "#A9BCB7", down998: "#2856A3", within: "#9DB4DB" } as const;
 
 /**
  * Wspólna paleta wykresów punktowych świadczeniodawców (karta grupy JGP i eksplorator).

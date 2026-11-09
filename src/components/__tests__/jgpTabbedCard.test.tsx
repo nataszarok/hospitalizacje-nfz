@@ -331,32 +331,23 @@ describe("Karta w zakładkach — linie województw w „Ile?”", () => {
 });
 
 describe("Karta w zakładkach — powiększenie wykresów", () => {
-  it("każdy wykres Przeglądu ma przycisk powiększenia; okno prowadzi do widoku eksploratora z grupą", () => {
+  it("Przegląd i wykres liniowy ośrodków nie mają powiększenia", () => {
     renderCard();
-    const panel = screen.getByRole("tabpanel");
-    const buttons = within(panel).getAllByRole("button", { name: /^Powiększ wykres:/ });
-    // Ile?, Gdzie?, Za ile?, tryb przyjęcia (fixture bez rodziny).
-    expect(buttons.map((button) => button.getAttribute("aria-label"))).toEqual([
-      expect.stringMatching(/^Powiększ wykres: A01: hospitalizacje miesięcznie/),
-      "Powiększ wykres: A01: hospitalizacje na 100 tys. mieszkańców w województwach",
-      "Powiększ wykres: A01: kwota świadczeń NFZ w latach",
-      "Powiększ wykres: A01: tryb przyjęcia w latach",
-    ]);
-    fireEvent.click(buttons[0]);
-    const dialog = screen.getByRole("dialog");
-    expect(within(dialog).getByRole("list", { name: "Linie wykresu" })).toBeInTheDocument();
-    expect(within(dialog).getByRole("link", { name: /W czasie w eksploratorze/ })).toHaveAttribute("href", "/analizy?jgp=A01");
+    expect(within(screen.getByRole("tabpanel")).queryByRole("button", { name: /^Powiększ wykres:/ })).not.toBeInTheDocument();
   });
 
-  it("w Ośrodkach: linie i oba wykresy punktowe mają powiększenie z linkiem do „Kto leczy” albo „Tryb przyjęcia”", () => {
+  it("w Ośrodkach powiększenie mają tylko oba wykresy punktowe; okno prowadzi do „Tryb przyjęcia” albo „Kto leczy”", () => {
     open("?widok=osrodki");
     renderCard();
     const buttons = screen.getAllByRole("button", { name: /^Powiększ wykres:/ });
-    expect(buttons).toHaveLength(3);
-    fireEvent.click(buttons[1]);
+    expect(buttons.map((button) => button.getAttribute("aria-label"))).toEqual([
+      `Powiększ wykres: A01: udział przyjęć nagłych w ośrodkach, ${data.year}`,
+      `Powiększ wykres: A01: śmiertelność, ${data.year}`,
+    ]);
+    fireEvent.click(buttons[0]);
     expect(within(screen.getByRole("dialog")).getByRole("link", { name: /Tryb przyjęcia w eksploratorze/ })).toHaveAttribute("href", `/analizy?t=a&jgp=A01&y=${data.year}`);
     fireEvent.keyDown(document, { key: "Escape" });
-    fireEvent.click(buttons[2]);
+    fireEvent.click(buttons[1]);
     expect(within(screen.getByRole("dialog")).getByRole("link", { name: /Kto leczy w eksploratorze/ })).toHaveAttribute("href", `/analizy?t=k&jgp=A01&y=${data.year}`);
   });
 });
