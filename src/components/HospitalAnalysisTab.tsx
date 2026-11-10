@@ -7,6 +7,7 @@ import type { EstimationMethod, HospitalAnalysis, HospitalDirectoryEntry, Produc
 import { hospitalAnalysisFromDataset, hospitalDirectoryFromDataset, loadStaticDataset } from "@/lib/staticData";
 import { PLOTLY_CONFIG, axisTitle, baselineShape, categoryAxis, chartLayout, measureAxis, paddedRange } from "@/lib/plotlyChart";
 import { CHART_COLORS } from "@/lib/chartPalette";
+import { formatPln } from "@/lib/formatters";
 import { plotlyObjectBox, pointerBox, type Box } from "@/lib/tooltipPosition";
 import { ChartTooltip, TooltipHead, TooltipKeyValue, TooltipSection } from "./ChartTooltip";
 import { HospitalSimilarityTab } from "@/components/HospitalSimilarityTab";
@@ -23,16 +24,9 @@ import "./HospitalProfileSummary.css";
 
 const nf = new Intl.NumberFormat("pl-PL", { maximumFractionDigits: 0 });
 const pf = new Intl.NumberFormat("pl-PL", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
-const mf = new Intl.NumberFormat("pl-PL", { minimumFractionDigits: 0, maximumFractionDigits: 1 });
-const bf = new Intl.NumberFormat("pl-PL", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 const pct = (v: number) => `${pf.format(v)}%`;
 const normalizeNip=(value:unknown)=>String(value ?? "").replace(/\D/g,"");
-const moneyCompact=(value:number|null|undefined)=>{
-  if(value==null || !Number.isFinite(value)) return "—";
-  const abs=Math.abs(value);
-  if(abs>=1_000_000_000) return `${bf.format(value/1_000_000_000)} mld zł`;
-  return `${mf.format(value/1_000_000)} mln zł`;
-};
+const moneyCompact=(value:number|null|undefined)=>value==null || !Number.isFinite(value) ? "—" : formatPln(value);
 
 type FinancialYearRecord = {
   year:number;

@@ -182,9 +182,10 @@ export function TrendView({ productCodes, method, regions = NO_REGIONS, areaLabe
 
     <details className="data-details">
       <summary>Tabela danych · lata</summary>
-      <div className="table-wrap">
+      {/* Priorytety kolumn (DESIGN.md 7.1): w wąskim kontenerze zostają rok, hospitalizacje i śmiertelność. */}
+      <div className="table-wrap priority-table">
         <table>
-          <thead><tr><th>Rok</th><th>Hospitalizacje</th><th>Zgony</th><th>Śmiertelność</th><th>Planowe</th><th>Nagłe</th></tr></thead>
+          <thead><tr><th>Rok</th><th>Hospitalizacje</th><th className="col-p2">Zgony</th><th>Śmiertelność</th><th className="col-p3">Planowe</th><th className="col-p2">Nagłe</th></tr></thead>
           <tbody>
             {years.map((year, i) => {
               const point = yearlyRows[i];
@@ -192,10 +193,10 @@ export function TrendView({ productCodes, method, regions = NO_REGIONS, areaLabe
                 <td>{year}</td>
                 {point ? <>
                   <td>{integer(point.hospitalizations)}</td>
-                  <td>{integer(point.deaths)}</td>
+                  <td className="col-p2">{integer(point.deaths)}</td>
                   <td>{pct(point.hospitalizations ? (point.deaths / point.hospitalizations) * 100 : 0)}</td>
-                  <td>{point.planned === null ? "—" : integer(point.planned)}</td>
-                  <td>{integer(point.urgent)}</td>
+                  <td className="col-p3">{point.planned === null ? "—" : integer(point.planned)}</td>
+                  <td className="col-p2">{integer(point.urgent)}</td>
                 </> : <td colSpan={5}>brak wybranych grup w katalogu JGP</td>}
               </tr>;
             })}

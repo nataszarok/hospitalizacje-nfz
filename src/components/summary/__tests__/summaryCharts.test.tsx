@@ -57,11 +57,11 @@ describe("Wykresy karty „Hospitalizacje w Polsce”", () => {
     for (let i = 1; i < ys.length; i++) expect(ys[i] - ys[i - 1]).toBeGreaterThanOrEqual(13);
   });
 
-  it("podaje kwoty od 1 mld zł w miliardach, mniejsze w milionach", () => {
-    expect(formatPln(64_277_000_000)).toBe("64,3 mld zł");
-    expect(formatPln(1_000_000_000)).toBe("1,0 mld zł");
+  it("podaje kwoty od 1 mld zł w miliardach z 2 miejscami, mniejsze w pełnych milionach", () => {
+    expect(formatPln(64_277_000_000)).toBe("64,28 mld zł");
+    expect(formatPln(1_000_000_000)).toBe("1,00 mld zł");
     expect(formatPln(994_400_000)).toBe("994 mln zł");
-    expect(formatPln(12_340_000)).toBe("12,3 mln zł");
+    expect(formatPln(12_340_000)).toBe("12 mln zł");
     expect(formatPln(450_400)).toBe("450 tys. zł");
   });
 
@@ -74,8 +74,8 @@ describe("Wykresy karty „Hospitalizacje w Polsce”", () => {
     const [first, second] = screen.getAllByRole("link");
     expect(first).toHaveAttribute("href", "/jgp/E53G");
     // Układ jak lista najczęstszych grup: kod i nazwa, pasek, kwota, zmiana — bez dodatkowych opisów.
-    expect(first).toHaveTextContent(/^E53G Niewydolność krążenia1,5 mld zł\+135%$/);
-    expect(first).toHaveAttribute("title", "E53G Niewydolność krążenia: 1,5 mld zł, 10\u00a0521 zł na hospitalizację");
+    expect(first).toHaveTextContent(/^E53G Niewydolność krążenia1,49 mld zł\+135%$/);
+    expect(first).toHaveAttribute("title", "E53G Niewydolność krążenia: 1,49 mld zł, 10\u00a0521 zł na hospitalizację");
     expect(second).toHaveTextContent(/^A48 Udar747 mln zł—$/);
     expect(screen.getByTitle("Brak kwot w 2019 r.")).toBeInTheDocument();
     expect([...container.querySelectorAll("[style]")].map((el) => (el as HTMLElement).style.width)).toEqual(["100%", "50%"]);

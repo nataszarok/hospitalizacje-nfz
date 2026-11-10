@@ -15,7 +15,8 @@ afterEach(() => {
 
 const catalog = buildJgpCatalog(trendsFixture);
 const codes = () => within(screen.getByRole("region", { name: "Grupy JGP" })).getAllByRole("row").slice(2)
-  .map((row) => within(row).getAllByRole("cell")[0].textContent);
+  // Pierwszy link w wierszu to kod grupy (kod i nazwa są w jednej komórce).
+  .map((row) => within(row).getAllByRole("link")[0].textContent);
 
 describe("Katalog grup JGP", () => {
   it("pokazuje grupy z najnowszego roku z linkami do kart; wycofane po zaznaczeniu", () => {
@@ -32,8 +33,8 @@ describe("Katalog grup JGP", () => {
   it("pokazuje rozliczenia NFZ i ich zmianę, sortuje po kwocie; bez kwot tych kolumn nie ma", () => {
     render(<JgpCatalogPage catalog={buildJgpCatalog(trendsFixture, { A01: { "2024": 2_000_000_000, "2025": 2_500_000_000 }, F99: { "2025": 3_400_000 } })} />);
     const cells = (code: string) => within(screen.getByRole("link", { name: code }).closest("tr")!).getAllByRole("cell").map((cell) => cell.textContent);
-    expect(cells("A01").slice(7)).toEqual(["2,5 mld zł", "+25%"]);
-    expect(cells("F99").slice(7)).toEqual(["3,4 mln zł", "—"]);
+    expect(cells("A01").slice(5)).toEqual(["2,50 mld zł", "+25%"]);
+    expect(cells("F99").slice(5)).toEqual(["3 mln zł", "—"]);
     fireEvent.click(screen.getByRole("button", { name: /^Rozliczenia\s*NFZ 2025$/ }));
     expect(codes()).toEqual(["A01", "F99"]);
     fireEvent.click(screen.getByRole("button", { name: /^Rozliczenia\s*NFZ 2025/ }));
@@ -53,7 +54,7 @@ describe("Katalog grup JGP", () => {
   it("badge z latami tylko przy kodach, których nie było przez cały okres", () => {
     render(<JgpCatalogPage catalog={catalog} />);
     fireEvent.click(screen.getByRole("checkbox", { name: /pokaż grupy wycofane/i }));
-    const badge = (code: string) => within(screen.getByRole("link", { name: code }).closest("tr")!).getAllByRole("cell")[1].querySelector("[title]")?.textContent;
+    const badge = (code: string) => within(screen.getByRole("link", { name: code }).closest("tr")!).getAllByRole("cell")[0].querySelector("[title]")?.textContent;
     expect(badge("A01")).toBeUndefined();
     expect(badge("F99")).toBe("od 2025");
     expect(badge("F04")).toBe("do 2024");
@@ -62,10 +63,12 @@ describe("Katalog grup JGP", () => {
   it("rozróżnia „—” (grupy nie było w katalogu) od liczby; KPI nowych i wycofanych osobno", () => {
     render(<JgpCatalogPage catalog={catalog} />);
     fireEvent.click(screen.getByRole("checkbox", { name: /pokaż grupy wycofane/i }));
-    const cells = (code: string) => within(screen.getByRole("link", { name: code }).closest("tr")!).getAllByRole("cell").map((cell) => cell.textContent);
-    // Kolumny: kod, nazwa, wykres, 2024, 2025, r/r, śmiertelność.
-    expect(cells("F99").slice(3, 5)).toEqual(["—", "1"]);
-    expect(cells("F04").slice(3, 5)).toEqual(["4", "—"]);
+    const cells = (code: string) => within(screen.getByRole("link", { name: code }).closest("tr")!).getAllByRole("cell");
+    // Kolumny: grupa (kod + nazwa), wykres, 2025, r/r (poprzedni rok w dymku), śmiertelność.
+    expect(cells("F99")[2]).toHaveTextContent("1");
+    expect(cells("F99")[3]).toHaveAttribute("title", "2024: —");
+    expect(cells("F04")[2]).toHaveTextContent("—");
+    expect(cells("F04")[3]).toHaveAttribute("title", "2024: 4");
     expect(screen.getByText("Nowe grupy w 2025 r.").nextElementSibling).toHaveTextContent("1");
     expect(screen.getByText("Grupy wycofane").nextElementSibling).toHaveTextContent("1");
   });
@@ -73,7 +76,7 @@ describe("Katalog grup JGP", () => {
   it("zapisuje filtry i sortowanie w adresie i odczytuje je po wejściu", () => {
     render(<JgpCatalogPage catalog={catalog} />);
     fireEvent.change(screen.getByRole("searchbox"), { target: { value: "f" } });
-    fireEvent.click(screen.getByRole("button", { name: "Kod" }));
+    fireEvent.click(screen.getByRole("button", { name: "Grupa JGP" }));
     expect(window.location.search).toBe("?q=f&sort=kod");
     cleanup();
     window.history.replaceState(null, "", "/jgp?wycofane=1&sort=kod&kier=malejaco");
@@ -86,7 +89,7 @@ describe("Katalog grup JGP", () => {
     render(<JgpCatalogPage catalog={catalog} />);
     expect(screen.getByRole("button", { name: "Wyczyść filtry" })).toBeDisabled();
     expect(screen.getByText("Wyświetlono 2 z 2 grup")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Kod" }));
+    fireEvent.click(screen.getByRole("button", { name: "Grupa JGP" }));
     fireEvent.change(screen.getByRole("searchbox"), { target: { value: "staly" } });
     expect(screen.getByText("Wyświetlono 1 z 1 pasujących grup")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Wyczyść filtry" })).toBeEnabled();
@@ -126,9 +129,9 @@ describe("Katalog grup JGP", () => {
 
   it("sortuje po kliknięciu nagłówka i filtruje minimalną liczbą hospitalizacji", () => {
     render(<JgpCatalogPage catalog={catalog} />);
-    fireEvent.click(screen.getByRole("button", { name: "Kod" }));
+    fireEvent.click(screen.getByRole("button", { name: "Grupa JGP" }));
     expect(codes()).toEqual(["A01", "F99"]);
-    fireEvent.click(screen.getByRole("button", { name: /Kod/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Grupa JGP/ }));
     expect(codes()).toEqual(["F99", "A01"]);
     fireEvent.change(screen.getByRole("combobox", { name: /Min. hospitalizacji \(2025\)/ }), { target: { value: "100" } });
     expect(screen.getByText("Brak grup dla tych filtrów.")).toBeInTheDocument();

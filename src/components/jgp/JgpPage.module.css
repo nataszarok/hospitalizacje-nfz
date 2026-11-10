@@ -60,7 +60,8 @@
   width: auto;
 }
 
-.table td:nth-child(2) {
+/* Druga kolumna z nazwą (np. katalog); kolumna liczby (`.num`) nie dostaje szerokości nazwy. */
+.table td:nth-child(2):not(.num) {
   min-width: 260px;
   white-space: normal;
 }

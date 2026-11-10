@@ -359,12 +359,7 @@ a.code {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  /* Telefon: tylko kod i nazwa; liczby są na karcie grupy. */
-  .table th:nth-child(n + 3),
-  .table td:nth-child(n + 3) {
-    display: none;
-  }
-
+  /* Telefon: kolumny ukrywają priorytety (.priority-table), nazwa nie ma minimalnej szerokości. */
   .table td.name {
     min-width: 0;
   }

@@ -343,7 +343,8 @@
 
 .heatWrap {
   position: relative;
-  overflow-x: auto;
+  container-type: inline-size;
+  overflow-x: hidden;
   /* Miejsce na tło kolumny roku (wystaje 6 px poza komórki), żeby nie pojawiał się pasek przewijania. */
   padding: 8px;
 }
@@ -728,6 +729,14 @@
   color: var(--color-text-tertiary);
 }
 
+/* Pasek ma stałą wysokość: długa podpowiedź kończy się wielokropkiem w granicach paska (telefon). */
+.bar > .hint {
+  flex-shrink: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .barChip {
   color: var(--color-text-secondary);
   white-space: nowrap;
@@ -941,4 +950,13 @@
 .periodToggle button[aria-pressed="true"] {
   background: var(--color-primary-soft);
   color: var(--color-primary-hover);
+}
+
+/* Mapa ciepła bez przewijania w poziomie: w wąskim kontenerze znikają najstarsze lata (DESIGN.md 7.1). */
+@container (max-width: 559px) {
+  .heatYearOld { display: none; }
+}
+
+@container (max-width: 419px) {
+  .heatYearMid { display: none; }
 }

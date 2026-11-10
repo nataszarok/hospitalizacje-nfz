@@ -2,7 +2,7 @@
 
 import "@testing-library/jest-dom/vitest";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within, waitFor } from "@testing-library/react";
 import { HospitalSimilarityTab } from "@/components/HospitalSimilarityTab";
 import { products, sampleBenchmark, samplePair, samplePeer } from "./fixtures/hospitalFixtures";
 
@@ -149,6 +149,21 @@ describe("HospitalSimilarityTab — porównanie modelu par", () => {
     fireEvent.click(screen.getByRole("button", { name: /Grupa porównawcza/ }));
     expect(screen.getByRole("dialog")).toBeInTheDocument();
     expect(screen.getByRole("dialog")).toHaveTextContent("SZPITAL PORÓWNAWCZY");
+  });
+
+  it("tabela grupy porównawczej ma do 7 kolumn z priorytetami, klasa pary jest pod nazwą", async () => {
+    render(<HospitalSimilarityTab {...props} />);
+    await screen.findByText(/Jak ten szpital wygląda na tle podobnych szpitali/);
+    fireEvent.click(screen.getByRole("button", { name: /Grupa porównawcza/ }));
+    const table = within(screen.getByRole("dialog")).getByRole("table");
+    const headers = within(table).getAllByRole("columnheader");
+    expect(headers.map((th) => th.textContent?.replace(/[↕↑↓]/g, "").trim())).toEqual([
+      "Placówka", "Dystans", "Hospitalizacje", "Łóżka główne", "Główne oddziały", "Wspólne JGP", "Podobieństwo rodzin JGP",
+    ]);
+    // Priorytet 2 znika poniżej 640 px kontenera, priorytet 3 poniżej 900 px (DESIGN.md 7.1).
+    expect(headers.map((th) => (th.classList.contains("col-p2") ? 2 : th.classList.contains("col-p3") ? 3 : 1))).toEqual([1, 1, 1, 2, 3, 2, 3]);
+    expect(table.closest(".priority-table")).not.toBeNull();
+    expect(table.querySelector("tbody:not(.hospital-peer-group-main-body) td .hospital-peer-grade")).toHaveTextContent(/^[AB]$/);
   });
 
   it("przy zmianie dystansu zostawia poprzedni wynik do czasu przeliczenia", async () => {

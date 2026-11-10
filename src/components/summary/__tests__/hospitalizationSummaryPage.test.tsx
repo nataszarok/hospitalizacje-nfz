@@ -94,7 +94,7 @@ describe("Karta „Hospitalizacje w Polsce”", () => {
   it("pokazuje kwoty NFZ w latach ze zmianą r/r i średnią kwotę na hospitalizację; nie ma mapy województw", () => {
     renderPage(withExtras());
     const section = screen.getByRole("region", { name: "Ile NFZ płaci za hospitalizacje?" });
-    expect(within(section).getByRole("img", { name: /Kwoty NFZ w latach \(mld zł\): 2024 — 0,0, 2025 — 0,0 \(\+100,0%\)/ })).toBeInTheDocument();
+    expect(within(section).getByRole("img", { name: /Kwoty NFZ w latach \(tys\. zł\): 2024 — 1, 2025 — 1 \(\+100,0%\)/ })).toBeInTheDocument();
     // 2024: 500 zł / 12 hospitalizacji, 2025: 1000 zł / 10.
     expect(screen.getByRole("article", { name: "Średnia kwota na hospitalizację" })).toHaveTextContent("100 zł w 2025 r., 42 zł w 2024 r.");
     expect(screen.queryByRole("heading", { name: "Gdzie szpitale leczą najwięcej?" })).not.toBeInTheDocument();

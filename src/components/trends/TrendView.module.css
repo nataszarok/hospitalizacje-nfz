@@ -1,6 +1,8 @@
 /* Widok „W czasie”: karta wykresu z zakładkami miary (jak przyciski miary na karcie grupy JGP). */
 .view {
   display: grid;
+  /* minmax(0, …): wykres i tabela nie rozpychają kolumny ponad szerokość ekranu (telefon). */
+  grid-template-columns: minmax(0, 1fr);
   gap: 16px;
 }
 

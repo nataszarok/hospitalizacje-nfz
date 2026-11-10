@@ -42,7 +42,7 @@ describe("Karta w zakładkach — nagłówek i Przegląd", () => {
     const kpis = container.querySelector('dl[aria-label="Liczby grupy"]')!;
     expect(kpis.children).toHaveLength(4);
     expect(kpis).toHaveTextContent("Hospitalizacje 202530+100,0% r/r");
-    expect(kpis).toHaveTextContent("Kwota świadczeń NFZ 20251,2 mln zł+33,3% r/r");
+    expect(kpis).toHaveTextContent("Kwota świadczeń NFZ 20251 mln zł+33,3% r/r");
     expect(screen.getByText("cała Polska · kliknij województwo na mapie")).toBeInTheDocument();
   });
 
@@ -111,7 +111,7 @@ describe("Karta w zakładkach — Ośrodki", () => {
     expect(window.location.search).toBe("?osrodek=07%7C111");
     expect(screen.queryByRole("region", { name: "Szczegóły wybranego ośrodka" })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Szczegóły" }));
-    expect(screen.getByRole("region", { name: "Szczegóły wybranego ośrodka" })).toHaveTextContent("Rozliczenia NFZ za A010,5 mln zł41,7% kraju");
+    expect(screen.getByRole("region", { name: "Szczegóły wybranego ośrodka" })).toHaveTextContent("Rozliczenia NFZ za A01500 tys. zł41,7% kraju");
     fireEvent.click(screen.getByRole("button", { name: "Usuń wybór" }));
     expect(window.location.search).toBe("?widok=osrodki");
   });
@@ -163,7 +163,8 @@ describe("Karta w zakładkach — wybór roku, opis i rodzina", () => {
     expect(container.querySelector('dl[aria-label="Liczby grupy"]')).toHaveTextContent("Hospitalizacje 202415");
     fireEvent.click(screen.getByRole("tab", { name: /Ośrodki/ }));
     const rows = within(screen.getByRole("region", { name: /^Lista ośrodków/ })).getAllByRole("row").slice(1);
-    expect(rows.map((row) => within(row).getAllByRole("cell")[2].textContent)).toEqual(["10", "5"]);
+    // Kolumny: ośrodek (miejsce w kraju w drugiej linii), hospitalizacje w roku karty, …
+    expect(rows.map((row) => within(row).getAllByRole("cell")[1].textContent)).toEqual(["10", "5"]);
     fireEvent.click(within(screen.getByRole("group", { name: "Rok karty" })).getByRole("button", { name: "2025" }));
     expect(window.location.search).toBe("?widok=osrodki");
   });
