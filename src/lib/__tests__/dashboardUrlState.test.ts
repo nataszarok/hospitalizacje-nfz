@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dashboardUrlSearch, readDashboardUrlState, type DashboardUrlState } from "@/lib/dashboardUrlState";
+import { dashboardUrlSearch, readDashboardUrlState, readFocusParam, type DashboardUrlState } from "@/lib/dashboardUrlState";
 import type { ReferencePayload } from "@/lib/types";
 
 const reference: ReferencePayload = {
@@ -49,6 +49,8 @@ describe("dashboard URL state", () => {
       minHosp: 25,
       axisMode: "per_100k",
       admissionAxisMode: "per_100k",
+      funnel: true,
+      focus: true,
       geoMode: "cities",
       highlightedRegions: ["07"],
       highlightedCities: ["Warszawa"],
@@ -56,6 +58,21 @@ describe("dashboard URL state", () => {
       areas: [{ kind: "region", owNfz: "12" }, { kind: "city", city: "Warszawa" }],
     };
     expect(readDashboardUrlState(reference, dashboardUrlSearch(reference, state))).toEqual(state);
+  });
+
+  it("lejek „Kto leczy” jako lj=1; bez lejka parametru nie ma", () => {
+    expect(dashboardUrlSearch(reference, { ...defaults, funnel: true })).toBe("?lj=1");
+    expect(dashboardUrlSearch(reference, { ...defaults, funnel: false })).toBe("");
+    expect(readDashboardUrlState(reference, "?lj=1").funnel).toBe(true);
+    expect(readDashboardUrlState(reference, "").funnel).toBe(false);
+  });
+
+  it("tryb analizy jako pelny=1; bez trybu parametru nie ma", () => {
+    expect(dashboardUrlSearch(reference, { ...defaults, focus: true })).toBe("?pelny=1");
+    expect(dashboardUrlSearch(reference, { ...defaults, focus: false })).toBe("");
+    expect(readDashboardUrlState(reference, "?pelny=1").focus).toBe(true);
+    expect(readFocusParam("?t=k&pelny=1")).toBe(true);
+    expect(readFocusParam("?pelny=0")).toBe(false);
   });
 
   it("serializes analysis areas as repeated ow and mc", () => {

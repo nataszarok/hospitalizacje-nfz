@@ -906,10 +906,8 @@
   vertical-align: 0;
 }
 
-/* Wybrany ośrodek: gwiazda jak na wykresach punktowych (DESIGN.md, 6.2a). Kolor sygnału (tabela, legenda,
-   wykres nagłych); na lejku grafit (`.graphiteStar`), bo ciepłe kolory zajmuje tam skala odchylenia. */
-.selectedStar,
-.graphiteStar {
+/* Wybrany ośrodek: gwiazda w kolorze sygnału, jak na wykresach punktowych (tabela, legendy). */
+.selectedStar {
   display: inline-block;
   flex: none;
   width: 14px;
@@ -919,7 +917,6 @@
   clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
   vertical-align: -2px;
 }
-.graphiteStar { background: var(--color-text); }
 
 .nameCell .selectedStar,
 .nameCell .dot {
@@ -970,4 +967,24 @@
 
 @container (max-width: 419px) {
   .heatYearMid { display: none; }
+}
+
+/* Legenda w pionie w prawym górnym rogu wykresu (skala lejka na karcie), pod przyciskiem powiększenia.
+   Prawy górny róg wykresu lejkowego jest zwykle pusty: duże ośrodki leżą blisko średniej. */
+.cornerLegendFrame {
+  position: relative;
+}
+
+ul.cornerLegend {
+  position: absolute;
+  z-index: 2;
+  top: 32px;
+  right: 22px;
+  flex-direction: column;
+  gap: 3px;
+  padding: 6px 8px;
+  border: 1px solid var(--color-border);
+  background: rgba(255, 255, 255, .9);
+  font-size: var(--fs-xs);
+  pointer-events: none;
 }

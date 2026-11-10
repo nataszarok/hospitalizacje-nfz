@@ -390,6 +390,9 @@
 .focus .workspace {
   width: calc(100% - 32px);
   margin-top: 20px;
+  /* Obszar na całą szerokość okna: na dużym ekranie panel też trochę rośnie (20% okna, 300–360 px).
+     Wykresy dopasowują się do nowej szerokości same (`usePlotResize`). */
+  grid-template-columns: clamp(var(--atlas-sidebar-width), 20vw, 360px) minmax(0, 1fr);
 }
 
 /* Tryb analizy: tylko tytuł i wykres — opis pod wykresem i tabela danych gasną i znikają. */
@@ -612,9 +615,32 @@
   min-width: 0;
 }
 
-/* Tabela obok mapy bez poziomego przewijania: stały układ kolumn, nazwy się zawijają, pasek zajmuje resztę. */
+/* Tabela obok mapy bez poziomego przewijania: stały układ kolumn, nazwy się zawijają, pasek zajmuje resztę.
+   Bez globalnego limitu 420 px: tabela pod mapą ma pełną wysokość, a obok mapy — wysokość kolumny mapy (niżej). */
 .citySection :global(.table-wrap) {
   overflow-x: hidden;
+  max-height: none;
+  margin-top: 0;
+}
+
+/* Mapa i tabela obok siebie: tabela kończy się na wysokości mapy z legendą. `contain: size` sprawia, że lista nie
+   wydłuża wiersza siatki; przewija się tylko, gdy wierszy jest więcej, niż mieści wysokość mapy. */
+@media (min-width: 1201px) {
+  .mapLayout {
+    align-items: stretch;
+  }
+
+  .citySection {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .citySection :global(.table-wrap) {
+    flex: 1 1 0;
+    min-height: 240px;
+    contain: size;
+    overflow-y: auto;
+  }
 }
 
 .citySection .cityTable {
@@ -623,7 +649,8 @@
 
 .citySection .cityTable th,
 .citySection .cityTable td {
-  padding: 6px 6px;
+  /* 16 województw mieści się obok mapy bez przewijania. */
+  padding: 5px 6px;
   overflow-wrap: break-word;
   white-space: normal;
 }
@@ -644,13 +671,20 @@
   max-width: calc(100% - 48px);
 }
 
+/* Kolumna „#” (województwa, miasta) w jednej linii. */
 .citySection td:first-child {
   white-space: nowrap;
 }
 
-/* Lista placówek miasta: nazwa szeroka, trzy wąskie kolumny liczb. */
+/* Lista placówek miasta: nazwa szeroka, trzy wąskie kolumny liczb. Pierwsza kolumna to tu nazwa:
+   zawija się (DESIGN.md 7.1, p. 5), zamiast wchodzić na kolumny liczb. */
 .citySection .providerTable th:first-child {
   width: auto;
+}
+
+.citySection .providerTable td:first-child,
+.citySection .providerTable td:first-child :global(.table-link) {
+  white-space: normal;
 }
 
 .citySection .cardTitle {
@@ -899,6 +933,12 @@
 .citySelected td {
   background: var(--color-background-soft);
   font-weight: var(--fw-semibold);
+}
+
+/* Placówka wybrana na mapie: pasek w kolorze sygnału przy nazwie, jak wybrany ośrodek w tabeli karty JGP
+   (`.rankSelected`) i obwódka kropki na mapie (`.facilityDotSelected`). */
+.facilitySelected td:first-child {
+  box-shadow: inset 3px 0 0 var(--color-signal);
 }
 
 .cityButton {

@@ -22,6 +22,10 @@
   background: var(--color-background-soft);
 }
 
+.compact {
+  width: 184px;
+}
+
 .segmented :global(.mantine-SegmentedControl-label) {
   padding: 5px 10px;
   font-size: var(--fs-sm);

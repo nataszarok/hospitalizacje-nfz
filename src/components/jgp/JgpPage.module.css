@@ -264,7 +264,11 @@
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
 }
 
+/* Tytuł wykresu z ikoną „?” (objaśnienie wykresu w podpowiedzi, nie w akapicie pod wykresem). */
 .chartTitle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   margin: 0;
   padding: 12px 12px 0;
   font-size: var(--fs-lg);

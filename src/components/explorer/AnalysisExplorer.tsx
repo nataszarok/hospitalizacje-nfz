@@ -1,8 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { InfoTip } from "@/components/InfoTip";
-import { useCallback, useEffect, useMemo, useState, useSyncExternalStore, type ReactNode, type SetStateAction } from "react";
+import { useSearchParams } from "next/navigation";
+import { HelpLines, InfoTip } from "@/components/InfoTip";
+import { explorerFunnelState, mortalityChartHelp, mortalityTotals } from "@/lib/mortalityFunnel";
+import { showsMortalityReference } from "@/lib/jgpCard";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode, type SetStateAction } from "react";
 import { AdmissionTab } from "@/components/AdmissionTab";
 import { ExplorerSidebar } from "@/components/explorer/ExplorerSidebar";
 import { RegionView } from "@/components/explorer/RegionView";
@@ -14,11 +17,12 @@ import { PortalIcon, type PortalIconName } from "@/components/portal/PortalIcon"
 import { TrendView } from "@/components/trends/TrendView";
 import { areaLabel, areasLabel, dominantRegionForCity, type AnalysisArea } from "@/lib/area";
 import { DASHBOARD_HREFS, DASHBOARD_TAB_NAVIGATE_EVENT, type DashboardNavigation } from "@/lib/dashboardNavigation";
-import { dashboardUrlSearch, legacyAnalysisRedirect, readDashboardUrlState, resolveDashboardYear, type DashboardActiveTab } from "@/lib/dashboardUrlState";
+import { dashboardUrlSearch, legacyAnalysisRedirect, readFocusParam, resolveDashboardYear, type DashboardActiveTab } from "@/lib/dashboardUrlState";
 import type { MortalityDisplayMode } from "@/lib/mortality";
 import { jgpHref } from "@/lib/portalLinks";
+import { bootDurations, explorerBoot, explorerResults, peekExplorerBoot } from "@/lib/explorerBoot";
 import {
-  admissionsFromDataset, loadHospitalizationIndex, loadRegionalTrends, loadStaticDataset, loadTrends, mortalityFromDataset, productTrend,
+  loadHospitalizationIndex, loadRegionalTrends, loadStaticDataset, loadTrends, productTrend,
   referenceFromDataset, trendsForRegions, type StaticDataset,
 } from "@/lib/staticData";
 import { incompleteCoverage, yearChangePct } from "@/lib/trends";
@@ -46,14 +50,13 @@ const EMPTY_ADMISSION_DATA: AdmissionPayload = { rows: [], areaStats: EMPTY_GEO_
 export const EXPLORER_VIEWS: { tab: DashboardActiveTab; label: string; question: string; icon: PortalIconName; help?: string }[] = [
   { tab: "trend", label: "W czasie", question: "Jak zmieniała się liczba hospitalizacji?", icon: "chart" },
   { tab: "mortality", label: "Kto leczy", question: "Którzy świadczeniodawcy leczą i z jaką śmiertelnością?", icon: "heart",
-    help: "Każdy punkt to świadczeniodawca: oś X — liczba hospitalizacji, oś Y — śmiertelność (zgony w szpitalu / hospitalizacje). Przełącznik zmienia jednostkę osi X. Obszar wybrany w panelu jest wyróżniony kolorem." },
+    help: "Przełącznik „Liczba hospitalizacji” zmienia jednostkę osi X. Obszar wybrany w panelu jest wyróżniony kolorem." },
   { tab: "admissions", label: "Tryb przyjęcia", question: "Ile przyjęć jest planowych, a ile nagłych?", icon: "bed",
     help: "Każdy punkt to świadczeniodawca. Oś X pokazuje przyjęcia planowane (kod 6), a oś Y sumę przyjęć nagłych (kody 2 i 3). Przełącznik zmienia jednostkę obu osi. Obszar wybrany w panelu jest wyróżniony kolorem." },
   { tab: "regions", label: "Gdzie", question: "Jak hospitalizacje rozkładają się na województwa i miasta?", icon: "pin" },
 ];
 
 const INTRO_KEY = "funduszdanych:explorer-intro";
-const FOCUS_KEY = "funduszdanych:explorer-focus";
 
 // Przełączniki zapamiętane w przeglądarce (wygoda jednego użytkownika, nie stan analizy).
 // Bez dostępu do pamięci przeglądarki (tryb prywatny, blokada) działają do przeładowania strony.
@@ -91,38 +94,54 @@ function useStoredFlag(key: string, initial: boolean): [boolean, (value: boolean
 /**
  * Eksplorator /analizy: krótki nagłówek z rozwijanym wstępem, panel ustawień po lewej (zakres JGP, obszar,
  * okres, filtry) i widoki-pytania. Tryb analizy chowa nagłówek i daje wykresom całą szerokość okna.
- * Stan analizy jest w adresie URL; wstęp i tryb analizy zapamiętuje przeglądarka.
+ * Stan analizy i tryb analizy są w adresie URL; wstęp zapamiętuje przeglądarka.
  */
 export function AnalysisExplorer() {
-  const [reference, setReference] = useState<ReferencePayload | null>(null);
-  const [data, setData] = useState<MortalityPayload>(EMPTY_DATA);
+  // `useSearchParams` wymaga granicy Suspense: statyczny HTML ma szkielet, eksplorator rysuje przeglądarka.
+  return <Suspense fallback={<ExplorerSkeleton />}><ExplorerApp /></Suspense>;
+}
+
+function ExplorerApp() {
+  // Adres z routera, nie z `window.location`: przy przejściu linkiem `window.location` ma w pierwszym renderze
+  // jeszcze stary adres (np. „/” zamiast „/analizy?t=k”).
+  const searchParams = useSearchParams();
+  // Dane już w pamięci (pobrane z wyprzedzeniem po najechaniu na link): pełny stan w pierwszym renderze, bez szkieletu.
+  const [boot] = useState(() => typeof window === "undefined" ? null : peekExplorerBoot(`?${searchParams.toString()}`));
+  const results = boot?.results;
+  const [reference, setReference] = useState<ReferencePayload | null>(boot?.reference ?? null);
+  const [data, setData] = useState<MortalityPayload>(results?.data ?? EMPTY_DATA);
   // Liczby dla wybranego obszaru (karty nad wykresem); wykres pokazuje wszystkich i wyróżnia obszar.
-  const [areaData, setAreaData] = useState<MortalityPayload | null>(null);
+  const [areaData, setAreaData] = useState<MortalityPayload | null>(results?.areaData ?? null);
   const [introOpen, setIntroOpen] = useStoredFlag(INTRO_KEY, false);
-  const [focus, setFocus] = useStoredFlag(FOCUS_KEY, false);
-  const [admissionData, setAdmissionData] = useState<AdmissionPayload>(EMPTY_ADMISSION_DATA);
+  // Tryb analizy jest w adresie (`pelny=1`), nie w pamięci przeglądarki: odświeżenie i link zachowują układ,
+  // a zwykłe wejście na /analizy zawsze startuje bez pełnego ekranu.
+  const [focus, setFocus] = useState(() => readFocusParam(searchParams.toString()));
+  const [admissionData, setAdmissionData] = useState<AdmissionPayload>(results?.admissionData ?? EMPTY_ADMISSION_DATA);
   // Przyjęcia nagłe w obszarze (pasek liczb) i zmiana hospitalizacji r/r z trendów (klucz = zakres, dla którego ją policzono).
-  const [areaUrgent, setAreaUrgent] = useState(0);
+  const [areaUrgent, setAreaUrgent] = useState(results?.areaUrgent ?? 0);
   const [trendChange, setTrendChange] = useState<{ key: string; pct: number | null } | null>(null);
-  const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
+  const [selectedProducts, setSelectedProducts] = useState<string[]>(boot?.urlState.selectedProducts ?? []);
   // Opisy grup ze wszystkich wczytanych lat: nazwa wybranej grupy zostaje, gdy rok nie ma jej w katalogu.
-  const [knownProducts, setKnownProducts] = useState<ProductOption[]>([]);
+  const [knownProducts, setKnownProducts] = useState<ProductOption[]>(boot?.reference.products ?? []);
   // Obszary analizy (do 5, suma); pusta lista = cała Polska.
-  const [areas, setAreas] = useState<AnalysisArea[]>([]);
-  const [dataset, setDataset] = useState<StaticDataset | null>(null);
+  const [areas, setAreas] = useState<AnalysisArea[]>(boot?.urlState.areas ?? []);
+  const [dataset, setDataset] = useState<StaticDataset | null>(boot?.dataset ?? null);
   // Filtr długości pobytu działa tylko w widoku, w którym go ustawiono (W czasie, Kto leczy, Tryb przyjęcia).
-  const [durationsByTab, setDurationsByTab] = useState<Partial<Record<DashboardActiveTab, string[]>>>({});
-  const [method, setMethod] = useState<EstimationMethod>("min");
-  const [axisMode, setAxisMode] = useState<AxisMode>("total");
-  const [admissionAxisMode, setAdmissionAxisMode] = useState<AxisMode>("total");
-  const [loading, setLoading] = useState(true);
+  const [durationsByTab, setDurationsByTab] = useState<Partial<Record<DashboardActiveTab, string[]>>>(boot ? bootDurations(boot.urlState) : {});
+  const [method, setMethod] = useState<EstimationMethod>(boot?.urlState.method ?? "min");
+  const [axisMode, setAxisMode] = useState<AxisMode>(boot?.urlState.axisMode ?? "total");
+  const [admissionAxisMode, setAdmissionAxisMode] = useState<AxisMode>(boot?.urlState.admissionAxisMode ?? "total");
+  const [funnel, setFunnel] = useState(Boolean(boot?.urlState.funnel));
+  const [loading, setLoading] = useState(!boot);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<DashboardActiveTab>("trend");
+  const [activeTab, setActiveTab] = useState<DashboardActiveTab>(boot?.urlState.activeTab ?? "trend");
   const [jgpDisplayMode, setJgpDisplayMode] = useState<MortalityDisplayMode>("combined");
-  const [urlStateReady, setUrlStateReady] = useState(false);
-  const [years, setYears] = useState<string[]>([]);
-  const [latestYear, setLatestYear] = useState("");
-  const [year, setYear] = useState("");
+  const [urlStateReady, setUrlStateReady] = useState(Boolean(boot));
+  const [years, setYears] = useState<string[]>(boot?.index.years ?? []);
+  const [latestYear, setLatestYear] = useState(boot?.index.latestYear ?? "");
+  const [year, setYear] = useState(boot?.year ?? "");
+  // Wyniki ze startu są już policzone: pierwsze przeliczenie po zamontowaniu pomijamy.
+  const skipFirstRefresh = useRef(Boolean(boot?.results));
   const durations = useMemo(() => activeTab === "regions" ? [] : durationsByTab[activeTab] ?? [], [activeTab, durationsByTab]);
   const setDurations = useCallback((next: SetStateAction<string[]>) => setDurationsByTab((current) => ({
     ...current,
@@ -137,6 +156,7 @@ export function AnalysisExplorer() {
   }, []);
 
   useEffect(() => {
+    if (boot) return;
     const redirect = legacyAnalysisRedirect(window.location.search);
     if (redirect) {
       window.location.replace(redirect);
@@ -146,14 +166,14 @@ export function AnalysisExplorer() {
       try {
         const index = await loadHospitalizationIndex();
         const initialYear = resolveDashboardYear(new URLSearchParams(window.location.search).get("y") ?? undefined, index.years, index.latestYear);
-        const payload = referenceFromDataset(await loadStaticDataset(initialYear));
-        const urlState = readDashboardUrlState(payload, window.location.search);
+        const { reference: payload, urlState } = explorerBoot(index, await loadStaticDataset(initialYear), window.location.search);
         setSelectedProducts(urlState.selectedProducts);
         setAreas(urlState.areas);
-        setDurationsByTab(urlState.durations.length && urlState.activeTab !== "regions" ? { [urlState.activeTab]: urlState.durations } : {});
+        setDurationsByTab(bootDurations(urlState));
         setMethod(urlState.method);
         setAxisMode(urlState.axisMode);
         setAdmissionAxisMode(urlState.admissionAxisMode);
+        setFunnel(Boolean(urlState.funnel));
         setActiveTab(urlState.activeTab);
         setYears(index.years);
         setLatestYear(index.latestYear);
@@ -167,7 +187,7 @@ export function AnalysisExplorer() {
       }
     };
     void load();
-  }, []);
+  }, [boot]);
 
   // Zmiana roku: nowy słownik (katalog JGP i placówki zależą od roku). Grupy i obszary zostają także wtedy, gdy nie ma ich
   // w katalogu danego roku (dają wtedy zero), bo oś czasu w „Gdzie” przechodzi przez wszystkie lata i wraca.
@@ -197,6 +217,10 @@ export function AnalysisExplorer() {
     // Czekamy, aż słownik nowego roku zastąpi poprzedni.
     if (year && reference.analysisYear !== year) return;
 
+    if (skipFirstRefresh.current) {
+      skipFirstRefresh.current = false;
+      return;
+    }
     let cancelled = false;
     const refreshData = async () => {
       try {
@@ -212,16 +236,12 @@ export function AnalysisExplorer() {
           setLoading(false);
           return;
         }
-        setLoading(true);
         setError(null);
-        // Wykresy świadczeniodawców pokazują cały kraj; obszar jest wyróżnieniem, a karty liczb liczą tylko obszar.
-        const query = { products: selectedProducts, durations, method, minHosp: 0 };
-        setData(mortalityFromDataset(dataset, query));
-        setAreaData(areas.length ? mortalityFromDataset(dataset, { ...query, areas }) : null);
-        const admissions = admissionsFromDataset(dataset, query);
-        setAdmissionData(admissions);
-        const areaAdmissions = areas.length ? admissionsFromDataset(dataset, { ...query, areas }) : admissions;
-        setAreaUrgent(areaAdmissions.rows.reduce((sum, row) => sum + row.urgentAdmissions, 0));
+        const next = explorerResults(dataset, { products: selectedProducts, durations, method, areas });
+        setData(next.data);
+        setAreaData(next.areaData);
+        setAdmissionData(next.admissionData);
+        setAreaUrgent(next.areaUrgent);
         setLoading(false);
       } catch (err) {
         if (cancelled) return;
@@ -237,11 +257,11 @@ export function AnalysisExplorer() {
     if (!reference || !urlStateReady) return;
     const search = dashboardUrlSearch(reference, {
       // Próg hospitalizacji i dodatkowe wyróżnienia usunięte z panelu: wykres jest interaktywny, obszar wyróżnia sam.
-      selectedProducts, durations, method, minHosp: 0, axisMode, admissionAxisMode, geoMode: "regions",
-      highlightedRegions: [], highlightedCities: [], activeTab, areas, year,
+      selectedProducts, durations, method, minHosp: 0, axisMode, admissionAxisMode, funnel, geoMode: "regions",
+      highlightedRegions: [], highlightedCities: [], activeTab, areas, year, focus,
     }, latestYear);
     window.history.replaceState(window.history.state, "", `${window.location.pathname}${search}${window.location.hash}`);
-  }, [reference, urlStateReady, selectedProducts, durations, method, axisMode, admissionAxisMode, activeTab, areas, year, latestYear]);
+  }, [reference, urlStateReady, selectedProducts, durations, method, axisMode, admissionAxisMode, funnel, activeTab, areas, year, focus, latestYear]);
 
   // Trend miesięczny ma podział na województwa, nie na miasta: dla miasta bierzemy jego województwo
   // (to, w którym świadczeniodawcy z miasta mają najwięcej hospitalizacji). Kilka obszarów = suma województw.
@@ -315,11 +335,21 @@ export function AnalysisExplorer() {
   };
 
   // Szkielet strony zamiast komunikatu na środku: ten sam nagłówek, panel i miejsce na wyniki, bez przeskoku po załadowaniu.
-  if (!reference && loading) return <ExplorerSkeleton />;
+  if (!reference && loading) return <ExplorerSkeleton focus={focus} />;
   if (!reference) return <main className="center-state error">{error ?? "Brak konfiguracji."}</main>;
 
   const range = years.length > 1 ? `${years[0]}–${years.at(-1)}` : reference.analysisYear;
   const activeView = EXPLORER_VIEWS.find((view) => view.tab === activeTab) ?? EXPLORER_VIEWS[0];
+  // „Kto leczy”: objaśnienie wykresu śmiertelności według wspólnego standardu (`mortalityChartHelp`), zależne od lejka.
+  const mortalityStats = mortalityTotals(data.rows);
+  const mortalityFunnel = explorerFunnelState({
+    enabled: funnel, deaths: mortalityStats.deaths, perCapita: axisMode === "per_100k",
+    separateGroups: selectedProducts.length >= 2 && jgpDisplayMode !== "combined",
+  });
+  const viewHelp = activeTab === "mortality" ? <HelpLines lines={[
+    ...mortalityChartHelp({ state: mortalityFunnel, showsMean: showsMortalityReference(mortalityStats.meanPct) }),
+    activeView.help ?? "",
+  ]} /> : activeView.help;
   // Strona grupy JGP, gdy wybrano jedną grupę, która ma już stronę.
   const singleProduct = selectedProducts.length === 1 ? reference.products.find((product) => product.code === selectedProducts[0]) : undefined;
   const groupPage = jgpHref(singleProduct?.jgpCode);
@@ -416,7 +446,7 @@ export function AnalysisExplorer() {
           <div>
             <h2 className={styles.question}>
               {activeView.question}
-              {activeView.help ? <InfoTip label={activeView.help} ariaLabel="Jak czytać wykres" /> : null}
+              {viewHelp ? <InfoTip label={viewHelp} ariaLabel="Jak czytać wykres" /> : null}
             </h2>
             <Collapsible open={!focus}>
               <p className={styles.scope}>{scopeLabel} · {areasLabel(areas, reference)} · {activeTab === "trend" ? range : reference.analysisYear}</p>
@@ -439,6 +469,8 @@ export function AnalysisExplorer() {
             highlightAreas={areas}
             displayMode={jgpDisplayMode}
             setDisplayMode={setJgpDisplayMode}
+            funnelState={mortalityFunnel}
+            setFunnel={setFunnel}
           /> : <AdmissionTab
             reference={reference}
             data={admissionData}
@@ -469,9 +501,10 @@ function Collapsible({ open, children }: { open: boolean; children: ReactNode })
 const EXPLORER_LEAD = <p>Własne analizy hospitalizacji NFZ: wybierz grupy JGP, obszar i rok, a eksplorator policzy wyniki łącznie dla całego wyboru.</p>;
 
 /** Szkielet eksploratora na czas pierwszego pobrania danych: układ strony jak po załadowaniu (nagłówek, panel, widoki, liczby, wykres). */
-function ExplorerSkeleton() {
-  return <main className={styles.page} aria-busy="true">
-    <PageHeader compact eyebrow={<>Hospitalizacje · grupy JGP</>} title="Eksplorator danych" lead={EXPLORER_LEAD} />
+/** Szkielet w układzie strony; w trybie analizy (`pelny=1`) bez nagłówka, więc po załadowaniu układ nie przeskakuje. */
+function ExplorerSkeleton({ focus = false }: { focus?: boolean }) {
+  return <main className={`${styles.page} ${focus ? styles.focus : ""}`} aria-busy="true">
+    {focus ? null : <PageHeader compact eyebrow={<>Hospitalizacje · grupy JGP</>} title="Eksplorator danych" lead={EXPLORER_LEAD} />}
     <div className={styles.workspace}>
       <aside className={styles.sidebar}>
         <Skeleton height={120} />
@@ -480,11 +513,13 @@ function ExplorerSkeleton() {
       </aside>
       <section className={styles.content} aria-label="Wyniki analizy">
         <LoadingStatus>Ładowanie analiz…</LoadingStatus>
+        {/* Wysokości jak po załadowaniu (widoki, pytanie z zakresem, liczby, wykres „W czasie” z opisem): treść pod spodem nie skacze. */}
         <Skeleton height={44} />
+        <Skeleton height={52} style={{ marginTop: 16 }} />
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, marginTop: 16 }}>
           {[0, 1, 2, 3].map((i) => <Skeleton key={i} height={84} />)}
         </div>
-        <Skeleton height={420} style={{ marginTop: 16 }} />
+        <Skeleton height={600} style={{ marginTop: 16 }} />
       </section>
     </div>
   </main>;

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef } from "react";
+import { usePlotResize } from "@/lib/usePlotResize";
 import { formatCityName } from "@/lib/formatters";
 import {
   aggregateMortalityRowsByProvider,
@@ -8,7 +9,9 @@ import {
   type MortalityDisplayMode,
   type MortalityDisplayRow,
 } from "@/lib/mortality";
-import { BASE_POINT, OTHER_POINT } from "@/lib/chartPalette";
+import { BASE_POINT, CHART_COLORS, OTHER_POINT } from "@/lib/chartPalette";
+import { funnelStatus, showsMortalityReference } from "@/lib/jgpCard";
+import { FUNNEL_STATUS_COLORS, funnelLines, mortalityTotals } from "@/lib/mortalityFunnel";
 import { areaFromValue, areaToValue, type AnalysisArea } from "@/lib/area";
 import {
   areaHighlightKey,
@@ -20,12 +23,12 @@ import {
   hoverTemplate,
   measureAxis,
   paddedRange,
-  PLOT_TOOLBAR_MARGIN,
   HIGHLIGHT_COLORS,
   makeDimensionLegendTraces,
   makeHoverTrace,
   PLOTLY_CONFIG,
   PRODUCT_SYMBOLS,
+  referenceShape,
   type PlotElement,
 } from "@/lib/plotlyChart";
 import type { AxisMode, MortalityRow, ProductOption, RegionOption } from "@/lib/types";
@@ -37,6 +40,7 @@ export function MortalityChart({
   highlightAreas,
   products,
   regions,
+  funnel = false,
 }: {
   rows: MortalityRow[];
   axisMode: AxisMode;
@@ -45,8 +49,14 @@ export function MortalityChart({
   highlightAreas: AnalysisArea[];
   products: ProductOption[];
   regions: RegionOption[];
+  /**
+   * Lejek (tylko oś „liczba hospitalizacji” i grupy razem, `explorerFunnelState`): granice 95% i 99,8% wokół średniej,
+   * punkty spoza wyróżnionych obszarów w kolorach statusu, w dymku status. Jak na karcie grupy JGP.
+   */
+  funnel?: boolean;
 }) {
   const chartRef = useRef<HTMLDivElement>(null);
+  usePlotResize(chartRef);
   const productByCode = useMemo(
     () => new Map(products.map((product) => [product.code, product])),
     [products],
@@ -85,11 +95,15 @@ export function MortalityChart({
       const isCombined = displayMode === "combined";
       const showLegend = geoSelection.length > 0 || (!isCombined && productCodes.length > 1);
 
+      // Średnia śmiertelność wszystkich świadczeniodawców wykresu (linia „średnia” i środek lejka).
+      const { meanPct } = mortalityTotals(rows);
+      const status = (row: MortalityDisplayRow) => funnelStatus(row.mortalityPct, meanPct, row.hospitalizations);
+
       const makeTrace = (
         subset: MortalityDisplayRow[],
         productIndex: number,
         name: string,
-        color: string,
+        color: string | ((row: MortalityDisplayRow) => string),
         emphasized = false,
       ) => ({
         type: "scattergl",
@@ -112,6 +126,7 @@ export function MortalityChart({
           row.productCodes
             .map((code) => productByCode.get(code)?.jgpCode ?? code)
             .join(", "),
+          funnel ? status(row) : "",
         ]),
         marker: {
           size: emphasized ? 11 : 9,
@@ -120,7 +135,7 @@ export function MortalityChart({
           symbol: isCombined || productCodes.length === 1
             ? "circle"
             : PRODUCT_SYMBOLS[productIndex % PRODUCT_SYMBOLS.length],
-          color,
+          color: typeof color === "function" ? subset.map(color) : color,
           line: {
             width: emphasized ? 0.8 : 0.4,
             color: "#FFFFFF",
@@ -136,12 +151,19 @@ export function MortalityChart({
               ? { label: "Hospitalizacje na 100 tys.", value: "%{customdata[7]:,.1f}" }
               : { label: "Hospitalizacje", value: "%{customdata[5]:,.0f}" },
             { label: "Zgony", value: "%{customdata[6]:,.0f}" },
+            ...(funnel ? [{ label: "Lejek", value: "%{customdata[9]}" }] : []),
           ],
           footer: "NIP %{customdata[1]}",
         }),
       });
 
-      const traces: Record<string, unknown>[] = [];
+      // Linie lejka pod punktami, bez dymka.
+      const traces: Record<string, unknown>[] = funnel
+        ? funnelLines(meanPct, Math.max(0, ...rows.map((row) => row.hospitalizations))).map((line) => ({
+          type: "scattergl", mode: "lines", x: line.x, y: line.y, hoverinfo: "skip", showlegend: false,
+          line: { color: line.color, width: 1.2, dash: line.dash },
+        }))
+        : [];
 
       if (isCombined) {
         const chartRows = aggregateMortalityRowsByProvider(rows);
@@ -150,7 +172,9 @@ export function MortalityChart({
         );
 
         if (remaining.length > 0) {
-          traces.push(makeTrace(remaining, 0, "Pozostałe", restColor));
+          // Lejek bez wyróżnionych obszarów: kolor punktu = status na lejku.
+          const color = funnel && !geoSelection.length ? (row: MortalityDisplayRow) => FUNNEL_STATUS_COLORS[status(row)] : restColor;
+          traces.push(makeTrace(remaining, 0, "Pozostałe", color));
         }
 
         geoSelection.forEach((key, geoIndex) => {
@@ -220,13 +244,14 @@ export function MortalityChart({
       // Ten sam margines na obu osiach (−6% / +10%); zero rysuje podstawa pod danymi.
       const xValues = traces.flatMap((trace) => (trace.x as (number | null)[] | undefined) ?? []);
       const yValues = rows.map((row) => row.mortalityPct);
+      const showMean = showsMortalityReference(meanPct);
 
       await Plotly.react(
         chartRef.current,
         traces,
         {
+          // Przełączniki są w wierszu nad wykresem (`MortalityTab`), więc wykres ma zwykły górny margines.
           ...getCommonPlotLayout(showLegend),
-          margin: { ...getCommonPlotLayout(showLegend).margin, t: PLOT_TOOLBAR_MARGIN },
           xaxis: measureAxis({
             title: axisTitle(axisMode === "per_100k" ? "Hospitalizacje na 100 tys. mieszkańców" : "Liczba hospitalizacji", 18),
             range: paddedRange(xValues),
@@ -237,7 +262,13 @@ export function MortalityChart({
             range: paddedRange(yValues),
             ticksuffix: "%",
           }),
-          shapes: [baselineShape("y"), baselineShape("x")],
+          // Linia średniej od 0,5% (`showsMortalityReference`), podpis „średnia: …” przy prawej krawędzi.
+          shapes: [baselineShape("y"), baselineShape("x"), ...(showMean ? [referenceShape(meanPct)] : [])],
+          annotations: showMean ? [{
+            xref: "paper", x: 1, y: meanPct, xanchor: "right", yanchor: "bottom", showarrow: false,
+            text: `średnia: ${meanPct.toLocaleString("pl-PL", { minimumFractionDigits: meanPct < 1 ? 2 : 1, maximumFractionDigits: meanPct < 1 ? 2 : 1 })}%`,
+            font: { size: 12, color: CHART_COLORS.textSecondary },
+          }] : [],
         },
         PLOTLY_CONFIG,
       );
@@ -259,6 +290,7 @@ export function MortalityChart({
     products,
     productByCode,
     regionByCode,
+    funnel,
   ]);
 
   return <div className="plot-shell"><div ref={chartRef} className="plot" /></div>;

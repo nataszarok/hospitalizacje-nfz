@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cartogramCells, cellColor, outlierCap, darkLabel, scaleColor, monthYears, movingAverage, sumByYear, packPageData, unpackPageData, poolStats, providerPool, selectedIndex, sumSeries, yearChangePct } from "@/lib/jgpCard";
+import { cartogramCells, cellColor, outlierCap, showsMortalityReference, darkLabel, scaleColor, monthYears, movingAverage, sumByYear, packPageData, unpackPageData, poolStats, providerPool, selectedIndex, sumSeries, yearChangePct } from "@/lib/jgpCard";
 import { buildJgpPageData } from "@/lib/jgpPage";
 import type { RegionRow } from "@/lib/regions";
 import { extrasFixture } from "./fixtures/jgpCardFixture";
@@ -130,6 +130,15 @@ describe("monthYears i sumByYear (wykres „Ile?” w latach)", () => {
   it("sumuje miesiące w latach", () => {
     expect(sumByYear(months, [1, 2, 3, 4, 5])).toEqual([3, 12]);
     expect(sumByYear([], [])).toEqual([]);
+  });
+});
+
+describe("showsMortalityReference — linia średniej śmiertelności", () => {
+  it("rysuje linię od 0,5%; niższej średniej (ułamek procenta, np. B19G) nie", () => {
+    expect(showsMortalityReference(0.5)).toBe(true);
+    expect(showsMortalityReference(11.5)).toBe(true);
+    expect(showsMortalityReference(0.49)).toBe(false);
+    expect(showsMortalityReference(0)).toBe(false);
   });
 });
 

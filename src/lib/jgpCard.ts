@@ -269,6 +269,15 @@ export function outlierCap(points: { x: number; y: number }[], minN = OUTLIER_MI
   return points.some((p) => p.y > cap) ? cap : null;
 }
 
+/**
+ * Linię średniej śmiertelności na wykresie punktowym ośrodków rysujemy od tej wartości (%).
+ * Niższa średnia (np. B19G, ułamek procenta) leży prawie na podstawie i tylko zasłania punkty.
+ */
+export const MIN_MORTALITY_REFERENCE_PCT = 0.5;
+
+/** Czy wykres śmiertelności ośrodków ma linię średniej grupy (`MIN_MORTALITY_REFERENCE_PCT`). */
+export const showsMortalityReference = (mortalityPct: number) => mortalityPct >= MIN_MORTALITY_REFERENCE_PCT;
+
 /** Lejek śmiertelności pokazujemy tylko, gdy grupa ma co najmniej tyle zgonów w roku. */
 export const MIN_FUNNEL_DEATHS = 30;
 /** Granice lejka: 95% (z = 1,96) i 99,8% (z = 3,09). */

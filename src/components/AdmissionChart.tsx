@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef } from "react";
+import { usePlotResize } from "@/lib/usePlotResize";
 import {
   admissionRowsPerJgp,
   aggregateAdmissionRowsByProvider,
@@ -48,6 +49,7 @@ export function AdmissionChart({
   regions: RegionOption[];
 }) {
   const chartRef = useRef<HTMLDivElement>(null);
+  usePlotResize(chartRef);
   const productByCode = useMemo(() => new Map(products.map((p) => [p.code, p])), [products]);
   const regionByCode = useMemo(() => new Map(regions.map((r) => [r.owNfz, r.name])), [regions]);
 

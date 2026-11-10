@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { usePlotResize } from "@/lib/usePlotResize";
 import { ChartTooltip, TooltipHead, TooltipLines } from "@/components/ChartTooltip";
 import { monthYears, movingAverage, movingRatio, ratioSeries, sumByYear, type ChartPeriod } from "@/lib/jgpCard";
 import { baselineShape, categoryAxis, chartLayout, countAxis, makeHoverTrace, measureAxis, monthAxis, percentAxis, PLOTLY_CONFIG, wrapChartLabel, type PlotElement } from "@/lib/plotlyChart";
@@ -53,7 +54,8 @@ const yearlyLine = (line: ChartLine, months: string[]): ChartLine => ({ ...line,
  * Najechanie: wskazana kropka rośnie i zmienia kolor (osobna seria-znacznik, jak w `attachHoverMarker`),
  * a cała seria ośrodka jest rysowana na wierzchu w jego kolorze. Zmieniamy tylko serie nakładki.
  * Dymek HTML (`ChartTooltip` + `placeTooltip`, DESIGN.md 6.3): obok kropki, może wyjść poza wykres, cała nazwa.
- * Wybrany ośrodek (`tone: "selected"`): reaguje na najechanie tylko jego linia, pozostałe są przygaszone i bez dymka.
+ * Wybrany ośrodek (`tone: "selected"`): pozostałe linie są przygaszone. Najechanie na nie podświetla na chwilę
+ * samą linię (bez kropek serii) w domyślnym niebieskim i pokazuje dymek.
  * Kliknięcie przy dowolnej linii wybiera najbliższą linię (własna obsługa kliknięcia: Plotly nie zgłasza kliknięć
  * serii bez najechania).
  * Wszystkie serie są typu `scattergl` (jak w eksploratorze): `restyle` serii SVG w trakcie najechania
@@ -88,6 +90,7 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
   modeBar?: boolean;
 }) {
   const chartRef = useRef<HTMLDivElement>(null);
+  usePlotResize(chartRef);
   const shellRef = useRef<HTMLDivElement>(null);
   const [tip, setTip] = useState<{ anchor: Box; title: string; context: string; lines: string[] } | null>(null);
   // Funkcje z rodzica trzymamy w refach: nowa funkcja po rerenderze nie przerysowuje wykresu.
@@ -114,9 +117,8 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
       const emphasized = (line: ChartLine) => Boolean(line.tone || line.color) && !line.thin;
       const color = (line: ChartLine) => line.tone === "selected" ? selectedColor : line.color ?? (line.tone === "primary" ? PRIMARY : BASE);
       const hasSelected = ordered.some((line) => line.tone === "selected");
-      // Przy wybranym ośrodku pozostałe linie są tłem: mocniej przygaszone i bez najechania.
+      // Przy wybranym ośrodku pozostałe linie są tłem: mocniej przygaszone.
       const opacity = (line: ChartLine) => emphasized(line) ? 1 : hasSelected ? 0.3 : 0.5;
-      const hoverable = (line: ChartLine) => !hasSelected || line.tone === "selected";
       const width = (line: ChartLine) => emphasized(line) ? 2.5 : 1.5;
       const markerSize = (line: ChartLine) => (emphasized(line) ? 7 : 5) + (yearly ? 2 : 0);
       const percent = ordered.some((line) => line.base);
@@ -126,21 +128,20 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
       // Dymek rysuje `ChartTooltip`: Plotly tylko zgłasza najechanie („none”); linie tła pomija („skip”).
       const traces = ordered.flatMap((line) => {
         const { points, average } = series.get(line.key)!;
-        const hover = hoverable(line) ? "none" : "skip";
         return [
           {
             type: "scattergl", mode: "markers", name: line.name, legendgroup: line.key, showlegend: legend,
             x, y: points,
             marker: { color: color(line), size: markerSize(line), line: { color: "#FFFFFF", width: 1 } },
             opacity: opacity(line),
-            hoverinfo: hover,
+            hoverinfo: "none",
           },
           {
             type: "scattergl", mode: "lines", name: yearly ? line.name : `${line.name} · średnia 3M`, legendgroup: line.key, showlegend: false,
             x, y: average, connectgaps: false,
             line: { color: color(line), width: width(line) },
             opacity: opacity(line),
-            hoverinfo: hover,
+            hoverinfo: "none",
           },
         ];
       });
@@ -223,7 +224,7 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
         void Plotly.restyle(plot, { x: [[null], [null], [null]], y: [[null], [null], [null]] }, overlay);
         restyleInProgress = false;
       };
-      // Kliknięcie: linia podświetlona, a bez podświetlenia (linie tła przy wybranym ośrodku) najbliższa linia
+      // Kliknięcie: linia podświetlona, a bez podświetlenia najbliższa linia
       // (kropka albo punkt średniej) w promieniu 16 px od kursora. Podświetlenie i dymek znikają od razu,
       // więc po zmianie wyboru nie zostają dwie wyróżnione linie.
       plot.onclick = (event: MouseEvent) => {
@@ -256,7 +257,6 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
         const point = event?.points?.[0];
         if (cancelled || restyleInProgress || !point || point.curveNumber >= overlayStart) return;
         const line = ordered[Math.floor(point.curveNumber / 2)];
-        if (!hoverable(line)) return;
         hovered = line;
         hoverRef.current?.(line.key);
         const highlight = line.tone === "selected" ? selectedColor : line.color ?? line.accent ?? PRIMARY;
@@ -265,10 +265,12 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
         const y = points[point.pointNumber] ?? null;
         const anchor = plotlyDataBox(plot, x[point.pointNumber], y ?? average[point.pointNumber] ?? 0, 14);
         setTip(anchor ? tipFor(line, point.pointNumber, anchor) : null);
+        // Linia tła przy wybranym ośrodku: podświetlona sama linia, kropki serii zostają przygaszone.
+        const lineOnly = hasSelected && line.tone !== "selected";
         restyleInProgress = true;
         void Plotly.restyle(plot, {
-          x: [x, x, [point.x]],
-          y: [average, points, [y]],
+          x: [x, lineOnly ? [null] : x, [point.x]],
+          y: [average, lineOnly ? [null] : points, [y]],
           "line.color": [highlight, highlight, "#FFFFFF"],
           "marker.color": [highlight, highlight, CHART_COLORS.text],
         }, overlay);

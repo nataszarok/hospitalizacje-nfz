@@ -21,10 +21,11 @@ const react = vi.fn(async (plot: HTMLElement) => {
     },
   });
 });
+const restyle = vi.fn<(...args: unknown[]) => Promise<void>>(() => Promise.resolve());
 vi.mock("@/lib/plotlyLoader", () => ({
-  loadPlotly: async () => ({ react, restyle: vi.fn(() => Promise.resolve()) }),
+  loadPlotly: async () => ({ react, restyle }),
 }));
-afterEach(() => { cleanup(); react.mockClear(); for (const key of Object.keys(handlers)) delete handlers[key]; });
+afterEach(() => { cleanup(); react.mockClear(); restyle.mockClear(); for (const key of Object.keys(handlers)) delete handlers[key]; });
 
 // Trzy miesiące 2023 (rok niepełny) i dwanaście 2024.
 const months = ["2023-10", "2023-11", "2023-12", ...Array.from({ length: 12 }, (_, i) => `2024-${String(i + 1).padStart(2, "0")}`)];
@@ -100,16 +101,28 @@ describe("GroupLineChart — wybrany ośrodek", () => {
     expect(traces.slice(0, 4).map((trace) => trace.hoverinfo)).toEqual(["none", "none", "none", "none"]);
   });
 
-  it("z wybranym ośrodkiem dymek ma tylko jego linia; pozostałe są przygaszone", async () => {
+  it("z wybranym ośrodkiem pozostałe linie są przygaszone, ale reagują na najechanie", async () => {
     const { traces } = await draw(lines);
     // Serie: inny ośrodek (kropki, średnia), wybrany (kropki, średnia).
-    expect(traces.slice(0, 4).map((trace) => trace.hoverinfo)).toEqual(["skip", "skip", "none", "none"]);
+    expect(traces.slice(0, 4).map((trace) => trace.hoverinfo)).toEqual(["none", "none", "none", "none"]);
     expect(traces[0].opacity).toBeLessThan(0.5);
     hover(2, 0);
     expect(screen.getByRole("tooltip")).toHaveTextContent(name);
   });
 
-  it("kliknięcie przy innej linii wybiera ją, choć nie ma dymka; kliknięcie z dala od linii nic nie robi", async () => {
+  it("najechanie na linię tła podświetla samą linię na niebiesko, bez kropek serii; wybrana linia ma też kropki", async () => {
+    await draw(lines);
+    const overlay = () => restyle.mock.calls.at(-1)![1] as { y: unknown[][]; "line.color": string[] };
+    hover(0, 3);
+    expect(screen.getByRole("tooltip")).toHaveTextContent("Inny ośrodek");
+    expect(overlay()["line.color"][0]).toBe("#2856A3");
+    expect(overlay().y[0]).toHaveLength(months.length);
+    expect(overlay().y[1]).toEqual([null]);
+    hover(2, 3);
+    expect(overlay().y[1]).toHaveLength(months.length);
+  });
+
+  it("kliknięcie przy innej linii wybiera ją; kliknięcie z dala od linii nic nie robi", async () => {
     const onSelect = vi.fn();
     const { plot } = await draw(lines, { onSelect });
     // Linia „Inny ośrodek”: miesiąc 5 → wartość 106 → piksel (50, 94).

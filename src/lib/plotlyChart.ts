@@ -64,7 +64,7 @@ export function areaHighlightTitle(areas: AnalysisArea[]): string {
   return "Obszary";
 }
 
-/** Górny margines wykresów punktowych eksploratora: miejsce na przełączniki w prawym górnym rogu karty. */
+/** Górny margines wykresu „Tryb przyjęcia”: miejsce na przełączniki w prawym górnym rogu karty. */
 export const PLOT_TOOLBAR_MARGIN = 56;
 
 /*

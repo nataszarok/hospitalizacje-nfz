@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 
 import "@testing-library/jest-dom/vitest";
+import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { JgpPage } from "@/components/jgp/JgpPage";
@@ -12,6 +13,11 @@ import { latestDatasetFixture, trendsFixture } from "@/lib/__tests__/fixtures/tr
 // Wykresy Plotly zastępujemy prostymi listami: test sprawdza układ strony, nie rysowanie.
 vi.mock("@/components/jgp/GroupLineChart", () => ({
   GroupLineChart: ({ lines }: { lines: { key: string; name: string }[] }) => <ul aria-label="Linie wykresu">{lines.map((line) => <li key={line.key}>{line.name}</li>)}</ul>,
+}));
+// Podpowiedź „?” bez Mantine: treść jako notka (sprawdzamy tekst objaśnienia).
+vi.mock("@/components/InfoTip", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/components/InfoTip")>()),
+  InfoTip: ({ label, ariaLabel }: { label: ReactNode; ariaLabel?: string }) => <span role="note" aria-label={ariaLabel}>{label}</span>,
 }));
 vi.mock("@/components/jgp/ProviderScatter", () => ({
   ProviderScatter: ({ ariaLabel }: { ariaLabel: string }) => <div role="group" aria-label={ariaLabel} />,

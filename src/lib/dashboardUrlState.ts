@@ -11,6 +11,10 @@ export type DashboardUrlState = {
   minHosp: number;
   axisMode: AxisMode;
   admissionAxisMode: AxisMode;
+  /** Lejek na wykresie „Kto leczy” (`lj=1`). */
+  funnel?: boolean;
+  /** Tryb analizy: schowany nagłówek strony, wykresy na całą szerokość okna (`pelny=1`). */
+  focus?: boolean;
   geoMode: GeographyMode;
   highlightedRegions: string[];
   highlightedCities: string[];
@@ -35,6 +39,13 @@ function nonNegativeInteger(value: string | null) {
   if (value === null || value.trim() === "") return 0;
   const parsed = Number(value);
   return Number.isFinite(parsed) ? Math.max(0, Math.floor(parsed)) : 0;
+}
+
+const FOCUS_PARAM = "pelny";
+
+/** Tryb analizy z adresu (`pelny=1`). Bez słownika roku: eksplorator czyta go w pierwszym renderze, bez przeskoku. */
+export function readFocusParam(search: string): boolean {
+  return new URLSearchParams(search).get(FOCUS_PARAM) === "1";
 }
 
 export function readDashboardUrlState(reference: ReferencePayload, search: string): DashboardUrlState {
@@ -89,6 +100,8 @@ export function readDashboardUrlState(reference: ReferencePayload, search: strin
     minHosp: nonNegativeInteger(params.get("n")),
     axisMode: params.get("x") === "100k" ? "per_100k" : "total",
     admissionAxisMode: params.get("ax") === "100k" ? "per_100k" : "total",
+    funnel: params.get("lj") === "1",
+    focus: readFocusParam(search),
     geoMode: params.get("g") === "c" ? "cities" : "regions",
     highlightedRegions: validValues(params.getAll("r"), regionCodes, 10),
     highlightedCities: validValues(params.getAll("c"), cityValues, 10),
@@ -136,6 +149,8 @@ export function dashboardUrlSearch(reference: ReferencePayload, state: Dashboard
   state.highlightedCities.forEach((value) => params.append("c", value));
   if (state.axisMode === "per_100k") params.set("x", "100k");
   if (state.admissionAxisMode === "per_100k") params.set("ax", "100k");
+  if (state.funnel) params.set("lj", "1");
+  if (state.focus) params.set(FOCUS_PARAM, "1");
   if (state.activeTab === "mortality") params.set("t", "k");
   if (state.activeTab === "admissions") params.set("t", "a");
   if (state.activeTab === "regions") params.set("t", "g");

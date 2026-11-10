@@ -1,0 +1,13 @@
+.control {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+}
+
+.label {
+  padding-left: 8px;
+  color: var(--color-text-secondary);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  white-space: nowrap;
+}
