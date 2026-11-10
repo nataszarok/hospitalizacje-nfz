@@ -36,39 +36,51 @@ export function formatSigned(value: number, unit = ""): string {
   return `${sign}${compactFormat.format(Math.abs(value))}${unit}`;
 }
 
-const billionFormat = new Intl.NumberFormat("pl-PL", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const oneDecimalFormat = compactFormat;
 
-/** Jednostka kwot w zł (DESIGN.md 3.1): tys. i mln bez miejsc dziesiętnych, mld z 2 miejscami. */
+/**
+ * Jednostka kwot w zł (DESIGN.md 3.1): tys. zł bez miejsc dziesiętnych; mln zł z 1 miejscem poniżej 100 mln,
+ * bez miejsc od 100 mln; mld zł z 1 miejscem.
+ */
 export interface PlnScale {
   unit: "tys. zł" | "mln zł" | "mld zł";
-  /** Sama liczba w jednostce, z polskim minusem: 1 403 200 000 → „1,40”. */
+  /** Sama liczba w jednostce, z polskim minusem: 1 403 200 000 → „1,4”. */
   format: (value: number) => string;
 }
 
-const PLN_SCALES: Record<PlnScale["unit"], { divisor: number; format: Intl.NumberFormat }> = {
-  "tys. zł": { divisor: 1_000, format: integerFormat },
-  "mln zł": { divisor: 1_000_000, format: integerFormat },
-  "mld zł": { divisor: 1_000_000_000, format: billionFormat },
+const PLN_DIVISORS: Record<PlnScale["unit"], number> = {
+  "tys. zł": 1_000,
+  "mln zł": 1_000_000,
+  "mld zł": 1_000_000_000,
 };
 
 function plnUnit(abs: number): PlnScale["unit"] {
-  // Próg liczymy po zaokrągleniu: 999,6 mln to już „1,00 mld zł”, nie „1 000 mln zł”.
+  // Próg liczymy po zaokrągleniu: 999,6 mln to już „1,0 mld zł”, nie „1 000 mln zł”.
   if (Math.round(abs / 1_000_000) >= 1_000) return "mld zł";
   if (Math.round(abs / 1_000) >= 1_000) return "mln zł";
   return "tys. zł";
 }
 
+/** Miejsca dziesiętne jednostki: mln od 100 (po zaokrągleniu do 1 miejsca) bez miejsc, „99,96 mln” → „100 mln”. */
+function plnFormat(unit: PlnScale["unit"], maxAbs: number): Intl.NumberFormat {
+  if (unit === "tys. zł") return integerFormat;
+  if (unit === "mln zł" && Math.round(maxAbs / 100_000) >= 1_000) return integerFormat;
+  return oneDecimalFormat;
+}
+
 /**
- * Wspólna jednostka dla zestawu kwot (słupki, kolumna tabeli, oś): dobiera ją największa wartość.
- * Jednostka idzie do podpisu lub nagłówka, w komórkach same liczby z `format`.
+ * Wspólna jednostka dla zestawu kwot (słupki, kolumna tabeli, oś): jednostkę i miejsca dziesiętne
+ * dobiera największa wartość. Jednostka idzie do podpisu lub nagłówka, w komórkach same liczby z `format`.
  */
 export function plnScale(values: readonly number[]): PlnScale {
-  const unit = plnUnit(Math.max(0, ...values.map((value) => Math.abs(value))));
-  const { divisor, format } = PLN_SCALES[unit];
+  const maxAbs = Math.max(0, ...values.map((value) => Math.abs(value)));
+  const unit = plnUnit(maxAbs);
+  const divisor = PLN_DIVISORS[unit];
+  const format = plnFormat(unit, maxAbs);
   return { unit, format: (value) => `${value < 0 ? "−" : ""}${format.format(Math.abs(value) / divisor)}` };
 }
 
-/** Kwota w zł w skrócie: 1 403 200 000 → „1,40 mld zł”, 274 400 000 → „274 mln zł”, 450 400 → „450 tys. zł”. */
+/** Kwota w zł w skrócie: 1 403 200 000 → „1,4 mld zł”, 274 400 000 → „274 mln zł”, 38 210 000 → „38,2 mln zł”, 450 400 → „450 tys. zł”. */
 export function formatPln(value: number): string {
   const scale = plnScale([value]);
   return `${scale.format(value)} ${scale.unit}`;

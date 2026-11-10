@@ -3,7 +3,7 @@
 import "@testing-library/jest-dom/vitest";
 import { afterEach, describe, expect, it } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
-import { formatPln, MonthLines, StayShares, ValueBars, ValueRows } from "@/components/summary/SummaryCharts";
+import { formatPln, JgpActivityBars, MonthLines, StayShares, ValueBars, ValueRows } from "@/components/summary/SummaryCharts";
 
 afterEach(cleanup);
 
@@ -57,11 +57,11 @@ describe("Wykresy karty „Hospitalizacje w Polsce”", () => {
     for (let i = 1; i < ys.length; i++) expect(ys[i] - ys[i - 1]).toBeGreaterThanOrEqual(13);
   });
 
-  it("podaje kwoty od 1 mld zł w miliardach z 2 miejscami, mniejsze w pełnych milionach", () => {
-    expect(formatPln(64_277_000_000)).toBe("64,28 mld zł");
-    expect(formatPln(1_000_000_000)).toBe("1,00 mld zł");
+  it("podaje kwoty według DESIGN.md 3.1: mld z 1 miejscem, mln od 100 mln bez miejsc, poniżej z 1 miejscem", () => {
+    expect(formatPln(64_277_000_000)).toBe("64,3 mld zł");
+    expect(formatPln(1_000_000_000)).toBe("1,0 mld zł");
     expect(formatPln(994_400_000)).toBe("994 mln zł");
-    expect(formatPln(12_340_000)).toBe("12 mln zł");
+    expect(formatPln(12_340_000)).toBe("12,3 mln zł");
     expect(formatPln(450_400)).toBe("450 tys. zł");
   });
 
@@ -74,8 +74,8 @@ describe("Wykresy karty „Hospitalizacje w Polsce”", () => {
     const [first, second] = screen.getAllByRole("link");
     expect(first).toHaveAttribute("href", "/jgp/E53G");
     // Układ jak lista najczęstszych grup: kod i nazwa, pasek, kwota, zmiana — bez dodatkowych opisów.
-    expect(first).toHaveTextContent(/^E53G Niewydolność krążenia1,49 mld zł\+135%$/);
-    expect(first).toHaveAttribute("title", "E53G Niewydolność krążenia: 1,49 mld zł, 10\u00a0521 zł na hospitalizację");
+    expect(first).toHaveTextContent(/^E53G Niewydolność krążenia1,5 mld zł\+135%$/);
+    expect(first).toHaveAttribute("title", "E53G Niewydolność krążenia: 1,5 mld zł, 10\u00a0521 zł na hospitalizację");
     expect(second).toHaveTextContent(/^A48 Udar747 mln zł—$/);
     expect(screen.getByTitle("Brak kwot w 2019 r.")).toBeInTheDocument();
     expect([...container.querySelectorAll("[style]")].map((el) => (el as HTMLElement).style.width)).toEqual(["100%", "50%"]);
@@ -89,10 +89,31 @@ describe("Wykresy karty „Hospitalizacje w Polsce”", () => {
     expect(link.getAttribute("title")).toContain("z rekonstrukcją kostną, endoprotezoplastyka stawu biodrowego");
   });
 
-  it("bez linków pokazuje sekcje jako zwykłe wiersze", () => {
-    render(<ValueRows rows={[{ code: "E", label: "Układ krążenia", valuePln: 10, hospitalizations: 1, perStayPln: 10, sharePct: 100, changePct: -5 }]} label="Sekcje" firstYear="2019" />);
+  it("bez linków pokazuje sekcje jako zwykłe wiersze ze średnią kwotą na hospitalizację", () => {
+    render(<ValueRows rows={[
+      { code: "E", label: "Układ krążenia", valuePln: 12_000_000, hospitalizations: 1000, perStayPln: 12_000, sharePct: 100, changePct: -5 },
+      { code: "F", label: "Układ pokarmowy", valuePln: 1000, hospitalizations: 0, perStayPln: null, sharePct: 0, changePct: null },
+    ]} label="Sekcje" firstYear="2019" />);
     expect(screen.queryByRole("link")).not.toBeInTheDocument();
-    expect(screen.getByRole("list", { name: "Sekcje" })).toHaveTextContent("Obszar leczeniaKwotaod 2019EUkład krążenia0 tys. zł−5%");
+    expect(screen.getByRole("list", { name: "Sekcje" })).toHaveTextContent(/^Obszar leczeniaKwotaNa hosp\.od 2019E/);
+    const [circulation, digestive] = screen.getAllByRole("listitem");
+    expect(circulation).toHaveTextContent(/^EUkład krążenia12,0 mln zł12\s000 zł−5%$/);
+    // Sekcja bez hospitalizacji nie ma średniej.
+    expect(digestive).toHaveTextContent(/^FUkład pokarmowy1 tys\. zł——$/);
     expect(screen.getByRole("list", { name: "Sekcje" })).toHaveTextContent("Układ krążenia");
+  });
+
+  it("dzieli słupek aktywnych grup JGP na grupy stałe, wcześniejsze i nowe; pod rokiem nowe i zniknięte", () => {
+    const years = [
+      { year: "2023", active: 10, core: 6, earlier: 4, new: 0, gone: 0 },
+      { year: "2024", active: 12, core: 6, earlier: 3, new: 3, gone: 1 },
+    ];
+    const { container } = render(<JgpActivityBars years={years} />);
+    expect(screen.getByRole("img", { name: "Aktywne grupy JGP w latach: 2023 — 10 (w każdym roku 6, wcześniejsze 4), 2024 — 12 (w każdym roku 6, wcześniejsze 3, nowe 3, zniknęło 1)" })).toBeInTheDocument();
+    // Pierwszy rok bez części „nowe”: 2 + 3 prostokąty.
+    const heights = [...container.querySelectorAll("rect")].map((rect) => Number(rect.getAttribute("height")));
+    expect(heights).toHaveLength(5);
+    expect(heights[0]).toBeCloseTo(heights[2]);
+    expect([...container.querySelectorAll("text")].map((t) => t.textContent)).toEqual(["10", "’23", "12", "’24", "+3 −1"]);
   });
 });

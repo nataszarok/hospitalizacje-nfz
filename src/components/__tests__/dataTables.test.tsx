@@ -20,6 +20,8 @@ afterEach(() => {
 
 vi.mock("@mantine/core", () => ({
   SegmentedControl: ({ value }: { value: string }) => <div data-testid="segmented-control">{value}</div>,
+  Switch: ({ checked, label }: { checked: boolean; label: string }) => <input type="checkbox" role="switch" aria-label={label} checked={checked} readOnly />,
+  Tooltip: ({ children }: { children: React.ReactNode }) => children,
 }));
 
 vi.mock("@/components/InfoTip", () => ({ InfoTip: ({ label }: { label: string }) => <span role="note">{label}</span> }));
@@ -110,6 +112,8 @@ const commonProps = {
   highlightAreas: [] as AnalysisArea[],
   displayMode: "combined" as const,
   setDisplayMode: vi.fn(),
+  funnelState: "off" as const,
+  setFunnel: vi.fn(),
 };
 
 describe("MortalityTab data table", () => {

@@ -64,7 +64,7 @@ export function areaHighlightTitle(areas: AnalysisArea[]): string {
   return "Obszary";
 }
 
-/** Górny margines wykresów punktowych eksploratora: miejsce na przełączniki w prawym górnym rogu karty. */
+/** Górny margines wykresu „Tryb przyjęcia”: miejsce na przełączniki w prawym górnym rogu karty. */
 export const PLOT_TOOLBAR_MARGIN = 56;
 
 /*
@@ -83,6 +83,23 @@ export function chartHoverLabel() {
     font: { family: getAppFontFamily(), color: CHART_COLORS.text, size: CHART_TEXT.hover },
     align: "left" as const,
   };
+}
+
+/** Najdłuższa linia nazwy w dymku i w podpisie na wykresie (znaki). */
+export const CHART_LABEL_LINE = 32;
+
+/**
+ * Długa nazwa (np. placówki) w kilku liniach Plotly (`<br>`), łamana na spacjach (DESIGN.md, 6.3).
+ * Dymek i podpis nie są wtedy szersze od wykresu i nie zasłaniają punktu. Słowo dłuższe niż linia zostaje całe.
+ */
+export function wrapChartLabel(text: string, max = CHART_LABEL_LINE): string {
+  const lines: string[] = [];
+  for (const word of text.split(/\s+/).filter(Boolean)) {
+    const last = lines.at(-1);
+    if (last !== undefined && last.length + 1 + word.length <= max) lines[lines.length - 1] = `${last} ${word}`;
+    else lines.push(word);
+  }
+  return lines.join("<br>");
 }
 
 /**

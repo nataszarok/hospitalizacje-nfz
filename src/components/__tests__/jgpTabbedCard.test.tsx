@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 
 import "@testing-library/jest-dom/vitest";
+import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { JgpPage } from "@/components/jgp/JgpPage";
@@ -16,8 +17,14 @@ vi.mock("@/components/jgp/GroupLineChart", () => ({
     </li>)}
   </ul>,
 }));
+// Podpowiedź „?” bez Mantine: treść jako notka (sprawdzamy tekst objaśnienia).
+vi.mock("@/components/InfoTip", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/components/InfoTip")>()),
+  InfoTip: ({ label, ariaLabel }: { label: ReactNode; ariaLabel?: string }) => <span role="note" aria-label={ariaLabel}>{label}</span>,
+}));
 vi.mock("@/components/jgp/ProviderScatter", () => ({
-  ProviderScatter: ({ points, ariaLabel, curves }: { points: { key: string; name: string; color?: string; label?: string }[]; ariaLabel: string; curves?: unknown[] }) => <div role="group" aria-label={ariaLabel} data-curves={curves?.length ?? 0}>
+  NO_CURVES: [],
+  ProviderScatter: ({ points, ariaLabel, curves, yCap }: { points: { key: string; name: string; color?: string; label?: string }[]; ariaLabel: string; curves?: unknown[]; yCap?: number | null }) => <div role="group" aria-label={ariaLabel} data-curves={curves?.length ?? 0} data-cap={yCap ?? ""}>
     {points.map((point) => <span key={point.key} data-color={point.color ?? ""} data-label={point.label ?? ""}>{point.name}</span>)}
   </div>,
 }));
@@ -42,7 +49,7 @@ describe("Karta w zakładkach — nagłówek i Przegląd", () => {
     const kpis = container.querySelector('dl[aria-label="Liczby grupy"]')!;
     expect(kpis.children).toHaveLength(4);
     expect(kpis).toHaveTextContent("Hospitalizacje 202530+100,0% r/r");
-    expect(kpis).toHaveTextContent("Kwota świadczeń NFZ 20251 mln zł+33,3% r/r");
+    expect(kpis).toHaveTextContent("Kwota świadczeń NFZ 20251,2 mln zł+33,3% r/r");
     expect(screen.getByText("cała Polska · kliknij województwo na mapie")).toBeInTheDocument();
   });
 
@@ -142,7 +149,12 @@ describe("Karta w zakładkach — Ośrodki", () => {
     expect(mortality).toHaveAttribute("data-curves", "0");
     expect(within(mortality).getAllByText(/Szpital/)).toHaveLength(2);
     expect(screen.queryByRole("group", { name: /Wykres lejkowy/ })).not.toBeInTheDocument();
-    expect(screen.getByText(/Bez granic lejka/)).toBeInTheDocument();
+    // Objaśnienie w ikonie „?” przy tytule, nie w akapicie pod wykresem.
+    const help = screen.getByRole("note", { name: "Jak czytać wykres śmiertelności" });
+    expect(help).toHaveTextContent(/^Punkt to ośrodek/);
+    expect(help).not.toHaveTextContent(/Bez lejka|Bez linii średniej|<5/);
+    expect(help).toHaveTextContent("Kliknięcie punktu wybiera ośrodek.");
+    expect(screen.queryByText(/^Bez granic lejka/)).not.toBeInTheDocument();
   });
 
   it("Jak leczą? przy wybranym województwie: wszystkie ośrodki, wybrane w kolorze, reszta szara", () => {
@@ -219,13 +231,18 @@ describe("Karta w zakładkach — Gdzie?", () => {
 });
 
 describe("Karta w zakładkach — wybrany ośrodek przy wybranych województwach", () => {
-  it("znacznik wybranego ośrodka w tabeli i legendzie; województwa w kolorach mapy", () => {
+  it("znacznik wybranego ośrodka w tabeli; w legendzie tylko w powiększeniu; województwa w kolorach mapy", () => {
     open("?osrodek=07%7C111&ow=07&ow=12");
     renderCard();
     const rows = within(screen.getByRole("region", { name: /^Lista ośrodków/ })).getAllByRole("row").slice(1);
     const alfa = rows.find((row) => row.textContent?.includes("Szpital Alfa"))!;
     expect(within(alfa).getByRole("img", { name: "wybrany ośrodek" })).toBeInTheDocument();
-    expect(screen.getByRole("list", { name: "Legenda województw" })).toHaveTextContent("wybrany ośrodek: Szpital Alfa");
+    // Na karcie legenda ma tylko województwa; wybrany ośrodek jest w legendzie pod wykresem w powiększeniu.
+    const regionLegend = screen.getByRole("list", { name: "Legenda województw" });
+    expect(regionLegend).not.toHaveTextContent("wybrany ośrodek");
+    fireEvent.click(screen.getAllByRole("button", { name: /^Powiększ wykres:/ })[0]);
+    expect(within(screen.getByRole("dialog")).getByRole("list", { name: "Legenda" })).toHaveTextContent("wybrany ośrodek: Szpital Alfa");
+    fireEvent.keyDown(document, { key: "Escape" });
     const urgent = screen.getByRole("group", { name: /udział przyjęć nagłych/ });
     expect(within(urgent).getByText("Szpital Alfa")).toHaveAttribute("data-label", "");
     expect(within(urgent).getByText("Szpital Beta")).toHaveAttribute("data-color", "#1A9850");
@@ -326,5 +343,27 @@ describe("Karta w zakładkach — linie województw w „Ile?”", () => {
     fireEvent.click(within(screen.getByRole("group", { name: "Rok karty" })).getByRole("button", { name: "2024" }));
     expect(screen.getByRole("list", { name: "Linie wykresu" }).textContent).toBe(before);
     expect(before).toBe("Mazowieckie: 17");
+  });
+});
+
+describe("Karta w zakładkach — powiększenie wykresów", () => {
+  it("Przegląd i wykres liniowy ośrodków nie mają powiększenia", () => {
+    renderCard();
+    expect(within(screen.getByRole("tabpanel")).queryByRole("button", { name: /^Powiększ wykres:/ })).not.toBeInTheDocument();
+  });
+
+  it("w Ośrodkach powiększenie mają tylko oba wykresy punktowe; okno prowadzi do „Tryb przyjęcia” albo „Kto leczy”", () => {
+    open("?widok=osrodki");
+    renderCard();
+    const buttons = screen.getAllByRole("button", { name: /^Powiększ wykres:/ });
+    expect(buttons.map((button) => button.getAttribute("aria-label"))).toEqual([
+      `Powiększ wykres: A01: udział przyjęć nagłych w ośrodkach, ${data.year}`,
+      `Powiększ wykres: A01: śmiertelność, ${data.year}`,
+    ]);
+    fireEvent.click(buttons[0]);
+    expect(within(screen.getByRole("dialog")).getByRole("link", { name: /Tryb przyjęcia w eksploratorze/ })).toHaveAttribute("href", `/analizy?t=a&jgp=A01&y=${data.year}`);
+    fireEvent.keyDown(document, { key: "Escape" });
+    fireEvent.click(buttons[1]);
+    expect(within(screen.getByRole("dialog")).getByRole("link", { name: /Kto leczy w eksploratorze/ })).toHaveAttribute("href", `/analizy?t=k&jgp=A01&y=${data.year}`);
   });
 });

@@ -124,3 +124,32 @@ export function plotlyObjectBox(plot: HTMLElement, type: "scatter" | "bar" | "tr
   const node = trace?.querySelectorAll(type === "scatter" ? "path.point" : ".point").item(pointIndex);
   return node ? elementBox(node) : null;
 }
+
+/** Część `_fullLayout` Plotly potrzebna do przeliczenia danych na piksele. */
+interface PlotlyAxis { l2p: (value: number) => number; d2l?: (value: number | string) => number }
+interface PlotlyFullLayout {
+  _size: { l: number; t: number };
+  xaxis: PlotlyAxis;
+  yaxis: PlotlyAxis;
+}
+
+/** Wartość danych na piksel osi (daty przez `d2l`). */
+const toPixel = (axis: PlotlyAxis, value: number | string) => axis.l2p(axis.d2l ? axis.d2l(value) : Number(value));
+
+/** Pozycja punktu danych w pikselach względem lewego górnego rogu wykresu; `null` przed narysowaniem. */
+export function plotlyDataPixel(plot: HTMLElement, x: number | string, y: number): { x: number; y: number } | null {
+  const layout = (plot as HTMLElement & { _fullLayout?: PlotlyFullLayout })._fullLayout;
+  if (!layout?._size || !layout.xaxis?.l2p || !layout.yaxis?.l2p) return null;
+  return { x: layout._size.l + toPixel(layout.xaxis, x), y: layout._size.t + toPixel(layout.yaxis, y) };
+}
+
+/**
+ * Prostokąt punktu serii `scattergl` (WebGL nie ma elementów SVG punktów): środek z osi wykresu (także osi dat), bok = rozmiar znacznika.
+ * `null`, gdy wykres nie jest jeszcze narysowany.
+ */
+export function plotlyDataBox(plot: HTMLElement, x: number | string, y: number, size: number): Box | null {
+  const pixel = plotlyDataPixel(plot, x, y);
+  if (!pixel) return null;
+  const rect = plot.getBoundingClientRect();
+  return { left: rect.left + pixel.x - size / 2, top: rect.top + pixel.y - size / 2, width: size, height: size };
+}

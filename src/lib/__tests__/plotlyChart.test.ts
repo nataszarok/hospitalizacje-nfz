@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { attachHoverMarker, type PlotElement } from "@/lib/plotlyChart";
+import { attachHoverMarker, wrapChartLabel, type PlotElement } from "@/lib/plotlyChart";
 
 // Atrapa wykresu: zapamiętuje obsługę zdarzeń i wywołania restyle.
 function fakePlot() {
@@ -167,5 +167,19 @@ describe("hoverTemplate — kolejność dymka", () => {
 
   it("bez kontekstu i stopki ma tylko nazwę i wartości", () => {
     expect(hoverTemplate({ title: "A", rows: [{ label: "B", value: "1" }] })).toBe("<b>A</b><br>B: <b>1</b><extra></extra>");
+  });
+});
+
+describe("wrapChartLabel — długie nazwy w dymku i podpisie", () => {
+  it("łamie na spacjach, najwyżej 32 znaki w linii", () => {
+    const text = wrapChartLabel("SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ MINISTERSTWA SPRAW WEWNĘTRZNYCH I ADMINISTRACJI W KOSZALINIE");
+    const lines = text.split("<br>");
+    expect(lines).toEqual(["SAMODZIELNY PUBLICZNY ZAKŁAD", "OPIEKI ZDROWOTNEJ MINISTERSTWA", "SPRAW WEWNĘTRZNYCH I", "ADMINISTRACJI W KOSZALINIE"]);
+    expect(Math.max(...lines.map((line) => line.length))).toBeLessThanOrEqual(32);
+  });
+
+  it("krótkiej nazwy nie zmienia; słowo dłuższe niż linia zostaje całe; nadmiarowe spacje znikają", () => {
+    expect(wrapChartLabel("Szpital w Nowej Soli")).toBe("Szpital w Nowej Soli");
+    expect(wrapChartLabel("A  BARDZODLUGIESLOWO", 8)).toBe("A<br>BARDZODLUGIESLOWO");
   });
 });

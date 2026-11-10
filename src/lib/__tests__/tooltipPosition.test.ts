@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import { describe, expect, it } from "vitest";
-import { placeTooltip, plotlyObjectBox, TOOLTIP_GAP, type Box } from "@/lib/tooltipPosition";
+import { placeTooltip, plotlyDataBox, plotlyDataPixel, plotlyObjectBox, TOOLTIP_GAP, type Box } from "@/lib/tooltipPosition";
 
 const viewport: Box = { left: 0, top: 0, width: 1200, height: 800 };
 const tooltip = { width: 300, height: 200 };
@@ -99,5 +99,29 @@ describe("plotlyObjectBox — prostokąt obiektu wykresu", () => {
     element.querySelector("#slice")!.getBoundingClientRect = () => ({ left: 10, top: 20, width: 30, height: 40 }) as DOMRect;
     expect(plotlyObjectBox(element, "bar", 0, 0)).toEqual({ left: 1, top: 2, width: 3, height: 4 });
     expect(plotlyObjectBox(element, "treemap", 0, 0, element.querySelector("#label"))).toEqual({ left: 10, top: 20, width: 30, height: 40 });
+  });
+});
+
+describe("plotlyDataPixel / plotlyDataBox — punkt serii WebGL z osi wykresu", () => {
+  const plot = () => {
+    const element = document.createElement("div");
+    element.getBoundingClientRect = () => ({ left: 100, top: 50, width: 400, height: 300 } as DOMRect);
+    return element;
+  };
+
+  it("liczy piksel z marginesów i osi; oś dat przez `d2l`", () => {
+    const element = Object.assign(plot(), { _fullLayout: {
+      _size: { l: 56, t: 12 },
+      xaxis: { l2p: (v: number) => v / 2, d2l: (v: string | number) => (typeof v === "string" ? Date.parse(v) / 1e10 : v) },
+      yaxis: { l2p: (v: number) => 200 - v },
+    } });
+    expect(plotlyDataPixel(element, 40, 50)).toEqual({ x: 76, y: 162 });
+    expect(plotlyDataPixel(element, "1970-01-01", 0)).toEqual({ x: 56, y: 212 });
+    expect(plotlyDataBox(element, 40, 50, 10)).toEqual({ left: 171, top: 207, width: 10, height: 10 });
+  });
+
+  it("przed narysowaniem wykresu: null", () => {
+    expect(plotlyDataPixel(plot(), 1, 1)).toBeNull();
+    expect(plotlyDataBox(plot(), 1, 1, 10)).toBeNull();
   });
 });

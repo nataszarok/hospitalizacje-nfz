@@ -612,6 +612,8 @@
   gap: 6px;
   height: 200px;
 }
+/* W powiększeniu (`ChartExpand`) słupki są wyższe. */
+.costBarsLarge { height: min(480px, 60vh); }
 
 .costBar {
   flex: 1 1 0;
@@ -891,10 +893,8 @@
   }
 }
 
-/* Wybrany ośrodek: kropka w kolorze sygnału (jak linia na wykresie „Ile?” i punkt na wykresie nagłych),
-   na lejku grafitowy punkt z białą obwódką (DESIGN.md, 6.2a). */
-.selectedDot,
-.graphiteDot {
+/* Wybrany ośrodek: kropka w kolorze sygnału (jak linia na wykresie „Ile?” i w rankingu). */
+.selectedDot {
   display: inline-block;
   flex: none;
   width: 10px;
@@ -905,12 +905,20 @@
   box-shadow: 0 0 0 2px #fff, 0 0 0 3px var(--color-signal);
   vertical-align: 0;
 }
-.graphiteDot {
-  background: var(--color-text);
-  box-shadow: 0 0 0 2px #fff, 0 0 0 3px var(--color-text);
+
+/* Wybrany ośrodek: gwiazda w kolorze sygnału, jak na wykresach punktowych (tabela, legendy). */
+.selectedStar {
+  display: inline-block;
+  flex: none;
+  width: 14px;
+  height: 14px;
+  margin-right: 6px;
+  background: var(--color-signal);
+  clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+  vertical-align: -2px;
 }
 
-.nameCell .selectedDot,
+.nameCell .selectedStar,
 .nameCell .dot {
   margin-right: 6px;
   vertical-align: 1px;
@@ -959,4 +967,24 @@
 
 @container (max-width: 419px) {
   .heatYearMid { display: none; }
+}
+
+/* Legenda w pionie w prawym górnym rogu wykresu (skala lejka na karcie), pod przyciskiem powiększenia.
+   Prawy górny róg wykresu lejkowego jest zwykle pusty: duże ośrodki leżą blisko średniej. */
+.cornerLegendFrame {
+  position: relative;
+}
+
+ul.cornerLegend {
+  position: absolute;
+  z-index: 2;
+  top: 32px;
+  right: 22px;
+  flex-direction: column;
+  gap: 3px;
+  padding: 6px 8px;
+  border: 1px solid var(--color-border);
+  background: rgba(255, 255, 255, .9);
+  font-size: var(--fs-xs);
+  pointer-events: none;
 }

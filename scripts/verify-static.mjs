@@ -184,6 +184,10 @@ for (const [folder, script] of [["facilities", "build_facility_years.py"], ["dur
     const file = await readGzipJson(path.join(DIR, folder, name));
     size += file.size;
     file.data.rows.year.forEach((year, i) => totals.set(index.years[year], totals.get(index.years[year]) + file.data.rows.hMin[i]));
+    // Placówki: zgony w szpitalu do dymka mapy (format v2).
+    if (folder === "facilities" && (file.data.version !== 2 || file.data.rows.dMin?.length !== file.data.rows.hMin.length || file.data.rows.dSim?.length !== file.data.rows.hMin.length)) {
+      throw new Error(`${folder}/${name}: expected version 2 with dMin/dSim columns (run scripts/${script}).`);
+    }
   }
   for (const year of [index.years[0], index.latestYear]) {
     const { data } = await readGzipJson(path.join(DIR, `${year}.json.gz`));

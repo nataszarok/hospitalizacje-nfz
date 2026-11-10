@@ -384,3 +384,7 @@ td:nth-child(6), td:nth-child(7), td:nth-child(8) { white-space:nowrap; }
 /* Linki w tabelach (profil szpitala, strona grupy JGP). */
 .table-link { color:inherit; text-decoration:underline; text-decoration-color:var(--color-border-strong); text-underline-offset:2px; }
 .table-link:hover { color:var(--color-primary); text-decoration-color:currentColor; }
+
+/* Dymki wykresów Plotly mogą wychodzić poza wykres (DESIGN.md 6.3): warstwa dymków nie przycina tekstu.
+   Dane w obszarze wykresu przycina clipPath Plotly, nie `overflow`. Podwójna klasa: pierwszeństwo przed stylem Plotly. */
+.js-plotly-plot .plotly .main-svg.main-svg { overflow: visible; }

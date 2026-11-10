@@ -2,6 +2,7 @@
 
 import "@testing-library/jest-dom/vitest";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { financialResultsResource, jgpValuationsResource, peerPairsResource, rpwdlSummaryProfilesResource } from "@/lib/hospitalData";
 import { cleanup, fireEvent, render, screen, within, waitFor } from "@testing-library/react";
 import { HospitalSimilarityTab } from "@/components/HospitalSimilarityTab";
 import { products, sampleBenchmark, samplePair, samplePeer } from "./fixtures/hospitalFixtures";
@@ -14,6 +15,7 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("@/lib/staticData", () => ({
+  peekStaticDataset: () => null,
   loadStaticDataset: mocks.loadStaticDataset,
   hospitalPeerBenchmarkFromDataset: mocks.hospitalPeerBenchmarkFromDataset,
 }));
@@ -23,6 +25,7 @@ vi.mock("@/components/HospitalComparisonShared", () => ({
   pct: (x: number) => `${x.toLocaleString("pl-PL", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`,
   displayHospitalName: (x: string) => x,
   loadJgpValuations: mocks.loadJgpValuations,
+  peekJgpValuations: () => null,
   parseMaybeGzip: mocks.parseMaybeGzip,
   PeerComparisonCharts: ({ pairMode }: { pairMode?: boolean }) => <div data-testid="peer-charts">{String(pairMode)}</div>,
   JgpMortalityDifferenceTable: ({ pairMode }: { pairMode?: boolean }) => <div data-testid="jgp-table">{String(pairMode)}</div>,
@@ -45,6 +48,8 @@ const foreignPair = samplePair({ a: "01|9999999999", b: "01|8888888888", distanc
 const props = { hospitalKey: key, method: "sim" as const, products };
 
 beforeEach(() => {
+  // Pliki szpitali są w pamięci modułu na całą wizytę: każdy test pobiera je od nowa.
+  for (const resource of [financialResultsResource, rpwdlSummaryProfilesResource, peerPairsResource, jgpValuationsResource]) resource.reset();
   vi.clearAllMocks();
   mocks.loadStaticDataset.mockResolvedValue({});
   mocks.loadJgpValuations.mockResolvedValue([]);
@@ -52,10 +57,7 @@ beforeEach(() => {
   mocks.hospitalPeerBenchmarkFromDataset.mockReturnValue(sampleBenchmark([
     samplePeer(), samplePeer({ key: pairB.b, providerName: "SZPITAL KLASY B", peerGrade: "B" }),
   ]));
-  vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
-    ok: true,
-    json: async () => ({ version: 1, grades: [], rows: [pairA, pairB, distantPair, foreignPair] }),
-  }));
+  vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ version: 1, grades: [], rows: [pairA, pairB, distantPair, foreignPair] }))));
 });
 
 afterEach(() => {

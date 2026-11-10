@@ -7,7 +7,7 @@ import { CHART_COLORS, REGION_PICK_COLORS } from "@/lib/chartPalette";
 import type { ChartPeriod } from "@/lib/jgpCard";
 import type { MortalityDisplayMode } from "@/lib/mortality";
 import { citySection, durationYears, type DurationYearsSection } from "@/lib/regions";
-import { loadDurationYearsSection, loadRegionalTrends, loadTrends, productTrend, trendsForRegions, type RegionalTrendsDataset, type TrendsDataset } from "@/lib/staticData";
+import { loadDurationYearsSection, loadRegionalTrends, loadTrends, peekTrends, productTrend, trendsForRegions, type RegionalTrendsDataset, type TrendsDataset } from "@/lib/staticData";
 import { TREND_METRICS, type TrendMetric } from "@/lib/trendMetrics";
 import { durationChartData, incompleteCoverage, trendChartLines, trendMonths } from "@/lib/trends";
 import type { EstimationMethod } from "@/lib/types";
@@ -41,7 +41,8 @@ export type TrendViewProps = {
  * Wykres jak na karcie grupy JGP (`GroupLineChart`): kropka = miesiąc, linia = średnia z 3 miesięcy.
  */
 export function TrendView({ productCodes, method, regions = NO_REGIONS, areaLabel, areaNote, durations = NO_DURATIONS, displayMode = "combined", onDisplayModeChange }: TrendViewProps) {
-  const [national, setNational] = useState<TrendsDataset | null>(null);
+  // Trendy już w pamięci (pobrane z wyprzedzeniem): wykres w pierwszym renderze, bez pustego miejsca.
+  const [national, setNational] = useState<TrendsDataset | null>(peekTrends);
   const [regional, setRegional] = useState<{ key: string; files: RegionalTrendsDataset[] } | null>(null);
   const [durationData, setDurationData] = useState<{ key: string; files: DurationYearsSection[] } | null>(null);
   const [error, setError] = useState<string | null>(null);

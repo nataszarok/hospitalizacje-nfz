@@ -110,3 +110,9 @@ describe("tabele bez przewijania w poziomie (DESIGN.md 7.1)", () => {
     expect(globals).toMatch(/--atlas-sidebar-width:\s*300px/);
   });
 });
+
+describe("wykresy Plotly", () => {
+  it("dymek może wychodzić poza wykres: warstwy SVG Plotly nie przycinają treści (DESIGN.md 6.3)", () => {
+    expect(globals).toMatch(/\.js-plotly-plot \.plotly \.main-svg\.main-svg\s*\{\s*overflow:\s*visible;/);
+  });
+});

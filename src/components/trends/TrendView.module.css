@@ -51,13 +51,20 @@
   outline-offset: -2px;
 }
 
+/* Tytuł z opisem po lewej, przyciski zawsze w prawym górnym rogu: długi opis (np. komunikat o obszarze)
+   zawija się w swojej kolumnie i nie spycha przycisków do nowego wiersza. */
 .chartHeader {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
   gap: 8px 12px;
   margin-bottom: 4px;
+}
+
+@media (max-width: 640px) {
+  .chartHeader {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .chartHeader h2 {
@@ -75,6 +82,7 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: flex-end;
   gap: 8px 12px;
 }
 

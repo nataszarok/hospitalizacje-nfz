@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { SegmentedControl, Select, Slider } from "@mantine/core";
 import { createPortal } from "react-dom";
 import type { EstimationMethod, HospitalAnalysis, HospitalDirectoryEntry, ProductOption } from "@/lib/types";
-import { hospitalAnalysisFromDataset, hospitalDirectoryFromDataset, loadStaticDataset } from "@/lib/staticData";
+import { financialResultsResource, rpwdlSummaryProfilesResource } from "@/lib/hospitalData";
+import { hospitalAnalysisFromDataset, hospitalDirectoryFromDataset, loadStaticDataset, peekStaticDataset } from "@/lib/staticData";
 import { PLOTLY_CONFIG, axisTitle, baselineShape, categoryAxis, chartLayout, measureAxis, paddedRange } from "@/lib/plotlyChart";
 import { CHART_COLORS } from "@/lib/chartPalette";
 import { formatPln } from "@/lib/formatters";
@@ -51,14 +52,9 @@ type FinancialEntityRecord = {
 type FinancialResultsPayload = {
   version:number; currency:string; entity_level:string; preferred_year:number; records:FinancialEntityRecord[];
 };
-let financialResultsPromise:Promise<FinancialResultsPayload>|null=null;
-function loadFinancialResults(){
-  if(!financialResultsPromise){
-    financialResultsPromise=fetch("/data/financial_results.json.gz",{cache:"force-cache"}).then(parseMaybeGzip) as Promise<FinancialResultsPayload>;
-    financialResultsPromise=financialResultsPromise.catch(e=>{financialResultsPromise=null;throw e;});
-  }
-  return financialResultsPromise;
-}
+// Pliki profilu: jeden na wizytę (`hospitalData.ts`, też pobierane z wyprzedzeniem po najechaniu na link).
+const loadFinancialResults=()=>financialResultsResource.load() as Promise<FinancialResultsPayload>;
+const peekFinancialResults=()=>financialResultsResource.peek() as FinancialResultsPayload|null;
 type RpwdlSummaryCapability = { count?:number; beds?:number; stations?:number; day_places?:number };
 type RpwdlCoreWard = { code:string; name:string; beds:number; fields:string[] };
 type RpwdlLocationType = { locations:number; cells?:number; aos_cells?:number; beds?:number };
@@ -77,22 +73,20 @@ type RpwdlSummaryProfileRecord = {
 };
 type RpwdlSummaryProfilesPayload={version:number;source_version?:number;rpwdl_snapshot_date:string;records:RpwdlSummaryProfileRecord[]};
 type RpwdlWardSortKey="name"|"beds"|"fields";
-let rpwdlSummaryProfilesPromise:Promise<RpwdlSummaryProfilesPayload>|null=null;
-function loadRpwdlSummaryProfiles(){
-  if(!rpwdlSummaryProfilesPromise){
-    rpwdlSummaryProfilesPromise=fetch("/data/rpwdl_summary_profiles.json.gz",{cache:"force-cache"}).then(parseMaybeGzip) as Promise<RpwdlSummaryProfilesPayload>;
-    rpwdlSummaryProfilesPromise=rpwdlSummaryProfilesPromise.catch(e=>{rpwdlSummaryProfilesPromise=null;throw e;});
-  }
-  return rpwdlSummaryProfilesPromise;
-}
-async function parseMaybeGzip(r: Response) {
-  if (!r.ok) throw new Error(`Nie udało się pobrać danych (${r.status})`);
-  const bytes = new Uint8Array(await r.arrayBuffer());
-  const gzip = bytes.length >= 2 && bytes[0] === 0x1f && bytes[1] === 0x8b;
-  if (!gzip) return JSON.parse(new TextDecoder().decode(bytes));
-  const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream("gzip"));
-  return JSON.parse(await new Response(stream).text());
-}
+const loadRpwdlSummaryProfiles=()=>rpwdlSummaryProfilesResource.load() as Promise<RpwdlSummaryProfilesPayload>;
+const peekRpwdlSummaryProfiles=()=>rpwdlSummaryProfilesResource.peek() as RpwdlSummaryProfilesPayload|null;
+/** Profile RPWDL według klucza świadczeniodawcy (OW|NIP). */
+const rpwdlByKey=(payload:RpwdlSummaryProfilesPayload)=>{
+  const byKey:Record<string,RpwdlSummaryProfileRecord>={};
+  payload.records.forEach(x=>{byKey[`${x.oz_nfz}|${x.nip}`]=x;});
+  return byKey;
+};
+/** Wyniki finansowe według NIP. */
+const financeByNip=(payload:FinancialResultsPayload)=>{
+  const byNip:Record<string,FinancialEntityRecord>={};
+  payload.records.forEach(x=>{byNip[normalizeNip(x.nip)]=x;});
+  return byNip;
+};
 
 function displayHospitalName(value:string){
   const raw=String(value ?? "")
@@ -623,17 +617,24 @@ export function HospitalAnalysisTab({ method, products, hospitalKey, setHospital
   peerThreshold:number; setPeerThreshold:(value:number)=>void;
   peerDistance:number; setPeerDistance:(value:number)=>void;
 }) {
-  const [directory, setDirectory] = useState<HospitalDirectoryEntry[]>([]);
+  // Pliki już w pamięci (pobrane z wyprzedzeniem): profil w pierwszym renderze, bez stanu ładowania.
+  const [boot]=useState(()=>{
+    const dataset=peekStaticDataset();
+    const profiles=peekRpwdlSummaryProfiles();
+    const finance=peekFinancialResults();
+    return dataset && profiles && finance ? {dataset,profiles,finance} : null;
+  });
+  const [directory, setDirectory] = useState<HospitalDirectoryEntry[]>(()=>boot ? hospitalDirectoryFromDataset(boot.dataset) : []);
   const [analysisResult,setAnalysisResult]=useState<{
     hospitalKey:string;method:EstimationMethod;value:HospitalAnalysis|null;
-  }|null>(null);
+  }|null>(()=>boot && hospitalKey ? {hospitalKey,method,value:hospitalAnalysisFromDataset(boot.dataset,hospitalKey,method)} : null);
   const analysis=analysisResult?.hospitalKey===hospitalKey && analysisResult.method===method
     ? analysisResult.value : null;
-  const [rpwdlSummaryProfiles, setRpwdlSummaryProfiles] = useState<Record<string,RpwdlSummaryProfileRecord>>({});
-  const [facilitySnapshotDate,setFacilitySnapshotDate]=useState<string>("");
-  const [financialResults,setFinancialResults]=useState<Record<string,FinancialEntityRecord>>({});
+  const [rpwdlSummaryProfiles, setRpwdlSummaryProfiles] = useState<Record<string,RpwdlSummaryProfileRecord>>(()=>boot ? rpwdlByKey(boot.profiles) : {});
+  const [facilitySnapshotDate,setFacilitySnapshotDate]=useState<string>(boot?.profiles.rpwdl_snapshot_date ?? "");
+  const [financialResults,setFinancialResults]=useState<Record<string,FinancialEntityRecord>>(()=>boot ? financeByNip(boot.finance) : {});
   const [sidebarSlot, setSidebarSlot] = useState<HTMLElement | null>(null);
-  const [directoryLoading, setDirectoryLoading] = useState(true);
+  const [directoryLoading, setDirectoryLoading] = useState(!boot);
   const loading=directoryLoading || Boolean(hospitalKey && (analysisResult?.hospitalKey!==hospitalKey || analysisResult.method!==method));
   const [error, setError] = useState<string | null>(null);
   // Próg podobieństwa dotyczy starej metody porównawczej (HospitalComparisonLegacyTab), która jest odłączona.
@@ -662,12 +663,13 @@ export function HospitalAnalysisTab({ method, products, hospitalKey, setHospital
   };
 
 
-  useEffect(() => {
-    // Opóźniony odczyt po montażu: React nie wykonuje setState synchronicznie w efekcie.
-    const frame=requestAnimationFrame(()=>setSidebarSlot(document.getElementById("hospital-sidebar-slot")));
-    return ()=>cancelAnimationFrame(frame);
+  // Miejsce w panelu bocznym przed narysowaniem klatki: wybór szpitala nie pojawia się klatkę później (przeskok).
+  useLayoutEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- element rodzica istnieje dopiero po zatwierdzeniu DOM
+    setSidebarSlot(document.getElementById("hospital-sidebar-slot"));
   }, []);
   useEffect(() => {
+    if (boot) return;
     void loadStaticDataset()
       .then((d) => {
         setDirectory(hospitalDirectoryFromDataset(d));
@@ -675,16 +677,10 @@ export function HospitalAnalysisTab({ method, products, hospitalKey, setHospital
       })
       .then(([fp, fin]) => {
         if(fp.status === "fulfilled"){
-          const byKey:Record<string,RpwdlSummaryProfileRecord>={};
-          fp.value.records.forEach(x=>{byKey[`${x.oz_nfz}|${x.nip}`]=x;});
-          setRpwdlSummaryProfiles(byKey);
+          setRpwdlSummaryProfiles(rpwdlByKey(fp.value));
           setFacilitySnapshotDate(fp.value.rpwdl_snapshot_date);
         }
-        if(fin.status === "fulfilled"){
-          const byNip:Record<string,FinancialEntityRecord>={};
-          fin.value.records.forEach(x=>{byNip[normalizeNip(x.nip)]=x;});
-          setFinancialResults(byNip);
-        }
+        if(fin.status === "fulfilled") setFinancialResults(financeByNip(fin.value));
         const optionalErrors = [
           fp.status === "rejected" ? `zagregowany profil RPWDL: ${fp.reason instanceof Error ? fp.reason.message : "błąd"}` : null,
           fin.status === "rejected" ? `wyniki finansowe: ${fin.reason instanceof Error ? fin.reason.message : "błąd"}` : null,
@@ -693,7 +689,7 @@ export function HospitalAnalysisTab({ method, products, hospitalKey, setHospital
         setDirectoryLoading(false);
       })
       .catch((e) => { setError(e instanceof Error ? e.message : "Błąd danych"); setDirectoryLoading(false); });
-  }, []);
+  }, [boot]);
   const rpwdlSummaryProfile = hospitalKey ? rpwdlSummaryProfiles[hospitalKey] : undefined;
   const facilityAddress=rpwdlSummaryProfile?.primary_address;
   const facilityCity=facilityAddress?.city ?? rpwdlSummaryProfile?.source_city;
@@ -802,7 +798,8 @@ export function HospitalAnalysisTab({ method, products, hospitalKey, setHospital
     let cancelled = false;
     void loadStaticDataset()
       .then((d) => {
-        if (!cancelled) setAnalysisResult({
+        // Wynik z pierwszego renderu (dane z pamięci) zostaje: bez drugiego liczenia tej samej analizy.
+        if (!cancelled) setAnalysisResult((current) => current?.hospitalKey===hospitalKey && current.method===method ? current : {
           hospitalKey,method,value:hospitalAnalysisFromDataset(d,hospitalKey,method),
         });
       })

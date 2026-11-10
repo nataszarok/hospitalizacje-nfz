@@ -1052,7 +1052,7 @@ footer.end .wrap { display:flex; flex-wrap:wrap; gap:8px 24px; justify-content:s
         <div class="grid-2" style="align-items:start">
           <div class="chart-demo">
             <span class="eyebrow">Lejek z wybranym ośrodkiem</span>
-            <svg viewBox="0 0 420 200" role="img" aria-label="Przykład: lejek ze skalą odchylenia (ciepłe w górę, błękitne w dół) i wybranym ośrodkiem jako grafitowy punkt z obwódką i podpisem">
+            <svg viewBox="0 0 420 200" role="img" aria-label="Przykład: lejek ze skalą odchylenia (ciepłe w górę, szarość i granat w dół) i wybranym ośrodkiem jako grafitowy znacznik z obwódką">
               <line class="gl" x1="40" y1="30" x2="410" y2="30"/><line class="gl" x1="40" y1="90" x2="410" y2="90"/><line class="gl" x1="40" y1="150" x2="410" y2="150"/>
               <line x1="40" y1="180" x2="410" y2="180" stroke="#B9CEC9" stroke-width="1.5"/>
               <path d="M48 20 C 110 70, 220 92, 410 98" fill="none" stroke="#6C827E" stroke-width="1.2" stroke-dasharray="6 4"/>
@@ -1061,17 +1061,16 @@ footer.end .wrap { display:flex; flex-wrap:wrap; gap:8px 24px; justify-content:s
               <g fill="#9DB4DB"><circle cx="70" cy="110" r="4"/><circle cx="95" cy="92" r="4"/><circle cx="130" cy="104" r="4"/><circle cx="170" cy="98" r="4"/><circle cx="210" cy="106" r="4"/><circle cx="260" cy="100" r="4"/><circle cx="330" cy="103" r="4"/></g>
               <g fill="#E3A27F"><circle cx="150" cy="72" r="4"/><circle cx="240" cy="86" r="4"/></g>
               <g fill="#B4441B"><circle cx="90" cy="40" r="4"/><circle cx="300" cy="78" r="4"/></g>
-              <g fill="#8FB0DD"><circle cx="120" cy="140" r="4"/><circle cx="220" cy="118" r="4"/></g>
+              <g fill="#A9BCB7"><circle cx="120" cy="140" r="4"/><circle cx="220" cy="118" r="4"/></g>
               <g fill="#2856A3"><circle cx="160" cy="160" r="4"/><circle cx="360" cy="124" r="4"/></g>
               <circle cx="196" cy="62" r="7" style="fill:var(--fg);stroke:var(--card)" stroke-width="2.5"/>
-              <text x="208" y="52" style="font:700 12px var(--font-body);fill:var(--fg)">Ten szpital</text>
             </svg>
-            <div class="src">Kolory punktów = skala odchylenia. Wybrany ośrodek = grafit z białą obwódką i podpisem, nie pomarańcz.</div>
+            <div class="src">Kolory punktów = skala odchylenia. Wybrany ośrodek = grafit z białą obwódką, nie pomarańcz; nazwa w legendzie i w dymku.</div>
           </div>
           <div class="panel">
             <h3>Sygnał albo skala odchylenia, nie oba</h3>
-            <p><b>Skala odchylenia</b> (lejek, różnica wobec podobnych): w górę ciepło (<span style="color:#E3A27F;font-weight:700">●</span> poza 95%, <span style="color:#B4441B;font-weight:700">●</span> poza 99,8%), w dół błękit (<span style="color:#8FB0DD;font-weight:700">●</span>, <span style="color:#2856A3;font-weight:700">●</span>), w granicach błękit fartucha. Zawsze z legendą albo podpisem w dymku.</p>
-            <p><b>Wyróżnienie</b> („ten szpital”): na wykresie bez skali odchylenia kolor sygnału. Na wykresie ze skalą odchylenia grafitowy punkt z białą obwódką, większy o połowę, z podpisem. Kolor sygnału zniknąłby wśród ciepłych punktów.</p>
+            <p><b>Skala odchylenia</b> (lejek, różnica wobec podobnych): w górę ciepło (<span style="color:#E3A27F;font-weight:700">●</span> poza 95%, <span style="color:#B4441B;font-weight:700">●</span> poza 99,8%), w dół neutralna szarość poza 95% (<span style="color:#A9BCB7;font-weight:700">●</span>) i granat poza 99,8% (<span style="color:#2856A3;font-weight:700">●</span>), w granicach błękit fartucha. Zawsze z legendą albo podpisem w dymku.</p>
+            <p><b>Wyróżnienie</b> („ten szpital”): na wykresie bez skali odchylenia kolor sygnału. Na wykresie ze skalą odchylenia grafit z białą obwódką. Kolor sygnału zniknąłby wśród ciepłych punktów. Na wykresach punktowych ośrodków znacznik ma kształt gwiazdy, bez podpisu z nazwą (nazwa jest w legendzie i w dymku).</p>
             <p><b>Bez legendy</b> (baner, miniatura) skala odchylenia nic nie mówi. Wtedy trzy stopnie jednego błękitu z wyraźnym odstępem jasności: w granicach <code>#C3D2EB</code>, poza 95% <code>#6A8FCB</code>, poza 99,8% <code>#1B3D78</code>; w obie strony tak samo.</p>
           </div>
         </div>

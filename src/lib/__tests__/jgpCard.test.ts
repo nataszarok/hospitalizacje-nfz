@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cartogramCells, cellColor, darkLabel, scaleColor, monthYears, movingAverage, sumByYear, packPageData, unpackPageData, poolStats, providerPool, selectedIndex, sumSeries, yearChangePct } from "@/lib/jgpCard";
+import { cartogramCells, cellColor, outlierCap, showsMortalityReference, darkLabel, scaleColor, monthYears, movingAverage, sumByYear, packPageData, unpackPageData, poolStats, providerPool, selectedIndex, sumSeries, yearChangePct } from "@/lib/jgpCard";
 import { buildJgpPageData } from "@/lib/jgpPage";
 import type { RegionRow } from "@/lib/regions";
 import { extrasFixture } from "./fixtures/jgpCardFixture";
@@ -130,5 +130,31 @@ describe("monthYears i sumByYear (wykres „Ile?” w latach)", () => {
   it("sumuje miesiące w latach", () => {
     expect(sumByYear(months, [1, 2, 3, 4, 5])).toEqual([3, 12]);
     expect(sumByYear([], [])).toEqual([]);
+  });
+});
+
+describe("showsMortalityReference — linia średniej śmiertelności", () => {
+  it("rysuje linię od 0,5%; niższej średniej (ułamek procenta, np. B19G) nie", () => {
+    expect(showsMortalityReference(0.5)).toBe(true);
+    expect(showsMortalityReference(11.5)).toBe(true);
+    expect(showsMortalityReference(0.49)).toBe(false);
+    expect(showsMortalityReference(0)).toBe(false);
+  });
+});
+
+describe("outlierCap — skala osi bez skrajnych małych ośrodków", () => {
+  it("1 hospitalizacja i 1 zgon (100%) nie wyznacza skali: koniec 15% nad największą wartością ośrodków z ≥ 10 hospitalizacjami", () => {
+    // 40% × 1,15 = 46 → w górę do 50.
+    expect(outlierCap([{ x: 1, y: 100 }, { x: 383, y: 40 }, { x: 12, y: 30 }])).toBe(50);
+  });
+
+  it("bez punktów ponad skalą albo bez ośrodków z ≥ 10 hospitalizacjami: brak przycięcia", () => {
+    expect(outlierCap([{ x: 5, y: 45 }, { x: 383, y: 40 }])).toBeNull();
+    expect(outlierCap([{ x: 1, y: 100 }, { x: 3, y: 33 }])).toBeNull();
+    expect(outlierCap([])).toBeNull();
+  });
+
+  it("skala ma co najmniej 5%", () => {
+    expect(outlierCap([{ x: 1, y: 100 }, { x: 50, y: 0 }])).toBe(5);
   });
 });

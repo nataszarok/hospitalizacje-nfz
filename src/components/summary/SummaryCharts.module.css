@@ -37,9 +37,11 @@
 .trendRow { height: 66px; }
 .clamp { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 
-/* Kwoty sekcji: układ jak lista obszarów leczenia, szersza kolumna kwoty. */
-.valueSectionRow { grid-template-columns: 30px minmax(0, 1fr) 130px 64px; }
-.valueSectionRow .share { grid-template-columns: 1fr 66px; }
+/* Kwoty sekcji: układ jak lista obszarów leczenia; pasek pod nazwą, obok kwota, średnia na hospitalizację i zmiana. */
+.valueSectionRow { grid-template-columns: 30px minmax(0, 1fr) 84px 76px 56px; gap: 4px 10px; }
+.valueSectionRow .label .track { display: block; margin-top: 5px; height: 6px; }
+.valueSectionRow .valueAmount { white-space: nowrap; }
+.perStay { font-size: var(--fs-md); text-align: right; font-variant-numeric: tabular-nums; color: var(--color-text-secondary); white-space: nowrap; }
 /* Kwoty grup: układ jak lista najczęstszych grup (nazwa nad paskiem). */
 .valueGroupRow { display: grid; grid-template-columns: minmax(0, 1fr) 76px 60px; align-items: center; gap: 4px 12px; padding: 6px 8px; margin-inline: -8px; border-radius: var(--radius-control); color: var(--color-text); text-decoration: none; }
 .valueGroupRow:hover { background: var(--color-primary-soft); }
@@ -51,6 +53,8 @@
 .note { font-size: var(--fs-xs); font-weight: var(--fw-bold); text-anchor: middle; font-variant-numeric: tabular-nums; }
 .noteUp { fill: var(--color-positive); }
 .noteDown { fill: #A23B16; }
+.noteNew { fill: #A84B22; }
+.noteGone { fill: var(--color-text-tertiary); }
 .spark rect { fill: var(--color-data-muted); }
 .spark rect:last-child { fill: var(--color-data); }
 
@@ -59,8 +63,14 @@
   .sectionRow .share, .headRow span:nth-child(3) { display: none; }
   .familyRow { grid-template-columns: minmax(0, 1fr) 80px 56px; }
   .spark { width: 80px; }
-  .valueSectionRow { grid-template-columns: 24px minmax(0, 1fr) 72px 52px; }
-  .valueSectionRow .share { display: grid; grid-template-columns: 1fr; }
-  .valueSectionRow .share .track { display: none; }
+  /* Wąski ekran: średnia na hospitalizację pod kwotą (bez paska), zmiana obok. */
+  .valueSectionRow { grid-template-columns: 24px minmax(0, 1fr) 80px 52px; grid-template-areas: "letter label amount change" "letter label perStay change"; row-gap: 0; }
+  .valueSectionRow .letter { grid-area: letter; }
+  .valueSectionRow .label { grid-area: label; }
+  .valueSectionRow .valueAmount { grid-area: amount; }
+  .valueSectionRow .perStay { grid-area: perStay; font-size: var(--fs-sm); color: var(--color-text-tertiary); }
+  .valueSectionRow > :last-child { grid-area: change; }
+  .valueSectionRow.headRow { grid-template-areas: "letter label amount change"; }
   .valueSectionRow.headRow span:nth-child(3) { display: inline; }
+  .valueSectionRow.headRow span:nth-child(4) { display: none; }
 }

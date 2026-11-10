@@ -87,22 +87,24 @@ describe("shortenName", () => {
 });
 
 describe("formatPln", () => {
-  it("dobiera jednostkę do wielkości kwoty: tys. i mln bez miejsc dziesiętnych, mld z 2 miejscami", () => {
-    expect(formatPln(64_277_000_000)).toBe("64,28 mld zł");
-    expect(formatPln(1_403_200_000)).toBe("1,40 mld zł");
-    expect(formatPln(274_000_000)).toBe("274 mln zł");
-    expect(formatPln(3_400_000)).toBe("3 mln zł");
-    expect(formatPln(450_400)).toBe("450 tys. zł");
+  it("dobiera jednostkę i miejsca dziesiętne do wielkości kwoty (DESIGN.md 3.1)", () => {
+    expect(formatPln(64_277_000_000)).toBe("64,3 mld zł");
+    expect(formatPln(1_403_200_000)).toBe("1,4 mld zł");
+    expect(formatPln(302_400_000)).toBe("302 mln zł");
+    expect(formatPln(38_210_000)).toBe("38,2 mln zł");
+    expect(formatPln(3_400_000)).toBe("3,4 mln zł");
+    expect(formatPln(845_400)).toBe("845 tys. zł");
   });
 
   it("przechodzi do większej jednostki po zaokrągleniu (nigdy 1 000 w jednostce)", () => {
-    expect(formatPln(999_600_000)).toBe("1,00 mld zł");
-    expect(formatPln(999_700)).toBe("1 mln zł");
+    expect(formatPln(999_600_000)).toBe("1,0 mld zł");
+    expect(formatPln(999_700)).toBe("1,0 mln zł");
+    expect(formatPln(99_960_000)).toBe("100 mln zł");
   });
 
   it("używa polskiego minusa", () => {
-    expect(formatPln(-2_345_000_000)).toBe("−2,35 mld zł");
-    expect(formatPln(-38_200_000)).toBe("−38 mln zł");
+    expect(formatPln(-2_345_000_000)).toBe("−2,3 mld zł");
+    expect(formatPln(-38_200_000)).toBe("−38,2 mln zł");
   });
 });
 
@@ -110,14 +112,20 @@ describe("plnScale", () => {
   it("dobiera jedną jednostkę dla zestawu kwot według największej", () => {
     const scale = plnScale([820_000_000, 1_403_200_000]);
     expect(scale.unit).toBe("mld zł");
-    expect(scale.format(820_000_000)).toBe("0,82");
-    expect(scale.format(1_403_200_000)).toBe("1,40");
+    expect(scale.format(820_000_000)).toBe("0,8");
+    expect(scale.format(1_403_200_000)).toBe("1,4");
   });
 
-  it("w mln podaje pełne liczby", () => {
+  it("w mln poniżej 100 mln podaje 1 miejsce po przecinku", () => {
     const scale = plnScale([12_400_000, 38_600_000]);
     expect(scale.unit).toBe("mln zł");
+    expect(scale.format(12_400_000)).toBe("12,4");
+    expect(scale.format(38_600_000)).toBe("38,6");
+  });
+
+  it("w mln od 100 mln podaje pełne liczby dla całego zestawu", () => {
+    const scale = plnScale([12_400_000, 302_400_000]);
     expect(scale.format(12_400_000)).toBe("12");
-    expect(scale.format(38_600_000)).toBe("39");
+    expect(scale.format(302_400_000)).toBe("302");
   });
 });

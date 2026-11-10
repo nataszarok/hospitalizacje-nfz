@@ -3,12 +3,15 @@
 import { useMemo, useState } from "react";
 import { AreaStatsPopover } from "@/components/AreaStatsPopover";
 import { ChartScaleControl } from "@/components/ChartScaleControl";
+import { FunnelControl } from "@/components/FunnelControl";
+import { FunnelLegend } from "@/components/jgp/FunnelLegend";
 import { MortalityChart } from "@/components/MortalityChart";
 import { MortalityDisplayControl } from "@/components/MortalityDisplayControl";
 import { SortableTableHeader } from "@/components/SortableTableHeader";
 import { JgpCodeLinks, ProviderLink } from "@/components/TableLinks";
 import type { AnalysisArea } from "@/lib/area";
 import { formatCityName } from "@/lib/formatters";
+import { plural } from "@/lib/jgpDescription";
 import {
   aggregateMortalityRowsByProvider,
   mortalityInsights,
@@ -17,6 +20,7 @@ import {
   type MortalityInsights,
 } from "@/lib/mortality";
 import { nextSortState, sortTableRows, type SortState } from "@/lib/tableSort";
+import type { FunnelState } from "@/lib/mortalityFunnel";
 import type { AxisMode, GeographyMode, MortalityPayload, ReferencePayload } from "@/lib/types";
 import styles from "./MortalityTab.module.css";
 
@@ -42,6 +46,9 @@ type MortalityTabProps = {
   highlightAreas: AnalysisArea[];
   displayMode: MortalityDisplayMode;
   setDisplayMode: (value: MortalityDisplayMode) => void;
+  /** Stan lejka (`explorerFunnelState`): przełącznik, dostępność i liczba zgonów. */
+  funnelState: FunnelState;
+  setFunnel: (value: boolean) => void;
 };
 
 export function MortalityTab({
@@ -55,6 +62,8 @@ export function MortalityTab({
   highlightAreas,
   displayMode,
   setDisplayMode,
+  funnelState,
+  setFunnel,
 }: MortalityTabProps) {
   // Panel statystyk obszarów ma jeden poziom: miasta, gdy wybrano tylko miasta; w pozostałych przypadkach województwa.
   const geoMode: GeographyMode = highlightAreas.length && highlightAreas.every((area) => area.kind === "city") ? "cities" : "regions";
@@ -111,14 +120,19 @@ export function MortalityTab({
     <div className={loading ? "content loading" : "content"}>
       <section className="chart-section">
         {data.rows.length > 0 ? (
-          <div className={`plot-column ${styles.plotColumn}`}>
-            <div className={`plot-toolbar ${styles.toolbar}`}>
-              {canGroupJgp ? (
-                <MortalityDisplayControl value={displayMode} onChange={setDisplayMode} />
-              ) : null}
-
-              <div className={styles.presentationControls}>
-                <ChartScaleControl value={axisMode} onChange={setAxisMode} />
+          <div className="plot-column">
+            {/* Pasek nad wykresem, jak nagłówek w „W czasie”: opis po lewej, przełączniki po prawej.
+                Dane („Zestawienie JGP”) → wygląd (lejek) → oś X → statystyki obszarów. */}
+            <div className={styles.chartHeader}>
+              <p className={styles.chartCaption}>
+                {pointCaption(tableRows.length, effectiveDisplayMode)}
+              </p>
+              <div className={styles.controls}>
+                {canGroupJgp ? (
+                  <MortalityDisplayControl value={displayMode} onChange={setDisplayMode} />
+                ) : null}
+                <FunnelControl value={funnelState !== "off"} onChange={setFunnel} disabled={funnelState === "unavailable"} />
+                <ChartScaleControl value={axisMode} onChange={setAxisMode} compact />
                 <AreaStatsPopover
                   kind="mortality"
                   geographyMode={geoMode}
@@ -139,7 +153,10 @@ export function MortalityTab({
               highlightAreas={highlightAreas}
               products={selectedProductDefinitions}
               regions={reference.regions}
+              funnel={funnelState === "funnel"}
             />
+            {/* Kolory statusu tylko bez wyróżnionych obszarów (obszary mają własne kolory, jak na karcie JGP). */}
+            {funnelState === "funnel" && !highlightAreas.length ? <FunnelLegend /> : null}
           </div>
         ) : (
           <div className="empty-chart">
@@ -216,4 +233,12 @@ export function MortalityInsightText({ insights }: { insights: MortalityInsights
       {" "}Różnica może wynikać ze stanu pacjentów i profilu ośrodka — to nie jest ocena jakości leczenia.
     </p> : null}
   </div>;
+}
+
+/** Opis punktów nad wykresem: ile ich jest i co oznacza jeden punkt. */
+export function pointCaption(count: number, displayMode: MortalityDisplayMode): string {
+  const number = count.toLocaleString("pl-PL");
+  return displayMode === "combined"
+    ? `${number} ${plural(count, "świadczeniodawca", "świadczeniodawców", "świadczeniodawców")} · wszystkie wybrane grupy razem`
+    : `${number} ${plural(count, "punkt", "punkty", "punktów")} · każda grupa JGP osobno`;
 }

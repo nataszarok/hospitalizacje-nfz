@@ -6,15 +6,17 @@ import type { EstimationMethod, HospitalPeerBenchmark, ProductOption } from "@/l
 import {
   hospitalPeerBenchmarkFromDataset,
   loadStaticDataset,
+  peekStaticDataset,
   type HospitalPeerSelectionEntry,
+  type StaticDataset,
 } from "@/lib/staticData";
 import {
   JgpMortalityDifferenceTable,
   PeerComparisonCharts,
   displayHospitalName,
   loadJgpValuations,
+  peekJgpValuations,
   nf,
-  parseMaybeGzip,
   pct,
   pf,
   type JgpValuation,
@@ -22,17 +24,21 @@ import {
   type PeerPair,
 } from "./HospitalComparisonShared";
 import { formatSigned as signed } from "@/lib/formatters";
+import { peerPairsResource } from "@/lib/hospitalData";
 
 type PeerPairsPayload={version:number;grades:PeerGrade[];rows:PeerPair[]};
-let peerPairsPromise:Promise<PeerPairsPayload>|null=null;
+// Pary A/B: jeden plik na wizytę (`peerPairsResource`, też pobierany z wyprzedzeniem po najechaniu na link).
+const loadPeerPairs=()=>peerPairsResource.load() as Promise<PeerPairsPayload>;
+const peekPeerPairs=()=>peerPairsResource.peek() as PeerPairsPayload|null;
 
-function loadPeerPairs(){
-  if(!peerPairsPromise){
-    peerPairsPromise=fetch("/data/peer_pairs_ab.json.gz",{cache:"force-cache"})
-      .then(parseMaybeGzip) as Promise<PeerPairsPayload>;
-    peerPairsPromise=peerPairsPromise.catch(e=>{peerPairsPromise=null;throw e;});
-  }
-  return peerPairsPromise;
+/** Wynik porównania szpitala z parami (wspólny dla pierwszego renderu z pamięci i dla pobrania). */
+function comparisonResult(query:{hospitalKey:string;method:EstimationMethod;gradeScope:"A"|"AB";maxDistance:number;peerThreshold:number;queryKey:string;scopeKey:string},dataset:StaticDataset,pairsPayload:PeerPairsPayload,valuations:JgpValuation[]){
+  const selection=newPeerSelection(pairsPayload.rows,query.hospitalKey,query.gradeScope,query.maxDistance,query.method);
+  return {
+    key:query.queryKey,scopeKey:query.scopeKey,peerPairs:pairsPayload.rows,valuations,
+    benchmark:selection.size ? hospitalPeerBenchmarkFromDataset(dataset,query.hospitalKey,query.method,{},query.peerThreshold,selection) : null,
+    error:null as string|null,
+  };
 }
 
 function newPeerSelection(rows:PeerPair[],hospitalKey:string,gradeScope:"A"|"AB",maxDistance:number,method:EstimationMethod){
@@ -381,15 +387,20 @@ export function HospitalSimilarityTab({
   maxDistance?:number;
   peerThreshold?:number;
 }){
-  const [result,setResult]=useState<{
-    key:string;scopeKey:string;benchmark:HospitalPeerBenchmark|null;peerPairs:PeerPair[];
-    valuations:JgpValuation[];error:string|null;
-  }|null>(null);
-  const [hoveredPeerKey,setHoveredPeerKey]=useState<string|null>(null);
   const queryKey=JSON.stringify([hospitalKey,method,gradeScope,maxDistance,peerThreshold]);
   // Zmiana zakresu par (suwak) nie czyści widoku: do czasu przeliczenia zostaje poprzedni wynik
   // tego samego szpitala i metody. Zmiana szpitala lub metody pokazuje ładowanie.
   const scopeKey=JSON.stringify([hospitalKey,method]);
+  const query={hospitalKey,method,gradeScope,maxDistance,peerThreshold,queryKey,scopeKey};
+  // Pliki już w pamięci (pobrane z wyprzedzeniem): porównanie w pierwszym renderze, bez „Ładowanie…”.
+  const [result,setResult]=useState<{
+    key:string;scopeKey:string;benchmark:HospitalPeerBenchmark|null;peerPairs:PeerPair[];
+    valuations:JgpValuation[];error:string|null;
+  }|null>(()=>{
+    const dataset=peekStaticDataset(), pairs=peekPeerPairs(), valuations=peekJgpValuations();
+    return hospitalKey && dataset && pairs && valuations ? comparisonResult(query,dataset,pairs,valuations) : null;
+  });
+  const [hoveredPeerKey,setHoveredPeerKey]=useState<string|null>(null);
   const currentResult=result?.key===queryKey || (result?.scopeKey===scopeKey && !result.error) ? result : null;
   const updating=Boolean(currentResult && currentResult.key!==queryKey);
   const benchmark=currentResult?.benchmark ?? null;
@@ -403,14 +414,7 @@ export function HospitalSimilarityTab({
     void Promise.all([loadStaticDataset(),loadPeerPairs(),loadJgpValuations()])
       .then(([dataset,pairsPayload,jgpValuations])=>{
         if(cancelled) return;
-        const selection=newPeerSelection(pairsPayload.rows,hospitalKey,gradeScope,maxDistance,method);
-        setResult({
-          key:queryKey,scopeKey,peerPairs:pairsPayload.rows,valuations:jgpValuations,
-          benchmark:selection.size
-            ? hospitalPeerBenchmarkFromDataset(dataset,hospitalKey,method,{},peerThreshold,selection)
-            : null,
-          error:null,
-        });
+        setResult((current)=>current?.key===queryKey && !current.error ? current : comparisonResult({hospitalKey,method,gradeScope,maxDistance,peerThreshold,queryKey,scopeKey},dataset,pairsPayload,jgpValuations));
       })
       .catch((e)=>{
         if(cancelled) return;

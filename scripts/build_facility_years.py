@@ -13,8 +13,10 @@ Output:
      "facilities": [[OW NFZ, NIP, nazwa, MIASTO (wielkie litery)], ...],
      "active": [maska lat, ...]}   # bit i = placówka ma hospitalizacje (dowolne grupy) w roku years[i]
   facilities/<litera>.json.gz (columns; indices into `products`, index `facilities` and `years`):
-    {"version": 1, "products": [kod produktu, ...],
-     "rows": {"product": [...], "facility": [...], "year": [...], "hMin": [...], "hSim": [...]}}
+    {"version": 2, "products": [kod produktu, ...],
+     "rows": {"product": [...], "facility": [...], "year": [...], "hMin": [...], "hSim": [...], "dMin": [...], "dSim": [...]}}
+  hMin/hSim = hospitalizations, dMin/dSim = in-hospital deaths (estimation of <5: min / sim); the map tooltip
+  shows the provider's mortality.
   The browser knows a product's section from its JGP code (first letter); products without a code: "_".
 
 Usage:
@@ -37,7 +39,7 @@ def main() -> None:
     args = parser.parse_args()
 
     years = json.loads((args.dir / "index.json").read_text(encoding="utf-8"))["years"]
-    totals: dict[tuple[str, tuple[str, str], int], list[int]] = defaultdict(lambda: [0, 0])
+    totals: dict[tuple[str, tuple[str, str], int], list[int]] = defaultdict(lambda: [0, 0, 0, 0])
     section_of: dict[str, str] = {}
     # Placówka = OW NFZ + NIP; nazwa i miasto z najnowszego roku, w którym występuje.
     info: dict[tuple[str, str], tuple[str, str]] = {}
@@ -50,11 +52,13 @@ def main() -> None:
                 section_of[code] = jgp[0].upper()
         for ow, nip, name, city in facilities:
             info[(ow, nip)] = (name, city.strip().upper())
-        for facility, product, h_min, h_sim in zip(facts["facility"], facts["product"], facts["hMin"], facts["hSim"]):
+        for facility, product, h_min, h_sim, d_min, d_sim in zip(facts["facility"], facts["product"], facts["hMin"], facts["hSim"], facts["dMin"], facts["dSim"]):
             ow, nip = facilities[facility][:2]
             total = totals[(products[product][0], (ow, nip), year_index)]
             total[0] += h_min
             total[1] += h_sim
+            total[2] += d_min
+            total[3] += d_sim
             if h_min > 0:
                 active[(ow, nip)] |= 1 << year_index
 
@@ -72,8 +76,8 @@ def main() -> None:
     product_index = {}
     for letter, codes in sections.items():
         product_index.update({code: (letter, i) for i, code in enumerate(codes)})
-        rows_by_section[letter] = {"product": [], "facility": [], "year": [], "hMin": [], "hSim": []}
-    for (product, key, year_index), (h_min, h_sim) in sorted(totals.items()):
+        rows_by_section[letter] = {"product": [], "facility": [], "year": [], "hMin": [], "hSim": [], "dMin": [], "dSim": []}
+    for (product, key, year_index), (h_min, h_sim, d_min, d_sim) in sorted(totals.items()):
         letter, i = product_index[product]
         rows = rows_by_section[letter]
         rows["product"].append(i)
@@ -81,9 +85,11 @@ def main() -> None:
         rows["year"].append(year_index)
         rows["hMin"].append(h_min)
         rows["hSim"].append(h_sim)
+        rows["dMin"].append(d_min)
+        rows["dSim"].append(d_sim)
     size = 0
     for letter, codes in sorted(sections.items()):
-        size += write_json_gz(out / f"{letter}.json.gz", {"version": 1, "products": codes, "rows": rows_by_section[letter]})
+        size += write_json_gz(out / f"{letter}.json.gz", {"version": 2, "products": codes, "rows": rows_by_section[letter]})
 
     index = {
         "version": 1,

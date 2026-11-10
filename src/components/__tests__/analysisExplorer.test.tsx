@@ -29,7 +29,16 @@ const mortalityFromDataset = vi.fn<(...args: unknown[]) => unknown>((_d, q) => {
   const facilities = (q as { areas?: unknown[] }).areas?.length ? 1 : 2;
   return { rows: Array.from({ length: facilities }, () => ({})), current: { ...emptyKpi, facilities, hospitalizations: 10, deaths: 1, mortalityPct: 10 }, baseline: emptyKpi, hasComparison: false, areaStats: emptyGeo, baselineAreaStats: emptyGeo };
 });
+// Dane w pamięci (pobrane z wyprzedzeniem): domyślnie brak, test startu bez szkieletu je ustawia.
+const peeked: { index: unknown; dataset: unknown } = { index: null, dataset: null };
+// Adres z routera Next (w aplikacji `useSearchParams`); w testach — bieżący adres okna.
+// `router.search` ustawia test przejścia linkiem: router ma już nowy adres, a `window.location` jeszcze stary.
+const router: { search: string | null } = { search: null };
+vi.mock("next/navigation", () => ({ useSearchParams: () => new URLSearchParams(router.search ?? window.location.search) }));
 vi.mock("@/lib/staticData", () => ({
+  peekHospitalizationIndex: () => peeked.index,
+  peekStaticDataset: () => peeked.dataset,
+  peekTrends: () => null,
   loadHospitalizationIndex: () => Promise.resolve({ version: 1, years: ["2024", "2025"], latestYear: "2025", defaultProductCode: "P1" }),
   loadStaticDataset: (year?: string) => loadStaticDataset(year),
   referenceFromDataset: (d: { analysisYear: string }) => ({ ...reference, analysisYear: d.analysisYear }),
@@ -51,7 +60,7 @@ vi.mock("@/components/explorer/ExplorerSidebar", () => ({
     <button onClick={() => setSelectedProducts(["P1", "P2"])}>dwie grupy</button>
   </section>,
 }));
-vi.mock("@/components/InfoTip", () => ({ InfoTip: () => null }));
+vi.mock("@/components/InfoTip", () => ({ InfoTip: () => null, HelpLines: () => null }));
 vi.mock("@/components/MortalityTab", () => ({
   MortalityTab: ({ data, highlightAreas }: { data: { rows: unknown[] }; highlightAreas: { kind: string; owNfz?: string; city?: string }[] }) =>
     <div>widok: kto leczy · punkty {data.rows.length} · wyróżnienie {highlightAreas.map((area) => area.owNfz ?? area.city).join(",")}</div>,
@@ -77,10 +86,43 @@ beforeEach(() => {
   loadStaticDataset.mockClear();
   mortalityFromDataset.mockClear();
   replace.mockReset();
+  peeked.index = null;
+  peeked.dataset = null;
+  router.search = null;
 });
 afterEach(() => {
   vi.unstubAllGlobals();
   cleanup();
+});
+
+describe("AnalysisExplorer — start", () => {
+  it("dane już w pamięci (pobrane z wyprzedzeniem): wyniki w pierwszym renderze, bez szkieletu i bez pobierania", () => {
+    window.history.replaceState(null, "", "/analizy?t=k&ow=07");
+    peeked.index = { version: 1, years: ["2024", "2025"], latestYear: "2025", defaultProductCode: "P1" };
+    peeked.dataset = { analysisYear: "2025", facilities: [], facts: [] };
+    render(<AnalysisExplorer />);
+    // Bez `await`: widok i liczby obszaru są od razu, nie po załadowaniu.
+    expect(screen.queryByText("Ładowanie analiz…")).not.toBeInTheDocument();
+    expect(screen.getByText("Którzy świadczeniodawcy leczą i z jaką śmiertelnością?")).toBeInTheDocument();
+    expect(loadStaticDataset).not.toHaveBeenCalled();
+    // Wyniki policzone raz (kraj i obszar), bez drugiego przeliczenia po zamontowaniu.
+    expect(mortalityFromDataset).toHaveBeenCalledTimes(2);
+  });
+
+  it("przejście linkiem: stan z adresu routera, nie ze starego `window.location`", () => {
+    window.history.replaceState(null, "", "/");
+    router.search = "?t=k";
+    peeked.index = { version: 1, years: ["2024", "2025"], latestYear: "2025", defaultProductCode: "P1" };
+    peeked.dataset = { analysisYear: "2025", facilities: [], facts: [] };
+    render(<AnalysisExplorer />);
+    expect(screen.getByText("Którzy świadczeniodawcy leczą i z jaką śmiertelnością?")).toBeInTheDocument();
+  });
+
+  it("bez danych w pamięci: szkielet, potem wyniki", async () => {
+    render(<AnalysisExplorer />);
+    expect(screen.getByText("Ładowanie analiz…")).toBeInTheDocument();
+    expect(await screen.findByText("widok: w czasie/P1/min")).toBeInTheDocument();
+  });
 });
 
 describe("AnalysisExplorer", () => {
@@ -110,23 +152,30 @@ describe("AnalysisExplorer", () => {
     expect(screen.getByRole("link", { name: "Metodologia" })).toHaveAttribute("href", "/o-danych");
   });
 
-  it("tryb analizy chowa nagłówek strony i zapamiętuje wybór", async () => {
+  it("tryb analizy chowa nagłówek strony i jest w adresie (pelny=1), nie w pamięci przeglądarki", async () => {
+    // Wartość zapisana przez starszą wersję strony nie włącza trybu.
+    window.localStorage.setItem("funduszdanych:explorer-focus", "1");
     render(<AnalysisExplorer />);
     await screen.findByText("widok: w czasie/P1/min");
+    expect(screen.getByRole("heading", { level: 1, name: "Eksplorator danych" })).toBeInTheDocument();
+    expect(document.documentElement).not.toHaveAttribute("data-explorer-focus");
     vi.stubGlobal("scrollTo", vi.fn());
     fireEvent.click(screen.getByRole("button", { name: "Tryb analizy" }));
     expect(screen.queryByRole("heading", { level: 1 })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Zakończ tryb analizy" })).toHaveAttribute("aria-pressed", "true");
-    expect(window.localStorage.getItem("funduszdanych:explorer-focus")).toBe("1");
+    expect(window.location.search).toContain("pelny=1");
     // Pasek liczb chowa się płynnie (zostaje w DOM, poza drzewem dostępności); nagłówek portalu dostaje znacznik trybu.
     expect(document.querySelector('dl[aria-label="Liczby wybranego zakresu"]')?.closest("[aria-hidden]")).toHaveAttribute("aria-hidden", "true");
     expect(document.documentElement).toHaveAttribute("data-explorer-focus");
+    // Odświeżenie strony z tym adresem: tryb od pierwszego renderu.
     cleanup();
     render(<AnalysisExplorer />);
-    expect(await screen.findByRole("button", { name: "Zakończ tryb analizy" })).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: "Zakończ tryb analizy" })).toHaveAttribute("aria-pressed", "true");
     fireEvent.click(screen.getByRole("button", { name: "Zakończ tryb analizy" }));
     expect(screen.getByRole("heading", { level: 1, name: "Eksplorator danych" })).toBeInTheDocument();
     expect(document.documentElement).not.toHaveAttribute("data-explorer-focus");
+    expect(window.location.search).not.toContain("pelny");
+    window.localStorage.removeItem("funduszdanych:explorer-focus");
   });
 
   it("w „W czasie” przekazuje zestawienie JGP wspólne z „Kto leczy”", async () => {

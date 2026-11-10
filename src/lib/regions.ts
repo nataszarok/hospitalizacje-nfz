@@ -117,29 +117,41 @@ export interface FacilityYearsIndex {
 
 /** `facilities/<sekcja>.json.gz`: hospitalizacje produktu w placówce w roku (kolumny, indeksy w `products` i indeksie). */
 export interface FacilityYearsSection {
-  version: 1;
+  version: 2;
   products: string[];
-  rows: { product: number[]; facility: number[]; year: number[]; hMin: number[]; hSim: number[] };
+  /** hMin/hSim — hospitalizacje, dMin/dSim — zgony w szpitalu (estymacja <5: min / sim). */
+  rows: { product: number[]; facility: number[]; year: number[]; hMin: number[]; hSim: number[]; dMin: number[]; dSim: number[] };
 }
 
 /** Sekcja plików placówek i długości pobytu dla grupy JGP: pierwsza litera kodu, „_” bez kodu. */
 export const citySection = (jgpCode: string | null | undefined) => jgpCode ? jgpCode[0].toUpperCase() : "_";
 
-/** Hospitalizacje wybranych produktów: indeks placówki → wartości w kolejnych latach indeksu. */
-export function facilityYearTotals(index: FacilityYearsIndex, sections: FacilityYearsSection[], productCodes: string[], method: EstimationMethod): Map<number, number[]> {
+/** Suma kolumny wybranych produktów: indeks placówki → wartości w kolejnych latach indeksu. */
+function facilityYearSums(index: FacilityYearsIndex, sections: FacilityYearsSection[], productCodes: string[], column: (rows: FacilityYearsSection["rows"]) => number[]): Map<number, number[]> {
   const selected = new Set(productCodes);
   const out = new Map<number, number[]>();
   for (const section of sections) {
     const products = section.products.map((code) => selected.has(code));
-    const { product, facility, year, hMin, hSim } = section.rows;
+    const { product, facility, year } = section.rows;
+    const values = column(section.rows);
     for (let i = 0; i < product.length; i++) {
       if (!products[product[i]]) continue;
-      let values = out.get(facility[i]);
-      if (!values) { values = index.years.map(() => 0); out.set(facility[i], values); }
-      values[year[i]] += method === "sim" ? hSim[i] : hMin[i];
+      let sums = out.get(facility[i]);
+      if (!sums) { sums = index.years.map(() => 0); out.set(facility[i], sums); }
+      sums[year[i]] += values[i];
     }
   }
   return out;
+}
+
+/** Hospitalizacje wybranych produktów: indeks placówki → wartości w kolejnych latach indeksu. */
+export function facilityYearTotals(index: FacilityYearsIndex, sections: FacilityYearsSection[], productCodes: string[], method: EstimationMethod): Map<number, number[]> {
+  return facilityYearSums(index, sections, productCodes, (rows) => method === "sim" ? rows.hSim : rows.hMin);
+}
+
+/** Zgony w szpitalu wybranych produktów: indeks placówki → wartości w kolejnych latach indeksu (dymek mapy). */
+export function facilityYearDeaths(index: FacilityYearsIndex, sections: FacilityYearsSection[], productCodes: string[], method: EstimationMethod): Map<number, number[]> {
+  return facilityYearSums(index, sections, productCodes, (rows) => method === "sim" ? rows.dSim : rows.dMin);
 }
 
 /** Sumy placówek według miasta siedziby: miasto → wartości w latach. */
@@ -165,6 +177,8 @@ export interface FacilityDot {
   y: number;
   r: number;
   hospitalizations: number;
+  /** Zgony w szpitalu w roku mapy; `null` bez danych o zgonach. */
+  deaths: number | null;
 }
 
 /** Najmniej hospitalizacji placówki w roku, żeby miała kropkę (mniejsze to pojedyncze przypadki, nie ośrodki). */
@@ -217,7 +231,7 @@ export function packCircles(radii: number[], gap = 0.8): { x: number; y: number 
  * wybranych grup w tym roku i z miastem w słowniku miast. Placówki jednego miasta są ciasno upakowane wokół punktu
  * miasta (`packCircles`); promień z `radius(hospitalizacje)`.
  */
-export function facilityDots(index: FacilityYearsIndex, totals: Map<number, number[]>, map: CitiesMap, yearIndex: number, radius: (hospitalizations: number) => number): FacilityDot[] {
+export function facilityDots(index: FacilityYearsIndex, totals: Map<number, number[]>, map: CitiesMap, yearIndex: number, radius: (hospitalizations: number) => number, deaths?: Map<number, number[]>): FacilityDot[] {
   const cities = new Map(map.cities.map((city) => [city[0], city]));
   const byCity = new Map<string, { facility: number; hospitalizations: number }[]>();
   for (const [facility, values] of totals) {
@@ -237,7 +251,7 @@ export function facilityDots(index: FacilityYearsIndex, totals: Map<number, numb
     const offsets = packCircles(radii);
     ordered.forEach((item, i) => {
       const [owNfz, nip, name] = index.facilities[item.facility];
-      dots.push({ facility: item.facility, owNfz, nip, name, city, x: cx + offsets[i].x, y: cy + offsets[i].y, r: radii[i], hospitalizations: item.hospitalizations });
+      dots.push({ facility: item.facility, owNfz, nip, name, city, x: cx + offsets[i].x, y: cy + offsets[i].y, r: radii[i], hospitalizations: item.hospitalizations, deaths: deaths ? deaths.get(item.facility)?.[yearIndex] ?? 0 : null });
     });
   }
   // Pakowanie nie widzi sąsiednich miast (np. Warszawa i Konstancin-Jeziorna): rozsuwamy kolizje między miastami.

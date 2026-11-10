@@ -3,6 +3,7 @@ import { Inter, Inter_Tight } from "next/font/google";
 import "@mantine/core/styles.css";
 import "./globals.css";
 import "../styles/portal.css";
+import { DataPrefetch } from "@/components/portal/DataPrefetch";
 import { SiteHeader } from "@/components/portal/SiteHeader";
 import { SITE_NAME } from "@/lib/site";
 import { ColorSchemeScript, MantineProvider, mantineHtmlProps } from "@mantine/core";
@@ -46,6 +47,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         >
           <div className="atlas-portal">
             <SiteHeader />
+            <DataPrefetch />
             {children}
           </div>
         </MantineProvider>

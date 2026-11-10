@@ -3,7 +3,7 @@ import { DataCard, Legend } from "@/components/portal/DataCard";
 import { AdmissionBars, GroupBars, YearBars } from "@/components/portal/HomeCharts";
 import { PageHeader, pageContainerClass } from "@/components/portal/PageHeader";
 import { PortalIcon } from "@/components/portal/PortalIcon";
-import { formatPln, MonthLines, SectionChanges, STAY_COLORS, StayShares, TrendRows, ValueBars, ValueRows } from "@/components/summary/SummaryCharts";
+import { formatPln, JGP_ACTIVITY_COLORS, JgpActivityBars, MonthLines, SectionChanges, STAY_COLORS, StayShares, TrendRows, ValueBars, ValueRows } from "@/components/summary/SummaryCharts";
 import { DASHBOARD_HREFS } from "@/lib/dashboardNavigation";
 import { formatYearRange, plnScale } from "@/lib/formatters";
 import { STAY_BUCKETS, TREND_MIN_HOSPITALIZATIONS, type HospitalizationSummary } from "@/lib/hospitalizationSummary";
@@ -27,6 +27,7 @@ const TOC = [
   { id: "dni", label: "Długość pobytu i kto leczy" },
   { id: "tryb", label: "Tryb przyjęcia i zgony" },
   { id: "co", label: "Obszary leczenia" },
+  { id: "aktywne", label: "Ile grup JGP?" },
   { id: "grupy", label: "Grupy JGP" },
   { id: "zmiany", label: "Co rośnie, co maleje?" },
 ];
@@ -62,14 +63,20 @@ export function HospitalizationSummaryPage({ summary }: { summary: Hospitalizati
     const count = hospitalizationsByYear.get(year);
     return count ? [{ year, value: valuePln / count }] : [];
   });
+  const settlementsPerStay = perStay.find((y) => y.year === settlements?.year);
   const valueChange = firstTotal && latestTotal && firstTotal.valuePln ? ((latestTotal.valuePln - firstTotal.valuePln) / firstTotal.valuePln) * 100 : null;
-  const toc = TOC.filter((item) => (item.id !== "kwoty" || settlements) && (item.id !== "zmiany" || trendChanges.up.length || trendChanges.down.length));
+  const activity = summary.jgpActivity;
+  const firstActivity = activity.years[0];
+  const latestActivity = activity.years.at(-1);
+  const mostNew = activity.years.slice(1).reduce<(typeof activity.years)[number] | null>((max, y) => (!max || y.new > max.new ? y : max), null);
+  const signedCount = (value: number) => (value > 0 ? `+${value}` : value < 0 ? `−${-value}` : "0");
+  const toc = TOC.filter((item) => (item.id !== "kwoty" || settlements) && (item.id !== "zmiany" || trendChanges.up.length || trendChanges.down.length) && (item.id !== "aktywne" || latestActivity));
 
   return <main id="main-content" className={styles.page}>
     <PageHeader
       eyebrow={<>Hospitalizacje w Polsce · {range}</>}
       title="Hospitalizacje w Polsce"
-      lead={<p>Podsumowanie wszystkich hospitalizacji rozliczonych przez NFZ w grupach JGP. Każda część odpowiada na jedno pytanie, opisuje, jak czytać wykres, i prowadzi do szczegółów.</p>}
+      lead={<p>Podsumowanie wszystkich hospitalizacji rozliczonych przez NFZ w grupach JGP. Każda część odpowiada na jedno pytanie i opisuje, jak czytać wykres. Szczegóły grup są w katalogu JGP.</p>}
       kpis={latest && latestMetrics ? [
         { label: `Hospitalizacje JGP ${latestYear}`, value: millions(latest.hospitalizations), note: yearChange !== null ? `${signedPct(yearChange)} r/r` : null },
         { label: "Przyjęcia nagłe", value: pct(latest.urgentPct), note: `${pct(first.urgentPct)} w ${first.year} r.` },
@@ -97,8 +104,6 @@ export function HospitalizationSummaryPage({ summary }: { summary: Hospitalizati
               <p>NFZ rozlicza też pobyty poza JGP, np. w psychiatrii, rehabilitacji i opiece długoterminowej. Tych pobytów nie ma w tych danych.</p>
               <p>Najmniej hospitalizacji było w {label(lowest.year)} ({millions(lowest.hospitalizations)}).{lowest.year === "2020" ? " To rok pandemii COVID-19: szpitale ograniczyły przyjęcia planowe." : null}</p>
             </>}
-            href={DASHBOARD_HREFS.trend}
-            cta="W czasie: dowolne grupy"
           >
             <YearBars years={years} />
           </DataCard>
@@ -108,8 +113,6 @@ export function HospitalizationSummaryPage({ summary }: { summary: Hospitalizati
             title="Hospitalizacje w miesiącach"
             lead={<>Ciemna linia: {latestYear} r., jasna: {previousYear} r.{summary.months.length > 2 ? <>, przerywana: {summary.months[0].year} r.</> : null}</>}
             description={<p>Linie pokazują sezonowość. Mniej przyjęć w miesiącach wakacyjnych i w grudniu to głównie mniej leczenia planowego. Porównanie z poprzednim i pierwszym rokiem pokazuje, w których miesiącach zmieniła się liczba hospitalizacji.</p>}
-            href={DASHBOARD_HREFS.trend}
-            cta="W czasie"
           >
             <MonthLines months={summary.months} />
             <Legend items={summary.months.map((m, i) => ({ label: m.year, color: i === summary.months.length - 1 ? CHART_COLORS.data : i === 0 && summary.months.length > 2 ? CHART_COLORS.textTertiary : CHART_COLORS.dataSoft }))} />
@@ -151,8 +154,6 @@ export function HospitalizationSummaryPage({ summary }: { summary: Hospitalizati
               <p>Średnia to kwota NFZ w roku podzielona przez liczbę hospitalizacji JGP w tym roku. Rośnie, gdy rosną wyceny i gdy przybywa droższego leczenia.</p>
               <p>W 2020 r. średnia wzrosła, bo szpitale leczyły mniej pacjentów planowych z prostymi zabiegami.</p>
             </>}
-            href="/jgp?sort=kwota"
-            cta="Grupy JGP według kwot"
             source="Dane NFZ o rozliczonych świadczeniach"
           >
             <ValueBars
@@ -178,8 +179,6 @@ export function HospitalizationSummaryPage({ summary }: { summary: Hospitalizati
               <p>Linie to udział pobytów bez nocy (0 dni) i pobytów 6 dni i dłuższych w hospitalizacjach roku (%). Reszta to pobyty 1–5 dni. NFZ podaje długość pobytu tylko w przedziałach (0, 1–2, 3–5, 6 i więcej dni), więc nie liczymy sumy dni (osobodni).</p>
               <p>Coraz więcej pobytów bez nocy i coraz mniej długich pobytów to skutek przenoszenia zabiegów do trybu jednego dnia, np. operacji zaćmy, i skracania pobytów.</p>
             </>}
-            href={DASHBOARD_HREFS.trend}
-            cta="W czasie: dowolne grupy"
           >
             <StayShares stays={summary.stays} buckets={STAY_SHOWN} />
             <Legend items={STAY_SHOWN.map((b) => ({ label: STAY_BUCKETS[b], color: STAY_COLORS[b] }))} />
@@ -193,8 +192,6 @@ export function HospitalizationSummaryPage({ summary }: { summary: Hospitalizati
               <p>Świadczeniodawca to podmiot z umową z NFZ (para: oddział wojewódzki NFZ i NIP). To szpitale, ale też kliniki zabiegów jednego dnia, np. okulistyczne.</p>
               <p>Udział 10% największych pokazuje koncentrację: im wyższy, tym więcej leczenia w dużych ośrodkach.</p>
             </>}
-            href={DASHBOARD_HREFS.hospital}
-            cta="Profile szpitali"
             source="Dane NFZ o hospitalizacjach"
           >
             <ValueBars years={summaryYears.map((y) => y.year)} values={summaryYears.map((y) => y.providers)} format={integer} label="Świadczeniodawcy w latach" />
@@ -214,8 +211,6 @@ export function HospitalizationSummaryPage({ summary }: { summary: Hospitalizati
               <p><b>Nagłe</b>: przyjęcia w trybie nagłym (kody trybu 2 i 3 w danych NFZ). <b>Planowe</b>: przyjęcia na podstawie skierowania (kod 6). <b>Pozostałe</b>: inne tryby, np. przeniesienie z innego szpitala.</p>
               {latest ? <p>Przyjęć nagłych: {millions(urgent(first))} w {first.year} r. i {millions(urgent(latest))} w {latestYear} r. Planowych: {millions(planned(first))} i {millions(planned(latest))}.</p> : null}
             </>}
-            href={DASHBOARD_HREFS.admissions}
-            cta="Tryb przyjęcia"
           >
             <AdmissionBars years={years} />
             <Legend items={[{ label: "Nagłe (%)", color: CHART_COLORS.data }, { label: "Planowe", color: CHART_COLORS.dataMuted }, { label: "Pozostałe", color: CHART_COLORS.dataFaint, border: CHART_COLORS.border }]} />
@@ -229,8 +224,6 @@ export function HospitalizationSummaryPage({ summary }: { summary: Hospitalizati
               <p>Wskaźnik to liczba zgonów w szpitalu podzielona przez liczbę hospitalizacji. Rośnie, gdy szpitale przyjmują mniej pacjentów planowych, bo przyjęcia planowe rzadko kończą się zgonem.</p>
               <p>Wskaźnik nie uwzględnia wieku i stanu pacjentów, więc nie mierzy jakości leczenia. Porównania szpitali są w widoku „Kto leczy”.</p>
             </>}
-            href={DASHBOARD_HREFS.mortality}
-            cta="Kto leczy"
           >
             <ValueBars years={summaryYears.map((y) => y.year)} values={summaryYears.map((y) => y.mortalityPct)} format={(v) => decimal(v)} label="Odsetek zgonów w latach (%)" />
           </DataCard>
@@ -259,9 +252,9 @@ export function HospitalizationSummaryPage({ summary }: { summary: Hospitalizati
             id="summary-value-sections"
             kicker={`Rozliczenia NFZ · ${settlements.year}`}
             title="Kwoty według obszarów leczenia"
-            lead={latestTotal ? <>NFZ rozliczył <strong>{formatPln(latestTotal.valuePln)}</strong> za hospitalizacje JGP w {settlements.year} r.{valueChange !== null && firstTotal ? <> ({signedPct(valueChange)} od {firstTotal.year} r.)</> : null}</> : null}
+            lead={latestTotal ? <>NFZ rozliczył <strong>{formatPln(latestTotal.valuePln)}</strong> za hospitalizacje JGP w {settlements.year} r.{valueChange !== null && firstTotal ? <> ({signedPct(valueChange)} od {firstTotal.year} r.).</> : null}{settlementsPerStay ? <> Średnio <strong>{integer(settlementsPerStay.value)} zł</strong> za hospitalizację.</> : null}</> : null}
             description={<>
-              <p>Kwota to wartość świadczeń rozliczonych przez NFZ w grupach JGP, zsumowana dla sekcji katalogu (pierwsza litera kodu). Ostatnia kolumna: zmiana kwoty od {settlements.firstYear} r., pierwszego roku w zestawieniu rozliczeń NFZ.</p>
+              <p>Kwota to wartość świadczeń rozliczonych przez NFZ w grupach JGP, zsumowana dla sekcji katalogu (pierwsza litera kodu). Kolumna „Na hosp.”: kwota sekcji podzielona przez liczbę hospitalizacji sekcji w {settlements.year} r. Ostatnia kolumna: zmiana kwoty od {settlements.firstYear} r., pierwszego roku w zestawieniu rozliczeń NFZ.</p>
               <p>Kwota to przychód szpitala z NFZ, a nie zysk. Dane nie zawierają kosztów leczenia, więc nie pokazują, które leczenie jest dla szpitala opłacalne.</p>
             </>}
             href="/jgp"
@@ -274,6 +267,51 @@ export function HospitalizationSummaryPage({ summary }: { summary: Hospitalizati
           </DataCard> : null}
         </div>
       </section>
+
+      {firstActivity && latestActivity ? <section id="aktywne" className={styles.section} aria-labelledby="aktywne-title">
+        <h2 id="aktywne-title" className={styles.sectionTitle}>Ile grup JGP rozlicza NFZ?</h2>
+        <div className={styles.grid}>
+          <DataCard
+            id="summary-jgp-active"
+            kicker={`Grupy JGP · ${range}`}
+            title="Aktywne grupy JGP w latach"
+            lead={<>Aktywnych grup: <strong>{integer(latestActivity.active)}</strong> w {latestYear} r., {integer(firstActivity.active)} w {firstActivity.year} r. Pod rokiem: zmiana r/r.</>}
+            description={<>
+              <p>Grupa aktywna to grupa JGP z co najmniej jedną hospitalizacją rozliczoną w roku. Grupa z katalogu bez hospitalizacji nie jest aktywna.</p>
+              <p>Liczba grup zmienia się głównie ze zmianami katalogu JGP: NFZ dodaje grupy, dzieli je i zastępuje stare kody nowymi.{partial ? <> Rok {latestYear} ma dane za {latest!.months} mies., więc rzadkie grupy mogą jeszcze nie mieć hospitalizacji.</> : null}</p>
+            </>}
+            href="/jgp"
+            cta="Katalog grup JGP"
+          >
+            <ValueBars
+              years={activity.years.map((y) => y.year)}
+              values={activity.years.map((y) => y.active)}
+              format={integer}
+              notes={activity.years.map((y, i) => (i ? signedCount(y.active - activity.years[i - 1].active) : ""))}
+              label="Aktywne grupy JGP w latach"
+            />
+          </DataCard>
+          <DataCard
+            id="summary-jgp-cohorts"
+            kicker={`Grupy JGP · ${range}`}
+            title="Grupy stałe i nowe"
+            lead={<><strong>{integer(activity.core)}</strong> z {integer(activity.total)} grup było aktywnych w każdym roku {range}. Pod rokiem: grupy nowe (+) i grupy, które przestały być aktywne (−).</>}
+            description={<>
+              <p>Słupek to aktywne grupy roku. Dół słupka to grupy aktywne w każdym roku. Środek to pozostałe grupy aktywne już wcześniej. Góra to grupy, które w tym roku pierwszy raz mają hospitalizacje.</p>
+              {mostNew && mostNew.new ? <p>Najwięcej nowych grup było w {label(mostNew.year)}: {integer(mostNew.new)}. W tym samym roku przestało być aktywnych: {integer(mostNew.gone)}. Duża zmiana w jednym roku to zwykle nowy katalog JGP.</p> : null}
+            </>}
+            href="/jgp"
+            cta="Katalog grup JGP"
+          >
+            <JgpActivityBars years={activity.years} />
+            <Legend items={[
+              { label: `W każdym roku ${range}`, color: JGP_ACTIVITY_COLORS.core },
+              { label: "Aktywne wcześniej", color: JGP_ACTIVITY_COLORS.earlier },
+              { label: "Nowe w roku", color: JGP_ACTIVITY_COLORS.new },
+            ]} />
+          </DataCard>
+        </div>
+      </section> : null}
 
       <section id="grupy" className={styles.section} aria-labelledby="grupy-title">
         <h2 id="grupy-title" className={styles.sectionTitle}>Grupy JGP: najczęstsze i z największą kwotą</h2>
@@ -299,8 +337,8 @@ export function HospitalizationSummaryPage({ summary }: { summary: Hospitalizati
               <p>Na liście są grupy częste (np. zaćma, porody) i grupy drogie, rozliczane rzadziej, ale z wysoką kwotą na hospitalizację (np. zabiegi kardiologiczne). Liczba po kwocie to zmiana kwoty od {settlements.firstYear} r.</p>
               <p>Zmiana od {settlements.firstYear} r. to zmiana kwoty jednej grupy. Grupa nowa w katalogu nie ma zmiany („—”). Długie nazwy są skrócone, pełna nazwa jest w dymku. Kliknij grupę, aby otworzyć jej kartę z kwotami w latach i świadczeniodawcami.</p>
             </>}
-            href="/jgp"
-            cta="Katalog grup JGP"
+            href="/jgp?sort=kwota"
+            cta="Grupy JGP według kwot"
             source="Dane NFZ o rozliczonych świadczeniach"
             estimate={false}
             chartAlign="start"
