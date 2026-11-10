@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Radiologia Kopernik 2026</title>
+<style>
+  :root {
+    --bg: #0f1115; --panel: #171a21; --panel2: #1d212a; --line: #2a2f3a;
+    --text: #e6e8ec; --muted: #9aa1ad; --accent: #4ade80; --warn: #fbbf24; --hl: #233026;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+    font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 1240px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  .sub { color: var(--muted); margin: 0 0 20px; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 20px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+  .card .k { color: var(--muted); font-size: 13px; }
+  .card .v { font-size: 24px; font-weight: 600; margin-top: 4px; font-variant-numeric: tabular-nums; }
+  .card .n { color: var(--muted); font-size: 12px; margin-top: 2px; }
+  .box { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .box h2 { font-size: 15px; margin: 0; padding: 14px 16px; border-bottom: 1px solid var(--line); }
+  .scroll { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; min-width: 980px; }
+  th, td { padding: 10px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+  th { color: var(--muted); font-weight: 500; font-size: 13px; background: var(--panel2); cursor: pointer; user-select: none; white-space: nowrap; }
+  th.num, td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  tr:hover td { background: #1a1e26; }
+  tr.firm td { background: var(--hl); }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .tag { display: inline-block; font-size: 11px; padding: 1px 6px; border-radius: 6px; border: 1px solid var(--line); color: var(--muted); margin-left: 6px; }
+  .tag.firm { color: var(--accent); border-color: #2f5a3d; }
+  .tag.ann { color: var(--warn); border-color: #5a4a22; }
+  .small { color: var(--muted); font-size: 12px; }
+  tfoot td { font-weight: 600; background: var(--panel2); }
+  .notes { margin-top: 20px; color: var(--muted); font-size: 13px; }
+  .notes li { margin-bottom: 6px; }
+  .btn { background: var(--panel2); color: var(--text); border: 1px solid var(--line); border-radius: 8px;
+    padding: 6px 12px; font: inherit; cursor: pointer; margin: -8px 0 16px; }
+  .btn:hover { border-color: var(--accent); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Radiologia w Szpitalu Kopernika w Łodzi — kontrakty z października 2026</h1>
+  <p class="sub">Konkurs ofert 2026/24/2/NO („kompleksowe udzielanie świadczeń w zakresie radiologii i diagnostyki obrazowej”). Dane: Centralny Rejestr Umów, stan na 06.11.2026.</p>
+  <p><button id="names" class="btn" type="button">Pokaż nazwiska</button></p>
+
+  <div class="box">
+    <h2>Umowy z konkursu 2026/24/2/NO (17 wykonawców)</h2>
+    <div class="scroll">
+      <table id="t">
+        <thead><tr>
+          <th data-k="wyk">Wykonawca</th>
+          <th data-k="nr">Nr umowy</th>
+          <th data-k="data">Zawarta</th>
+          <th data-k="wartosc" class="num">Wartość (3 lata) ↓</th>
+          <th data-k="rok" class="num">Rocznie</th>
+          <th data-k="mies" class="num">Miesięcznie</th>
+          <th data-k="udz" class="num">Udział</th>
+        </tr></thead>
+        <tbody></tbody>
+        <tfoot></tfoot>
+      </table>
+    </div>
+  </div>
+
+  <div class="box" style="margin-top:16px">
+    <h2>Inne umowy radiologiczne zawarte w tym samym czasie (poza konkursem 2026/24/2/NO)</h2>
+    <div class="scroll">
+      <table id="t2">
+        <thead><tr><th>Wykonawca</th><th>Nr umowy</th><th>Przedmiot</th><th>Okres</th><th class="num">Wartość</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <ul class="notes">
+    <li><b>Wartość umowy to górny limit, nie wypłata.</b> Szpital płaci za każde opisane badanie oraz za godziny dyżurów i nadzoru. Wartość wynika z cen wykonawcy pomnożonych przez szacunkową liczbę badań. Szpital może zlecić mniej badań albo ok. 30% więcej.</li>
+    <li>Przy wartości 3 lat „rocznie” = wartość / 3, „miesięcznie” = wartość / 36. To średnie z limitu umowy.</li>
+    <li>Kwoty kontraktów jednoosobowych to przychód firmy lekarza, przed ZUS, podatkiem i kosztami (np. polisa OC).</li>
+    <li>MC-RADS sp. z o.o. i PULSMEDICA sp. z o.o. podały ten sam adres: ul. Paderewskiego 6, 93-509 Łódź (ogłoszenie o rozstrzygnięciu konkursu). Umowa MC-RADS obejmuje Pakiet 2: radiologię w Ośrodku Onkologii i Hematologii wraz z koordynacją (min. 12 dyżurów w miesiącu, do 5 lekarzy jednocześnie).</li>
+    <li>8 z 17 umów ma aneks z października 2026 z opisem „omyłka pisarska, błędna kwota za procedurę”. Aneks zmienił cennik i wartość umowy.</li>
+    <li>Lekarzy na kontraktach jednoosobowych oznaczono numerami (Lekarz 1–16, według wartości umowy). Przycisk „Pokaż nazwiska” pokazuje nazwy z CRU, pełne numery umów i linki do wpisów.</li>
+    <li>Źródła: <a href="https://rejestrumow.gov.pl/">Centralny Rejestr Umów</a> (linki przy spółkach), <a href="https://konkursy.kopernik.lodz.pl/index_szp.php?dokszp=gzp_01_konkursy/szp_2026_09_18_radi3">dokumenty konkursu 2026/24/2/NO</a>.</li>
+  </ul>
+</main>
+
+<script>
+const CRU = "https://rejestrumow.gov.pl/umowa/";
+const main = [
+  ["MC-RADS sp. z o.o.", true, "2026/24/2/NO/MC-RADS", "01.10.2026", 65710386, "", "48931a42-9936-4465-aac8-820682271aaf"],
+  // Lekarze na kontraktach jednoosobowych: bez nazwisk, bez linku do CRU (wpis zawiera nazwisko),
+  // numer umowy bez inicjałów na końcu.
+  ["Lekarz 1", false, "2026/24/2/NO", "01.10.2026", 6523560, "15.10.2026", null],
+  ["PULSMEDICA sp. z o.o.", true, "2026/24/2/NO/PM", "01.10.2026", 6435501, "16.10.2026", "7257222a-a43c-4252-86d5-d0b5bce48b97"],
+  ["Lekarz 2", false, "2026/24/2/NO", "01.10.2026", 4831005, "16.10.2026", null],
+  ["Lekarz 3", false, "2026/24/2/NO", "01.10.2026", 3779826, "15.10.2026", null],
+  ["Lekarz 4", false, "2026/24/2/NO", "01.10.2026", 3541281, "", null],
+  ["Lekarz 5", false, "2026/24/2/NO", "01.10.2026", 3505191, "", null],
+  ["Lekarz 6", false, "2026/24/2/NO", "01.10.2026", 2808840, "", null],
+  ["Lekarz 7", false, "2026/24/2/NO", "01.10.2026", 2808435, "", null],
+  ["Lekarz 8", false, "2026/24/2/NO", "01.10.2026", 2808231, "", null],
+  ["Lekarz 9", false, "2026/24/2/NO", "01.10.2026", 2804436, "", null],
+  ["Lekarz 10", false, "2026/24/2/NO", "01.10.2026", 2573796, "27.10.2026", null],
+  ["Lekarz 11", false, "2026/24/2/NO", "01.10.2026", 2124714, "26.10.2026", null],
+  ["Lekarz 12", false, "2026/24/2/NO", "01.10.2026", 2012690, "", null],
+  ["Lekarz 13", false, "2026/24/2/NO", "01.10.2026", 1743804, "16.10.2026", null],
+  ["Lekarz 14", false, "2026/24/2/NO", "01.10.2026", 1683564, "26.10.2026", null],
+  ["Lekarz 15", false, "2026/24/2/NO", "01.10.2026", 1435131, "", null],
+];
+// Dane z CRU pokazywane po kliknięciu „Pokaż nazwiska”: [wykonawca, nr umowy, id CRU].
+const names = {
+  "Lekarz 1": ["MJG Michał Głowacki", "2026/242/2NO/MG", "dc9a7cb5-6e3c-4fc4-8452-3b87cddd85fb"],
+  "Lekarz 2": ["Prywatna Praktyka Lekarska Bartosz Czarniak", "2026/24/2/NO/BC", "b7eaa14a-69cb-4b44-907e-05c86e8d4034"],
+  "Lekarz 3": ["Jarosław Arkadiusz Chrząstek", "2026/24/2/NO/JC", "5ab4f903-8711-463e-89fc-b564c0474773"],
+  "Lekarz 4": ["Jakub Żabierek", "2026/24/2/NO/JŻ", "b2eecf34-deb0-4c2b-9f2b-9dea1eec9983"],
+  "Lekarz 5": ["Marek Mikinka Specjalistyczna Praktyka Lekarska", "2026/24/2/NO/MM", "7e0864ce-7b48-4da7-9140-970119bd7158"],
+  "Lekarz 6": ["Indywidualna Specjalistyczna Praktyka Lekarska Magdalena Wolska", "2026/24/2NO/MW", "b2e9d5bb-1a8e-4381-a625-94f62e63f203"],
+  "Lekarz 7": ["Aleksandra Raczkowska", "2026/24/2/NO/AR", "31ed4d61-1890-4a28-9ee3-5804060d6940"],
+  "Lekarz 8": ["Katarzyna Sobczyk", "2026/24/2/NO/KS", "21606998-b167-4d09-a479-9d2b58578265"],
+  "Lekarz 9": ["Indywidualna Praktyka Lekarska Wojciech Lizurej", "2026/24/2/NO/WL", "d9f93093-b95d-45a5-834b-d17fce6369a9"],
+  "Lekarz 10": ["Katarzyna Kurzyk", "2026/24/2/NO/KK", "ee99e8b4-cffa-4f79-96cf-9f6220d8510b"],
+  "Lekarz 11": ["Adam Tomalczyk Praktyka Lekarska", "2026/24/2/NO/AT", "b3d8da6e-26f8-41ee-8b9e-3c3bf4ee3603"],
+  "Lekarz 12": ["Praktyka Lekarska Bartosz Kałdoński", "2026/24/2/NO/BK", "6e11ed14-1b87-45f5-a467-719a23a2916d"],
+  "Lekarz 13": ["Praktyka Lekarska Mateusz Zieliński", "2026/24/2/NO/MZ", "54a984b1-8f2e-4576-9fbc-37c0919e6b00"],
+  "Lekarz 14": ["Patryk Wieczorek", "2026/24/2/NO/PW", "ed00dbc3-6c5e-4690-aefb-d5f17919dd95"],
+  "Lekarz 15": ["Indywidualna Praktyka Lekarska Adam Brożyński", "2026/24/2/NO/AB", "4892625b-d670-486e-aa9e-9063762d846d"],
+  "Lekarz 16": ["Dominika Słodka-Dymecka", "2026/58/NO/DSD", "d7becf87-e32f-422d-9688-4afe059c7647"],
+};
+let showNames = false;
+// Zwraca [wykonawca, nr, id] — z nazwiskiem albo zanonimizowane.
+const who = (wyk, nr, id) => showNames && names[wyk] ? names[wyk] : [wyk, nr, id];
+const link = (w, id) => id ? `<a href="${CRU + id}" target="_blank" rel="noopener">${w}</a>` : w;
+
+const other = [
+  ["Lekarz 16", "2026/58/NO", "radiologia i diagnostyka obrazowa — Ośrodek Pediatryczny im. J. Korczaka", "1096 dni", 1733760, null],
+  ["MC-RADS sp. z o.o.", "2026/64/NO/MCR/A", "usługi medyczne w zakresie radiologii i diagnostyki obrazowej", "92 dni", 129999.99, "ff3d47af-8c86-48ca-ae03-146e1aefc116"],
+];
+
+const zl = v => v.toLocaleString("pl-PL", { maximumFractionDigits: 0 }) + " zł";
+const total = main.reduce((s, r) => s + r[4], 0);
+
+let rows = main.map(r => ({ wyk: r[0], firm: r[1], nr: r[2], data: r[3], wartosc: r[4], ann: r[5], id: r[6],
+  rok: r[4] / 3, mies: r[4] / 36, udz: r[4] / total }));
+
+let sortKey = "wartosc", asc = false;
+function render() {
+  rows.sort((a, b) => {
+    const x = a[sortKey], y = b[sortKey];
+    const c = typeof x === "number" ? x - y : String(x).localeCompare(String(y), "pl", { numeric: true });
+    return asc ? c : -c;
+  });
+  document.querySelector("#t tbody").innerHTML = rows.map(r => { const [w, nr, id] = who(r.wyk, r.nr, r.id); return `<tr class="${r.firm ? "firm" : ""}">
+    <td>${link(w, id)}${r.firm ? '<span class="tag firm">spółka</span>' : '<span class="tag">kontrakt</span>'}</td>
+    <td class="small">${nr}</td>
+    <td class="small">${r.data}</td>
+    <td class="num">${zl(r.wartosc)}</td>
+    <td class="num">${zl(r.rok)}</td>
+    <td class="num">${zl(r.mies)}</td>
+    <td class="num">${(r.udz * 100).toFixed(1)}%</td></tr>`; }).join("");
+  document.querySelector("#t2 tbody").innerHTML = other.map(r => { const [w, nr, id] = who(r[0], r[1], r[5]); return `<tr>
+    <td>${link(w, id)}</td>
+    <td class="small">${nr}</td><td class="small">${r[2]}</td><td class="small">${r[3]}</td>
+    <td class="num">${zl(r[4])}</td></tr>`; }).join("");
+  document.querySelector("#names").textContent = showNames ? "Ukryj nazwiska" : "Pokaż nazwiska";
+  document.querySelectorAll("#t th").forEach(th => {
+    th.textContent = th.textContent.replace(/ [↑↓]$/, "") + (th.dataset.k === sortKey ? (asc ? " ↑" : " ↓") : "");
+  });
+}
+document.querySelector("#t tfoot").innerHTML = `<tr><td colspan="3">Razem (17 umów)</td>
+  <td class="num">${zl(total)}</td><td class="num">${zl(total / 3)}</td><td class="num">${zl(total / 36)}</td><td class="num">100%</td></tr>`;
+document.querySelectorAll("#t th").forEach(th => th.addEventListener("click", () => {
+  const k = th.dataset.k;
+  if (k === sortKey) asc = !asc; else { sortKey = k; asc = typeof rows[0][k] !== "number"; }
+  render();
+}));
+document.querySelector("#names").addEventListener("click", () => { showNames = !showNames; render(); });
+render();
+</script>
+</body>
+</html>

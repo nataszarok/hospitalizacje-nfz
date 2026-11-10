@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="pl">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kalibracja 2017–2018</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Koncepcja kalibracji „<5” dla lat bez zestawienia świadczeń (2017–2018). Te same tokeny co plan kalibracji. */
+:root {
+  --bg: #ffffff; --surface: #f5f8f7; --panel: #ffffff;
+  --ink: #172033; --ink-2: #475467; --ink-3: #667085; --line: #e2e8e6;
+  --brand: #087f75; --brand-soft: #e6f3f1; --on-brand: #ffffff;
+  --hi: #c65d2e; --hi-soft: rgba(198, 93, 46, 0.10); --ok: #2f7d4f; --ok-soft: rgba(47, 125, 79, 0.10);
+  --font: "Inter", ui-sans-serif, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1716; --surface: #15201e; --panel: #1a2624; --ink: #e8eeec; --ink-2: #b5c2be; --ink-3: #8b9a96; --line: #2a3936;
+    --brand: #4cc2b2; --brand-soft: #18322e; --on-brand: #0f1716; --hi: #e8895c; --hi-soft: rgba(232, 137, 92, 0.14); --ok: #6cc28e; --ok-soft: rgba(108, 194, 142, 0.12); color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1716; --surface: #15201e; --panel: #1a2624; --ink: #e8eeec; --ink-2: #b5c2be; --ink-3: #8b9a96; --line: #2a3936;
+  --brand: #4cc2b2; --brand-soft: #18322e; --on-brand: #0f1716; --hi: #e8895c; --hi-soft: rgba(232, 137, 92, 0.14); --ok: #6cc28e; --ok-soft: rgba(108, 194, 142, 0.12); color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 15px; line-height: 1.55; }
+.wrap { max-width: 1080px; margin: 0 auto; padding: 36px 16px 80px; display: grid; gap: 40px; }
+h1 { font-size: clamp(26px, 4vw, 34px); margin: 0; letter-spacing: -0.02em; line-height: 1.2; }
+h2 { font-size: 21px; margin: 0; }
+h3 { font-size: 15.5px; margin: 0; }
+p { margin: 0; max-width: 76ch; }
+code { font-size: 0.9em; background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; }
+.kicker { font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--brand); }
+.lead { font-size: 16.5px; color: var(--ink-2); }
+section { display: grid; gap: 14px; }
+.card { border: 1px solid var(--line); border-radius: 12px; background: var(--panel); padding: 16px 18px; display: grid; gap: 12px; min-width: 0; }
+.card.warn { border-color: var(--hi); background: var(--hi-soft); }
+.note { font-size: 12.5px; color: var(--ink-3); }
+.scroll-x { overflow-x: auto; }
+.formula { font-size: 15px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; font-variant-numeric: tabular-nums; }
+.parts { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.part { border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; display: grid; gap: 4px; font-size: 13.5px; color: var(--ink-2); align-content: start; }
+.part b { color: var(--ink); }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+.fact { border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; display: grid; gap: 2px; }
+.fact b { font-size: 24px; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
+.fact span { font-size: 12.5px; color: var(--ink-3); }
+table { border-collapse: collapse; width: 100%; font-size: 13px; font-variant-numeric: tabular-nums; }
+th { font-size: 11.5px; font-weight: 600; color: var(--ink-3); text-align: right; padding: 6px 7px; border-bottom: 1px solid var(--line); vertical-align: bottom; }
+td { padding: 6px 7px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; }
+td.wrap-cell { white-space: normal; text-align: left; min-width: 260px; }
+td.bad { color: var(--hi); font-weight: 600; }
+td.good { color: var(--ok); font-weight: 600; }
+ul, ol { margin: 0; padding-left: 20px; display: grid; gap: 6px; font-size: 14px; color: var(--ink-2); max-width: 80ch; }
+li b { color: var(--ink); }
+.tag { display: inline-block; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; border-radius: 999px; padding: 1px 8px; margin-right: 6px; vertical-align: 1px; }
+.tag.hi { background: var(--hi-soft); color: var(--hi); }
+.tag.mid { background: var(--brand-soft); color: var(--brand); }
+.tag.lo { background: var(--surface); color: var(--ink-3); border: 1px solid var(--line); }
+.step { display: grid; grid-template-columns: 30px 1fr; gap: 10px; align-items: start; }
+.step > span { width: 26px; height: 26px; border-radius: 50%; background: var(--brand-soft); color: var(--brand); font-weight: 700; font-size: 13px; display: grid; place-items: center; }
+tr.pick td { background: var(--ok-soft); font-weight: 600; }
+tr.wrong td { background: var(--hi-soft); }
+</style>
+
+<div class="wrap">
+  <header style="display:grid;gap:10px">
+    <span class="kicker">Roadmapa · etap 4a · koncepcja</span>
+    <h1>Kalibracja „&lt;5” dla lat 2017–2018, bez zestawienia świadczeń</h1>
+    <p class="lead">Metoda v4 opiera komórkę na dwóch źródłach z zestawienia świadczeń: punktach i liczbie pacjentów. Zestawienie ma dane od 2019 r. Ten dokument opisuje, co możemy zrobić dla lat 2017–2018, jak to sprawdzić przed wdrożeniem i jakie są ryzyka.</p>
+    <p class="note">Wyniki testu wstecznego: <a href="test-wsteczny-2022-2023.html">test-wsteczny-2022-2023.html</a>. Powiązane: <a href="kalibracja-schemat-decyzji.html">schemat metody v2/v4</a>, <a href="kalibracja-ponizej-5.html">plan kalibracji</a>, <a href="../koncepcja-analiz.html">roadmapa</a>.</p>
+  </header>
+
+  <section>
+    <h2>1. Co mamy, a czego brakuje</h2>
+    <div class="card">
+      <div class="scroll-x"><table>
+        <thead><tr><th>Źródło</th><th>2017–2018</th><th>2019–2024</th><th>Do czego służy w v4</th></tr></thead>
+        <tbody>
+          <tr><td>Plik hospitalizacji (eksport wieloletni)</td><td class="good">tak</td><td class="good">tak</td><td class="wrap-cell">komórki, granice lo/hi, długość pobytu, wiersze ze zgonem</td></tr>
+          <tr><td>Zestawienie świadczeń (punkty, pacjenci)</td><td class="bad">nie</td><td class="good">tak</td><td class="wrap-cell">metoda A (pacjenci), metoda B (punkty), granica hi2, dolna granica z pacjentów</td></tr>
+          <tr><td>API statystyk JGP: dane ogólne, zakresy, wypis, histogram dni</td><td class="good">tak (sprawdzone: E10, 12 tabel)</td><td class="good">tak</td><td class="wrap-cell">sumy grupy, cele zakresów, zgony, wycena z osobodniami</td></tr>
+          <tr><td>API: tryb przyjęcia, płeć, wiek</td><td class="good">tak</td><td class="good">tak</td><td class="wrap-cell">w v4 tylko do oceny metody</td></tr>
+          <tr><td>Katalog wycen (zarządzenia)</td><td>do pobrania (mamy od 12.2018)</td><td class="good">tak</td><td class="wrap-cell">wycena U; bez punktów niepotrzebna</td></tr>
+        </tbody>
+      </table></div>
+      <div class="facts">
+        <div class="fact"><b>94,6%</b><span>wierszy 2017 to „&lt;5” (2018: 94,7%, 2019: 94,7%)</span></div>
+        <div class="fact"><b>85,3%</b><span>wierszy „&lt;5” z 2017 r. leży w komórkach, które istnieją w 2019 r.</span></div>
+        <div class="fact"><b>89,8%</b><span>to samo dla 2018 r.</span></div>
+        <div class="fact"><b>93,5% / 94,1%</b><span>wierszy „&lt;5” z 2017 / 2018 r. ma produkt JGP obecny w 2019 r.</span></div>
+      </div>
+      <p class="note">Komórka = OW NFZ + NIP + kod zakresu + produkt JGP. Liczby policzone z eksportu wieloletniego (hospitalizacje_2019_2021.csv, lata 2017–2019).</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>2. Co z v4 zostaje, a co znika</h2>
+    <div class="card">
+      <ul>
+        <li><b>Zostaje:</b> granice z pliku (lo, hi), cele zakresów i suma grupy z API, przydział zgonów (z zasadą „pobyt w wierszu ze zgonem jest zgonem”), histogram dni.</li>
+        <li><b>Znika:</b> wszystko, co rozróżnia szpitale wewnątrz zakresu: pacjenci (metoda A, dolna granica, hi2) i punkty (metoda B). Bez tego v4 nie wie, czy wiersz „&lt;5” w szpitalu X to raczej 1, czy raczej 3 pobyty.</li>
+        <li><b>Wniosek:</b> potrzebujemy innego źródła różnic między szpitalami. Mamy dwa kandydaty: atrybuty wierszy w połączeniu z rozkładami krajowymi z API (wariant 1) i strukturę tych samych komórek z lat 2019+ (wariant 2).</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2>3. Wariant 1: dopasowanie do wszystkich rozkładów krajowych z API</h2>
+    <div class="card">
+      <p>Każdy wiersz „&lt;5” dostaje wartość od 1 do 4. Szukamy wartości, przy których sumy pliku zgadzają się jednocześnie z kilkoma tabelami API dla grupy:</p>
+      <ul>
+        <li>suma grupy i pobyty w zakresach umów (jak w v4),</li>
+        <li>zgony (tryb wypisu 9),</li>
+        <li>długość pobytu w 4 przedziałach (z histogramu dni),</li>
+        <li>tryb przyjęcia (te same kody co w pliku),</li>
+        <li>płeć,</li>
+        <li>wiek: tylko tam, gdzie granice grup da się złożyć (API: 18–40, 41–60, 61–80, 81+; plik: 18–44, 45–64, 65+) — zwykle tylko podział dzieci / dorośli.</li>
+      </ul>
+      <p><b>Technika:</b> iteracyjne dopasowanie proporcjonalne (raking, IPF) z obcięciem do [1, 4] na wiersz. Start: 1 na wiersz (min) albo wartości z wariantu 2. Po każdym obrocie po tabelach wartości mnożymy, żeby zgodzić się z kolejną tabelą, i obcinamy do granic. Na końcu zaokrąglamy z zachowaniem sum (jak w v4).</p>
+      <p><b>Co to daje:</b> szpital, który ma dużo wierszy „&lt;5” w kategoriach niedoszacowanych przez <code>min</code> (np. długie pobyty, tryb nagły), dostaje więcej pobytów. To realna informacja, bo API mówi, gdzie brakuje pobytów.</p>
+      <p><b>Ograniczenie:</b> dwa szpitale z wierszami o tych samych atrybutach dostaną tę samą wartość. Różnice między szpitalami wynikają tylko z miksu wierszy.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>4. Wariant 2: struktura komórki z lat z zestawieniem</h2>
+    <div class="card">
+      <p>Dla komórki liczymy z v4 (2019 r., docelowo średnia 2019 i 2021–2022, z pominięciem 2020 przez COVID) <b>nadwyżkę na wiersz „&lt;5”</b>: (cal − min) ÷ liczba wierszy „&lt;5”. Zakładamy, że ten sam szpital w tym samym zakresie i produkcie ma podobny profil pacjentów rok czy dwa lata wcześniej.</p>
+      <div class="formula">start(wiersz 2018) = 1 + nadwyżka na wiersz komórki w 2019 · (popr. do sumy zakresu z API 2018)</div>
+      <ul>
+        <li>85–90% wierszy „&lt;5” z 2017–2018 ma komórkę w 2019 r. Pozostałe dostają średnią zakresu albo grupy.</li>
+        <li>Produkty spoza katalogu 2019 (ok. 6% wierszy) nie mają odpowiednika. Zostają przy wariancie 1.</li>
+        <li>Zmiany kodów zakresów i NIP między latami trzeba połączyć tak jak w v4 (lista ręczna kodów świadczeniodawców).</li>
+      </ul>
+      <p><b>Ryzyko:</b> zmiana katalogu JGP. Przykład: E10 do września 2017 r. obejmowało więcej przypadków (punkt kontrolny E10 2017: 20 596 pobytów min, 2018: 10 431). Struktura komórki z 2019 r. może wtedy nie pasować. Takie produkty trzeba wykryć (np. duża zmiana liczby wierszy komórki między latami) i dać im wariant 1.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>5. Rekomendacja: wariant 2 jako start, wariant 1 jako dopasowanie</h2>
+    <div class="card">
+      <ol>
+        <li><b>Start:</b> wartości wierszy z wariantu 2 (struktura komórek z 2019+), dla komórek bez odpowiednika 1 + średnia nadwyżka zakresu.</li>
+        <li><b>Dopasowanie:</b> raking z wariantu 1 do tabel API 2017/2018: zakresy, suma grupy, zgony, długość pobytu, tryb przyjęcia, płeć. Raking zmienia start możliwie mało (minimalna odległość od startu, mnożniki zamiast nowych wartości).</li>
+        <li><b>Granice:</b> twarde [1, 4] na wiersz, suma grupy = API, wiersz ze zgonem zawiera tylko zgony.</li>
+        <li><b>Oznaczenie:</b> w danych metoda <code>cal-2017</code> (inna niż v4), w UI informacja, że dla 2017–2018 szacunek jest mniej pewny.</li>
+      </ol>
+      <p>Ta kombinacja to jedna zasada, a nie zestaw wyjątków: każdy rok ma start (z danych szpitala, jeśli są) i dopasowanie do wszystkich tabel API. Dla lat 2019+ ten sam raking można później dodać jako krok po v4 (dopasowanie rozkładów krajowych, które v4 teraz tylko sprawdza).</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>6. Jak to sprawdzimy przed wdrożeniem: test wsteczny</h2>
+    <div class="card">
+      <p>Liczymy metodę dla roku, w którym mamy pełne v4, udając, że nie mamy zestawienia. Wynik porównujemy z v4.</p>
+      <div class="scroll-x"><table>
+        <thead><tr><th>Test</th><th>Rok testu</th><th>Start z roku</th><th>Co sprawdza</th></tr></thead>
+        <tbody>
+          <tr><td>A</td><td>2023</td><td>2024 (1 rok różnicy)</td><td class="wrap-cell">jak 2018 ← 2019</td></tr>
+          <tr><td>B</td><td>2022</td><td>2024 (2 lata)</td><td class="wrap-cell">jak 2017 ← 2019</td></tr>
+          <tr><td>C</td><td>2023</td><td>bez startu (sam wariant 1)</td><td class="wrap-cell">ile daje sam raking</td></tr>
+        </tbody>
+      </table></div>
+      <p><b>Miary:</b> pobyty przesunięte względem v4 (%), błąd komórki (mediana, 90. percentyl), test zakresów bez celów z API, udział komórek, w których wynik leży bliżej v4 niż <code>min</code> i <code>sim</code>. <b>Kryterium wdrożenia:</b> metoda musi być wyraźnie bliżej v4 niż <code>min</code> i <code>sim</code> w każdym teście; inaczej dla 2017–2018 zostaje <code>min</code> z jasną informacją.</p>
+      <p class="note">Rozkłady krajowe z API nie są w tym teście niezależne (raking je dopasowuje), dlatego główną miarą jest odległość od v4 na poziomie komórek. Pary lat po 2021 r. wybieramy celowo: omijają COVID (2020–2021), a w latach 2022–2024 mamy pełne v4.</p>
+      <h3>Czy test jest reprezentatywny? Przetasowania między latami</h3>
+      <p>Sumy krajowe dla każdej grupy JGP mamy z API dokładnie dla każdego roku. Niewiadomą jest tylko podział między szpitale wewnątrz grupy, a ten zmienia się z roku na rok (szpital przejmuje pacjentów, inny zamyka oddział). Test wsteczny mierzy właśnie ten błąd, pod warunkiem że przetasowania w parze testowej są podobne jak między 2017–2018 a 2019. Plik hospitalizacji mamy dla wszystkich lat, więc da się to porównać wprost (pobyty metodą min w komórkach):</p>
+      <div class="scroll-x"><table>
+        <thead><tr><th>Rok ← rok startu</th><th>Wiersze „&lt;5” w komórkach obecnych w roku startu</th><th>Przetasowanie udziałów w grupie: mediana / ważone</th><th>Zmiana wielkości komórki (mediana |log|)</th></tr></thead>
+        <tbody>
+          <tr><td>2018 ← 2019</td><td>89,8%</td><td>16,8% / 13,3%</td><td>36%</td></tr>
+          <tr><td><b>2023 ← 2024</b> (test A)</td><td>97,4%</td><td>16,6% / 12,8%</td><td>37%</td></tr>
+          <tr><td>2017 ← 2019</td><td>85,3%</td><td>22,7% / 18,3%</td><td>46%</td></tr>
+          <tr><td><b>2022 ← 2024</b> (test B)</td><td>92,8%</td><td>21,1% / 18,0%</td><td>45%</td></tr>
+          <tr><td>2021 ← 2023 (COVID)</td><td>91,5%</td><td>23,0% / 19,9%</td><td>51%</td></tr>
+        </tbody>
+      </table></div>
+      <p>Przetasowania w parach testowych są takie same jak w parach docelowych (przy tej samej odległości w latach). Różni się tylko pokrycie: w 2017–2018 więcej wierszy leży w komórkach, których nie ma w roku startu (zmiana katalogu JGP w 2017 r., zmiany zakresów). Test wsteczny będzie więc trochę zbyt optymistyczny dla komórek bez odpowiednika; ich błąd trzeba podać osobno.</p>
+      <p class="note">Przetasowanie = ½ Σ |udział komórki w grupie w roku A − udział w roku B| po komórkach obecnych w obu latach (mediana po grupach JGP; ważone pobytami). Liczone na pobytach metodą min.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>7. Otwarte pytania i ryzyka</h2>
+    <div class="card">
+      <ul>
+        <li><b>Pobranie API 2017–2018</b> dla wszystkich produktów (<code>fetch_jgp_stats.py --years 2017-2018</code>): sprawdzone dla E10, trzeba potwierdzić pokrycie produktów z katalogu 2017.</li>
+        <li><b>Nazwy zakresów</b> w API 2017–2018 a w pliku: w v4 łączymy po nazwie z zestawienia; bez zestawienia trzeba słownika kod zakresu → nazwa (np. z plików 2019+ albo z API umów NFZ).</li>
+        <li><b>Wykaz procedur ICD-9 per szpital i grupa JGP</b> (dane.gov.pl, zbiór 3009 „Dane dotyczące hospitalizacji rozliczonych JGP”, plik procedur „w latach 2019–2021”, 7z, 117 MB). Plik hospitalizacji z tego samego zbioru, opisany jako 2019–2021, zawiera też lata 2017–2018 — możliwe, że plik procedur także. Liczba procedur w szpitalu i grupie JGP byłaby sygnałem wielkości komórki, którego brakuje bez zestawienia. Do pobrania i sprawdzenia.</li>
+        <li><b>Inne źródła sprawdzone (7.11.2026):</b> ezdrowie.gov.pl „Liczba hospitalizacji i wartość ich refundacji w ramach JGP według świadczeniodawców” — dopiero od 2020 r.; „Informacje o liczbie hospitalizacji sprawozdanych dla wybranych grup JGP” — 2019–2021; „Miesięczny raport dot. hospitalizacji JGP” — od 2020 r., bez podziału na szpitale; mapy potrzeb zdrowotnych (BASiW) — oddziały, nie szpitale i grupy JGP; zbiór 4514 — tylko szpitale samorządu województwa śląskiego.</li>
+        <li><b>API umów NFZ</b> (mamy próbkę <code>data/nfz_umowy_09R_010019.json</code>): umowy szpitala z planem w zakresach. Do sprawdzenia, czy są dla 2017–2018 i czy wartość umowy w zakresie może zastąpić punkty jako sygnał różnic między szpitalami.</li>
+        <li><b>Wiek:</b> granice grup w API i w pliku się nie pokrywają; używamy tylko tego, co da się złożyć.</li>
+        <li><b>Zmiana katalogu w październiku 2017 r.:</b> produkty, które zmieniły zakres, wymagają osobnego traktowania (wariant 1 bez startu).</li>
+        <li><b>Zgony:</b> te same zasady co w v4; w latach z dużą liczbą zgonów w wierszach „&lt;5” sprawdzić, czy suma zgonów nie odbiega od API bardziej niż w 2024 r. (+67, 0,04%).</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2>8. Kroki</h2>
+    <div class="card">
+      <ol>
+        <li>Pobrać tabele API dla 2017–2018 (lata testowe 2022–2024 są już pobrane i policzone v4).</li>
+        <li>Policzyć v4 dla 2019 (start dla 2017–2018) — wymaga tabel API 2019.</li>
+        <li>Napisać raking (wariant 1) jako osobną funkcję z testami na małych danych.</li>
+        <li>Test wsteczny A–C, raport w tym folderze.</li>
+        <li>Decyzja: wdrożenie dla 2017–2018 albo zostawienie <code>min</code>.</li>
+      </ol>
+    </div>
+  </section>
+</div>

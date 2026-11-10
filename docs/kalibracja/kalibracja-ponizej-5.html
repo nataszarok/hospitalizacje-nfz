@@ -1,0 +1,500 @@
+<!doctype html>
+<html lang="pl">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kalibracja „&lt;5”</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Plan etapu 4a: kalibracja wartości „<5”. Te same tokeny co dokumenty kart JGP. */
+:root {
+  --bg: #ffffff; --surface: #f5f8f7; --panel: #ffffff;
+  --ink: #172033; --ink-2: #475467; --ink-3: #667085; --line: #e2e8e6;
+  --brand: #087f75; --brand-soft: #e6f3f1; --on-brand: #ffffff;
+  --hi: #c65d2e; --hi-soft: rgba(198, 93, 46, 0.10); --ok: #2f7d4f; --ok-soft: rgba(47, 125, 79, 0.10);
+  --font: "Inter", ui-sans-serif, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1716; --surface: #15201e; --panel: #1a2624; --ink: #e8eeec; --ink-2: #b5c2be; --ink-3: #8b9a96; --line: #2a3936;
+    --brand: #4cc2b2; --brand-soft: #18322e; --on-brand: #0f1716; --hi: #e8895c; --hi-soft: rgba(232, 137, 92, 0.14); --ok: #6cc28e; --ok-soft: rgba(108, 194, 142, 0.12); color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1716; --surface: #15201e; --panel: #1a2624; --ink: #e8eeec; --ink-2: #b5c2be; --ink-3: #8b9a96; --line: #2a3936;
+  --brand: #4cc2b2; --brand-soft: #18322e; --on-brand: #0f1716; --hi: #e8895c; --hi-soft: rgba(232, 137, 92, 0.14); --ok: #6cc28e; --ok-soft: rgba(108, 194, 142, 0.12); color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 15px; line-height: 1.55; }
+.wrap { max-width: 1080px; margin: 0 auto; padding: 36px 16px 80px; display: grid; gap: 40px; }
+h1 { font-size: clamp(26px, 4vw, 34px); margin: 0; letter-spacing: -0.02em; line-height: 1.2; }
+h2 { font-size: 21px; margin: 0; }
+h3 { font-size: 15.5px; margin: 0; }
+p { margin: 0; max-width: 76ch; }
+code { font-size: 0.9em; background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; }
+.kicker { font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--brand); }
+.lead { font-size: 16.5px; color: var(--ink-2); }
+section { display: grid; gap: 14px; }
+.card { border: 1px solid var(--line); border-radius: 12px; background: var(--panel); padding: 16px 18px; display: grid; gap: 12px; min-width: 0; }
+.card.warn { border-color: var(--hi); background: var(--hi-soft); }
+.note { font-size: 12.5px; color: var(--ink-3); }
+.scroll-x { overflow-x: auto; }
+.formula { font-size: 15px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; font-variant-numeric: tabular-nums; }
+.parts { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.part { border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; display: grid; gap: 4px; font-size: 13.5px; color: var(--ink-2); align-content: start; }
+.part b { color: var(--ink); }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+.fact { border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; display: grid; gap: 2px; }
+.fact b { font-size: 24px; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
+.fact span { font-size: 12.5px; color: var(--ink-3); }
+table { border-collapse: collapse; width: 100%; font-size: 13px; font-variant-numeric: tabular-nums; }
+th { font-size: 11.5px; font-weight: 600; color: var(--ink-3); text-align: right; padding: 6px 7px; border-bottom: 1px solid var(--line); vertical-align: bottom; }
+td { padding: 6px 7px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; }
+td.wrap-cell { white-space: normal; text-align: left; min-width: 260px; }
+td.bad { color: var(--hi); font-weight: 600; }
+td.good { color: var(--ok); font-weight: 600; }
+ul, ol { margin: 0; padding-left: 20px; display: grid; gap: 6px; font-size: 14px; color: var(--ink-2); max-width: 80ch; }
+li b { color: var(--ink); }
+.tag { display: inline-block; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; border-radius: 999px; padding: 1px 8px; margin-right: 6px; vertical-align: 1px; }
+.tag.hi { background: var(--hi-soft); color: var(--hi); }
+.tag.mid { background: var(--brand-soft); color: var(--brand); }
+.tag.lo { background: var(--surface); color: var(--ink-3); border: 1px solid var(--line); }
+</style>
+
+<div class="wrap">
+  <header style="display:grid;gap:10px">
+    <span class="kicker">Roadmapa · etap 4a · plan</span>
+    <h1>Kalibracja wartości „&lt;5”</h1>
+    <p class="lead">Plan, jak zastąpić metody <code>min</code> (każde „&lt;5” = 1) i <code>sim</code> (losowanie 1–4) jedną metodą skalibrowaną do zewnętrznych sum: zestawienia świadczeń NFZ (punkty, 2019–2026) i statystyk JGP NFZ (liczby hospitalizacji, 2017–2024). Liczby w dokumencie pochodzą z pomiaru na danych 2024 (5.11.2026).</p>
+  </header>
+
+  <section>
+    <h2>1. Skala problemu (2024)</h2>
+    <div class="facts">
+      <div class="fact"><b>94,6%</b><span>wierszy pliku hospitalizacji ma wartość „&lt;5” (3,65 mln z 3,86 mln)</span></div>
+      <div class="fact"><b>ok. 69%</b><span>hospitalizacji leży w wierszach „&lt;5”; wiersze jawne (≥ 5) to tylko 2,22 mln</span></div>
+      <div class="fact"><b>82,9% / 109,1%</b><span>suma <code>min</code> / <code>sim</code> względem sumy NFZ (7,04 mln, 695 grup)</span></div>
+      <div class="fact"><b>1,33</b><span>średnia liczba hospitalizacji w wierszu „&lt;5” wynikająca z sum NFZ; <code>sim</code> zakłada 1,51, <code>min</code> 1,00</span></div>
+    </div>
+    <div class="card">
+      <p>Wiersz „&lt;5” ukrywa zwykle 1 hospitalizację, ale nie zawsze. Średnia ukryta wartość zależy od grupy: mediana grup 1,24, zakres 1,00–2,56. Dlatego żadna stała (1, losowanie 1–4, ani nawet 1,33) nie jest dobra dla wszystkich grup. <code>sim</code> trafia lepiej w sumę kraju, ale w typowej grupie zawyża o 20% (mediana ilorazu 1,205), bo losuje za dużo w małych grupach.</p>
+      <div class="scroll-x"><table>
+        <thead><tr><th>Grupa (2024)</th><th>NFZ (API)</th><th>min</th><th>min ÷ NFZ</th><th>sim</th><th>sim ÷ NFZ</th><th>wiersze „&lt;5”</th><th>średnio w wierszu „&lt;5”</th></tr></thead>
+        <tbody>
+          <tr><td>E10</td><td>8 995</td><td>8 178</td><td class="bad">0,91</td><td>12 113</td><td class="bad">1,35</td><td>7 746</td><td>1,11</td></tr>
+          <tr><td>H52</td><td>23 531</td><td>17 545</td><td class="bad">0,75</td><td>24 153</td><td class="good">1,03</td><td>13 007</td><td>1,46</td></tr>
+          <tr><td>H55</td><td>30 971</td><td>26 068</td><td class="bad">0,84</td><td>29 250</td><td>0,94</td><td>6 263</td><td>1,78</td></tr>
+          <tr><td>A48</td><td>65 809</td><td>50 058</td><td class="bad">0,76</td><td>62 298</td><td>0,95</td><td>24 094</td><td>1,65</td></tr>
+          <tr><td>N01</td><td>145 961</td><td>135 375</td><td>0,93</td><td>142 280</td><td class="good">0,97</td><td>13 593</td><td>1,78</td></tr>
+          <tr><td>Wszystkie (695)</td><td>7 040 202</td><td>5 834 465</td><td class="bad">0,83</td><td>7 679 257</td><td>1,09</td><td>3,65 mln</td><td>1,33</td></tr>
+        </tbody>
+      </table></div>
+      <p class="note">min i sim policzone dla komórek, które mają parę w zestawieniu świadczeń (99% wierszy), dlatego E10 różni się nieco od liczb w roadmapie (8 236). sim = wartość oczekiwana losowania (1,508 na wiersz), nie jedno losowanie.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>2. Źródła, które mamy</h2>
+    <div class="card">
+      <div class="scroll-x"><table>
+        <thead><tr><th>Źródło</th><th>Lata</th><th>Szczegółowość</th><th style="text-align:left">Co daje kalibracji</th></tr></thead>
+        <tbody>
+          <tr><td>Plik hospitalizacji (<code>data/hospitalizacje_*.csv</code>)</td><td>2017–2025</td><td>rok × miesiąc × OW × NIP × zakres × produkt × tryb przyjęcia × tryb wypisu × płeć × wiek × długość pobytu</td><td class="wrap-cell">Wiersze do oszacowania. Wiersze jawne są stałe.</td></tr>
+          <tr><td>Zestawienie świadczeń (<code>zestawienie_swiadczen_2019_2026.csv</code>)</td><td>2019–2026 (2026 niepełny)</td><td>rok × OW × kod świadczeniodawcy × zakres × produkt</td><td class="wrap-cell">Punkty (<code>Liczba_jednostek_rozliczonych</code>) i liczba pacjentów (47% „&lt;5”) dla każdej komórki rok × ośrodek × zakres × produkt. Para z plikiem hospitalizacji dla 99% wierszy; kod → NIP z <code>nfz_swiadczeniodawcy_2025.csv</code> (865 z 911 kodów, 99,96% punktów).</td></tr>
+          <tr><td>API statystyk JGP NFZ (<code>app-stat-api-jgp</code>)</td><td>2017–2024 (2025: brak)</td><td>grupa × rok, kraj</td><td class="wrap-cell">Liczba hospitalizacji i pacjentów oraz rozkłady: tryb wypisu (zgony), tryb przyjęcia, wiek, płeć, długość pobytu (histogram), zakres świadczeń (np. E10: kardiologia 93,6%, KOS-zawał 6,3%). Te same pobrania co w etapie 4b.</td></tr>
+          <tr><td>Katalog wycen (<code>wyceny_jgp_2025.xlsx</code>)</td><td>tylko 2025</td><td>grupa</td><td class="wrap-cell">Punkty bazowe, pobyty 0/1/2-dniowe, osobodzień ponad ryczałt, współczynniki zakresów. Potrzebny tylko dla roku bez API (2025).</td></tr>
+        </tbody>
+      </table></div>
+      <p class="note">Sprawdzone: w zestawieniu <code>Wartosc_jednostek_rozliczonych</code> to złote, a <code>Liczba_jednostek_rozliczonych</code> to punkty. Cena punktu rośnie z 1,00 zł (2019) do 1,77 zł (2024) i 1,96 zł (2026). Kalibracja musi używać punktów, nie złotych. API pokazuje rozkład po województwach („divided-by-branches”), ale zapytanie z parametrem <code>branch</code> zwraca tylko wiersz kraju — do sprawdzenia w kroku 1.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>3. Ocena podejścia „wycena kodu w każdym roku”</h2>
+    <div class="card">
+      <p>Pomysł jest dobry w rdzeniu: punkty z zestawienia dzielone przez wartość jednej hospitalizacji dają liczbę hospitalizacji w komórce rok × ośrodek × zakres × produkt. Ma jednak cztery słabe punkty. Trzy z nich da się obejść.</p>
+      <div class="parts">
+        <div class="part"><b>Wycena katalogowa nie jest potrzebna dla 2019–2024</b>API daje liczbę hospitalizacji grupy w roku. Iloraz u = punkty ÷ hospitalizacje to <i>zrealizowana</i> średnia wartość pobytu. Zawiera zmiany wyceny w trakcie roku, osobodni ponad ryczałt, pobyty skrócone i współczynniki. Nie trzeba składać historii zarządzeń.</div>
+        <div class="part"><b>Wycena bazowa myli się o ±10–20%</b>Zrealizowane u (2024) ÷ wycena bazowa (2025): mediana 1,02, ale 10–90% grup w przedziale 0,87–1,19, skrajnie 0,53–2,08. Wycena katalogowa jest więc słabą kotwicą. Użyjemy jej tylko w 2025, i to jako zmiany względem 2024.</div>
+        <div class="part"><b>Ośrodek ≠ średnia kraju</b>Punkty na pobyt w ośrodku zależą od długości pobytów i współczynników. Przy u kraju 7,8% komórek wypada poniżej dolnej granicy (jawne + 1 na każdy wiersz „&lt;5”), a w 13,2% komórek z jawną liczbą pacjentów oszacowanie jest niższe niż liczba pacjentów. Rozwiązanie: granice zamiast równości (sekcja 4).</div>
+        <div class="part"><b>„Czystej” komórki prawie nie ma</b>Tylko 7 z 204 tys. komórek rok × ośrodek × zakres × produkt nie ma żadnego „&lt;5”. Nie da się wyznaczyć wyceny z komórek bez ukrytych wartości. Kotwicą musi być suma kraju z API.</div>
+      </div>
+      <p><b>Rozkład na miesiące nie jest osobnym problemem.</b> Nie dzielimy sumy roku na miesiące. Każdy wiersz „&lt;5” ma już miesiąc, tryb, wiek, płeć i długość pobytu. Szacujemy wartość każdego wiersza (od 1 do 4) tak, żeby sumy roku zgadzały się z kotwicami. Miesiące, tryby i zgony wynikają wtedy z wierszy. Niepewność zostaje tylko wewnątrz komórki: dane nie mówią, który miesiąc ośrodka miał 1, a który 3 pobyty.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>3a. Test: E10 w 2024, liczba hospitalizacji placówki z zestawienia</h2>
+    <div class="card">
+      <p>Pytanie: czy z punktów placówki w roku (zestawienie świadczeń) da się odtworzyć liczbę hospitalizacji placówki, także gdy wszystkie jej wiersze to „&lt;5”? Komórka = rok × OW × NIP × zakres × produkt. E10 ma 222 komórki w pliku hospitalizacji i 222 w zestawieniu; 220 ma parę. Wycena bazowa E10: 4 161 pkt.</p>
+      <div class="facts">
+        <div class="fact"><b>1,04</b><span>mediana „punkty ÷ pacjent ÷ 4 161” (5–95%: 1,00–1,14). Punkty zawierają współczynnik: kardiologia 1,027, KOS-zawał 1,114</span></div>
+        <div class="fact"><b>18 z 18</b><span>komórek z pacjentami „&lt;5” ma dokładnie jedną liczbę całkowitą zgodną z punktami i granicami; zawsze 1 hospitalizacja na wiersz „&lt;5”</span></div>
+        <div class="fact"><b>1,004</b><span>hospitalizacje ÷ pacjenci w E10 (API). W 202 komórkach z jawną liczbą pacjentów ta liczba prawie wprost daje hospitalizacje</span></div>
+        <div class="fact"><b>≥ 90%</b><span>wierszy „&lt;5” w E10 to dokładnie 1 hospitalizacja: nadwyżka ponad <code>min</code> to tylko 769 pobytów na 7 746 wierszy</span></div>
+      </div>
+      <div class="scroll-x"><table>
+        <thead><tr><th>Metoda (E10, 2024)</th><th>Suma</th><th>÷ NFZ (8 995)</th><th style="text-align:left">Uwagi</th></tr></thead>
+        <tbody>
+          <tr><td><code>min</code></td><td>8 236</td><td class="bad">0,916</td><td class="wrap-cell">Dolna granica każdej komórki.</td></tr>
+          <tr><td><code>sim</code></td><td>12 171</td><td class="bad">1,353</td><td class="wrap-cell">W E10 prawie każdy wiersz „&lt;5” to 1, więc losowanie 1–4 bardzo zawyża.</td></tr>
+          <tr><td>A. punkty ÷ 4 161</td><td>9 590</td><td class="bad">1,066</td><td class="wrap-cell">Punkty komórki ÷ wycena bazowa, bez zaokrąglenia. Przykład: 331 028 pkt → 79,6.</td></tr>
+          <tr><td>B. ⌊punkty ÷ 4 161⌋</td><td>9 498</td><td class="bad">1,056</td><td class="wrap-cell">To samo, zaokrąglone w dół: 79,6 → 79. Dobre w małych komórkach. W dużych zawyża, bo współczynnik mnoży każdy pobyt: komórka z 642 pacjentami daje 728.</td></tr>
+          <tr><td>C. punkty ÷ (4 161 × współczynnik zakresu)</td><td>9 183</td><td>1,021</td><td class="wrap-cell">Współczynnik = mediana „punkty ÷ (4 161 × pacjenci)” w zakresie: kardiologia 1,027, KOS-zawał 1,114. Przykład: 331 028 ÷ (4 161 × 1,027) = 77,5.</td></tr>
+          <tr><td>D. liczba całkowita z punktów</td><td>9 214</td><td>1,024</td><td class="wrap-cell">Sprawdź każde n od jawne + m do jawne + 4m. Zostaw n, dla którego punkty ÷ (4 161 × n) mieści się w 0,97–1,32. Wybierz n z ilorazem najbliższym współczynnikowi zakresu. Przykład: 8 426 pkt, m = 2: n = 2 daje 1,013, n = 1 daje 2,03 → n = 2.</td></tr>
+          <tr><td>E. hybryda</td><td>9 009</td><td class="good">1,002</td><td class="wrap-cell">Jawni pacjenci (≥ 5): n = max(pacjenci × 1,004; jawne + m), gdzie 1,004 = hospitalizacje ÷ pacjenci w API. Wynik ułamkowy (77 pacjentów → 77,3). Pacjenci „&lt;5”: metoda D (liczba całkowita). Po zaokrągleniu każdej komórki: 8 978 (0,998); zaokrąglenie zmienia wynik względem liczby pacjentów tylko w 8 z 202 komórek.</td></tr>
+        </tbody>
+      </table></div>
+      <p><b>Wniosek.</b> Poziom placówki działa i jest mocniejszy, niż zakładał plan. Wyceny bazowej nie wolno jednak dzielić wprost: punkty w zestawieniu zawierają współczynniki (zakres, KOS-zawał), więc wynik jest zawyżony o 4–11%. Najlepszą kotwicą placówki jest jawna liczba pacjentów (53,6% komórek wszystkich grup), przeliczona stosunkiem hospitalizacji do pacjentów z API. Punkty rozstrzygają małe komórki, w których pacjenci to „&lt;5”: tam liczba całkowita jest jednoznaczna. Ranking zmienia się realnie: 05|6751209442 przechodzi z 7. na 4. miejsce, 07|1132869037 z 13. na 9.</p>
+      <p><b>Miesiące w E10.</b> Komórka ma średnio 35 wierszy „&lt;5”, a nadwyżka ponad 1 na wiersz wynosi średnio 0,07 (mediana 0,04, maks. 0,5). 36% komórek nie ma nadwyżki wcale. Rozkład na miesiące dotyczy więc najwyżej 10% wierszy i nie zmieni wyraźnie przebiegu w czasie.</p>
+      <p class="note">Sumy obejmują komórki bez pary w zestawieniu (58 pobytów według <code>min</code>). Pierwsza wersja tej tabeli liczyła je błędnie jako 4 pobyty; poprawione 5.11.</p>
+      <p><b>Skąd nadwyżka punktów w E10.</b> Katalog nie przewiduje dla E10 osobodni ponad ryczałt (brak „liczby dni finansowanej grupą”), więc nadwyżka nie pochodzi z dni pobytu. Iloraz „punkty ÷ (4 161 × pacjenci)” przyjmuje kilka stałych wartości: 1,00; 1,01; 1,02; 1,025; 1,03 oraz 1,10–1,15 (najczęściej 1,02, 1,128 i 1,122). To wygląda na procentowe współczynniki korygujące placówki. Zaokrąglenie w dół działa tylko wtedy, gdy nadwyżka całej komórki jest mniejsza niż jedna wycena: przy współczynniku 1,128 dla najwyżej 7 pobytów. Zaokrąglenie w dół w innych grupach: H52 1,007, H55 0,933 (wyceny pobytów krótkich są niższe od bazowej), A48 1,041 (osobodni ponad 36 dni).</p>
+      <p><b>Komórki bez pary (cztery grupy, 2024).</b> Są tylko dwa przypadki:</p>
+      <ol>
+        <li><b>Bolesławiec i Zgorzelec.</b> Plik hospitalizacji (2022–2025) zawsze używa dwóch NIP-ów: 6151706942 (Zgorzelec) i 6121542507 (ZOZ w Bolesławcu). NIP 8993067225 („WZOZ Bolesławiec-Zgorzelec”) nie występuje w nim w żadnym roku. Plik świadczeniodawców 2025 przypisuje ten NIP obu kodom z zestawienia. Pary według zakresów: kod 3401029 = Zgorzelec (E10 <code>.130</code>: 60 pacjentów wobec 58 pobytów; A48 <code>.130</code>), kod 3401024 = Bolesławiec (A48 <code>.180</code>: 299 pacjentów wobec 213 pobytów <code>min</code>).</li>
+        <li><b>Vital Medic, Kluczbork.</b> Placówka <i>jest</i> w zestawieniu (kod 08R/20555, 2019–2024, w 2024 r. 2,08 mln pkt), ale nie ma jej w pliku świadczeniodawców 2025 (upadłość), więc kod nie ma NIP-u. Plik hospitalizacji ma ją jako NIP 7511748938 (OW 08, 2022–2024, w 2025 brak).</li>
+      </ol>
+      <p class="note">Rozwiązanie: ręczna tabela <code>data/kody_swiadczeniodawcow_uzupelnienie.csv</code> (OW, kod, NIP z pliku hospitalizacji), czytana przed plikiem 2025: 01|3401029 → 6151706942, 01|3401024 → 6121542507, 08|08R/20555 → 7511748938. Kandydatów do tabeli wskazuje skrypt: niesparowany NIP i niesparowany kod w tym samym OW z tymi samymi zakresami i produktami. Uwaga: zestawienie podaje bieżącą nazwę placówki we wszystkich latach, więc nazwa nie pomaga w parowaniu.</p>
+      <p class="note">Ograniczenia testu: E10 to grupa łatwa (prawie każdy pacjent ma jeden pobyt, wycena jednolita, bez pobytów skróconych). W grupach z wieloma pobytami jednego pacjenta (stosunek pacjentów do hospitalizacji w API do 0,13) pacjenci dają tylko dolną granicę, a o wyniku decydują punkty i współczynnik. Wycena 4 161 pkt pochodzi z katalogu 2025; 5% komórek ma współczynnik dokładnie 1,00, więc w 2024 wycena była prawdopodobnie ta sama.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>3b. Niezależne kontrole z API: zgony, zakresy, liczba placówek</h2>
+    <div class="card">
+      <p>API podaje dla grupy i roku rozkłady, których metoda E nie używa. Dzięki temu można ją sprawdzić bez błędnego koła.</p>
+      <div class="scroll-x"><table>
+        <thead><tr><th>E10, 2024</th><th>API</th><th><code>min</code></th><th><code>sim</code></th><th>metoda E</th></tr></thead>
+        <tbody>
+          <tr><td>Zgony (tryb wypisu 9)</td><td>347</td><td class="good">346</td><td class="bad">522</td><td>— (jeszcze nie liczona)</td></tr>
+          <tr><td>Zakres: kardiologia</td><td>7 087</td><td class="bad">6 468</td><td></td><td class="good">7 038 (+57 Zgorzelec bez pary = 7 095)</td></tr>
+          <tr><td>Zakres: KOS-zawał</td><td>1 908</td><td class="bad">1 768</td><td></td><td class="good">1 913</td></tr>
+        </tbody>
+      </table></div>
+      <ol>
+        <li><b>Zgony.</b> Tabela „tryb wypisu” w API ma kod 9 „zgon pacjenta” dla każdej grupy i roku (2017–2024). W E10 wszystkie 346 wierszy ze zgonem to „&lt;5”, a API podaje 347. Każdy taki wiersz to więc prawie na pewno 1 zgon; <code>sim</code> zawyża zgony o 50%. Zgony trzeba kalibrować osobno: placówka nie ma liczby zgonów w zestawieniu, więc kotwicą jest tylko suma kraju z API (oraz granice 1–4 i liczba hospitalizacji wiersza).</li>
+        <li><b>Zakresy.</b> Podział E10 na kardiologię i KOS-zawał z metody E zgadza się z API z dokładnością do 0,3%, choć metoda go nie używa. To najmocniejszy dotąd dowód, że punkty placówki dają dobre liczby.</li>
+        <li><b>Liczba placówek.</b> API jej nie podaje. Tabele mają tylko liczby hospitalizacji i pacjentów, odsetki, mediany i wartości. Kontrolą placówek może być liczba par z zestawieniem i lista komórek bez pary.</li>
+      </ol>
+      <p class="note">Pozostałe rozkłady do kontroli (2017–2024): płeć, wiek, tryb przyjęcia, histogram długości pobytu (punkty dla zakresu), kategorie produktu.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>3c. Test: H52, H55, A48 obok E10 (2024)</h2>
+    <div class="card">
+      <p>Ta sama metoda dla trzech trudniejszych grup. H52 ma osobną wycenę pobytu planowego. H55 ma wyceny pobytów 0-, 1- i 2-dniowych, a jeden pacjent ma tam średnio 1,2 pobytu. A48 ma długie pobyty i osobodni ponad ryczałt. „Struktura” oznacza wycenę każdego wiersza według trybu (planowy = kod 6) i długości pobytu. Wiersz „&lt;5” liczy się w niej jako 1.</p>
+      <div class="scroll-x"><table>
+        <thead><tr><th>Wynik ÷ NFZ</th><th>E10</th><th>H52</th><th>H55</th><th>A48</th></tr></thead>
+        <tbody>
+          <tr><td>Suma NFZ (API)</td><td>8 995</td><td>23 531</td><td>30 971</td><td>65 809</td></tr>
+          <tr><td>hospitalizacje ÷ pacjenci (API)</td><td>1,004</td><td>1,038</td><td>1,200</td><td>1,026</td></tr>
+          <tr><td><code>min</code></td><td class="bad">0,916</td><td class="bad">0,746</td><td class="bad">0,842</td><td class="bad">0,768</td></tr>
+          <tr><td><code>sim</code></td><td class="bad">1,353</td><td class="good">1,026</td><td>0,945</td><td>0,954</td></tr>
+          <tr><td>punkty ÷ wycena bazowa</td><td>1,066</td><td class="good">1,010</td><td>0,937</td><td>1,042</td></tr>
+          <tr><td>punkty ÷ wycena wg struktury</td><td>1,066</td><td class="bad">1,083</td><td class="good">1,012</td><td>1,042</td></tr>
+          <tr><td>współczynnik z komórek z jawnymi pacjentami</td><td>1,031</td><td>1,026</td><td class="bad">1,113</td><td class="good">1,013</td></tr>
+          <tr><td>hybryda: pacjenci × iloraz API, inaczej punkty</td><td class="good">1,002</td><td class="good">1,005</td><td class="bad">1,059</td><td class="good">1,006</td></tr>
+          <tr><td>punkty, jeden współczynnik grupy dopasowany do API</td><td>1,000*</td><td>1,000*</td><td>1,000*</td><td>1,000*</td></tr>
+        </tbody>
+      </table></div>
+      <p class="note">* Z definicji: współczynnik grupy (E10 1,067, H52 1,083, H55 1,012, A48 1,043) jest dobrany tak, żeby suma kraju była równa API. Sprawdzianem jest tylko podział między placówki (tabela niżej). We wszystkich wariantach z przycięciem 97–100% komórek mieści się w granicach [m, 4m].</p>
+      <div class="scroll-x"><table>
+        <thead><tr><th>Placówki</th><th>E10</th><th>H52</th><th>H55</th><th>A48</th></tr></thead>
+        <tbody>
+          <tr><td>Komórki (z jawną liczbą pacjentów)</td><td>220 (202)</td><td>294 (206)</td><td>205 (163)</td><td>185 (184)</td></tr>
+          <tr><td>Punkty a pacjenci: komórki w ±10%</td><td class="good">96%</td><td class="good">92%</td><td class="bad">72%</td><td class="good">99%</td></tr>
+          <tr><td>Punkty a pacjenci: mediana różnicy</td><td>3,9%</td><td>2,1%</td><td>5,1%</td><td>2,0%</td></tr>
+          <tr><td>Nadwyżka ponad 1 na wiersz „&lt;5”</td><td>0,10</td><td>0,46</td><td>0,79</td><td>0,63</td></tr>
+          <tr><td>Komórki bez nadwyżki (każdy „&lt;5” = 1)</td><td>40%</td><td>37%</td><td>26%</td><td>1%</td></tr>
+          <tr><td>Pierwsza dziesiątka: zmiana miejsca względem <code>min</code></td><td>70%</td><td>80%</td><td>70%</td><td>40%</td></tr>
+        </tbody>
+      </table></div>
+      <p class="note">„Punkty a pacjenci”: dwa niezależne oszacowania tej samej komórki — z punktów (współczynnik z komórek z pacjentami) i z liczby pacjentów × iloraz z API. Nadwyżka i komórki bez nadwyżki liczone dla wariantu z jednym współczynnikiem grupy.</p>
+      <p><b>Wnioski.</b></p>
+      <ol>
+        <li><b>Punkty placówki działają we wszystkich czterech grupach.</b> Poza H55 oszacowanie z punktów zgadza się z liczbą pacjentów w ±10% w 92–99% komórek.</li>
+        <li><b>Liczba pacjentów jest dobrą kotwicą tylko przy ilorazie bliskim 1.</b> W H55 iloraz kraju (1,2) zawyża wynik o 6%. Pacjent z kilkoma pobytami w różnych placówkach liczy się w każdej z nich, więc iloraz w placówce jest mniejszy niż w kraju. Dla takich grup pacjenci dają tylko dolną granicę.</li>
+        <li><b>Reguły wyceny z katalogu pomagają niejednoznacznie.</b> W H55 (krótkie pobyty) wycena wg długości poprawia wynik z 0,937 na 1,012. W H52 wycena „planowa” dla trybu 6 psuje go z 1,010 na 1,083. Prostszy i pewniejszy jest jeden współczynnik na grupę × zakres, dopasowany do danych. Współczynniki zakresów są różne: E10 KOS-zawał 1,11 wobec 1,02; H55 zakresy <code>.031</code>/<code>.032</code> 0,79–0,85 wobec 0,89–0,95.</li>
+        <li><b>Rozkład na miesiące ma znaczenie poza E10.</b> W H55 i A48 wiersz „&lt;5” to średnio 1,6–1,8 pobytu, a w A48 prawie każda komórka ma nadwyżkę. Nadwyżkę trzeba rozdzielić między wiersze według marginesów kraju (długość pobytu, tryb, wiek) — to więz 3.</li>
+      </ol>
+    </div>
+  </section>
+
+  <section>
+    <h2>3d. Liczby całkowite i zgony: E10, H52, H55, A48 (2024)</h2>
+    <div class="card">
+      <p>Wszystkie liczby to liczby całkowite, zaokrąglane w dół (66,8 → 66). Kod → NIP z listy ręcznej <code>data/kody_swiadczeniodawcow_uzupelnienie.csv</code>: po jej dodaniu każda komórka w tych czterech grupach ma parę w zestawieniu.</p>
+      <ol>
+        <li><b>Hospitalizacje komórki.</b> Grupy z ilorazem hospitalizacje ÷ pacjenci &lt; 1,05 (E10, H52, A48): jawni pacjenci → ⌊pacjenci × iloraz⌋, nie mniej niż jawne + m; pacjenci „&lt;5” → liczba całkowita z punktów (metoda D). H55 (iloraz 1,2): ⌊punkty ÷ (wycena wg długości pobytu × współczynnik grupy)⌋ w granicach [jawne + m, jawne + 4m] i nie mniej niż pacjenci; współczynnik grupy (1,014) to najmniejszy, przy którym suma nie przekracza API.</li>
+        <li><b>Zgony.</b> Zgony do dodania = zgony API − (jawne + liczba wierszy „&lt;5” ze zgonem). Rozdział między komórki proporcjonalnie do: wiersze ze zgonem × nadwyżka na wiersz „&lt;5” w komórce; najwyżej +3 na wiersz i nie więcej niż nadwyżka komórki. Reszty metodą największych reszt.</li>
+        <li><b>Wiersze.</b> Pozostała nadwyżka komórki idzie po równo na wiersze „&lt;5” bez zgonu (całkowite, najwyżej 4). Reszta trafia na co k-ty wiersz w kolejności miesięcy. To rozwiązanie tymczasowe: docelowo według rozkładów kraju (więz 3).</li>
+      </ol>
+      <div class="scroll-x"><table>
+        <thead><tr><th>2024</th><th>E10</th><th>H52</th><th>H55</th><th>A48</th></tr></thead>
+        <tbody>
+          <tr><td>Hospitalizacje API</td><td>8 995</td><td>23 531</td><td>30 971</td><td>65 809</td></tr>
+          <tr><td><code>min</code> / <code>sim</code></td><td>8 236 / 12 200</td><td>17 545 / 24 153</td><td>26 089 / 29 281</td><td>50 530 / 62 879</td></tr>
+          <tr><td><b><code>cal</code></b> (÷ API)</td><td class="good">8 975 (0,998)</td><td class="good">23 543 (1,001)</td><td class="good">30 970 (1,000*)</td><td class="good">66 223 (1,006)</td></tr>
+          <tr><td>Zgony API</td><td>347</td><td>37</td><td>0</td><td>3 067</td></tr>
+          <tr><td><code>min</code> / <code>sim</code></td><td>346 / 522</td><td>37 / 56</td><td>0 / 0</td><td>2 395 / 3 588</td></tr>
+          <tr><td><b><code>cal</code></b></td><td class="good">347</td><td class="good">37</td><td class="good">0</td><td class="good">3 067</td></tr>
+          <tr><td>Śmiertelność API</td><td>3,86%</td><td>0,16%</td><td>0%</td><td>4,66%</td></tr>
+          <tr><td><code>min</code> / <code>sim</code></td><td class="bad">4,20% / 4,28%</td><td class="bad">0,21% / 0,23%</td><td>0% / 0%</td><td class="bad">4,74% / 5,71%</td></tr>
+          <tr><td><b><code>cal</code></b></td><td class="good">3,87%</td><td class="good">0,16%</td><td class="good">0%</td><td class="good">4,63%</td></tr>
+          <tr><td>Zakresy <code>cal</code> / API</td><td>kardiologia 7 070 / 7 087; KOS 1 905 / 1 908</td><td>neurochirurgia 15 583 / 15 509</td><td>chir. ogólna 10 591 / 10 393; neurochirurgia 9 489 / 9 593; ZChJD 1 615 / 1 674</td><td>neurologia 65 538 / 65 127; specjalistyczna 684 / 681</td></tr>
+          <tr><td>Wiersze „&lt;5” bez zgonu: 1 / 2 / 3 / 4</td><td>6 723 / 735 / 0 / 0</td><td>7 233 / 5 735 / 2 / 0</td><td>2 016 / 3 812 / 430 / 26</td><td>7 881 / 14 051 / 28 / 0</td></tr>
+        </tbody>
+      </table></div>
+      <p class="note">* H55: suma dopasowana do API przez współczynnik grupy, więc to nie jest test. Testem dla H55 jest podział na zakresy (różnice 1–4%). Zgony: suma równa API z konstrukcji; testem jest śmiertelność, bo mianownik pochodzi z punktów. W A48 trzeba było dodać 672 zgony do 2 349 wierszy „&lt;5” ze zgonem. API łączy część zakresów (np. ortopedię H52 podaje w trzech pozycjach o skróconej nazwie), więc porównanie zakresów jest pełne tylko dla głównych pozycji.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>3e. Te same cztery grupy w latach 2019–2025</h2>
+    <div class="card">
+      <p><b>Czy metoda jest ta sama dla wszystkich kodów?</b> Reguły są wspólne, ale gałąź wybiera się dla każdej grupy i roku według ilorazu hospitalizacje ÷ pacjenci z API:</p>
+      <ol>
+        <li><b>Gałąź A (iloraz &lt; 1,05):</b> jawni pacjenci → ⌊pacjenci × iloraz⌋; pacjenci „&lt;5” → liczba całkowita z punktów. Suma kraju nie jest dopasowywana, więc wynik ÷ API jest testem.</li>
+        <li><b>Gałąź B (iloraz ≥ 1,05):</b> ⌊punkty ÷ (wycena wg długości pobytu × współczynnik grupy)⌋, nie mniej niż pacjenci; współczynnik dobrany do sumy API, więc wynik ÷ API = 1 z konstrukcji.</li>
+        <li><b>Zgony i wiersze:</b> wspólne dla obu gałęzi (sekcja 3d).</li>
+        <li><b>2025 (brak API):</b> iloraz, współczynnik grupy i liczba dodatkowych zgonów na wiersz „&lt;5” ze zgonem — z 2024.</li>
+      </ol>
+      <p>Gałąź zmienia się w czasie: H52 ma iloraz ≥ 1,05 w 2022–2023 (B), a w pozostałych latach &lt; 1,05 (A). H55 jest zawsze w B, E10 i A48 zawsze w A. Wycena: katalog 2025 dla wszystkich lat (w gałęzi B skalę poprawia współczynnik roku; w A wycena służy tylko do wyboru liczby całkowitej w małych komórkach).</p>
+      <div class="scroll-x"><table>
+        <thead><tr><th>Grupa, rok</th><th>Gałąź</th><th>Hosp. API</th><th><code>min</code></th><th><code>cal</code></th><th><code>cal</code> ÷ API</th><th>Zgony API</th><th>Zgony <code>cal</code></th><th>Śm. API</th><th>Śm. <code>min</code></th><th>Śm. <code>sim</code></th><th>Śm. <code>cal</code></th></tr></thead>
+        <tbody>
+<tr><td>E10 2019</td><td>A</td><td>12 330</td><td>10 643</td><td>12 311</td><td class="good">0,998</td><td>446</td><td>446</td><td>3,62%</td><td>4,16%</td><td>4,26%</td><td>3,62%</td></tr>
+<tr><td>E10 2020</td><td>A</td><td>9 056</td><td>8 062</td><td>9 035</td><td class="good">0,998</td><td>401</td><td>401</td><td>4,43%</td><td>4,89%</td><td>4,98%</td><td>4,44%</td></tr>
+<tr><td>E10 2021</td><td>A</td><td>9 195</td><td>8 352</td><td>9 235</td><td class="good">1,004</td><td>410</td><td>416</td><td>4,46%</td><td>4,98%</td><td>5,09%</td><td>4,50%</td></tr>
+<tr><td>E10 2022</td><td>A</td><td>9 570</td><td>8 612</td><td>9 544</td><td class="good">0,997</td><td>411</td><td>411</td><td>4,29%</td><td>4,69%</td><td>4,79%</td><td>4,31%</td></tr>
+<tr><td>E10 2023</td><td>A</td><td>9 459</td><td>8 534</td><td>9 432</td><td class="good">0,997</td><td>418</td><td>418</td><td>4,42%</td><td>4,85%</td><td>4,95%</td><td>4,43%</td></tr>
+<tr><td>E10 2024</td><td>A</td><td>8 995</td><td>8 236</td><td>8 975</td><td class="good">0,998</td><td>347</td><td>347</td><td>3,86%</td><td>4,20%</td><td>4,28%</td><td>3,87%</td></tr>
+<tr><td>E10 2025</td><td>A</td><td>—</td><td>8 326</td><td>9 090</td><td class="">—</td><td>—</td><td>392</td><td>—</td><td>4,70%</td><td>4,77%</td><td>4,31%</td></tr>
+<tr><td>H52 2019</td><td>A</td><td>16 308</td><td>12 208</td><td>16 304</td><td class="good">1,000</td><td>52</td><td>52</td><td>0,32%</td><td>0,43%</td><td>0,45%</td><td>0,32%</td></tr>
+<tr><td>H52 2020</td><td>A</td><td>13 420</td><td>10 411</td><td>13 410</td><td class="good">0,999</td><td>48</td><td>48</td><td>0,36%</td><td>0,46%</td><td>0,49%</td><td>0,36%</td></tr>
+<tr><td>H52 2021</td><td>A</td><td>17 011</td><td>13 042</td><td>17 231</td><td class="">1,013</td><td>45</td><td>45</td><td>0,26%</td><td>0,35%</td><td>0,38%</td><td>0,26%</td></tr>
+<tr><td>H52 2022</td><td>B</td><td>20 426</td><td>15 693</td><td>20 426</td><td class="good">1,000</td><td>54</td><td>54</td><td>0,26%</td><td>0,34%</td><td>0,38%</td><td>0,26%</td></tr>
+<tr><td>H52 2023</td><td>B</td><td>22 767</td><td>17 230</td><td>22 766</td><td class="good">1,000</td><td>45</td><td>45</td><td>0,20%</td><td>0,26%</td><td>0,29%</td><td>0,20%</td></tr>
+<tr><td>H52 2024</td><td>A</td><td>23 531</td><td>17 545</td><td>23 543</td><td class="good">1,001</td><td>37</td><td>37</td><td>0,16%</td><td>0,21%</td><td>0,23%</td><td>0,16%</td></tr>
+<tr><td>H52 2025</td><td>A</td><td>—</td><td>17 923</td><td>23 947</td><td class="">—</td><td>—</td><td>39</td><td>—</td><td>0,22%</td><td>0,24%</td><td>0,16%</td></tr>
+<tr><td>H55 2019</td><td>B</td><td>8 634</td><td>6 676</td><td>8 634</td><td class="good">1,000</td><td>0</td><td>0</td><td>0,00%</td><td>0,00%</td><td>0,00%</td><td>0,00%</td></tr>
+<tr><td>H55 2020</td><td>B</td><td>7 071</td><td>5 581</td><td>7 071</td><td class="good">1,000</td><td>0</td><td>0</td><td>0,00%</td><td>0,00%</td><td>0,00%</td><td>0,00%</td></tr>
+<tr><td>H55 2021</td><td>B</td><td>10 160</td><td>7 718</td><td>10 160</td><td class="good">1,000</td><td>0</td><td>0</td><td>0,00%</td><td>0,00%</td><td>0,00%</td><td>0,00%</td></tr>
+<tr><td>H55 2022</td><td>B</td><td>17 937</td><td>14 290</td><td>17 937</td><td class="good">1,000</td><td>0</td><td>0</td><td>0,00%</td><td>0,00%</td><td>0,00%</td><td>0,00%</td></tr>
+<tr><td>H55 2023</td><td>B</td><td>24 517</td><td>20 224</td><td>24 517</td><td class="good">1,000</td><td>0</td><td>0</td><td>0,00%</td><td>0,00%</td><td>0,00%</td><td>0,00%</td></tr>
+<tr><td>H55 2024</td><td>B</td><td>30 971</td><td>26 089</td><td>30 970</td><td class="good">1,000</td><td>0</td><td>0</td><td>0,00%</td><td>0,00%</td><td>0,00%</td><td>0,00%</td></tr>
+<tr><td>H55 2025</td><td>B</td><td>—</td><td>26 128</td><td>31 014</td><td class="">—</td><td>—</td><td>1</td><td>—</td><td>0,00%</td><td>0,01%</td><td>0,00%</td></tr>
+<tr><td>A48 2019</td><td>A</td><td>60 505</td><td>46 364</td><td>60 860</td><td class="good">1,006</td><td>2 981</td><td>2 981</td><td>4,93%</td><td>5,04%</td><td>6,13%</td><td>4,90%</td></tr>
+<tr><td>A48 2020</td><td>A</td><td>54 516</td><td>41 098</td><td>54 883</td><td class="good">1,007</td><td>3 038</td><td>3 038</td><td>5,57%</td><td>5,59%</td><td>6,65%</td><td>5,54%</td></tr>
+<tr><td>A48 2021</td><td>A</td><td>56 585</td><td>43 226</td><td>57 282</td><td class="">1,012</td><td>2 958</td><td>2 958</td><td>5,23%</td><td>5,41%</td><td>6,40%</td><td>5,16%</td></tr>
+<tr><td>A48 2022</td><td>A</td><td>61 970</td><td>47 341</td><td>62 321</td><td class="good">1,006</td><td>3 135</td><td>3 135</td><td>5,06%</td><td>5,14%</td><td>6,16%</td><td>5,03%</td></tr>
+<tr><td>A48 2023</td><td>A</td><td>65 493</td><td>49 887</td><td>65 925</td><td class="good">1,007</td><td>2 995</td><td>2 995</td><td>4,57%</td><td>4,76%</td><td>5,71%</td><td>4,54%</td></tr>
+<tr><td>A48 2024</td><td>A</td><td>65 809</td><td>50 530</td><td>66 223</td><td class="good">1,006</td><td>3 067</td><td>3 067</td><td>4,66%</td><td>4,74%</td><td>5,71%</td><td>4,63%</td></tr>
+<tr><td>A48 2025</td><td>A</td><td>—</td><td>50 418</td><td>65 801</td><td class="">—</td><td>—</td><td>3 152</td><td>—</td><td>4,88%</td><td>5,88%</td><td>4,79%</td></tr>
+        </tbody>
+      </table></div>
+      <p class="note">Wszystkie komórki tych grup mają parę w zestawieniu w każdym roku (po uzupełnieniu listy kodów, punkt niżej); wyjątek: H55 — po 1–3 komórki tylko w zestawieniu albo tylko w pliku hospitalizacji, łącznie ≤ 4 pobyty. E10 2021: API podaje 410 zgonów, a plik hospitalizacji ma 416 wierszy ze zgonem (każdy ≥ 1), więc śmiertelność nie może zejść do wartości API (4,50% wobec 4,46%).</p>
+      <p><b>Dlaczego w latach 2019–2021 ok. 3% hospitalizacji nie miało pary.</b> Mapa kod → NIP pochodziła z pliku świadczeniodawców 2025, a plik hospitalizacji podaje NIP z danego roku. Dwie przyczyny (udział hospitalizacji <code>min</code> bez pary):</p>
+      <div class="scroll-x"><table>
+        <thead><tr><th>Przyczyna</th><th>2019</th><th>2020</th><th>2021</th><th>2022</th><th>2023</th><th>2024</th><th>2025</th></tr></thead>
+        <tbody>
+          <tr><td>Kod bez NIP w pliku 2025 (placówka zamknięta, połączona albo upadła, np. Szpital Kliniczny Przemienienia Pańskiego w Poznaniu, Szpital Jana Bożego w Lublinie, DCOPiH, Szpital Polski w Sztumie)</td><td>1,97%</td><td>1,71%</td><td>1,42%</td><td>0,69%</td><td>0,25%</td><td>0,01%</td><td>0%</td></tr>
+          <tr><td>Kod ma w pliku 2025 inny NIP niż plik hospitalizacji (zmiana NIP po przekształceniu, np. PIM MSWiA, Szpital Wolski, Sulechów, Gliwice)</td><td>0,99%</td><td>0,53%</td><td>0,64%</td><td>0,16%</td><td>0,13%</td><td>0,08%</td><td>0,02%</td></tr>
+          <tr><td><b>Po uzupełnieniu listy kodów (wszystkie grupy)</b></td><td>0,07%</td><td>0,05%</td><td>0,07%</td><td>0,10%</td><td>0,04%</td><td>0,00%</td><td>0,00%</td></tr>
+        </tbody>
+      </table></div>
+      <p class="note">Pary znalazł skrypt: niesparowany NIP z pliku hospitalizacji i niesparowany kod z zestawienia w tym samym roku i OW, z tymi samymi komórkami zakres × produkt (zgodność zbiorów ≥ 0,7; Gliwice dodane ręcznie, bo stary NIP obejmuje też inne kody — skrypt w wersji docelowej ma sprawdzać zawieranie zbiorów, nie tylko zgodność). Lista: <code>data/kody_swiadczeniodawcow_uzupelnienie.csv</code>, 57 kodów, kolumna <code>LATA</code> ogranicza wiersz do lat z parą. Reszta (ok. 0,05%) to komórki z innym kodem zakresu w obu plikach dla tej samej placówki (np. ortopedia <code>.4500</code> w pliku hospitalizacji, <code>.4580</code> w zestawieniu).</p>
+      <p><b>Gdzie trafią wyniki.</b> Do tych samych plików co dziś, jako nowa metoda obok <code>min</code> i <code>sim</code>:</p>
+      <ol>
+        <li><code>iter_frames</code> dopisuje kolumny <code>h_cal</code> i <code>d_cal</code> (liczby całkowite). Wiersz z jawną liczbą (≥ 5) ma w <code>h_cal</code> dokładnie tę liczbę — tak jak dziś w <code>h_min</code> i <code>h_sim</code>. Zmieniają się tylko wiersze „&lt;5” (1–4). Build ma to sprawdzać: suma jawnych wierszy w <code>h_cal</code> = suma w <code>h_min</code> dla każdej komórki.</li>
+        <li>Pliki roku, trendy i karty JGP biorą wartości z <code>iter_frames</code>, więc dostaną <code>cal</code> bez osobnej ścieżki. Pliki źródłowe w <code>data/</code> się nie zmieniają.</li>
+        <li>Jedno miejsce liczy wszystkie trzy metody: <code>iter_frames</code> (sekcja 4a). Przez okres przejściowy pliki mają <code>min</code>, <code>sim</code> i <code>cal</code>; docelowo zostaje tylko <code>cal</code>.</li>
+      </ol>
+    </div>
+  </section>
+
+  <section>
+    <h2>3f. Wszystkie kody, 2024</h2>
+    <div class="card">
+      <p class="note">Objaśnienie metod A i B oraz dwóch poprawek na przykładach E10, F61, J08, z przeliczeniem 2024 po poprawkach (sekcja 11): <a href="kalibracja-metody-przyklady.html">kalibracja-metody-przyklady.html</a>.</p>
+      <p>Kalibracja dla wszystkich 696 produktów JGP z pliku hospitalizacji 2024 (stan 5.11.2026). Wejście: plik hospitalizacji, zestawienie świadczeń, tabele API dla 2024 (<code>data/nfz_jgp_stats/2024/</code>, <code>scripts/fetch_jgp_stats.py</code>), wyceny 2024 (<code>data/wyceny/</code>, niżej) i mapa kodów <code>data/kody_swiadczeniodawcow_uzupelnienie.csv</code>.</p>
+      <p><b>Zmiana metody po teście:</b> na końcu nadwyżka ponad 1 na wiersz „&lt;5” jest skalowana tak, żeby suma grupy była równa API (liczby całkowite, w granicach komórek). Bez tego kroku 30 grup gałęzi A miało sumę wyższą od API o ponad 2% (do +24%).</p>
+      <div class="facts">
+        <div class="fact"><b>695 / 696</b><span>produktów z danymi API; bez API: 5.51.01.0002007 (22 wiersze „&lt;5”, zostaje <code>min</code>)</span></div>
+        <div class="fact"><b>7 042 543</b><span>hospitalizacji przed dopasowaniem wobec 7 040 202 w API (1,000); <code>min</code> 0,834, <code>sim</code> 1,098</span></div>
+        <div class="fact"><b>79% / 92%</b><span>grup gałęzi A (417) w ±1% / ±2% od API przed dopasowaniem; po dopasowaniu wszystkie grupy w ±0,02%</span></div>
+        <div class="fact"><b>0,2% wobec 1,3%</b><span>błąd podziału na zakresy świadczeń (mediana, 643 grupy z ≥ 2 zakresami): <code>cal</code> wobec <code>min</code>; test niezależny od dopasowania</span></div>
+      </div>
+      <div class="scroll-x"><table>
+        <thead><tr><th>2024, 695 grup</th><th><code>min</code></th><th><code>sim</code></th><th><code>cal</code></th></tr></thead>
+        <tbody>
+          <tr><td>Hospitalizacje ÷ API (suma)</td><td class="bad">0,834</td><td class="bad">1,098</td><td class="good">1,000</td></tr>
+          <tr><td>|Błąd| w grupie, mediana — gałąź A (test)</td><td>14,2%</td><td>24,7%</td><td class="good">0,4%</td></tr>
+          <tr><td>Zgony ÷ API (suma)</td><td>0,935</td><td class="bad">1,409</td><td class="good">1,000</td></tr>
+          <tr><td>Śmiertelność: |różnica od API| w pp, mediana / p90 / maks.</td><td>0,11 / 0,76 / 2,70</td><td>0,17 / 0,99 / 3,42</td><td class="good">0,00 / 0,00 / 0,02</td></tr>
+          <tr><td>Błąd podziału na zakresy, mediana / p90</td><td>1,3% / 3,5%</td><td>—</td><td class="good">0,2% / 1,1%</td></tr>
+        </tbody>
+      </table></div>
+      <p><b>Jak czytać błąd podziału na zakresy.</b> Błąd = ½ × Σ |udział zakresu w wyniku − udział zakresu w API|, czyli odsetek hospitalizacji grupy „w złym zakresie”. Przykład E10: API ma kardiologię 7 087 (78,8%) i KOS-zawał 1 908 (21,2%); <code>min</code> daje 6 468 i 1 768 (78,5% / 21,5%) → błąd 0,25%; <code>cal</code> daje 7 086 i 1 909 → błąd 0,01%. Porównuję tylko zakresy, których nazwa jest w obu źródłach. Pierwsza wersja liczyła też zakresy z nazwą tylko po jednej stronie (np. inny wariant nazwy „III poziom referencyjny” w M13) i zawyżała błąd do 1,1% / 2,2%.</p>
+      <p><b>Ocena grup.</b> Miara grupy = większa z dwóch liczb: |suma przed dopasowaniem ÷ API − 1| (tylko gałąź A; w gałęzi B suma jest dopasowana z definicji) i błąd podziału na zakresy. Zgony oceniam osobno: w 3 grupach (H83, D37F, D51, klasa 0,5–1%) API ma o 1 zgon mniej niż plik ma wierszy ze zgonem.</p>
+      <div class="scroll-x"><table>
+        <thead><tr><th>Miara</th><th>Grupy (A / B)</th><th>Hospitalizacje API</th><th style="text-align:left">Największe grupy</th></tr></thead>
+        <tbody>
+          <tr><td class="good">&lt; 0,5%</td><td>393 (234 / 159)</td><td>67,0%</td><td class="wrap-cell">B19G, E53G, N01, M15</td></tr>
+          <tr><td class="good">0,5–1%</td><td>154 (92 / 62)</td><td>22,6%</td><td class="wrap-cell">A87, H83, A48, S06</td></tr>
+          <tr><td>1–2%</td><td>101 (57 / 44)</td><td>8,7%</td><td class="wrap-cell">B84, F46, H43, G18 (zakresy)</td></tr>
+          <tr><td>2–5%</td><td>33 (20 / 13)</td><td>1,6%</td><td class="wrap-cell">B33, Q42G, J08 (zakresy); A50 (suma +3,3%)</td></tr>
+          <tr><td class="bad">&gt; 5%</td><td>14 (14 / 0)</td><td>0,1%</td><td class="wrap-cell">F47E, K47L, D38, L23, F61, PZS02, L03, F51 (suma przed dopasowaniem; osobodni ponad ryczałt)</td></tr>
+          <tr><td>Bez API</td><td>1</td><td>—</td><td class="wrap-cell">5.51.01.0002007, zostaje <code>min</code></td></tr>
+        </tbody>
+      </table></div>
+      <p><b>Problemy, które wyszły na wszystkich kodach:</b></p>
+      <ol>
+        <li><b>Grupy z dopłatami za dni i dużymi współczynnikami.</b> 14 z 417 grup gałęzi A ma sumę przed dopasowaniem &gt; 5% ponad API (30 grup &gt; 2%); razem 0,08% hospitalizacji. Wszystkie mają w katalogu osobodzień ponad ryczałt, prawie wszystkie pobyty to wiersze „&lt;5”, a mediana punktów na pobyt to 1,28 wyceny (w gałęzi A ogółem 1,04). W gałęzi A punkty dawały tam za dużo pobytów, np. F61 (+24%: API 191 = <code>min</code>, czyli każdy wiersz „&lt;5” to 1), PZS02 (+20%), L03 (+15%), F51 (+10%). Punkty na pobyt są tam bardzo zmienne (osobodni ponad ryczałt, współczynniki), więc liczba całkowita z punktów jest zawodna. Mechanizm (F61): wycena 6 140 pkt (od lipca 9 763), 21 dni finansowanych, potem osobodzień 353–576 pkt. Komórka z 2 wierszami „&lt;5” ma 80 674 pkt; jeden długi pobyt z osobodniami wygląda w punktach jak kilka krótkich. Współczynnik grupy (1,68) pochodzi z 2 komórek z jawnymi pacjentami i leży poza oknem 0,97–1,32, więc wybór n w oknie zawsze bierze większe n. API pokazuje, że każdy wiersz to 1 pobyt. Poprawka do rozważenia: dla grup z osobodniami odejmować punkty za osobodni albo nie używać okna, gdy współczynnik jest poza nim. Rozwiązanie bieżące: dopasowanie do sumy API (wyżej). Koszt: w gałęzi A suma przestaje być testem; testem zostaje podział na zakresy i stan przed dopasowaniem.</li>
+        <li><b>Metoda B a zakresy.</b> Jeden współczynnik na grupę daje sumę równą API, ale zakresy mają różne punkty na pobyt (dopłaty zakresu, np. kompleksowa opieka onkologiczna). W 72 z 643 grup (43 w B, 29 w A) <code>cal</code> ma większy błąd zakresów niż <code>min</code>, np. J08: 3,7% wobec 2,3%; mediana w B 0,4% wobec 1,5% dla <code>min</code> (choroby wewnętrzne +135 pobytów, onkologia kliniczna −208). Test trzech wariantów współczynnika w gałęzi B (258 grup): (1) jeden na grupę, dopasowany do sumy API (dziś): błąd zakresów mediana 0,6%, p90 2,2%; (2) na zakres z komórek z jawnymi pacjentami, jak w gałęzi A (punkty ÷ (wycena × pacjenci × iloraz)): suma +4,3% (p90 +13,6%), zakresy 1,0% — gorzej, bo iloraz hospitalizacje ÷ pacjenci różni się między ośrodkami; (3) na zakres, dopasowany do sumy zakresu z API: zakresy ≈ 0, suma ≈ API. Współczynnika z komórek w pełni jawnych nie da się policzyć: tylko 7 z 205 926 komórek nie ma wiersza „&lt;5”. Wybór: wariant 3 (zakres jako dodatkowa kotwica z API, zgodnie z więzią 3); koszt: test zakresów przestaje być niezależny, zostaje test sumy przed dopasowaniem w gałęzi A.</li>
+        <li><b>Brak górnej granicy z pacjentów „&lt;5” w gałęzi A.</b> Pacjenci „&lt;5” w zestawieniu to najwyżej 4 pacjentów, więc komórka ma najwyżej ⌊4 × iloraz⌋ pobytów na wiersz zestawienia. Metoda tego nie używa: 1 059 z 46 925 komórek z samymi pacjentami „&lt;5” ma więcej (+1 854 pobyty). F61: 6 komórek, suma par 225 → 212 po przycięciu (API 191). Do dodania jako granica komórki.</li>
+        <li><b>Komórki na górnej granicy.</b> 189 z 205 950 komórek ma 4 pobyty na każdy wiersz „&lt;5”: punkty albo pacjenci z zestawienia wskazują więcej, niż mieści się w granicach. To rozbieżność plików (zestawienie a plik hospitalizacji), nie błąd metody.</li>
+        <li><b>Mniej zgonów w API niż wierszy ze zgonem.</b> 3 grupy (D51, D37F, H83): po 1 zgonie różnicy. Śmiertelność różni się od API o ≤ 0,02 pp.</li>
+        <li><b>Komórki bez pary.</b> 65 komórek (226 pobytów) bez pary w zestawieniu — zostają na <code>min</code>; 26 komórek tylko w zestawieniu.</li>
+        <li><b>Rozdział zgonów w komórce.</b> Nie wiemy, który wiersz ze zgonem ma więcej niż 1 zgon; zgony dodatkowe idą proporcjonalnie do nadwyżki komórki. Rozdział na miesiące jest nadal tymczasowy (sekcja 3d).</li>
+      </ol>
+    </div>
+  </section>
+
+  <section>
+    <h2>3g. Wyceny JGP 2019–2024</h2>
+    <div class="card">
+      <p><b>Źródło:</b> oficjalny „Katalog grup” (załącznik 1a do zarządzeń Prezesa NFZ o leczeniu szpitalnym). Zarządzenia do stycznia 2022 r. pobrane z nfz.gov.pl (archiwa ZIP), późniejsze z Bazy Aktów Własnych NFZ (baw.nfz.gov.pl, archiwa ZIPX). Wybrane są tylko zarządzenia, które zmieniają katalog: 25 wersji od 134/2018/DSOZ do 120/2024/DSOZ, zapisane w <code>data/wyceny/zrodla/&lt;data&gt;_&lt;zarządzenie&gt;.xlsx</code>.</p>
+      <p><b>Wynik:</b> <code>scripts/build_valuation_history.py</code> zapisuje <code>data/wyceny/wyceny_jgp_&lt;rok&gt;.csv</code>: każda wersja obowiązująca w roku z liczbą miesięcy obowiązywania. Kalibracja bierze średnią ważoną miesiącami. Kolumny: wycena hospitalizacji, planowej, „leczenia jednego dnia”, pobytu &lt; 3 dni (do 2024) albo 0-, 1- i 2-dniowego (od 2025), dni finansowane grupą, osobodzień ponad ryczałt.</p>
+      <ul>
+        <li><b>Wyceny punktowe zmieniają się rzadko.</b> E10: 4 040 pkt do czerwca 2019, potem 4 161 do 2025; H52: 14 602 → 15 040; A48: 8 816 → 9 080. Zmienia się głównie cena punktu w złotych (1,00 zł w 2019, 1,77 zł w 2024), a kalibracja liczy w punktach.</li>
+        <li><b>Data obowiązywania jest przybliżona.</b> Biorę datę wejścia zarządzenia w życie (BAW) albo dzień po podpisaniu (nfz.gov.pl); wersja od połowy miesiąca liczy się od następnego miesiąca. Zarządzenie może stosować katalog od innej daty — do sprawdzenia w treści, jeśli wynik będzie tego wymagał.</li>
+        <li><b>Do 2024 r. jedna wycena krótkiego pobytu</b> („&lt; 3 dni”) zamiast osobnych dla 0, 1 i 2 dni.</li>
+        <li><b>Pliki źródłowe w <code>data/</code></b> (poza repozytorium, jak inne dane źródłowe); skrypt i opis źródła są w repozytorium.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2>4. Proponowana metoda: <code>cal</code></h2>
+    <div class="card">
+      <p class="note">Objaśnienie metod A i B oraz dwóch poprawek na przykładach E10, F61, J08, z przeliczeniem 2024 po poprawkach (sekcja 11): <a href="kalibracja-metody-przyklady.html">kalibracja-metody-przyklady.html</a>.</p>
+      <div class="formula">x<sub>r</sub> ∈ [1, 4] dla każdego wiersza „&lt;5”; jawne wiersze bez zmian; x<sub>r</sub> dobrane tak, żeby sumy pasowały do kotwic (ograniczone dopasowanie proporcjonalne, IPF)</div>
+      <div class="parts">
+        <div class="part"><b>Więz 1: wiersz</b>1 ≤ x<sub>r</sub> ≤ 4. Wartość ułamkowa (oczekiwana), nie losowana. Wynik jest deterministyczny: bez ziarna i bez zależności od kolejności pliku.</div>
+        <div class="part"><b>Więz 2: komórka roku (2019+)</b>Dla komórki rok × OW × NIP × zakres × produkt, w granicach [jawne + m, jawne + 4m] (m = liczba wierszy „&lt;5”), N<sub>c</sub> = punkty<sub>c</sub> ÷ (wycena × współczynnik grupy × zakresu), współczynnik dopasowany tak, żeby suma grupy była równa API. Liczba pacjentów to dolna granica; przy ilorazie hospitalizacje ÷ pacjenci &lt; 1,05 także oszacowanie zastępcze. W małych komórkach liczba całkowita z punktów jest jednoznaczna (sekcje 3a–3c).</div>
+        <div class="part"><b>Więz 3: marginesy kraju (2017+)</b>Dla grupy w roku: suma hospitalizacji, rozkład trybu wypisu (zgony), trybu przyjęcia, wieku, płci, długości pobytu i zakresu świadczeń — wszystko z API. Zgony mają własną kotwicę, więc śmiertelność nie przesunie się tylko przez zmianę mianownika.</div>
+        <div class="part"><b>Wynik w danych</b>Kolumny <code>h_cal</code> i <code>d_cal</code> obok <code>h_min</code>/<code>h_sim</code> w <code>iter_frames</code>. Wszystkie pliki (rok, trendy, karty JGP) biorą te same wartości, bo czytają plik tą funkcją.</div>
+      </div>
+      <ol>
+        <li>Start: x<sub>r</sub> = średnia wartość wiersza „&lt;5” grupy wynikająca z API ((NFZ − jawne) ÷ m), przycięta do [1, 4].</li>
+        <li>Dopasuj sumy komórek (więz 2), potem kolejne marginesy kraju (więz 3). Po każdym kroku przytnij x<sub>r</sub> do [1, 4].</li>
+        <li>Powtarzaj do zbieżności (zmiana &lt; 0,1% sumy) albo do 50 iteracji. Zapisz komórki i marginesy, których nie udało się dopasować.</li>
+        <li>u grupy licz jako punkty komórek z parą ÷ (suma NFZ − hospitalizacje komórek bez pary), żeby 1% wierszy bez pary nie zaburzył kotwicy.</li>
+      </ol>
+      <p class="note">Pomiar 2024 dla samego więzu 2 (u kraju, przycięcie do granic): mediana wartości wiersza „&lt;5” w komórce 1,06 (10–90%: 1,00–1,51), 31% komórek na dolnej granicy, 0,2% na górnej. Ranking ośrodków w grupie zostaje podobny (mediana korelacji Spearmana 0,99), ale 52% pozycji w pierwszej dziesiątce zmienia miejsce względem <code>min</code>.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>4a. Wspólne liczenie min, sim i cal</h2>
+    <div class="card">
+      <p>Dziś <code>iter_frames</code> w <code>scripts/build_hospitalizations.py</code> czyta plik roku fragmentami i dla każdego wiersza „&lt;5” wpisuje <code>min</code> (1) i <code>sim</code> (losowanie). Z tej funkcji korzystają wszystkie pliki: rok, trendy, trendy województw i karty JGP (<code>build_jgp_pages.py</code>). <code>cal</code> dołącza do niej jako trzecia metoda, więc każdy plik dostaje te same wartości bez osobnej ścieżki.</p>
+      <div class="scroll-x"><table>
+        <thead><tr><th>Wejście</th><th style="text-align:left">Plik</th><th style="text-align:left">Do czego</th></tr></thead>
+        <tbody>
+          <tr><td>Wiersze hospitalizacji</td><td class="wrap-cell"><code>data/hospitalizacje_&lt;rok&gt;.csv</code>, <code>data/hospitalizacje_2019_2021.csv</code> (bez zmian)</td><td class="wrap-cell">Wiersze jawne i „&lt;5”, komórki, zgony.</td></tr>
+          <tr><td>Punkty i pacjenci placówek</td><td class="wrap-cell"><code>data/zestawienie_swiadczen_2019_2026.csv</code></td><td class="wrap-cell">Hospitalizacje komórki (2019+).</td></tr>
+          <tr><td>Kod → NIP</td><td class="wrap-cell"><code>data/nfz_swiadczeniodawcy_2025.csv</code> + <code>data/kody_swiadczeniodawcow_uzupelnienie.csv</code> (<code>load_provider_codes</code>)</td><td class="wrap-cell">Para komórki z zestawieniem.</td></tr>
+          <tr><td>Sumy kraju</td><td class="wrap-cell"><code>data/nfz_jgp_stats/&lt;rok&gt;/&lt;KOD&gt;.json</code> (<code>scripts/fetch_jgp_stats.py</code>, wspólny z etapem 4b)</td><td class="wrap-cell">Iloraz hospitalizacje ÷ pacjenci, zgony, zakresy, suma grupy (2017–2024).</td></tr>
+          <tr><td>Wyceny</td><td class="wrap-cell"><code>data/wyceny/wyceny_jgp_&lt;rok&gt;.csv</code> (2019–2024, <code>scripts/build_valuation_history.py</code>, sekcja 3g)</td><td class="wrap-cell">Liczba całkowita z punktów; wycena wg długości pobytu.</td></tr>
+        </tbody>
+      </table></div>
+      <ol>
+        <li><b>Przebieg 1 — sumy roku.</b> Jeden odczyt pliku roku: komórki rok × OW × NIP × zakres × produkt (jawne, liczba „&lt;5”, wiersze ze zgonem). Lekki: kilkaset tysięcy komórek.</li>
+        <li><b>Plan komórek.</b> Nowy moduł <code>scripts/suppressed.py</code>: hospitalizacje komórki (gałąź A albo B), zgony do dodania i rozdział nadwyżki na wiersze. Wynik: dla każdej komórki liczba dodatkowych pobytów na wiersz „&lt;5” bez zgonu i ze zgonem oraz reszty.</li>
+        <li><b>Przebieg 2 — wiersze.</b> <code>iter_frames</code> czyta plik jak dziś i dla każdego wiersza „&lt;5” wpisuje <code>min</code>, <code>sim</code> i <code>cal</code>. <code>cal</code> bierze wartość z planu komórki według kolejności wiersza w komórce, więc wynik jest deterministyczny. Wiersze jawne mają we wszystkich metodach tę samą liczbę.</li>
+        <li><b>Kolumny.</b> <code>VALUE_COLS</code> = <code>h_min</code>, <code>h_sim</code>, <code>h_cal</code>, <code>d_min</code>, <code>d_sim</code>, <code>d_cal</code>. Format plików przeglądarki dostaje nową kolumnę w tym samym miejscu co dziś <code>min</code>/<code>sim</code>. UI: <code>cal</code> jako domyślna metoda w „Więcej filtrów”.</li>
+        <li><b>Lata bez zestawienia (2017–2018).</b> <code>cal</code> = tylko sumy kraju z API (zgony, suma grupy) rozdzielone na komórki proporcjonalnie do liczby wierszy „&lt;5”. <b>Lata bez API (2025).</b> Iloraz, współczynnik i zgony z poprzedniego roku; przeliczyć, gdy NFZ opublikuje 2025.</li>
+        <li><b>Kontrole w buildzie.</b> Wiersze jawne bez zmian; każdy wiersz „&lt;5” w 1–4; suma grupy i zgony ÷ API; raport komórek bez pary; nowe punkty kontrolne w <code>verify-static.mjs</code>.</li>
+      </ol>
+      <p class="note">Koszt: dwa odczyty pliku roku zamiast jednego (ok. 1–2 min na rok). Alternatywa z jednym odczytem wymaga trzymania całego roku w pamięci (ok. 4 mln wierszy); dwa przebiegi są prostsze i mają stałe zużycie pamięci. API NFZ (5.11.2026) nie ma jeszcze danych za 2025.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>5. Co dostaje każdy rok</h2>
+    <div class="card">
+      <div class="scroll-x"><table>
+        <thead><tr><th>Lata</th><th>Więz 1</th><th>Więz 2 (punkty ośrodka)</th><th>Więz 3 (API kraju)</th><th style="text-align:left">Jakość i uwagi</th></tr></thead>
+        <tbody>
+          <tr><td>2019–2024</td><td>tak</td><td>tak</td><td>tak</td><td class="wrap-cell"><span class="tag mid">najlepsza</span>Suma kraju dokładna z definicji; poziom ośrodka ograniczony punktami.</td></tr>
+          <tr><td>2017–2018</td><td>tak</td><td>nie (brak zestawienia)</td><td>tak</td><td class="wrap-cell"><span class="tag lo">średnia</span>Sumy kraju i rozkłady dokładne; podział między ośrodki tylko z marginesów. Opcja: przenieść względny poziom ośrodka z 2019 (x ośrodka ÷ średnia grupy), jeśli test z sekcji 6 pokaże zysk.</td></tr>
+          <tr><td>2025</td><td>tak</td><td>tak</td><td>nie (API bez 2025)</td><td class="wrap-cell"><span class="tag lo">średnia</span>u<sub>2025</sub> = u<sub>2024</sub> × (wycena 2025 ÷ wycena 2024). Brak katalogu 2024 w repo: pozyskać go albo przyjąć u<sub>2025</sub> = u<sub>2024</sub> dla grup bez zmiany wyceny. Po publikacji API 2025 przeliczyć rok.</td></tr>
+          <tr><td>2026</td><td colspan="4" class="wrap-cell">Poza zakresem: brak pliku hospitalizacji, zestawienie niepełne.</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>6. Jak sprawdzimy, że jest lepiej</h2>
+    <div class="card">
+      <p>Prawdziwej wartości wiersza „&lt;5” nie znamy. Suma kraju zgadza się z definicji, więc nie jest dowodem. Testy muszą ukrywać część informacji i sprawdzać, czy metoda ją odtwarza.</p>
+      <ol>
+        <li><b>Test lat 2017–2018 na latach 2019–2024.</b> Policz <code>cal</code> bez więzu 2 i porównaj sumy ośrodków z pełnym <code>cal</code>: błąd względny, zmiany w pierwszej dziesiątce. Ten sam test dla wariantu z poziomem ośrodka z poprzedniego roku.</li>
+        <li><b>Test roku 2025 na 2024.</b> Policz 2024 tak jak 2025 (u z 2023, bez marginesów API) i porównaj z pełnym <code>cal</code> 2024 na poziomie grup i ośrodków.</li>
+        <li><b>Ukryty margines.</b> Kalibruj bez rozkładu wieku (potem bez długości pobytu) i sprawdź, jak dobrze wynik odtwarza ten rozkład z API. To samo dla <code>min</code> i <code>sim</code>.</li>
+        <li><b>Zgodność z pacjentami.</b> Udział komórek, w których hospitalizacje &lt; jawna liczba pacjentów (2024: <code>min</code> 57%, punkty bez przycięcia 13%; po <code>cal</code> ma być 0%).</li>
+        <li><b>Wpływ na portal.</b> Lista grup i ośrodków z największą zmianą liczby, śmiertelności i miejsca w rankingu; ręczny przegląd 10 przypadków (np. E10, H52, H55).</li>
+      </ol>
+    </div>
+  </section>
+
+  <section>
+    <h2>7. Słabe punkty i ryzyka</h2>
+    <div class="card warn">
+      <ul>
+        <li><span class="tag hi">wysokie</span><b>Rok w zestawieniu.</b> Nie wiemy, czy „Rok” to rok wypisu, czy rozliczenia, ani jak ujęto korekty (6 672 wierszy z punktami ≤ 0). Pobyty z przełomu roku albo korekty mogą przesunąć punkty. Sprawdzić na grupach z dużymi komórkami (porównanie punktów z grudnia/stycznia nie jest możliwe, więc test: stabilność u między latami).</li>
+        <li><span class="tag hi">wysokie</span><b>Punkty ośrodka a współczynniki.</b> Współczynniki korygujące (zakres, pediatria, KOS-zawał, pakiet onkologiczny) zmieniają punkty na pobyt w ośrodku. Wariant: u per grupa × zakres zamiast per grupa (API daje rozkład zakresów). Nie wiemy też, czy punkty w zestawieniu zawierają współczynniki — do sprawdzenia na grupie, która ma ten sam produkt w kilku zakresach.</li>
+        <li><span class="tag mid">średnie</span><b>Mapowanie kod → NIP.</b> Plik świadczeniodawców jest z 2025. Kody i NIP-y zmieniały się (przekształcenia szpitali). 46 kodów bez NIP to dziś 0,04% punktów, ale w 2019 może być więcej. Raport niedopasowanych komórek dla każdego roku.</li>
+        <li><span class="tag mid">średnie</span><b>Brak kotwicy wojewódzkiej dla 2017–2018.</b> Jeśli API nie da rozkładu po OW, podział między województwa w tych latach pochodzi tylko z wierszy jawnych i marginesów kraju.</li>
+        <li><span class="tag mid">średnie</span><b>Wartości ułamkowe.</b> Wiersz może mieć 1,27 hospitalizacji. Sumy są dobre, ale małe liczby na kartach (np. ośrodek z 3 wierszami „&lt;5”) pokażą ułamki. Zaokrąglać przy wyświetlaniu; dla małych liczb pokazać przedział (min–max) zamiast liczby.</li>
+        <li><span class="tag mid">średnie</span><b>Pobieranie API.</b> Ok. 700 grup × 8 lat × 7 tabel ≈ 40 tys. zapytań. Robić raz, z przerwami, do <code>data/nfz_jgp_stats/</code> (w <code>.gitignore</code>), wspólnie z etapem 4b.</li>
+        <li><span class="tag lo">niskie</span><b>Zmiana liczb na portalu.</b> Liczby wzrosną średnio o ok. 20% względem <code>min</code>, śmiertelność spadnie. Opis metody na <code>/o-danych</code> i nowe punkty kontrolne w <code>verify-static.mjs</code>.</li>
+        <li><span class="tag lo">niskie</span><b>Czas budowania.</b> 3,9 mln wierszy na rok; dopasowanie wektorowe (numpy) w obrębie grupy. Pomiar 2024 (agregacja + złączenie) trwa kilka minut — akceptowalne.</li>
+      </ul>
+    </div>
+    <p class="note">Czego ta metoda nie naprawi: rozkładu wewnątrz komórki ośrodka (który miesiąc, który wiek) — tu zostaje tylko to, co dają marginesy kraju. Śmiertelność małych ośrodków nadal będzie niepewna.</p>
+  </section>
+
+  <section>
+    <h2>8. Kroki wdrożenia</h2>
+    <div class="card">
+      <ol>
+        <li><b>Pobranie API.</b> <code>scripts/fetch_jgp_stats.py</code>: tabele „Dane ogólne”, tryb wypisu, tryb przyjęcia, wiek, płeć, histogram długości pobytu i zakres świadczeń dla wszystkich grup, 2017–2024. Sprawdzić parametr województwa. Wspólne z etapem 4b.</li>
+        <li><b>Audyt.</b> <code>scripts/audit_suppressed.py</code>: dla każdej grupy i roku NFZ, jawne, <code>min</code>, <code>sim</code>, średnia wartość wiersza „&lt;5”, u, pokrycie zestawienia. Wynik: raport CSV i krótki dokument w <code>docs/</code>.</li>
+        <li><b>Kalibracja.</b> Moduł <code>scripts/suppressed.py</code> (plan komórek) i dwa przebiegi w <code>build_hospitalizations.py</code> (sekcja 4a); <code>iter_frames</code> dopisuje <code>h_cal</code> i <code>d_cal</code> obok <code>min</code> i <code>sim</code>. Testy na małym, ręcznym przykładzie (znane sumy, granice, wiersze jawne bez zmian).</li>
+        <li><b>Walidacja.</b> Testy z sekcji 6; decyzja o wariantach (u per zakres, poziom ośrodka z 2019 dla 2017–2018).</li>
+        <li><b>Dane i UI.</b> <code>cal</code> jako metoda domyślna; <code>min</code> i <code>sim</code> zostają w „Więcej filtrów” albo znikają (decyzja). Format plików: nowa kolumna albo zamiana <code>sim</code> na <code>cal</code> (rozmiar plików).</li>
+        <li><b>Opis i kontrola.</b> Opis metody na <code>/o-danych</code>; nowe punkty kontrolne E10 w <code>verify-static.mjs</code>; aktualizacja roadmapy.</li>
+      </ol>
+      <p class="note">Szacunek: kroki 1–2 to ok. 2 dni (głównie czas pobierania API), krok 3 — 2–3 dni, kroki 4–6 — 2–3 dni.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>9. Decyzje do podjęcia</h2>
+    <div class="card">
+      <ol>
+        <li>Czy <code>cal</code> zastępuje <code>sim</code> w plikach (mniejsze pliki), czy dochodzi jako trzecia metoda?</li>
+        <li>Czy UI pokazuje przedział dla małych liczb, czy tylko zaokrągloną wartość?</li>
+        <li>Rok 2025: czekamy na API 2025, czy liczymy od razu z u<sub>2024</sub> (i skąd katalog wycen 2024)?</li>
+        <li>Czy zestawienie świadczeń (punkty ośrodka) może trafić do aplikacji jako osobna informacja na karcie, obok liczb z kalibracji?</li>
+      </ol>
+    </div>
+  </section>
+</div>

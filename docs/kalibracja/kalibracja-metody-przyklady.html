@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="pl">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Metody kalibracji „&lt;5”</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Objaśnienie metod A i B kalibracji „<5” na przykładach. Te same tokeny co plan kalibracji. */
+:root {
+  --bg: #ffffff; --surface: #f5f8f7; --panel: #ffffff;
+  --ink: #172033; --ink-2: #475467; --ink-3: #667085; --line: #e2e8e6;
+  --brand: #087f75; --brand-soft: #e6f3f1; --on-brand: #ffffff;
+  --hi: #c65d2e; --hi-soft: rgba(198, 93, 46, 0.10); --ok: #2f7d4f; --ok-soft: rgba(47, 125, 79, 0.10);
+  --font: "Inter", ui-sans-serif, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1716; --surface: #15201e; --panel: #1a2624; --ink: #e8eeec; --ink-2: #b5c2be; --ink-3: #8b9a96; --line: #2a3936;
+    --brand: #4cc2b2; --brand-soft: #18322e; --on-brand: #0f1716; --hi: #e8895c; --hi-soft: rgba(232, 137, 92, 0.14); --ok: #6cc28e; --ok-soft: rgba(108, 194, 142, 0.12); color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1716; --surface: #15201e; --panel: #1a2624; --ink: #e8eeec; --ink-2: #b5c2be; --ink-3: #8b9a96; --line: #2a3936;
+  --brand: #4cc2b2; --brand-soft: #18322e; --on-brand: #0f1716; --hi: #e8895c; --hi-soft: rgba(232, 137, 92, 0.14); --ok: #6cc28e; --ok-soft: rgba(108, 194, 142, 0.12); color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 15px; line-height: 1.55; }
+.wrap { max-width: 1080px; margin: 0 auto; padding: 36px 16px 80px; display: grid; gap: 40px; }
+h1 { font-size: clamp(26px, 4vw, 34px); margin: 0; letter-spacing: -0.02em; line-height: 1.2; }
+h2 { font-size: 21px; margin: 0; }
+h3 { font-size: 15.5px; margin: 0; }
+p { margin: 0; max-width: 76ch; }
+code { font-size: 0.9em; background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; }
+.kicker { font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--brand); }
+.lead { font-size: 16.5px; color: var(--ink-2); }
+section { display: grid; gap: 14px; }
+.card { border: 1px solid var(--line); border-radius: 12px; background: var(--panel); padding: 16px 18px; display: grid; gap: 12px; min-width: 0; }
+.card.warn { border-color: var(--hi); background: var(--hi-soft); }
+.note { font-size: 12.5px; color: var(--ink-3); }
+.scroll-x { overflow-x: auto; }
+.formula { font-size: 15px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; font-variant-numeric: tabular-nums; }
+.parts { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.part { border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; display: grid; gap: 4px; font-size: 13.5px; color: var(--ink-2); align-content: start; }
+.part b { color: var(--ink); }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+.fact { border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; display: grid; gap: 2px; }
+.fact b { font-size: 24px; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
+.fact span { font-size: 12.5px; color: var(--ink-3); }
+table { border-collapse: collapse; width: 100%; font-size: 13px; font-variant-numeric: tabular-nums; }
+th { font-size: 11.5px; font-weight: 600; color: var(--ink-3); text-align: right; padding: 6px 7px; border-bottom: 1px solid var(--line); vertical-align: bottom; }
+td { padding: 6px 7px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; }
+td.wrap-cell { white-space: normal; text-align: left; min-width: 260px; }
+td.bad { color: var(--hi); font-weight: 600; }
+td.good { color: var(--ok); font-weight: 600; }
+ul, ol { margin: 0; padding-left: 20px; display: grid; gap: 6px; font-size: 14px; color: var(--ink-2); max-width: 80ch; }
+li b { color: var(--ink); }
+.tag { display: inline-block; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; border-radius: 999px; padding: 1px 8px; margin-right: 6px; vertical-align: 1px; }
+.tag.hi { background: var(--hi-soft); color: var(--hi); }
+.tag.mid { background: var(--brand-soft); color: var(--brand); }
+.tag.lo { background: var(--surface); color: var(--ink-3); border: 1px solid var(--line); }
+.step { display: grid; grid-template-columns: 30px 1fr; gap: 10px; align-items: start; }
+.step > span { width: 26px; height: 26px; border-radius: 50%; background: var(--brand-soft); color: var(--brand); font-weight: 700; font-size: 13px; display: grid; place-items: center; }
+tr.pick td { background: var(--ok-soft); font-weight: 600; }
+tr.wrong td { background: var(--hi-soft); }
+</style>
+
+<div class="wrap">
+  <header style="display:grid;gap:10px">
+    <span class="kicker">Roadmapa · etap 4a · objaśnienie</span>
+    <h1>Jak liczymy wiersze „&lt;5”: metody A i B na przykładach</h1>
+    <p class="lead">Objaśnienie metody <code>cal</code> z <a href="kalibracja-ponizej-5.html">planu kalibracji</a> krok po kroku, na trzech grupach JGP z 2024 r.: E10 (działa dobrze), F61 (metoda A się myli) i J08 (metoda B się myli). Na końcu dwie poprawki i ich wynik.</p>
+    <p class="note">Cały proces na jednym schemacie (kiedy A, kiedy B), z przykładami E10, H55, J08 i wykresami miesięcznymi sim / cal: <a href="kalibracja-schemat-decyzji.html">kalibracja-schemat-decyzji.html</a>.</p>
+  </header>
+
+  <section>
+    <h2>1. Problem w jednym zdaniu</h2>
+    <div class="card">
+      <p>Plik hospitalizacji NFZ ma wiersz na każdy miesiąc, wiek, płeć, tryb i długość pobytu. Gdy w wierszu jest 1–4 pobyty, NFZ pisze „&lt;5”. Musimy zgadnąć, ile pobytów kryje każdy taki wiersz. Pomagają nam dwa inne źródła NFZ:</p>
+      <div class="parts">
+        <div class="part"><b>Zestawienie świadczeń</b>Dla każdego szpitala, zakresu umowy i grupy JGP: suma <b>punktów</b> rozliczonych w roku i liczba <b>pacjentów</b> (też czasem „&lt;5”).</div>
+        <div class="part"><b>API statystyk JGP</b>Dla całej Polski i grupy JGP: liczba <b>hospitalizacji</b>, <b>pacjentów</b>, <b>zgonów</b> i hospitalizacji w każdym <b>zakresie</b>.</div>
+        <div class="part"><b>Katalog grup (wycena)</b>Ile punktów płaci NFZ za jeden pobyt w grupie. Krótkie pobyty i dni ponad limit mają osobne stawki.</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>2. Pojęcia</h2>
+    <div class="card scroll-x">
+      <table>
+        <thead><tr><th>Pojęcie</th><th style="text-align:left">Znaczenie</th></tr></thead>
+        <tbody>
+          <tr><td>Komórka</td><td class="wrap-cell">Jeden szpital (OW + NIP) × jeden zakres umowy × jedna grupa JGP w roku. Tu spotykają się plik hospitalizacji i zestawienie świadczeń.</td></tr>
+          <tr><td>Wiersze „&lt;5”</td><td class="wrap-cell">Liczba wierszy „&lt;5” w komórce. Komórka ma co najmniej tyle pobytów (każdy wiersz ≥ 1) i najwyżej 4 razy tyle (każdy wiersz ≤ 4). Na przykład 3 wiersze „&lt;5” znaczą od 3 do 12 pobytów.</td></tr>
+          <tr><td>Wycena (U)</td><td class="wrap-cell">Punkty za jeden pobyt według katalogu. Średnia z wierszy komórki według długości pobytu (np. J08: 0 dni = 620 pkt, 1–2 dni ≈ 1 344 pkt, dłużej = 2 067 pkt).</td></tr>
+          <tr><td>Współczynnik</td><td class="wrap-cell">Punkty rozliczone ÷ (wycena × pobyty). Pokazuje, ile razy więcej niż wycena szpital dostał za jeden pobyt: dopłaty zakresu, dni ponad limit. E10 kardiologia: 1,02; E10 KOS-zawał: 1,11.</td></tr>
+          <tr><td>Iloraz</td><td class="wrap-cell">Hospitalizacje ÷ pacjenci dla grupy w całej Polsce (API). Mówi, ile razy średnio pacjent wraca. E10: 1,004 (prawie nikt nie wraca); J08: 1,317.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>3. Wybór metody</h2>
+    <div class="card">
+      <div class="formula">iloraz &lt; 1,05 → <b>metoda A</b> &nbsp;·&nbsp; iloraz ≥ 1,05 → <b>metoda B</b></div>
+      <p>Gdy iloraz jest bliski 1, jeden pacjent = jeden pobyt. Wtedy liczba pacjentów z zestawienia prawie wprost daje liczbę pobytów (metoda A). Gdy pacjenci wracają (J08: 1,32), liczba pacjentów nie mówi, ile było pobytów w danym szpitalu. Zostają tylko punkty (metoda B).</p>
+      <p>W 2024 r. metodą A liczymy 417 grup, metodą B 278. E10 i F61 to metoda A, a J08 to metoda B.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>4. Metoda A na przykładzie E10 (działa dobrze)</h2>
+    <div class="card">
+      <p>E10 w 2024 r.: API 8 995 hospitalizacji, 8 957 pacjentów, iloraz 1,004. Wycena 4 161 pkt przez cały rok. Komórek: 222, w tym 203 z jawną liczbą pacjentów.</p>
+      <div class="step"><span>1</span><p><b>Szpital ma jawną liczbę pacjentów (≥ 5).</b> Pobyty = ⌊pacjenci × iloraz⌋, ale nie mniej niż liczba wierszy. <br>Żary, KOS-zawał: 33 wiersze „&lt;5”, 36 pacjentów → ⌊36 × 1,004⌋ = <b>36 pobytów</b>.</p></div>
+      <div class="step"><span>2</span><p><b>Szpital ma pacjentów „&lt;5”.</b> Liczby pacjentów nie znamy, więc liczymy z punktów. Najpierw ustalamy typowy współczynnik zakresu z kroku 1: mediana punkty ÷ (wycena × pacjenci × iloraz). Kardiologia: 1,02, KOS-zawał: 1,11. Potem sprawdzamy każdą możliwą liczbę pobytów n i liczymy, jaki współczynnik by z niej wyszedł. Bierzemy tę, która daje współczynnik najbliższy typowemu. Rozsądne są tylko współczynniki od 0,97 do 1,32 („okno”).</p></div>
+      <div class="scroll-x"><table>
+        <thead><tr><th>LUX MED Warszawa, kardiologia: 3 wiersze „&lt;5”, 12 545 pkt</th><th>n = 3</th><th>n = 4</th><th>n = 5 … 12</th></tr></thead>
+        <tbody>
+          <tr><td>Współczynnik = 12 545 ÷ (4 161 × n)</td><td class="good">1,005 ✓ w oknie</td><td>0,754 ✗</td><td>&lt; 0,61 ✗</td></tr>
+        </tbody>
+      </table></div>
+      <p>Wynik: <b>3 pobyty</b>. Dla Narodowego Instytutu Kardiologii (KOS-zawał, 4 wiersze, 18 766 pkt): n = 4 daje 1,13 (blisko 1,11), a n = 5 daje 0,90 (poza oknem). Wynik: <b>4 pobyty</b>.</p>
+      <div class="step"><span>3</span><p><b>Suma kraju.</b> Komórki dają razem 8 975 pobytów wobec 8 995 w API (−0,2%). Na końcu brakujące 20 pobytów rozdzielamy proporcjonalnie (sekcja 6).</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>5. Metoda B na przykładzie J08</h2>
+    <div class="card">
+      <p>J08 w 2024 r.: API 9 465 hospitalizacji, 7 188 pacjentów, iloraz 1,317, czyli pacjenci często wracają (chemioterapia). Wycena: 2 067 pkt; 0 dni: 620 pkt; 1–2 dni: 1 102–1 585 pkt; po 8 dniach 236 pkt za każdy kolejny dzień.</p>
+      <div class="formula">pobyty komórki = ⌊ punkty ÷ (wycena × współczynnik grupy) ⌋, w granicach [wiersze, 4 × wiersze] i nie mniej niż pacjenci</div>
+      <p><b>Współczynnik grupy</b> to jedna liczba dla całej grupy. Dobieramy ją tak, żeby suma wszystkich komórek była równa sumie z API. Dla J08 wynosi 1,141. Dlatego w metodzie B suma zawsze zgadza się z API, a ta zgodność niczego nie sprawdza.</p>
+      <div class="scroll-x"><table>
+        <thead><tr><th>Komórka</th><th>Wiersze „&lt;5”</th><th>Punkty</th><th>Wycena</th><th>Obliczenie</th><th>Wynik</th></tr></thead>
+        <tbody>
+          <tr><td>Zielona Góra, onkologia kliniczna (48 pacjentów)</td><td>49</td><td>49 517</td><td>753*</td><td>49 517 ÷ (753 × 1,141) = 57,6</td><td>57</td></tr>
+          <tr><td>Grudziądz, chirurgia onkologiczna</td><td>3</td><td>4 802</td><td>1 585*</td><td>4 802 ÷ (1 585 × 1,141) = 2,7 → min. 3</td><td>3</td></tr>
+          <tr class="wrong"><td>Sieradz, choroby wewnętrzne</td><td>3</td><td>17 765</td><td>2 067</td><td>17 765 ÷ (2 067 × 1,141) = 7,5</td><td>7</td></tr>
+        </tbody>
+      </table></div>
+      <p class="note">* Średnia wycena wierszy komórki według długości pobytu: w onkologii większość pobytów trwa 0 dni (620 pkt).</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>6. Krok końcowy: dopasowanie do sumy API</h2>
+    <div class="card">
+      <p>Po metodzie A suma grupy różni się od API (E10: −0,2%, F61: +24%). Bierzemy nadwyżkę każdej komórki (pobyty ponad liczbę wierszy) i skalujemy ją tak, żeby suma grupy = API. Liczby są całkowite, a reszty z zaokrągleń dostają komórki z największą częścią ułamkową. Ten krok poprawia <b>sumę</b>, ale nie poprawia <b>rozkładu</b> między szpitale.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>7. Co poszło źle</h2>
+    <div class="card warn">
+      <h3>F61 (metoda A): +24% przed dopasowaniem</h3>
+      <p>F61: API 191 hospitalizacji, 190 pacjentów (iloraz 1,005), a plik ma 191 wierszy „&lt;5”. Każdy wiersz to więc <b>dokładnie 1 pobyt</b>. Wycena: 6 140 pkt, od lipca 9 763 pkt (średnio 7 650). Po 21 dniach płacone są dodatkowo osobodni (353–576 pkt za dzień).</p>
+      <p>Tylko 2 ze 117 komórek mają jawnych pacjentów. Typowy współczynnik z nich to 1,68, czyli długie pobyty z dopłatami za dni. Ta wartość leży poza oknem 0,97–1,32.</p>
+      <div class="scroll-x"><table>
+        <thead><tr><th>Olesno, chirurgia ogólna: 2 wiersze „&lt;5”, 80 674 pkt</th><th>n=2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th></tr></thead>
+        <tbody>
+          <tr><td>Współczynnik = 80 674 ÷ (7 650 × n)</td><td>5,27</td><td>3,52</td><td>2,64</td><td>2,11</td><td>1,76</td><td>1,51</td><td class="bad">1,32 ✓</td></tr>
+        </tbody>
+      </table></div>
+      <p>Tylko n = 8 mieści się w oknie, więc metoda wybrała 8 pobytów. Naprawdę były 2 bardzo długie pobyty, bo 80 674 pkt to ok. 5 wycen na pobyt. Punkty nie odróżniają jednego długiego pobytu od kilku krótkich. Dwa błędy metody:</p>
+      <ol>
+        <li>Zestawienie mówi, że Olesno miało pacjentów „&lt;5”, czyli najwyżej 4. Przy ilorazie 1,005 to najwyżej 4 pobyty, a nie 8. <b>Metoda nie używała tej granicy.</b></li>
+        <li>API podaje 185 pobytów w chirurgii ogólnej, a plik ma tam 185 wierszy. Każdy wiersz = 1, więc punkty nie są tu potrzebne. <b>Metoda nie używała sum zakresów z API.</b></li>
+      </ol>
+    </div>
+    <div class="card warn">
+      <h3>J08 (metoda B): suma dobra, ale pobyty w złych szpitalach</h3>
+      <p>Jeden współczynnik (1,141) dla całej grupy zakłada, że każdy zakres ma podobne punkty na pobyt. W J08 tak nie jest: w chorobach wewnętrznych 47% pobytów trwa 6 dni i dłużej, a za dni po 8. dniu NFZ dopłaca. W Sieradzu 17 765 pkt z 3 wierszy to ok. 5 900 pkt na pobyt, czyli pobyt ok. 24-dniowy. Metoda liczy to jako 7 krótkich pobytów.</p>
+      <div class="scroll-x"><table>
+        <thead><tr><th>J08, zakres</th><th>API</th><th><code>min</code></th><th>Metoda B dziś</th><th>Różnica</th></tr></thead>
+        <tbody>
+          <tr><td>Kompleksowa opieka onkologiczna</td><td>3 571</td><td>2 819</td><td>3 752</td><td class="bad">+181</td></tr>
+          <tr><td>Onkologia kliniczna – diagnostyka i leczenie</td><td>2 971</td><td>2 473</td><td>2 763</td><td class="bad">−208</td></tr>
+          <tr><td>Onkologia kliniczna</td><td>1 248</td><td>1 002</td><td>1 131</td><td class="bad">−117</td></tr>
+          <tr><td>Choroby wewnętrzne</td><td>640</td><td>635</td><td>775</td><td class="bad">+135</td></tr>
+          <tr><td>Chirurgia onkologiczna – diagnostyka i leczenie</td><td>538</td><td>424</td><td>518</td><td>−20</td></tr>
+        </tbody>
+      </table></div>
+      <p>Wynik: błąd zakresów 3,7%, czyli 3,7% pobytów jest w złym zakresie, więc w złych szpitalach. Metoda <code>min</code> ma tu 2,3%.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>8. Poprawka 1: górna granica z pacjentów „&lt;5”</h2>
+    <div class="card">
+      <p>Gdy zestawienie podaje pacjentów „&lt;5”, szpital miał najwyżej 4 pacjentów w tym zakresie i grupie. Przy ilorazie grupy komórka ma więc najwyżej ⌊4 × iloraz⌋ pobytów (na każdy wiersz zestawienia, zwykle jeden).</p>
+      <div class="formula">górna granica komórki = min( 4 × wiersze „&lt;5”, ⌊4 × iloraz⌋ ) &nbsp;·&nbsp; dolna granica = wiersze „&lt;5”</div>
+      <p>Przykłady: F61 → ⌊4 × 1,005⌋ = 4, więc Olesno ma od 2 do 4 pobytów, a nie do 8. J08 → ⌊4 × 1,317⌋ = 5, więc Sieradz ma od 3 do 5, a nie do 12. Gdy komórka ma 4 lub więcej wierszy „&lt;5” i pacjentów „&lt;5”, granice się stykają i wynik jest pewny. Tak jest w 10 414 komórkach w 2024 r.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>9. Poprawka 2: współczynnik zakresu</h2>
+    <div class="card">
+      <p>API podaje dla grupy liczbę pobytów w każdym zakresie. J08: choroby wewnętrzne 640, kompleksowa opieka onkologiczna 3 571 itd. Poprawka używa tych liczb jako celu dla każdego zakresu osobno.</p>
+      <h3>Metoda B: współczynnik zakresu</h3>
+      <p>Współczynnik działa jak pokrętło. Dla jednego zakresu bierzemy wszystkie jego komórki i liczymy pobyty wzorem z sekcji 5 dla różnych wartości współczynnika c. Każda komórka zostaje w swoich granicach. Większe c daje mniej pobytów. Szukamy takiego c, przy którym suma komórek zakresu jest równa liczbie z API. Komputer szuka go przez połowienie przedziału (bisekcja), jak w zgadywance „więcej / mniej”.</p>
+      <div class="scroll-x"><table>
+        <thead><tr><th>J08, choroby wewnętrzne (268 komórek, 635–1 921 pobytów, API 640)</th><th>c = 1,0</th><th>1,141</th><th>1,5</th><th>2,0</th><th>2,24</th><th>3,07</th></tr></thead>
+        <tbody>
+          <tr><td>Suma pobytów w zakresie</td><td>826</td><td>760</td><td>682</td><td>652</td><td>645</td><td class="good">640 ✓</td></tr>
+        </tbody>
+      </table></div>
+      <div class="scroll-x"><table>
+        <thead><tr><th>J08, kompleksowa opieka onkologiczna (36 komórek, API 3 571)</th><th>c = 1,0</th><th>1,141</th><th>1,20</th><th>1,5</th><th>2,0</th></tr></thead>
+        <tbody>
+          <tr><td>Suma pobytów w zakresie</td><td>4 272</td><td>3 750</td><td class="good">3 571 ✓</td><td>3 131</td><td>3 100 (= dolna granica)</td></tr>
+        </tbody>
+      </table></div>
+      <p>Wynik dla J08: kompleksowa opieka onkologiczna c = 1,20; onkologia kliniczna – diagnostyka i leczenie 1,04; onkologia kliniczna 1,01; chirurgia onkologiczna – diagnostyka i leczenie 1,02; choroby wewnętrzne 3,07. Wysokie c w chorobach wewnętrznych pokazuje długie pobyty z dopłatą za dni. Dawny jeden współczynnik grupy 1,141 był średnią tych wartości i w żadnym zakresie nie pasował dobrze.</p>
+      <p>Komórki z przykładów: Sieradz ⌊17 765 ÷ (2 067 × 3,07)⌋ = 2, ale dolna granica komórki to 3 → <b>3 pobyty zamiast 7</b>. Zielona Góra (onkologia kliniczna, 48 pacjentów) ⌊49 517 ÷ (753 × 1,04)⌋ = <b>63 zamiast 57</b>, co zgadza się z 48 × 1,32 = 63.</p>
+      <h3>Metoda A: dopasowanie nadwyżki w zakresie</h3>
+      <p>W metodzie A współczynnik zakresu już był: to mediana z komórek z jawnymi pacjentami (sekcja 4). Zmienia się tylko krok końcowy (sekcja 6). Nadwyżkę skalujemy do sumy API osobno w każdym zakresie, a nie w całej grupie. F61: chirurgia ogólna ma w API 185 pobytów, a w pliku 185 wierszy „&lt;5”, więc każda komórka dostaje tyle pobytów, ile ma wierszy. Olesno: <b>2 zamiast 8</b>.</p>
+      <h3>Zakresy, których API nie wymienia</h3>
+      <p>API pomija małe zakresy. W J08 suma zakresów z API to 9 269, a grupa ma 9 465 pobytów. Brakujące 196 pobytów należy do zakresów spoza listy, np. geriatrii i ginekologii. Te zakresy liczymy razem, z jednym współczynnikiem, do celu 196. W 2024 r. takie zakresy mają 1,5% hospitalizacji. Na końcu sprawdzamy sumę grupy i różnicę z zaokrągleń rozdzielamy na całą grupę.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>10. Co tracimy</h2>
+    <div class="card">
+      <ul>
+        <li><b>Test zakresów przestaje być niezależny.</b> Po poprawce 2 błąd zakresów jest bliski 0 z definicji, bo dopasowujemy wynik do zakresów z API. Zostają dwa testy: suma przed dopasowaniem w metodzie A i punkty kontrolne E10 w <code>verify-static.mjs</code>.</li>
+        <li><b>Rozkład w zakresie nadal opiera się na punktach.</b> Gdy szpital ma długie pobyty, a inny w tym samym zakresie krótkie, jeden współczynnik zakresu nadal przesunie część pobytów. Tego nie da się sprawdzić danymi NFZ.</li>
+        <li><b>Komórek w pełni jawnych prawie nie ma</b> (7 z 205 926), więc współczynnika nie da się wziąć z komórek bez „&lt;5”.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2>11. Przeliczenie 2024: stara i nowa wersja</h2>
+    <div class="card">
+      <p>Obie poprawki przeliczone dla 695 grup z danymi API (6.11.2026).</p>
+      <div class="scroll-x"><table>
+        <thead><tr><th>2024, 695 grup</th><th>Stara</th><th>Nowa</th></tr></thead>
+        <tbody>
+          <tr><td>Hospitalizacje (API 7 040 202)</td><td>7 040 179</td><td class="good">7 040 202</td></tr>
+          <tr><td>Grupy z sumą różną od API</td><td>1</td><td class="good">0</td></tr>
+          <tr><td>Zgony (API 151 722)</td><td>151 725</td><td>151 725</td></tr>
+          <tr><td>Śmiertelność, maks. |różnica od API|</td><td>0,02 pp</td><td>0,02 pp</td></tr>
+          <tr><td>Błąd zakresów, mediana / p90 / maks.</td><td>0,22% / 1,09% / 4,43%</td><td class="good">0,00% / 0,00% / 1,22%</td></tr>
+          <tr><td>Metoda A przed dopasowaniem: grupy w ±1% / ±2%</td><td>79% / 92%</td><td class="good">80% / 95%</td></tr>
+          <tr><td>Metoda A przed dopasowaniem: grupy &gt; 5%</td><td>14</td><td class="good">7</td></tr>
+          <tr><td>Komórki przycięte przez poprawkę 1</td><td>—</td><td>1 275 (−2 535 pobytów nadmiaru)</td></tr>
+          <tr><td>Komórki z pewnym wynikiem (dolna granica = górna)</td><td>—</td><td>10 414</td></tr>
+        </tbody>
+      </table></div>
+      <div class="scroll-x"><table>
+        <thead><tr><th>Grupa</th><th>Metoda</th><th>API</th><th><code>min</code></th><th>Przed dopasowaniem: stara / nowa</th><th>Wynik</th><th>Błąd zakresów: stara / nowa</th><th style="text-align:left">Przykładowa komórka</th></tr></thead>
+        <tbody>
+          <tr><td>E10</td><td>A</td><td>8 995</td><td>8 236</td><td>8 975 / 8 975</td><td>8 995</td><td>0,01% / 0,00%</td><td class="wrap-cell">bez zmian</td></tr>
+          <tr><td>F61</td><td>A</td><td>191</td><td>191</td><td>237 / 221</td><td>191</td><td>0% / 0%</td><td class="wrap-cell">Olesno 8 → 2; Grudziądz 8 → 4</td></tr>
+          <tr><td>J08</td><td>B</td><td>9 465</td><td>7 834</td><td>= API (z definicji)</td><td>9 465</td><td>3,66% / 0,00%</td><td class="wrap-cell">Sieradz 7 → 3; Zielona Góra 57 → 63</td></tr>
+        </tbody>
+      </table></div>
+      <p><b>Ile się zmieniło.</b> Inną liczbę pobytów ma 24 927 z 205 859 komórek (12%). Przesunięte jest 28 984 pobytów, czyli 0,41% wszystkich. Suma grupy się nie zmienia, zmienia się tylko to, który szpital je dostał. Mediana przesunięcia w grupie: metoda A 0,17%, metoda B 0,40%. Najwięcej przesunęło się w grupach metody B z wieloma zakresami: B33 2,5%, S60 2,0%, F46 1,8%, J32 1,7%.</p>
+      <p><b>Co zostaje słabe.</b> 7 grup metody A ma przed dopasowaniem nadal &gt; 5% za dużo: PZS02 +20%, F61 +16% (było +24%), PZF04 +10%, L03 +9,5%, A58 +8%, F51 +7%, J27 +5,5%. To małe grupy z dopłatami za dni. Po dopasowaniu w zakresach wynik jest równy API, ale rozkład między szpitale opiera się na punktach. W 1 164 komórkach plik ma więcej wierszy „&lt;5”, niż pozwala ⌊4 × iloraz⌋ przy pacjentach „&lt;5” w zestawieniu. To niezgodność plików, więc taka komórka zostaje na liczbie wierszy. Zgony w H83, D37F i D51 nadal różnią się o 1 od API.</p>
+    </div>
+  </section>
+</div>
