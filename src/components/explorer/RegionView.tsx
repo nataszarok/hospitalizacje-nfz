@@ -9,7 +9,7 @@ import { CHART_COLORS, REGION_PICK_COLORS } from "@/lib/chartPalette";
 import { formatCityName } from "@/lib/formatters";
 import { cartogramCells, scaleColor, type CartogramCell, type RegionsMap } from "@/lib/jgpCard";
 import {
-  cityProviders, citySection, median, cityYearPoints, cityYearTotals, facilityDots, facilityYearTotals, MIN_FACILITY_HOSPITALIZATIONS, regionalBreakdown,
+  cityProviders, citySection, median, cityYearPoints, cityYearTotals, facilityDots, facilityYearDeaths, facilityYearTotals, MIN_FACILITY_HOSPITALIZATIONS, regionalBreakdown,
   type CitiesMap, type CityProviderRow, type CityYearPoint, type FacilityDot, type FacilityYearsIndex, type FacilityYearsSection, type RegionRow,
 } from "@/lib/regions";
 import {
@@ -21,12 +21,28 @@ import jgp from "@/components/jgp/JgpPage.module.css";
 import styles from "./Explorer.module.css";
 
 const integer = (value: number) => Math.round(value).toLocaleString("pl-PL");
+const deathsWord = (n: number) => n === 1 ? "zgon" : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? "zgony" : "zgonów";
 const decimal = (value: number) => value.toLocaleString("pl-PL", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 const CITY_LIMIT = 15;
 /** Promień kropki placówki z największą liczbą hospitalizacji we wszystkich latach (jednostki mapy o szerokości 1000). */
 export const MAX_DOT = 30;
 /** Najmniejsza widoczna kropka placówki z hospitalizacjami. */
 const MIN_DOT = 2;
+/**
+ * Najmniejszy koniec skali wielkości kropek (hospitalizacje placówki w roku). Bez progu największa kropka grupy
+ * ze 100 hospitalizacjami byłaby tak duża jak kropka grupy z 8 000. Próg z danych 2017–2025: największa placówka
+ * w roku ma poniżej 500 hospitalizacji w 65% kodów produktów (mediana 265, maksimum ok. 8 500), więc duże grupy
+ * zachowują własną skalę, a małe mają mniejsze kropki.
+ */
+export const DOT_SCALE_FLOOR = 500;
+/** Koniec skali wielkości kropek: największa wartość placówki w całym okresie, nie mniej niż `DOT_SCALE_FLOOR`. */
+export const dotScaleMax = (maxFacility: number) => Math.max(maxFacility, DOT_SCALE_FLOOR);
+/**
+ * Najmniejsza wartość na skali wielkości kropek: placówka z mniejszą liczbą hospitalizacji ma kropkę jak placówka z 25.
+ * Różnica 10 a 20 hospitalizacji nie jest ważna na mapie, a kropki w dużych grupach byłyby za małe do najechania.
+ * Dymek zawsze pokazuje prawdziwą liczbę.
+ */
+export const DOT_VALUE_FLOOR = 25;
 /** Przezroczystość kropek spoza wybranych obszarów. */
 const DOT_OUTSIDE_OPACITY = 0.3;
 
@@ -44,11 +60,12 @@ export type RegionViewProps = {
 
 /**
  * Promień kropki: pole koła proporcjonalne do liczby hospitalizacji (promień ∝ √wartości),
- * skala wspólna dla wszystkich lat — `max` to największa wartość placówki w całym okresie.
+ * skala wspólna dla wszystkich lat — `max` to koniec skali (`dotScaleMax`). Wartości poniżej `DOT_VALUE_FLOOR`
+ * mają kropkę jak `DOT_VALUE_FLOOR`; kropka ma co najmniej `MIN_DOT`.
  */
 export function dotRadius(hospitalizations: number, max: number): number {
   if (hospitalizations <= 0 || max <= 0) return 0;
-  return Math.max(MIN_DOT, MAX_DOT * Math.sqrt(hospitalizations / max));
+  return Math.max(MIN_DOT, MAX_DOT * Math.sqrt(Math.max(hospitalizations, DOT_VALUE_FLOOR) / max));
 }
 
 /**
@@ -128,9 +145,13 @@ export function RegionView({ productCodes, year, method, areas = NO_AREAS, onAre
     : null, [data, sections, sectionKey, productCodes, method]);
   // Skala wielkości wspólna dla lat: największa wartość placówki w całym okresie.
   const maxFacility = useMemo(() => facilityTotals ? Math.max(0, ...[...facilityTotals.values()].flat()) : 0, [facilityTotals]);
+  const scaleMax = dotScaleMax(maxFacility);
+  const facilityDeaths = useMemo(() => data && sections?.key === sectionKey
+    ? facilityYearDeaths(data.facilityIndex, sections.files, productCodes, method)
+    : undefined, [data, sections, sectionKey, productCodes, method]);
   const dots = useMemo(() => data && facilityTotals
-    ? facilityDots(data.facilityIndex, facilityTotals, data.citiesMap, yearIndex, (value) => dotRadius(value, maxFacility))
-    : null, [data, facilityTotals, yearIndex, maxFacility]);
+    ? facilityDots(data.facilityIndex, facilityTotals, data.citiesMap, yearIndex, (value) => dotRadius(value, scaleMax), facilityDeaths)
+    : null, [data, facilityTotals, yearIndex, scaleMax, facilityDeaths]);
   // Środek skali koloru kropek: mediana placówek na mapie w roku mapy (osobno dla każdego roku).
   const dotMedian = useMemo(() => median((dots ?? []).map((dot) => dot.hospitalizations)), [dots]);
   const cityYear = useMemo(() => data && facilityTotals
@@ -157,7 +178,7 @@ export function RegionView({ productCodes, year, method, areas = NO_AREAS, onAre
   const range = years.length > 1 ? `${years[0]}–${years.at(-1)}` : mapYear;
   const mapHelp = mode === "regions"
     ? `Hospitalizacje na 100 tys. mieszkańców województwa. Kolor względem średniej Polski z lat ${range} (${decimal(regionReference)}), wspólny dla wszystkich lat. Województwo to oddział NFZ, w którym świadczeniodawca rozlicza hospitalizacje, nie miejsce zamieszkania pacjenta. Kliknij województwo, aby dodać je do obszaru analizy (do ${MAX_AREAS} obszarów) albo usunąć.`
-    : `Kropka = placówka z co najmniej ${MIN_FACILITY_HOSPITALIZATIONS} hospitalizacjami wybranych grup w roku; placówki jednego miasta są zebrane wokół jego punktu, a kropki sąsiednich miast są rozsunięte. Pole kropki = liczba hospitalizacji; największa kropka to największa wartość placówki w latach ${range}, więc wielkości są porównywalne między latami. Kolor = hospitalizacje placówki wobec mediany placówek na mapie w roku ${mapYear} (${integer(dotMedian)}), od ¼ × do 4 ×; mediana jest liczona osobno dla każdego roku, więc kolor pokazuje pozycję placówki w danym roku. Wybrane obszary mają obwódkę w swoim kolorze. Placówki z siedzibą poza słownikiem miast (głównie wsie) nie mają kropki. Kliknij kropkę, aby zobaczyć placówki miasta.`;
+    : `Kropka = placówka z co najmniej ${MIN_FACILITY_HOSPITALIZATIONS} hospitalizacjami wybranych grup w roku; placówki jednego miasta są zebrane wokół jego punktu, a kropki sąsiednich miast są rozsunięte. Pole kropki = liczba hospitalizacji (kropka 4 × większa w polu = 4 × więcej hospitalizacji). Skala jest wspólna dla lat ${range}: kończy się na największej wartości placówki w tych latach, ale nie niżej niż ${integer(DOT_SCALE_FLOOR)}, więc w małej grupie kropki są małe. Kolor = hospitalizacje placówki wobec mediany placówek na mapie w roku ${mapYear} (${integer(dotMedian)}), od ¼ × do 4 ×; mediana jest liczona osobno dla każdego roku, więc kolor pokazuje pozycję placówki w danym roku. Wybrane obszary mają obwódkę w swoim kolorze. Placówki z siedzibą poza słownikiem miast (głównie wsie) nie mają kropki. Kliknij kropkę, aby zobaczyć placówki miasta.`;
 
   return <div className={styles.viewStack}>
     <section className={styles.card} aria-labelledby="region-map">
@@ -197,6 +218,7 @@ export function RegionView({ productCodes, year, method, areas = NO_AREAS, onAre
             areaColor={areaColor}
             reference={reference}
             max={maxFacility}
+            scaleMax={scaleMax}
             dotMedian={dotMedian}
             scale={mapWidth / data.regionsMap.viewBox[0]}
           />
@@ -234,13 +256,16 @@ function niceValue(value: number): number {
  * Województwa: skala koloru i wybrane obszary. Placówki: kolory i wielkość — kropki w skali mapy
  * (`scale` = piksele na jednostkę mapy), więc kropka legendy ma rozmiar kropki na mapie.
  */
-function MapLegend({ mode, range, areas, areaColor, reference, max, dotMedian, scale }: {
+function MapLegend({ mode, range, areas, areaColor, reference, max, scaleMax, dotMedian, scale }: {
   mode: MapMode;
   range: string;
   areas: AnalysisArea[];
   areaColor: (area: AnalysisArea) => string;
   reference: { regions: { owNfz: string; name: string }[] };
+  /** Największa wartość placówki (wartości kropek legendy). */
   max: number;
+  /** Koniec skali wielkości (`dotScaleMax`). */
+  scaleMax: number;
   /** Mediana placówek w roku mapy (środek skali koloru kropek). */
   dotMedian: number;
   scale: number;
@@ -262,7 +287,9 @@ function MapLegend({ mode, range, areas, areaColor, reference, max, dotMedian, s
       </ul>
     </div> : null}
   </div>;
-  const sizes = [...new Set([niceValue(max), niceValue(max / 4), niceValue(max / 16)])].filter((value) => value > 0);
+  // Wartości poniżej progu mają jedną wielkość: legenda kończy się pozycją „≤ 25”.
+  const sizes = [...new Set([niceValue(max), niceValue(max / 4), niceValue(max / 16)])].filter((value) => value > DOT_VALUE_FLOOR);
+  sizes.push(DOT_VALUE_FLOOR);
   return <div className={styles.mapLegend}>
     <div className={styles.legendGroup}>
       <div className={styles.legendTitle}>Hospitalizacje placówki wobec mediany roku ({integer(dotMedian)})</div>
@@ -282,10 +309,10 @@ function MapLegend({ mode, range, areas, areaColor, reference, max, dotMedian, s
       <div className={styles.legendTitle}>Hospitalizacje w roku</div>
       <ul className={styles.legendSizes}>
         {sizes.map((value) => {
-          const r = Math.max(1.5, dotRadius(value, max) * scale);
+          const r = Math.max(1.5, dotRadius(value, scaleMax) * scale);
           return <li key={value}>
             <svg width={2 * r + 2} height={2 * r + 2} aria-hidden><circle cx={r + 1} cy={r + 1} r={r} /></svg>
-            <span>{integer(value)}</span>
+            <span>{value === DOT_VALUE_FLOOR ? `≤ ${integer(value)}` : integer(value)}</span>
           </li>;
         })}
       </ul>
@@ -366,6 +393,7 @@ function FacilityMap({ map, dots, mapYear, areas, areaColor, median: yearMedian,
       <b>{hover.dot.name}</b>
       <span>{formatCityName(hover.dot.city)} · {regionName(hover.dot.owNfz)}</span>
       <span>Hospitalizacje {mapYear}: <b>{integer(hover.dot.hospitalizations)}</b> ({ratio(hover.dot.hospitalizations, yearMedian)} mediany roku)</span>
+      {hover.dot.deaths !== null ? <span>Śmiertelność: <b>{decimal((hover.dot.deaths / hover.dot.hospitalizations) * 100)}%</b> ({integer(hover.dot.deaths)} {deathsWord(hover.dot.deaths)} na {integer(hover.dot.hospitalizations)} hosp.)</span> : null}
       {tipArea ? <span><i className={styles.areaSwatch} style={{ background: areaColor(tipArea) }} aria-hidden /> w obszarze analizy</span> : null}
     </div> : null}
   </div>;
@@ -483,15 +511,16 @@ function CityProviders({ city, facility, year, point, productCodes, method, onBa
       {onAddArea ? <> · <button type="button" className={styles.cityButton} onClick={onAddArea}>Dodaj miasto do obszaru analizy</button></> : null}
     </p>
     {rows === null ? <div className="empty-chart">Ładowanie placówek…</div>
-      : rows.length ? <div className="table-wrap">
+      // Obok mapy tabela ma ok. 340 px: zostają nazwa, hospitalizacje i śmiertelność (DESIGN.md 7.1); „Nagłe” ma priorytet 3.
+      : rows.length ? <div className="table-wrap priority-table">
         <table className={`${styles.cityTable} ${styles.providerTable}`}>
-          <thead><tr><th>Placówka</th><th className={styles.num}>Hosp.</th><th className={styles.num} title="Śmiertelność">Zgony %</th><th className={styles.num} title="Przyjęcia nagłe">Nagłe</th></tr></thead>
+          <thead><tr><th>Placówka</th><th className={styles.num}>Hosp.</th><th className={styles.num} title="Śmiertelność">Zgony %</th><th className={`${styles.num} col-p3`} title="Przyjęcia nagłe">Nagłe</th></tr></thead>
           <tbody>
-            {rows.map((row) => <tr key={`${row.owNfz}|${row.nip}`} className={isFocused(row) ? styles.citySelected : undefined} aria-current={isFocused(row) ? "true" : undefined}>
+            {rows.map((row) => <tr key={`${row.owNfz}|${row.nip}`} className={isFocused(row) ? `${styles.citySelected} ${styles.facilitySelected}` : undefined} aria-current={isFocused(row) ? "true" : undefined}>
               <td><ProviderLink owNfz={row.owNfz} nip={row.nip} name={row.name} /></td>
               <td className={styles.num}>{integer(row.hospitalizations)}</td>
               <td className={styles.num}>{decimal(row.mortalityPct)}%</td>
-              <td className={styles.num}>{decimal(row.urgentPct)}%</td>
+              <td className={`${styles.num} col-p3`}>{decimal(row.urgentPct)}%</td>
             </tr>)}
           </tbody>
         </table>

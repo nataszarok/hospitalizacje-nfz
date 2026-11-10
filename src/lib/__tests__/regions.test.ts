@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  cityBreakdown, cityProviders, citySection, cityYearPoints, cityYearTotals, durationYears, facilityDots, facilityYearTotals, packCircles, regionalBreakdown, separateDots, median,
+  cityBreakdown, cityProviders, citySection, cityYearPoints, cityYearTotals, durationYears, facilityDots, facilityYearDeaths, facilityYearTotals, packCircles, regionalBreakdown, separateDots, median,
   type CitiesMap, type DurationYearsSection, type FacilityYearsIndex, type FacilityYearsSection,
 } from "@/lib/regions";
 import { latestDatasetFixture as dataset, trendsFixture as trends } from "./fixtures/trendsFixture";
@@ -47,10 +47,10 @@ describe("placówki w latach", () => {
     active: [0b11, 0b10, 0b11, 0b10],
   };
   const section: FacilityYearsSection = {
-    version: 1,
+    version: 2,
     products: ["P1", "P2"],
     // P1: Beta 10 → 40, Alfa 0 → 20, Gamma 5 w 2025. P2 (niewybrany): Beta 99 w 2025.
-    rows: { product: [0, 0, 0, 0, 1], facility: [0, 0, 2, 1, 0], year: [0, 1, 1, 1, 1], hMin: [10, 40, 20, 5, 99], hSim: [11, 41, 21, 6, 99] },
+    rows: { product: [0, 0, 0, 0, 1], facility: [0, 0, 2, 1, 0], year: [0, 1, 1, 1, 1], hMin: [10, 40, 20, 5, 99], hSim: [11, 41, 21, 6, 99], dMin: [1, 4, 0, 0, 9], dSim: [1, 5, 0, 0, 9] },
   };
   const map: CitiesMap = { version: 1, source: "test", viewBox: [1000, 946], cities: [["KATOWICE", "12", 450, 750, 200_000, "2024"], ["WARSZAWA", "07", 650, 350, 1_000_000, "2024"]] };
 
@@ -58,6 +58,9 @@ describe("placówki w latach", () => {
     const totals = facilityYearTotals(index, [section], ["P1"], "min");
     expect(Object.fromEntries(totals)).toEqual({ 0: [10, 40], 1: [0, 5], 2: [0, 20] });
     expect(facilityYearTotals(index, [section], ["P1"], "sim").get(0)).toEqual([11, 41]);
+    // Zgony tych samych produktów (dymek mapy).
+    expect(Object.fromEntries(facilityYearDeaths(index, [section], ["P1"], "min"))).toEqual({ 0: [1, 4], 1: [0, 0], 2: [0, 0] });
+    expect(facilityYearDeaths(index, [section], ["P1"], "sim").get(0)).toEqual([1, 5]);
     expect(Object.fromEntries(cityYearTotals(index, totals))).toEqual({ KATOWICE: [10, 40], GLIWICE: [0, 5], WARSZAWA: [0, 20] });
   });
 

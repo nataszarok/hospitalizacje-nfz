@@ -3,7 +3,7 @@
 import "@testing-library/jest-dom/vitest";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
-import { dotRadius, MAX_DOT, RegionView } from "@/components/explorer/RegionView";
+import { DOT_SCALE_FLOOR, DOT_VALUE_FLOOR, dotRadius, dotScaleMax, MAX_DOT, RegionView } from "@/components/explorer/RegionView";
 import { latestDatasetFixture, trendsFixture } from "@/lib/__tests__/fixtures/trendsFixture";
 import { REGION_PICK_COLORS } from "@/lib/chartPalette";
 import type { RegionsMap } from "@/lib/jgpCard";
@@ -29,8 +29,8 @@ const facilityIndex: FacilityYearsIndex = {
 };
 // P1 (A01): Beta 40 w 2023 (największa wartość okresu) i 18 w 2025, Alfa 12 w 2025. P3 (F99): Gamma 50 w 2025.
 const sections: Record<string, FacilityYearsSection> = {
-  A: { version: 1, products: ["P1"], rows: { product: [0, 0, 0], facility: [1, 1, 0], year: [0, 2, 2], hMin: [40, 18, 12], hSim: [40, 18, 12] } },
-  F: { version: 1, products: ["P3"], rows: { product: [0], facility: [2], year: [2], hMin: [50], hSim: [50] } },
+  A: { version: 2, products: ["P1"], rows: { product: [0, 0, 0], facility: [1, 1, 0], year: [0, 2, 2], hMin: [40, 18, 12], hSim: [40, 18, 12], dMin: [4, 3, 0], dSim: [4, 3, 0] } },
+  F: { version: 2, products: ["P3"], rows: { product: [0], facility: [2], year: [2], hMin: [50], hSim: [50], dMin: [0], dSim: [0] } },
 };
 
 const loadTrends = vi.fn();
@@ -101,15 +101,35 @@ describe("RegionView", () => {
     expect(loadFacilityYearsSection.mock.calls.map(([section]) => section).sort()).toEqual(["A", "F"]);
     // 2025: Beta 18 i Alfa 12; Delta bez wybranych grup — bez kropki; Gamma bez miasta w słowniku — bez kropki.
     expect(within(map).getAllByRole("button").map((dot) => dot.getAttribute("aria-label")?.split(" (")[0]).sort()).toEqual(["Szpital Alfa", "Szpital Beta"]);
-    // Największa wartość placówki w okresie to 50 (Gamma 2025, bez kropki, ale w skali).
-    expect(Number(within(map).getByRole("button", { name: /^Szpital Beta/ }).getAttribute("r"))).toBeCloseTo(dotRadius(18, 50));
+    // Największa wartość placówki w okresie to 50 (Gamma 2025, bez kropki): mniej niż próg skali, więc skala kończy się na progu.
+    expect(Number(within(map).getByRole("button", { name: /^Szpital Beta/ }).getAttribute("r"))).toBeCloseTo(dotRadius(18, DOT_SCALE_FLOOR));
     expect(tableRows(/Miasta · 2025/).map((row) => cellText(row, 1))).toEqual(["Gliwice", "Katowice", "Warszawa"]);
     expect(cellText(tableRows(/Miasta · 2025/)[0], 3)).toBe("—");
     rerender(<RegionView productCodes={["P1", "P3"]} year="2023" method="min" />);
     const map2023 = await screen.findByRole("group", { name: /Mapa placówek: hospitalizacje w 2023/ });
-    expect(Number(within(map2023).getByRole("button", { name: /^Szpital Beta/ }).getAttribute("r"))).toBeCloseTo(dotRadius(40, 50));
+    expect(Number(within(map2023).getByRole("button", { name: /^Szpital Beta/ }).getAttribute("r"))).toBeCloseTo(dotRadius(40, DOT_SCALE_FLOOR));
     expect(within(map2023).queryByRole("button", { name: /^Szpital Alfa/ })).not.toBeInTheDocument();
     expect(dotRadius(50, 50)).toBe(MAX_DOT);
+  });
+
+  it("skala kropek: pole ∝ hospitalizacjom (5 × więcej = 5 × większe pole); koniec skali nie niżej niż próg", () => {
+    const area = (value: number) => dotRadius(value, 8_000) ** 2;
+    expect(area(500) / area(100)).toBeCloseTo(5);
+    expect(dotScaleMax(100)).toBe(DOT_SCALE_FLOOR);
+    expect(dotScaleMax(8_000)).toBe(8_000);
+    // Koniec skali rośnie z dużą grupą: max(największa placówka, próg).
+    expect(dotScaleMax(8_512)).toBe(8_512);
+    // Największa kropka grupy ze 100 hospitalizacjami jest mniejsza niż największa kropka dużej grupy.
+    expect(dotRadius(100, dotScaleMax(100))).toBeLessThan(dotRadius(8_000, dotScaleMax(8_000)));
+  });
+
+  it("skala kropek: poniżej 25 hospitalizacji jedna wielkość (jak 25); kropka nie mniejsza niż minimum", () => {
+    expect(dotRadius(10, 500)).toBe(dotRadius(DOT_VALUE_FLOOR, 500));
+    expect(dotRadius(24, 500)).toBe(dotRadius(DOT_VALUE_FLOOR, 500));
+    expect(dotRadius(26, 500)).toBeGreaterThan(dotRadius(DOT_VALUE_FLOOR, 500));
+    // Duża grupa (B18, ok. 8 500): kropka 25 hospitalizacji ma najmniejszy promień.
+    expect(dotRadius(DOT_VALUE_FLOOR, 8_512)).toBe(2);
+    expect(dotRadius(0, 500)).toBe(0);
   });
 
   it("legenda: kolory i wielkość kropek w jednym układzie", async () => {
@@ -148,6 +168,8 @@ describe("RegionView", () => {
     expect(tip).toHaveTextContent("Hospitalizacje 2025: 18");
     expect(tip).toHaveTextContent("Katowice · Śląskie");
     expect(tip).toHaveTextContent(/× mediany roku/);
+    // Śmiertelność placówki: 3 zgony na 18 hospitalizacji.
+    expect(tip).toHaveTextContent("Śmiertelność: 16,7% (3 zgony na 18 hosp.)");
     expect(screen.getByRole("region", { name: /Miasta · 2025/ })).toBeInTheDocument();
     fireEvent.mouseLeave(within(map).getByRole("button", { name: /^Szpital Beta/ }));
     expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
@@ -160,6 +182,8 @@ describe("RegionView", () => {
     const panel = await screen.findByRole("region", { name: "Katowice · 2025" });
     expect(await within(panel).findByText("Szpital Beta")).toBeInTheDocument();
     expect(within(panel).getByText("Szpital Beta").closest("tr")).toHaveAttribute("aria-current", "true");
+    // Wybrana placówka: pasek w kolorze sygnału, jak w tabeli ośrodków karty JGP.
+    expect(within(panel).getByText("Szpital Beta").closest("tr")!.className).toMatch(/facilitySelected/);
     fireEvent.click(within(panel).getByRole("button", { name: "Dodaj miasto do obszaru analizy" }));
     expect(onAreasChange).toHaveBeenCalledWith([{ kind: "city", city: "KATOWICE" }]);
     fireEvent.click(within(panel).getByRole("button", { name: "← Wszystkie miasta" }));
