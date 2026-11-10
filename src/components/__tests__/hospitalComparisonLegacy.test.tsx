@@ -2,6 +2,7 @@
 
 import "@testing-library/jest-dom/vitest";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { financialResultsResource, jgpValuationsResource, peerPairsResource, rpwdlSummaryProfilesResource } from "@/lib/hospitalData";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { HospitalComparisonLegacyTab } from "@/components/HospitalComparisonLegacyTab";
 import { products, sampleBenchmark } from "./fixtures/hospitalFixtures";
@@ -11,6 +12,7 @@ const mocks = vi.hoisted(() => ({
   loadJgpValuations: vi.fn(), parseMaybeGzip: vi.fn(),
 }));
 vi.mock("@/lib/staticData", () => ({
+  peekStaticDataset: () => null,
   loadStaticDataset: mocks.loadStaticDataset,
   hospitalPeerBenchmarkFromDataset: mocks.hospitalPeerBenchmarkFromDataset,
 }));
@@ -20,6 +22,7 @@ vi.mock("@/components/HospitalComparisonShared", () => ({
   pct: (v: number) => `${v.toLocaleString("pl-PL", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`,
   displayHospitalName: (name: string) => name,
   loadJgpValuations: mocks.loadJgpValuations,
+  peekJgpValuations: () => null,
   parseMaybeGzip: mocks.parseMaybeGzip,
   PeerComparisonCharts: () => <div data-testid="legacy-charts" />,
   JgpMortalityDifferenceTable: () => <div data-testid="legacy-jgp" />,
@@ -38,6 +41,8 @@ const key = "07|1234567890";
 const props = { hospitalKey: key, method: "sim" as const, products, peerThreshold: 75 };
 
 beforeEach(() => {
+  // Pliki szpitali są w pamięci modułu na całą wizytę: każdy test pobiera je od nowa.
+  for (const resource of [financialResultsResource, rpwdlSummaryProfilesResource, peerPairsResource, jgpValuationsResource]) resource.reset();
   vi.clearAllMocks();
   mocks.loadStaticDataset.mockResolvedValue({});
   mocks.loadJgpValuations.mockResolvedValue([]);

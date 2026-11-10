@@ -75,12 +75,32 @@ async function fetchGzipJson<T>(url: string): Promise<T> {
   return new Response(decompressed).json() as Promise<T>;
 }
 
+/**
+ * Pliki już pobrane i zdekodowane (np. przez pobieranie z wyprzedzeniem, `dataPrefetch.ts`). Funkcje `peek…`
+ * zwracają je od razu, bez obietnicy: strona może wtedy wyrenderować wyniki w pierwszym renderze, bez szkieletu.
+ */
+let resolvedIndex: HospitalizationIndex | null = null;
+const resolvedDatasets = new Map<string, StaticDataset>();
+let resolvedTrends: TrendsDataset | null = null;
+
+/** Lista lat, jeśli jest już w pamięci; inaczej `null`. */
+export const peekHospitalizationIndex = () => resolvedIndex;
+/** Plik roku (bez argumentu: najnowszy), jeśli jest już w pamięci; inaczej `null`. */
+export function peekStaticDataset(year?: string): StaticDataset | null {
+  const selectedYear = year ?? resolvedIndex?.latestYear;
+  return selectedYear ? resolvedDatasets.get(selectedYear) ?? null : null;
+}
+/** Trendy kraju, jeśli są już w pamięci; inaczej `null`. */
+export const peekTrends = () => resolvedTrends;
+
 let indexPromise: Promise<HospitalizationIndex> | null = null;
 export function loadHospitalizationIndex(): Promise<HospitalizationIndex> {
   indexPromise ??= (async () => {
     const response = await fetch(`${HOSPITALIZATIONS_DATA_PATH}/index.json`);
     if (!response.ok) throw new Error("Nie udało się pobrać listy lat z danymi.");
-    return response.json() as Promise<HospitalizationIndex>;
+    const index = await response.json() as HospitalizationIndex;
+    resolvedIndex = index;
+    return index;
   })();
   indexPromise.catch(() => { indexPromise = null; });
   return indexPromise;
@@ -92,7 +112,11 @@ export async function loadStaticDataset(year?: string): Promise<StaticDataset> {
   const selectedYear = year ?? (await loadHospitalizationIndex()).latestYear;
   let promise = datasetPromises.get(selectedYear);
   if (!promise) {
-    promise = fetchGzipJson<StaticDatasetFile>(`${HOSPITALIZATIONS_DATA_PATH}/${selectedYear}.json.gz`).then(decodeStaticDataset);
+    promise = fetchGzipJson<StaticDatasetFile>(`${HOSPITALIZATIONS_DATA_PATH}/${selectedYear}.json.gz`).then((file) => {
+      const dataset = decodeStaticDataset(file);
+      resolvedDatasets.set(selectedYear, dataset);
+      return dataset;
+    });
     datasetPromises.set(selectedYear, promise);
     promise.catch(() => datasetPromises.delete(selectedYear));
   }
@@ -101,7 +125,10 @@ export async function loadStaticDataset(year?: string): Promise<StaticDataset> {
 
 let trendsPromise: Promise<TrendsDataset> | null = null;
 export function loadTrends(): Promise<TrendsDataset> {
-  trendsPromise ??= fetchGzipJson<TrendsFile>(`${HOSPITALIZATIONS_DATA_PATH}/trends.json.gz`).then(decodeTrends);
+  trendsPromise ??= fetchGzipJson<TrendsFile>(`${HOSPITALIZATIONS_DATA_PATH}/trends.json.gz`).then((file) => {
+    resolvedTrends = decodeTrends(file);
+    return resolvedTrends;
+  });
   trendsPromise.catch(() => { trendsPromise = null; });
   return trendsPromise;
 }
@@ -189,6 +216,9 @@ export function trendsForRegion(t: TrendsDataset, regional: RegionalTrendsDatase
 export function resetStaticDataCache() {
   indexPromise = null;
   trendsPromise = null;
+  resolvedIndex = null;
+  resolvedTrends = null;
+  resolvedDatasets.clear();
   regionalTrendsPromises.clear();
   datasetPromises.clear();
 }

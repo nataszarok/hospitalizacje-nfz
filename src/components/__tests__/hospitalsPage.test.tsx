@@ -7,7 +7,12 @@ import { HospitalsPage } from "@/components/hospitals/HospitalsPage";
 import { HOSPITAL_VIEW_CHANGED_EVENT, HOSPITAL_VIEW_NAVIGATE_EVENT } from "@/lib/dashboardNavigation";
 
 const loadStaticDataset = vi.fn();
+// Plik roku w pamięci (pobrany z wyprzedzeniem): domyślnie brak.
+const peeked: { dataset: unknown } = { dataset: null };
+// Adres z routera Next (w aplikacji `useSearchParams`); w testach — bieżący adres okna.
+vi.mock("next/navigation", () => ({ useSearchParams: () => new URLSearchParams(window.location.search) }));
 vi.mock("@/lib/staticData", () => ({
+  peekStaticDataset: () => peeked.dataset,
   loadStaticDataset: (year?: string) => loadStaticDataset(year),
   referenceFromDataset: (d: { analysisYear: string }) => ({ analysisYear: d.analysisYear, products: [{ code: "P1", jgpCode: "E10", name: "OZW", label: "E10 — OZW" }] }),
 }));
@@ -25,6 +30,7 @@ beforeEach(() => {
   window.history.replaceState(null, "", "/szpitale");
   loadStaticDataset.mockResolvedValue({ analysisYear: "2025" });
   changed.mockReset();
+  peeked.dataset = null;
   window.addEventListener(HOSPITAL_VIEW_CHANGED_EVENT, changed);
 });
 afterEach(() => {
@@ -33,6 +39,14 @@ afterEach(() => {
 });
 
 describe("HospitalsPage", () => {
+  it("plik roku już w pamięci: profil z adresu w pierwszym renderze, bez szkieletu i bez pobierania", () => {
+    window.history.replaceState(null, "", "/szpitale?hospital=07%7C111&hv=c");
+    peeked.dataset = { analysisYear: "2025" };
+    render(<HospitalsPage />);
+    expect(screen.getByText("szpital: 07|111 · widok: comparison · metoda: min · produkty: 1")).toBeInTheDocument();
+    expect(loadStaticDataset).not.toHaveBeenCalled();
+  });
+
   it("ładuje najnowszy rok i pokazuje profil", async () => {
     render(<HospitalsPage />);
     // Bez szpitala w adresie: szpital domyślny (Koszalin).

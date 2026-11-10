@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { HospitalAnalysisTab } from "@/components/HospitalAnalysisTab";
 import { HOSPITAL_VIEW_CHANGED_EVENT, HOSPITAL_VIEW_NAVIGATE_EVENT, type HospitalNavigation } from "@/lib/dashboardNavigation";
 import { hospitalUrlSearch, readHospitalUrlState, type HospitalView } from "@/lib/hospitalUrlState";
 import { PEER_DISTANCE_A_LIMIT } from "@/lib/peerDistance";
 import { LoadingStatus, Skeleton } from "@/components/portal/Skeleton";
-import { loadStaticDataset, referenceFromDataset } from "@/lib/staticData";
+import { loadStaticDataset, peekStaticDataset, referenceFromDataset } from "@/lib/staticData";
 import type { ProductOption } from "@/lib/types";
 
 const noop = () => {};
@@ -18,15 +19,30 @@ const METHOD = "min";
  * Dane z najnowszego roku — finanse i model par są liczone dla niego.
  */
 export function HospitalsPage() {
-  const [ready, setReady] = useState(false);
-  const [year, setYear] = useState("");
-  const [products, setProducts] = useState<ProductOption[]>([]);
-  const [hospitalKey, setHospitalKey] = useState("");
-  const [view, setView] = useState<HospitalView>("summary");
-  const [peerDistance, setPeerDistance] = useState(PEER_DISTANCE_A_LIMIT);
+  // `useSearchParams` wymaga granicy Suspense: statyczny HTML ma szkielet, stronę rysuje przeglądarka.
+  return <Suspense fallback={<HospitalsSkeleton comparison={false} />}><HospitalsApp /></Suspense>;
+}
+
+function HospitalsApp() {
+  // Adres z routera, nie z `window.location`: przy przejściu linkiem `window.location` ma w pierwszym renderze
+  // jeszcze stary adres (np. „/” zamiast „/szpitale?hv=c”).
+  const searchParams = useSearchParams();
+  // Plik roku już w pamięci (pobrany z wyprzedzeniem po najechaniu na link): strona bez szkieletu w pierwszym renderze.
+  const [boot] = useState(() => {
+    if (typeof window === "undefined") return null;
+    const dataset = peekStaticDataset();
+    return dataset ? { reference: referenceFromDataset(dataset), state: readHospitalUrlState(`?${searchParams.toString()}`) } : null;
+  });
+  const [ready, setReady] = useState(Boolean(boot));
+  const [year, setYear] = useState(boot?.reference.analysisYear ?? "");
+  const [products, setProducts] = useState<ProductOption[]>(boot?.reference.products ?? []);
+  const [hospitalKey, setHospitalKey] = useState(boot?.state.hospitalKey ?? "");
+  const [view, setView] = useState<HospitalView>(boot?.state.view ?? "summary");
+  const [peerDistance, setPeerDistance] = useState(boot?.state.peerDistance ?? PEER_DISTANCE_A_LIMIT);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (boot) return;
     const state = readHospitalUrlState(window.location.search);
     loadStaticDataset()
       .then((dataset) => {
@@ -39,7 +55,7 @@ export function HospitalsPage() {
         setReady(true);
       })
       .catch((err: unknown) => setError(err instanceof Error ? err.message : "Błąd pobierania danych."));
-  }, []);
+  }, [boot]);
 
   // Most z nagłówkiem portalu: „Szpitale” i „Porównania” przełączają widok bez przeładowania strony.
   useEffect(() => {

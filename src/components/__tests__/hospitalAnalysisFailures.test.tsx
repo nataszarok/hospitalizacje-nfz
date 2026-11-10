@@ -2,6 +2,7 @@
 
 import "@testing-library/jest-dom/vitest";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { financialResultsResource, jgpValuationsResource, peerPairsResource, rpwdlSummaryProfilesResource } from "@/lib/hospitalData";
 import { cleanup, render, screen } from "@testing-library/react";
 import { HospitalAnalysisTab } from "@/components/HospitalAnalysisTab";
 import { products, sampleAnalysis } from "./fixtures/hospitalFixtures";
@@ -10,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   loadStaticDataset: vi.fn(), hospitalDirectoryFromDataset: vi.fn(), hospitalAnalysisFromDataset: vi.fn(),
 }));
 vi.mock("@/lib/staticData", () => ({
+  peekStaticDataset: () => null,
   loadStaticDataset: mocks.loadStaticDataset,
   hospitalDirectoryFromDataset: mocks.hospitalDirectoryFromDataset,
   hospitalAnalysisFromDataset: mocks.hospitalAnalysisFromDataset,
@@ -29,6 +31,8 @@ const props = {
 };
 
 beforeEach(() => {
+  // Pliki szpitali są w pamięci modułu na całą wizytę: każdy test pobiera je od nowa.
+  for (const resource of [financialResultsResource, rpwdlSummaryProfilesResource, peerPairsResource, jgpValuationsResource]) resource.reset();
   vi.clearAllMocks();
   mocks.loadStaticDataset.mockResolvedValue({});
   mocks.hospitalDirectoryFromDataset.mockReturnValue([]);

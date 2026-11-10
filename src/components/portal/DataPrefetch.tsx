@@ -14,7 +14,8 @@ export function DataPrefetch() {
       const link = event.target instanceof Element ? event.target.closest("a[href]") : null;
       const href = link?.getAttribute("href");
       if (!href || !/^\/(analizy|szpitale)(\?|$)/.test(href)) return;
-      const key = href.split("?")[0];
+      // Porównanie szpitali ma własne pliki (pary A/B): osobny klucz niż profil.
+      const key = href.split("?")[0] + (/[?&]hv=c(&|$)/.test(href) ? "?hv=c" : "");
       if (done.has(key)) return;
       if (prefetchForHref(href, window.location.origin)) done.add(key);
     };

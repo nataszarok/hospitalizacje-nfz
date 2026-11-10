@@ -2,6 +2,7 @@
 
 import "@testing-library/jest-dom/vitest";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { financialResultsResource, jgpValuationsResource, peerPairsResource, rpwdlSummaryProfilesResource } from "@/lib/hospitalData";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { HospitalAnalysisTab, PEER_DISTANCE_LIVE_DELAY } from "@/components/HospitalAnalysisTab";
 import type { HospitalAnalysis } from "@/lib/types";
@@ -15,6 +16,7 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("@/lib/staticData", () => ({
+  peekStaticDataset: () => null,
   loadStaticDataset: mocks.loadStaticDataset,
   hospitalDirectoryFromDataset: mocks.hospitalDirectoryFromDataset,
   hospitalAnalysisFromDataset: mocks.hospitalAnalysisFromDataset,
@@ -103,6 +105,8 @@ function responseJson(value: unknown) {
 }
 
 beforeEach(() => {
+  // Pliki szpitali są w pamięci modułu na całą wizytę: każdy test pobiera je od nowa.
+  for (const resource of [financialResultsResource, rpwdlSummaryProfilesResource, peerPairsResource, jgpValuationsResource]) resource.reset();
   vi.clearAllMocks();
   mocks.loadStaticDataset.mockResolvedValue({});
   mocks.hospitalDirectoryFromDataset.mockReturnValue([
@@ -141,7 +145,7 @@ describe("HospitalAnalysisTab — profil szpitala", () => {
   it("pokazuje stratę finansową, normalizuje NIP i informuje o danych z wcześniejszego roku", async () => {
     render(<HospitalAnalysisTab {...baseProps} />);
     expect(await screen.findByText("Strata netto (2024)")).toBeInTheDocument();
-    expect(screen.getByText(/−12 mln zł/)).toBeInTheDocument();
+    expect(screen.getByText(/−12,0 mln zł/)).toBeInTheDocument();
     expect(screen.getByText(/Brak danych za 2025/)).toBeInTheDocument();
     expect(screen.getByText(/Przychód 210 mln zł/)).toBeInTheDocument();
   });

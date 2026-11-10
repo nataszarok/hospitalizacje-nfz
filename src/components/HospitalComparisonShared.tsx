@@ -1,7 +1,8 @@
 "use client";
 
 import { formatCityName, formatSigned as signed } from "@/lib/formatters";
-import { decodeValuations, VALUATIONS_PATH, type JgpValuation, type ValuationsFile } from "@/lib/valuations";
+import { jgpValuationsResource } from "@/lib/hospitalData";
+import type { JgpValuation } from "@/lib/valuations";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type * as React from "react";
 import type { HospitalPeerBenchmark, ProductOption } from "@/lib/types";
@@ -16,30 +17,12 @@ export const nf = new Intl.NumberFormat("pl-PL", { maximumFractionDigits: 0 });
 export const pf = new Intl.NumberFormat("pl-PL", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 export const pct = (v: number) => `${pf.format(v)}%`;
 
-export async function parseMaybeGzip(r: Response) {
-  if (!r.ok) throw new Error(`Nie udało się pobrać danych (${r.status})`);
-  const bytes = new Uint8Array(await r.arrayBuffer());
-  const gzip = bytes.length >= 2 && bytes[0] === 0x1f && bytes[1] === 0x8b;
-  if (!gzip) return JSON.parse(new TextDecoder().decode(bytes));
-  const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream("gzip"));
-  return JSON.parse(await new Response(stream).text());
-}
-
+export { parseMaybeGzip } from "@/lib/hospitalData";
 export type { JgpValuation } from "@/lib/valuations";
 
-let valuationPromise: Promise<JgpValuation[]> | null = null;
-export function loadJgpValuations() {
-  if (!valuationPromise) {
-    valuationPromise = fetch(VALUATIONS_PATH, { cache: "force-cache" })
-      .then(parseMaybeGzip)
-      .then((file: ValuationsFile) => decodeValuations(file))
-      .catch((e) => {
-        valuationPromise = null;
-        throw e;
-      });
-  }
-  return valuationPromise;
-}
+/** Wyceny JGP: jeden plik na wizytę (`jgpValuationsResource`, też pobierany z wyprzedzeniem). */
+export const loadJgpValuations = () => jgpValuationsResource.load();
+export const peekJgpValuations = () => jgpValuationsResource.peek();
 
 export function displayHospitalName(value:string){
   const raw=String(value ?? "")

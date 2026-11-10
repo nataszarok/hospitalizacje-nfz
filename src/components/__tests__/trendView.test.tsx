@@ -30,6 +30,7 @@ const loadTrends = vi.fn();
 const loadRegionalTrends = vi.fn<(ow: string) => Promise<unknown>>();
 vi.mock("@/lib/staticData", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/staticData")>()),
+  peekTrends: () => null,
   loadTrends: () => loadTrends(),
   loadRegionalTrends: (ow: string) => loadRegionalTrends(ow),
   loadDurationYearsSection: (section: string) => loadDurationYearsSection(section),
