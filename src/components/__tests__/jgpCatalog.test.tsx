@@ -33,8 +33,8 @@ describe("Katalog grup JGP", () => {
   it("pokazuje rozliczenia NFZ i ich zmianę, sortuje po kwocie; bez kwot tych kolumn nie ma", () => {
     render(<JgpCatalogPage catalog={buildJgpCatalog(trendsFixture, { A01: { "2024": 2_000_000_000, "2025": 2_500_000_000 }, F99: { "2025": 3_400_000 } })} />);
     const cells = (code: string) => within(screen.getByRole("link", { name: code }).closest("tr")!).getAllByRole("cell").map((cell) => cell.textContent);
-    expect(cells("A01").slice(5)).toEqual(["2,50 mld zł", "+25%"]);
-    expect(cells("F99").slice(5)).toEqual(["3 mln zł", "—"]);
+    expect(cells("A01").slice(5)).toEqual(["2,5 mld zł", "+25%"]);
+    expect(cells("F99").slice(5)).toEqual(["3,4 mln zł", "—"]);
     fireEvent.click(screen.getByRole("button", { name: /^Rozliczenia\s*NFZ 2025$/ }));
     expect(codes()).toEqual(["A01", "F99"]);
     fireEvent.click(screen.getByRole("button", { name: /^Rozliczenia\s*NFZ 2025/ }));
