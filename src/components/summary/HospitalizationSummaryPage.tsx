@@ -76,7 +76,7 @@ export function HospitalizationSummaryPage({ summary }: { summary: Hospitalizati
     <PageHeader
       eyebrow={<>Hospitalizacje w Polsce · {range}</>}
       title="Hospitalizacje w Polsce"
-      lead={<p>Podsumowanie wszystkich hospitalizacji rozliczonych przez NFZ w grupach JGP. Każda część odpowiada na jedno pytanie, opisuje, jak czytać wykres, i prowadzi do szczegółów.</p>}
+      lead={<p>Podsumowanie wszystkich hospitalizacji rozliczonych przez NFZ w grupach JGP. Każda część odpowiada na jedno pytanie i opisuje, jak czytać wykres. Szczegóły grup są w katalogu JGP.</p>}
       kpis={latest && latestMetrics ? [
         { label: `Hospitalizacje JGP ${latestYear}`, value: millions(latest.hospitalizations), note: yearChange !== null ? `${signedPct(yearChange)} r/r` : null },
         { label: "Przyjęcia nagłe", value: pct(latest.urgentPct), note: `${pct(first.urgentPct)} w ${first.year} r.` },
@@ -104,8 +104,6 @@ export function HospitalizationSummaryPage({ summary }: { summary: Hospitalizati
               <p>NFZ rozlicza też pobyty poza JGP, np. w psychiatrii, rehabilitacji i opiece długoterminowej. Tych pobytów nie ma w tych danych.</p>
               <p>Najmniej hospitalizacji było w {label(lowest.year)} ({millions(lowest.hospitalizations)}).{lowest.year === "2020" ? " To rok pandemii COVID-19: szpitale ograniczyły przyjęcia planowe." : null}</p>
             </>}
-            href={DASHBOARD_HREFS.trend}
-            cta="W czasie: dowolne grupy"
           >
             <YearBars years={years} />
           </DataCard>
@@ -115,8 +113,6 @@ export function HospitalizationSummaryPage({ summary }: { summary: Hospitalizati
             title="Hospitalizacje w miesiącach"
             lead={<>Ciemna linia: {latestYear} r., jasna: {previousYear} r.{summary.months.length > 2 ? <>, przerywana: {summary.months[0].year} r.</> : null}</>}
             description={<p>Linie pokazują sezonowość. Mniej przyjęć w miesiącach wakacyjnych i w grudniu to głównie mniej leczenia planowego. Porównanie z poprzednim i pierwszym rokiem pokazuje, w których miesiącach zmieniła się liczba hospitalizacji.</p>}
-            href={DASHBOARD_HREFS.trend}
-            cta="W czasie"
           >
             <MonthLines months={summary.months} />
             <Legend items={summary.months.map((m, i) => ({ label: m.year, color: i === summary.months.length - 1 ? CHART_COLORS.data : i === 0 && summary.months.length > 2 ? CHART_COLORS.textTertiary : CHART_COLORS.dataSoft }))} />
@@ -158,8 +154,6 @@ export function HospitalizationSummaryPage({ summary }: { summary: Hospitalizati
               <p>Średnia to kwota NFZ w roku podzielona przez liczbę hospitalizacji JGP w tym roku. Rośnie, gdy rosną wyceny i gdy przybywa droższego leczenia.</p>
               <p>W 2020 r. średnia wzrosła, bo szpitale leczyły mniej pacjentów planowych z prostymi zabiegami.</p>
             </>}
-            href="/jgp?sort=kwota"
-            cta="Grupy JGP według kwot"
             source="Dane NFZ o rozliczonych świadczeniach"
           >
             <ValueBars
@@ -185,8 +179,6 @@ export function HospitalizationSummaryPage({ summary }: { summary: Hospitalizati
               <p>Linie to udział pobytów bez nocy (0 dni) i pobytów 6 dni i dłuższych w hospitalizacjach roku (%). Reszta to pobyty 1–5 dni. NFZ podaje długość pobytu tylko w przedziałach (0, 1–2, 3–5, 6 i więcej dni), więc nie liczymy sumy dni (osobodni).</p>
               <p>Coraz więcej pobytów bez nocy i coraz mniej długich pobytów to skutek przenoszenia zabiegów do trybu jednego dnia, np. operacji zaćmy, i skracania pobytów.</p>
             </>}
-            href={DASHBOARD_HREFS.trend}
-            cta="W czasie: dowolne grupy"
           >
             <StayShares stays={summary.stays} buckets={STAY_SHOWN} />
             <Legend items={STAY_SHOWN.map((b) => ({ label: STAY_BUCKETS[b], color: STAY_COLORS[b] }))} />
@@ -200,8 +192,6 @@ export function HospitalizationSummaryPage({ summary }: { summary: Hospitalizati
               <p>Świadczeniodawca to podmiot z umową z NFZ (para: oddział wojewódzki NFZ i NIP). To szpitale, ale też kliniki zabiegów jednego dnia, np. okulistyczne.</p>
               <p>Udział 10% największych pokazuje koncentrację: im wyższy, tym więcej leczenia w dużych ośrodkach.</p>
             </>}
-            href={DASHBOARD_HREFS.hospital}
-            cta="Profile szpitali"
             source="Dane NFZ o hospitalizacjach"
           >
             <ValueBars years={summaryYears.map((y) => y.year)} values={summaryYears.map((y) => y.providers)} format={integer} label="Świadczeniodawcy w latach" />
@@ -221,8 +211,6 @@ export function HospitalizationSummaryPage({ summary }: { summary: Hospitalizati
               <p><b>Nagłe</b>: przyjęcia w trybie nagłym (kody trybu 2 i 3 w danych NFZ). <b>Planowe</b>: przyjęcia na podstawie skierowania (kod 6). <b>Pozostałe</b>: inne tryby, np. przeniesienie z innego szpitala.</p>
               {latest ? <p>Przyjęć nagłych: {millions(urgent(first))} w {first.year} r. i {millions(urgent(latest))} w {latestYear} r. Planowych: {millions(planned(first))} i {millions(planned(latest))}.</p> : null}
             </>}
-            href={DASHBOARD_HREFS.admissions}
-            cta="Tryb przyjęcia"
           >
             <AdmissionBars years={years} />
             <Legend items={[{ label: "Nagłe (%)", color: CHART_COLORS.data }, { label: "Planowe", color: CHART_COLORS.dataMuted }, { label: "Pozostałe", color: CHART_COLORS.dataFaint, border: CHART_COLORS.border }]} />
@@ -236,8 +224,6 @@ export function HospitalizationSummaryPage({ summary }: { summary: Hospitalizati
               <p>Wskaźnik to liczba zgonów w szpitalu podzielona przez liczbę hospitalizacji. Rośnie, gdy szpitale przyjmują mniej pacjentów planowych, bo przyjęcia planowe rzadko kończą się zgonem.</p>
               <p>Wskaźnik nie uwzględnia wieku i stanu pacjentów, więc nie mierzy jakości leczenia. Porównania szpitali są w widoku „Kto leczy”.</p>
             </>}
-            href={DASHBOARD_HREFS.mortality}
-            cta="Kto leczy"
           >
             <ValueBars years={summaryYears.map((y) => y.year)} values={summaryYears.map((y) => y.mortalityPct)} format={(v) => decimal(v)} label="Odsetek zgonów w latach (%)" />
           </DataCard>
@@ -351,8 +337,8 @@ export function HospitalizationSummaryPage({ summary }: { summary: Hospitalizati
               <p>Na liście są grupy częste (np. zaćma, porody) i grupy drogie, rozliczane rzadziej, ale z wysoką kwotą na hospitalizację (np. zabiegi kardiologiczne). Liczba po kwocie to zmiana kwoty od {settlements.firstYear} r.</p>
               <p>Zmiana od {settlements.firstYear} r. to zmiana kwoty jednej grupy. Grupa nowa w katalogu nie ma zmiany („—”). Długie nazwy są skrócone, pełna nazwa jest w dymku. Kliknij grupę, aby otworzyć jej kartę z kwotami w latach i świadczeniodawcami.</p>
             </>}
-            href="/jgp"
-            cta="Katalog grup JGP"
+            href="/jgp?sort=kwota"
+            cta="Grupy JGP według kwot"
             source="Dane NFZ o rozliczonych świadczeniach"
             estimate={false}
             chartAlign="start"

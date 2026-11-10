@@ -46,12 +46,16 @@ describe("Karta „Hospitalizacje w Polsce”", () => {
       "Ile hospitalizacji JGP?", "Ile NFZ płaci za hospitalizacje?", "Jak długo trwa pobyt i kto leczy?", "Jak przyjmowani są pacjenci i ilu umiera w szpitalu?",
       "Obszary leczenia: co leczą szpitale i za ile?", "Ile grup JGP rozlicza NFZ?", "Grupy JGP: najczęstsze i z największą kwotą", "Co rośnie, co maleje?",
     ]);
-    for (const card of screen.getAllByRole("article")) {
-      expect(card.querySelector("footer a")).not.toBeNull();
-      expect(card.textContent!.length).toBeGreaterThan(150);
+    // Link pod wykresem tylko tam, gdzie strona docelowa pokazuje tę samą miarę (katalog JGP).
+    // Eksplorator otwiera jedną grupę, a karty liczą wszystkie, więc karty bez odpowiednika nie mają linku.
+    const footerLinks = screen.getAllByRole("article").map((card) => card.querySelector("footer a")?.getAttribute("href") ?? null);
+    expect(footerLinks.filter((href) => href?.startsWith("/analizy") || href?.startsWith("/szpitale"))).toEqual([]);
+    expect(footerLinks.filter(Boolean).every((href) => href!.startsWith("/jgp"))).toBe(true);
+    for (const id of ["summary-years", "summary-months", "summary-per-stay", "summary-stays", "summary-providers", "summary-admissions", "summary-mortality"]) {
+      expect(document.querySelector(`[aria-labelledby="${id}"] footer a`)).toBeNull();
     }
+    for (const card of screen.getAllByRole("article")) expect(card.textContent!.length).toBeGreaterThan(150);
     expect(screen.getByRole("article", { name: "Przyjęcia nagłe i planowe" })).toHaveTextContent("Planowe: przyjęcia na podstawie skierowania");
-    expect(within(screen.getByRole("article", { name: "Odsetek hospitalizacji zakończonych zgonem" })).getByRole("link", { name: /Kto leczy/ })).toHaveAttribute("href", "/analizy?t=k");
   });
 
   it("tryb przyjęcia i zgony są w jednej sekcji, obok siebie", () => {
