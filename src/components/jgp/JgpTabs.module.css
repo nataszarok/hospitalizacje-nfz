@@ -1012,3 +1012,10 @@ ul.cornerLegend {
   font-size: var(--fs-xs);
   pointer-events: none;
 }
+
+/* Linia granicy w legendzie lejka: kolor i grubość jak na wykresie (DESIGN.md 6.2, „Granica”). */
+.legendLine {
+  flex: none;
+  stroke: var(--color-text-tertiary);
+  stroke-width: 1.2;
+}

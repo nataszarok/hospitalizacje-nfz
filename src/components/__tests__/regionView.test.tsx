@@ -175,6 +175,18 @@ describe("RegionView", () => {
     expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
   });
 
+  it("dymek kropki to wspólny `ChartTooltip` (pozycja z kropki, może wyjść poza mapę); działa też z klawiatury", async () => {
+    render(<RegionView productCodes={["P1"]} year="2025" method="min" />);
+    const map = await openCities();
+    const dot = within(map).getByRole("button", { name: /^Szpital Beta/ });
+    fireEvent.focus(dot);
+    const tip = screen.getByRole("tooltip");
+    expect(tip.className).toMatch(/tooltip/);
+    expect(tip).toHaveAttribute("data-ready", "true");
+    fireEvent.blur(dot);
+    expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
+  });
+
   it("kliknięcie kropki pokazuje placówki miasta z wyróżnioną placówką; można dodać miasto do obszarów i wrócić", async () => {
     const onAreasChange = vi.fn();
     render(<RegionView productCodes={["P1"]} year="2025" method="min" onAreasChange={onAreasChange} />);

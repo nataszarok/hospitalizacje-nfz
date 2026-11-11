@@ -8,7 +8,7 @@ describe("mortalityChartHelp — krótki standard objaśnienia wykresu śmiertel
     expect(lines).toEqual([
       "Punkt to ośrodek: liczba hospitalizacji i śmiertelność (zgony w szpitalu / hospitalizacje).",
       "Linia kropkowana: średnia wszystkich ośrodków.",
-      expect.stringMatching(/^Lejek: granice 95% i 99,8% wokół średniej/),
+      expect.stringMatching(/^Granice odchyleń: 95% \(kropki\) i 99,8% \(kreski\) wokół średniej/),
       "Kliknięcie punktu wybiera ośrodek.",
     ]);
     expect(mortalityChartHelp({ state: "funnel", showsMean: true })).toHaveLength(3);
@@ -17,8 +17,8 @@ describe("mortalityChartHelp — krótki standard objaśnienia wykresu śmiertel
   it("tylko to, co jest na wykresie: bez zdań o braku średniej, lejka i o szacowaniu <5", () => {
     const text = mortalityChartHelp({ state: "few-deaths", showsMean: false }).join(" ");
     expect(text).not.toMatch(/Bez linii średniej|Bez lejka|<5/);
-    expect(mortalityChartHelp({ state: "off", showsMean: true }).join(" ")).not.toMatch(/lejek/i);
-    expect(mortalityChartHelp({ state: "unavailable", showsMean: true })[2]).toMatch(/^Lejek działa dla/);
+    expect(mortalityChartHelp({ state: "off", showsMean: true }).join(" ")).not.toMatch(/lejek|granice/i);
+    expect(mortalityChartHelp({ state: "unavailable", showsMean: true })[2]).toMatch(/^Granice odchyleń działają dla/);
   });
 
   it("z lejkiem całość ma najwyżej ok. 60 słów", () => {

@@ -163,7 +163,7 @@ describe("Karta w zakładkach — Ośrodki", () => {
     const mortality = screen.getByRole("group", { name: /Wykres punktowy: 2 ośrodków, śmiertelność/ });
     expect(mortality).toHaveAttribute("data-curves", "0");
     expect(within(mortality).getAllByText(/Szpital/)).toHaveLength(2);
-    expect(screen.queryByRole("group", { name: /Wykres lejkowy/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("group", { name: /granicami odchyleń/ })).not.toBeInTheDocument();
     // Objaśnienie w ikonie „?” przy tytule, nie w akapicie pod wykresem.
     const help = screen.getByRole("note", { name: "Jak czytać wykres śmiertelności" });
     expect(help).toHaveTextContent(/^Punkt to ośrodek/);

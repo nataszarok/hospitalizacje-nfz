@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { defaultCardYear, funnelCurves, funnelHalfWidth, limitToCatalogYears, funnelStatus, movingRatio, providerYearTotals, ratioSeries, structureShares } from "@/lib/jgpCard";
+import { defaultCardYear, funnelCurves, funnelHalfWidth, limitToCatalogYears, funnelStatus, movingRatio, providerYearTotals, ratioSeries, structureShares, topProvidersOfPeriod } from "@/lib/jgpCard";
 import type { JgpPageData, JgpProviderRow } from "@/lib/jgpPage";
 
 const row = (hospitalizations: number, yearly: [number, number, number][] = []): JgpProviderRow => ({
@@ -165,5 +165,17 @@ describe("limitToCatalogYears — lata grupy w katalogu", () => {
     const full = { ...data, catalogYears: data.admissionYears, year: "2020" };
     expect(limitToCatalogYears(full)).toBe(full);
     expect(defaultCardYear(full)).toBe("2020");
+  });
+});
+
+describe("topProvidersOfPeriod — linie ośrodków w „Ile?”", () => {
+  it("wybiera największe ośrodki całego okresu (suma serii), nie ostatniego roku", () => {
+    // Ośrodek A: duży w latach wcześniejszych, mały w ostatnim roku (jak Koszalin w H52).
+    const a = { ...row(5), name: "A", series: [900, 800, 5] };
+    const b = { ...row(50), name: "B", series: [10, 10, 50] };
+    const c = { ...row(40), name: "C", series: [20, 20, 40] };
+    const zero = { ...row(0), name: "Z", series: [0, 0, 0] };
+    expect(topProvidersOfPeriod([b, c, a, zero], 2).map((item) => item.name)).toEqual(["A", "C"]);
+    expect(topProvidersOfPeriod([b, c, a, zero], 10).map((item) => item.name)).toEqual(["A", "C", "B"]);
   });
 });

@@ -155,8 +155,8 @@ export function MortalityTab({
               regions={reference.regions}
               funnel={funnelState === "funnel"}
             />
-            {/* Kolory statusu tylko bez wyróżnionych obszarów (obszary mają własne kolory, jak na karcie JGP). */}
-            {funnelState === "funnel" && !highlightAreas.length ? <FunnelLegend /> : null}
+            {/* Kolory statusu tylko bez wyróżnionych obszarów (obszary mają własne kolory, jak na karcie JGP); linie granic zawsze. */}
+            {funnelState === "funnel" ? <FunnelLegend statuses={!highlightAreas.length} /> : null}
           </div>
         ) : (
           <div className="empty-chart">

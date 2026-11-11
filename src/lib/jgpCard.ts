@@ -108,6 +108,19 @@ export function sumSeries(rows: JgpProviderRow[], length: number): number[] {
   return out;
 }
 
+/**
+ * Największe ośrodki całego okresu wykresu: suma hospitalizacji z serii (wszystkie miesiące), nie z jednego roku.
+ * Wykres „w czasie” pokazuje wszystkie lata, więc ośrodek duży w latach wcześniejszych nie znika z linii
+ * (np. H52: Koszalin jest 1. w całym okresie i 37. w 2025 r.).
+ */
+export function topProvidersOfPeriod(rows: JgpProviderRow[], count: number): JgpProviderRow[] {
+  const total = new Map(rows.map((row) => [row, row.series.reduce((sum, value) => sum + value, 0)]));
+  return rows
+    .filter((row) => (total.get(row) ?? 0) > 0)
+    .sort((a, b) => (total.get(b) ?? 0) - (total.get(a) ?? 0) || a.name.localeCompare(b.name, "pl"))
+    .slice(0, count);
+}
+
 /** Wskaźniki grupy świadczeniodawców (do porównania wybranego szpitala). */
 export function poolStats(rows: JgpProviderRow[]) {
   const hospitalizations = rows.reduce((sum, row) => sum + row.hospitalizations, 0);

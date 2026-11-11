@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { ChartTooltip, TooltipHead, TooltipLines } from "@/components/ChartTooltip";
 import { InfoTip } from "@/components/InfoTip";
 import { RegionMap } from "@/components/jgp/RegionMap";
 import { ProviderLink } from "@/components/TableLinks";
@@ -16,6 +17,7 @@ import {
   loadCitiesMap, loadFacilityYearsIndex, loadFacilityYearsSection, loadRegionsMap, loadStaticDataset, loadTrends,
   type StaticDataset, type TrendsDataset,
 } from "@/lib/staticData";
+import { elementBox, type Box } from "@/lib/tooltipPosition";
 import type { EstimationMethod } from "@/lib/types";
 import jgp from "@/components/jgp/JgpPage.module.css";
 import styles from "./Explorer.module.css";
@@ -194,7 +196,8 @@ export function RegionView({ productCodes, year, method, areas = NO_AREAS, onAre
       </div>
       <div className={styles.mapLayout}>
         <div className={styles.mapColumn}>
-          <div ref={mapRef}>
+          {/* Szerokość mapy z wysokości okna (`--map-aspect`): mapa z legendą i nagłówkiem karty mieści się na ekranie. */}
+          <div ref={mapRef} className={styles.mapFrame} style={{ "--map-aspect": data.regionsMap.viewBox[0] / data.regionsMap.viewBox[1] } as CSSProperties}>
             {mode === "regions"
               ? <RegionMap map={data.regionsMap} cells={cells} regions={regionAreas.map((area) => area.owNfz)} onToggle={toggleRegion} colors={regionAreas.map(areaColor)} />
               : dots
@@ -331,7 +334,8 @@ const ratio = (value: number, reference: number) => reference > 0
 /**
  * Mapa placówek: kontury województw i kropka na każdą placówkę z kropką w roku mapy (`facilityDots`).
  * Kolor = hospitalizacje placówki wobec mediany placówek w roku mapy; wybrane obszary mają obwódkę,
- * pozostałe placówki są przygaszone. Najechanie pokazuje podpowiedź (bez zmiany tabeli obok).
+ * pozostałe placówki są przygaszone. Najechanie pokazuje dymek `ChartTooltip` obok kropki (bez zmiany tabeli obok);
+ * dymek może wyjść poza mapę i kartę, ale nie poza okno (DESIGN.md 6.3).
  * Większe kropki pod spodem, mniejsze na wierzchu; przy zmianie roku kropki płynnie zmieniają wielkość i miejsce.
  */
 function FacilityMap({ map, dots, mapYear, areas, areaColor, median: yearMedian, regionName, focus, onSelect }: {
@@ -347,15 +351,12 @@ function FacilityMap({ map, dots, mapYear, areas, areaColor, median: yearMedian,
   onSelect: (dot: FacilityDot) => void;
 }) {
   const [width, height] = map.viewBox;
-  const [hover, setHover] = useState<{ dot: FacilityDot; x: number; y: number; left: boolean } | null>(null);
+  const [hover, setHover] = useState<{ dot: FacilityDot; anchor: Box } | null>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const shown = [...dots].sort((a, b) => b.r - a.r);
   const areaOf = (dot: FacilityDot) => areas.find((candidate) => inArea(candidate, { owNfz: dot.owNfz, city: dot.city }));
-  const showTip = (dot: FacilityDot, clientX: number, clientY: number) => {
-    const box = wrapRef.current?.getBoundingClientRect();
-    // Po prawej połowie mapy podpowiedź po lewej stronie kursora (nie wychodzi poza kartę).
-    if (box) setHover({ dot, x: clientX - box.left, y: clientY - box.top, left: clientX - box.left > box.width / 2 });
-  };
+  // Pozycja z prostokąta kropki, nie z kursora: dymek nie zasłania placówki.
+  const showTip = (dot: FacilityDot, target: Element) => setHover({ dot, anchor: elementBox(target) });
   const tipArea = hover ? areaOf(hover.dot) : undefined;
   return <div ref={wrapRef} className={styles.facilityMap} onMouseLeave={() => setHover(null)}>
     <svg className={jgp.regionMap} viewBox={`0 0 ${width} ${height}`} role="group" aria-label={`Mapa placówek: hospitalizacje w ${mapYear} r.`}>
@@ -378,24 +379,22 @@ function FacilityMap({ map, dots, mapYear, areas, areaColor, median: yearMedian,
           aria-label={dotTitle(dot, mapYear)}
           aria-pressed={selected}
           onClick={() => onSelect(dot)}
-          onMouseEnter={(event) => showTip(dot, event.clientX, event.clientY)}
-          onMouseMove={(event) => showTip(dot, event.clientX, event.clientY)}
+          onMouseEnter={(event) => showTip(dot, event.currentTarget)}
           onMouseLeave={() => setHover(null)}
+          onFocus={(event) => showTip(dot, event.currentTarget)}
+          onBlur={() => setHover(null)}
           onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onSelect(dot); } }}
         />;
       })}
     </svg>
-    {hover ? <div
-      className={`${styles.mapTip} ${hover.left ? styles.mapTipLeft : ""}`}
-      style={{ left: hover.x, top: hover.y }}
-      role="tooltip"
-    >
-      <b>{hover.dot.name}</b>
-      <span>{formatCityName(hover.dot.city)} · {regionName(hover.dot.owNfz)}</span>
-      <span>Hospitalizacje {mapYear}: <b>{integer(hover.dot.hospitalizations)}</b> ({ratio(hover.dot.hospitalizations, yearMedian)} mediany roku)</span>
-      {hover.dot.deaths !== null ? <span>Śmiertelność: <b>{decimal((hover.dot.deaths / hover.dot.hospitalizations) * 100)}%</b> ({integer(hover.dot.deaths)} {deathsWord(hover.dot.deaths)} na {integer(hover.dot.hospitalizations)} hosp.)</span> : null}
-      {tipArea ? <span><i className={styles.areaSwatch} style={{ background: areaColor(tipArea) }} aria-hidden /> w obszarze analizy</span> : null}
-    </div> : null}
+    {hover ? <ChartTooltip anchor={hover.anchor} container={wrapRef}>
+      <TooltipHead title={hover.dot.name} context={`${formatCityName(hover.dot.city)} · ${regionName(hover.dot.owNfz)}`} />
+      <TooltipLines lines={[
+        <>Hospitalizacje {mapYear}: <b>{integer(hover.dot.hospitalizations)}</b> ({ratio(hover.dot.hospitalizations, yearMedian)} mediany roku)</>,
+        ...(hover.dot.deaths !== null ? [<>Śmiertelność: <b>{decimal((hover.dot.deaths / hover.dot.hospitalizations) * 100)}%</b> ({integer(hover.dot.deaths)} {deathsWord(hover.dot.deaths)} na {integer(hover.dot.hospitalizations)} hosp.)</>] : []),
+        ...(tipArea ? [<><i className={styles.areaSwatch} style={{ background: areaColor(tipArea) }} aria-hidden /> w obszarze analizy</>] : []),
+      ]} />
+    </ChartTooltip> : null}
   </div>;
 }
 

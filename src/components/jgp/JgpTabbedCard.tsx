@@ -16,7 +16,7 @@ import { formatCityName, formatPln, plnScale } from "@/lib/formatters";
 import {
   cartogramCells, dataForYear, defaultCardYear, funnelStatus, limitToCatalogYears, MAX_REGIONS, poolStats, providerPool, providerYearTotals, scaleColor, selectedIndex,
   structureShares, sumSeries, unpackPageData, yearChangePct, type ChartPeriod, type CompareScope, type PackedJgpPageData, type RegionsMap,
-  outlierCap, showsMortalityReference,
+  outlierCap, showsMortalityReference, topProvidersOfPeriod,
 } from "@/lib/jgpCard";
 import type { JgpPageData, JgpProviderRow } from "@/lib/jgpPage";
 import { explorerHref, hospitalHref } from "@/lib/portalLinks";
@@ -49,7 +49,14 @@ const REGION_PARAM = "ow";
 const YEAR_PARAM = "rok";
 /** Okres wykresów „Ile?”: `okres=lata`; bez parametru miesiące. */
 const PERIOD_PARAM = "okres";
+/** Liczba linii ośrodków w „Ile?” (największe w całym okresie wykresu, `topProvidersOfPeriod`). */
 const TOP_LINES = 15;
+/** Okres wykresu słowami: „w latach 2017–2025” albo „w 2025 r.”. */
+const yearSpan = (months: string[]) => {
+  const from = months[0]?.slice(0, 4);
+  const to = months.at(-1)?.slice(0, 4);
+  return from && to && from !== to ? `w latach ${from}–${to}` : `w ${to ?? ""} r.`;
+};
 const SERVER_ROWS = 30;
 const subscribeNothing = () => () => {};
 // Kolory wybranych województw i ośrodków spoza nich: wspólna paleta z eksploratorem (`chartPalette`).
@@ -216,6 +223,7 @@ export function JgpTabbedCard({ packed, map = null }: { packed: PackedJgpPageDat
         <ProvidersTab
           data={data}
           pool={pool}
+          linePool={linePool}
           comparison={comparison}
           regions={state.regions}
           selectedRow={selectedRow}
@@ -578,30 +586,33 @@ function FamilySection({ data }: { data: JgpPageData }) {
 
 // ——— Ośrodki ———
 
-function ProvidersTab({ data, pool, comparison, regions, selectedRow, scope, filtered, onSelect, onScope, onClear, period, onPeriod }: {
-  data: JgpPageData; pool: JgpProviderRow[]; comparison: JgpProviderRow[]; regions: string[]; selectedRow: JgpProviderRow | null; scope: CompareScope; filtered: boolean;
+function ProvidersTab({ data, pool, linePool, comparison, regions, selectedRow, scope, filtered, onSelect, onScope, onClear, period, onPeriod }: {
+  data: JgpPageData; pool: JgpProviderRow[]; linePool: JgpProviderRow[]; comparison: JgpProviderRow[]; regions: string[]; selectedRow: JgpProviderRow | null; scope: CompareScope; filtered: boolean;
   onSelect: (key: string) => void; onScope: (scope: CompareScope) => void; onClear: () => void; period: ChartPeriod; onPeriod: (period: ChartPeriod) => void;
 }) {
   const [hoverKey, setHoverKey] = useState<string | null>(null);
   const [details, setDetails] = useState(false);
+  // Linie: największe ośrodki całego okresu wykresu (`linePool` ze wszystkich lat), nie tylko wybranego roku.
   // Stała lista linii przy najechaniu (nowa tablica przerysowywałaby wykres przy każdym ruchu myszy).
-  const top = useMemo(() => pool.slice(0, TOP_LINES), [pool]);
+  const top = useMemo(() => topProvidersOfPeriod(linePool, TOP_LINES), [linePool]);
+  const rankOf = useMemo(() => new Map(data.providers.map((row, i) => [row.key, i + 1])), [data.providers]);
   const regionColor = useMemo(() => regionColors(regions), [regions]);
   const lines = useMemo((): ChartLine[] => {
-    const shown = selectedRow && !top.includes(selectedRow) ? [...top, selectedRow] : top;
+    const shown = selectedRow && !top.some((row) => row.key === selectedRow.key) ? [...top, selectedRow] : top;
     // Linie ośrodków szare; wybrany ośrodek – linia w kolorze sygnału z podpisem (nazwa).
+    // Numer = miejsce w rankingu wybranego roku; ośrodek bez hospitalizacji w tym roku nie ma numeru.
     return shown.map((row) => ({
       key: row.key,
-      name: `${data.providers.indexOf(row) + 1}. ${row.name}`,
+      name: rankOf.has(row.key) ? `${rankOf.get(row.key)}. ${row.name}` : row.name,
       detail: `${formatCityName(row.city)} · OW ${row.voivodeship}`,
       values: row.series,
-      tone: row === selectedRow ? "selected" : undefined,
+      tone: row.key === selectedRow?.key ? "selected" : undefined,
     }));
-  }, [top, selectedRow, data.providers]);
+  }, [top, selectedRow, rankOf]);
   const hoverRow = hoverKey ? data.providers.find((row) => row.key === hoverKey) ?? null : null;
   return <>
     <section className={styles.sec} aria-labelledby="s-czas">
-      <SectionHead id="s-czas" question="Ile?" context={`Hospitalizacje ${periodWord(period)}, ${Math.min(TOP_LINES, pool.length)} największych ośrodków w ${data.year} r.`} tools={<PeriodToggle period={period} onPeriod={onPeriod} />} />
+      <SectionHead id="s-czas" question="Ile?" context={`Hospitalizacje ${periodWord(period)}, ${top.length} największych ośrodków ${yearSpan(data.months)}`} tools={<PeriodToggle period={period} onPeriod={onPeriod} />} />
       <GroupLineChart
         months={data.months}
         lines={lines}
@@ -800,7 +811,7 @@ function HowSection({ data, rows, regions, selectedRow, onSelect }: { data: JgpP
   const names = new Map(data.regions.map((row) => [row.owNfz, row.name]));
   // Legendy „Jak leczą?”. Na karcie: województwa nad wykresami, skala lejka w pionie w prawym górnym rogu wykresu.
   // Wybrany ośrodek ma w legendzie miejsce tylko w powiększeniu: tam wszystkie pozycje są w jednym wierszu pod wykresem.
-  const showFunnelLegend = showFunnel && !highlight;
+  // Z wyróżnionymi województwami punkty mają ich kolory, więc legenda lejka pokazuje tylko linie granic.
   const selectedItem = selectedRow ? <SelectedLegendItem name={selectedRow.name} /> : null;
   const regionItems = highlight ? <>
     {regions.map((ow) => <li key={ow}><span className={base.swatch} style={{ background: regionColor.get(ow) }} aria-hidden />{(names.get(ow) ?? ow).toLocaleLowerCase("pl-PL")}</li>)}
@@ -808,7 +819,7 @@ function HowSection({ data, rows, regions, selectedRow, onSelect }: { data: JgpP
   </> : null;
   const regionLegend = highlight ? <ul className={base.legend} aria-label="Legenda województw">{regionItems}</ul> : null;
   const expandedLegend = (funnel: boolean) => funnel
-    ? <FunnelLegend>{selectedItem}</FunnelLegend>
+    ? <FunnelLegend statuses={!highlight}>{selectedItem}{regionItems}</FunnelLegend>
     : selectedItem || highlight ? <ul className={base.legend} aria-label="Legenda">{selectedItem}{regionItems}</ul> : null;
   return <section className={styles.sec} aria-labelledby="s-jak">
     <SectionHead id="s-jak" question="Jak leczą?" context={`Wszystkie ośrodki w ${data.year} r.${highlight ? "; wybrane województwa w kolorach" : ""}`} tag="Rok" />
@@ -821,9 +832,9 @@ function HowSection({ data, rows, regions, selectedRow, onSelect }: { data: JgpP
         </ChartExpand>
       </div>
       <div>
-        <h3 className={base.chartTitle}>{showFunnel ? "Śmiertelność: wykres lejkowy" : "Śmiertelność"} <InfoTip label={<HelpLines lines={mortalityHelp} />} ariaLabel="Jak czytać wykres śmiertelności" /></h3>
-        <ChartExpand title={`${data.jgpCode}: ${showFunnel ? "śmiertelność, wykres lejkowy" : "śmiertelność"}, ${data.year}`} explorer={{ href: explorerHref(data.jgpCode, "mortality", { year: data.year, regions }), label: "Kto leczy" }}>
-          {(expanded) => <div className={styles.cornerLegendFrame}><ProviderScatter points={mortality.points} curves={mortality.curves} xTitle="Hospitalizacje" yTitle="Śmiertelność" ySuffix="%" reference={referenceMortality} onSelect={onSelect} height={expanded ? 600 : 300} yCap={mortalityCap} modeBar={false} ariaLabel={`${showFunnel ? "Wykres lejkowy" : "Wykres punktowy"}: ${rows.length} ośrodków, śmiertelność względem liczby hospitalizacji`} />{expanded ? expandedLegend(showFunnelLegend) : showFunnelLegend ? <FunnelLegend corner /> : null}</div>}
+        <h3 className={base.chartTitle}>{showFunnel ? "Śmiertelność i granice odchyleń" : "Śmiertelność"} <InfoTip label={<HelpLines lines={mortalityHelp} />} ariaLabel="Jak czytać wykres śmiertelności" /></h3>
+        <ChartExpand title={`${data.jgpCode}: ${showFunnel ? "śmiertelność i granice odchyleń" : "śmiertelność"}, ${data.year}`} explorer={{ href: explorerHref(data.jgpCode, "mortality", { year: data.year, regions }), label: "Kto leczy" }}>
+          {(expanded) => <div className={styles.cornerLegendFrame}><ProviderScatter points={mortality.points} curves={mortality.curves} xTitle="Hospitalizacje" yTitle="Śmiertelność" ySuffix="%" reference={referenceMortality} onSelect={onSelect} height={expanded ? 600 : 300} yCap={mortalityCap} modeBar={false} ariaLabel={`${showFunnel ? "Wykres punktowy z granicami odchyleń" : "Wykres punktowy"}: ${rows.length} ośrodków, śmiertelność względem liczby hospitalizacji`} />{expanded ? expandedLegend(showFunnel) : showFunnel ? <FunnelLegend corner statuses={!highlight} /> : null}</div>}
         </ChartExpand>
       </div>
     </div>

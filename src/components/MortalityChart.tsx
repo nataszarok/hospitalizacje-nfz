@@ -153,7 +153,7 @@ export function MortalityChart({
               ? { label: "Hospitalizacje na 100 tys.", value: "%{customdata[7]:,.1f}" }
               : { label: "Hospitalizacje", value: "%{customdata[5]:,.0f}" },
             { label: "Zgony", value: "%{customdata[6]:,.0f}" },
-            ...(funnel ? [{ label: "Lejek", value: "%{customdata[9]}" }] : []),
+            ...(funnel ? [{ label: "Granice odchyleń", value: "%{customdata[9]}" }] : []),
           ],
           footer: "NIP %{customdata[1]}",
         }),
