@@ -49,6 +49,19 @@ export const FUNNEL_LINE_LEGEND: { dash: "dot" | "dash"; label: string }[] = [
   { dash: "dash", label: "granica 99,8%" },
 ];
 
+/**
+ * Pozycje legendy Plotly z liniami granic (eksplorator): w tej samej kolumnie legendy co obszary i kody JGP,
+ * pod tytułem `FUNNEL_NAME`. Serie bez danych, tylko do legendy.
+ */
+export function funnelLegendTraces(): Record<string, unknown>[] {
+  return FUNNEL_LINE_LEGEND.map((item, index) => ({
+    type: "scatter", mode: "lines", x: [null], y: [null], name: item.label, hoverinfo: "skip",
+    line: { color: CHART_COLORS.textTertiary, width: 1.2, dash: item.dash },
+    legendgroup: "funnel",
+    ...(index === 0 ? { legendgrouptitle: { text: FUNNEL_NAME } } : {}),
+  }));
+}
+
 /** Lejek ma sens dopiero od `MIN_FUNNEL_DEATHS` zgonów w grupie. */
 export const hasEnoughDeathsForFunnel = (deaths: number) => deaths >= MIN_FUNNEL_DEATHS;
 

@@ -333,7 +333,7 @@ describe("Karta w zakładkach — okres w „Ile?” (miesiące albo lata)", () 
     expect(chart()).toHaveAttribute("data-note", expect.stringContaining("Kropka = suma roku"));
     fireEvent.click(screen.getByRole("tab", { name: /Ośrodki/ }));
     expect(chart()).toHaveAttribute("data-period", "year");
-    expect(heading()).toHaveTextContent(/^Ile\? Hospitalizacje rocznie, \d+ największych ośrodków/);
+    expect(heading()).toHaveTextContent(/^Ile\? Hospitalizacje rocznie: 15 największych ośrodków z każdego roku .* \(razem \d+\)/);
     fireEvent.click(within(toggle()).getByRole("button", { name: "Miesiące" }));
     expect(chart()).toHaveAttribute("data-period", "month");
     expect(window.location.search).toBe("?widok=osrodki");

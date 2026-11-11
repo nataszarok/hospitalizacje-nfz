@@ -196,7 +196,7 @@ export function RegionView({ productCodes, year, method, areas = NO_AREAS, onAre
       </div>
       <div className={styles.mapLayout}>
         <div className={styles.mapColumn}>
-          {/* Szerokość mapy z wysokości okna (`--map-aspect`): mapa z legendą i nagłówkiem karty mieści się na ekranie. */}
+          {/* Szerokość mapy z wysokości okna (`--map-aspect`): mapa z nagłówkiem karty mieści się na ekranie. */}
           <div ref={mapRef} className={styles.mapFrame} style={{ "--map-aspect": data.regionsMap.viewBox[0] / data.regionsMap.viewBox[1] } as CSSProperties}>
             {mode === "regions"
               ? <RegionMap map={data.regionsMap} cells={cells} regions={regionAreas.map((area) => area.owNfz)} onToggle={toggleRegion} colors={regionAreas.map(areaColor)} />
@@ -213,18 +213,18 @@ export function RegionView({ productCodes, year, method, areas = NO_AREAS, onAre
                   onSelect={(dot) => setFocus({ city: dot.city, facility: dot.facility })}
                 />
                 : <div className="empty-chart">Ładowanie danych placówek…</div>}
+            {/* Legenda w pustym lewym dolnym rogu prostokąta mapy (na wąskim ekranie pod mapą). */}
+            <MapLegend
+              mode={mode}
+              range={range}
+              max={maxFacility}
+              scaleMax={scaleMax}
+              dotMedian={dotMedian}
+              scale={mapWidth / data.regionsMap.viewBox[0]}
+            />
           </div>
-          <MapLegend
-            mode={mode}
-            range={range}
-            areas={areas}
-            areaColor={areaColor}
-            reference={reference}
-            max={maxFacility}
-            scaleMax={scaleMax}
-            dotMedian={dotMedian}
-            scale={mapWidth / data.regionsMap.viewBox[0]}
-          />
+          {/* Obszary pod mapą: lista do 5 pozycji nie mieści się w rogu mapy. */}
+          <AreaLegend areas={mode === "regions" ? regionAreas : areas} areaColor={areaColor} reference={reference} />
         </div>
         {mode === "regions"
           ? <RegionTable year={mapYear} rows={rows} areas={regionAreas} areaColor={areaColor} onToggle={onAreasChange ? toggleRegion : undefined} />
@@ -247,6 +247,17 @@ export function RegionView({ productCodes, year, method, areas = NO_AREAS, onAre
   </div>;
 }
 
+/** Legenda wybranych obszarów (obwódka w kolorze obszaru); bez obszarów nic. */
+function AreaLegend({ areas, areaColor, reference }: { areas: AnalysisArea[]; areaColor: (area: AnalysisArea) => string; reference: Parameters<typeof areaLabel>[1] }) {
+  if (!areas.length) return null;
+  return <div className={styles.legendGroup}>
+    <div className={styles.legendTitle}>Obszary</div>
+    <ul className={styles.legendItems}>
+      {areas.map((area) => <li key={areaToValue(area)}><i className={styles.legendRing} style={{ borderColor: areaColor(area) }} aria-hidden />{areaLabel(area, reference)}</li>)}
+    </ul>
+  </div>;
+}
+
 /** Zaokrąglenie wartości legendy do 1, 2 albo 5 × potęga 10. */
 function niceValue(value: number): number {
   if (value <= 0) return 0;
@@ -255,16 +266,13 @@ function niceValue(value: number): number {
 }
 
 /**
- * Legenda mapy w jednym układzie: grupy z nagłówkiem (jak legenda obok mapy w przykładzie).
- * Województwa: skala koloru i wybrane obszary. Placówki: kolory i wielkość — kropki w skali mapy
+ * Legenda mapy w jednym układzie: grupy z nagłówkiem, w lewym dolnym rogu mapy (obszary: `AreaLegend` pod mapą).
+ * Województwa: skala koloru. Placówki: wielkość i kolory — kropki w skali mapy
  * (`scale` = piksele na jednostkę mapy), więc kropka legendy ma rozmiar kropki na mapie.
  */
-function MapLegend({ mode, range, areas, areaColor, reference, max, scaleMax, dotMedian, scale }: {
+function MapLegend({ mode, range, max, scaleMax, dotMedian, scale }: {
   mode: MapMode;
   range: string;
-  areas: AnalysisArea[];
-  areaColor: (area: AnalysisArea) => string;
-  reference: { regions: { owNfz: string; name: string }[] };
   /** Największa wartość placówki (wartości kropek legendy). */
   max: number;
   /** Koniec skali wielkości (`dotScaleMax`). */
@@ -273,7 +281,6 @@ function MapLegend({ mode, range, areas, areaColor, reference, max, scaleMax, do
   dotMedian: number;
   scale: number;
 }) {
-  const regionAreas = areas.filter((area) => area.kind === "region");
   if (mode === "regions") return <div className={styles.mapLegend}>
     <div className={styles.legendGroup}>
       <div className={styles.legendTitle}>Na 100 tys. mieszkańców wobec średniej {range}</div>
@@ -283,33 +290,13 @@ function MapLegend({ mode, range, areas, areaColor, reference, max, scaleMax, do
         <span>2 ×</span>
       </div>
     </div>
-    {regionAreas.length ? <div className={styles.legendGroup}>
-      <div className={styles.legendTitle}>Obszary</div>
-      <ul className={styles.legendItems}>
-        {regionAreas.map((area) => <li key={areaToValue(area)}><i className={styles.legendRing} style={{ borderColor: areaColor(area) }} aria-hidden />{areaLabel(area, reference)}</li>)}
-      </ul>
-    </div> : null}
   </div>;
   // Wartości poniżej progu mają jedną wielkość: legenda kończy się pozycją „≤ 25”.
   const sizes = [...new Set([niceValue(max), niceValue(max / 4), niceValue(max / 16)])].filter((value) => value > DOT_VALUE_FLOOR);
   sizes.push(DOT_VALUE_FLOOR);
   return <div className={styles.mapLegend}>
     <div className={styles.legendGroup}>
-      <div className={styles.legendTitle}>Hospitalizacje placówki wobec mediany roku ({integer(dotMedian)})</div>
-      <div className={styles.legendScale}>
-        <span>¼ ×</span>
-        <i style={{ background: `linear-gradient(90deg, ${scaleColor(-1)}, ${scaleColor(0)}, ${scaleColor(1)})` }} aria-hidden />
-        <span>4 ×</span>
-      </div>
-    </div>
-    {areas.length ? <div className={styles.legendGroup}>
-      <div className={styles.legendTitle}>Obszary</div>
-      <ul className={styles.legendItems}>
-        {areas.map((area) => <li key={areaToValue(area)}><i className={styles.legendRing} style={{ borderColor: areaColor(area) }} aria-hidden />{areaLabel(area, reference)}</li>)}
-      </ul>
-    </div> : null}
-    <div className={styles.legendGroup}>
-      <div className={styles.legendTitle}>Hospitalizacje w roku</div>
+      <div className={styles.legendTitle}>Wielkość: hospitalizacje</div>
       <ul className={styles.legendSizes}>
         {sizes.map((value) => {
           const r = Math.max(1.5, dotRadius(value, scaleMax) * scale);
@@ -319,6 +306,14 @@ function MapLegend({ mode, range, areas, areaColor, reference, max, scaleMax, do
           </li>;
         })}
       </ul>
+    </div>
+    <div className={styles.legendGroup}>
+      <div className={styles.legendTitle}>Kolor: wobec mediany roku ({integer(dotMedian)})</div>
+      <div className={styles.legendScale}>
+        <span>¼ ×</span>
+        <i style={{ background: `linear-gradient(90deg, ${scaleColor(-1)}, ${scaleColor(0)}, ${scaleColor(1)})` }} aria-hidden />
+        <span>4 ×</span>
+      </div>
     </div>
   </div>;
 }

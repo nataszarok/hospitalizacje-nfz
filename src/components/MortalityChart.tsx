@@ -11,7 +11,7 @@ import {
 } from "@/lib/mortality";
 import { BASE_POINT, OTHER_POINT } from "@/lib/chartPalette";
 import { funnelStatus, showsMortalityReference } from "@/lib/jgpCard";
-import { FUNNEL_STATUS_COLORS, funnelLines, mortalityTotals } from "@/lib/mortalityFunnel";
+import { FUNNEL_STATUS_COLORS, funnelLegendTraces, funnelLines, mortalityTotals } from "@/lib/mortalityFunnel";
 import { areaFromValue, areaToValue, type AnalysisArea } from "@/lib/area";
 import {
   areaHighlightKey,
@@ -95,7 +95,8 @@ export function MortalityChart({
       // Bez wyróżnienia punkty są niebieskie; z wyróżnieniem pozostałe szare (jak na karcie grupy JGP).
       const restColor = geoSelection.length ? OTHER_POINT : BASE_POINT;
       const isCombined = displayMode === "combined";
-      const showLegend = geoSelection.length > 0 || (!isCombined && productCodes.length > 1);
+      // Legenda Plotly: obszary, kody JGP i linie granic odchyleń w jednej kolumnie.
+      const showLegend = funnel || geoSelection.length > 0 || (!isCombined && productCodes.length > 1);
 
       // Średnia śmiertelność wszystkich świadczeniodawców wykresu (linia „średnia” i środek lejka).
       const { meanPct } = mortalityTotals(rows);
@@ -241,6 +242,7 @@ export function MortalityChart({
         productCodes: isCombined ? [] : productCodes,
         productLabel: (code) => productByCode.get(code)?.jgpCode ?? code,
       }));
+      if (funnel) traces.push(...funnelLegendTraces());
 
       const hoverTraceIndex = traces.length;
       traces.push(makeHoverTrace());

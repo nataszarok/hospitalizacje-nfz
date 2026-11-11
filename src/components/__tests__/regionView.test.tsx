@@ -135,8 +135,8 @@ describe("RegionView", () => {
   it("legenda: kolory i wielkość kropek w jednym układzie", async () => {
     render(<RegionView productCodes={["P1"]} year="2025" method="min" areas={[{ kind: "city", city: "KATOWICE" }]} />);
     await openCities();
-    expect(screen.getByText(/Hospitalizacje placówki wobec mediany roku/)).toBeInTheDocument();
-    expect(screen.getByText("Hospitalizacje w roku")).toBeInTheDocument();
+    expect(screen.getByText(/Kolor: wobec mediany roku/)).toBeInTheDocument();
+    expect(screen.getByText("Wielkość: hospitalizacje")).toBeInTheDocument();
     expect(screen.getByText("Obszary")).toBeInTheDocument();
     expect(screen.getAllByText("Katowice").length).toBeGreaterThan(0);
   });

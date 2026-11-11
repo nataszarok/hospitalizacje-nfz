@@ -169,13 +169,23 @@ describe("limitToCatalogYears — lata grupy w katalogu", () => {
 });
 
 describe("topProvidersOfPeriod — linie ośrodków w „Ile?”", () => {
-  it("wybiera największe ośrodki całego okresu (suma serii), nie ostatniego roku", () => {
-    // Ośrodek A: duży w latach wcześniejszych, mały w ostatnim roku (jak Koszalin w H52).
-    const a = { ...row(5), name: "A", series: [900, 800, 5] };
-    const b = { ...row(50), name: "B", series: [10, 10, 50] };
-    const c = { ...row(40), name: "C", series: [20, 20, 40] };
-    const zero = { ...row(0), name: "Z", series: [0, 0, 0] };
-    expect(topProvidersOfPeriod([b, c, a, zero], 2).map((item) => item.name)).toEqual(["A", "C"]);
-    expect(topProvidersOfPeriod([b, c, a, zero], 10).map((item) => item.name)).toEqual(["A", "C", "B"]);
+  const months = ["2023-01", "2023-02", "2024-01", "2024-02", "2025-01", "2025-02"];
+  const provider = (name: string, series: number[]) => ({ ...row(0), key: name, name, series });
+  // A: lokalny wzrost w 2023 (jak Koszalin w H52); B, C: duże w ostatnich latach; D: zawsze mały; Z: bez hospitalizacji.
+  const a = provider("A", [500, 400, 5, 5, 1, 1]);
+  const b = provider("B", [20, 20, 60, 60, 50, 50]);
+  const c = provider("C", [30, 30, 40, 40, 45, 45]);
+  const d = provider("D", [1, 1, 1, 1, 1, 1]);
+  const z = provider("Z", [0, 0, 0, 0, 0, 0]);
+
+  it("bierze największe ośrodki z każdego roku, razem bez powtórzeń; kolejność według sumy okresu", () => {
+    // Top 1: 2023 → A, 2024 → B, 2025 → B.
+    expect(topProvidersOfPeriod([b, c, a, d, z], months, 1).map((item) => item.name)).toEqual(["A", "B"]);
+    // Top 2: 2023 → A, C; 2024 → B, C; 2025 → B, C.
+    expect(topProvidersOfPeriod([b, c, a, d, z], months, 2).map((item) => item.name)).toEqual(["A", "B", "C"]);
+  });
+
+  it("pomija ośrodki bez hospitalizacji", () => {
+    expect(topProvidersOfPeriod([z, d], months, 5).map((item) => item.name)).toEqual(["D"]);
   });
 });

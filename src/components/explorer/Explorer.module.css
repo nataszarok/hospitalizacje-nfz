@@ -607,12 +607,45 @@
   min-width: 0;
 }
 
-/* Wysokość mapy najwyżej wysokość okna bez nagłówka strony, nagłówka karty i legendy (ok. 380 px),
+/* Wysokość mapy najwyżej wysokość okna bez nagłówka strony, nagłówka karty i wiersza obszarów (ok. 260 px),
    ale nie mniej niż 320 px szerokości. Legenda liczy skalę kropek z szerokości tej ramki. */
 .mapFrame {
+  position: relative;
   width: 100%;
-  max-width: max(320px, calc((100svh - 380px) * var(--map-aspect, 1)));
+  max-width: max(320px, calc((100svh - 260px) * var(--map-aspect, 1)));
   margin-inline: auto;
+}
+
+/* Szeroki ekran: legenda w pustym lewym dolnym rogu prostokąta mapy (pod Dolnym Śląskiem nie ma kraju),
+   grupy jedna pod drugą. Bez kliknięć: nie zasłania kropek przy najechaniu. */
+@media (min-width: 901px) {
+  .mapFrame .mapLegend {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    /* 22%: róg bez kraju (na lewo od Kotliny Kłodzkiej, pod Dolnym Śląskiem). */
+    width: 22%;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    gap: 8px;
+    padding: 0;
+    border-top: 0;
+    pointer-events: none;
+  }
+
+  .mapFrame .legendSizes {
+    gap: 10px;
+  }
+
+  .mapFrame .legendSizes span {
+    white-space: nowrap;
+  }
+
+  .mapFrame .legendScale i {
+    width: auto;
+    flex: 1 1 0;
+    min-width: 40px;
+  }
 }
 
 .legendNote {

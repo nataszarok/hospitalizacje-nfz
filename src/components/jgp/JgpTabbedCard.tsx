@@ -49,8 +49,8 @@ const REGION_PARAM = "ow";
 const YEAR_PARAM = "rok";
 /** Okres wykresów „Ile?”: `okres=lata`; bez parametru miesiące. */
 const PERIOD_PARAM = "okres";
-/** Liczba linii ośrodków w „Ile?” (największe w całym okresie wykresu, `topProvidersOfPeriod`). */
-const TOP_LINES = 15;
+/** Linie ośrodków w „Ile?”: tylu największych z każdego roku, razem bez powtórzeń (`topProvidersOfPeriod`). */
+const TOP_LINES_PER_YEAR = 15;
 /** Okres wykresu słowami: „w latach 2017–2025” albo „w 2025 r.”. */
 const yearSpan = (months: string[]) => {
   const from = months[0]?.slice(0, 4);
@@ -592,9 +592,9 @@ function ProvidersTab({ data, pool, linePool, comparison, regions, selectedRow, 
 }) {
   const [hoverKey, setHoverKey] = useState<string | null>(null);
   const [details, setDetails] = useState(false);
-  // Linie: największe ośrodki całego okresu wykresu (`linePool` ze wszystkich lat), nie tylko wybranego roku.
+  // Linie: największe ośrodki każdego roku wykresu (`linePool` ze wszystkich lat), nie tylko wybranego roku.
   // Stała lista linii przy najechaniu (nowa tablica przerysowywałaby wykres przy każdym ruchu myszy).
-  const top = useMemo(() => topProvidersOfPeriod(linePool, TOP_LINES), [linePool]);
+  const top = useMemo(() => topProvidersOfPeriod(linePool, data.months, TOP_LINES_PER_YEAR), [linePool, data.months]);
   const rankOf = useMemo(() => new Map(data.providers.map((row, i) => [row.key, i + 1])), [data.providers]);
   const regionColor = useMemo(() => regionColors(regions), [regions]);
   const lines = useMemo((): ChartLine[] => {
@@ -612,7 +612,7 @@ function ProvidersTab({ data, pool, linePool, comparison, regions, selectedRow, 
   const hoverRow = hoverKey ? data.providers.find((row) => row.key === hoverKey) ?? null : null;
   return <>
     <section className={styles.sec} aria-labelledby="s-czas">
-      <SectionHead id="s-czas" question="Ile?" context={`Hospitalizacje ${periodWord(period)}, ${top.length} największych ośrodków ${yearSpan(data.months)}`} tools={<PeriodToggle period={period} onPeriod={onPeriod} />} />
+      <SectionHead id="s-czas" question="Ile?" context={`Hospitalizacje ${periodWord(period)}: ${TOP_LINES_PER_YEAR} największych ośrodków z każdego roku ${yearSpan(data.months)} (razem ${top.length})`} tools={<PeriodToggle period={period} onPeriod={onPeriod} />} />
       <GroupLineChart
         months={data.months}
         lines={lines}

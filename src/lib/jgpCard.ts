@@ -109,16 +109,23 @@ export function sumSeries(rows: JgpProviderRow[], length: number): number[] {
 }
 
 /**
- * Największe ośrodki całego okresu wykresu: suma hospitalizacji z serii (wszystkie miesiące), nie z jednego roku.
- * Wykres „w czasie” pokazuje wszystkie lata, więc ośrodek duży w latach wcześniejszych nie znika z linii
- * (np. H52: Koszalin jest 1. w całym okresie i 37. w 2025 r.).
+ * Ośrodki na wykresie „w czasie”: `perYear` największych w każdym roku wykresu, razem i bez powtórzeń
+ * (roczne sumy z serii miesięcznej `months`). Wykres pokazuje wszystkie lata, więc ośrodek duży tylko przez
+ * rok-dwa (lokalny wzrost) też ma linię, np. H52: Koszalin jest 1. w latach 2021–2023 i 37. w 2025 r.
+ * Liczba linii zależy od grupy. Kolejność: suma hospitalizacji w całym okresie.
  */
-export function topProvidersOfPeriod(rows: JgpProviderRow[], count: number): JgpProviderRow[] {
-  const total = new Map(rows.map((row) => [row, row.series.reduce((sum, value) => sum + value, 0)]));
-  return rows
-    .filter((row) => (total.get(row) ?? 0) > 0)
-    .sort((a, b) => (total.get(b) ?? 0) - (total.get(a) ?? 0) || a.name.localeCompare(b.name, "pl"))
-    .slice(0, count);
+export function topProvidersOfPeriod(rows: JgpProviderRow[], months: string[], perYear: number): JgpProviderRow[] {
+  const years = [...new Set(months.map((month) => month.slice(0, 4)))];
+  const yearly = new Map(rows.map((row) => [row, years.map((year) => row.series.reduce((sum, value, i) => months[i]?.startsWith(year) ? sum + value : sum, 0))]));
+  const total = (row: JgpProviderRow) => (yearly.get(row) ?? []).reduce((sum, value) => sum + value, 0);
+  const picked = new Set<JgpProviderRow>();
+  years.forEach((_, y) => {
+    rows.filter((row) => (yearly.get(row)?.[y] ?? 0) > 0)
+      .sort((a, b) => (yearly.get(b)?.[y] ?? 0) - (yearly.get(a)?.[y] ?? 0) || a.name.localeCompare(b.name, "pl"))
+      .slice(0, perYear)
+      .forEach((row) => picked.add(row));
+  });
+  return [...picked].sort((a, b) => total(b) - total(a) || a.name.localeCompare(b.name, "pl"));
 }
 
 /** Wskaźniki grupy świadczeniodawców (do porównania wybranego szpitala). */
