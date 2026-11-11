@@ -9,9 +9,9 @@ import {
   type MortalityDisplayMode,
   type MortalityDisplayRow,
 } from "@/lib/mortality";
-import { BASE_POINT, CHART_COLORS, OTHER_POINT } from "@/lib/chartPalette";
+import { BASE_POINT, OTHER_POINT } from "@/lib/chartPalette";
 import { funnelStatus, showsMortalityReference } from "@/lib/jgpCard";
-import { FUNNEL_STATUS_COLORS, funnelLines, mortalityTotals } from "@/lib/mortalityFunnel";
+import { FUNNEL_STATUS_COLORS, funnelLegendTraces, funnelLines, mortalityTotals } from "@/lib/mortalityFunnel";
 import { areaFromValue, areaToValue, type AnalysisArea } from "@/lib/area";
 import {
   areaHighlightKey,
@@ -28,7 +28,9 @@ import {
   makeHoverTrace,
   PLOTLY_CONFIG,
   PRODUCT_SYMBOLS,
+  referenceAnnotation,
   referenceShape,
+  meanPctLabel,
   type PlotElement,
 } from "@/lib/plotlyChart";
 import type { AxisMode, MortalityRow, ProductOption, RegionOption } from "@/lib/types";
@@ -93,7 +95,8 @@ export function MortalityChart({
       // Bez wyróżnienia punkty są niebieskie; z wyróżnieniem pozostałe szare (jak na karcie grupy JGP).
       const restColor = geoSelection.length ? OTHER_POINT : BASE_POINT;
       const isCombined = displayMode === "combined";
-      const showLegend = geoSelection.length > 0 || (!isCombined && productCodes.length > 1);
+      // Legenda Plotly: obszary, kody JGP i linie granic odchyleń w jednej kolumnie.
+      const showLegend = funnel || geoSelection.length > 0 || (!isCombined && productCodes.length > 1);
 
       // Średnia śmiertelność wszystkich świadczeniodawców wykresu (linia „średnia” i środek lejka).
       const { meanPct } = mortalityTotals(rows);
@@ -151,7 +154,7 @@ export function MortalityChart({
               ? { label: "Hospitalizacje na 100 tys.", value: "%{customdata[7]:,.1f}" }
               : { label: "Hospitalizacje", value: "%{customdata[5]:,.0f}" },
             { label: "Zgony", value: "%{customdata[6]:,.0f}" },
-            ...(funnel ? [{ label: "Lejek", value: "%{customdata[9]}" }] : []),
+            ...(funnel ? [{ label: "Granice odchyleń", value: "%{customdata[9]}" }] : []),
           ],
           footer: "NIP %{customdata[1]}",
         }),
@@ -164,6 +167,8 @@ export function MortalityChart({
           line: { color: line.color, width: 1.2, dash: line.dash },
         }))
         : [];
+      // Oś X liczymy z punktów, bez linii lejka (sięgają do 105% maksimum): włączenie lejka nie zmienia osi.
+      const funnelTraceCount = traces.length;
 
       if (isCombined) {
         const chartRows = aggregateMortalityRowsByProvider(rows);
@@ -237,12 +242,13 @@ export function MortalityChart({
         productCodes: isCombined ? [] : productCodes,
         productLabel: (code) => productByCode.get(code)?.jgpCode ?? code,
       }));
+      if (funnel) traces.push(...funnelLegendTraces());
 
       const hoverTraceIndex = traces.length;
       traces.push(makeHoverTrace());
 
       // Ten sam margines na obu osiach (−6% / +10%); zero rysuje podstawa pod danymi.
-      const xValues = traces.flatMap((trace) => (trace.x as (number | null)[] | undefined) ?? []);
+      const xValues = traces.slice(funnelTraceCount).flatMap((trace) => (trace.x as (number | null)[] | undefined) ?? []);
       const yValues = rows.map((row) => row.mortalityPct);
       const showMean = showsMortalityReference(meanPct);
 
@@ -264,11 +270,7 @@ export function MortalityChart({
           }),
           // Linia średniej od 0,5% (`showsMortalityReference`), podpis „średnia: …” przy prawej krawędzi.
           shapes: [baselineShape("y"), baselineShape("x"), ...(showMean ? [referenceShape(meanPct)] : [])],
-          annotations: showMean ? [{
-            xref: "paper", x: 1, y: meanPct, xanchor: "right", yanchor: "bottom", showarrow: false,
-            text: `średnia: ${meanPct.toLocaleString("pl-PL", { minimumFractionDigits: meanPct < 1 ? 2 : 1, maximumFractionDigits: meanPct < 1 ? 2 : 1 })}%`,
-            font: { size: 12, color: CHART_COLORS.textSecondary },
-          }] : [],
+          annotations: showMean ? [referenceAnnotation(meanPct, meanPctLabel(meanPct))] : [],
         },
         PLOTLY_CONFIG,
       );

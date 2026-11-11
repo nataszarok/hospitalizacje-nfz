@@ -57,6 +57,15 @@ export function movingAverage(values: number[], window = 3, minPeriods = 1): (nu
   });
 }
 
+/** Indeksy pierwszej i ostatniej niezerowej wartości serii (okres aktywności); `null`, gdy seria ma same zera. */
+export function activeSpan(values: number[]): [number, number] | null {
+  const from = values.findIndex((value) => value > 0);
+  if (from < 0) return null;
+  let to = values.length - 1;
+  while (to > from && !(values[to] > 0)) to -= 1;
+  return [from, to];
+}
+
 /** Okres na wykresach „w czasie”: miesiące (domyślnie) albo lata. */
 export type ChartPeriod = "month" | "year";
 
@@ -106,6 +115,26 @@ export function sumSeries(rows: JgpProviderRow[], length: number): number[] {
   const out = Array.from({ length }, () => 0);
   for (const row of rows) row.series.forEach((value, i) => { out[i] += value; });
   return out;
+}
+
+/**
+ * Ośrodki na wykresie „w czasie”: `perYear` największych w każdym roku wykresu, razem i bez powtórzeń
+ * (roczne sumy z serii miesięcznej `months`). Wykres pokazuje wszystkie lata, więc ośrodek duży tylko przez
+ * rok-dwa (lokalny wzrost) też ma linię, np. H52: Koszalin jest 1. w latach 2021–2023 i 37. w 2025 r.
+ * Liczba linii zależy od grupy. Kolejność: suma hospitalizacji w całym okresie.
+ */
+export function topProvidersOfPeriod(rows: JgpProviderRow[], months: string[], perYear: number): JgpProviderRow[] {
+  const years = [...new Set(months.map((month) => month.slice(0, 4)))];
+  const yearly = new Map(rows.map((row) => [row, years.map((year) => row.series.reduce((sum, value, i) => months[i]?.startsWith(year) ? sum + value : sum, 0))]));
+  const total = (row: JgpProviderRow) => (yearly.get(row) ?? []).reduce((sum, value) => sum + value, 0);
+  const picked = new Set<JgpProviderRow>();
+  years.forEach((_, y) => {
+    rows.filter((row) => (yearly.get(row)?.[y] ?? 0) > 0)
+      .sort((a, b) => (yearly.get(b)?.[y] ?? 0) - (yearly.get(a)?.[y] ?? 0) || a.name.localeCompare(b.name, "pl"))
+      .slice(0, perYear)
+      .forEach((row) => picked.add(row));
+  });
+  return [...picked].sort((a, b) => total(b) - total(a) || a.name.localeCompare(b.name, "pl"));
 }
 
 /** Wskaźniki grupy świadczeniodawców (do porównania wybranego szpitala). */
@@ -207,6 +236,7 @@ export function darkLabel(cell: Pick<CartogramCell, "position">): boolean {
 export type PackedProvider = [
   key: string, name: string, city: string, hospitalizations: number, deaths: number, mortalityPct: number, urgentPct: number,
   series: number[], previousHospitalizations: number | null, valuePln: number | null, peers: number[], yearly: [number, number, number][], yearlyDeaths: number[],
+  yearlyValuePln: (number | null)[],
 ];
 
 /** Dane strony z rankingiem w krotkach; `topProviders` odtwarzamy z pełnej listy. */
@@ -219,7 +249,7 @@ export function packPageData(data: JgpPageData): PackedJgpPageData {
     topCount: topProviders.length,
     providerRows: providers.map((row): PackedProvider => [
       row.key, row.name, row.city, row.hospitalizations, row.deaths, row.mortalityPct, row.urgentPct,
-      row.series, row.previousHospitalizations, row.valuePln, row.peers, row.yearly, row.yearlyDeaths,
+      row.series, row.previousHospitalizations, row.valuePln, row.peers, row.yearly, row.yearlyDeaths, row.yearlyValuePln,
     ]),
   };
 }
@@ -227,11 +257,11 @@ export function packPageData(data: JgpPageData): PackedJgpPageData {
 export function unpackPageData(packed: PackedJgpPageData): JgpPageData {
   const { providerRows, topCount, ...rest } = packed;
   const regionNames = new Map(packed.regions.map((row) => [row.owNfz, row.name]));
-  const providers = providerRows.map(([key, name, city, hospitalizations, deaths, mortalityPct, urgentPct, series, previousHospitalizations, valuePln, peers, yearly, yearlyDeaths]): JgpProviderRow => {
+  const providers = providerRows.map(([key, name, city, hospitalizations, deaths, mortalityPct, urgentPct, series, previousHospitalizations, valuePln, peers, yearly, yearlyDeaths, yearlyValuePln]): JgpProviderRow => {
     const [owNfz, nip] = key.split("|");
     return {
       key, owNfz, nip, name, city, voivodeship: regionNames.get(owNfz) ?? owNfz,
-      hospitalizations, deaths, mortalityPct, urgentPct, series, previousHospitalizations, valuePln, peers, yearly, yearlyDeaths,
+      hospitalizations, deaths, mortalityPct, urgentPct, series, previousHospitalizations, valuePln, peers, yearly, yearlyDeaths, yearlyValuePln,
     };
   });
   return { ...rest, providers, topProviders: providers.slice(0, topCount) };
@@ -339,7 +369,7 @@ export function defaultCardYear(data: JgpPageData): string {
 /**
  * Dane karty dla wybranego roku pliku grupy (indeks w `admissionYears`): ranking, liczby i województwa z tego roku.
  * Najnowszy rok: liczby ze szczegółów roku, bez ośrodków z zerem (są w danych tylko dla wcześniejszych lat). Wcześniejszy rok liczymy z krotek pliku grupy
- * (metoda konserwatywna); rozliczeń NFZ ośrodków nie ma, a pary podobnych szpitali przenumerowujemy po nowym rankingu.
+ * (metoda konserwatywna); rozliczenia NFZ ośrodków z `yearlyValuePln`, a pary podobnych szpitali przenumerowujemy po nowym rankingu.
  */
 export function dataForYear(data: JgpPageData, yearIndex: number): JgpPageData {
   const year = data.admissionYears[yearIndex];
@@ -356,7 +386,7 @@ export function dataForYear(data: JgpPageData, yearIndex: number): JgpPageData {
       mortalityPct: hospitalizations ? (deaths / hospitalizations) * 100 : 0,
       urgentPct: hospitalizations && tuple ? (tuple[1] / hospitalizations) * 100 : 0,
       previousHospitalizations: yearIndex > 0 ? sumTuple(row.yearly[yearIndex - 1]) : null,
-      valuePln: null,
+      valuePln: row.yearlyValuePln[yearIndex] ?? null,
     };
   });
   const order = rows.map((_, i) => i).filter((i) => rows[i].hospitalizations > 0)

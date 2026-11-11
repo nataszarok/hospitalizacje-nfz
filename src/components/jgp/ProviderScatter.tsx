@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { usePlotResize } from "@/lib/usePlotResize";
 import { ChartTooltip, TooltipHead, TooltipLines } from "@/components/ChartTooltip";
-import { attachHoverMarker, axisTitle, baselineShape, chartLayout, makeHoverTrace, measureAxis, paddedRange, PLOTLY_CONFIG, referenceShape, type PlotElement, type PlotlyHoverEvent } from "@/lib/plotlyChart";
+import { attachHoverMarker, axisTitle, baselineShape, chartLayout, makeHoverTrace, measureAxis, paddedRange, PLOTLY_CONFIG, referenceAnnotation, referenceShape, type PlotElement, type PlotlyHoverEvent } from "@/lib/plotlyChart";
 import { CHART_COLORS, BASE_POINT } from "@/lib/chartPalette";
 import { loadPlotly } from "@/lib/plotlyLoader";
 import { plotlyDataBox, type Box } from "@/lib/tooltipPosition";
@@ -143,7 +143,7 @@ export function ProviderScatter({ points, xTitle, yTitle, ySuffix, reference, on
         yaxis: measureAxis({ title: axisTitle(yTitle), range: paddedRange([yMax, Math.min(curveMax, yCap ?? yMax * 1.6)]), ticksuffix: ySuffix }),
         shapes: [baselineShape("y"), baselineShape("x"), ...(line ? [referenceShape(line.y)] : [])],
         annotations: [
-          ...(line ? [{ xref: "paper", x: 1, y: line.y, xanchor: "right", yanchor: "bottom", showarrow: false, text: line.label, font: { size: 12, color: CHART_COLORS.textSecondary } }] : []),
+          ...(line ? [referenceAnnotation(line.y, line.label)] : []),
         ],
       }, modeBar ? PLOTLY_CONFIG : { ...PLOTLY_CONFIG, displayModeBar: false });
       if (cancelled) return;

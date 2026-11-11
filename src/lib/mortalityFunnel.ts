@@ -15,7 +15,7 @@ export const FUNNEL_STATUS_COLORS: Record<FunnelStatus, string> = {
   "poniżej 99,8%": DEVIATION_COLORS.down998,
 };
 
-/** Pozycje legendy lejka w kolejności od góry. */
+/** Pozycje legendy lejka (statusy punktów) w kolejności od góry. */
 export const FUNNEL_LEGEND: { status: FunnelStatus; label: string }[] = [
   { status: "powyżej 99,8%", label: "powyżej 99,8%" },
   { status: "powyżej 95%", label: "powyżej 95%" },
@@ -41,6 +41,25 @@ export function funnelLines(meanPct: number, xMax: number): { x: number[]; y: nu
     { x: c.x, y: c.inner[0], color, dash: "dot" }, { x: c.x, y: c.inner[1], color, dash: "dot" },
     { x: c.x, y: c.outer[0], color, dash: "dash" }, { x: c.x, y: c.outer[1], color, dash: "dash" },
   ];
+}
+
+/** Pozycje legendy z liniami granic: ten sam rodzaj linii co na wykresie (DESIGN.md 6.2, „Granica”). */
+export const FUNNEL_LINE_LEGEND: { dash: "dot" | "dash"; label: string }[] = [
+  { dash: "dot", label: "granica 95%" },
+  { dash: "dash", label: "granica 99,8%" },
+];
+
+/**
+ * Pozycje legendy Plotly z liniami granic (eksplorator): w tej samej kolumnie legendy co obszary i kody JGP,
+ * pod tytułem `FUNNEL_NAME`. Serie bez danych, tylko do legendy.
+ */
+export function funnelLegendTraces(): Record<string, unknown>[] {
+  return FUNNEL_LINE_LEGEND.map((item, index) => ({
+    type: "scatter", mode: "lines", x: [null], y: [null], name: item.label, hoverinfo: "skip",
+    line: { color: CHART_COLORS.textTertiary, width: 1.2, dash: item.dash },
+    legendgroup: "funnel",
+    ...(index === 0 ? { legendgrouptitle: { text: FUNNEL_NAME } } : {}),
+  }));
 }
 
 /** Lejek ma sens dopiero od `MIN_FUNNEL_DEATHS` zgonów w grupie. */
@@ -77,8 +96,14 @@ const centersWord = (n: number) => n === 1 ? "ośrodek" : n % 10 >= 2 && n % 10 
  * Tylko to, co jest na wykresie: punkt, linia średniej (gdy jest), lejek (gdy jest), punkty ponad skalą (▲)
  * i kliknięcie. Bez zdań o tym, czego na wykresie nie ma.
  */
-/** Powód, dla którego lejka nie ma (stan „unavailable”): dymek przełącznika i objaśnienie „?”. */
-export const FUNNEL_UNAVAILABLE_REASON = "Lejek działa dla liczby hospitalizacji i grup JGP razem.";
+/** Nazwa lejka w interfejsie (przełącznik, objaśnienia): użytkownik widzi granice odchyleń od średniej, nie „lejek”. */
+export const FUNNEL_NAME = "Granice odchyleń";
+
+/** Co oznaczają granice: dymek przełącznika. */
+export const FUNNEL_HELP = "Linie wokół średniej pokazują, jak daleko śmiertelność ośrodka może odejść od średniej przez sam przypadek przy jego liczbie hospitalizacji. Kropki: granica 95%, kreski: granica 99,8%. Punkt poza granicą to sygnał do sprawdzenia, nie ocena jakości.";
+
+/** Powód, dla którego granic nie ma (stan „unavailable”): dymek przełącznika i objaśnienie „?”. */
+export const FUNNEL_UNAVAILABLE_REASON = "Granice odchyleń działają dla liczby hospitalizacji i grup JGP razem.";
 
 export function mortalityChartHelp({ state, showsMean, aboveCap, selectable = false }: {
   state: FunnelState;
@@ -90,7 +115,7 @@ export function mortalityChartHelp({ state, showsMean, aboveCap, selectable = fa
 }): string[] {
   const lines = ["Punkt to ośrodek: liczba hospitalizacji i śmiertelność (zgony w szpitalu / hospitalizacje)."];
   if (showsMean) lines.push("Linia kropkowana: średnia wszystkich ośrodków.");
-  if (state === "funnel") lines.push("Lejek: granice 95% i 99,8% wokół średniej. Kolor punktu to jego położenie wobec granic. Punkt poza granicą to sygnał do sprawdzenia, nie ocena jakości.");
+  if (state === "funnel") lines.push("Granice odchyleń: 95% (kropki) i 99,8% (kreski) wokół średniej. Kolor punktu to jego położenie wobec granic. Punkt poza granicą to sygnał do sprawdzenia, nie ocena jakości.");
   if (state === "unavailable") lines.push(FUNNEL_UNAVAILABLE_REASON);
   if (aboveCap?.count) {
     lines.push(`▲: ${aboveCap.count.toLocaleString("pl-PL")} ${centersWord(aboveCap.count)} poniżej ${OUTLIER_MIN_HOSPITALIZATIONS} hospitalizacji ze śmiertelnością ponad ${aboveCap.cap}%. Prawdziwa wartość jest w dymku.`);

@@ -135,8 +135,8 @@ describe("RegionView", () => {
   it("legenda: kolory i wielkość kropek w jednym układzie", async () => {
     render(<RegionView productCodes={["P1"]} year="2025" method="min" areas={[{ kind: "city", city: "KATOWICE" }]} />);
     await openCities();
-    expect(screen.getByText(/Hospitalizacje placówki wobec mediany roku/)).toBeInTheDocument();
-    expect(screen.getByText("Hospitalizacje w roku")).toBeInTheDocument();
+    expect(screen.getByText(/Kolor: wobec mediany roku/)).toBeInTheDocument();
+    expect(screen.getByText("Wielkość: hospitalizacje")).toBeInTheDocument();
     expect(screen.getByText("Obszary")).toBeInTheDocument();
     expect(screen.getAllByText("Katowice").length).toBeGreaterThan(0);
   });
@@ -172,6 +172,18 @@ describe("RegionView", () => {
     expect(tip).toHaveTextContent("Śmiertelność: 16,7% (3 zgony na 18 hosp.)");
     expect(screen.getByRole("region", { name: /Miasta · 2025/ })).toBeInTheDocument();
     fireEvent.mouseLeave(within(map).getByRole("button", { name: /^Szpital Beta/ }));
+    expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
+  });
+
+  it("dymek kropki to wspólny `ChartTooltip` (pozycja z kropki, może wyjść poza mapę); działa też z klawiatury", async () => {
+    render(<RegionView productCodes={["P1"]} year="2025" method="min" />);
+    const map = await openCities();
+    const dot = within(map).getByRole("button", { name: /^Szpital Beta/ });
+    fireEvent.focus(dot);
+    const tip = screen.getByRole("tooltip");
+    expect(tip.className).toMatch(/tooltip/);
+    expect(tip).toHaveAttribute("data-ready", "true");
+    fireEvent.blur(dot);
     expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
   });
 

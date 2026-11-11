@@ -3,9 +3,10 @@
 import { useEffect, useRef, useState } from "react";
 import { usePlotResize } from "@/lib/usePlotResize";
 import { ChartTooltip, TooltipHead, TooltipLines } from "@/components/ChartTooltip";
-import { monthYears, movingAverage, movingRatio, ratioSeries, sumByYear, type ChartPeriod } from "@/lib/jgpCard";
+import { activeSpan, monthYears, movingAverage, movingRatio, ratioSeries, sumByYear, type ChartPeriod } from "@/lib/jgpCard";
 import { baselineShape, categoryAxis, chartLayout, countAxis, makeHoverTrace, measureAxis, monthAxis, percentAxis, PLOTLY_CONFIG, wrapChartLabel, type PlotElement } from "@/lib/plotlyChart";
 import { loadPlotly } from "@/lib/plotlyLoader";
+import { nearestLine, type PixelSeries } from "@/lib/lineHitTest";
 import { plotlyDataBox, plotlyDataPixel, type Box } from "@/lib/tooltipPosition";
 import { CHART_COLORS } from "@/lib/chartPalette";
 
@@ -15,6 +16,8 @@ const PRIMARY = CHART_COLORS.data;
 const SELECTED = CHART_COLORS.signal;
 // Tło wybranego roku (jak „wybrany rok” w makietach karty); to samo tło ma kolumna roku w mapie ciepła (.heatBand).
 const YEAR_BAND = "rgba(31, 138, 112, 0.10)";
+/** Promień trafienia w linię (px): najechanie i kliknięcie wybierają najbliższą linię w tym promieniu. */
+const HIT_DISTANCE = 12;
 const integer = (value: number) => Math.round(value).toLocaleString("pl-PL");
 
 export interface ChartLine {
@@ -33,6 +36,8 @@ export interface ChartLine {
   thin?: boolean;
   /** Mianownik (np. hospitalizacje miesięcznie): wykres pokazuje `values / base` w procentach. */
   base?: number[];
+  /** Tylko okres aktywności (`activeSpan`): bez zer przed pierwszą i po ostatniej wartości (ośrodek zaczął albo przestał leczyć). */
+  activeOnly?: boolean;
 }
 
 /**
@@ -41,6 +46,16 @@ export interface ChartLine {
  */
 function seriesOf(line: ChartLine, period: ChartPeriod) {
   const points = line.base ? ratioSeries(line.values, line.base) : line.values as (number | null)[];
+  const span = line.activeOnly ? activeSpan(line.values) : null;
+  if (span) {
+    // Poza okresem aktywności nie ma punktów; średnia 3M liczy się od pierwszego aktywnego miesiąca.
+    const [from, to] = span;
+    const inside = (_: unknown, i: number) => i >= from && i <= to;
+    const trimmed = points.map((value, i) => inside(value, i) ? value : null);
+    if (period === "year") return { points: trimmed, average: trimmed };
+    const average = movingAverage(line.values.slice(from, to + 1));
+    return { points: trimmed, average: line.values.map((_, i) => inside(_, i) ? average[i - from] : null) };
+  }
   if (period === "year") return { points, average: points };
   return { points, average: line.base ? movingRatio(line.values, line.base) : movingAverage(line.values) };
 }
@@ -56,8 +71,8 @@ const yearlyLine = (line: ChartLine, months: string[]): ChartLine => ({ ...line,
  * Dymek HTML (`ChartTooltip` + `placeTooltip`, DESIGN.md 6.3): obok kropki, może wyjść poza wykres, cała nazwa.
  * Wybrany ośrodek (`tone: "selected"`): pozostałe linie są przygaszone. Najechanie na nie podświetla na chwilę
  * samą linię (bez kropek serii) w domyślnym niebieskim i pokazuje dymek.
- * Kliknięcie przy dowolnej linii wybiera najbliższą linię (własna obsługa kliknięcia: Plotly nie zgłasza kliknięć
- * serii bez najechania).
+ * Najechanie i kliknięcie: najbliższa linia w promieniu `HIT_DISTANCE` (`nearestLine`: kropki i odcinki średniej
+ * w pikselach). Hover Plotly wybierał przy nakładających się kropkach pierwszą serię, nie najbliższą.
  * Wszystkie serie są typu `scattergl` (jak w eksploratorze): `restyle` serii SVG w trakcie najechania
  * przerysowuje dymek podpowiedzi, wywołuje kolejne najechanie i przepełnia stos.
  */
@@ -175,6 +190,8 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
       const yAxis = percent ? percentAxis(allPoints, { fit: fitAxis }) : countAxis(allPoints);
       await Plotly.react(plot, traces, {
         ...chartLayout(),
+        // Najechanie liczy `nearestLine` (prawdziwa odległość od kropek i odcinków); hover Plotly wyłączony.
+        hovermode: false,
         height,
         autosize: true,
         margin: { l: 56, r: 16, t: legend ? 36 : 12, b: 44 + noteLines * 16 },
@@ -190,11 +207,15 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
           }] : []),
           ...(yAxis.range[0] <= 0 ? [baselineShape("y")] : []),
         ],
-        // Podpis wybranego ośrodka przy ostatnim punkcie jego średniej 3M.
+        // Podpis wybranego ośrodka przy ostatnim punkcie jego średniej 3M (wyrównany do prawej, nie wychodzi poza wykres).
         annotations: (() => {
           const line = selectedLabel ? ordered.find((item) => item.tone === "selected") : undefined;
-          const last = line ? series.get(line.key)!.average.at(-1) : null;
-          const label = line && last !== null && last !== undefined ? [{ x: x.at(-1), y: last, text: wrapChartLabel(selectedLabel!), xanchor: "right", yanchor: "bottom", align: "right", showarrow: false, font: { size: 12, color: selectedColor }, bgcolor: "rgba(255,255,255,0.85)" }] : [];
+          // Ostatni punkt linii (linia ośrodka może kończyć się przed ostatnim miesiącem: `activeOnly`).
+          const average = line ? series.get(line.key)!.average : [];
+          let lastAt = average.length - 1;
+          while (lastAt >= 0 && (average[lastAt] === null || average[lastAt] === undefined)) lastAt -= 1;
+          const last = lastAt >= 0 ? average[lastAt] : null;
+          const label = line && last !== null && last !== undefined ? [{ x: x[lastAt], y: last, text: wrapChartLabel(selectedLabel!), xanchor: "right", yanchor: "bottom", align: "right", showarrow: false, font: { size: 12, color: selectedColor }, bgcolor: "rgba(255,255,255,0.85)" }] : [];
           const explain = noteText ? [{ xref: "paper", yref: "paper", x: 0, y: 0, yshift: -40, xanchor: "left", yanchor: "top", align: "left", showarrow: false, text: noteText, font: { size: 12, color: CHART_COLORS.textTertiary } }] : [];
           return [...label, ...explain];
         })(),
@@ -213,73 +234,76 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
       plot.removeAllListeners("plotly_hover");
       plot.removeAllListeners("plotly_unhover");
       plot.removeAllListeners("plotly_click");
-      let restyleInProgress = false;
-      // Linia pod kursorem (podświetlona, z dymkiem); kliknięcie wybiera właśnie ją.
-      let hovered: ChartLine | null = null;
+      // Linia pod kursorem (podświetlona, z dymkiem); kliknięcie wybiera linię pod kursorem.
+      // Trafienie liczymy sami (`nearestLine`): kropki i odcinki średniej w pikselach, bez hover Plotly.
+      let hovered: { line: ChartLine; index: number } | null = null;
+      // Piksele serii: liczone po narysowaniu i ponownie po zmianie rozmiaru wykresu.
+      let pixels: { size: string; series: PixelSeries[] } | null = null;
+      const seriesPixels = () => {
+        const size = `${plot.clientWidth}x${plot.clientHeight}`;
+        if (pixels?.size !== size) {
+          const toPixel = (xi: string, value: number | null | undefined) => value === null || value === undefined ? null : plotlyDataPixel(plot, xi, value);
+          pixels = { size, series: ordered.map((line) => {
+            const { points, average } = series.get(line.key)!;
+            return { points: x.map((xi, i) => toPixel(xi, points[i])), line: x.map((xi, i) => toPixel(xi, average[i])) };
+          }) };
+        }
+        return pixels.series;
+      };
+      const hitAt = (event: MouseEvent) => {
+        const rect = plot.getBoundingClientRect();
+        const current = hovered ? ordered.indexOf(hovered.line) : null;
+        const hit = nearestLine(seriesPixels(), { x: event.clientX - rect.left, y: event.clientY - rect.top }, HIT_DISTANCE, current);
+        return hit ? { line: ordered[hit.series], index: hit.index } : null;
+      };
       const clearHover = () => {
+        if (!hovered) return;
         hovered = null;
         hoverRef.current?.(null);
         setTip(null);
-        restyleInProgress = true;
         void Plotly.restyle(plot, { x: [[null], [null], [null]], y: [[null], [null], [null]] }, overlay);
-        restyleInProgress = false;
       };
-      // Kliknięcie: linia podświetlona, a bez podświetlenia najbliższa linia
-      // (kropka albo punkt średniej) w promieniu 16 px od kursora. Podświetlenie i dymek znikają od razu,
-      // więc po zmianie wyboru nie zostają dwie wyróżnione linie.
-      plot.onclick = (event: MouseEvent) => {
-        if (cancelled || !selectRef.current) return;
-        let key = hovered?.key ?? null;
-        if (!key) {
-          const rect = plot.getBoundingClientRect();
-          const cx = event.clientX - rect.left;
-          const cy = event.clientY - rect.top;
-          let best = Infinity;
-          for (const line of ordered) {
-            const { points, average } = series.get(line.key)!;
-            x.forEach((xi, i) => {
-              for (const value of [points[i], average[i]]) {
-                if (value === null || value === undefined) continue;
-                const pixel = plotlyDataPixel(plot, xi, value);
-                if (!pixel) continue;
-                const distance = Math.hypot(pixel.x - cx, pixel.y - cy);
-                if (distance <= 16 && distance < best) { best = distance; key = line.key; }
-              }
-            });
-          }
-        }
-        if (!key) return;
-        clearHover();
-        selectRef.current(key);
-      };
-      // Zdarzenia starego rysunku (`cancelled`) nie przywracają podświetlenia po zmianie wyboru.
-      plot.on("plotly_hover", (event) => {
-        const point = event?.points?.[0];
-        if (cancelled || restyleInProgress || !point || point.curveNumber >= overlayStart) return;
-        const line = ordered[Math.floor(point.curveNumber / 2)];
-        hovered = line;
-        hoverRef.current?.(line.key);
+      const showHover = (line: ChartLine, index: number) => {
+        if (hovered?.line === line && hovered.index === index) return;
+        const sameLine = hovered?.line === line;
+        hovered = { line, index };
+        if (!sameLine) hoverRef.current?.(line.key);
         const highlight = line.tone === "selected" ? selectedColor : line.color ?? line.accent ?? PRIMARY;
         // Kropka wskazanego miesiąca (także przy najechaniu na linię średniej).
         const { points, average } = series.get(line.key)!;
-        const y = points[point.pointNumber] ?? null;
-        const anchor = plotlyDataBox(plot, x[point.pointNumber], y ?? average[point.pointNumber] ?? 0, 14);
-        setTip(anchor ? tipFor(line, point.pointNumber, anchor) : null);
+        const y = points[index] ?? null;
+        const anchor = plotlyDataBox(plot, x[index], y ?? average[index] ?? 0, 14);
+        setTip(anchor ? tipFor(line, index, anchor) : null);
         // Linia tła przy wybranym ośrodku: podświetlona sama linia, kropki serii zostają przygaszone.
         const lineOnly = hasSelected && line.tone !== "selected";
-        restyleInProgress = true;
+        // Ta sama linia, inny miesiąc: przesuwamy tylko znacznik (jedna seria zamiast trzech).
+        if (sameLine) {
+          void Plotly.restyle(plot, { x: [[x[index]]], y: [[y]] }, [overlay[2]]);
+          return;
+        }
         void Plotly.restyle(plot, {
-          x: [x, lineOnly ? [null] : x, [point.x]],
+          x: [x, lineOnly ? [null] : x, [x[index]]],
           y: [average, lineOnly ? [null] : points, [y]],
           "line.color": [highlight, highlight, "#FFFFFF"],
           "marker.color": [highlight, highlight, CHART_COLORS.text],
         }, overlay);
-        restyleInProgress = false;
-      });
-      plot.on("plotly_unhover", () => {
-        if (cancelled || restyleInProgress) return;
+      };
+      plot.onmousemove = (event: MouseEvent) => {
+        if (cancelled) return;
+        const hit = hitAt(event);
+        if (hit) showHover(hit.line, hit.index);
+        else clearHover();
+      };
+      plot.onmouseleave = () => { if (!cancelled) clearHover(); };
+      // Kliknięcie wybiera linię pod kursorem (ta sama, którą podświetla najechanie). Podświetlenie i dymek znikają
+      // od razu, więc po zmianie wyboru nie zostają dwie wyróżnione linie.
+      plot.onclick = (event: MouseEvent) => {
+        if (cancelled || !selectRef.current) return;
+        const hit = hitAt(event);
+        if (!hit) return;
         clearHover();
-      });
+        selectRef.current(hit.line.key);
+      };
     };
     void render();
     return () => { cancelled = true; };

@@ -22,18 +22,27 @@ globalThis.ResizeObserver ??= class { observe() {} unobserve() {} disconnect() {
 const wrap = (node: ReactNode) => render(<MantineProvider>{node}</MantineProvider>);
 
 describe("Pasek nad wykresem „Kto leczy”", () => {
-  it("lejek to przełącznik tak/nie", () => {
+  it("granice odchyleń (lejek) to przełącznik tak/nie z nazwą „Granice odchyleń”", () => {
     const onChange = vi.fn();
     wrap(<FunnelControl value={false} onChange={onChange} />);
-    const toggle = screen.getByRole("switch", { name: "Lejek śmiertelności" });
+    const toggle = screen.getByRole("switch", { name: "Granice odchyleń od średniej" });
+    expect(screen.getByText("Granice odchyleń")).toBeInTheDocument();
+    expect(screen.queryByText(/Lejek/)).not.toBeInTheDocument();
     expect(toggle).not.toBeChecked();
     fireEvent.click(toggle);
     expect(onChange).toHaveBeenCalledWith(true);
   });
 
-  it("niedostępny lejek: przełącznik wyszarzony i wyłączony, mimo zapisanego wyboru", () => {
+  it("dymek przełącznika mówi, co oznaczają granice 95% i 99,8%", async () => {
+    wrap(<FunnelControl value={false} onChange={() => {}} />);
+    // Cel dymka to obudowa przełącznika (span `control`).
+    fireEvent.mouseEnter(screen.getByRole("switch").closest("[class*='control']")!);
+    expect(await screen.findByRole("tooltip")).toHaveTextContent(/granica 95%.*granica 99,8%/);
+  });
+
+  it("niedostępne granice: przełącznik wyszarzony i wyłączony, mimo zapisanego wyboru", () => {
     wrap(<FunnelControl value onChange={() => {}} disabled />);
-    const toggle = screen.getByRole("switch", { name: "Lejek śmiertelności" });
+    const toggle = screen.getByRole("switch", { name: "Granice odchyleń od średniej" });
     expect(toggle).toBeDisabled();
     expect(toggle).not.toBeChecked();
   });

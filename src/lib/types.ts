@@ -82,9 +82,13 @@ export interface AdmissionRow {
   city: string;
   voivodeship: string;
   population: number;
+  /** Wszystkie hospitalizacje (każdy tryb przyjęcia): mianownik udziału przyjęć nagłych. */
+  hospitalizations: number;
   plannedAdmissions: number;
   urgentAdmissions: number;
+  /** Planowane (6) + nagłe (2+3), bez pozostałych trybów. */
   totalAdmissions: number;
+  hospitalizationsPer100k: number;
   plannedAdmissionsPer100k: number;
   urgentAdmissionsPer100k: number;
 }

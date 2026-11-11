@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { ChartTooltip, TooltipHead, TooltipLines } from "@/components/ChartTooltip";
 import { InfoTip } from "@/components/InfoTip";
 import { RegionMap } from "@/components/jgp/RegionMap";
 import { ProviderLink } from "@/components/TableLinks";
@@ -16,6 +17,7 @@ import {
   loadCitiesMap, loadFacilityYearsIndex, loadFacilityYearsSection, loadRegionsMap, loadStaticDataset, loadTrends,
   type StaticDataset, type TrendsDataset,
 } from "@/lib/staticData";
+import { elementBox, type Box } from "@/lib/tooltipPosition";
 import type { EstimationMethod } from "@/lib/types";
 import jgp from "@/components/jgp/JgpPage.module.css";
 import styles from "./Explorer.module.css";
@@ -194,7 +196,8 @@ export function RegionView({ productCodes, year, method, areas = NO_AREAS, onAre
       </div>
       <div className={styles.mapLayout}>
         <div className={styles.mapColumn}>
-          <div ref={mapRef}>
+          {/* Szerokość mapy z wysokości okna (`--map-aspect`): mapa z nagłówkiem karty mieści się na ekranie. */}
+          <div ref={mapRef} className={styles.mapFrame} style={{ "--map-aspect": data.regionsMap.viewBox[0] / data.regionsMap.viewBox[1] } as CSSProperties}>
             {mode === "regions"
               ? <RegionMap map={data.regionsMap} cells={cells} regions={regionAreas.map((area) => area.owNfz)} onToggle={toggleRegion} colors={regionAreas.map(areaColor)} />
               : dots
@@ -210,18 +213,18 @@ export function RegionView({ productCodes, year, method, areas = NO_AREAS, onAre
                   onSelect={(dot) => setFocus({ city: dot.city, facility: dot.facility })}
                 />
                 : <div className="empty-chart">Ładowanie danych placówek…</div>}
+            {/* Legenda w pustym lewym dolnym rogu prostokąta mapy (na wąskim ekranie pod mapą). */}
+            <MapLegend
+              mode={mode}
+              range={range}
+              max={maxFacility}
+              scaleMax={scaleMax}
+              dotMedian={dotMedian}
+              scale={mapWidth / data.regionsMap.viewBox[0]}
+            />
           </div>
-          <MapLegend
-            mode={mode}
-            range={range}
-            areas={areas}
-            areaColor={areaColor}
-            reference={reference}
-            max={maxFacility}
-            scaleMax={scaleMax}
-            dotMedian={dotMedian}
-            scale={mapWidth / data.regionsMap.viewBox[0]}
-          />
+          {/* Obszary pod mapą: lista do 5 pozycji nie mieści się w rogu mapy. */}
+          <AreaLegend areas={mode === "regions" ? regionAreas : areas} areaColor={areaColor} reference={reference} />
         </div>
         {mode === "regions"
           ? <RegionTable year={mapYear} rows={rows} areas={regionAreas} areaColor={areaColor} onToggle={onAreasChange ? toggleRegion : undefined} />
@@ -244,6 +247,17 @@ export function RegionView({ productCodes, year, method, areas = NO_AREAS, onAre
   </div>;
 }
 
+/** Legenda wybranych obszarów (obwódka w kolorze obszaru); bez obszarów nic. */
+function AreaLegend({ areas, areaColor, reference }: { areas: AnalysisArea[]; areaColor: (area: AnalysisArea) => string; reference: Parameters<typeof areaLabel>[1] }) {
+  if (!areas.length) return null;
+  return <div className={styles.legendGroup}>
+    <div className={styles.legendTitle}>Obszary</div>
+    <ul className={styles.legendItems}>
+      {areas.map((area) => <li key={areaToValue(area)}><i className={styles.legendRing} style={{ borderColor: areaColor(area) }} aria-hidden />{areaLabel(area, reference)}</li>)}
+    </ul>
+  </div>;
+}
+
 /** Zaokrąglenie wartości legendy do 1, 2 albo 5 × potęga 10. */
 function niceValue(value: number): number {
   if (value <= 0) return 0;
@@ -252,16 +266,13 @@ function niceValue(value: number): number {
 }
 
 /**
- * Legenda mapy w jednym układzie: grupy z nagłówkiem (jak legenda obok mapy w przykładzie).
- * Województwa: skala koloru i wybrane obszary. Placówki: kolory i wielkość — kropki w skali mapy
+ * Legenda mapy w jednym układzie: grupy z nagłówkiem, w lewym dolnym rogu mapy (obszary: `AreaLegend` pod mapą).
+ * Województwa: skala koloru. Placówki: wielkość i kolory — kropki w skali mapy
  * (`scale` = piksele na jednostkę mapy), więc kropka legendy ma rozmiar kropki na mapie.
  */
-function MapLegend({ mode, range, areas, areaColor, reference, max, scaleMax, dotMedian, scale }: {
+function MapLegend({ mode, range, max, scaleMax, dotMedian, scale }: {
   mode: MapMode;
   range: string;
-  areas: AnalysisArea[];
-  areaColor: (area: AnalysisArea) => string;
-  reference: { regions: { owNfz: string; name: string }[] };
   /** Największa wartość placówki (wartości kropek legendy). */
   max: number;
   /** Koniec skali wielkości (`dotScaleMax`). */
@@ -270,7 +281,6 @@ function MapLegend({ mode, range, areas, areaColor, reference, max, scaleMax, do
   dotMedian: number;
   scale: number;
 }) {
-  const regionAreas = areas.filter((area) => area.kind === "region");
   if (mode === "regions") return <div className={styles.mapLegend}>
     <div className={styles.legendGroup}>
       <div className={styles.legendTitle}>Na 100 tys. mieszkańców wobec średniej {range}</div>
@@ -280,33 +290,13 @@ function MapLegend({ mode, range, areas, areaColor, reference, max, scaleMax, do
         <span>2 ×</span>
       </div>
     </div>
-    {regionAreas.length ? <div className={styles.legendGroup}>
-      <div className={styles.legendTitle}>Obszary</div>
-      <ul className={styles.legendItems}>
-        {regionAreas.map((area) => <li key={areaToValue(area)}><i className={styles.legendRing} style={{ borderColor: areaColor(area) }} aria-hidden />{areaLabel(area, reference)}</li>)}
-      </ul>
-    </div> : null}
   </div>;
   // Wartości poniżej progu mają jedną wielkość: legenda kończy się pozycją „≤ 25”.
   const sizes = [...new Set([niceValue(max), niceValue(max / 4), niceValue(max / 16)])].filter((value) => value > DOT_VALUE_FLOOR);
   sizes.push(DOT_VALUE_FLOOR);
   return <div className={styles.mapLegend}>
     <div className={styles.legendGroup}>
-      <div className={styles.legendTitle}>Hospitalizacje placówki wobec mediany roku ({integer(dotMedian)})</div>
-      <div className={styles.legendScale}>
-        <span>¼ ×</span>
-        <i style={{ background: `linear-gradient(90deg, ${scaleColor(-1)}, ${scaleColor(0)}, ${scaleColor(1)})` }} aria-hidden />
-        <span>4 ×</span>
-      </div>
-    </div>
-    {areas.length ? <div className={styles.legendGroup}>
-      <div className={styles.legendTitle}>Obszary</div>
-      <ul className={styles.legendItems}>
-        {areas.map((area) => <li key={areaToValue(area)}><i className={styles.legendRing} style={{ borderColor: areaColor(area) }} aria-hidden />{areaLabel(area, reference)}</li>)}
-      </ul>
-    </div> : null}
-    <div className={styles.legendGroup}>
-      <div className={styles.legendTitle}>Hospitalizacje w roku</div>
+      <div className={styles.legendTitle}>Wielkość: hospitalizacje</div>
       <ul className={styles.legendSizes}>
         {sizes.map((value) => {
           const r = Math.max(1.5, dotRadius(value, scaleMax) * scale);
@@ -316,6 +306,14 @@ function MapLegend({ mode, range, areas, areaColor, reference, max, scaleMax, do
           </li>;
         })}
       </ul>
+    </div>
+    <div className={styles.legendGroup}>
+      <div className={styles.legendTitle}>Kolor: wobec mediany roku ({integer(dotMedian)})</div>
+      <div className={styles.legendScale}>
+        <span>¼ ×</span>
+        <i style={{ background: `linear-gradient(90deg, ${scaleColor(-1)}, ${scaleColor(0)}, ${scaleColor(1)})` }} aria-hidden />
+        <span>4 ×</span>
+      </div>
     </div>
   </div>;
 }
@@ -331,7 +329,8 @@ const ratio = (value: number, reference: number) => reference > 0
 /**
  * Mapa placówek: kontury województw i kropka na każdą placówkę z kropką w roku mapy (`facilityDots`).
  * Kolor = hospitalizacje placówki wobec mediany placówek w roku mapy; wybrane obszary mają obwódkę,
- * pozostałe placówki są przygaszone. Najechanie pokazuje podpowiedź (bez zmiany tabeli obok).
+ * pozostałe placówki są przygaszone. Najechanie pokazuje dymek `ChartTooltip` obok kropki (bez zmiany tabeli obok);
+ * dymek może wyjść poza mapę i kartę, ale nie poza okno (DESIGN.md 6.3).
  * Większe kropki pod spodem, mniejsze na wierzchu; przy zmianie roku kropki płynnie zmieniają wielkość i miejsce.
  */
 function FacilityMap({ map, dots, mapYear, areas, areaColor, median: yearMedian, regionName, focus, onSelect }: {
@@ -347,15 +346,12 @@ function FacilityMap({ map, dots, mapYear, areas, areaColor, median: yearMedian,
   onSelect: (dot: FacilityDot) => void;
 }) {
   const [width, height] = map.viewBox;
-  const [hover, setHover] = useState<{ dot: FacilityDot; x: number; y: number; left: boolean } | null>(null);
+  const [hover, setHover] = useState<{ dot: FacilityDot; anchor: Box } | null>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const shown = [...dots].sort((a, b) => b.r - a.r);
   const areaOf = (dot: FacilityDot) => areas.find((candidate) => inArea(candidate, { owNfz: dot.owNfz, city: dot.city }));
-  const showTip = (dot: FacilityDot, clientX: number, clientY: number) => {
-    const box = wrapRef.current?.getBoundingClientRect();
-    // Po prawej połowie mapy podpowiedź po lewej stronie kursora (nie wychodzi poza kartę).
-    if (box) setHover({ dot, x: clientX - box.left, y: clientY - box.top, left: clientX - box.left > box.width / 2 });
-  };
+  // Pozycja z prostokąta kropki, nie z kursora: dymek nie zasłania placówki.
+  const showTip = (dot: FacilityDot, target: Element) => setHover({ dot, anchor: elementBox(target) });
   const tipArea = hover ? areaOf(hover.dot) : undefined;
   return <div ref={wrapRef} className={styles.facilityMap} onMouseLeave={() => setHover(null)}>
     <svg className={jgp.regionMap} viewBox={`0 0 ${width} ${height}`} role="group" aria-label={`Mapa placówek: hospitalizacje w ${mapYear} r.`}>
@@ -378,24 +374,22 @@ function FacilityMap({ map, dots, mapYear, areas, areaColor, median: yearMedian,
           aria-label={dotTitle(dot, mapYear)}
           aria-pressed={selected}
           onClick={() => onSelect(dot)}
-          onMouseEnter={(event) => showTip(dot, event.clientX, event.clientY)}
-          onMouseMove={(event) => showTip(dot, event.clientX, event.clientY)}
+          onMouseEnter={(event) => showTip(dot, event.currentTarget)}
           onMouseLeave={() => setHover(null)}
+          onFocus={(event) => showTip(dot, event.currentTarget)}
+          onBlur={() => setHover(null)}
           onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onSelect(dot); } }}
         />;
       })}
     </svg>
-    {hover ? <div
-      className={`${styles.mapTip} ${hover.left ? styles.mapTipLeft : ""}`}
-      style={{ left: hover.x, top: hover.y }}
-      role="tooltip"
-    >
-      <b>{hover.dot.name}</b>
-      <span>{formatCityName(hover.dot.city)} · {regionName(hover.dot.owNfz)}</span>
-      <span>Hospitalizacje {mapYear}: <b>{integer(hover.dot.hospitalizations)}</b> ({ratio(hover.dot.hospitalizations, yearMedian)} mediany roku)</span>
-      {hover.dot.deaths !== null ? <span>Śmiertelność: <b>{decimal((hover.dot.deaths / hover.dot.hospitalizations) * 100)}%</b> ({integer(hover.dot.deaths)} {deathsWord(hover.dot.deaths)} na {integer(hover.dot.hospitalizations)} hosp.)</span> : null}
-      {tipArea ? <span><i className={styles.areaSwatch} style={{ background: areaColor(tipArea) }} aria-hidden /> w obszarze analizy</span> : null}
-    </div> : null}
+    {hover ? <ChartTooltip anchor={hover.anchor} container={wrapRef}>
+      <TooltipHead title={hover.dot.name} context={`${formatCityName(hover.dot.city)} · ${regionName(hover.dot.owNfz)}`} />
+      <TooltipLines lines={[
+        <>Hospitalizacje {mapYear}: <b>{integer(hover.dot.hospitalizations)}</b> ({ratio(hover.dot.hospitalizations, yearMedian)} mediany roku)</>,
+        ...(hover.dot.deaths !== null ? [<>Śmiertelność: <b>{decimal((hover.dot.deaths / hover.dot.hospitalizations) * 100)}%</b> ({integer(hover.dot.deaths)} {deathsWord(hover.dot.deaths)} na {integer(hover.dot.hospitalizations)} hosp.)</>] : []),
+        ...(tipArea ? [<><i className={styles.areaSwatch} style={{ background: areaColor(tipArea) }} aria-hidden /> w obszarze analizy</>] : []),
+      ]} />
+    </ChartTooltip> : null}
   </div>;
 }
 

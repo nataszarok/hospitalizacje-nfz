@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import { AreaStatsPopover } from "@/components/AreaStatsPopover";
 import { ChartScaleControl } from "@/components/ChartScaleControl";
 import { FunnelControl } from "@/components/FunnelControl";
-import { FunnelLegend } from "@/components/jgp/FunnelLegend";
 import { MortalityChart } from "@/components/MortalityChart";
 import { MortalityDisplayControl } from "@/components/MortalityDisplayControl";
 import { SortableTableHeader } from "@/components/SortableTableHeader";
@@ -155,8 +154,6 @@ export function MortalityTab({
               regions={reference.regions}
               funnel={funnelState === "funnel"}
             />
-            {/* Kolory statusu tylko bez wyróżnionych obszarów (obszary mają własne kolory, jak na karcie JGP). */}
-            {funnelState === "funnel" && !highlightAreas.length ? <FunnelLegend /> : null}
           </div>
         ) : (
           <div className="empty-chart">

@@ -10,19 +10,24 @@ trends.json.gz, build-data/jgp/<KOD>.json.gz in a compact format (version 3):
              about twice as well as row tuples) — conservative
              estimation of "<5" (= 1), the method used by the pages; same file order and seed
              as scripts/build_hospitalizations.py (shared iter_frames)
-  valuePln   NFZ settlements in PLN: national total by year and per provider for the latest
-             data year, from data/zestawienie_swiadczen_2019_2026.csv; omitted when the file is
-             missing. The last year in the settlements file is incomplete and skipped.
+  valuePln   NFZ settlements in PLN, from data/zestawienie_swiadczen_2019_2026.csv: national total
+             by year ({year: zł}) and per provider by year ({year: [["OW|NIP", zł], ...]});
+             omitted when the file is missing. The last year in the settlements file is
+             incomplete and skipped.
 
 The files are read only by the Next build (src/lib/staticDataServer.ts), which puts the card
 data into the HTML of /jgp/[kod]; they live outside public/, so the export does not copy them
 to dist/ and the site does not serve them.
 
 Provider codes in the settlements file are NFZ provider codes; they are mapped to NIP with
-data/nfz_swiadczeniodawcy_2025.csv (OW + code -> NIP).
+data/nfz_swiadczeniodawcy_2025.csv (OW + code -> NIP), overridden by
+data/kody_swiadczeniodawcow_uzupelnienie.csv (OW_NFZ, KOD_SWIADCZENIODAWCY, NIP, LATA, UWAGI): codes missing from
+the 2025 file and codes whose NIP in the hospitalization files differs (LATA = years it applies to; empty = all).
 
 Run after build_hospitalizations.py (product codes come from trends.json.gz):
   python3 scripts/build_jgp_pages.py --years 2024,2025
+
+--settlements-only rewrites only valuePln in the existing group files (fast: no hospitalization CSVs).
 """
 from __future__ import annotations
 
@@ -38,6 +43,7 @@ from build_hospitalizations import ALL_YEARS, ROOT, VALUE_COLS, columns, iter_fr
 
 SETTLEMENTS_FILE = "zestawienie_swiadczen_2019_2026.csv"
 PROVIDERS_FILE = "nfz_swiadczeniodawcy_2025.csv"
+PROVIDER_CODES_SUPPLEMENT = "kody_swiadczeniodawcow_uzupelnienie.csv"
 
 
 GROUP_INDEX = {"p": 0, "u": 1, "o": 2}
@@ -72,7 +78,7 @@ def read_monthly(data_dir: Path, years: list[str], product_to_group: dict[str, s
     return rows
 
 
-def read_settlements(data_dir: Path, groups: set[str], provider_year: str) -> dict[str, dict]:
+def read_settlements(data_dir: Path, groups: set[str]) -> dict[str, dict]:
     path = data_dir / SETTLEMENTS_FILE
     if not path.exists():
         print(f"Uwaga: brak {path.name} — pliki grup bez kwot rozliczeń.")
@@ -86,23 +92,34 @@ def read_settlements(data_dir: Path, groups: set[str], provider_year: str) -> di
     frame = frame[frame["jgp"].isin(groups)].copy()
     frame["value"] = pd.to_numeric(frame["Wartosc_jednostek_rozliczonych"].str.replace(",", ".", regex=False), errors="coerce").fillna(0)
     frame["ow"] = frame["Oddzial_wojewodzki_NFZ"].str.zfill(2)
-    frame["nip"] = (frame["ow"] + "|" + frame["Kod_swiadczeniodawcy"].str.strip()).map(nip_by_code)
+    frame["key"] = frame["ow"] + "|" + frame["Kod_swiadczeniodawcy"].str.strip()
+    frame["nip"] = frame["key"].map(nip_by_code)
+    # Uzupełnienie kodów: kody spoza pliku 2025 i kody, przy których plik hospitalizacji ma inny NIP (w latach LATA).
+    supplement_path = data_dir / PROVIDER_CODES_SUPPLEMENT
+    if supplement_path.exists():
+        supplement = pd.read_csv(supplement_path, dtype=str, encoding="utf-8-sig").fillna("")
+        for row in supplement.itertuples(index=False):
+            key = f"{row.OW_NFZ.zfill(2)}|{row.KOD_SWIADCZENIODAWCY.strip()}"
+            years = [year.strip() for year in row.LATA.split(",") if year.strip()]
+            mask = (frame["key"] == key) & (frame["Rok"].isin(years) if years else True)
+            frame.loc[mask, "nip"] = row.NIP.strip()
     # Ostatni rok w pliku jest niepełny (dane w trakcie roku).
     last_year = frame["Rok"].max()
     frame = frame[frame["Rok"] < last_year]
     unmapped = frame.loc[frame["nip"].isna(), "value"].sum()
     if unmapped:
-        print(f"Uwaga: {unmapped:,.0f} zł rozliczeń bez NIP (brak w {PROVIDERS_FILE}).")
+        print(f"Uwaga: {unmapped:,.0f} zł rozliczeń bez NIP (brak w {PROVIDERS_FILE} i {PROVIDER_CODES_SUPPLEMENT}).")
     out: dict[str, dict] = {}
     for jgp, part in frame.groupby("jgp"):
         national = part.groupby("Rok")["value"].sum().round().astype("int64")
-        # Strona grupy pokazuje kwoty świadczeniodawców tylko dla roku danych o hospitalizacjach.
-        latest = part[(part["Rok"] == provider_year)].dropna(subset=["nip"])
-        by_provider = latest.groupby(["ow", "nip"])["value"].sum().round().astype("int64").reset_index()
+        # Kwoty świadczeniodawców w każdym roku: ranking karty pokazuje rok wybrany przyciskiem roku.
+        by_provider = part.dropna(subset=["nip"]).groupby(["Rok", "ow", "nip"])["value"].sum().round().astype("int64").reset_index()
         out[jgp] = {
             "national": {year: int(value) for year, value in national.items()},
-            "year": provider_year,
-            "providers": [[f"{ow}|{nip}", int(value)] for ow, nip, value in by_provider.itertuples(index=False)],
+            "providers": {
+                year: [[f"{ow}|{nip}", int(value)] for _, ow, nip, value in rows.itertuples(index=False) if value]
+                for year, rows in by_provider.groupby("Rok")
+            },
         }
     return out
 
@@ -130,14 +147,28 @@ def main() -> None:
     parser.add_argument("--data-dir", type=Path, default=ROOT / "data")
     parser.add_argument("--trends", type=Path, default=ROOT / "public" / "data" / "hospitalizations" / "trends.json.gz")
     parser.add_argument("--output-dir", type=Path, default=ROOT / "build-data" / "jgp")
+    parser.add_argument("--settlements-only", action="store_true", help="podmień tylko valuePln w istniejących plikach grup")
     args = parser.parse_args()
+
+    if args.settlements_only:
+        files = sorted(args.output_dir.glob("*.json.gz"))
+        settlements = read_settlements(args.data_dir, {path.name.removesuffix(".json.gz") for path in files})
+        for path in files:
+            with gzip.open(path, "rt", encoding="utf-8") as handle:
+                payload = json.load(handle)
+            payload.pop("valuePln", None)
+            if payload["jgp"] in settlements:
+                payload["valuePln"] = settlements[payload["jgp"]]
+            write_json_gz(path, payload)
+        print(f"jgp: rozliczenia podmienione w {len(files)} plikach")
+        return
 
     years = sorted({y.strip() for y in args.years.split(",") if y.strip()})
     codes = product_codes_by_group(args.trends)
     product_to_group = {code: group for group, group_codes in codes.items() for code in group_codes}
 
     monthly = read_monthly(args.data_dir, years, product_to_group)
-    settlements = read_settlements(args.data_dir, set(codes), years[-1])
+    settlements = read_settlements(args.data_dir, set(codes))
     # Stare pliki (np. grupy, które zniknęły z danych) usuwamy, żeby katalog odpowiadał indeksowi.
     args.output_dir.mkdir(parents=True, exist_ok=True)
     for old in args.output_dir.glob("*.json.gz"):

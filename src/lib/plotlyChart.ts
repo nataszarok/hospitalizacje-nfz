@@ -166,6 +166,17 @@ export function referenceShape(y: number) {
   return { type: "line", xref: "paper", x0: 0, x1: 1, y0: y, y1: y, line: { color: CHART_COLORS.textSecondary, width: 1, dash: "dot" } };
 }
 
+/** Podpis linii odniesienia przy prawej krawędzi, nad linią (np. „średnia: 11,5%”). */
+export function referenceAnnotation(y: number, text: string) {
+  return { xref: "paper", x: 1, y, xanchor: "right", yanchor: "bottom", showarrow: false, text, font: { size: 12, color: CHART_COLORS.textSecondary } };
+}
+
+/** Podpis średniej w procentach: „średnia: 11,5%”, przy wartości poniżej 1% dwa miejsca po przecinku (6.4). */
+export function meanPctLabel(value: number) {
+  const digits = value < 1 ? 2 : 1;
+  return `średnia: ${value.toLocaleString("pl-PL", { minimumFractionDigits: digits, maximumFractionDigits: digits })}%`;
+}
+
 /** Wiersz dymka: etykieta i wyrażenie Plotly (np. `%{y:.1f}%`). */
 export interface HoverRow { label: string; value: string }
 

@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { defaultCardYear, funnelCurves, funnelHalfWidth, limitToCatalogYears, funnelStatus, movingRatio, providerYearTotals, ratioSeries, structureShares } from "@/lib/jgpCard";
+import { defaultCardYear, funnelCurves, funnelHalfWidth, limitToCatalogYears, funnelStatus, movingRatio, providerYearTotals, ratioSeries, structureShares, topProvidersOfPeriod, activeSpan } from "@/lib/jgpCard";
 import type { JgpPageData, JgpProviderRow } from "@/lib/jgpPage";
 
 const row = (hospitalizations: number, yearly: [number, number, number][] = []): JgpProviderRow => ({
   key: `07|${hospitalizations}`, owNfz: "07", nip: String(hospitalizations), name: `S${hospitalizations}`, city: "", voivodeship: "07",
-  hospitalizations, deaths: 0, mortalityPct: 0, urgentPct: 0, series: [], previousHospitalizations: null, valuePln: null, peers: [], yearly, yearlyDeaths: [],
+  hospitalizations, deaths: 0, mortalityPct: 0, urgentPct: 0, series: [], previousHospitalizations: null, valuePln: null, peers: [], yearly, yearlyDeaths: [], yearlyValuePln: [],
 });
 
 describe("structureShares — struktura ośrodków nad rankingiem", () => {
@@ -87,12 +87,12 @@ describe("dataForYear — karta dla wcześniejszego roku", () => {
     expect(dataForYear(data, 1)).toBe(data);
   });
 
-  it("2024: ranking, zgony i tryb z pliku grupy, bez rozliczeń ośrodków", () => {
+  it("2024: ranking, zgony, tryb i rozliczenia ośrodków z pliku grupy (kwoty tego roku)", () => {
     const year = dataForYear(data, 0);
     expect(year.year).toBe("2024");
     expect(year.providers.map((row) => [row.name, row.hospitalizations, row.deaths, row.urgentPct, row.valuePln])).toEqual([
       ["Szpital Beta", 10, 1, 100, null],
-      ["Szpital Alfa", 5, 0, 0, null],
+      ["Szpital Alfa", 5, 0, 0, 300_000],
     ]);
     expect(year.hospitalizations).toBe(15);
     expect(year.previousHospitalizations).toBeNull();
@@ -133,6 +133,7 @@ describe("limitToCatalogYears — lata grupy w katalogu", () => {
     ...row(0, [[1, 4, 0], [2, 3, 0], [0, 0, 0], [0, 0, 0]]),
     series: months.map((month) => month < "2019" ? 1 : 0),
     yearlyDeaths: [1, 0, 0, 0],
+    yearlyValuePln: [null, null, null, null],
   };
   const data = {
     jgpCode: "E03", name: "", procedural: true, productCodes: ["P"], catalogYears: ["2017", "2018"], year: "2020",
@@ -165,5 +166,35 @@ describe("limitToCatalogYears — lata grupy w katalogu", () => {
     const full = { ...data, catalogYears: data.admissionYears, year: "2020" };
     expect(limitToCatalogYears(full)).toBe(full);
     expect(defaultCardYear(full)).toBe("2020");
+  });
+});
+
+describe("topProvidersOfPeriod — linie ośrodków w „Ile?”", () => {
+  const months = ["2023-01", "2023-02", "2024-01", "2024-02", "2025-01", "2025-02"];
+  const provider = (name: string, series: number[]) => ({ ...row(0), key: name, name, series });
+  // A: lokalny wzrost w 2023 (jak Koszalin w H52); B, C: duże w ostatnich latach; D: zawsze mały; Z: bez hospitalizacji.
+  const a = provider("A", [500, 400, 5, 5, 1, 1]);
+  const b = provider("B", [20, 20, 60, 60, 50, 50]);
+  const c = provider("C", [30, 30, 40, 40, 45, 45]);
+  const d = provider("D", [1, 1, 1, 1, 1, 1]);
+  const z = provider("Z", [0, 0, 0, 0, 0, 0]);
+
+  it("bierze największe ośrodki z każdego roku, razem bez powtórzeń; kolejność według sumy okresu", () => {
+    // Top 1: 2023 → A, 2024 → B, 2025 → B.
+    expect(topProvidersOfPeriod([b, c, a, d, z], months, 1).map((item) => item.name)).toEqual(["A", "B"]);
+    // Top 2: 2023 → A, C; 2024 → B, C; 2025 → B, C.
+    expect(topProvidersOfPeriod([b, c, a, d, z], months, 2).map((item) => item.name)).toEqual(["A", "B", "C"]);
+  });
+
+  it("pomija ośrodki bez hospitalizacji", () => {
+    expect(topProvidersOfPeriod([z, d], months, 5).map((item) => item.name)).toEqual(["D"]);
+  });
+});
+
+describe("activeSpan — okres aktywności ośrodka", () => {
+  it("od pierwszej do ostatniej niezerowej wartości; zera w środku zostają w okresie", () => {
+    expect(activeSpan([0, 0, 117, 0, 250, 0, 0])).toEqual([2, 4]);
+    expect(activeSpan([5])).toEqual([0, 0]);
+    expect(activeSpan([0, 0])).toBeNull();
   });
 });

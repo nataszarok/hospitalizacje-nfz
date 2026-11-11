@@ -2,7 +2,7 @@
 
 import "@testing-library/jest-dom/vitest";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { GroupLineChart, type ChartLine } from "@/components/jgp/GroupLineChart";
 
 // Po narysowaniu wykres podpina zdarzenia Plotly do elementu: zapamiętujemy obsługę zdarzeń.
@@ -37,11 +37,12 @@ type Layout = { height: number; xaxis: { ticklabelmode?: string; range?: string[
 async function draw(lines: ChartLine[], props: { period?: "month" | "year"; selectedLabel?: string; onSelect?: (key: string) => void } = {}) {
   render(<GroupLineChart months={months} lines={lines} valueLabel="hosp." ariaLabel="wykres" height={300} {...props} />);
   await waitFor(() => expect(react).toHaveBeenCalled());
-  await waitFor(() => expect(handlers.plotly_hover?.length).toBe(1));
+  await waitFor(() => expect(screen.getByRole("img", { name: "wykres" }).onmousemove).toBeTruthy());
   const [plot, traces, layout] = react.mock.calls.at(-1) as unknown as [HTMLElement, Trace[], Layout];
   return { plot, traces, layout };
 }
-const hover = (curveNumber: number, pointNumber: number) => act(() => { for (const fn of handlers.plotly_hover) fn({ points: [{ curveNumber, pointNumber, x: 0, y: 0 }] }); });
+// Kursor w pikselach wykresu (x = indeks miesiąca × 10, y = 200 − wartość).
+const hoverAt = (clientX: number, clientY: number) => fireEvent.mouseMove(screen.getByRole("img", { name: "wykres" }), { clientX, clientY });
 
 describe("GroupLineChart — okres", () => {
   it("domyślnie miesiące: kropka na miesiąc i linia średniej 3M; Plotly nie rysuje dymka", async () => {
@@ -52,6 +53,18 @@ describe("GroupLineChart — okres", () => {
     expect(markers.hoverinfo).toBe("none");
   });
 
+  it("`activeOnly`: bez zer przed i po okresie aktywności; średnia 3M liczy się od pierwszego aktywnego miesiąca", async () => {
+    const active = months.map((_, i) => i >= 2 && i <= 5 ? 10 * i : 0);
+    const { traces } = await draw([{ key: "s", name: "Szpital", values: active, activeOnly: true }]);
+    const [markers, line] = traces;
+    expect(markers.y).toEqual([null, null, 20, 30, 40, 50, ...Array(9).fill(null)]);
+    expect(line.y.slice(0, 4)).toEqual([null, null, 20, 25]);
+    cleanup();
+    react.mockClear();
+    const yearly = await draw([{ key: "s", name: "Szpital", values: months.map((_, i) => i >= 3 ? 1 : 0), activeOnly: true }], { period: "year" });
+    expect(yearly.traces[0].y).toEqual([null, 12]);
+  });
+
   it("lata: suma roku w połowie roku, ta sama wysokość, rok niepełny z liczbą miesięcy w dymku", async () => {
     const { traces, layout } = await draw([{ key: "pl", name: "Polska", values }], { period: "year" });
     const [markers, line] = traces;
@@ -60,7 +73,7 @@ describe("GroupLineChart — okres", () => {
     expect(line.y).toEqual([6, 114]);
     expect(layout.height).toBe(300);
     expect(layout.xaxis).toMatchObject({ ticklabelmode: "period", range: ["2023-01-01", "2024-12-31"] });
-    hover(0, 0);
+    hoverAt(0, 194);
     expect(screen.getByRole("tooltip")).toHaveTextContent("Polska2023 (3 mies.)6 hosp.");
     expect(screen.getByRole("tooltip")).not.toHaveTextContent("średnia 3M");
   });
@@ -70,7 +83,8 @@ describe("GroupLineChart — okres", () => {
     const { traces } = await draw([{ key: "pl", name: "Polska", values, base }], { period: "year" });
     // 2023: 6 / 30; 2024: 114 / 120.
     expect(traces[0].y).toEqual([20, 95]);
-    hover(0, 1);
+    // Punkt roku 2024 stoi 1 lipca (w osi testu miesiąc 9 → x = 90).
+    hoverAt(90, 105);
     expect(screen.getByRole("tooltip")).toHaveTextContent("95,0% (114 hosp. z 120 hosp.)");
   });
 });
@@ -78,13 +92,13 @@ describe("GroupLineChart — okres", () => {
 describe("GroupLineChart — dymek HTML", () => {
   it("najechanie pokazuje nazwę, miejscowość, miesiąc, wartość i średnią 3M; zjechanie chowa dymek", async () => {
     await draw([{ key: "a", name: "Szpital A", detail: "Koszalin · OW Zachodniopomorskie", values }]);
-    hover(0, 3);
+    hoverAt(30, 196);
     const tooltip = screen.getByRole("tooltip");
     expect(tooltip).toHaveTextContent("Szpital AKoszalin · OW Zachodniopomorskie · sty 20244 hosp.średnia 3M: 3 hosp.");
     // Dymek obok kropki: środek (30, 196), znacznik 14 px, strefa ochronna 12 px.
     expect(tooltip.dataset.placement).toBe("right");
     expect(parseFloat(tooltip.style.left)).toBeCloseTo(30 + 7 + 12);
-    act(() => { for (const fn of handlers.plotly_unhover) fn(); });
+    fireEvent.mouseLeave(screen.getByRole("img", { name: "wykres" }));
     expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
   });
 });
@@ -106,19 +120,19 @@ describe("GroupLineChart — wybrany ośrodek", () => {
     // Serie: inny ośrodek (kropki, średnia), wybrany (kropki, średnia).
     expect(traces.slice(0, 4).map((trace) => trace.hoverinfo)).toEqual(["none", "none", "none", "none"]);
     expect(traces[0].opacity).toBeLessThan(0.5);
-    hover(2, 0);
+    hoverAt(0, 199);
     expect(screen.getByRole("tooltip")).toHaveTextContent(name);
   });
 
   it("najechanie na linię tła podświetla samą linię na niebiesko, bez kropek serii; wybrana linia ma też kropki", async () => {
     await draw(lines);
     const overlay = () => restyle.mock.calls.at(-1)![1] as { y: unknown[][]; "line.color": string[] };
-    hover(0, 3);
+    hoverAt(30, 96);
     expect(screen.getByRole("tooltip")).toHaveTextContent("Inny ośrodek");
     expect(overlay()["line.color"][0]).toBe("#2856A3");
     expect(overlay().y[0]).toHaveLength(months.length);
     expect(overlay().y[1]).toEqual([null]);
-    hover(2, 3);
+    hoverAt(30, 196);
     expect(overlay().y[1]).toHaveLength(months.length);
   });
 
@@ -135,15 +149,26 @@ describe("GroupLineChart — wybrany ośrodek", () => {
     expect(onSelect).not.toHaveBeenCalled();
   });
 
-  it("kliknięcie wybiera linię podświetloną (pod kursorem), nie najbliższą; dymek znika od razu", async () => {
+  it("najechanie i kliknięcie: linia najbliżej kursora, także gdy kropki linii się nakładają; dymek znika po kliknięciu", async () => {
     const onSelect = vi.fn();
-    const { plot } = await draw(lines.map((line) => ({ ...line, tone: undefined })), { onSelect });
-    // Podświetlona linia „b” (wybrany ośrodek bez wyróżnienia), kliknięcie tuż przy linii „a”.
-    hover(2, 5);
-    expect(screen.getByRole("tooltip")).toBeInTheDocument();
-    fireEvent.click(plot, { clientX: 52, clientY: 96 });
-    expect(onSelect).toHaveBeenLastCalledWith("b");
+    // „c” ma kropki w tych samych miesiącach co „a”, 3 jednostki niżej (kropki się nakładają); „a” jest pierwsza na liście.
+    const overlapping: ChartLine[] = [lines[0], { key: "c", name: "Krótka linia", values: values.map((v, i) => i >= 4 && i <= 6 ? v + 97 : 0), activeOnly: true }];
+    const { plot } = await draw(overlapping, { onSelect });
+    // Miesiąc 5: „a” = 106 (y 94), „c” = 103 (y 97). Kursor na kropce „c”.
+    hoverAt(50, 97);
+    expect(screen.getByRole("tooltip")).toHaveTextContent("Krótka linia");
+    fireEvent.click(plot, { clientX: 50, clientY: 97 });
+    expect(onSelect).toHaveBeenLastCalledWith("c");
     expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
+    // Odcinek średniej między kropkami też jest trafieniem.
+    hoverAt(45, 94.5);
+    expect(screen.getByRole("tooltip")).toHaveTextContent("Inny ośrodek");
+  });
+
+  it("podpis wybranej linii stoi przy jej ostatnim punkcie, także gdy linia kończy się wcześniej", async () => {
+    const short: ChartLine = { key: "s", name: "Ośrodek zamknięty", values: values.map((v, i) => i <= 4 ? v : 0), activeOnly: true, tone: "selected" };
+    const { layout } = await draw([short], { selectedLabel: "Ośrodek zamknięty" });
+    expect(layout.annotations[0]).toMatchObject({ text: "Ośrodek zamknięty", x: `${months[4]}-01` });
   });
 
   it("długą nazwę w podpisie łamie na linie, bez skracania", async () => {

@@ -5,6 +5,8 @@ import { usePlotResize } from "@/lib/usePlotResize";
 import {
   admissionRowsPerJgp,
   aggregateAdmissionRowsByProvider,
+  urgentMeanPct,
+  urgentSharePct,
   type AdmissionDisplayRow,
 } from "@/lib/admissions";
 import { formatCityName } from "@/lib/formatters";
@@ -27,11 +29,18 @@ import {
   makeHoverTrace,
   PLOTLY_CONFIG,
   PRODUCT_SYMBOLS,
+  meanPctLabel,
+  referenceAnnotation,
+  referenceShape,
   type PlotElement,
 } from "@/lib/plotlyChart";
-import { ratioPct } from "@/lib/metrics";
 import type { AdmissionRow, AxisMode, ProductOption, RegionOption } from "@/lib/types";
 
+/**
+ * Tryb przyjęcia w eksploratorze — ten sam układ co wykres przyjęć nagłych na karcie grupy JGP:
+ * punkt = ośrodek, oś X = liczba hospitalizacji (albo na 100 tys. mieszkańców), oś Y = udział przyjęć nagłych (2+3),
+ * linia kropkowana = średnia wszystkich ośrodków.
+ */
 export function AdmissionChart({
   rows,
   axisMode,
@@ -89,33 +98,22 @@ export function AdmissionChart({
         mode: "markers",
         name,
         showlegend: false,
-        x: subset.map((row) => axisMode === "per_100k"
-          ? row.plannedAdmissionsPer100k
-          : row.plannedAdmissions),
-        y: subset.map((row) => axisMode === "per_100k"
-          ? row.urgentAdmissionsPer100k
-          : row.urgentAdmissions),
-        customdata: subset.map((row) => {
-          const ratio = ratioPct(row.plannedAdmissions, row.urgentAdmissions);
-          return [
-            row.providerName,
-            row.nip,
-            row.owNfz,
-            regionByCode.get(row.owNfz) ?? row.voivodeship,
-            formatCityName(row.city),
-            row.plannedAdmissions,
-            row.urgentAdmissions,
-            row.totalAdmissions,
-            row.plannedAdmissionsPer100k,
-            row.urgentAdmissionsPer100k,
-            ratio === null
-              ? "—"
-              : `${ratio.toLocaleString("pl-PL", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`,
-            row.productCodes
-              .map((code) => productByCode.get(code)?.jgpCode ?? code)
-              .join(", "),
-          ];
-        }),
+        x: subset.map((row) => axisMode === "per_100k" ? row.hospitalizationsPer100k : row.hospitalizations),
+        y: subset.map(urgentSharePct),
+        customdata: subset.map((row) => [
+          row.providerName,
+          row.nip,
+          row.owNfz,
+          regionByCode.get(row.owNfz) ?? row.voivodeship,
+          formatCityName(row.city),
+          row.hospitalizations,
+          row.hospitalizationsPer100k,
+          row.urgentAdmissions,
+          row.plannedAdmissions,
+          row.productCodes
+            .map((code) => productByCode.get(code)?.jgpCode ?? code)
+            .join(", "),
+        ]),
         marker: {
           size: emphasized ? 11 : 9,
           // Kolory tła mają już przezroczystość z palety.
@@ -126,21 +124,18 @@ export function AdmissionChart({
           color,
           line: { width: emphasized ? 0.8 : 0.4, color: "#FFFFFF" },
         },
-        // Kolejność dymka: nazwa, kontekst, oś Y (nagłe), oś X (planowe), stosunek, NIP na końcu.
+        // Kolejność dymka: nazwa, kontekst, oś Y (udział nagłych), oś X (hospitalizacje), liczby przyjęć, NIP na końcu.
         hovertemplate: hoverTemplate({
           title: "%{customdata[0]}",
-          context: "%{customdata[4]} · %{customdata[3]} · %{customdata[11]}",
-          rows: axisMode === "per_100k"
-            ? [
-              { label: "Nagłe (2+3) na 100 tys.", value: "%{customdata[9]:,.2f}" },
-              { label: "Planowe (6) na 100 tys.", value: "%{customdata[8]:,.2f}" },
-              { label: "Planowe / nagłe", value: "%{customdata[10]}" },
-            ]
-            : [
-              { label: "Nagłe (2+3)", value: "%{customdata[6]:,.0f}" },
-              { label: "Planowe (6)", value: "%{customdata[5]:,.0f}" },
-              { label: "Planowe / nagłe", value: "%{customdata[10]}" },
-            ],
+          context: "%{customdata[4]} · %{customdata[3]} · %{customdata[9]}",
+          rows: [
+            { label: "Przyjęcia nagłe", value: "%{y:.1f}%" },
+            axisMode === "per_100k"
+              ? { label: "Hospitalizacje na 100 tys.", value: "%{customdata[6]:,.2f}" }
+              : { label: "Hospitalizacje", value: "%{customdata[5]:,.0f}" },
+            { label: "Nagłe (2+3)", value: "%{customdata[7]:,.0f}" },
+            { label: "Planowe (6)", value: "%{customdata[8]:,.0f}" },
+          ],
           footer: "NIP %{customdata[1]}",
         }),
       });
@@ -220,22 +215,25 @@ export function AdmissionChart({
 
       const hoverTraceIndex = traces.length;
       traces.push(makeHoverTrace());
+      const meanPct = urgentMeanPct(rows);
 
       await Plotly.react(chartRef.current, traces, {
         ...getCommonPlotLayout(showLegend),
         margin: { ...getCommonPlotLayout(showLegend).margin, t: PLOT_TOOLBAR_MARGIN },
         // Ten sam margines na obu osiach (−6% / +10%); zero rysuje podstawa pod danymi.
         xaxis: measureAxis({
-          title: axisTitle(axisMode === "per_100k" ? "Przyjęcia planowane na 100 tys. mieszkańców" : "Liczba przyjęć planowanych", 18),
+          title: axisTitle(axisMode === "per_100k" ? "Hospitalizacje na 100 tys. mieszkańców" : "Liczba hospitalizacji", 18),
           range: paddedRange(traces.flatMap((trace) => (trace.x as (number | null)[] | undefined) ?? [])),
           ...(axisMode === "per_100k" ? {} : { tickformat: ",.0f" }),
         }),
         yaxis: measureAxis({
-          title: axisTitle(axisMode === "per_100k" ? "Przyjęcia nagłe na 100 tys. mieszkańców" : "Liczba przyjęć nagłych", 18),
+          title: axisTitle("Przyjęcia nagłe (%)", 18),
           range: paddedRange(traces.flatMap((trace) => (trace.y as (number | null)[] | undefined) ?? [])),
-          ...(axisMode === "per_100k" ? {} : { tickformat: ",.0f" }),
+          ticksuffix: "%",
         }),
-        shapes: [baselineShape("y"), baselineShape("x")],
+        // Średnia wszystkich ośrodków (jak na karcie JGP); na zerze pokrywa się z podstawą, więc jej nie ma.
+        shapes: [baselineShape("y"), baselineShape("x"), ...(meanPct > 0 ? [referenceShape(meanPct)] : [])],
+        annotations: meanPct > 0 ? [referenceAnnotation(meanPct, meanPctLabel(meanPct))] : [],
       }, PLOTLY_CONFIG);
 
       const plot = chartRef.current as PlotElement;

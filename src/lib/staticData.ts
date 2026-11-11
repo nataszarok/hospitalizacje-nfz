@@ -358,16 +358,18 @@ export function mortalityFromDataset(d: StaticDataset, q: StaticQuery): Mortalit
 export function admissionsFromDataset(d: StaticDataset, q: StaticQuery): AdmissionPayload {
   if (!q.products.length) return { rows:[], areaStats:{regions:[],cities:[]} };
   const selected = new Set(q.products), durations = new Set(q.durations), inArea = areasMatcher(d, q.areas);
-  const grouped = new Map<string,{ow:string;nip:string;product:string;planned:number;urgent:number}>();
+  // Hospitalizacje w każdym trybie (mianownik udziału nagłych jak na karcie JGP); planowe = 6, nagłe = 2 i 3.
+  const grouped = new Map<string,{ow:string;nip:string;product:string;h:number;planned:number;urgent:number}>();
   for (const f of d.facts) {
     const [ow,nip,product,duration,admission,hSim,hMin] = f;
-    if (!selected.has(product) || (durations.size && !durations.has(duration)) || !["2","3","6"].includes(admission) || (inArea && !inArea(ow,nip))) continue;
-    const key=`${ow}|${nip}|${product}`; const g=grouped.get(key)??{ow,nip,product,planned:0,urgent:0}; const h=q.method==="sim"?hSim:hMin;
-    if (admission==="6") g.planned+=h; else g.urgent+=h; grouped.set(key,g);
+    if (!selected.has(product) || (durations.size && !durations.has(duration)) || (inArea && !inArea(ow,nip))) continue;
+    const key=`${ow}|${nip}|${product}`; const g=grouped.get(key)??{ow,nip,product,h:0,planned:0,urgent:0}; const h=q.method==="sim"?hSim:hMin;
+    g.h+=h; if (admission==="6") g.planned+=h; else if (admission==="2"||admission==="3") g.urgent+=h; grouped.set(key,g);
   }
-  const totals=new Map<string,number>(); for(const g of grouped.values()) totals.set(`${g.ow}|${g.nip}`,(totals.get(`${g.ow}|${g.nip}`)??0)+g.planned+g.urgent);
+  const totals=new Map<string,number>(); for(const g of grouped.values()) totals.set(`${g.ow}|${g.nip}`,(totals.get(`${g.ow}|${g.nip}`)??0)+g.h);
   const c=context(d);
-  const rows:AdmissionRow[]=[...grouped.values()].filter(g=>(totals.get(`${g.ow}|${g.nip}`)??0)>=q.minHosp).map(g=>{const f=c.facilities.get(`${g.ow}|${g.nip}`);const population=c.populations.get(g.ow)??0;const total=g.planned+g.urgent;return {owNfz:g.ow,nip:g.nip,productCode:g.product,providerName:f?.name??"",city:f?.city??"",voivodeship:c.regions.get(g.ow)??g.ow,population,plannedAdmissions:g.planned,urgentAdmissions:g.urgent,totalAdmissions:total,plannedAdmissionsPer100k:population?g.planned/population*100000:0,urgentAdmissionsPer100k:population?g.urgent/population*100000:0};}).sort((a,b)=>b.totalAdmissions-a.totalAdmissions);
+  const per100k=(value:number,population:number)=>population?value/population*100000:0;
+  const rows:AdmissionRow[]=[...grouped.values()].filter(g=>g.h>0&&(totals.get(`${g.ow}|${g.nip}`)??0)>=q.minHosp).map(g=>{const f=c.facilities.get(`${g.ow}|${g.nip}`);const population=c.populations.get(g.ow)??0;return {owNfz:g.ow,nip:g.nip,productCode:g.product,providerName:f?.name??"",city:f?.city??"",voivodeship:c.regions.get(g.ow)??g.ow,population,hospitalizations:g.h,plannedAdmissions:g.planned,urgentAdmissions:g.urgent,totalAdmissions:g.planned+g.urgent,hospitalizationsPer100k:per100k(g.h,population),plannedAdmissionsPer100k:per100k(g.planned,population),urgentAdmissionsPer100k:per100k(g.urgent,population)};}).sort((a,b)=>b.hospitalizations-a.hospitalizations||a.owNfz.localeCompare(b.owNfz)||a.nip.localeCompare(b.nip));
   return { rows, areaStats:summarizeAdmissionGeographies(rows) };
 }
 

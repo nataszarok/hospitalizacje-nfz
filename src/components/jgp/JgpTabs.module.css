@@ -225,7 +225,7 @@
   font-weight: var(--fw-bold) !important;
 }
 
-.costBarPick {
+.costBar.costBarPick {
   cursor: pointer;
 }
 
@@ -607,43 +607,67 @@
 }
 
 .costBars {
+  position: relative;
   display: flex;
   align-items: stretch;
   gap: 6px;
   height: 200px;
 }
-/* W powiększeniu (`ChartExpand`) słupki są wyższe. */
-.costBarsLarge { height: min(480px, 60vh); }
 
 .costBar {
   flex: 1 1 0;
   display: grid;
-  grid-template-rows: auto 1fr auto;
+  grid-template-rows: minmax(0, 1fr) auto;
   justify-items: center;
   gap: 4px;
   min-width: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-badge);
+  background: none;
+  font: inherit;
+  cursor: default;
 }
 
+.costBar:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+/* Podpis i słupek przyklejone do podstawy; górny zapas na podpis najwyższego słupka (słupek 100% = wysokość bez zapasu). */
 .costTrack {
   display: flex;
-  align-items: flex-end;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 2px;
   width: 100%;
   height: 100%;
+  padding-top: calc(var(--fs-sm) * 1.4 + 2px);
+  box-sizing: border-box;
 }
 
 .costFill {
+  flex: none;
   width: 100%;
   border-radius: var(--radius-badge) var(--radius-badge) 0 0;
   background: var(--color-data-soft);
 }
 
-.costFillOn {
+.costBar:hover .costFill,
+.costBar:focus-visible .costFill {
+  background: var(--color-data);
+}
+
+.costFillOn,
+.costBar:hover .costFillOn {
   background: var(--color-primary);
 }
 
 .costValue {
   color: var(--color-text-secondary);
   font-size: var(--fs-sm);
+  line-height: 1.4;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
@@ -687,70 +711,11 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Zwarty pasek ośrodka pod wykresem linii: jedna linia, bez przesuwania strony. */
-/* Stała wysokość (jedna linia): zmiana treści przy najechaniu nie przesuwa tabeli pod kursorem. */
-.bar {
-  display: flex;
-  flex-wrap: nowrap;
-  align-items: center;
-  gap: 4px 12px;
-  height: 40px;
-  overflow: hidden;
-  white-space: nowrap;
-  margin: 0;
-  padding: 6px 12px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-control);
-  font-size: var(--fs-md);
-  font-variant-numeric: tabular-nums;
-}
-
-.barPreview {
-  border-style: dashed;
-}
-
-.bar > b {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.bar > *:not(b) {
-  flex: none;
-}
-
 .dot {
   display: inline-block;
   width: 10px;
   height: 10px;
   border-radius: 50%;
-}
-
-.hint,
-.bar small {
-  color: var(--color-text-tertiary);
-}
-
-/* Pasek ma stałą wysokość: długa podpowiedź kończy się wielokropkiem w granicach paska (telefon). */
-.bar > .hint {
-  flex-shrink: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.barChip {
-  color: var(--color-text-secondary);
-  white-space: nowrap;
-}
-
-.details {
-  display: grid;
-  gap: 10px;
-  padding: 12px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-control);
-  background: var(--color-background-soft);
 }
 
 .struct {
@@ -799,11 +764,6 @@
   font-size: var(--fs-sm);
 }
 
-.spark {
-  display: block;
-  width: 80px;
-  height: 22px;
-}
 
 .two {
   display: grid;
@@ -893,18 +853,6 @@
   }
 }
 
-/* Wybrany ośrodek: kropka w kolorze sygnału (jak linia na wykresie „Ile?” i w rankingu). */
-.selectedDot {
-  display: inline-block;
-  flex: none;
-  width: 10px;
-  height: 10px;
-  margin-right: 6px;
-  border-radius: 50%;
-  background: var(--color-signal);
-  box-shadow: 0 0 0 2px #fff, 0 0 0 3px var(--color-signal);
-  vertical-align: 0;
-}
 
 /* Wybrany ośrodek: gwiazda w kolorze sygnału, jak na wykresach punktowych (tabela, legendy). */
 .selectedStar {
@@ -987,4 +935,11 @@ ul.cornerLegend {
   background: rgba(255, 255, 255, .9);
   font-size: var(--fs-xs);
   pointer-events: none;
+}
+
+/* Linia granicy w legendzie lejka: kolor i grubość jak na wykresie (DESIGN.md 6.2, „Granica”). */
+.legendLine {
+  flex: none;
+  stroke: var(--color-text-tertiary);
+  stroke-width: 1.2;
 }

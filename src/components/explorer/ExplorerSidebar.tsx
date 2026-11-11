@@ -43,6 +43,11 @@ export function ExplorerSidebar(props: ExplorerSidebarProps) {
   const onYearIndex = useCallback((index: number) => setYear(years[index]), [setYear, years]);
   // Długość pobytu: filtr widoku, w którym go ustawiono (W czasie, Kto leczy, Tryb przyjęcia; nie Gdzie).
   const durationFilter = view !== "regions";
+  // „W czasie”: trend ma podział na województwa, nie na miasta (miasto bywa jednym szpitalem) — obszar to tylko województwa.
+  const regionsOnly = view === "trend";
+  const shownAreas = regionsOnly ? props.areas.filter((area) => area.kind === "region") : props.areas;
+  const hiddenAreas = regionsOnly ? props.areas.filter((area) => area.kind !== "region") : [];
+  const regionOptions = { group: "Województwa", items: reference.regions.map((region) => ({ value: `ow:${region.owNfz}`, label: region.name })) };
 
   return <div className={styles.sidebarInner} role="region" aria-label="Ustawienia analizy">
     <Section title="Zakres analizy">
@@ -50,17 +55,17 @@ export function ExplorerSidebar(props: ExplorerSidebarProps) {
         <ProductPicker reference={reference} known={props.knownProducts} selected={selectedProducts} setSelected={setSelectedProducts} />
       </Field>
 
-      <Field label="Obszar" htmlFor="area" meta={`${props.areas.length}/${MAX_AREAS}`} help="Do 5 województw lub miast naraz; liczby to ich suma. Województwo to oddział NFZ, miasto to siedziba świadczeniodawcy. W widokach Kto leczy i Tryb przyjęcia wykres pokazuje wszystkich świadczeniodawców, a obszary wyróżnia kolorami; liczby nad wykresem dotyczą obszarów.">
+      <Field label="Obszar" htmlFor="area" meta={`${shownAreas.length}/${MAX_AREAS}`} help={regionsOnly
+        ? "Do 5 województw naraz; liczby to ich suma. Województwo to oddział NFZ. Widok W czasie nie ma podziału na miasta: miasta wybrane w innych widokach tu pomijamy."
+        : "Do 5 województw lub miast naraz; liczby to ich suma. Województwo to oddział NFZ, miasto to siedziba świadczeniodawcy. W widokach Kto leczy i Tryb przyjęcia wykres pokazuje wszystkich świadczeniodawców, a obszary wyróżnia kolorami; liczby nad wykresem dotyczą obszarów."}>
         <ListPicker
           id="area"
-          selected={areasToValues(props.areas)}
-          onChange={(values) => props.setAreas(areasFromValues(values))}
-          data={[
-            { group: "Województwa", items: reference.regions.map((region) => ({ value: `ow:${region.owNfz}`, label: region.name })) },
-            { group: "Miasta", items: reference.cities.map((city) => ({ value: `c:${city}`, label: formatCityName(city) })) },
-          ]}
-          max={MAX_AREAS}
-          placeholder={(count) => count >= MAX_AREAS ? `Wybrano ${MAX_AREAS} obszarów` : count ? "Dodaj województwo lub miasto" : "Cała Polska: wpisz województwo lub miasto"}
+          selected={areasToValues(shownAreas)}
+          // Miasta ukryte w widoku „W czasie” zostają w wyborze (wracają w innych widokach).
+          onChange={(values) => props.setAreas(areasFromValues([...areasToValues(hiddenAreas), ...values]))}
+          data={regionsOnly ? [regionOptions] : [regionOptions, { group: "Miasta", items: reference.cities.map((city) => ({ value: `c:${city}`, label: formatCityName(city) })) }]}
+          max={MAX_AREAS - hiddenAreas.length}
+          placeholder={(count) => count + hiddenAreas.length >= MAX_AREAS ? `Wybrano ${MAX_AREAS} obszarów` : regionsOnly ? count ? "Dodaj województwo" : "Cała Polska: wpisz województwo" : count ? "Dodaj województwo lub miasto" : "Cała Polska: wpisz województwo lub miasto"}
           listLabel="Wybrane obszary"
           // Kolor obszaru jak na wykresach i mapie (pozycja na liście).
           lead={(_value, index) => <i className={styles.pickedSwatch} style={{ background: REGION_PICK_COLORS[index % REGION_PICK_COLORS.length] }} aria-hidden />}

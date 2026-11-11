@@ -1,6 +1,6 @@
 import { formatCityName } from "@/lib/formatters";
 import type { StaticDataset } from "@/lib/staticData";
-import type { EstimationMethod, ReferencePayload } from "@/lib/types";
+import type { ReferencePayload } from "@/lib/types";
 
 /**
  * Obszar analizy: cały kraj, województwo (OW NFZ świadczeniodawcy) albo miasto (siedziba świadczeniodawcy).
@@ -92,21 +92,4 @@ export function areasMatcher(d: StaticDataset, areas: AnalysisArea[] | undefined
   const matchers = (areas ?? []).map((area) => areaMatcher(d, area)).filter((match): match is (ow: string, nip: string) => boolean => match !== null);
   if (!matchers.length) return null;
   return (ow, nip) => matchers.some((match) => match(ow, nip));
-}
-
-/**
- * Województwo (OW NFZ), w którym świadczeniodawcy z danego miasta mają najwięcej hospitalizacji wybranych produktów.
- * Trend miesięczny nie ma podziału na miasta, więc dla miasta pokazujemy to województwo. `null` = brak danych.
- */
-export function dominantRegionForCity(d: StaticDataset, city: string, productCodes: string[], method: EstimationMethod): string | null {
-  const inCity = areaMatcher(d, { kind: "city", city });
-  if (!inCity) return null;
-  const selected = new Set(productCodes);
-  const totals = new Map<string, number>();
-  for (const [ow, nip, product, , , hSim, hMin] of d.facts) {
-    if ((selected.size && !selected.has(product)) || !inCity(ow, nip)) continue;
-    totals.set(ow, (totals.get(ow) ?? 0) + (method === "sim" ? hSim : hMin));
-  }
-  const best = [...totals.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0];
-  return best ? best[0] : null;
 }

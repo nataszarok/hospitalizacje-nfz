@@ -10,6 +10,7 @@ import { JgpCodeLinks, ProviderLink } from "@/components/TableLinks";
 import {
   admissionRowsPerJgp,
   aggregateAdmissionRowsByProvider,
+  urgentSharePct,
 } from "@/lib/admissions";
 import type { AnalysisArea } from "@/lib/area";
 import { formatCityName } from "@/lib/formatters";
@@ -24,9 +25,9 @@ type AdmissionSortKey =
   | "jgp"
   | "voivodeship"
   | "city"
-  | "plannedAdmissions"
+  | "hospitalizations"
   | "urgentAdmissions"
-  | "totalAdmissions";
+  | "urgentPct";
 
 export function AdmissionTab({
   reference,
@@ -84,9 +85,9 @@ export function AdmissionTab({
             .join(", ");
         case "voivodeship": return row.voivodeship;
         case "city": return formatCityName(row.city);
-        case "plannedAdmissions": return row.plannedAdmissions;
+        case "hospitalizations": return row.hospitalizations;
         case "urgentAdmissions": return row.urgentAdmissions;
-        case "totalAdmissions": return row.totalAdmissions;
+        case "urgentPct": return urgentSharePct(row);
       }
     });
   }, [productByCode, sortState, tableRows]);
@@ -140,14 +141,14 @@ export function AdmissionTab({
       <details className="data-details">
         <summary>Tabela danych · tryb przyjęcia</summary>
         <div className="table-wrap priority-table">
-          {/* 4 kolumny (DESIGN.md 7.1): kod JGP, miasto i województwo w drugiej linii nazwy, NIP w dymku. */}
+          {/* 4 kolumny (DESIGN.md 7.1), jak wykres: hospitalizacje i udział nagłych; kod JGP, miasto i województwo w drugiej linii nazwy, NIP w dymku. */}
           <table className="provider-table">
             <thead>
               <tr>
                 <SortableTableHeader label="Świadczeniodawca" active={sortState?.key === "providerName"} direction={sortState?.direction} onSort={() => sortBy("providerName")} />
-                <SortableTableHeader label="Planowane (6)" active={sortState?.key === "plannedAdmissions"} direction={sortState?.direction} onSort={() => sortBy("plannedAdmissions")} />
+                <SortableTableHeader label="Hospitalizacje" active={sortState?.key === "hospitalizations"} direction={sortState?.direction} onSort={() => sortBy("hospitalizations")} />
                 <SortableTableHeader label="Nagłe (2+3)" active={sortState?.key === "urgentAdmissions"} direction={sortState?.direction} onSort={() => sortBy("urgentAdmissions")} />
-                <SortableTableHeader label="Planowane + nagłe" active={sortState?.key === "totalAdmissions"} direction={sortState?.direction} onSort={() => sortBy("totalAdmissions")} />
+                <SortableTableHeader label="Przyjęcia nagłe" active={sortState?.key === "urgentPct"} direction={sortState?.direction} onSort={() => sortBy("urgentPct")} />
               </tr>
             </thead>
             <tbody>
@@ -164,9 +165,9 @@ export function AdmissionTab({
                       <ProviderLink owNfz={row.owNfz} nip={row.nip} name={row.providerName} />
                       <small><JgpCodeLinks codes={jgpCodes} /> · {formatCityName(row.city)} · {row.voivodeship}</small>
                     </td>
-                    <td>{Math.round(row.plannedAdmissions).toLocaleString("pl-PL")}</td>
+                    <td>{Math.round(row.hospitalizations).toLocaleString("pl-PL")}</td>
                     <td>{Math.round(row.urgentAdmissions).toLocaleString("pl-PL")}</td>
-                    <td>{Math.round(row.totalAdmissions).toLocaleString("pl-PL")}</td>
+                    <td>{urgentSharePct(row).toLocaleString("pl-PL", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%</td>
                   </tr>
                 );
               })}

@@ -86,9 +86,11 @@ function admissionRow(overrides: Partial<AdmissionRow> = {}): AdmissionRow {
     city: "Warszawa",
     voivodeship: "Mazowieckie",
     population: 1_000_000,
+    hospitalizations: 15_000,
     plannedAdmissions: 12_345.4,
     urgentAdmissions: 2_345.6,
     totalAdmissions: 14_691,
+    hospitalizationsPer100k: 1500,
     plannedAdmissionsPer100k: 1234.54,
     urgentAdmissionsPer100k: 234.56,
     ...overrides,
@@ -284,16 +286,17 @@ describe("AdmissionTab data table", () => {
     const headers = within(table).getAllByRole("columnheader");
     expect(headers).toHaveLength(4);
 
-    for (const label of ["Świadczeniodawca", "Planowane (6)", "Nagłe (2+3)", "Planowane + nagłe"]) {
+    for (const label of ["Świadczeniodawca", "Hospitalizacje", "Nagłe (2+3)", "Przyjęcia nagłe"]) {
       expect(within(table).getByRole("button", { name: label })).toBeInTheDocument();
     }
 
     const cells = within(table).getAllByRole("cell").map((cell) => cell.textContent);
     expect(cells).toEqual([
       "Szpital TestowyE10 · Warszawa · Mazowieckie",
-      (12_345).toLocaleString("pl-PL"),
+      (15_000).toLocaleString("pl-PL"),
       (2_346).toLocaleString("pl-PL"),
-      (14_691).toLocaleString("pl-PL"),
+      // Udział nagłych we wszystkich hospitalizacjach (jak na karcie JGP): 2 345,6 / 15 000.
+      "15,6%",
     ]);
   });
 
@@ -304,9 +307,10 @@ describe("AdmissionTab data table", () => {
         {...commonProps}
         selectedProducts={["P1", "P2"]}
         data={admissionPayload([
-          admissionRow({ plannedAdmissions: 100, urgentAdmissions: 20, totalAdmissions: 120 }),
+          admissionRow({ hospitalizations: 125, plannedAdmissions: 100, urgentAdmissions: 20, totalAdmissions: 120 }),
           admissionRow({
             productCode: "P2",
+            hospitalizations: 55,
             plannedAdmissions: 50,
             urgentAdmissions: 10,
             totalAdmissions: 60,
@@ -320,9 +324,9 @@ describe("AdmissionTab data table", () => {
 
     const cells = within(table).getAllByRole("cell").map((cell) => cell.textContent);
     expect(cells[0]).toContain("E10, A01");
-    expect(cells).toContain((150).toLocaleString("pl-PL"));
-    expect(cells).toContain((30).toLocaleString("pl-PL"));
     expect(cells).toContain((180).toLocaleString("pl-PL"));
+    expect(cells).toContain((30).toLocaleString("pl-PL"));
+    expect(cells).toContain("16,7%");
   });
 
   it("sorts admission rows by text and numeric columns", () => {
@@ -330,8 +334,8 @@ describe("AdmissionTab data table", () => {
       <AdmissionTab
         {...commonProps}
         data={admissionPayload([
-          admissionRow({ nip: "1111111111", providerName: "Żuraw", plannedAdmissions: 300 }),
-          admissionRow({ nip: "2222222222", providerName: "Alfa", plannedAdmissions: 20 }),
+          admissionRow({ nip: "1111111111", providerName: "Żuraw", hospitalizations: 300 }),
+          admissionRow({ nip: "2222222222", providerName: "Alfa", hospitalizations: 20 }),
         ])}
       />,
     );
@@ -343,12 +347,12 @@ describe("AdmissionTab data table", () => {
     expect(within(rows[1]).getByText("Alfa")).toBeInTheDocument();
     expect(within(rows[2]).getByText("Żuraw")).toBeInTheDocument();
 
-    fireEvent.click(within(table).getByRole("button", { name: /Planowane \(6\)/ }));
+    fireEvent.click(within(table).getByRole("button", { name: /Hospitalizacje/ }));
     rows = within(table).getAllByRole("row");
     expect(within(rows[1]).getByText("Alfa")).toBeInTheDocument();
     expect(within(rows[2]).getByText("Żuraw")).toBeInTheDocument();
 
-    fireEvent.click(within(table).getByRole("button", { name: /Planowane \(6\)/ }));
+    fireEvent.click(within(table).getByRole("button", { name: /Hospitalizacje/ }));
     rows = within(table).getAllByRole("row");
     expect(within(rows[1]).getByText("Żuraw")).toBeInTheDocument();
     expect(within(rows[2]).getByText("Alfa")).toBeInTheDocument();
