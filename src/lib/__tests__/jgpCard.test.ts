@@ -114,7 +114,7 @@ describe("packPageData / unpackPageData", () => {
   it("pakuje ranking do krotek i odtwarza identyczne dane strony", () => {
     const packed = packPageData(withPeers);
     expect(packed).not.toHaveProperty("providers");
-    expect(packed.providerRows[0]).toEqual(["12|222", "Szpital Beta", "KATOWICE", 18, 2, 11.11, 100, withPeers.providers[0].series, 10, 700_000, [1], [[0, 10, 0], [0, 18, 0]], [1, 2]]);
+    expect(packed.providerRows[0]).toEqual(["12|222", "Szpital Beta", "KATOWICE", 18, 2, 11.11, 100, withPeers.providers[0].series, 10, 700_000, [1], [[0, 10, 0], [0, 18, 0]], [1, 2], [null, 700_000]]);
     expect(unpackPageData(packed)).toEqual(withPeers);
   });
 });

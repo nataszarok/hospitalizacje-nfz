@@ -73,7 +73,7 @@ describe("decodeJgpGroupFile", () => {
   const file: JgpGroupFileColumns = {
     version: 3, jgp: "A01", years: ["2024", "2025"], providers: ["07|111", "12|222"],
     rows: { provider: [1, 0], month: [12, 3], admission: [1, 0], hospitalizations: [4, 2], deaths: [1, 0] },
-    valuePln: { national: { "2025": 1000 }, year: "2025", providers: [["07|111", 400]] },
+    valuePln: { national: { "2025": 1000 }, providers: { "2025": [["07|111", 400]] } },
   };
 
   it("odtwarza wiersze grupy z kolumn, reszta pliku bez zmian", () => {

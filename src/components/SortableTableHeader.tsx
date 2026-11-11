@@ -8,6 +8,8 @@ type SortableTableHeaderProps = {
   active: boolean;
   direction?: SortDirection;
   onSort: () => void;
+  /** Klasy komórki nagłówka (np. liczby do prawej, priorytet kolumny `col-p2` / `col-p3`). */
+  className?: string;
 };
 
 export function SortableTableHeader({
@@ -15,13 +17,14 @@ export function SortableTableHeader({
   active,
   direction,
   onSort,
+  className,
 }: SortableTableHeaderProps) {
   const ariaSort = active
     ? direction === "asc" ? "ascending" : "descending"
     : "none";
 
   return (
-    <th aria-sort={ariaSort}>
+    <th aria-sort={ariaSort} className={className}>
       <button
         type="button"
         className={`${styles.button} ${active ? styles.active : ""}`}

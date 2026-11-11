@@ -121,21 +121,42 @@ describe("Karta w zakładkach — Ośrodki", () => {
       .toEqual(["1. Szpital Beta: 28", "2. Szpital Alfa: 17"]);
   });
 
-  it("najechanie na linię pokazuje pasek ośrodka, kliknięcie go wybiera; Szczegóły rozwijają porównanie", () => {
+  it("kliknięcie linii wybiera ośrodek, drugie kliknięcie zdejmuje wybór; pod wykresem nie ma paska ośrodka", () => {
     open("?widok=osrodki");
     renderCard();
-    expect(screen.getByText(/Najedź na linię albo wiersz rankingu/)).toBeInTheDocument();
-    const alfa = screen.getByRole("button", { name: "2. Szpital Alfa: 17" });
-    fireEvent.mouseEnter(alfa);
-    expect(screen.getByText("kliknij, żeby wybrać")).toBeInTheDocument();
-    fireEvent.click(alfa);
-    fireEvent.mouseLeave(alfa);
+    expect(screen.queryByText(/Najedź na linię albo wiersz rankingu/)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "2. Szpital Alfa: 17" }));
     expect(window.location.search).toBe("?osrodek=07%7C111");
-    expect(screen.queryByRole("region", { name: "Szczegóły wybranego ośrodka" })).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Szczegóły" }));
-    expect(screen.getByRole("region", { name: "Szczegóły wybranego ośrodka" })).toHaveTextContent("Rozliczenia NFZ za A01500 tys. zł41,7% kraju");
-    fireEvent.click(screen.getByRole("button", { name: "Usuń wybór" }));
+    expect(screen.queryByRole("button", { name: "Szczegóły" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Szpital Alfa: 17/ }));
     expect(window.location.search).toBe("?widok=osrodki");
+  });
+
+  it("ranking: kolumna NFZ z kwotą rozliczeń w roku z przycisku roku, wspólna jednostka w nagłówku", () => {
+    open("?widok=osrodki");
+    renderCard();
+    const ranking = () => screen.getByRole("region", { name: /Lista ośrodków/ });
+    expect(within(ranking()).getByRole("columnheader", { name: "NFZ (tys. zł)" })).toBeInTheDocument();
+    expect(within(ranking()).getByRole("row", { name: /Szpital Beta/ })).toHaveTextContent("700");
+    expect(within(ranking()).getByRole("row", { name: /Szpital Alfa/ })).toHaveTextContent("500");
+    fireEvent.click(within(screen.getByRole("group", { name: "Rok karty" })).getByRole("button", { name: "2024" }));
+    // 2024: kwota tylko dla Alfy; Beta bez kwoty („—”).
+    expect(within(ranking()).getByRole("row", { name: /Szpital Alfa/ })).toHaveTextContent("300");
+    expect(within(ranking()).getByRole("row", { name: /Szpital Beta/ })).toHaveTextContent("—");
+  });
+
+  it("ranking sortuje się po kolumnie: pierwsze kliknięcie rosnąco, drugie malejąco; bez wyboru kolejność rankingu", () => {
+    open("?widok=osrodki");
+    renderCard();
+    const ranking = () => screen.getByRole("region", { name: /Lista ośrodków/ });
+    const names = () => within(ranking()).getAllByRole("row").slice(1).map((row) => row.textContent?.match(/Szpital (Alfa|Beta)/)?.[0]);
+    expect(names()).toEqual(["Szpital Beta", "Szpital Alfa"]);
+    const nfz = within(ranking()).getByRole("button", { name: /NFZ/ });
+    fireEvent.click(nfz);
+    expect(within(ranking()).getByRole("columnheader", { name: /NFZ/ })).toHaveAttribute("aria-sort", "ascending");
+    expect(names()).toEqual(["Szpital Alfa", "Szpital Beta"]);
+    fireEvent.click(nfz);
+    expect(names()).toEqual(["Szpital Beta", "Szpital Alfa"]);
   });
 
   it("link z wybranym ośrodkiem otwiera zakładkę Ośrodki", () => {
@@ -333,7 +354,7 @@ describe("Karta w zakładkach — okres w „Ile?” (miesiące albo lata)", () 
     expect(chart()).toHaveAttribute("data-note", expect.stringContaining("Kropka = suma roku"));
     fireEvent.click(screen.getByRole("tab", { name: /Ośrodki/ }));
     expect(chart()).toHaveAttribute("data-period", "year");
-    expect(heading()).toHaveTextContent(/^Ile\? Hospitalizacje rocznie: 15 największych ośrodków z każdego roku .* \(razem \d+\)/);
+    expect(heading()).toHaveTextContent(/^Ile\? Hospitalizacje rocznie: Największe ośrodki/);
     fireEvent.click(within(toggle()).getByRole("button", { name: "Miesiące" }));
     expect(chart()).toHaveAttribute("data-period", "month");
     expect(window.location.search).toBe("?widok=osrodki");

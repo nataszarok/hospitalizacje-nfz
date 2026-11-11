@@ -711,70 +711,11 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Zwarty pasek ośrodka pod wykresem linii: jedna linia, bez przesuwania strony. */
-/* Stała wysokość (jedna linia): zmiana treści przy najechaniu nie przesuwa tabeli pod kursorem. */
-.bar {
-  display: flex;
-  flex-wrap: nowrap;
-  align-items: center;
-  gap: 4px 12px;
-  height: 40px;
-  overflow: hidden;
-  white-space: nowrap;
-  margin: 0;
-  padding: 6px 12px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-control);
-  font-size: var(--fs-md);
-  font-variant-numeric: tabular-nums;
-}
-
-.barPreview {
-  border-style: dashed;
-}
-
-.bar > b {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.bar > *:not(b) {
-  flex: none;
-}
-
 .dot {
   display: inline-block;
   width: 10px;
   height: 10px;
   border-radius: 50%;
-}
-
-.hint,
-.bar small {
-  color: var(--color-text-tertiary);
-}
-
-/* Pasek ma stałą wysokość: długa podpowiedź kończy się wielokropkiem w granicach paska (telefon). */
-.bar > .hint {
-  flex-shrink: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.barChip {
-  color: var(--color-text-secondary);
-  white-space: nowrap;
-}
-
-.details {
-  display: grid;
-  gap: 10px;
-  padding: 12px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-control);
-  background: var(--color-background-soft);
 }
 
 .struct {
@@ -823,11 +764,6 @@
   font-size: var(--fs-sm);
 }
 
-.spark {
-  display: block;
-  width: 80px;
-  height: 22px;
-}
 
 .two {
   display: grid;
@@ -917,18 +853,6 @@
   }
 }
 
-/* Wybrany ośrodek: kropka w kolorze sygnału (jak linia na wykresie „Ile?” i w rankingu). */
-.selectedDot {
-  display: inline-block;
-  flex: none;
-  width: 10px;
-  height: 10px;
-  margin-right: 6px;
-  border-radius: 50%;
-  background: var(--color-signal);
-  box-shadow: 0 0 0 2px #fff, 0 0 0 3px var(--color-signal);
-  vertical-align: 0;
-}
 
 /* Wybrany ośrodek: gwiazda w kolorze sygnału, jak na wykresach punktowych (tabela, legendy). */
 .selectedStar {

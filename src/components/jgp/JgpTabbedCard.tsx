@@ -11,6 +11,7 @@ import { HelpLines, InfoTip } from "@/components/InfoTip";
 import { FunnelLegend, SelectedLegendItem } from "@/components/jgp/FunnelLegend";
 import { FUNNEL_STATUS_COLORS, funnelLines, hasEnoughDeathsForFunnel, mortalityChartHelp } from "@/lib/mortalityFunnel";
 import { NO_CURVES, ProviderScatter, type ScatterCurve, type ScatterPoint } from "@/components/jgp/ProviderScatter";
+import { SortableTableHeader } from "@/components/SortableTableHeader";
 import { ProviderLink } from "@/components/TableLinks";
 import { formatCityName, formatPln, plnScale } from "@/lib/formatters";
 import {
@@ -19,7 +20,8 @@ import {
   outlierCap, showsMortalityReference, topProvidersOfPeriod,
 } from "@/lib/jgpCard";
 import type { JgpPageData, JgpProviderRow } from "@/lib/jgpPage";
-import { explorerHref, hospitalHref } from "@/lib/portalLinks";
+import { explorerHref } from "@/lib/portalLinks";
+import { nextSortState, sortTableRows, type SortState } from "@/lib/tableSort";
 import base from "./JgpPage.module.css";
 import styles from "./JgpTabs.module.css";
 import { CHART_COLORS, OTHER_POINT, REGION_PICK_COLORS } from "@/lib/chartPalette";
@@ -51,12 +53,6 @@ const YEAR_PARAM = "rok";
 const PERIOD_PARAM = "okres";
 /** Linie ośrodków w „Ile?”: tylu największych z każdego roku, razem bez powtórzeń (`topProvidersOfPeriod`). */
 const TOP_LINES_PER_YEAR = 15;
-/** Okres wykresu słowami: „w latach 2017–2025” albo „w 2025 r.”. */
-const yearSpan = (months: string[]) => {
-  const from = months[0]?.slice(0, 4);
-  const to = months.at(-1)?.slice(0, 4);
-  return from && to && from !== to ? `w latach ${from}–${to}` : `w ${to ?? ""} r.`;
-};
 const SERVER_ROWS = 30;
 const subscribeNothing = () => () => {};
 // Kolory wybranych województw i ośrodków spoza nich: wspólna paleta z eksploratorem (`chartPalette`).
@@ -227,11 +223,9 @@ export function JgpTabbedCard({ packed, map = null }: { packed: PackedJgpPageDat
           comparison={comparison}
           regions={state.regions}
           selectedRow={selectedRow}
-          scope={scope}
+          selectedKey={state.selectedKey}
           filtered={scope === "peers" || state.regions.length > 0}
           onSelect={(key) => write({ selectedKey: key === state.selectedKey ? null : key })}
-          onScope={(next) => write({ scope: next })}
-          onClear={() => write({ selectedKey: null })}
           period={period}
           onPeriod={setPeriod}
         />
@@ -586,19 +580,19 @@ function FamilySection({ data }: { data: JgpPageData }) {
 
 // ——— Ośrodki ———
 
-function ProvidersTab({ data, pool, linePool, comparison, regions, selectedRow, scope, filtered, onSelect, onScope, onClear, period, onPeriod }: {
-  data: JgpPageData; pool: JgpProviderRow[]; linePool: JgpProviderRow[]; comparison: JgpProviderRow[]; regions: string[]; selectedRow: JgpProviderRow | null; scope: CompareScope; filtered: boolean;
-  onSelect: (key: string) => void; onScope: (scope: CompareScope) => void; onClear: () => void; period: ChartPeriod; onPeriod: (period: ChartPeriod) => void;
+function ProvidersTab({ data, pool, linePool, comparison, regions, selectedRow, selectedKey, filtered, onSelect, period, onPeriod }: {
+  data: JgpPageData; pool: JgpProviderRow[]; linePool: JgpProviderRow[]; comparison: JgpProviderRow[]; regions: string[]; selectedRow: JgpProviderRow | null; selectedKey: string | null; filtered: boolean;
+  onSelect: (key: string) => void; period: ChartPeriod; onPeriod: (period: ChartPeriod) => void;
 }) {
-  const [hoverKey, setHoverKey] = useState<string | null>(null);
-  const [details, setDetails] = useState(false);
   // Linie: największe ośrodki każdego roku wykresu (`linePool` ze wszystkich lat), nie tylko wybranego roku.
   // Stała lista linii przy najechaniu (nowa tablica przerysowywałaby wykres przy każdym ruchu myszy).
   const top = useMemo(() => topProvidersOfPeriod(linePool, data.months, TOP_LINES_PER_YEAR), [linePool, data.months]);
   const rankOf = useMemo(() => new Map(data.providers.map((row, i) => [row.key, i + 1])), [data.providers]);
   const regionColor = useMemo(() => regionColors(regions), [regions]);
+  // Wybrany ośrodek na wykresie linii: także ośrodek bez hospitalizacji w roku karty (nie ma go w `pool`, jest w `linePool`).
+  const selectedLine = useMemo(() => selectedRow ?? (selectedKey ? linePool.find((row) => row.key === selectedKey) ?? null : null), [selectedRow, selectedKey, linePool]);
   const lines = useMemo((): ChartLine[] => {
-    const shown = selectedRow && !top.some((row) => row.key === selectedRow.key) ? [...top, selectedRow] : top;
+    const shown = selectedLine && !top.some((row) => row.key === selectedLine.key) ? [...top, selectedLine] : top;
     // Linie ośrodków szare; wybrany ośrodek – linia w kolorze sygnału z podpisem (nazwa).
     // Numer = miejsce w rankingu wybranego roku; ośrodek bez hospitalizacji w tym roku nie ma numeru.
     return shown.map((row) => ({
@@ -606,100 +600,62 @@ function ProvidersTab({ data, pool, linePool, comparison, regions, selectedRow, 
       name: rankOf.has(row.key) ? `${rankOf.get(row.key)}. ${row.name}` : row.name,
       detail: `${formatCityName(row.city)} · OW ${row.voivodeship}`,
       values: row.series,
-      tone: row.key === selectedRow?.key ? "selected" : undefined,
+      // Linia tylko w okresie, w którym ośrodek leczył w tej grupie (np. Miastko w H55: IV 2024 – III 2025).
+      activeOnly: true,
+      tone: row.key === selectedLine?.key ? "selected" : undefined,
     }));
-  }, [top, selectedRow, rankOf]);
-  const hoverRow = hoverKey ? data.providers.find((row) => row.key === hoverKey) ?? null : null;
+  }, [top, selectedLine, rankOf]);
   return <>
     <section className={styles.sec} aria-labelledby="s-czas">
-      <SectionHead id="s-czas" question="Ile?" context={`Hospitalizacje ${periodWord(period)}: ${TOP_LINES_PER_YEAR} największych ośrodków z każdego roku ${yearSpan(data.months)} (razem ${top.length})`} tools={<PeriodToggle period={period} onPeriod={onPeriod} />} />
+      <SectionHead id="s-czas" question="Ile?" context={`Hospitalizacje ${periodWord(period)}: Największe ośrodki`} tools={<PeriodToggle period={period} onPeriod={onPeriod} />} />
       <GroupLineChart
         months={data.months}
         lines={lines}
         valueLabel="hosp."
-        height={300}
+        // Bez paska ośrodka pod wykresem: jego miejsce zajmuje wykres (dane ośrodka są w dymku linii).
+        height={352}
         onSelect={onSelect}
-        onHover={setHoverKey}
         selectedColor={CHART_COLORS.signal}
         highlightYear={data.year}
         period={period}
-        selectedLabel={selectedRow?.name}
+        selectedLabel={selectedLine?.name}
         ariaLabel={`Wykres liniowy: hospitalizacje ${periodWord(period)} w ${lines.length} ośrodkach`}
       />
-      <ProviderBar
-        data={data}
-        pool={pool}
-        regionColor={regionColor}
-        row={hoverRow ?? selectedRow}
-        preview={Boolean(hoverRow && hoverRow !== selectedRow)}
-        selected={Boolean(selectedRow && (!hoverRow || hoverRow === selectedRow))}
-        details={details}
-        onDetails={() => setDetails((value) => !value)}
-        onClear={() => { setDetails(false); onClear(); }}
-      />
-      {selectedRow && details ? <ProviderDetails data={data} row={selectedRow} comparison={comparison} scope={scope} onScope={onScope} /> : null}
     </section>
-    <RankingSection data={data} pool={pool} selectedRow={selectedRow} filtered={filtered} regionColor={regionColor} onSelect={onSelect} onHover={setHoverKey} />
+    <RankingSection data={data} pool={pool} selectedRow={selectedRow} filtered={filtered} regionColor={regionColor} onSelect={onSelect} />
     <HowSection data={data} rows={comparison} regions={regions} selectedRow={selectedRow} onSelect={onSelect} />
   </>;
 }
 
-/** Zwarty pasek ośrodka (jedna linia): najechany albo wybrany; pełne porównanie po „Szczegóły”. */
-function ProviderBar({ data, pool, regionColor, row, preview, selected, details, onDetails, onClear }: {
-  data: JgpPageData; pool: JgpProviderRow[]; regionColor: Map<string, string>; row: JgpProviderRow | null; preview: boolean; selected: boolean; details: boolean; onDetails: () => void; onClear: () => void;
+/** Kolumny rankingu z sortowaniem (udział sortuje się tak samo jak hospitalizacje, więc go pomijamy). */
+type RankingSortKey = "name" | "hospitalizations" | "change" | "value" | "urgent" | "mortality";
+
+function RankingSection({ data, pool, selectedRow, filtered, regionColor, onSelect }: {
+  data: JgpPageData; pool: JgpProviderRow[]; selectedRow: JgpProviderRow | null; filtered: boolean; regionColor: Map<string, string>; onSelect: (key: string) => void;
 }) {
-  if (!row) return <p className={styles.bar} aria-live="polite"><span className={styles.hint}>Najedź na linię albo wiersz rankingu, żeby zobaczyć ośrodek. Kliknij, żeby go wybrać.</span></p>;
-  const group = poolStats(pool);
-  const rank = pool.indexOf(row) + 1;
-  const change = yearChangePct(row.hospitalizations, row.previousHospitalizations);
-  return <p className={`${styles.bar} ${preview ? styles.barPreview : ""}`} aria-live="polite">
-    {selected ? <i className={styles.selectedDot} aria-hidden /> : <i className={styles.dot} style={{ background: regionColor.get(row.owNfz) ?? CHART_COLORS.borderStrong }} aria-hidden />}
-    <b>{row.name}</b>
-    <span className={styles.hint}>{formatCityName(row.city)} · {row.voivodeship}</span>
-    <span className={styles.barChip}><b>{integer(row.hospitalizations)}</b> hosp. {data.year}</span>
-    {rank ? <span className={styles.barChip}>miejsce {rank}/{pool.length} · {pct(group.hospitalizations ? (row.hospitalizations / group.hospitalizations) * 100 : 0)}</span> : null}
-    <span className={styles.barChip}>r/r {change === null ? "—" : signedPct(change)}</span>
-    <span className={styles.barChip}>nagłe {pct(row.urgentPct, 0)} <small>(gr. {pct(group.urgentPct, 0)})</small></span>
-    <span className={styles.barChip}>zgony {pct(row.mortalityPct)} <small>(gr. {pct(group.mortalityPct)})</small></span>
-    {selected
-      ? <><button type="button" className={base.linkButton} onClick={onDetails}>{details ? "Zwiń" : "Szczegóły"}</button><button type="button" className={base.linkButton} aria-label="Usuń wybór" onClick={onClear}>×</button></>
-      : <span className={styles.hint}>kliknij, żeby wybrać</span>}
-  </p>;
-}
-
-function ProviderDetails({ data, row, comparison, scope, onScope }: { data: JgpPageData; row: JgpProviderRow; comparison: JgpProviderRow[]; scope: CompareScope; onScope: (scope: CompareScope) => void }) {
-  const group = poolStats(comparison);
-  const position = comparison.indexOf(row) + 1;
-  const nationalValue = data.valuePln.find((item) => item.year === data.year)?.value;
-  const label = scope === "peers" ? "podobne" : "grupa";
-  return <div className={styles.details} aria-label="Szczegóły wybranego ośrodka" role="region">
-    <div className={base.segmented} role="group" aria-label="Porównaj z">
-      <button type="button" aria-pressed={scope === "all"} onClick={() => onScope("all")}>Wszystkie ośrodki ({integer(data.providerCount)})</button>
-      <button type="button" aria-pressed={scope === "peers"} disabled={!row.peers.length} onClick={() => onScope("peers")}>Podobne szpitale ({row.peers.length})</button>
-    </div>
-    <dl className={base.selectedMetrics}>
-      <div><dt>Miejsce</dt><dd>{position} / {integer(comparison.length)}</dd><span>{scope === "peers" ? "wśród podobnych szpitali" : "w grupie"}</span></div>
-      <div><dt>Hospitalizacje</dt><dd>{integer(row.hospitalizations)}</dd><span>{pct(group.hospitalizations ? (row.hospitalizations / group.hospitalizations) * 100 : 0)} {scope === "peers" ? "podobnych" : "grupy"}</span></div>
-      <div><dt>Przyjęcia nagłe</dt><dd>{pct(row.urgentPct)}</dd><span>{label}: {pct(group.urgentPct)}</span></div>
-      <div><dt>Śmiertelność</dt><dd>{pct(row.mortalityPct)}</dd><span>{label}: {pct(group.mortalityPct)}</span></div>
-      {row.valuePln !== null ? <div><dt>Rozliczenia NFZ za {data.jgpCode}</dt><dd>{formatPln(row.valuePln)}</dd><span>{nationalValue ? `${pct((row.valuePln / nationalValue) * 100)} kraju` : ""}</span></div> : null}
-    </dl>
-    <p className={base.note}>{row.peers.length ? `Podobne szpitale: ${row.peers.length} z modelu par (klasa A), które leczą w tej grupie.` : "Model par nie wskazał podobnych szpitali w tej grupie."} <Link href={hospitalHref(row.owNfz, row.nip)}>Profil szpitala →</Link></p>
-  </div>;
-}
-
-/** Mini-trend: hospitalizacje miesięcznie w skali wiersza (kształt, nie wielkość). */
-function Spark({ values }: { values: number[] }) {
-  const max = Math.max(...values, 1);
-  const points = values.map((value, i) => `${((i / Math.max(values.length - 1, 1)) * 80).toFixed(1)},${(20 - (value / max) * 18).toFixed(1)}`).join(" ");
-  return <svg className={styles.spark} viewBox="0 0 80 22" aria-hidden><polyline points={points} fill="none" stroke={CHART_COLORS.data} strokeWidth="1.4" /></svg>;
-}
-
-function RankingSection({ data, pool, selectedRow, filtered, regionColor, onSelect, onHover }: {
-  data: JgpPageData; pool: JgpProviderRow[]; selectedRow: JgpProviderRow | null; filtered: boolean; regionColor: Map<string, string>; onSelect: (key: string) => void; onHover: (key: string | null) => void;
-}) {
+  // Rozliczenia NFZ w roku karty (przycisk roku): wspólna jednostka kolumny w nagłówku (DESIGN.md 3.1).
+  const valueScale = plnScale(pool.flatMap((row) => row.valuePln === null ? [] : [row.valuePln]));
+  // Sortowanie kolumn; bez wyboru kolejność rankingu (hospitalizacje w roku karty). Brak wartości („—”) na końcu.
+  const [sort, setSort] = useState<SortState<RankingSortKey>>(null);
+  const sorted = useMemo(() => {
+    if (!sort) return pool;
+    const missing = sort.direction === "asc" ? Infinity : -Infinity;
+    return sortTableRows(pool, sort.direction, (row) => {
+      switch (sort.key) {
+        case "name": return row.name;
+        case "hospitalizations": return row.hospitalizations;
+        case "change": return yearChangePct(row.hospitalizations, row.previousHospitalizations) ?? missing;
+        case "value": return row.valuePln ?? missing;
+        case "urgent": return row.urgentPct;
+        case "mortality": return row.mortalityPct;
+      }
+    });
+  }, [pool, sort]);
+  const header = (key: RankingSortKey, label: string, className?: string) => <SortableTableHeader
+    label={label} className={className} active={sort?.key === key} direction={sort?.direction} onSort={() => setSort((current) => nextSortState(current, key))}
+  />;
   const mounted = useSyncExternalStore(subscribeNothing, () => true, () => false);
-  const visible = mounted ? pool : pool.slice(0, SERVER_ROWS);
+  const visible = mounted ? sorted : sorted.slice(0, SERVER_ROWS);
   const total = pool.reduce((sum, row) => sum + row.hospitalizations, 0);
   const shares = structureShares(pool);
   const colors = [CHART_COLORS.data, "#6F8FC9", "#A9BCE0"];
@@ -722,13 +678,13 @@ function RankingSection({ data, pool, selectedRow, filtered, regionColor, onSele
       </div>
       <p className={styles.structText}><span><b>{integer(pool.length)}</b> ośrodków{filtered ? " po filtrach karty" : ""}</span>{shares.map((item) => <span key={item.label}>{item.label}: <b>{pct(item.share)}</b></span>)}</p>
     </div>
-    <div ref={scrollRef} className={`${base.scrollTable} priority-table`} tabIndex={0} role="region" aria-label={`Lista ośrodków: ${pool.length}`} onMouseLeave={() => onHover(null)}>
+    <div ref={scrollRef} className={`${base.scrollTable} priority-table`} tabIndex={0} role="region" aria-label={`Lista ośrodków: ${pool.length}`}>
       <table className={base.table}>
         <thead><tr>
           {/* 7 kolumn (DESIGN.md 7.1): miejsce w kraju w drugiej linii nazwy, poprzedni rok w dymku r/r. */}
-          <th>Ośrodek</th>
-          <th className={base.num}>{data.year}</th><th className={`${base.num} col-p2`}>r/r</th><th className={`${base.num} col-p3`}>Udział</th><th className="col-p3">Trend</th>
-          <th className={`${base.num} col-p2`}>Nagłe</th><th className={base.num}>Śmiertelność</th>
+          {header("name", "Ośrodek")}
+          {header("hospitalizations", data.year, base.num)}{header("change", "r/r", `${base.num} col-p2`)}<th className={`${base.num} col-p3`}>Udział</th>{header("value", `NFZ (${valueScale.unit})`, `${base.num} col-p3`)}
+          {header("urgent", "Nagłe", `${base.num} col-p2`)}{header("mortality", "Śmiertelność", base.num)}
         </tr></thead>
         <tbody>
           {visible.map((row) => {
@@ -742,7 +698,6 @@ function RankingSection({ data, pool, selectedRow, filtered, regionColor, onSele
               tabIndex={0}
               onClick={() => onSelect(row.key)}
               onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onSelect(row.key); } }}
-              onMouseEnter={() => onHover(row.key)}
             >
               <td className={styles.nameCell}>
                 {/* Znak jak na wykresach punktowych: gwiazda = wybrany ośrodek, kropka = kolor województwa. */}
@@ -752,7 +707,7 @@ function RankingSection({ data, pool, selectedRow, filtered, regionColor, onSele
               <td className={base.num}>{integer(row.hospitalizations)}</td>
               <td className={`${base.num} col-p2`} title={previousYear && row.previousHospitalizations !== null ? `${previousYear}: ${integer(row.previousHospitalizations)}` : undefined}>{row.previousHospitalizations === 0 ? "nowy" : change === null ? "—" : signedPct(change)}</td>
               <td className={`${base.num} col-p3`}>{pct(total ? (row.hospitalizations / total) * 100 : 0)}</td>
-              <td className="col-p3"><Spark values={row.series} /></td>
+              <td className={`${base.num} col-p3`} title={row.valuePln === null ? undefined : `Rozliczenia NFZ za ${data.jgpCode} w ${data.year} r.: ${formatPln(row.valuePln)}`}>{row.valuePln === null ? "—" : valueScale.format(row.valuePln)}</td>
               <td className={`${base.num} col-p2`}>{pct(row.urgentPct, 0)}</td>
               <td className={base.num}>{pct(row.mortalityPct)}</td>
             </tr>;
@@ -760,7 +715,7 @@ function RankingSection({ data, pool, selectedRow, filtered, regionColor, onSele
         </tbody>
       </table>
     </div>
-    <p className={base.note}>Wszystkie ośrodki z hospitalizacjami w {data.year} r.; przewijanie w tabeli. „nr” = miejsce w kraju; liczba z poprzedniego roku w dymku przy r/r. Kliknięcie wiersza wybiera ośrodek (nazwa prowadzi do profilu szpitala). Mini-trend: miesiące wszystkich lat, skala wiersza.</p>
+    <p className={base.note}>Wszystkie ośrodki z hospitalizacjami w {data.year} r.; przewijanie w tabeli. „nr” = miejsce w kraju; liczba z poprzedniego roku w dymku przy r/r. Kliknięcie wiersza wybiera ośrodek (nazwa prowadzi do profilu szpitala). NFZ: kwota rozliczeń za grupę w {data.year} r. (od 2019 r.; „—” = brak kwoty).</p>
   </section>;
 }
 

@@ -57,6 +57,15 @@ export function movingAverage(values: number[], window = 3, minPeriods = 1): (nu
   });
 }
 
+/** Indeksy pierwszej i ostatniej niezerowej wartości serii (okres aktywności); `null`, gdy seria ma same zera. */
+export function activeSpan(values: number[]): [number, number] | null {
+  const from = values.findIndex((value) => value > 0);
+  if (from < 0) return null;
+  let to = values.length - 1;
+  while (to > from && !(values[to] > 0)) to -= 1;
+  return [from, to];
+}
+
 /** Okres na wykresach „w czasie”: miesiące (domyślnie) albo lata. */
 export type ChartPeriod = "month" | "year";
 
@@ -227,6 +236,7 @@ export function darkLabel(cell: Pick<CartogramCell, "position">): boolean {
 export type PackedProvider = [
   key: string, name: string, city: string, hospitalizations: number, deaths: number, mortalityPct: number, urgentPct: number,
   series: number[], previousHospitalizations: number | null, valuePln: number | null, peers: number[], yearly: [number, number, number][], yearlyDeaths: number[],
+  yearlyValuePln: (number | null)[],
 ];
 
 /** Dane strony z rankingiem w krotkach; `topProviders` odtwarzamy z pełnej listy. */
@@ -239,7 +249,7 @@ export function packPageData(data: JgpPageData): PackedJgpPageData {
     topCount: topProviders.length,
     providerRows: providers.map((row): PackedProvider => [
       row.key, row.name, row.city, row.hospitalizations, row.deaths, row.mortalityPct, row.urgentPct,
-      row.series, row.previousHospitalizations, row.valuePln, row.peers, row.yearly, row.yearlyDeaths,
+      row.series, row.previousHospitalizations, row.valuePln, row.peers, row.yearly, row.yearlyDeaths, row.yearlyValuePln,
     ]),
   };
 }
@@ -247,11 +257,11 @@ export function packPageData(data: JgpPageData): PackedJgpPageData {
 export function unpackPageData(packed: PackedJgpPageData): JgpPageData {
   const { providerRows, topCount, ...rest } = packed;
   const regionNames = new Map(packed.regions.map((row) => [row.owNfz, row.name]));
-  const providers = providerRows.map(([key, name, city, hospitalizations, deaths, mortalityPct, urgentPct, series, previousHospitalizations, valuePln, peers, yearly, yearlyDeaths]): JgpProviderRow => {
+  const providers = providerRows.map(([key, name, city, hospitalizations, deaths, mortalityPct, urgentPct, series, previousHospitalizations, valuePln, peers, yearly, yearlyDeaths, yearlyValuePln]): JgpProviderRow => {
     const [owNfz, nip] = key.split("|");
     return {
       key, owNfz, nip, name, city, voivodeship: regionNames.get(owNfz) ?? owNfz,
-      hospitalizations, deaths, mortalityPct, urgentPct, series, previousHospitalizations, valuePln, peers, yearly, yearlyDeaths,
+      hospitalizations, deaths, mortalityPct, urgentPct, series, previousHospitalizations, valuePln, peers, yearly, yearlyDeaths, yearlyValuePln,
     };
   });
   return { ...rest, providers, topProviders: providers.slice(0, topCount) };
@@ -359,7 +369,7 @@ export function defaultCardYear(data: JgpPageData): string {
 /**
  * Dane karty dla wybranego roku pliku grupy (indeks w `admissionYears`): ranking, liczby i województwa z tego roku.
  * Najnowszy rok: liczby ze szczegółów roku, bez ośrodków z zerem (są w danych tylko dla wcześniejszych lat). Wcześniejszy rok liczymy z krotek pliku grupy
- * (metoda konserwatywna); rozliczeń NFZ ośrodków nie ma, a pary podobnych szpitali przenumerowujemy po nowym rankingu.
+ * (metoda konserwatywna); rozliczenia NFZ ośrodków z `yearlyValuePln`, a pary podobnych szpitali przenumerowujemy po nowym rankingu.
  */
 export function dataForYear(data: JgpPageData, yearIndex: number): JgpPageData {
   const year = data.admissionYears[yearIndex];
@@ -376,7 +386,7 @@ export function dataForYear(data: JgpPageData, yearIndex: number): JgpPageData {
       mortalityPct: hospitalizations ? (deaths / hospitalizations) * 100 : 0,
       urgentPct: hospitalizations && tuple ? (tuple[1] / hospitalizations) * 100 : 0,
       previousHospitalizations: yearIndex > 0 ? sumTuple(row.yearly[yearIndex - 1]) : null,
-      valuePln: null,
+      valuePln: row.yearlyValuePln[yearIndex] ?? null,
     };
   });
   const order = rows.map((_, i) => i).filter((i) => rows[i].hospitalizations > 0)

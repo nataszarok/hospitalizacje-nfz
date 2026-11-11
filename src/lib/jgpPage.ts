@@ -22,8 +22,8 @@ export interface JgpGroupFile {
   providers: string[];
   /** [świadczeniodawca, miesiąc (indeks roku × 12 + miesiąc − 1), tryb 0 planowe / 1 nagłe / 2 pozostałe, hospitalizacje, zgony] */
   rows: [number, number, number, number, number][];
-  /** Rozliczenia NFZ w zł: kraj w latach, świadczeniodawcy w roku `year`. */
-  valuePln?: { national: Record<string, number>; year: string; providers: [string, number][] };
+  /** Rozliczenia NFZ w zł: kraj w latach, świadczeniodawcy w latach (rok → [„OW|NIP”, zł]). */
+  valuePln?: { national: Record<string, number>; providers: Record<string, [string, number][]> };
 }
 
 /** Lista grup ze stroną (`build-data/jgp/index.json`). */
@@ -84,6 +84,8 @@ export interface JgpProviderRow {
   yearly: [number, number, number][];
   /** Zgony w latach `JgpPageData.admissionYears`; puste bez pliku. */
   yearlyDeaths: number[];
+  /** Rozliczenia NFZ (zł) w latach `JgpPageData.admissionYears`, `null` = brak kwoty; puste bez pliku. */
+  yearlyValuePln: (number | null)[];
 }
 
 /** Struktura trybu przyjęcia w jednym roku (p = planowe, u = nagłe, o = pozostałe). */
@@ -192,7 +194,9 @@ export function buildJgpPageData(trends: TrendsDataset, latest: StaticDataset, j
     national.deaths[i] += d;
     if (admissionGroup === 1) national.urgent[i] += h;
   }
-  const value = new Map(file?.valuePln?.year === latest.analysisYear ? file.valuePln.providers : []);
+  // Kwoty ośrodków w latach pliku grupy (ranking pokazuje rok wybrany przyciskiem roku).
+  const yearValues = (file?.years ?? []).map((year) => new Map(file?.valuePln?.providers[year] ?? []));
+  const valueYear = (file?.years ?? []).indexOf(latest.analysisYear);
   // Ośrodki z wcześniejszych lat bez hospitalizacji w najnowszym roku: na końcu rankingu, z zerem w najnowszym roku.
   if (file && extras.allYearProviders) {
     for (const key of file.providers) {
@@ -216,10 +220,11 @@ export function buildJgpPageData(trends: TrendsDataset, latest: StaticDataset, j
     urgentPct: row.h ? round2((row.urgent / row.h) * 100) : 0,
     series: series.get(key) ?? (file ? months.map(() => 0) : []),
     previousHospitalizations: file ? previous.get(key) ?? 0 : null,
-    valuePln: value.get(key) ?? null,
+    valuePln: yearValues[valueYear]?.get(key) ?? null,
     peers: [],
     yearly: file ? yearly.get(key) ?? file.years.map((): [number, number, number] => [0, 0, 0]) : [],
     yearlyDeaths: file ? yearlyDeaths.get(key) ?? file.years.map(() => 0) : [],
+    yearlyValuePln: yearValues.map((values) => values.get(key) ?? null),
   })).sort((a, b) => b.hospitalizations - a.hospitalizations || a.name.localeCompare(b.name, "pl"));
 
   // Podobne szpitale: pary klasy A z modelu, ograniczone do świadczeniodawców tej grupy.

@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { defaultCardYear, funnelCurves, funnelHalfWidth, limitToCatalogYears, funnelStatus, movingRatio, providerYearTotals, ratioSeries, structureShares, topProvidersOfPeriod } from "@/lib/jgpCard";
+import { defaultCardYear, funnelCurves, funnelHalfWidth, limitToCatalogYears, funnelStatus, movingRatio, providerYearTotals, ratioSeries, structureShares, topProvidersOfPeriod, activeSpan } from "@/lib/jgpCard";
 import type { JgpPageData, JgpProviderRow } from "@/lib/jgpPage";
 
 const row = (hospitalizations: number, yearly: [number, number, number][] = []): JgpProviderRow => ({
   key: `07|${hospitalizations}`, owNfz: "07", nip: String(hospitalizations), name: `S${hospitalizations}`, city: "", voivodeship: "07",
-  hospitalizations, deaths: 0, mortalityPct: 0, urgentPct: 0, series: [], previousHospitalizations: null, valuePln: null, peers: [], yearly, yearlyDeaths: [],
+  hospitalizations, deaths: 0, mortalityPct: 0, urgentPct: 0, series: [], previousHospitalizations: null, valuePln: null, peers: [], yearly, yearlyDeaths: [], yearlyValuePln: [],
 });
 
 describe("structureShares — struktura ośrodków nad rankingiem", () => {
@@ -87,12 +87,12 @@ describe("dataForYear — karta dla wcześniejszego roku", () => {
     expect(dataForYear(data, 1)).toBe(data);
   });
 
-  it("2024: ranking, zgony i tryb z pliku grupy, bez rozliczeń ośrodków", () => {
+  it("2024: ranking, zgony, tryb i rozliczenia ośrodków z pliku grupy (kwoty tego roku)", () => {
     const year = dataForYear(data, 0);
     expect(year.year).toBe("2024");
     expect(year.providers.map((row) => [row.name, row.hospitalizations, row.deaths, row.urgentPct, row.valuePln])).toEqual([
       ["Szpital Beta", 10, 1, 100, null],
-      ["Szpital Alfa", 5, 0, 0, null],
+      ["Szpital Alfa", 5, 0, 0, 300_000],
     ]);
     expect(year.hospitalizations).toBe(15);
     expect(year.previousHospitalizations).toBeNull();
@@ -133,6 +133,7 @@ describe("limitToCatalogYears — lata grupy w katalogu", () => {
     ...row(0, [[1, 4, 0], [2, 3, 0], [0, 0, 0], [0, 0, 0]]),
     series: months.map((month) => month < "2019" ? 1 : 0),
     yearlyDeaths: [1, 0, 0, 0],
+    yearlyValuePln: [null, null, null, null],
   };
   const data = {
     jgpCode: "E03", name: "", procedural: true, productCodes: ["P"], catalogYears: ["2017", "2018"], year: "2020",
@@ -187,5 +188,13 @@ describe("topProvidersOfPeriod — linie ośrodków w „Ile?”", () => {
 
   it("pomija ośrodki bez hospitalizacji", () => {
     expect(topProvidersOfPeriod([z, d], months, 5).map((item) => item.name)).toEqual(["D"]);
+  });
+});
+
+describe("activeSpan — okres aktywności ośrodka", () => {
+  it("od pierwszej do ostatniej niezerowej wartości; zera w środku zostają w okresie", () => {
+    expect(activeSpan([0, 0, 117, 0, 250, 0, 0])).toEqual([2, 4]);
+    expect(activeSpan([5])).toEqual([0, 0]);
+    expect(activeSpan([0, 0])).toBeNull();
   });
 });
