@@ -15,7 +15,7 @@ import { PageHeader } from "@/components/portal/PageHeader";
 import { LoadingStatus, Skeleton } from "@/components/portal/Skeleton";
 import { PortalIcon, type PortalIconName } from "@/components/portal/PortalIcon";
 import { TrendView } from "@/components/trends/TrendView";
-import { areaLabel, areasLabel, dominantRegionForCity, type AnalysisArea } from "@/lib/area";
+import { areaLabel, areasLabel, type AnalysisArea } from "@/lib/area";
 import { DASHBOARD_HREFS, DASHBOARD_TAB_NAVIGATE_EVENT, type DashboardNavigation } from "@/lib/dashboardNavigation";
 import { dashboardUrlSearch, legacyAnalysisRedirect, readFocusParam, resolveDashboardYear, type DashboardActiveTab } from "@/lib/dashboardUrlState";
 import type { MortalityDisplayMode } from "@/lib/mortality";
@@ -23,7 +23,7 @@ import { jgpHref } from "@/lib/portalLinks";
 import { bootDurations, explorerBoot, explorerResults, peekExplorerBoot } from "@/lib/explorerBoot";
 import {
   loadHospitalizationIndex, loadRegionalTrends, loadStaticDataset, loadTrends, productTrend,
-  referenceFromDataset, trendsForRegions, type StaticDataset,
+  referenceFromDataset, trendsForRegions,
 } from "@/lib/staticData";
 import { incompleteCoverage, yearChangePct } from "@/lib/trends";
 import type { AdmissionPayload, AxisMode, EstimationMethod, MortalityPayload, ProductOption, ReferencePayload } from "@/lib/types";
@@ -51,8 +51,8 @@ export const EXPLORER_VIEWS: { tab: DashboardActiveTab; label: string; question:
   { tab: "trend", label: "W czasie", question: "Jak zmieniała się liczba hospitalizacji?", icon: "chart" },
   { tab: "mortality", label: "Kto leczy", question: "Którzy świadczeniodawcy leczą i z jaką śmiertelnością?", icon: "heart",
     help: "Przełącznik „Liczba hospitalizacji” zmienia jednostkę osi X. Obszar wybrany w panelu jest wyróżniony kolorem." },
-  { tab: "admissions", label: "Tryb przyjęcia", question: "Ile przyjęć jest planowych, a ile nagłych?", icon: "bed",
-    help: "Każdy punkt to świadczeniodawca. Oś X pokazuje przyjęcia planowane (kod 6), a oś Y sumę przyjęć nagłych (kody 2 i 3). Przełącznik zmienia jednostkę obu osi. Obszar wybrany w panelu jest wyróżniony kolorem." },
+  { tab: "admissions", label: "Tryb przyjęcia", question: "Jaka część przyjęć jest nagła?", icon: "bed",
+    help: "Każdy punkt to świadczeniodawca: liczba hospitalizacji i udział przyjęć nagłych (kody 2 i 3) we wszystkich hospitalizacjach. Linia kropkowana: średnia wszystkich świadczeniodawców. Przełącznik zmienia jednostkę osi X. Obszar wybrany w panelu jest wyróżniony kolorem." },
   { tab: "regions", label: "Gdzie", question: "Jak hospitalizacje rozkładają się na województwa i miasta?", icon: "pin" },
 ];
 
@@ -125,7 +125,6 @@ function ExplorerApp() {
   const [knownProducts, setKnownProducts] = useState<ProductOption[]>(boot?.reference.products ?? []);
   // Obszary analizy (do 5, suma); pusta lista = cała Polska.
   const [areas, setAreas] = useState<AnalysisArea[]>(boot?.urlState.areas ?? []);
-  const [dataset, setDataset] = useState<StaticDataset | null>(boot?.dataset ?? null);
   // Filtr długości pobytu działa tylko w widoku, w którym go ustawiono (W czasie, Kto leczy, Tryb przyjęcia).
   const [durationsByTab, setDurationsByTab] = useState<Partial<Record<DashboardActiveTab, string[]>>>(boot ? bootDurations(boot.urlState) : {});
   const [method, setMethod] = useState<EstimationMethod>(boot?.urlState.method ?? "min");
@@ -226,7 +225,6 @@ function ExplorerApp() {
       try {
         const dataset = await loadStaticDataset(reference.analysisYear);
         if (cancelled) return;
-        setDataset(dataset);
         if (selectedProducts.length === 0) {
           setData(EMPTY_DATA);
           setAreaData(null);
@@ -263,32 +261,19 @@ function ExplorerApp() {
     window.history.replaceState(window.history.state, "", `${window.location.pathname}${search}${window.location.hash}`);
   }, [reference, urlStateReady, selectedProducts, durations, method, axisMode, admissionAxisMode, funnel, activeTab, areas, year, focus, latestYear]);
 
-  // Trend miesięczny ma podział na województwa, nie na miasta: dla miasta bierzemy jego województwo
-  // (to, w którym świadczeniodawcy z miasta mają najwięcej hospitalizacji). Kilka obszarów = suma województw.
+  // Trend miesięczny ma podział na województwa, nie na miasta (miasto bywa jednym szpitalem): „W czasie” bierze tylko
+  // województwa, a miasta wybrane w innych widokach pomija. Kilka województw = ich suma.
   const trendArea = useMemo((): { regions: string[]; label?: string; note: string | null; exact: boolean } => {
     if (!reference || !areas.length) return { regions: [], note: null, exact: true };
-    const regions: string[] = [];
-    const mapped: string[] = [];
-    const empty: string[] = [];
-    for (const area of areas) {
-      if (area.kind === "region") { if (!regions.includes(area.owNfz)) regions.push(area.owNfz); continue; }
-      if (area.kind !== "city") continue;
-      const region = dataset ? dominantRegionForCity(dataset, area.city, selectedProducts, method) : null;
-      if (!region) { empty.push(areaLabel(area, reference)); continue; }
-      if (!regions.includes(region)) regions.push(region);
-      mapped.push(`${areaLabel(area, reference)} → ${areaLabel({ kind: "region", owNfz: region }, reference)}`);
-    }
-    const notes = [
-      mapped.length ? `Trend miesięczny nie ma podziału na miasta; dla miast pokazujemy województwo z największą liczbą ich hospitalizacji: ${mapped.join(", ")}.` : "",
-      empty.length ? `Bez hospitalizacji w wybranych grupach: ${empty.join(", ")}.` : "",
-    ].filter(Boolean);
+    const regions = areas.flatMap((area) => area.kind === "region" ? [area.owNfz] : []);
+    const skipped = areas.filter((area) => area.kind === "city").map((area) => areaLabel(area, reference));
     return {
       regions,
       label: regions.length ? areasLabel(regions.map((owNfz) => ({ kind: "region", owNfz })), reference) : "cała Polska",
-      note: notes.length ? notes.join(" ") + (regions.length ? "" : " Pokazujemy całą Polskę.") : null,
-      exact: !mapped.length && !empty.length,
+      note: skipped.length ? `Widok W czasie pokazuje tylko województwa; pominięto miasta: ${skipped.join(", ")}.` : null,
+      exact: !skipped.length,
     };
-  }, [reference, areas, dataset, selectedProducts, method]);
+  }, [reference, areas]);
 
   // Zmiana r/r w pasku liczb: z trendów kraju albo województw (bez miast i bez filtra długości pobytu — trendy ich nie mają).
   const changeKey = `${selectedProducts.join(",")}|${method}|${trendArea.regions.join(",")}|${reference?.analysisYear ?? ""}`;
@@ -449,7 +434,7 @@ function ExplorerApp() {
               {viewHelp ? <InfoTip label={viewHelp} ariaLabel="Jak czytać wykres" /> : null}
             </h2>
             <Collapsible open={!focus}>
-              <p className={styles.scope}>{scopeLabel} · {areasLabel(areas, reference)} · {activeTab === "trend" ? range : reference.analysisYear}</p>
+              <p className={styles.scope}>{scopeLabel} · {activeTab === "trend" ? trendArea.label ?? "cała Polska" : areasLabel(areas, reference)} · {activeTab === "trend" ? range : reference.analysisYear}</p>
             </Collapsible>
           </div>
         </div>

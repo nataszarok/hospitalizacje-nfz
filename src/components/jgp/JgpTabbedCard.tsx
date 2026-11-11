@@ -5,6 +5,8 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, use
 import { GroupLineChart, type ChartLine } from "@/components/jgp/GroupLineChart";
 import { RegionMap, regionTitle } from "@/components/jgp/RegionMap";
 import { ChartExpand } from "@/components/portal/ChartExpand";
+import { ChartTooltip, TooltipHead, TooltipLines } from "@/components/ChartTooltip";
+import { elementBox, type Box } from "@/lib/tooltipPosition";
 import { HelpLines, InfoTip } from "@/components/InfoTip";
 import { FunnelLegend, SelectedLegendItem } from "@/components/jgp/FunnelLegend";
 import { FUNNEL_STATUS_COLORS, funnelLines, hasEnoughDeathsForFunnel, mortalityChartHelp } from "@/lib/mortalityFunnel";
@@ -452,23 +454,54 @@ function CostSection({ data, onYear }: { data: JgpPageData; onYear: (year: strin
   const latest = at >= 0 ? bars[at] : bars.at(-1);
   const previous = at > 0 ? bars[at - 1] : undefined;
   const change = latest && previous?.value ? ((latest.value - previous.value) / previous.value) * 100 : null;
+  const shellRef = useRef<HTMLDivElement>(null);
+  const [tip, setTip] = useState<{ year: string; amount: string; pick: boolean; anchor: Box } | null>(null);
   return <section className={styles.sec} aria-labelledby="s-koszt">
     <SectionHead id="s-koszt" question="Za ile?" context="Wycena i kwota świadczeń NFZ, wszystkie lata" tag="Lata" />
     <dl className={styles.costFacts}>
       <div><dt>Wycena (katalog {data.valuation?.year ?? ""})</dt><dd>{data.valuation?.points ? `${integer(data.valuation.points)} pkt` : "—"}</dd><span>za hospitalizację</span></div>
       <div><dt>Kwota świadczeń {latest?.year ?? ""}</dt><dd>{latest ? formatPln(latest.value) : "—"}</dd><span>{change === null ? "brak poprzedniego roku" : `${signedPct(change)} r/r`}</span></div>
     </dl>
-    {bars.length ? <div className={styles.costBars} role="img" aria-label={`Kwota świadczeń NFZ za ${data.jgpCode}: ${bars.map((item) => `${item.year} ${formatPln(item.value)}`).join(", ")}`}>
+    {bars.length ? <div ref={shellRef} className={styles.costBars} role="group" aria-label={`Kwota świadczeń NFZ za ${data.jgpCode} w latach`} onMouseLeave={() => setTip(null)}>
       {bars.map((item) => {
         const pick = cardYears.has(item.year);
-        return <div key={item.year} className={`${styles.costBar} ${pick ? styles.costBarPick : ""}`} onClick={pick ? () => onYear(item.year) : undefined} title={`${item.year}: ${formatPln(item.value)}${pick ? " · kliknij, żeby pokazać ten rok" : ""}`}>
-          <span className={styles.costValue}>{scale.format(item.value)}</span>
-          <span className={styles.costTrack}><span className={`${styles.costFill} ${item.year === data.year ? styles.costFillOn : ""}`} style={{ height: `${(item.value / max) * 100}%` }} /></span>
-          <span className={`${styles.costYear} ${item.year === data.year ? styles.costYearOn : ""}`}>{item.year}</span>
-        </div>;
+        const amount = `${scale.format(item.value)} ${scale.unit}`;
+        // Kotwica dymka: słupek razem z liczbą nad nim, żeby dymek nie zasłaniał liczby (DESIGN.md 6.3).
+        const show = (bar: HTMLElement) => {
+          const value = bar.querySelector(`.${styles.costValue}`);
+          const fill = bar.querySelector(`.${styles.costFill}`);
+          const box = value && fill ? elementBox(value) : null;
+          const end = fill ? elementBox(fill) : null;
+          setTip({ year: item.year, amount, pick, anchor: box && end
+            ? { left: end.left, top: box.top, width: end.width, height: end.top + end.height - box.top }
+            : elementBox(bar) });
+        };
+        return <button
+          key={item.year}
+          type="button"
+          className={`${styles.costBar} ${pick ? styles.costBarPick : ""}`}
+          aria-label={`${item.year}: ${amount}${pick ? "; pokaż ten rok" : ""}`}
+          aria-pressed={item.year === data.year}
+          aria-disabled={!pick}
+          onClick={pick ? () => onYear(item.year) : undefined}
+          onMouseEnter={(event) => show(event.currentTarget)}
+          onFocus={(event) => show(event.currentTarget)}
+          onBlur={() => setTip(null)}
+        >
+          {/* Liczba stoi tuż nad słupkiem: podpis i słupek są razem przyklejone do podstawy. */}
+          <span className={styles.costTrack} aria-hidden>
+            <span className={styles.costValue}>{scale.format(item.value)}</span>
+            <span className={`${styles.costFill} ${item.year === data.year ? styles.costFillOn : ""}`} style={{ height: `${(item.value / max) * 100}%` }} />
+          </span>
+          <span className={`${styles.costYear} ${item.year === data.year ? styles.costYearOn : ""}`} aria-hidden>{item.year}</span>
+        </button>;
       })}
+      {tip ? <ChartTooltip anchor={tip.anchor} container={shellRef} kind="bar">
+        <TooltipHead title={tip.year} context={`Kwota świadczeń NFZ · ${data.jgpCode}`} />
+        <TooltipLines lines={[<b key="v">{tip.amount}</b>, ...(tip.pick && tip.year !== data.year ? ["Kliknij, żeby pokazać ten rok."] : [])]} />
+      </ChartTooltip> : null}
     </div> : <p className={base.note}>Brak danych o rozliczeniach w złotych.</p>}
-    <p className={base.note}>Słupki: kwota świadczeń rozliczonych przez NFZ w {scale.unit} (zestawienie produktów JGP). Kliknięcie słupka zmienia rok karty. Karta nie dzieli kwoty przez liczbę hospitalizacji: zestawienie NFZ liczy pacjentów, a pacjent może mieć kilka hospitalizacji.</p>
+    <p className={base.note}>Słupki: kwota świadczeń rozliczonych przez NFZ w {scale.unit} (zestawienie produktów JGP). Najechanie pokazuje kwotę z jednostką, kliknięcie słupka zmienia rok karty. Karta nie dzieli kwoty przez liczbę hospitalizacji: zestawienie NFZ liczy pacjentów, a pacjent może mieć kilka hospitalizacji.</p>
   </section>;
 }
 

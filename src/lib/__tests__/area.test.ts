@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { areaFromValue, areaLabel, areaMatcher, areaToValue, COUNTRY_AREA, dominantRegionForCity, sameArea, validArea } from "@/lib/area";
+import { areaFromValue, areaLabel, areaMatcher, areaToValue, COUNTRY_AREA, sameArea, validArea } from "@/lib/area";
 import { latestDatasetFixture } from "@/lib/__tests__/fixtures/trendsFixture";
 import { referenceFromDataset } from "@/lib/staticData";
 
@@ -34,11 +34,5 @@ describe("obszar analizy", () => {
     // Nazwa miasta w słowniku ma spację na końcu — dopasowanie po przycięciu.
     const city = areaMatcher(latestDatasetFixture, { kind: "city", city: "WARSZAWA" })!;
     expect([city("07", "111"), city("12", "222")]).toEqual([true, false]);
-  });
-
-  it("wskazuje województwo, w którym świadczeniodawcy z miasta mają najwięcej hospitalizacji", () => {
-    expect(dominantRegionForCity(latestDatasetFixture, "KATOWICE", ["P1"], "min")).toBe("12");
-    expect(dominantRegionForCity(latestDatasetFixture, "GLIWICE", ["P1"], "min")).toBeNull();
-    expect(dominantRegionForCity(latestDatasetFixture, "GLIWICE", ["P3"], "min")).toBe("12");
   });
 });

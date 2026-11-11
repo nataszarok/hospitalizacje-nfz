@@ -60,6 +60,21 @@ describe("Karta w zakładkach — nagłówek i Przegląd", () => {
     expect(within(panel).getByRole("region", { name: "Mapa ciepła: województwa w latach" })).toBeInTheDocument();
   });
 
+  it("„Za ile?”: liczba nad słupkiem bez jednostki, dymek i etykieta słupka z jednostką (mln / mld zł)", () => {
+    renderCard();
+    const cost = within(screen.getByRole("tabpanel")).getByRole("region", { name: /Za ile\?/ });
+    const bars = within(cost).getAllByRole("button", { name: /^\d{4}: [\d,  ]+ (tys\.|mln|mld) zł/ });
+    expect(bars.length).toBeGreaterThan(0);
+    // Podpis i słupek w jednym torze: podpis tuż nad wypełnieniem.
+    const track = bars[0].firstElementChild!;
+    expect([...track.children].map((child) => child.className)).toEqual([expect.stringMatching(/costValue/), expect.stringMatching(/costFill/)]);
+    fireEvent.mouseEnter(bars[0]);
+    const unit = bars[0].getAttribute("aria-label")!.match(/(tys\.|mln|mld) zł/)![0];
+    expect(within(cost).getByRole("tooltip")).toHaveTextContent(unit);
+    fireEvent.mouseLeave(bars[0].parentElement!);
+    expect(within(cost).queryByRole("tooltip")).toBeNull();
+  });
+
   it("„Za ile?” ma wycenę i kwotę, bez średniej na hospitalizację; obok tryb przyjęcia bez śmiertelności", () => {
     renderCard();
     const panel = screen.getByRole("tabpanel");

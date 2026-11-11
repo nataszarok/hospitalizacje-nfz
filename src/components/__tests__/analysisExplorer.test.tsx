@@ -192,7 +192,7 @@ describe("AnalysisExplorer", () => {
     expect(screen.getByText("Świadczeniodawcy").nextSibling).toHaveTextContent("1");
   });
 
-  it("kilka obszarów: suma w liczbach, trend sumy województw (miasto → jego województwo), wyróżnienie każdego", async () => {
+  it("kilka obszarów: suma w liczbach, trend tylko województw (miasto pominięte), wyróżnienie każdego", async () => {
     window.history.replaceState(null, "", "/analizy?t=k");
     render(<AnalysisExplorer />);
     fireEvent.click(await screen.findByRole("button", { name: "województwo i miasto" }));
@@ -200,9 +200,10 @@ describe("AnalysisExplorer", () => {
     await waitFor(() => expect(window.location.search).toBe("?ow=07&mc=Warszawa&t=k"));
     expect(screen.getByText(/woj\. mazowieckie, Warszawa · 2025/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "W czasie" }));
-    // Warszawa: świadczeniodawcy z 12 mają więcej hospitalizacji (9 > 5), więc trend = woj. 07 + 12.
-    expect(await screen.findByText(/trend obszaru: 07\+12/)).toBeInTheDocument();
-    expect(screen.getByText(/uwaga: Trend miesięczny nie ma podziału na miasta/)).toBeInTheDocument();
+    // „W czasie” nie pokazuje miast (miasto bywa jednym szpitalem): trend = woj. 07, Warszawa pominięta.
+    expect(await screen.findByText(/trend obszaru: 07 · woj\. mazowieckie/)).toBeInTheDocument();
+    expect(screen.getByText(/uwaga: Widok W czasie pokazuje tylko województwa; pominięto miasta: Warszawa/)).toBeInTheDocument();
+    expect(screen.getByText(/· woj\. mazowieckie · 2024–2025/)).toBeInTheDocument();
   });
 
   it("filtr długości pobytu działa tylko w widoku, w którym go ustawiono", async () => {
@@ -255,11 +256,11 @@ describe("AnalysisExplorer", () => {
     expect(window.location.search).toBe("?ow=07");
   });
 
-  it("dla miasta pokazuje trend województwa z największą liczbą hospitalizacji i wyjaśnia to", async () => {
+  it("dla samego miasta „W czasie” pokazuje całą Polskę i wyjaśnia, że pominął miasto", async () => {
     render(<AnalysisExplorer />);
     fireEvent.click(await screen.findByRole("button", { name: "miasto Warszawa" }));
-    expect(await screen.findByText(/trend obszaru: 12/)).toBeInTheDocument();
-    expect(screen.getByText(/uwaga: Trend miesięczny nie ma podziału na miasta/)).toBeInTheDocument();
+    expect(await screen.findByText(/uwaga: Widok W czasie pokazuje tylko województwa; pominięto miasta: Warszawa/)).toBeInTheDocument();
+    expect(screen.queryByText(/trend obszaru:/)).not.toBeInTheDocument();
     expect(window.location.search).toBe("?mc=Warszawa");
   });
 

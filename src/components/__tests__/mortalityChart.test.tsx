@@ -18,7 +18,7 @@ const row = (nip: string, hospitalizations: number, deaths: number): MortalityRo
 // Średnia: 110 / 1100 = 10%. Szpital „3” ma 30% przy 100 hospitalizacjach: poza granicą 99,8%.
 const rows = [row("1", 500, 50), row("2", 500, 30), row("3", 100, 30)];
 type Trace = { mode: string; marker?: { color: string | string[] }; line?: { dash?: string } };
-type Layout = { shapes: unknown[]; annotations: { text: string }[] };
+type Layout = { shapes: unknown[]; annotations: { text: string }[]; xaxis: { range: [number, number] }; yaxis: { range: [number, number] } };
 
 async function draw(props: { rows?: MortalityRow[]; funnel?: boolean; highlightAreas?: AnalysisArea[] } = {}) {
   render(<MortalityChart rows={props.rows ?? rows} axisMode="total" displayMode="combined" highlightAreas={props.highlightAreas ?? []} products={[]} regions={[]} funnel={props.funnel} />);
@@ -52,5 +52,13 @@ describe("MortalityChart — średnia i lejek", () => {
     const { traces } = await draw({ funnel: true, highlightAreas: [{ kind: "region", owNfz: "07" }] });
     expect(traces.filter((trace) => trace.mode === "lines")).toHaveLength(4);
     expect(traces.some((trace) => trace.mode === "markers" && Array.isArray(trace.marker?.color))).toBe(false);
+  });
+
+  it("włączenie lejka nie zmienia osi (linie lejka sięgają za ostatni punkt)", async () => {
+    const off = await draw();
+    cleanup();
+    const on = await draw({ funnel: true });
+    expect(on.layout.xaxis.range).toEqual(off.layout.xaxis.range);
+    expect(on.layout.yaxis.range).toEqual(off.layout.yaxis.range);
   });
 });

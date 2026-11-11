@@ -25,7 +25,7 @@ function dataset(): Dataset {
       ["07", "111", "P1", "2-3", "2", 7, 5, 1, 1],
       ["07", "111", "P2", "0-1", "3", 5, 4, 0, 0],
       ["07", "222", "P1", "0-1", "6", 4, 3, 0, 0],
-      ["12", "333", "P1", "0-1", "9", 100, 90, 10, 9], // ignored by admissions
+      ["12", "333", "P1", "0-1", "9", 100, 90, 10, 9], // admissions: only in hospitalizations (other mode)
     ],
   } as Dataset;
 }
@@ -84,18 +84,19 @@ describe("mortalityFromDataset", () => {
 });
 
 describe("admissionsFromDataset", () => {
-  it("maps admission 6 to planned and 2+3 to urgent, ignoring other codes", () => {
+  it("maps admission 6 to planned and 2+3 to urgent; hospitalizations count every mode (as the JGP card)", () => {
     const result = admissionsFromDataset(dataset(), { products: ["P1", "P2"], durations: [], method: "min", minHosp: 0 });
     const aP1 = result.rows.find((r) => r.nip === "111" && r.productCode === "P1");
     const aP2 = result.rows.find((r) => r.nip === "111" && r.productCode === "P2");
-    expect(aP1).toMatchObject({ plannedAdmissions: 10, urgentAdmissions: 5, totalAdmissions: 15 });
-    expect(aP2).toMatchObject({ plannedAdmissions: 0, urgentAdmissions: 4, totalAdmissions: 4 });
-    expect(result.rows.some((r) => r.nip === "333")).toBe(false);
+    expect(aP1).toMatchObject({ hospitalizations: 15, plannedAdmissions: 10, urgentAdmissions: 5, totalAdmissions: 15 });
+    expect(aP2).toMatchObject({ hospitalizations: 4, plannedAdmissions: 0, urgentAdmissions: 4, totalAdmissions: 4 });
+    expect(result.rows.find((r) => r.nip === "333")).toMatchObject({ hospitalizations: 90, urgentAdmissions: 0, totalAdmissions: 0 });
   });
 
   it("applies duration, method and provider-level minHosp", () => {
     const result = admissionsFromDataset(dataset(), { products: ["P1", "P2"], durations: ["0-1"], method: "sim", minHosp: 15 });
-    expect(result.rows.map((r) => [r.nip, r.productCode, r.totalAdmissions])).toEqual([
+    expect(result.rows.map((r) => [r.nip, r.productCode, r.hospitalizations])).toEqual([
+      ["333", "P1", 100],
       ["111", "P1", 12],
       ["111", "P2", 5],
     ]);

@@ -147,6 +147,18 @@ describe("ExplorerSidebar", () => {
     expect(setAreas).toHaveBeenLastCalledWith([]);
   });
 
+  it("obszar w widoku „W czasie”: tylko województwa; miasta z innych widoków zostają w wyborze, ale nie na liście", () => {
+    const setAreas = vi.fn();
+    const warsaw = { kind: "city" as const, city: "WARSZAWA" };
+    render(<ExplorerSidebar {...props({ view: "trend", setAreas, areas: [warsaw] })} />);
+    expect(screen.queryByRole("list", { name: "Wybrane obszary" })).not.toBeInTheDocument();
+    expect(screen.getByText("0/5")).toBeInTheDocument();
+    const area = screen.getByTestId("area");
+    expect([...area.querySelectorAll("option")].map((o) => o.value)).toEqual(["ow:07"]);
+    fireEvent.change(area, { target: { value: "ow:07" } });
+    expect(setAreas).toHaveBeenCalledWith([warsaw, { kind: "region", owNfz: "07" }]);
+  });
+
   it("obszar: przy 5 obszarach pole wyszukiwania jest wyłączone", () => {
     const areas = ["07", "12", "02", "06", "01"].map((owNfz) => ({ kind: "region" as const, owNfz }));
     render(<ExplorerSidebar {...props({ areas })} />);

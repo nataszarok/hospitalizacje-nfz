@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   admissionRowsPerJgp,
   aggregateAdmissionRowsByProvider,
+  urgentMeanPct,
+  urgentSharePct,
 } from "@/lib/admissions";
 import type { AdmissionRow } from "@/lib/types";
 
@@ -14,9 +16,11 @@ function row(overrides: Partial<AdmissionRow> = {}): AdmissionRow {
     city: "Warszawa",
     voivodeship: "Mazowieckie",
     population: 1_000_000,
+    hospitalizations: 125,
     plannedAdmissions: 100,
     urgentAdmissions: 20,
     totalAdmissions: 120,
+    hospitalizationsPer100k: 12.5,
     plannedAdmissionsPer100k: 10,
     urgentAdmissionsPer100k: 2,
     ...overrides,
@@ -29,6 +33,7 @@ describe("admission JGP display rows", () => {
       row(),
       row({
         productCode: "P2",
+        hospitalizations: 75,
         plannedAdmissions: 50,
         urgentAdmissions: 10,
         totalAdmissions: 60,
@@ -40,6 +45,8 @@ describe("admission JGP display rows", () => {
     expect(result[0].plannedAdmissions).toBe(150);
     expect(result[0].urgentAdmissions).toBe(30);
     expect(result[0].totalAdmissions).toBe(180);
+    expect(result[0].hospitalizations).toBe(200);
+    expect(result[0].hospitalizationsPer100k).toBeCloseTo(20);
     expect(result[0].plannedAdmissionsPer100k).toBeCloseTo(15);
     expect(result[0].urgentAdmissionsPer100k).toBeCloseTo(3);
   });
@@ -72,5 +79,13 @@ describe("admission JGP display rows", () => {
     expect(result).toHaveLength(2);
     expect(result[0].productCodes).toEqual(["P1"]);
     expect(result[1].productCodes).toEqual(["P2"]);
+  });
+
+  it("udział nagłych liczy wobec wszystkich hospitalizacji (z pozostałymi trybami), jak karta JGP", () => {
+    expect(urgentSharePct(row())).toBeCloseTo(16);
+    expect(urgentSharePct(row({ hospitalizations: 0, urgentAdmissions: 0 }))).toBe(0);
+    // Średnia ważona hospitalizacjami, nie średnia udziałów: (20 + 10) / (125 + 75).
+    expect(urgentMeanPct([row(), row({ hospitalizations: 75, urgentAdmissions: 10 })])).toBeCloseTo(15);
+    expect(urgentMeanPct([])).toBe(0);
   });
 });

@@ -29,7 +29,7 @@ export type TrendViewProps = {
   durations?: string[];
   /** Nazwa obszaru w opisie wykresu, np. „woj. mazowieckie”. */
   areaLabel?: string;
-  /** Dodatkowa uwaga o obszarze, np. gdy dla miasta pokazujemy województwo. */
+  /** Dodatkowa uwaga o obszarze, np. gdy widok pominął wybrane miasta. */
   areaNote?: string | null;
   /** Zestawienie JGP: „Zbiorczo” (suma) albo „Per JGP” (seria na grupę). Przełącznik tylko przy ≥ 2 grupach i z `onDisplayModeChange`. */
   displayMode?: MortalityDisplayMode;
