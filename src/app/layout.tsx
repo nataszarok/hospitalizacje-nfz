@@ -5,7 +5,8 @@ import "./globals.css";
 import "../styles/portal.css";
 import { DataPrefetch } from "@/components/portal/DataPrefetch";
 import { SiteHeader } from "@/components/portal/SiteHeader";
-import { SITE_NAME } from "@/lib/site";
+import { pageMetadata } from "@/lib/pageMetadata";
+import { SITE_NAME, SITE_URL } from "@/lib/site";
 import { ColorSchemeScript, MantineProvider, mantineHtmlProps } from "@mantine/core";
 
 // Krój tekstu (font zmienny, wszystkie grubości): zmienna --font-body.
@@ -23,9 +24,14 @@ const interTight = Inter_Tight({
   variable: "--font-display",
 });
 
+// Domyślne metadane i podgląd linku (baner marki); strony nadpisują je przez `pageMetadata`.
 export const metadata: Metadata = {
-  title: SITE_NAME,
-  description: "Portal o publicznej ochronie zdrowia: hospitalizacje, szpitale publiczne, wyceny JGP i artykuły na podstawie danych NFZ.",
+  metadataBase: new URL(SITE_URL),
+  ...pageMetadata({
+    title: SITE_NAME,
+    description: "Portal o publicznej ochronie zdrowia: hospitalizacje, szpitale publiczne, wyceny JGP i artykuły na podstawie danych NFZ.",
+    path: "/",
+  }),
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

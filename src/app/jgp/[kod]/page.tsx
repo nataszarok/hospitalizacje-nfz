@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { JgpPage } from "@/components/jgp/JgpPage";
-import { buildJgpPageData } from "@/lib/jgpPage";
-import { SITE_NAME } from "@/lib/site";
-import {
-  readHospitalizationIndexFromDisk, readJgpGroupFileFromDisk, readJgpPagesIndexFromDisk, readJgpProfilesFromDisk, readJgpProseFromDisk, readPeerPairsFromDisk, readRegionsMapFromDisk, readStaticDatasetFromDisk, readTrendsFromDisk, readValuationsFromDisk,
-} from "@/lib/staticDataServer";
+import { formatJgpName } from "@/lib/formatters";
+import { jgpHref } from "@/lib/portalLinks";
+import { jgpPreviewAlt, jgpPreviewCard } from "@/lib/jgpPreview";
+import { readJgpPageDataFromDisk } from "@/lib/jgpPageServer";
+import { pageMetadata, previewImagePath } from "@/lib/pageMetadata";
+import { readJgpPagesIndexFromDisk, readRegionsMapFromDisk } from "@/lib/staticDataServer";
 
 export const dynamicParams = false;
 
@@ -15,31 +16,21 @@ export async function generateStaticParams() {
   return groups.map((kod) => ({ kod }));
 }
 
-async function pageData(kod: string) {
-  const [trends, index, groupFile, valuations, peerPairs, profiles, prose] = await Promise.all([
-    readTrendsFromDisk(), readHospitalizationIndexFromDisk(), readJgpGroupFileFromDisk(kod), readValuationsFromDisk(), readPeerPairsFromDisk(), readJgpProfilesFromDisk(), readJgpProseFromDisk(),
-  ]);
-  // Karta ma wybór roku: ośrodki ze wszystkich lat i ich nazwy ze starszych plików roku.
-  const older = await Promise.all(index.years.filter((year) => year !== index.latestYear).map((year) => readStaticDatasetFromDisk(year)));
-  return buildJgpPageData(trends, await readStaticDatasetFromDisk(index.latestYear), kod, "min", 15, {
-    groupFile, valuations: valuations.rows, valuationYear: valuations.year, peerPairs, profiles, prose,
-    allYearProviders: true, facilities: older.flatMap((dataset) => dataset.facilities),
-  });
-}
-
 export async function generateMetadata({ params }: { params: Promise<{ kod: string }> }): Promise<Metadata> {
   const { kod } = await params;
-  const data = await pageData(kod);
-  return {
-    title: `${kod} ${data?.name ?? ""} | Grupy JGP | ${SITE_NAME}`,
+  const data = await readJgpPageDataFromDisk(kod);
+  return pageMetadata({
+    title: `${kod} ${data ? formatJgpName(data.name) : ""} | Grupy JGP`,
     // Pierwsze zdanie opisu (proza albo zdanie o rozpoznaniach) mówi wyszukiwarce, co obejmuje grupa.
     description: `Hospitalizacje w grupie JGP ${kod} w kolejnych latach i świadczeniodawcy, którzy leczą najwięcej pacjentów.${data?.description ? ` ${data.description.sentences[0].split(/(?<=\.)\s/)[0]}` : ""} Dane NFZ.`,
-  };
+    path: jgpHref(kod) as string,
+    image: data ? { url: previewImagePath.jgp(kod), alt: jgpPreviewAlt(jgpPreviewCard(data)) } : undefined,
+  });
 }
 
 export default async function JgpGroupPage({ params }: { params: Promise<{ kod: string }> }) {
   const { kod } = await params;
-  const [data, map] = await Promise.all([pageData(kod), readRegionsMapFromDisk()]);
+  const [data, map] = await Promise.all([readJgpPageDataFromDisk(kod), readRegionsMapFromDisk()]);
   if (!data) notFound();
   return <JgpPage data={data} map={map} />;
 }
