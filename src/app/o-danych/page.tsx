@@ -1,12 +1,17 @@
 import type { Metadata } from "next";
 import { AboutDataPage } from "@/components/about/AboutDataPage";
-import { SITE_NAME } from "@/lib/site";
+import { formatYearRange } from "@/lib/formatters";
+import { pageMetadata } from "@/lib/pageMetadata";
 import { readHospitalizationIndexFromDisk } from "@/lib/staticDataServer";
 
-export const metadata: Metadata = {
-  title: `O danych | ${SITE_NAME}`,
-  description: "Źródła danych, definicje i metody liczenia hospitalizacji, śmiertelności i wartości ukrytych w danych NFZ.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { years } = await readHospitalizationIndexFromDisk();
+  return pageMetadata({
+    title: "O danych",
+    description: `Źródła danych, definicje i metody liczenia hospitalizacji, śmiertelności i wartości ukrytych w danych NFZ za lata ${formatYearRange(years[0], years.at(-1) as string)}.`,
+    path: "/o-danych",
+  });
+}
 
 export default async function AboutDataRoute() {
   const { years } = await readHospitalizationIndexFromDisk();
