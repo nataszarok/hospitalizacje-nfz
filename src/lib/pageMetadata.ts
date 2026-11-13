@@ -13,9 +13,11 @@ import { SITE_NAME } from "@/lib/site";
 /** Obraz ogólny portalu (baner marki z `brand/`, paleta PNG), 1200×630. */
 export const DEFAULT_PREVIEW_IMAGE = "/og/funduszdanych.png";
 
-/** Obrazy podglądu kart. Nowy rodzaj karty (np. profil szpitala: `/og/szpital/<klucz>.png`) dopisz tutaj. */
+/** Obrazy podglądu kart. Nowy rodzaj karty dopisz tutaj. */
 export const previewImagePath = {
   jgp: (jgpCode: string) => `/og/jgp/${encodeURIComponent(jgpCode)}.png`,
+  /** Karta szpitala: fragment adresu „<NIP>-<OW>” (`hospitalSlug`). */
+  szpital: (slug: string) => `/og/szpital/${encodeURIComponent(slug)}.png`,
 };
 
 export interface PageMetadataInput {
