@@ -76,6 +76,8 @@ const paths: readonly Path[] = [
 ];
 
 const integer = (value: number) => Math.round(value).toLocaleString("pl-PL");
+/** Wysokość histogramu finansów obok mapy szpitali (jednostki szerokości 520 ≈ px na karcie): jak mapa, 300 px. */
+const HOME_SIDE_CHART_HEIGHT = 290;
 const decimal = (value: number) => value.toLocaleString("pl-PL", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 const signedPct = (value: number) => `${value > 0 ? "+" : value < 0 ? "−" : ""}${decimal(Math.abs(value))}%`;
 
@@ -181,7 +183,7 @@ export function HomePage({ highlights, stats, hospitals, hospitalMap = null }: {
             id="hospitals-map"
             kicker={`Mapa · ${hospitalMap.year} · ${integer(hospitalMap.hospitals)} szpitali`}
             title="Gdzie są szpitale?"
-            lead={<>Kropka to szpital z hospitalizacjami w {hospitalMap.year} r., większa kropka — więcej hospitalizacji. <strong>{integer(hospitalMap.inPsz)}</strong> z nich należy do sieci szpitali (PSZ). Mediana szpitali z łóżkami: <strong>{integer(hospitals.medianBeds)}</strong> łóżek. <strong>{integer(hospitals.sorUnits)}</strong> oddziałów ratunkowych (SOR) działa w {integer(hospitals.withSor)} podmiotach.</>}
+            lead={<><strong>{integer(hospitalMap.inPsz)} z {integer(hospitalMap.hospitals)}</strong> szpitali należy do sieci szpitali (PSZ). Kropka to szpital z hospitalizacjami w {hospitalMap.year} r., większa kropka — więcej hospitalizacji.</>}
             href={DASHBOARD_HREFS.hospitals}
             cta="Mapa i katalog szpitali"
             source="Dane NFZ o hospitalizacjach; wykaz PSZ (NFZ); rejestr RPWDL"
@@ -212,7 +214,8 @@ export function HomePage({ highlights, stats, hospitals, hospitalMap = null }: {
             source="Sprawozdania finansowe; wykaz PSZ (NFZ)"
             estimate={false}
           >
-            <ContinuousHistogram bins={finance.margins} label="Podmioty według marży netto" unit="%" />
+            {/* Obok mapy: wykres tej samej wysokości (ok. 300 px, jak `.hospitalMap`); bez mapy — zwykła wysokość. */}
+            <ContinuousHistogram bins={finance.margins} label="Podmioty według marży netto" unit="%" height={hospitalMap ? HOME_SIDE_CHART_HEIGHT : undefined} />
             <Legend items={[{ label: "Strata", color: CHART_COLORS.signal }, { label: "Zysk", color: CHART_COLORS.data }]} />
           </DataCard> : null}
         </div>

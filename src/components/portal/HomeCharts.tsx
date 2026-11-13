@@ -65,9 +65,9 @@ export function Histogram({ bins, label, unit }: { bins: HistogramBin[]; label: 
 }
 
 /** Histogram na osi liczbowej (np. marża netto w %): przylegające słupki równych przedziałów, podziałka co 5. */
-export function ContinuousHistogram({ bins, label, unit }: { bins: HistogramBin[]; label: string; unit: string }) {
+/** `height`: wysokość w jednostkach szerokości 520 (np. wyższy wykres obok mapy w tej samej sekcji). */
+export function ContinuousHistogram({ bins, label, unit, height = 200 }: { bins: HistogramBin[]; label: string; unit: string; height?: number }) {
   const width = 520;
-  const height = 200;
   const top = 22;
   const bottom = 26;
   const max = Math.max(...bins.map((bin) => bin.count), 1);

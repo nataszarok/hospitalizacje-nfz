@@ -128,7 +128,7 @@ describe("Strona główna", () => {
 
     const finance = within(section).getByRole("article", { name: "Ile szpitali PSZ kończy rok ze stratą?" });
     expect(finance).toHaveTextContent("286 z 631 szpitali z sieci PSZ (45%) miało stratę netto w 2025 r. Łączny wynik: −1,2 mld zł.");
-    expect(within(finance).getByRole("img", { name: /−2,5…0 % — 137, 0…2,5 % — 218/ })).toBeInTheDocument();
+    expect(within(finance).getByRole("img", { name: /−2,5…0 % — 137, 0…2,5 % — 218/ })).toHaveAttribute("viewBox", "0 0 520 200");
     expect(within(finance).getByRole("link", { name: /Przykładowa karta: finanse/ })).toHaveAttribute("href", "/szpitale/9251723350-04?widok=finanse");
   });
 
@@ -147,8 +147,10 @@ describe("Strona główna", () => {
     expect(within(section).queryByRole("article", { name: "Jakiej wielkości są szpitale?" })).not.toBeInTheDocument();
     const card = within(section).getByRole("article", { name: "Gdzie są szpitale?" });
     expect(card).toHaveTextContent("Mapa · 2025 · 905 szpitali");
-    expect(card).toHaveTextContent("574 z nich należy do sieci szpitali (PSZ)");
-    expect(card).toHaveTextContent("249 oddziałów ratunkowych (SOR) działa w 243 podmiotach.");
+    expect(card).toHaveTextContent("574 z 905 szpitali należy do sieci szpitali (PSZ)");
+    // Wykres finansów obok mapy jest wyższy (ta sama wysokość co mapa); bez mapy — zwykła wysokość 200.
+    const finance = within(section).getByRole("article", { name: "Ile szpitali PSZ kończy rok ze stratą?" });
+    expect(within(finance).getByRole("img").getAttribute("viewBox")).toBe("0 0 520 290");
     const map = within(card).getByRole("img", { name: "Mapa szpitali z hospitalizacjami w 2025 r.: 905 szpitali, w tym 574 w sieci szpitali (PSZ)" });
     expect(map.querySelectorAll("path")).toHaveLength(2);
     const dots = [...map.querySelectorAll("circle")];

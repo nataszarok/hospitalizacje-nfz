@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { Sparkline } from "@/components/jgp/JgpCatalog";
-import { HospitalCatalogMap } from "./HospitalCatalogMap";
+import { CityFilter, HospitalCatalogMap } from "./HospitalCatalogMap";
 import { useMediaQuery } from "@/lib/useMediaQuery";
 import { HelpLines, InfoTip } from "@/components/InfoTip";
 import { HOSPITAL_EXPLORER_PATH } from "@/lib/dashboardNavigation";
@@ -149,9 +149,6 @@ export function HospitalCatalogView({ catalog }: { catalog: HospitalCatalog }) {
       </label>
       <button type="button" className={styles.clear} disabled={!hasActiveHospitalFilters(state)} onClick={() => update({ ...DEFAULT_HOSPITAL_CATALOG_STATE, view, sort })}>Wyczyść filtry</button>
     </div>
-    {city ? <p className={own.cityFilter}>
-      Miasto: <b>{formatCityName(city)}</b> <button type="button" onClick={() => update({ city: "" })} aria-label={`Usuń filtr miasta ${formatCityName(city)}`}>×</button>
-    </p> : null}
 
     {showMap ? <div className={view === null ? own.autoMap : undefined}><HospitalCatalogMap
       rows={filtered}
@@ -165,6 +162,8 @@ export function HospitalCatalogView({ catalog }: { catalog: HospitalCatalog }) {
       onShowList={() => update({ view: "list" })}
     /></div> : null}
     {showList ? <div className={view === null ? own.autoList : undefined}>
+    {/* Na mapie filtr miasta jest nakładką w rogu mapy (`HospitalCatalogMap`), więc mapa nie zmienia położenia. */}
+    {city ? <CityFilter city={city} onClear={() => update({ city: "" })} /> : null}
 
     <section className={styles.card} aria-label="Szpitale">
       {/* 7 kolumn (DESIGN.md 7.1): miasto i województwo w komórce nazwy, NIP w podpowiedzi; w wąskim kontenerze zostają szpital i liczba. */}
