@@ -6,7 +6,7 @@ import { pageMetadata } from "@/lib/pageMetadata";
 import { SITE_NAME } from "@/lib/site";
 import { datasetHighlights } from "@/lib/staticData";
 import {
-  readAllStaticDatasetsFromDisk, readCitiesMapFromDisk, readFacilityYearsFromDisk, readFinancialResultsFromDisk, readHospitalProfilesFromDisk,
+  readAllStaticDatasetsFromDisk, readCitiesMapFromDisk, readFacilityYearsFromDisk, readHospitalProfilesFromDisk,
   readPeerPairsFromDisk, readPszNipsFromDisk, readRegionsMapFromDisk, readTrendsFromDisk,
 } from "@/lib/staticDataServer";
 
@@ -17,16 +17,16 @@ export const metadata: Metadata = pageMetadata({
 });
 
 export default async function Home() {
-  const [datasets, trends, map, profiles, financial, pairs, psz, facilityYears, cities] = await Promise.all([
+  const [datasets, trends, map, profiles, pairs, psz, facilityYears, cities] = await Promise.all([
     readAllStaticDatasetsFromDisk(), readTrendsFromDisk(), readRegionsMapFromDisk(),
-    readHospitalProfilesFromDisk(), readFinancialResultsFromDisk(), readPeerPairsFromDisk(), readPszNipsFromDisk(),
+    readHospitalProfilesFromDisk(), readPeerPairsFromDisk(), readPszNipsFromDisk(),
     readFacilityYearsFromDisk(), readCitiesMapFromDisk(),
   ]);
   const latest = datasets.at(-1)!;
   return <HomePage
     highlights={datasetHighlights(datasets)}
     stats={buildHomeStats(trends, latest, map)}
-    hospitals={buildHospitalHomeStats(profiles, financial, pairs, latest.facilities, psz)}
+    hospitals={buildHospitalHomeStats(profiles, pairs, latest.facilities)}
     hospitalMap={buildHospitalMapStats(facilityYears.index, facilityYears.sections, cities, map, psz)}
   />;
 }

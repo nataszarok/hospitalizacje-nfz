@@ -3,7 +3,7 @@
 import "@testing-library/jest-dom/vitest";
 import { afterEach, describe, expect, it } from "vitest";
 import { cleanup, render, screen, within } from "@testing-library/react";
-import { AdmissionBars, ChangeList, ContinuousHistogram, Histogram, RegionsMiniMap } from "@/components/portal/HomeCharts";
+import { AdmissionBars, ChangeList, Histogram, RegionsMiniMap } from "@/components/portal/HomeCharts";
 import type { HomeStats } from "@/lib/homeStats";
 
 afterEach(cleanup);
@@ -42,21 +42,5 @@ describe("Wykresy strony głównej", () => {
     expect(screen.getByRole("img", { name: "Marża: −5…0 % — 137, 0…5 % — 218" })).toBeInTheDocument();
     const [loss, profit] = container.querySelectorAll("rect");
     expect(loss.getAttribute("class")).not.toBe(profit.getAttribute("class"));
-  });
-
-  it("rysuje histogram ciągły: przylegające słupki i podziałkę co 5 z wyróżnionym zerem", () => {
-    const bins = [
-      { label: "< −5", count: 2, negative: true, to: -5 },
-      { label: "−5…−2,5", count: 0, negative: true, from: -5, to: -2.5 },
-      { label: "−2,5…0", count: 4, negative: true, from: -2.5, to: 0 },
-      { label: "0…2,5", count: 6, negative: false, from: 0, to: 2.5 },
-      { label: "≥ 2,5", count: 1, negative: false, from: 2.5 },
-    ];
-    const { container } = render(<ContinuousHistogram label="Marża netto" unit="%" bins={bins} />);
-    expect(screen.getByRole("img", { name: /Marża netto: < −5 % — 2, −5…−2,5 % — 0/ })).toBeInTheDocument();
-    // Liczby nad słupkami (pusty przedział bez liczby), potem podziałka co 5.
-    expect([...container.querySelectorAll("text")].map((t) => t.textContent)).toEqual(["2", "4", "6", "1", "−5", "0"]);
-    const bars = [...container.querySelectorAll("rect")];
-    expect(Number(bars[1].getAttribute("x"))).toBeCloseTo(Number(bars[0].getAttribute("x")) + Number(bars[0].getAttribute("width")) + 1);
   });
 });
