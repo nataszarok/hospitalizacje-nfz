@@ -31,7 +31,7 @@ const topics: readonly Topic[] = [
   { title: "Porównanie szpitali", description: "Porównaj szpital z grupą podobnych placówek dobranych przez model.", icon: "compare", href: DASHBOARD_HREFS.comparison, label: "Porównaj szpitale" },
   { title: "Eksplorator JGP", description: "Narzędzie dla analityków: kilka grup naraz, obszary, filtry i tryb przyjęcia.", icon: "heart", href: DASHBOARD_HREFS.trend, label: "Otwórz eksplorator" },
   { title: "Wyceny JGP", description: "Jak wygląda system wycen JGP i jak zmieniają się wyceny.", icon: "chart", label: "Wyceny JGP" },
-  { title: "Artykuły", description: "Analizy i komentarze, m.in. o rozliczeniach i kontrolach NFZ.", icon: "book", label: "Artykuły" },
+  { title: "Artykuły", description: "Teksty o tym, jak działa system. Na start: czym są grupy JGP.", icon: "book", href: DASHBOARD_HREFS.articles, label: "Czytaj artykuły" },
 ];
 
 // Ścieżki „Od czego zacząć”: punkt wyjścia według pytania, a nie według modułu.
