@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { DASHBOARD_HREFS } from "@/lib/dashboardNavigation";
 import { formatJgpName } from "@/lib/formatters";
-import type { HistogramBin, PeerExample } from "@/lib/hospitalHomeStats";
+import type { HistogramBin, HospitalMapStats, PeerExample } from "@/lib/hospitalHomeStats";
 import type { HomeGroup, HomeStats, HomeYear } from "@/lib/homeStats";
 import { scaleColor } from "@/lib/jgpCard";
 import { PEER_DISTANCE_A_LIMIT } from "@/lib/peerDistance";
@@ -198,4 +198,16 @@ export function MapLegend() {
     <span className={styles.mapScale} style={{ background: `linear-gradient(90deg, ${scaleColor(-1)}, ${scaleColor(0)}, ${scaleColor(1)})` }} />
     <span>+{MAP_LIMIT_PCT}%</span>
   </div>;
+}
+
+/**
+ * Mapa szpitali: kontury województw i kropka na szpital (jak mapa katalogu `/szpitale`). Obraz statyczny: bez dymków,
+ * kliknięć i fokusu; liczby są w `aria-label` i w opisie karty. Kolor: sieć PSZ — błękit danych, poza siecią — jasny błękit.
+ */
+export function HospitalMap({ map }: { map: HospitalMapStats }) {
+  const [width, height] = map.viewBox;
+  return <svg className={styles.hospitalMap} viewBox={`0 0 ${width} ${height}`} role="img" aria-label={`Mapa szpitali z hospitalizacjami w ${map.year} r.: ${integer(map.hospitals)} szpitali, w tym ${integer(map.inPsz)} w sieci szpitali (PSZ)`}>
+    {map.regions.map((path, i) => <path key={i} d={path} className={styles.hospitalMapRegion} />)}
+    {map.dots.map(([x, y, r, psz], i) => <circle key={i} cx={x} cy={y} r={r} className={psz ? styles.hospitalDotPsz : styles.hospitalDot} />)}
+  </svg>;
 }

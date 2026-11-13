@@ -5,10 +5,11 @@ import { SITE_NAME } from "@/lib/site";
 import { formatAtLeastCount, formatCompactCount, formatPln, formatYearRange } from "@/lib/formatters";
 import type { DatasetHighlights } from "@/lib/staticData";
 import type { HomeStats } from "@/lib/homeStats";
-import type { HospitalHomeStats } from "@/lib/hospitalHomeStats";
+import type { HospitalHomeStats, HospitalMapStats } from "@/lib/hospitalHomeStats";
 import { hospitalComparisonHref, hospitalHref } from "@/lib/portalLinks";
-import { ContinuousHistogram, GroupBars, Histogram, PeerDistances, YearBars } from "@/components/portal/HomeCharts";
+import { ContinuousHistogram, GroupBars, Histogram, HospitalMap, PeerDistances, YearBars } from "@/components/portal/HomeCharts";
 import { DataCard, Legend } from "@/components/portal/DataCard";
+import { PlannedBadge } from "@/components/portal/PlannedBadge";
 import { PortalIcon } from "@/components/portal/PortalIcon";
 import { SearchBox } from "@/components/search/SearchBox";
 import styles from "./HomePage.module.css";
@@ -78,7 +79,8 @@ const integer = (value: number) => Math.round(value).toLocaleString("pl-PL");
 const decimal = (value: number) => value.toLocaleString("pl-PL", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 const signedPct = (value: number) => `${value > 0 ? "+" : value < 0 ? "−" : ""}${decimal(Math.abs(value))}%`;
 
-export function HomePage({ highlights, stats, hospitals }: { highlights: DatasetHighlights; stats: HomeStats; hospitals: HospitalHomeStats }) {
+/** `hospitalMap`: mapa szpitali w sekcji szpitali; bez mapy (`null`, brak pliku mapy) karta pokazuje histogram łóżek. */
+export function HomePage({ highlights, stats, hospitals, hospitalMap = null }: { highlights: DatasetHighlights; stats: HomeStats; hospitals: HospitalHomeStats; hospitalMap?: HospitalMapStats | null }) {
   const latest = stats.years.at(-1);
   const previous = stats.years.length > 1 ? stats.years[stats.years.length - 2] : null;
   const { finance, comparison } = hospitals;
@@ -175,7 +177,19 @@ export function HomePage({ highlights, stats, hospitals }: { highlights: Dataset
           <p>Profil każdego szpitala: oddziały, łóżka, SOR, grupy JGP i wynik finansowy. Wpisz nazwę albo miasto w wyszukiwarce.</p>
         </div>
         <div className={styles.dataGrid}>
-          <DataCard
+          {hospitalMap ? <DataCard
+            id="hospitals-map"
+            kicker={`Mapa · ${hospitalMap.year} · ${integer(hospitalMap.hospitals)} szpitali`}
+            title="Gdzie są szpitale?"
+            lead={<>Kropka to szpital z hospitalizacjami w {hospitalMap.year} r., większa kropka — więcej hospitalizacji. <strong>{integer(hospitalMap.inPsz)}</strong> z nich należy do sieci szpitali (PSZ). Mediana szpitali z łóżkami: <strong>{integer(hospitals.medianBeds)}</strong> łóżek. <strong>{integer(hospitals.sorUnits)}</strong> oddziałów ratunkowych (SOR) działa w {integer(hospitals.withSor)} podmiotach.</>}
+            href={DASHBOARD_HREFS.hospitals}
+            cta="Mapa i katalog szpitali"
+            source="Dane NFZ o hospitalizacjach; wykaz PSZ (NFZ); rejestr RPWDL"
+            estimate={false}
+          >
+            <HospitalMap map={hospitalMap} />
+            <Legend items={[{ label: "Szpital sieci (PSZ)", color: CHART_COLORS.data }, { label: "Poza siecią", color: CHART_COLORS.dataSoft }]} />
+          </DataCard> : <DataCard
             id="hospitals-beds"
             kicker={`Łóżka · ${integer(hospitals.profiles)} świadczeniodawców`}
             title="Jakiej wielkości są szpitale?"
@@ -186,7 +200,7 @@ export function HomePage({ highlights, stats, hospitals }: { highlights: Dataset
             estimate={false}
           >
             <Histogram bins={hospitals.beds} label="Placówki według liczby łóżek" unit="" />
-          </DataCard>
+          </DataCard>}
 
           {finance ? <DataCard
             id="hospitals-finance"
@@ -244,7 +258,7 @@ export function HomePage({ highlights, stats, hospitals }: { highlights: Dataset
             const content = <>
               <span className={styles.sectionIcon}><PortalIcon name={topic.icon} size={22} /></span>
               <span className={styles.sectionText}><strong>{topic.title}</strong><span>{topic.description}</span></span>
-              {topic.href ? <span className={styles.sectionArrow}><PortalIcon name="arrow" size={18} /></span> : <span className={styles.topicPlanned}>Planowane</span>}
+              {topic.href ? <span className={styles.sectionArrow}><PortalIcon name="arrow" size={18} /></span> : <PlannedBadge />}
             </>;
             return <li key={topic.title}>
               {topic.href

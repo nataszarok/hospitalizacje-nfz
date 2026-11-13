@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
 import { HomePage } from "@/components/portal/HomePage";
 import { buildHomeStats } from "@/lib/homeStats";
-import { buildHospitalHomeStats } from "@/lib/hospitalHomeStats";
+import { buildHospitalHomeStats, buildHospitalMapStats } from "@/lib/hospitalHomeStats";
 import { pageMetadata } from "@/lib/pageMetadata";
 import { SITE_NAME } from "@/lib/site";
 import { datasetHighlights } from "@/lib/staticData";
-import { readAllStaticDatasetsFromDisk, readFinancialResultsFromDisk, readHospitalProfilesFromDisk, readPeerPairsFromDisk, readPszNipsFromDisk, readRegionsMapFromDisk, readTrendsFromDisk } from "@/lib/staticDataServer";
+import {
+  readAllStaticDatasetsFromDisk, readCitiesMapFromDisk, readFacilityYearsFromDisk, readFinancialResultsFromDisk, readHospitalProfilesFromDisk,
+  readPeerPairsFromDisk, readPszNipsFromDisk, readRegionsMapFromDisk, readTrendsFromDisk,
+} from "@/lib/staticDataServer";
 
 export const metadata: Metadata = pageMetadata({
   title: `${SITE_NAME} | Hospitalizacje, szpitale publiczne, wyceny JGP`,
@@ -14,14 +17,16 @@ export const metadata: Metadata = pageMetadata({
 });
 
 export default async function Home() {
-  const [datasets, trends, map, profiles, financial, pairs, psz] = await Promise.all([
+  const [datasets, trends, map, profiles, financial, pairs, psz, facilityYears, cities] = await Promise.all([
     readAllStaticDatasetsFromDisk(), readTrendsFromDisk(), readRegionsMapFromDisk(),
     readHospitalProfilesFromDisk(), readFinancialResultsFromDisk(), readPeerPairsFromDisk(), readPszNipsFromDisk(),
+    readFacilityYearsFromDisk(), readCitiesMapFromDisk(),
   ]);
   const latest = datasets.at(-1)!;
   return <HomePage
     highlights={datasetHighlights(datasets)}
     stats={buildHomeStats(trends, latest, map)}
     hospitals={buildHospitalHomeStats(profiles, financial, pairs, latest.facilities, psz)}
+    hospitalMap={buildHospitalMapStats(facilityYears.index, facilityYears.sections, cities, map, psz)}
   />;
 }

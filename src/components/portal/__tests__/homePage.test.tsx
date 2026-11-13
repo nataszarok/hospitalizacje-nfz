@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { HomePage } from "@/components/portal/HomePage";
 import type { HomeStats } from "@/lib/homeStats";
-import type { HospitalHomeStats } from "@/lib/hospitalHomeStats";
+import type { HospitalHomeStats, HospitalMapStats } from "@/lib/hospitalHomeStats";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
 
@@ -130,6 +130,33 @@ describe("Strona główna", () => {
     expect(finance).toHaveTextContent("286 z 631 szpitali z sieci PSZ (45%) miało stratę netto w 2025 r. Łączny wynik: −1,2 mld zł.");
     expect(within(finance).getByRole("img", { name: /−2,5…0 % — 137, 0…2,5 % — 218/ })).toBeInTheDocument();
     expect(within(finance).getByRole("link", { name: /Przykładowa karta: finanse/ })).toHaveAttribute("href", "/szpitale/9251723350-04?widok=finanse");
+  });
+
+  it("z mapą szpitali pokazuje mapę zamiast wykresu łóżek: kropki bez dymków i interakcji", () => {
+    const hospitalMap: HospitalMapStats = {
+      year: "2025",
+      viewBox: [100, 100],
+      regions: ["M0 0h10v10z", "M20 20h10v10z"],
+      dots: [[5, 5, 2, 0], [25, 25, 3.5, 1]],
+      hospitals: 905,
+      inPsz: 574,
+      missing: 3,
+    };
+    render(<HomePage highlights={highlights} stats={stats} hospitals={hospitals} hospitalMap={hospitalMap} />);
+    const section = screen.getByRole("region", { name: "Jak wyglądają szpitale." });
+    expect(within(section).queryByRole("article", { name: "Jakiej wielkości są szpitale?" })).not.toBeInTheDocument();
+    const card = within(section).getByRole("article", { name: "Gdzie są szpitale?" });
+    expect(card).toHaveTextContent("Mapa · 2025 · 905 szpitali");
+    expect(card).toHaveTextContent("574 z nich należy do sieci szpitali (PSZ)");
+    expect(card).toHaveTextContent("249 oddziałów ratunkowych (SOR) działa w 243 podmiotach.");
+    const map = within(card).getByRole("img", { name: "Mapa szpitali z hospitalizacjami w 2025 r.: 905 szpitali, w tym 574 w sieci szpitali (PSZ)" });
+    expect(map.querySelectorAll("path")).toHaveLength(2);
+    const dots = [...map.querySelectorAll("circle")];
+    expect(dots.map((dot) => [dot.getAttribute("cx"), dot.getAttribute("cy"), dot.getAttribute("r")])).toEqual([["5", "5", "2"], ["25", "25", "3.5"]]);
+    // Obraz statyczny: bez fokusu, ról przycisków, linków i dymków (<title>).
+    expect(map.querySelectorAll("[tabindex], [role=button], a, title")).toHaveLength(0);
+    expect(within(card).getByRole("link", { name: /Mapa i katalog szpitali/ })).toHaveAttribute("href", "/szpitale");
+    expect(card).not.toHaveTextContent("Szacunek");
   });
 
   it("pokazuje porównanie placówek na przykładzie szpitala i jego par klasy A", () => {

@@ -36,10 +36,11 @@ describe("SiteHeader", () => {
     expect(screen.getByRole("link", { name: "Start" })).toHaveAttribute("aria-current", "page");
   });
 
-  it("ma siedem pozycji w kolejności od podsumowania do szczegółów", () => {
+  it("ma osiem pozycji w kolejności od podsumowania do szczegółów; Artykuły prowadzą do /artykuly", () => {
     render(<SiteHeader />);
     const items = [...nav().querySelectorAll(":scope > a")].map((item) => item.textContent?.trim());
-    expect(items).toEqual(["Start", "Przegląd", "Grupy JGP", "Eksplorator JGP", "Szpitale", "Porównania", "O danych"]);
+    expect(items).toEqual(["Start", "Przegląd", "Grupy JGP", "Eksplorator JGP", "Szpitale", "Porównania", "Artykuły", "O danych"]);
+    expect(screen.getByRole("link", { name: "Artykuły" })).toHaveAttribute("href", "/artykuly");
     expect(screen.getByRole("link", { name: "Przegląd" })).toHaveAttribute("href", "/hospitalizacje");
   });
 
@@ -50,6 +51,7 @@ describe("SiteHeader", () => {
     ["/szpitale/eksplorator", "", "Porównania"],
     ["/szpitale/eksplorator", "?hv=c", "Porównania"],
     ["/o-danych", "", "O danych"],
+    ["/artykuly", "", "Artykuły"],
   ])("na %s%s oznacza aktywną pozycję %s", (pathname, search, label) => {
     openPage(pathname, search);
     render(<SiteHeader />);
