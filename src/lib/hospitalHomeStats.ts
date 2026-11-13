@@ -43,7 +43,6 @@ export interface HospitalHomeStats {
   withSor: number;
   sorUnits: number;
   beds: HistogramBin[];
-  finance: { year: number; reported: number; loss: number; netResult: number; margins: HistogramBin[] } | null;
   comparison: { pairsA: number; hospitalsWithPeers: number; example: PeerExample | null };
 }
 
@@ -61,50 +60,11 @@ const BED_BINS: { label: string; max: number }[] = [
   { label: "800+", max: Infinity },
 ];
 
-// Marża netto w %: przedziały po 2,5 p.p. od −20 do 15, skrajne otwarte.
-const MARGIN_STEP = 2.5;
-const MARGIN_MIN = -20;
-const MARGIN_MAX = 15;
-const pl = (value: number) => value.toLocaleString("pl-PL").replace("-", "−");
-
-function marginBins(): HistogramBin[] {
-  const bins: HistogramBin[] = [{ label: `< ${pl(MARGIN_MIN)}`, count: 0, negative: true, to: MARGIN_MIN }];
-  for (let from = MARGIN_MIN; from < MARGIN_MAX; from += MARGIN_STEP) {
-    bins.push({ label: `${pl(from)}…${pl(from + MARGIN_STEP)}`, count: 0, negative: from < 0, from, to: from + MARGIN_STEP });
-  }
-  bins.push({ label: `≥ ${pl(MARGIN_MAX)}`, count: 0, negative: false, from: MARGIN_MAX });
-  return bins;
-}
-
 function median(values: number[]) {
   if (!values.length) return 0;
   const sorted = [...values].sort((a, b) => a - b);
   const middle = Math.floor(sorted.length / 2);
   return sorted.length % 2 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2;
-}
-
-function financeStats(allRecords: FinancialRecordSummary[], pszNips: ReadonlySet<string>): HospitalHomeStats["finance"] {
-  // Tylko szpitale z sieci PSZ (wykaz NFZ).
-  const records = allRecords.filter((record) => pszNips.has(record.nip));
-  // Rok z największą liczbą wyników netto (najczęściej najnowszy rok sprawozdań).
-  const counts = new Map<number, number>();
-  for (const record of records) for (const y of record.years) if (y.net_result !== null) counts.set(y.year, (counts.get(y.year) ?? 0) + 1);
-  const year = [...counts].sort((a, b) => b[1] - a[1] || b[0] - a[0])[0]?.[0];
-  if (year === undefined) return null;
-  const results = records.flatMap((record) => record.years.filter((y) => y.year === year && y.net_result !== null));
-  const margins = marginBins();
-  for (const y of results) {
-    const margin = y.net_margin ?? (y.revenue ? y.net_result! / y.revenue : null);
-    if (margin === null) continue;
-    margins.find((bin) => bin.to === undefined || margin * 100 < bin.to)!.count++;
-  }
-  return {
-    year,
-    reported: results.length,
-    loss: results.filter((y) => y.net_result! < 0).length,
-    netResult: results.reduce((sum, y) => sum + y.net_result!, 0),
-    margins,
-  };
 }
 
 function peerExample(pairs: JgpPeerPair[], facilities: Map<string, [string, string]>, featuredKey: string): PeerExample | null {
@@ -132,15 +92,13 @@ function peerExample(pairs: JgpPeerPair[], facilities: Map<string, [string, stri
 }
 
 /**
- * Liczby sekcji szpitali: wielkość (łóżka), SOR, wyniki finansowe szpitali PSZ i model par A/B.
+ * Liczby sekcji szpitali: wielkość (łóżka), SOR i model par A/B.
  * `facilities`: krotki `[OW, NIP, nazwa, miasto]` z najnowszego roku (nazwy w przykładzie porównania).
  */
 export function buildHospitalHomeStats(
   profiles: HospitalProfileSummary[],
-  financial: FinancialRecordSummary[],
   pairs: JgpPeerPair[],
   facilities: readonly (readonly [string, string, string, string])[],
-  pszNips: ReadonlySet<string>,
   featuredKey = FEATURED_HOSPITAL_KEY,
 ): HospitalHomeStats {
   const allBeds = profiles.map((profile) => profile.core?.beds ?? 0);
@@ -157,7 +115,6 @@ export function buildHospitalHomeStats(
     withSor: profiles.filter((profile) => (profile.capabilities?.sor?.count ?? 0) > 0).length,
     sorUnits: profiles.reduce((sum, profile) => sum + (profile.capabilities?.sor?.count ?? 0), 0),
     beds: bins,
-    finance: financeStats(financial, pszNips),
     comparison: { pairsA: pairsA.length, hospitalsWithPeers: withPeers.size, example: peerExample(pairs, names, featuredKey) },
   };
 }

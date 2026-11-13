@@ -40,7 +40,6 @@ const hospitals: HospitalHomeStats = {
   withSor: 243,
   sorUnits: 249,
   beds: [{ label: "bez łóżek", count: 121 }, { label: "1–99", count: 310 }],
-  finance: { year: 2025, reported: 631, loss: 286, netResult: -1_155_728_180, margins: [{ label: "−2,5…0", count: 137, negative: true, from: -2.5, to: 0 }, { label: "0…2,5", count: 218, negative: false, from: 0, to: 2.5 }] },
   comparison: {
     pairsA: 5056,
     hospitalsWithPeers: 452,
@@ -115,7 +114,7 @@ describe("Strona główna", () => {
     expect(within(groups).getByRole("link", { name: /Katalog grup JGP/ })).toHaveAttribute("href", "/jgp");
   });
 
-  it("wprowadza do szpitali publicznych wykresem łóżek i wyników finansowych", () => {
+  it("bez mapy wprowadza do szpitali publicznych wykresem łóżek", () => {
     renderHome();
     const section = screen.getByRole("region", { name: "Jak wyglądają szpitale." });
     const beds = within(section).getByRole("article", { name: "Jakiej wielkości są szpitale?" });
@@ -126,13 +125,11 @@ describe("Strona główna", () => {
     expect(within(beds).getByRole("link", { name: /Znajdź szpital/ })).toHaveAttribute("href", "/szpitale");
     expect(beds).not.toHaveTextContent("Szacunek");
 
-    const finance = within(section).getByRole("article", { name: "Ile szpitali PSZ kończy rok ze stratą?" });
-    expect(finance).toHaveTextContent("286 z 631 szpitali z sieci PSZ (45%) miało stratę netto w 2025 r. Łączny wynik: −1,2 mld zł.");
-    expect(within(finance).getByRole("img", { name: /−2,5…0 % — 137, 0…2,5 % — 218/ })).toBeInTheDocument();
-    expect(within(finance).getByRole("link", { name: /Przykładowa karta: finanse/ })).toHaveAttribute("href", "/szpitale/9251723350-04?widok=finanse");
+    // Bez karty finansów na stronie głównej (wynik finansowy jest na karcie szpitala).
+    expect(within(section).getAllByRole("article")).toHaveLength(1);
   });
 
-  it("z mapą szpitali: tekst po lewej, duża mapa po prawej (bez dymków i interakcji), finanse pod mapą", () => {
+  it("z mapą szpitali: tekst po lewej, duża mapa po prawej (bez dymków i interakcji), bez kart wykresów", () => {
     const hospitalMap: HospitalMapStats = {
       year: "2025",
       viewBox: [100, 100],
@@ -159,8 +156,8 @@ describe("Strona główna", () => {
     // Obraz statyczny: bez fokusu, ról przycisków, linków i dymków (<title>).
     expect(map.querySelectorAll("[tabindex], [role=button], a, title")).toHaveLength(0);
     expect(within(section).getByRole("link", { name: /Mapa i katalog szpitali/ })).toHaveAttribute("href", "/szpitale");
-    // Finanse: jedna szeroka karta pod mapą.
-    expect(within(section).getAllByRole("article").map((card) => card.getAttribute("aria-labelledby"))).toEqual(["hospitals-finance"]);
+    // Bez karty finansów i bez histogramu łóżek: sama mapa z tekstem.
+    expect(within(section).queryAllByRole("article")).toHaveLength(0);
   });
 
   it("pokazuje porównanie placówek na przykładzie szpitala i jego par klasy A", () => {
@@ -176,9 +173,8 @@ describe("Strona główna", () => {
     expect(within(section).getByRole("link", { name: /Porównaj przykładowy szpital/ })).toHaveAttribute("href", "/szpitale/eksplorator?hospital=04%7C9251723350&hv=c");
   });
 
-  it("pomija wykres finansów i przykład porównania bez danych", () => {
-    renderHome({}, { finance: null, comparison: { pairsA: 0, hospitalsWithPeers: 0, example: null } });
-    expect(screen.queryByRole("article", { name: "Ile szpitali PSZ kończy rok ze stratą?" })).not.toBeInTheDocument();
+  it("pomija przykład porównania bez danych", () => {
+    renderHome({}, { comparison: { pairsA: 0, hospitalsWithPeers: 0, example: null } });
     expect(screen.queryByRole("region", { name: "Szpital na tle podobnych." })).not.toBeInTheDocument();
   });
 
