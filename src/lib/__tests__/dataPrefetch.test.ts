@@ -39,12 +39,12 @@ describe("prefetchForHref — dane strony docelowej linku", () => {
   });
 
   it("szpitale: najnowszy rok, finanse i profile RPWDL do pamięci modułów; porównanie także pary A/B i wyceny", () => {
-    expect(prefetchForHref("/szpitale?hospital=07%7C111")).toBe("szpitale");
+    expect(prefetchForHref("/szpitale/eksplorator?hospital=07%7C111")).toBe("szpitale");
     expect(loadStaticDataset).toHaveBeenCalledWith(undefined);
     expect(loadPlotly).toHaveBeenCalledTimes(1);
     expect(loaded()).toEqual(["financialResultsResource", "rpwdlSummaryProfilesResource"]);
     vi.clearAllMocks();
-    expect(prefetchForHref("/szpitale?hv=c")).toBe("porownanie");
+    expect(prefetchForHref("/szpitale/eksplorator?hv=c")).toBe("porownanie");
     expect(loaded()).toEqual(["financialResultsResource", "rpwdlSummaryProfilesResource", "peerPairsResource", "jgpValuationsResource"]);
   });
 

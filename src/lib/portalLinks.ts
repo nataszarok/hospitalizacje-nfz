@@ -1,6 +1,14 @@
-/** Adres profilu świadczeniodawcy (klucz OW NFZ + NIP). */
+import { HOSPITAL_EXPLORER_PATH } from "@/lib/dashboardNavigation";
+import { hospitalCardHref } from "@/lib/hospitalPages";
+
+/** Adres szpitala (klucz OW NFZ + NIP): karta `/szpitale/[nip]`, jeśli ją ma, inaczej profil w eksploratorze szpitali. */
 export function hospitalHref(owNfz: string, nip: string) {
-  return `/szpitale?hospital=${encodeURIComponent(`${owNfz}|${nip}`)}`;
+  return hospitalCardHref(owNfz, nip) ?? hospitalExplorerHref(owNfz, nip);
+}
+
+/** Profil świadczeniodawcy w eksploratorze szpitali. */
+export function hospitalExplorerHref(owNfz: string, nip: string) {
+  return `${HOSPITAL_EXPLORER_PATH}?hospital=${encodeURIComponent(`${owNfz}|${nip}`)}`;
 }
 
 /** Adres karty grupy JGP (każda grupa z danych ma kartę) albo `null` bez kodu. */

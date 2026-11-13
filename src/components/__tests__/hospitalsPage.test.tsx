@@ -27,7 +27,7 @@ vi.mock("@/components/HospitalAnalysisTab", () => ({
 
 const changed = vi.fn();
 beforeEach(() => {
-  window.history.replaceState(null, "", "/szpitale");
+  window.history.replaceState(null, "", "/szpitale/eksplorator");
   loadStaticDataset.mockResolvedValue({ analysisYear: "2025" });
   changed.mockReset();
   peeked.dataset = null;
@@ -40,7 +40,7 @@ afterEach(() => {
 
 describe("HospitalsPage", () => {
   it("plik roku już w pamięci: profil z adresu w pierwszym renderze, bez szkieletu i bez pobierania", () => {
-    window.history.replaceState(null, "", "/szpitale?hospital=07%7C111&hv=c");
+    window.history.replaceState(null, "", "/szpitale/eksplorator?hospital=07%7C111&hv=c");
     peeked.dataset = { analysisYear: "2025" };
     render(<HospitalsPage />);
     expect(screen.getByText("szpital: 07|111 · widok: comparison · metoda: min · produkty: 1")).toBeInTheDocument();
@@ -61,14 +61,14 @@ describe("HospitalsPage", () => {
   });
 
   it("odtwarza szpital i widok z adresu; metoda jest zawsze konserwatywna", async () => {
-    window.history.replaceState(null, "", "/szpitale?hospital=07%7C111&hv=c&m=sim");
+    window.history.replaceState(null, "", "/szpitale/eksplorator?hospital=07%7C111&hv=c&m=sim");
     render(<HospitalsPage />);
     expect(await screen.findByText("szpital: 07|111 · widok: comparison · metoda: min · produkty: 1")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Porównanie szpitali" })).toBeInTheDocument();
   });
 
   it("zapisuje zmiany w adresie i zgłasza widok nagłówkowi", async () => {
-    window.history.replaceState(null, "", "/szpitale?hospital=07%7C111");
+    window.history.replaceState(null, "", "/szpitale/eksplorator?hospital=07%7C111");
     render(<HospitalsPage />);
     fireEvent.click(await screen.findByText("porównanie"));
     await waitFor(() => expect(window.location.search).toBe("?hospital=07%7C111&hv=c"));

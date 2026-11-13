@@ -160,7 +160,7 @@ describe("MortalityTab data table", () => {
   it("links provider names to their hospital profile", () => {
     render(<MortalityTab {...commonProps} data={mortalityPayload([mortalityRow()])} />);
     const row = mortalityRow();
-    expect(screen.getByRole("link", { name: row.providerName })).toHaveAttribute("href", `/szpitale?hospital=${encodeURIComponent(`${row.owNfz}|${row.nip}`)}`);
+    expect(screen.getByRole("link", { name: row.providerName })).toHaveAttribute("href", `/szpitale/eksplorator?hospital=${encodeURIComponent(`${row.owNfz}|${row.nip}`)}`);
   });
 
   it("falls back to the internal product code when JGP metadata is missing", () => {

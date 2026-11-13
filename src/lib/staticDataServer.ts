@@ -5,6 +5,8 @@ import type { FinancialRecordSummary, HospitalProfileSummary } from "@/lib/hospi
 import type { RegionsMap } from "@/lib/jgpCard";
 import type { JgpGroupFile, JgpPagesIndex, JgpPeerPair } from "@/lib/jgpPage";
 import type { JgpProfilesFile } from "@/lib/jgpDescription";
+import type { FacilityYearsIndex, FacilityYearsSection } from "@/lib/regions";
+import type { HospitalRpwdlRecord } from "@/lib/hospitalPage";
 import { readJgpProse } from "@/lib/jgpProse";
 import { decodeValuations, type JgpValuation, type ValuationsFile } from "@/lib/valuations";
 import { decodeJgpGroupFile, decodeStaticDataset, decodeTrends, type JgpGroupFileColumns, type StaticDatasetFile, type TrendsFile } from "@/lib/hospitalizationCodec";
@@ -140,10 +142,30 @@ export async function readHospitalProfilesFromDisk(file = join(DATA_DIR, "rpwdl_
   return data.records.map(({ oz_nfz, nip, core, capabilities }) => ({ oz_nfz, nip, core: core ? { beds: core.beds } : null, capabilities: capabilities?.sor ? { sor: capabilities.sor } : null }));
 }
 
+/** Pełny profil RPWDL jednego świadczeniodawcy („OW|NIP”, z oddziałami) albo `null`. */
+export async function readHospitalProfileRecordFromDisk(key: string, file = join(DATA_DIR, "rpwdl_summary_profiles.json.gz")): Promise<HospitalRpwdlRecord | null> {
+  const data = await readGzipJson<{ records: HospitalRpwdlRecord[] }>(file);
+  return data.records.find((record) => `${record.oz_nfz}|${record.nip}` === key) ?? null;
+}
+
 /** NIP-y szpitali z sieci PSZ (`scripts/build_psz.py`). */
 export async function readPszNipsFromDisk(file = join(DATA_DIR, "psz.json.gz")): Promise<Set<string>> {
   const data = await readGzipJson<{ rows: [string, number][] }>(file);
   return new Set(data.rows.map(([nip]) => nip));
+}
+
+/** Poziomy sieci szpitali (PSZ): nazwy poziomów i NIP → indeks poziomu (`scripts/build_psz.py`). */
+export async function readPszLevelsFromDisk(file = join(DATA_DIR, "psz.json.gz")): Promise<{ levels: string[]; byNip: Map<string, number> }> {
+  const data = await readGzipJson<{ levels: string[]; rows: [string, number][] }>(file);
+  return { levels: data.levels, byNip: new Map(data.rows) };
+}
+
+/** Hospitalizacje placówek w latach (`scripts/build_facility_years.py`): indeks i wszystkie pliki sekcji. */
+export async function readFacilityYearsFromDisk(dir = join(DEFAULT_DIR, "facilities")): Promise<{ index: FacilityYearsIndex; sections: FacilityYearsSection[] }> {
+  const index = JSON.parse(await readFile(join(dir, "index.json"), "utf8")) as FacilityYearsIndex;
+  const names = (await readdir(dir)).filter((name) => name.endsWith(".json.gz")).sort();
+  const sections = await Promise.all(names.map((name) => readGzipJson<FacilityYearsSection>(join(dir, name))));
+  return { index, sections };
 }
 
 /** Wyniki finansowe podmiotów (NIP): przychód, wynik netto, marża. */

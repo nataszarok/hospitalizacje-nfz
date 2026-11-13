@@ -49,7 +49,7 @@ describe("Karta „Hospitalizacje w Polsce”", () => {
     // Link pod wykresem tylko tam, gdzie strona docelowa pokazuje tę samą miarę (katalog JGP).
     // Eksplorator otwiera jedną grupę, a karty liczą wszystkie, więc karty bez odpowiednika nie mają linku.
     const footerLinks = screen.getAllByRole("article").map((card) => card.querySelector("footer a")?.getAttribute("href") ?? null);
-    expect(footerLinks.filter((href) => href?.startsWith("/analizy") || href?.startsWith("/szpitale"))).toEqual([]);
+    expect(footerLinks.filter((href) => href?.startsWith("/analizy") || href?.startsWith("/szpitale/eksplorator"))).toEqual([]);
     expect(footerLinks.filter(Boolean).every((href) => href!.startsWith("/jgp"))).toBe(true);
     for (const id of ["summary-years", "summary-months", "summary-per-stay", "summary-stays", "summary-providers", "summary-admissions", "summary-mortality"]) {
       expect(document.querySelector(`[aria-labelledby="${id}"] footer a`)).toBeNull();

@@ -57,7 +57,7 @@ describe("SearchBox", () => {
     expect(screen.getAllByRole("option")[1]).toHaveAttribute("aria-selected", "true");
     fireEvent.keyDown(input(), { key: "ArrowUp" });
     fireEvent.submit(input().closest("form")!);
-    expect(push).toHaveBeenCalledWith("/szpitale?hospital=04%7C9251723350");
+    expect(push).toHaveBeenCalledWith("/szpitale/eksplorator?hospital=04%7C9251723350");
   });
 
   it("zdanie z grupą i szpitalem prowadzi do karty grupy z wyróżnionym szpitalem", async () => {

@@ -26,7 +26,7 @@ type Topic = {
 const topics: readonly Topic[] = [
   { title: "Hospitalizacje w Polsce", description: "Podsumowanie wszystkich lat: liczba, tryb przyjęcia, województwa, obszary leczenia, zgony i świadczeniodawcy.", icon: "chart", href: DASHBOARD_HREFS.summary, label: "Hospitalizacje w Polsce" },
   { title: "Grupy JGP", description: "Karta każdej grupy: hospitalizacje w czasie, ośrodki, województwa, tryb przyjęcia i wycena.", icon: "bed", href: "/jgp", label: "Przeglądaj grupy JGP" },
-  { title: "Szpitale publiczne", description: "Profil szpitala: oddziały, łóżka, świadczenia i wyniki finansowe.", icon: "hospital", href: DASHBOARD_HREFS.hospital, label: "Znajdź szpital" },
+  { title: "Szpitale publiczne", description: "Katalog szpitali: hospitalizacje, śmiertelność, łóżka i sieć szpitali. Profil i finanse w eksploratorze szpitali.", icon: "hospital", href: DASHBOARD_HREFS.hospitals, label: "Znajdź szpital" },
   { title: "Porównanie szpitali", description: "Porównaj szpital z grupą podobnych placówek dobranych przez model.", icon: "compare", href: DASHBOARD_HREFS.comparison, label: "Porównaj szpitale" },
   { title: "Eksplorator danych", description: "Narzędzie dla analityków: kilka grup naraz, obszary, filtry i tryb przyjęcia.", icon: "heart", href: DASHBOARD_HREFS.trend, label: "Otwórz eksplorator" },
   { title: "Wyceny JGP", description: "Jak wygląda system wycen JGP i jak zmieniają się wyceny.", icon: "chart", label: "Wyceny JGP" },
@@ -53,10 +53,10 @@ const paths: readonly Path[] = [
     kicker: "Pytam o szpital",
     title: "Jak wygląda konkretny szpital",
     description: "Profil szpitala: oddziały, łóżka, świadczenia i finanse. Porównanie z grupą podobnych placówek.",
-    href: DASHBOARD_HREFS.hospital,
-    cta: "Znajdź szpital",
+    href: DASHBOARD_HREFS.hospitals,
+    cta: "Katalog szpitali",
     links: [
-      { label: "Profil szpitala", href: DASHBOARD_HREFS.hospital },
+      { label: "Eksplorator szpitali", href: DASHBOARD_HREFS.hospital },
       { label: "Porównanie z podobnymi", href: DASHBOARD_HREFS.comparison },
       { label: "Kto leczy", href: DASHBOARD_HREFS.mortality },
     ],
@@ -177,7 +177,7 @@ export function HomePage({ highlights, stats, hospitals }: { highlights: Dataset
             kicker={`Łóżka · ${integer(hospitals.profiles)} świadczeniodawców`}
             title="Jakiej wielkości są szpitale?"
             lead={<>Mediana szpitali z łóżkami: <strong>{integer(hospitals.medianBeds)}</strong>. {integer(hospitals.profiles - hospitals.withBeds)} placówek nie ma łóżek w RPWDL: to głównie kliniki zabiegów jednego dnia (np. zaćmy). <strong>{integer(hospitals.sorUnits)}</strong> oddziałów ratunkowych (SOR) działa w {integer(hospitals.withSor)} podmiotach.</>}
-            href={DASHBOARD_HREFS.hospital}
+            href={DASHBOARD_HREFS.hospitals}
             cta="Znajdź szpital"
             source="Rejestr RPWDL"
             estimate={false}
@@ -261,7 +261,7 @@ export function HomePage({ highlights, stats, hospitals }: { highlights: Dataset
         <div className={styles.lowerCard}>
           <span className={styles.lowerIcon}><PortalIcon name="shield" /></span>
           <div><h2>Porównuj z właściwym kontekstem</h2><p>Różnice we wskaźnikach nie oznaczają automatycznie różnic w jakości leczenia.</p></div>
-          <Link className={styles.textLink} href={DASHBOARD_HREFS.hospital}>Profile szpitali <PortalIcon name="arrow" size={17} /></Link>
+          <Link className={styles.textLink} href={DASHBOARD_HREFS.hospitals}>Szpitale <PortalIcon name="arrow" size={17} /></Link>
         </div>
       </section>
     </main>

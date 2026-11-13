@@ -319,7 +319,7 @@ describe("AnalysisExplorer", () => {
   });
 
   it.each([
-    ["?t=h&hospital=07%7C111&hv=c", "/szpitale?hospital=07%7C111&hv=c"],
+    ["?t=h&hospital=07%7C111&hv=c", "/szpitale/eksplorator?hospital=07%7C111&hv=c"],
     ["?t=m", "/o-danych"],
   ])("przekierowuje dawny adres %s", (search, target) => {
     vi.stubGlobal("location", { ...window.location, search, replace });

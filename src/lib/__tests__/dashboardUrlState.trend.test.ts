@@ -46,13 +46,13 @@ describe("widoki eksploratora — parametry t", () => {
 
 describe("legacyAnalysisRedirect", () => {
   it("przenosi profil szpitala na /szpitale z kluczem, widokiem i metodą", () => {
-    expect(legacyAnalysisRedirect("?t=h&hospital=07%7C111&hv=c&m=sim&jgp=E10")).toBe("/szpitale?hospital=07%7C111&hv=c&m=sim");
-    expect(legacyAnalysisRedirect("?t=h&hv=s")).toBe("/szpitale?hv=c");
-    expect(legacyAnalysisRedirect("?t=h")).toBe("/szpitale");
+    expect(legacyAnalysisRedirect("?t=h&hospital=07%7C111&hv=c&m=sim&jgp=E10")).toBe("/szpitale/eksplorator?hospital=07%7C111&hv=c&m=sim");
+    expect(legacyAnalysisRedirect("?t=h&hv=s")).toBe("/szpitale/eksplorator?hv=c");
+    expect(legacyAnalysisRedirect("?t=h")).toBe("/szpitale/eksplorator");
   });
 
   it("przenosi dystans par (pd) z dawnego adresu porównania", () => {
-    expect(legacyAnalysisRedirect("?t=h&hospital=07%7C111&hv=c&pd=13.51")).toBe("/szpitale?hospital=07%7C111&hv=c&pd=13.51");
+    expect(legacyAnalysisRedirect("?t=h&hospital=07%7C111&hv=c&pd=13.51")).toBe("/szpitale/eksplorator?hospital=07%7C111&hv=c&pd=13.51");
   });
 
   it("przenosi metodologię na /o-danych", () => {

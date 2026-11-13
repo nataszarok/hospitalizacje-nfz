@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BrandMark } from "@/components/BrandMark";
 import {
-  DASHBOARD_HREFS, DASHBOARD_TAB_NAVIGATE_EVENT, HOSPITAL_VIEW_CHANGED_EVENT, HOSPITAL_VIEW_NAVIGATE_EVENT,
+  DASHBOARD_HREFS, DASHBOARD_TAB_NAVIGATE_EVENT, HOSPITAL_EXPLORER_PATH, HOSPITAL_VIEW_CHANGED_EVENT, HOSPITAL_VIEW_NAVIGATE_EVENT,
   hospitalNavigationFromHref, navigationFromDashboardHref, type DashboardNavigation, type HospitalNavigation,
 } from "@/lib/dashboardNavigation";
 import { PortalIcon } from "@/components/portal/PortalIcon";
@@ -18,7 +18,8 @@ const links = [
   { label: "Przegląd", href: DASHBOARD_HREFS.summary, active: "summary" },
   { label: "Grupy JGP", href: "/jgp", active: "groups" },
   { label: "Eksplorator danych", href: DASHBOARD_HREFS.trend, active: "analyses" },
-  { label: "Szpitale", href: DASHBOARD_HREFS.hospital, active: "hospitals" },
+  { label: "Szpitale", href: DASHBOARD_HREFS.hospitals, active: "hospitals" },
+  { label: "Eksplorator szpitali", href: DASHBOARD_HREFS.hospital, active: "hospitalExplorer" },
   { label: "Porównania", href: DASHBOARD_HREFS.comparison, active: "compare" },
   { label: "O danych", href: DASHBOARD_HREFS.methodology, active: "about" },
 ] as const;
@@ -28,17 +29,18 @@ function sectionForPath(pathname: string, search: string) {
   if (pathname.startsWith("/hospitalizacje")) return "summary";
   if (pathname.startsWith("/jgp")) return "groups";
   if (pathname.startsWith("/analizy")) return "analyses";
-  if (pathname.startsWith("/szpitale")) return hospitalNavigationFromHref(`/szpitale${search}`)?.view === "comparison" ? "compare" : "hospitals";
+  if (pathname.startsWith(HOSPITAL_EXPLORER_PATH)) return hospitalNavigationFromHref(`${HOSPITAL_EXPLORER_PATH}${search}`)?.view === "comparison" ? "compare" : "hospitalExplorer";
+  if (pathname.startsWith("/szpitale")) return "hospitals";
   if (pathname.startsWith("/o-danych")) return "about";
   return "";
 }
 
-// Na tej samej stronie (/analizy, /szpitale) zmiana widoku idzie zdarzeniem, bez przeładowania — filtry zostają.
+// Na tej samej stronie (/analizy, eksplorator szpitali) zmiana widoku idzie zdarzeniem, bez przeładowania — filtry zostają.
 // Eksplorator ma jedną pozycję w menu; widoki wybiera się w nim samym.
 function navigateInsidePage(event: React.MouseEvent<HTMLAnchorElement>, pathname: string, href: string) {
   if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
   const analysis = pathname === "/analizy" ? navigationFromDashboardHref(href) : null;
-  const hospital = pathname === "/szpitale" ? hospitalNavigationFromHref(href) : null;
+  const hospital = pathname === HOSPITAL_EXPLORER_PATH ? hospitalNavigationFromHref(href) : null;
   if (analysis) {
     event.preventDefault();
     window.dispatchEvent(new CustomEvent<DashboardNavigation>(DASHBOARD_TAB_NAVIGATE_EVENT, { detail: analysis }));
@@ -75,7 +77,7 @@ export function SiteHeader() {
     };
     syncNavigation();
     const onHospitalChange = (event: Event) => {
-      setCurrentSection((event as CustomEvent<HospitalNavigation>).detail.view === "comparison" ? "compare" : "hospitals");
+      setCurrentSection((event as CustomEvent<HospitalNavigation>).detail.view === "comparison" ? "compare" : "hospitalExplorer");
     };
     window.addEventListener("popstate", syncNavigation);
     window.addEventListener("hashchange", syncNavigation);

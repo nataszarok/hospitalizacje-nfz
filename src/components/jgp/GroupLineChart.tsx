@@ -26,8 +26,9 @@ export interface ChartLine {
   /** Druga linia podpowiedzi, np. miasto i województwo. */
   detail?: string;
   values: number[];
-  /** „primary” — kraj albo suma; „selected” — wybrany szpital; domyślnie szara linia ośrodka. */
-  tone?: "primary" | "selected";
+  /** „primary” — kraj albo suma; „selected” — wybrany szpital; „reference” — linia odniesienia (np. Polska na karcie szpitala:
+   * kropkowana, szara, bez kropek; DESIGN.md 6.2); domyślnie szara linia ośrodka. */
+  tone?: "primary" | "selected" | "reference";
   /** Własny kolor (linie województw); ma pierwszeństwo przed `tone`. */
   color?: string;
   /** Kolor linii ośrodka po najechaniu (każdy ośrodek inny); domyślnie niebieski. */
@@ -129,11 +130,12 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
       const x = yearly ? years.map((year) => `${year}-07-01`) : months.map((month) => `${month}-01`);
       // Wybrany szpital rysujemy na końcu, żeby był nad innymi seriami.
       const ordered = [...lines.filter((line) => line.tone !== "selected"), ...lines.filter((line) => line.tone === "selected")].map((line) => yearly ? yearlyLine(line, months) : line);
-      const emphasized = (line: ChartLine) => Boolean(line.tone || line.color) && !line.thin;
-      const color = (line: ChartLine) => line.tone === "selected" ? selectedColor : line.color ?? (line.tone === "primary" ? PRIMARY : BASE);
+      const reference = (line: ChartLine) => line.tone === "reference";
+      const emphasized = (line: ChartLine) => Boolean(line.tone || line.color) && !line.thin && !reference(line);
+      const color = (line: ChartLine) => line.tone === "selected" ? selectedColor : line.color ?? (line.tone === "primary" ? PRIMARY : reference(line) ? CHART_COLORS.textSecondary : BASE);
       const hasSelected = ordered.some((line) => line.tone === "selected");
       // Przy wybranym ośrodku pozostałe linie są tłem: mocniej przygaszone.
-      const opacity = (line: ChartLine) => emphasized(line) ? 1 : hasSelected ? 0.3 : 0.5;
+      const opacity = (line: ChartLine) => emphasized(line) || reference(line) ? 1 : hasSelected ? 0.3 : 0.5;
       const width = (line: ChartLine) => emphasized(line) ? 2.5 : 1.5;
       const markerSize = (line: ChartLine) => (emphasized(line) ? 7 : 5) + (yearly ? 2 : 0);
       const percent = ordered.some((line) => line.base);
@@ -147,14 +149,14 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
           {
             type: "scattergl", mode: "markers", name: line.name, legendgroup: line.key, showlegend: legend,
             x, y: points,
-            marker: { color: color(line), size: markerSize(line), line: { color: "#FFFFFF", width: 1 } },
+            marker: { color: color(line), size: reference(line) ? 0 : markerSize(line), line: { color: "#FFFFFF", width: reference(line) ? 0 : 1 } },
             opacity: opacity(line),
             hoverinfo: "none",
           },
           {
             type: "scattergl", mode: "lines", name: yearly ? line.name : `${line.name} · średnia 3M`, legendgroup: line.key, showlegend: false,
             x, y: average, connectgaps: false,
-            line: { color: color(line), width: width(line) },
+            line: { color: color(line), width: width(line), ...(reference(line) ? { dash: "dot" } : {}) },
             opacity: opacity(line),
             hoverinfo: "none",
           },

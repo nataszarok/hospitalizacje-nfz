@@ -1,9 +1,18 @@
 import { describe, expect, it } from "vitest";
-import { explorerHref, hospitalHref, jgpHref } from "@/lib/portalLinks";
+import { hospitalCardHref, hospitalPageKey } from "@/lib/hospitalPages";
+import { explorerHref, hospitalExplorerHref, hospitalHref, jgpHref } from "@/lib/portalLinks";
 
 describe("linki portalu", () => {
-  it("buduje adres profilu z kluczem OW|NIP", () => {
-    expect(hospitalHref("07", "1234567890")).toBe("/szpitale?hospital=07%7C1234567890");
+  it("buduje adres profilu z kluczem OW|NIP w eksploratorze szpitali, gdy szpital nie ma karty", () => {
+    expect(hospitalHref("07", "1234567890")).toBe("/szpitale/eksplorator?hospital=07%7C1234567890");
+    expect(hospitalExplorerHref("16", "6691044410")).toBe("/szpitale/eksplorator?hospital=16%7C6691044410");
+  });
+
+  it("szpital z kartą prowadzi do /szpitale/[nip]; NIP z adresu daje klucz OW|NIP", () => {
+    expect(hospitalHref("16", "6691044410")).toBe("/szpitale/6691044410");
+    expect(hospitalCardHref("07", "6691044410")).toBeNull();
+    expect(hospitalPageKey("6691044410")).toBe("16|6691044410");
+    expect(hospitalPageKey("1234567890")).toBeNull();
   });
 
   it("linkuje każdą grupę JGP do jej karty", () => {
