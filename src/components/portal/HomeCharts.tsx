@@ -65,9 +65,9 @@ export function Histogram({ bins, label, unit }: { bins: HistogramBin[]; label: 
 }
 
 /** Histogram na osi liczbowej (np. marża netto w %): przylegające słupki równych przedziałów, podziałka co 5. */
-/** `height`: wysokość w jednostkach szerokości 520 (np. wyższy wykres obok mapy w tej samej sekcji). */
-export function ContinuousHistogram({ bins, label, unit, height = 200 }: { bins: HistogramBin[]; label: string; unit: string; height?: number }) {
+export function ContinuousHistogram({ bins, label, unit }: { bins: HistogramBin[]; label: string; unit: string }) {
   const width = 520;
+  const height = 200;
   const top = 22;
   const bottom = 26;
   const max = Math.max(...bins.map((bin) => bin.count), 1);
@@ -202,11 +202,12 @@ export function MapLegend() {
 
 /**
  * Mapa szpitali: kontury województw i kropka na szpital (jak mapa katalogu `/szpitale`). Obraz statyczny: bez dymków,
- * kliknięć i fokusu; liczby są w `aria-label` i w opisie karty. Kolor: sieć PSZ — błękit danych, poza siecią — jasny błękit.
+ * kliknięć i fokusu; liczby są w `aria-label` i w tekście obok. Kolor: sieć PSZ — błękit danych, poza siecią — jasny błękit.
+ * `large`: mapa tak duża, jak pozwala szerokość kolumny i wysokość okna (cała mieści się na ekranie pod nagłówkiem).
  */
-export function HospitalMap({ map }: { map: HospitalMapStats }) {
+export function HospitalMap({ map, large = false }: { map: HospitalMapStats; large?: boolean }) {
   const [width, height] = map.viewBox;
-  return <svg className={styles.hospitalMap} viewBox={`0 0 ${width} ${height}`} role="img" aria-label={`Mapa szpitali z hospitalizacjami w ${map.year} r.: ${integer(map.hospitals)} szpitali, w tym ${integer(map.inPsz)} w sieci szpitali (PSZ)`}>
+  return <svg className={`${styles.hospitalMap} ${large ? styles.hospitalMapLarge : ""}`} viewBox={`0 0 ${width} ${height}`} role="img" aria-label={`Mapa szpitali z hospitalizacjami w ${map.year} r.: ${integer(map.hospitals)} szpitali, w tym ${integer(map.inPsz)} w sieci szpitali (PSZ)`}>
     {map.regions.map((path, i) => <path key={i} d={path} className={styles.hospitalMapRegion} />)}
     {map.dots.map(([x, y, r, psz], i) => <circle key={i} cx={x} cy={y} r={r} className={psz ? styles.hospitalDotPsz : styles.hospitalDot} />)}
   </svg>;

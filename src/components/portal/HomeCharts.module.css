@@ -57,8 +57,9 @@
 .axisZero { stroke: var(--color-text); stroke-width: 1.5; }
 
 /* Mapa szpitali: te same kolory co mapa katalogu /szpitale (sieć PSZ — błękit danych, poza siecią — jasny błękit). */
-/* Wysokość jak wykres obok (HOME_SIDE_CHART_HEIGHT w HomePage): sekcja szpitali mieści się na jednym ekranie laptopa. */
-.hospitalMap { display: block; height: 300px; max-width: 100%; aspect-ratio: 1000 / 946; margin-inline: auto; }
+.hospitalMap { display: block; width: 100%; max-width: 440px; height: auto; aspect-ratio: 1000 / 946; margin-inline: auto; }
+/* Duża mapa: szerokość kolumny, ale cała wysokość mapy mieści się w oknie pod nagłówkiem portalu. */
+.hospitalMapLarge { max-width: min(100%, calc((100svh - var(--atlas-header-height, 76px) - 32px) * 1000 / 946)); }
 .hospitalMapRegion { fill: var(--color-background-muted); stroke: #fff; stroke-width: 2; stroke-linejoin: round; }
 .hospitalDot, .hospitalDotPsz { stroke: #fff; stroke-width: 1; fill-opacity: .85; }
 .hospitalDot { fill: var(--color-data-soft); }

@@ -21,7 +21,7 @@
 .fact span:not(.factIcon) { font-size: var(--fs-md); color: var(--color-text-secondary); line-height: 1.4; }
 .paths, .data, .sections { padding-top: 64px; scroll-margin-top: 92px; }
 .sectionEyebrow { font-size: var(--fs-sm); font-weight: var(--fw-bold); color: var(--color-primary); letter-spacing: .12em; }
-.sectionIntro h2, .compareText h2 { font-family: var(--font-display), var(--font-body), sans-serif; font-weight: var(--fw-regular); font-size: var(--fs-section); margin: 9px 0 6px; letter-spacing: -.035em; line-height: 1.05; }
+.sectionIntro h2, .compareText h2, .hospitalsText h2 { font-family: var(--font-display), var(--font-body), sans-serif; font-weight: var(--fw-regular); font-size: var(--fs-section); margin: 9px 0 6px; letter-spacing: -.035em; line-height: 1.05; }
 .sectionIntro p { font-size: var(--fs-lg); color: var(--color-text-secondary); margin: 0 0 24px; max-width: 680px; line-height: 1.6; }
 
 /* Ścieżki „Od czego zacząć” */
@@ -40,8 +40,11 @@
 
 /* Karty z wykresami „Liczby, które warto znać” */
 .dataGrid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 16px; }
+/* Szpitale: tekst po lewej, duża mapa po prawej (mapa ogranicza wysokość okna, `.hospitalMapLarge`). */
+.hospitalsLead { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); gap: 32px; align-items: center; margin-bottom: 24px; }
+.hospitalsText .hospitalsSource { margin: 14px 0 0; font-size: var(--fs-md); color: var(--color-text-tertiary); }
 .compare { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 32px; align-items: stretch; padding-block: 48px 8px; }
-.compareText > p { font-size: var(--fs-lg); color: var(--color-text-secondary); margin: 0 0 18px; line-height: 1.6; }
+.compareText > p, .hospitalsText > p { font-size: var(--fs-lg); color: var(--color-text-secondary); margin: 0 0 18px; line-height: 1.6; }
 .compareSteps { margin: 0 0 20px; padding: 0; list-style: none; counter-reset: step; display: grid; gap: 10px; }
 .compareSteps li { counter-increment: step; display: grid; grid-template-columns: 28px 1fr; gap: 10px; font-size: var(--fs-lg); color: var(--color-text-secondary); line-height: 1.5; }
 .compareSteps li::before { content: counter(step); width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-size: var(--fs-md); font-weight: var(--fw-bold); color: var(--color-primary); background: var(--color-primary-soft); }
@@ -75,7 +78,7 @@ a.sectionRow:hover strong { color: var(--color-primary-hover); }
 .footer .container { display: flex; justify-content: space-between; align-items: center; gap: 20px; min-height: 72px; }
 .footer a { color: var(--color-primary-hover); }
 @media (max-width: 1100px) { .fact { padding: 12px; gap: 10px; } .factIcon { width: 42px; height: 42px; } .fact strong { font-size: var(--fs-xl); } .lowerCard { flex-wrap: wrap; } .lowerCard .textLink { margin-left: 56px; } }
-@media (max-width: 800px) { .hero { height: 440px; } .heroPhoto { left: 25%; } .heroShade { background: linear-gradient(90deg, var(--color-background-soft) 0%,rgba(243,249,248,.94) 38%,rgba(243,249,248,.36) 79%,rgba(243,249,248,.1) 100%); } .heroContent { max-width: 470px; } .facts { grid-template-columns: 1fr 1fr; } .pathList { grid-template-columns: 1fr; } .path, .path + .path { padding: 22px 0; border-left: 0; } .path + .path { border-top: 1px solid var(--color-border); } .dataGrid { grid-template-columns: 1fr; } .compare { grid-template-columns: 1fr; gap: 20px; } .sectionList { grid-template-columns: 1fr; } .lower { grid-template-columns: 1fr; } }
+@media (max-width: 800px) { .hero { height: 440px; } .heroPhoto { left: 25%; } .heroShade { background: linear-gradient(90deg, var(--color-background-soft) 0%,rgba(243,249,248,.94) 38%,rgba(243,249,248,.36) 79%,rgba(243,249,248,.1) 100%); } .heroContent { max-width: 470px; } .facts { grid-template-columns: 1fr 1fr; } .pathList { grid-template-columns: 1fr; } .path, .path + .path { padding: 22px 0; border-left: 0; } .path + .path { border-top: 1px solid var(--color-border); } .dataGrid { grid-template-columns: 1fr; } .compare { grid-template-columns: 1fr; gap: 20px; } .hospitalsLead { grid-template-columns: 1fr; gap: 20px; } .sectionList { grid-template-columns: 1fr; } .lower { grid-template-columns: 1fr; } }
 @media (max-width: 550px) {
  .hero { min-height: 560px; height: auto; align-items: flex-start; }
  .heroPhoto { inset: 0 0 auto 0; height: 245px; background-position: center 54%; -webkit-mask-image: none; mask-image: none; }

@@ -128,11 +128,11 @@ describe("Strona główna", () => {
 
     const finance = within(section).getByRole("article", { name: "Ile szpitali PSZ kończy rok ze stratą?" });
     expect(finance).toHaveTextContent("286 z 631 szpitali z sieci PSZ (45%) miało stratę netto w 2025 r. Łączny wynik: −1,2 mld zł.");
-    expect(within(finance).getByRole("img", { name: /−2,5…0 % — 137, 0…2,5 % — 218/ })).toHaveAttribute("viewBox", "0 0 520 200");
+    expect(within(finance).getByRole("img", { name: /−2,5…0 % — 137, 0…2,5 % — 218/ })).toBeInTheDocument();
     expect(within(finance).getByRole("link", { name: /Przykładowa karta: finanse/ })).toHaveAttribute("href", "/szpitale/9251723350-04?widok=finanse");
   });
 
-  it("z mapą szpitali pokazuje mapę zamiast wykresu łóżek: kropki bez dymków i interakcji", () => {
+  it("z mapą szpitali: tekst po lewej, duża mapa po prawej (bez dymków i interakcji), finanse pod mapą", () => {
     const hospitalMap: HospitalMapStats = {
       year: "2025",
       viewBox: [100, 100],
@@ -145,20 +145,22 @@ describe("Strona główna", () => {
     render(<HomePage highlights={highlights} stats={stats} hospitals={hospitals} hospitalMap={hospitalMap} />);
     const section = screen.getByRole("region", { name: "Jak wyglądają szpitale." });
     expect(within(section).queryByRole("article", { name: "Jakiej wielkości są szpitale?" })).not.toBeInTheDocument();
-    const card = within(section).getByRole("article", { name: "Gdzie są szpitale?" });
-    expect(card).toHaveTextContent("Mapa · 2025 · 905 szpitali");
-    expect(card).toHaveTextContent("574 z 905 szpitali należy do sieci szpitali (PSZ)");
-    // Wykres finansów obok mapy jest wyższy (ta sama wysokość co mapa); bez mapy — zwykła wysokość 200.
-    const finance = within(section).getByRole("article", { name: "Ile szpitali PSZ kończy rok ze stratą?" });
-    expect(within(finance).getByRole("img").getAttribute("viewBox")).toBe("0 0 520 290");
-    const map = within(card).getByRole("img", { name: "Mapa szpitali z hospitalizacjami w 2025 r.: 905 szpitali, w tym 574 w sieci szpitali (PSZ)" });
+    expect(section).toHaveTextContent("Na mapie: każdy szpital z hospitalizacjami w 2025 r., w mieście siedziby.");
+    expect(section).toHaveTextContent("Szpitale905");
+    expect(section).toHaveTextContent("W sieci PSZ574");
+    expect(section).toHaveTextContent("Oddziały SOR249");
+    const map = within(section).getByRole("img", { name: "Mapa szpitali z hospitalizacjami w 2025 r.: 905 szpitali, w tym 574 w sieci szpitali (PSZ)" });
+    // Mapa obok tekstu (ten sam wiersz), nie w karcie.
+    expect(map.closest("article")).toBeNull();
+    expect(map.parentElement).toContainElement(screen.getByRole("heading", { name: "Jak wyglądają szpitale." }));
     expect(map.querySelectorAll("path")).toHaveLength(2);
     const dots = [...map.querySelectorAll("circle")];
     expect(dots.map((dot) => [dot.getAttribute("cx"), dot.getAttribute("cy"), dot.getAttribute("r")])).toEqual([["5", "5", "2"], ["25", "25", "3.5"]]);
     // Obraz statyczny: bez fokusu, ról przycisków, linków i dymków (<title>).
     expect(map.querySelectorAll("[tabindex], [role=button], a, title")).toHaveLength(0);
-    expect(within(card).getByRole("link", { name: /Mapa i katalog szpitali/ })).toHaveAttribute("href", "/szpitale");
-    expect(card).not.toHaveTextContent("Szacunek");
+    expect(within(section).getByRole("link", { name: /Mapa i katalog szpitali/ })).toHaveAttribute("href", "/szpitale");
+    // Finanse: jedna szeroka karta pod mapą.
+    expect(within(section).getAllByRole("article").map((card) => card.getAttribute("aria-labelledby"))).toEqual(["hospitals-finance"]);
   });
 
   it("pokazuje porównanie placówek na przykładzie szpitala i jego par klasy A", () => {

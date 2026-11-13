@@ -76,8 +76,6 @@ const paths: readonly Path[] = [
 ];
 
 const integer = (value: number) => Math.round(value).toLocaleString("pl-PL");
-/** Wysokość histogramu finansów obok mapy szpitali (jednostki szerokości 520 ≈ px na karcie): jak mapa, 300 px. */
-const HOME_SIDE_CHART_HEIGHT = 290;
 const decimal = (value: number) => value.toLocaleString("pl-PL", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 const signedPct = (value: number) => `${value > 0 ? "+" : value < 0 ? "−" : ""}${decimal(Math.abs(value))}%`;
 
@@ -94,6 +92,26 @@ export function HomePage({ highlights, stats, hospitals, hospitalMap = null }: {
   const exampleCompareHref = exampleKey ? hospitalComparisonHref(...exampleKey) : DASHBOARD_HREFS.comparison;
   const yearChange = latest && previous?.hospitalizations ? ((latest.hospitalizations - previous.hospitalizations) / previous.hospitalizations) * 100 : null;
   const range = formatYearRange(highlights.yearFrom, highlights.yearTo);
+  const hospitalsIntro = <>
+    <span className={styles.sectionEyebrow}>SZPITALE PUBLICZNE</span>
+    <h2 id="hospitals-title">Jak wyglądają szpitale.</h2>
+    <p>Profil każdego szpitala: oddziały, łóżka, SOR, grupy JGP i wynik finansowy. Wpisz nazwę albo miasto w wyszukiwarce.</p>
+  </>;
+  // Karta finansów: z mapą szpitali — szeroka, pod mapą; bez mapy — obok histogramu łóżek.
+  const financeCard = (wide: boolean) => finance ? <DataCard
+    id="hospitals-finance"
+    wide={wide}
+    kicker={`Finanse · ${finance.year} · szpitale PSZ`}
+    title="Ile szpitali PSZ kończy rok ze stratą?"
+    lead={<><strong>{integer(finance.loss)} z {integer(finance.reported)}</strong> szpitali z sieci PSZ ({Math.round((finance.loss / finance.reported) * 100)}%) miało stratę netto w {finance.year} r. Łączny wynik: <strong>{formatPln(finance.netResult)}</strong>. Oś: marża netto w % (przedziały po 2,5 p.p.).</>}
+    href={exampleHref}
+    cta={exampleCard ? "Przykładowa karta: finanse" : "Katalog szpitali"}
+    source="Sprawozdania finansowe; wykaz PSZ (NFZ)"
+    estimate={false}
+    >
+    <ContinuousHistogram bins={finance.margins} label="Podmioty według marży netto" unit="%" />
+    <Legend items={[{ label: "Strata", color: CHART_COLORS.signal }, { label: "Zysk", color: CHART_COLORS.data }]} />
+    </DataCard> : null;
   return <>
     <LegacyDashboardRedirect />
     <main id="main-content" className={styles.home}>
@@ -173,52 +191,45 @@ export function HomePage({ highlights, stats, hospitals, hospitalMap = null }: {
       </section>
 
       <section id="szpitale" className={`${styles.container} ${styles.data}`} aria-labelledby="hospitals-title">
-        <div className={styles.sectionIntro}>
-          <span className={styles.sectionEyebrow}>SZPITALE PUBLICZNE</span>
-          <h2 id="hospitals-title">Jak wyglądają szpitale.</h2>
-          <p>Profil każdego szpitala: oddziały, łóżka, SOR, grupy JGP i wynik finansowy. Wpisz nazwę albo miasto w wyszukiwarce.</p>
-        </div>
-        <div className={styles.dataGrid}>
-          {hospitalMap ? <DataCard
-            id="hospitals-map"
-            kicker={`Mapa · ${hospitalMap.year} · ${integer(hospitalMap.hospitals)} szpitali`}
-            title="Gdzie są szpitale?"
-            lead={<><strong>{integer(hospitalMap.inPsz)} z {integer(hospitalMap.hospitals)}</strong> szpitali należy do sieci szpitali (PSZ). Kropka to szpital z hospitalizacjami w {hospitalMap.year} r., większa kropka — więcej hospitalizacji.</>}
-            href={DASHBOARD_HREFS.hospitals}
-            cta="Mapa i katalog szpitali"
-            source="Dane NFZ o hospitalizacjach; wykaz PSZ (NFZ); rejestr RPWDL"
-            estimate={false}
-          >
-            <HospitalMap map={hospitalMap} />
-            <Legend items={[{ label: "Szpital sieci (PSZ)", color: CHART_COLORS.data }, { label: "Poza siecią", color: CHART_COLORS.dataSoft }]} />
-          </DataCard> : <DataCard
-            id="hospitals-beds"
-            kicker={`Łóżka · ${integer(hospitals.profiles)} świadczeniodawców`}
-            title="Jakiej wielkości są szpitale?"
-            lead={<>Mediana szpitali z łóżkami: <strong>{integer(hospitals.medianBeds)}</strong>. {integer(hospitals.profiles - hospitals.withBeds)} placówek nie ma łóżek w RPWDL: to głównie kliniki zabiegów jednego dnia (np. zaćmy). <strong>{integer(hospitals.sorUnits)}</strong> oddziałów ratunkowych (SOR) działa w {integer(hospitals.withSor)} podmiotach.</>}
-            href={DASHBOARD_HREFS.hospitals}
-            cta="Znajdź szpital"
-            source="Rejestr RPWDL"
-            estimate={false}
-          >
-            <Histogram bins={hospitals.beds} label="Placówki według liczby łóżek" unit="" />
-          </DataCard>}
+        {hospitalMap ? <>
+          {/* Tekst po lewej, mapa po prawej: mapa tak duża, jak pozwala wysokość okna (`.hospitalMapLarge`). */}
+          <div className={styles.hospitalsLead}>
+            <div className={styles.hospitalsText}>
+              {hospitalsIntro}
+              <p>Na mapie: każdy szpital z hospitalizacjami w {hospitalMap.year} r., w mieście siedziby. Większa kropka — więcej hospitalizacji.</p>
+              <dl className={styles.compareFacts}>
+                <div><dt>Szpitale</dt><dd>{integer(hospitalMap.hospitals)}</dd></div>
+                <div><dt>W sieci PSZ</dt><dd>{integer(hospitalMap.inPsz)}</dd></div>
+                <div><dt>Oddziały SOR</dt><dd>{integer(hospitals.sorUnits)}</dd></div>
+              </dl>
+              <Legend align="start" items={[{ label: "Szpital sieci (PSZ)", color: CHART_COLORS.data }, { label: "Poza siecią", color: CHART_COLORS.dataSoft }]} />
+              <Link className={styles.pathCta} href={DASHBOARD_HREFS.hospitals}>Mapa i katalog szpitali <PortalIcon name="arrow" size={17} /></Link>
+              <p className={styles.hospitalsSource}>Dane NFZ o hospitalizacjach; wykaz PSZ (NFZ); rejestr RPWDL</p>
+            </div>
+            <HospitalMap map={hospitalMap} large />
+          </div>
+          {finance ? <div className={styles.dataGrid}>{financeCard(true)}</div> : null}
+        </> : <>
+          <div className={styles.sectionIntro}>
+            {hospitalsIntro}
+          </div>
+          <div className={styles.dataGrid}>
+            <DataCard
+              id="hospitals-beds"
+              kicker={`Łóżka · ${integer(hospitals.profiles)} świadczeniodawców`}
+              title="Jakiej wielkości są szpitale?"
+              lead={<>Mediana szpitali z łóżkami: <strong>{integer(hospitals.medianBeds)}</strong>. {integer(hospitals.profiles - hospitals.withBeds)} placówek nie ma łóżek w RPWDL: to głównie kliniki zabiegów jednego dnia (np. zaćmy). <strong>{integer(hospitals.sorUnits)}</strong> oddziałów ratunkowych (SOR) działa w {integer(hospitals.withSor)} podmiotach.</>}
+              href={DASHBOARD_HREFS.hospitals}
+              cta="Znajdź szpital"
+              source="Rejestr RPWDL"
+              estimate={false}
+            >
+              <Histogram bins={hospitals.beds} label="Placówki według liczby łóżek" unit="" />
+            </DataCard>
 
-          {finance ? <DataCard
-            id="hospitals-finance"
-            kicker={`Finanse · ${finance.year} · szpitale PSZ`}
-            title="Ile szpitali PSZ kończy rok ze stratą?"
-            lead={<><strong>{integer(finance.loss)} z {integer(finance.reported)}</strong> szpitali z sieci PSZ ({Math.round((finance.loss / finance.reported) * 100)}%) miało stratę netto w {finance.year} r. Łączny wynik: <strong>{formatPln(finance.netResult)}</strong>. Oś: marża netto w % (przedziały po 2,5 p.p.).</>}
-            href={exampleHref}
-            cta={exampleCard ? "Przykładowa karta: finanse" : "Katalog szpitali"}
-            source="Sprawozdania finansowe; wykaz PSZ (NFZ)"
-            estimate={false}
-          >
-            {/* Obok mapy: wykres tej samej wysokości (ok. 300 px, jak `.hospitalMap`); bez mapy — zwykła wysokość. */}
-            <ContinuousHistogram bins={finance.margins} label="Podmioty według marży netto" unit="%" height={hospitalMap ? HOME_SIDE_CHART_HEIGHT : undefined} />
-            <Legend items={[{ label: "Strata", color: CHART_COLORS.signal }, { label: "Zysk", color: CHART_COLORS.data }]} />
-          </DataCard> : null}
-        </div>
+            {financeCard(false)}
+          </div>
+        </>}
       </section>
 
       {example ? <section id="porownanie" className={`${styles.container} ${styles.compare}`} aria-labelledby="compare-title">
