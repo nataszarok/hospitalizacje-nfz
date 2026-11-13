@@ -19,10 +19,13 @@ const links = [
   { label: "Grupy JGP", href: "/jgp", active: "groups" },
   { label: "Eksplorator JGP", href: DASHBOARD_HREFS.trend, active: "analyses" },
   { label: "Szpitale", href: DASHBOARD_HREFS.hospitals, active: "hospitals" },
-  { label: "Porównania", href: DASHBOARD_HREFS.comparison, active: "compare" },
+  // „Porównania” (DASHBOARD_HREFS.comparison, sekcja "compare") na razie ukryte w menu; strona działa pod swoim adresem.
   { label: "Artykuły", href: DASHBOARD_HREFS.articles, active: "articles" },
   { label: "O danych", href: DASHBOARD_HREFS.methodology, active: "about" },
 ] as const;
+
+/** Sekcje bez pozycji w menu: na ich stronach aktywna jest pozycja nadrzędna (porównanie szpitali → Szpitale). */
+const HIDDEN_SECTIONS: Record<string, string> = { compare: "hospitals" };
 
 function sectionForPath(pathname: string) {
   if (pathname === "/") return "start";
@@ -91,7 +94,8 @@ export function SiteHeader() {
     };
   }, [pathname]);
 
-  const current = currentSection || sectionForPath(pathname);
+  const section = currentSection || sectionForPath(pathname);
+  const current = HIDDEN_SECTIONS[section] ?? section;
   // Strona główna ma duże pole wyszukiwania w hero, więc nagłówek go nie powtarza.
   const showSearch = pathname !== "/";
 
