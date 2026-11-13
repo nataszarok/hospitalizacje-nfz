@@ -14,7 +14,7 @@ describe("AboutDataPage", () => {
     expect(screen.getByText(/lata 2024–2025/)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /zbiór danych o hospitalizacjach/ })).toHaveAttribute("href", expect.stringContaining("dane.gov.pl"));
     expect(screen.getByRole("link", { name: "Przejdź do analiz →" })).toHaveAttribute("href", "/analizy");
-    expect(screen.getByRole("link", { name: "Profile szpitali →" })).toHaveAttribute("href", "/szpitale");
+    expect(screen.getByRole("link", { name: "Szpitale →" })).toHaveAttribute("href", "/szpitale");
   });
 
   it("dla jednego roku pokazuje sam rok", () => {

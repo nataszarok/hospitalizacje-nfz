@@ -1,0 +1,267 @@
+/* Katalog szpitali: elementy, których nie ma w katalogu grup JGP (JgpCatalog.module.css). */
+
+/* Plakietka sieci szpitali (PSZ): zieleń marki jak plakietki stanu w karcie; „poza siecią” wyszarzona. */
+.psz {
+  display: inline-block;
+  padding: 0 6px;
+  border-radius: var(--radius-badge);
+  background: var(--color-primary-soft);
+  color: var(--color-primary-hover);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+  white-space: nowrap;
+  vertical-align: 1px;
+}
+
+.pszOut {
+  background: var(--color-background-muted);
+  color: var(--color-text-tertiary);
+}
+
+/* Lista zmian: nazwa szpitala (link), miasto i zmiana — bez kolumny kodu z katalogu JGP. */
+/* `ol > li` daje wyższą specyficzność niż `.changeCard li` z katalogu JGP. */
+ol > li.changeItem {
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 0.8fr) auto;
+}
+
+.changeLink {
+  overflow: hidden;
+  color: var(--color-text);
+  font-weight: var(--fw-semibold);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.changeLink:hover {
+  color: var(--color-primary-hover);
+}
+
+/* Zakładki Lista / Mapa jako przyciski (wygląd `.tab` z katalogu JGP). */
+.tabButton {
+  border-top: 0;
+  border-right: 0;
+  border-left: 0;
+  background: none;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+/* Filtr miasta (kropka na mapie): pod filtrami, z przyciskiem usunięcia. */
+.cityFilter {
+  margin: -4px 0 12px;
+  color: var(--color-text-secondary);
+  font-size: var(--fs-sm);
+}
+
+.cityFilter button {
+  margin-left: 4px;
+  padding: 0 6px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: #fff;
+  color: var(--color-text-secondary);
+  font: inherit;
+  cursor: pointer;
+}
+
+/* Mapa: karta jak tabela katalogu; mapa (3/4) i lista szpitali obok (1/4), na wąskim ekranie jedna pod drugą. */
+.mapCard {
+  padding: 16px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: #fff;
+}
+
+.mapGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(240px, 1fr);
+  gap: 24px;
+}
+
+@media (max-width: 900px) {
+  .mapGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.mapWrap {
+  position: relative;
+  min-width: 0;
+}
+
+/* Mapa wypełnia szerokość kolumny, ale mieści się w oknie w pionie (pod nagłówkiem portalu i zakładkami):
+   przy niskim oknie jest węższa i wyśrodkowana. */
+.map,
+.mapPlaceholder {
+  display: block;
+  width: 100%;
+  max-width: max(320px, calc((100vh - 200px) * 1000 / 946));
+  height: auto;
+  margin: 0 auto;
+  aspect-ratio: 1000 / 946;
+}
+
+.mapPlaceholder {
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-card);
+  background: var(--color-background-soft);
+  color: var(--color-text-tertiary);
+}
+
+.mapRegion {
+  fill: var(--color-background-muted);
+  stroke: #fff;
+  stroke-width: 2;
+  stroke-linejoin: round;
+  cursor: pointer;
+  /* Bez prostokątnej ramki fokusu po kliknięciu; fokus z klawiatury pokazuje wypełnienie. */
+  outline: none;
+}
+
+.mapRegion:hover,
+.mapRegion:focus-visible {
+  fill: var(--color-data-faint);
+}
+
+.mapRegionOn {
+  fill: var(--color-data-faint);
+  stroke: var(--color-data-soft);
+}
+
+.mapDot {
+  stroke: #fff;
+  stroke-width: 1;
+  fill-opacity: 0.85;
+  cursor: pointer;
+  /* Bez prostokątnej ramki fokusu po kliknięciu; fokus z klawiatury pokazuje obrys kropki. */
+  outline: none;
+}
+
+.mapDot:hover,
+.mapDot:focus-visible {
+  stroke: var(--color-text);
+}
+
+.mapDotOn {
+  fill-opacity: 1;
+  stroke: var(--color-text);
+  stroke-width: 2;
+}
+
+.mapLegend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--color-text-secondary);
+  font-size: var(--fs-sm);
+}
+
+.mapLegend li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mapLegend i {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.mapSide h3 {
+  margin: 0 0 4px;
+  color: var(--color-heading);
+  font-size: var(--fs-lg);
+}
+
+.mapNote {
+  margin: 8px 0;
+  color: var(--color-text-tertiary);
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+}
+
+.mapList {
+  margin: 8px 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mapList li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 12px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--color-border-subtle);
+  font-size: var(--fs-sm);
+}
+
+/* Pełna nazwa szpitala, zawijana w kilku liniach (bez ucinania wielokropkiem). */
+.mapList a {
+  color: var(--color-text);
+  overflow-wrap: anywhere;
+}
+
+.mapList b {
+  font-variant-numeric: tabular-nums;
+}
+
+.linkButton {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-primary);
+  font: inherit;
+  font-weight: var(--fw-semibold);
+  cursor: pointer;
+}
+
+/* Widok bez wyboru w adresie: mapa na komputerze, lista na telefonie (to samo zapytanie co CATALOG_PHONE_QUERY).
+   Rozstrzyga CSS, więc statyczna strona nie miga przed hydracją; tak samo wyróżnienie zakładki. */
+.autoList {
+  display: none;
+}
+
+.autoTabMap {
+  border-bottom-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+@media (max-width: 700px) {
+  .autoMap {
+    display: none;
+  }
+
+  .autoList {
+    display: block;
+  }
+
+  .autoTabMap {
+    border-bottom-color: transparent;
+    color: var(--color-text-secondary);
+  }
+
+  .autoTabList {
+    border-bottom-color: var(--color-primary);
+    color: var(--color-primary);
+  }
+}
+
+/* Szpital spoza filtrów (wyszukiwanie, sieć, próg, województwo): szare tło w tym samym miejscu i tej samej wielkości. */
+.mapDotOff {
+  fill: var(--color-border-strong);
+  fill-opacity: 0.45;
+  stroke: #fff;
+  stroke-width: 1;
+  pointer-events: none;
+}
+
+.mapLegend i.mapDotOffKey {
+  background: var(--color-border-strong);
+  opacity: 0.6;
+}

@@ -84,9 +84,10 @@ describe("Strona główna", () => {
       "Własny zakres: grupy, obszar, okres",
     ]);
     expect(within(paths).getByRole("link", { name: /Katalog grup JGP/ })).toHaveAttribute("href", "/jgp");
-    expect(within(paths).getByRole("link", { name: /Znajdź szpital/ })).toHaveAttribute("href", "/szpitale");
+    expect(within(paths).getByRole("link", { name: /Katalog szpitali/ })).toHaveAttribute("href", "/szpitale");
+    expect(within(paths).queryByRole("link", { name: "Eksplorator szpitali" })).not.toBeInTheDocument();
     expect(within(paths).getByRole("link", { name: /Otwórz eksplorator/ })).toHaveAttribute("href", "/analizy");
-    expect(within(paths).getByRole("link", { name: "Porównanie z podobnymi" })).toHaveAttribute("href", "/szpitale?hv=c");
+    expect(within(paths).getByRole("link", { name: "Porównanie z podobnymi" })).toHaveAttribute("href", "/szpitale/eksplorator?hv=c");
     expect(within(paths).getByRole("link", { name: "Największe zmiany" })).toHaveAttribute("href", "/jgp?sort=zmiana");
     expect(within(paths).getByRole("link", { name: "Gdzie" })).toHaveAttribute("href", "/analizy?t=g");
   });
@@ -128,7 +129,7 @@ describe("Strona główna", () => {
     const finance = within(section).getByRole("article", { name: "Ile szpitali PSZ kończy rok ze stratą?" });
     expect(finance).toHaveTextContent("286 z 631 szpitali z sieci PSZ (45%) miało stratę netto w 2025 r. Łączny wynik: −1,2 mld zł.");
     expect(within(finance).getByRole("img", { name: /−2,5…0 % — 137, 0…2,5 % — 218/ })).toBeInTheDocument();
-    expect(within(finance).getByRole("link", { name: /Przykładowy profil/ })).toHaveAttribute("href", "/szpitale?hospital=04%7C9251723350");
+    expect(within(finance).getByRole("link", { name: /Przykładowa karta: finanse/ })).toHaveAttribute("href", "/szpitale/9251723350-04?widok=finanse");
   });
 
   it("pokazuje porównanie placówek na przykładzie szpitala i jego par klasy A", () => {
@@ -138,8 +139,10 @@ describe("Strona główna", () => {
     expect(section).toHaveTextContent("Szpitale z parą A452");
     const card = within(section).getByRole("article", { name: "Które szpitale są najbardziej podobne?" });
     expect(card).toHaveTextContent("SZPITAL W NOWEJ SOLI: 40 par klasy A. Poniżej 1 najbliższych.");
-    expect(within(card).getByRole("link", { name: /SZPITAL W OSTROŁĘCE/ })).toHaveAttribute("href", "/szpitale?hospital=07%7C1111111111");
-    expect(within(section).getByRole("link", { name: /Porównaj przykładowy szpital/ })).toHaveAttribute("href", "/szpitale?hospital=04%7C9251723350&hv=c");
+    // Szpital bez karty: wiersz bez linku.
+    expect(within(card).getByText("SZPITAL W OSTROŁĘCE")).toBeInTheDocument();
+    expect(within(card).queryByRole("link", { name: /SZPITAL W OSTROŁĘCE/ })).not.toBeInTheDocument();
+    expect(within(section).getByRole("link", { name: /Porównaj przykładowy szpital/ })).toHaveAttribute("href", "/szpitale/eksplorator?hospital=04%7C9251723350&hv=c");
   });
 
   it("pomija wykres finansów i przykład porównania bez danych", () => {
@@ -155,7 +158,7 @@ describe("Strona główna", () => {
     expect(within(sections).getByRole("link", { name: "Przeglądaj grupy JGP" })).toHaveAttribute("href", "/jgp");
     expect(within(sections).getByRole("link", { name: "Otwórz eksplorator" })).toHaveAttribute("href", "/analizy");
     expect(within(sections).getByRole("link", { name: "Znajdź szpital" })).toHaveAttribute("href", "/szpitale");
-    expect(within(sections).getByRole("link", { name: "Porównaj szpitale" })).toHaveAttribute("href", "/szpitale?hv=c");
+    expect(within(sections).getByRole("link", { name: "Porównaj szpitale" })).toHaveAttribute("href", "/szpitale/eksplorator?hv=c");
     for (const name of ["Wyceny JGP", "Artykuły"]) {
       const tile = within(sections).getByRole("article", { name: `${name} — planowane` });
       expect(tile).toHaveTextContent("Planowane");

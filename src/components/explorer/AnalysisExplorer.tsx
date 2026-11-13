@@ -147,7 +147,7 @@ function ExplorerApp() {
     [activeTab]: typeof next === "function" ? next(current[activeTab] ?? []) : next,
   })), [activeTab]);
 
-  // Most z nagłówkiem portalu: link „Eksplorator danych” na tej stronie wraca do pierwszego widoku bez utraty filtrów.
+  // Most z nagłówkiem portalu: link „Eksplorator JGP” na tej stronie wraca do pierwszego widoku bez utraty filtrów.
   useEffect(() => {
     const handleNavigation = (event: Event) => setActiveTab((event as CustomEvent<DashboardNavigation>).detail.tab);
     window.addEventListener(DASHBOARD_TAB_NAVIGATE_EVENT, handleNavigation);
@@ -347,7 +347,7 @@ function ExplorerApp() {
       <PageHeader
         compact
         eyebrow={<>Hospitalizacje · grupy JGP · {range}</>}
-        title="Eksplorator danych"
+        title="Eksplorator JGP"
         lead={EXPLORER_LEAD}
         actions={<button
           type="button"
@@ -489,7 +489,7 @@ const EXPLORER_LEAD = <p>Własne analizy hospitalizacji NFZ: wybierz grupy JGP, 
 /** Szkielet w układzie strony; w trybie analizy (`pelny=1`) bez nagłówka, więc po załadowaniu układ nie przeskakuje. */
 function ExplorerSkeleton({ focus = false }: { focus?: boolean }) {
   return <main className={`${styles.page} ${focus ? styles.focus : ""}`} aria-busy="true">
-    {focus ? null : <PageHeader compact eyebrow={<>Hospitalizacje · grupy JGP</>} title="Eksplorator danych" lead={EXPLORER_LEAD} />}
+    {focus ? null : <PageHeader compact eyebrow={<>Hospitalizacje · grupy JGP</>} title="Eksplorator JGP" lead={EXPLORER_LEAD} />}
     <div className={styles.workspace}>
       <aside className={styles.sidebar}>
         <Skeleton height={120} />

@@ -139,7 +139,7 @@ describe("Karta w zakładkach — Ośrodki", () => {
     expect(within(ranking()).getByRole("columnheader", { name: "NFZ (tys. zł)" })).toBeInTheDocument();
     expect(within(ranking()).getByRole("row", { name: /Szpital Beta/ })).toHaveTextContent("700");
     expect(within(ranking()).getByRole("row", { name: /Szpital Alfa/ })).toHaveTextContent("500");
-    fireEvent.click(within(screen.getByRole("group", { name: "Rok karty" })).getByRole("button", { name: "2024" }));
+    fireEvent.change(within(screen.getByRole("group", { name: "Rok karty" })).getByRole("combobox", { name: "Rok" }), { target: { value: "2024" } });
     // 2024: kwota tylko dla Alfy; Beta bez kwoty („—”).
     expect(within(ranking()).getByRole("row", { name: /Szpital Alfa/ })).toHaveTextContent("300");
     expect(within(ranking()).getByRole("row", { name: /Szpital Beta/ })).toHaveTextContent("—");
@@ -206,25 +206,25 @@ describe("Karta w zakładkach — Ośrodki", () => {
 describe("Karta w zakładkach — wybór roku, opis i rodzina", () => {
   it("rok na pasku zmienia liczby i ranking oraz trafia do adresu", () => {
     const { container } = renderCard();
-    fireEvent.click(within(screen.getByRole("group", { name: "Rok karty" })).getByRole("button", { name: "2024" }));
+    fireEvent.change(within(screen.getByRole("group", { name: "Rok karty" })).getByRole("combobox", { name: "Rok" }), { target: { value: "2024" } });
     expect(window.location.search).toBe("?rok=2024");
     expect(container.querySelector('dl[aria-label="Liczby grupy"]')).toHaveTextContent("Hospitalizacje 202415");
     fireEvent.click(screen.getByRole("tab", { name: /Ośrodki/ }));
     const rows = within(screen.getByRole("region", { name: /^Lista ośrodków/ })).getAllByRole("row").slice(1);
     // Kolumny: ośrodek (miejsce w kraju w drugiej linii), hospitalizacje w roku karty, …
     expect(rows.map((row) => within(row).getAllByRole("cell")[1].textContent)).toEqual(["10", "5"]);
-    fireEvent.click(within(screen.getByRole("group", { name: "Rok karty" })).getByRole("button", { name: "2025" }));
+    fireEvent.change(within(screen.getByRole("group", { name: "Rok karty" })).getByRole("combobox", { name: "Rok" }), { target: { value: "2025" } });
     expect(window.location.search).toBe("?widok=osrodki");
   });
 
   it("odczytuje rok z adresu i ignoruje rok spoza danych", () => {
     open("?rok=2024");
     renderCard();
-    expect(within(screen.getByRole("group", { name: "Rok karty" })).getByRole("button", { name: "2024" })).toHaveAttribute("aria-pressed", "true");
+    expect(within(screen.getByRole("group", { name: "Rok karty" })).getByRole("combobox", { name: "Rok" })).toHaveValue("2024");
     cleanup();
     open("?rok=1999");
     renderCard();
-    expect(within(screen.getByRole("group", { name: "Rok karty" })).getByRole("button", { name: "2025" })).toHaveAttribute("aria-pressed", "true");
+    expect(within(screen.getByRole("group", { name: "Rok karty" })).getByRole("combobox", { name: "Rok" })).toHaveValue("2025");
   });
 
   it("opis z danych NFZ z wierszem źródła i sekcja rodziny z udziałami w latach", () => {
@@ -376,7 +376,7 @@ describe("Karta w zakładkach — linie województw w „Ile?”", () => {
     open("?ow=07");
     renderCard();
     const before = screen.getByRole("list", { name: "Linie wykresu" }).textContent;
-    fireEvent.click(within(screen.getByRole("group", { name: "Rok karty" })).getByRole("button", { name: "2024" }));
+    fireEvent.change(within(screen.getByRole("group", { name: "Rok karty" })).getByRole("combobox", { name: "Rok" }), { target: { value: "2024" } });
     expect(screen.getByRole("list", { name: "Linie wykresu" }).textContent).toBe(before);
     expect(before).toBe("Mazowieckie: 17");
   });

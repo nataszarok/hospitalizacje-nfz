@@ -1,0 +1,156 @@
+/* Karta szpitala: elementy, których nie ma na karcie grupy JGP (JgpTabs.module.css, JgpPage.module.css). */
+
+/* Zakładki, których jeszcze nie ma: widoczne, wyszarzone, bez akcji (selektor mocniejszy niż `.tabs button`). */
+button.tabSoon[aria-disabled="true"] {
+  color: var(--color-text-tertiary);
+  cursor: not-allowed;
+}
+
+/* Sekcje JGP w słupkach 100%: pięć największych w skali błękitów, reszta jasna. */
+.part0 { background: var(--color-data-strong); }
+.part1 { background: var(--color-data); }
+.part2 { background: var(--color-data-soft); }
+.part3 { background: var(--color-data-muted); }
+.part4 { background: var(--color-data-faint); }
+.partOther { background: var(--color-border); }
+
+/* Klucz linii wykresu „Ile?”: szpital (ciągła) i Polska (kropkowana, odniesienie). */
+.lineKey {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  margin: 0;
+  padding: 0 12px;
+  list-style: none;
+  color: var(--color-text-secondary);
+  font-size: var(--fs-sm);
+}
+
+.lineKey li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.keySolid,
+.keyDot {
+  width: 22px;
+  height: 0;
+  border-top: 2.5px solid var(--color-data);
+}
+
+.keyDot {
+  border-top: 2px dotted var(--color-text-secondary);
+}
+
+.tableWrap {
+  overflow: clip;
+}
+
+.groupName {
+  display: block;
+  color: var(--color-text-tertiary);
+  font-size: var(--fs-sm);
+}
+
+.rankTop {
+  color: var(--color-primary-hover);
+  font-weight: var(--fw-bold);
+}
+
+.more {
+  margin: 8px 12px 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-primary);
+  font: inherit;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-semibold);
+  cursor: pointer;
+}
+
+.more:hover {
+  text-decoration: underline;
+}
+
+/* Sposób zapłaty oddziału: plakietki w błękitach danych (ryczałt ciemny, za wykonanie jasny, mieszany z ramką). */
+.payWrap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 8px;
+  margin-top: 3px;
+}
+
+.pay {
+  display: inline-block;
+  padding: 0 6px;
+  border-radius: var(--radius-badge);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+  white-space: nowrap;
+}
+
+.payLump {
+  background: var(--color-data-strong);
+  color: #fff;
+}
+
+.payOut {
+  background: var(--color-data-soft);
+  color: var(--color-data-strong);
+}
+
+.payMixed {
+  border: 1px solid var(--color-data);
+  background: var(--color-data-faint);
+  color: var(--color-data-strong);
+}
+
+.payShare {
+  color: var(--color-text-tertiary);
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Komunikat o braku danych sekcji: ramka na tle sekcji, tekst drugorzędny; pierwsze zdanie pogrubione. */
+.empty {
+  margin: 0 0 12px;
+  padding: 14px 16px;
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius-card);
+  background: var(--color-background-soft);
+  color: var(--color-text-secondary);
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+}
+
+.empty b {
+  color: var(--color-text);
+}
+
+/* „Co leczy i za ile?”: liczba ośrodków po miejscu w Polsce, kropka odchylenia śmiertelności (skala odchylenia, jak lejek). */
+.rankOf {
+  color: var(--color-text-tertiary);
+  font-size: var(--fs-sm);
+}
+
+.mortality {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.devDot {
+  display: inline-block;
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+}
+
+.devDotEmpty {
+  border: 1px solid var(--color-border-strong);
+  background: transparent;
+}

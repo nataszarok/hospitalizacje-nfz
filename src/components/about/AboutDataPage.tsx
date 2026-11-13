@@ -58,7 +58,7 @@ export function AboutDataPage({ yearFrom, yearTo }: { yearFrom: string; yearTo: 
       </p>
       <p className={styles.links}>
         <Link href={DASHBOARD_HREFS.trend}>Przejdź do analiz →</Link>
-        <Link href={DASHBOARD_HREFS.hospital}>Profile szpitali →</Link>
+        <Link href={DASHBOARD_HREFS.hospitals}>Szpitale →</Link>
       </p>
     </section>
   </main>;

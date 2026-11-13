@@ -1,0 +1,3 @@
+OW_NFZ,NIP,NIP_API,UWAGI
+01,6121542507,8993067225,"ZOZ w Bolesławcu: plik hospitalizacji używa starego NIP; API NFZ „Umowy” ma umowy pod NIP z pliku świadczeniodawców 2025"
+08,8942814132,6711817537,"Szpital św. Rocha w Ozimku (kod 08R/20352): plik hospitalizacji podaje NIP EMC Instytut Medyczny; API NFZ „Umowy” ma umowy kodu pod NIP PROALTUM"

@@ -148,6 +148,8 @@ def iter_frames(path: Path, year: str):
             "ow": chunk["OW_NFZ"].str.strip().str.zfill(2),
             "nip": normalize_nip(chunk["NIP_PODMIOTU"]),
             "product": chunk["KOD_PRODUKTU_JEDNOSTKOWEGO"].str.strip(),
+            # Kod zakresu umowy (np. 03.4450.260.02): oddział i sposób zapłaty na kartach szpitali (build_hospital_payment.py).
+            "scope": chunk["KOD_PRODUKTU_KONTRAKTOWEGO"].str.strip(),
             "duration": chunk["PRZEDZIAL_DLUGOSCI_TRWANIA_HOSPITALIZACJI"].map(normalize_duration),
             "admission": chunk["KOD_TRYBU_PRZYJECIA"].str.strip(),
             "h_sim": h_sim, "h_min": h_min,

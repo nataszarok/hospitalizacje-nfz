@@ -26,8 +26,9 @@ export interface ChartLine {
   /** Druga linia podpowiedzi, np. miasto i województwo. */
   detail?: string;
   values: number[];
-  /** „primary” — kraj albo suma; „selected” — wybrany szpital; domyślnie szara linia ośrodka. */
-  tone?: "primary" | "selected";
+  /** „primary” — kraj albo suma; „selected” — wybrany szpital; „reference” — linia odniesienia (np. Polska na karcie szpitala:
+   * kropkowana, szara, bez kropek; DESIGN.md 6.2); domyślnie szara linia ośrodka. */
+  tone?: "primary" | "selected" | "reference";
   /** Własny kolor (linie województw); ma pierwszeństwo przed `tone`. */
   color?: string;
   /** Kolor linii ośrodka po najechaniu (każdy ośrodek inny); domyślnie niebieski. */
@@ -38,23 +39,66 @@ export interface ChartLine {
   base?: number[];
   /** Tylko okres aktywności (`activeSpan`): bez zer przed pierwszą i po ostatniej wartości (ośrodek zaczął albo przestał leczyć). */
   activeOnly?: boolean;
+  /** Tylko lata z danymi: rok bez hospitalizacji (suma `base ?? values` równa 0) to przerwa w linii, także w środku okresu. */
+  activeYearsOnly?: boolean;
+}
+
+/**
+ * Maska okresu z danymi (`true` = punkt jest rysowany) albo `null`, gdy linia pokazuje wszystkie punkty.
+ * `activeOnly`: od pierwszej do ostatniej wartości dodatniej. `activeYearsOnly`: lata z dodatnią sumą `base ?? values`
+ * (w trybie lat `values` są już sumami lat). Punkt poza maską to brak danych (`null`, przerwa w linii; DESIGN.md 6.4), nie 0.
+ */
+function activeMask(line: ChartLine, period: ChartPeriod, months: string[]): boolean[] | null {
+  if (line.activeYearsOnly) {
+    const activity = line.base ?? line.values;
+    if (period === "year") return activity.map((value) => value > 0);
+    const totals = new Map<string, number>();
+    months.forEach((month, i) => totals.set(month.slice(0, 4), (totals.get(month.slice(0, 4)) ?? 0) + (activity[i] ?? 0)));
+    return months.map((month) => (totals.get(month.slice(0, 4)) ?? 0) > 0);
+  }
+  if (line.activeOnly) {
+    const span = activeSpan(line.values);
+    return line.values.map((_, i) => span !== null && i >= span[0] && i <= span[1]);
+  }
+  return null;
+}
+
+/** Zakres osi miesięcy: pół miesiąca przed pierwszym i po ostatnim punkcie (punkt to 1. dzień miesiąca). */
+function monthRange(months: string[]): [string, string] {
+  const [year, month] = months[0].split("-").map(Number);
+  const before = month === 1 ? `${year - 1}-12` : `${year}-${String(month - 1).padStart(2, "0")}`;
+  return [`${before}-16`, `${months.at(-1)}-16`];
+}
+
+/** Ciągłe odcinki maski: [od, do] włącznie. */
+function runs(mask: boolean[]): [number, number][] {
+  const out: [number, number][] = [];
+  mask.forEach((on, i) => {
+    if (!on) return;
+    if (i > 0 && mask[i - 1]) out[out.length - 1][1] = i;
+    else out.push([i, i]);
+  });
+  return out;
 }
 
 /**
  * Punkty (wartość miesiąca) i linia (średnia 3M) serii; dla udziału: procent miesiąca i procent z 3 miesięcy.
- * Lata: punkt = suma roku (udział z sum roku), linia łączy punkty.
+ * Lata: punkt = suma roku (udział z sum roku), linia łączy punkty. Z maską (`activeMask`) średnia 3M liczy się
+ * osobno w każdym odcinku z danymi: miesiące bez danych nie zaniżają średniej po przerwie.
  */
-function seriesOf(line: ChartLine, period: ChartPeriod) {
+function seriesOf(line: ChartLine, period: ChartPeriod, months: string[]) {
   const points = line.base ? ratioSeries(line.values, line.base) : line.values as (number | null)[];
-  const span = line.activeOnly ? activeSpan(line.values) : null;
-  if (span) {
-    // Poza okresem aktywności nie ma punktów; średnia 3M liczy się od pierwszego aktywnego miesiąca.
-    const [from, to] = span;
-    const inside = (_: unknown, i: number) => i >= from && i <= to;
-    const trimmed = points.map((value, i) => inside(value, i) ? value : null);
+  const mask = activeMask(line, period, months);
+  if (mask) {
+    const trimmed = points.map((value, i) => mask[i] ? value : null);
     if (period === "year") return { points: trimmed, average: trimmed };
-    const average = movingAverage(line.values.slice(from, to + 1));
-    return { points: trimmed, average: line.values.map((_, i) => inside(_, i) ? average[i - from] : null) };
+    const average: (number | null)[] = line.values.map(() => null);
+    for (const [from, to] of runs(mask)) {
+      const values = line.values.slice(from, to + 1);
+      const part = line.base && !line.activeOnly ? movingRatio(values, line.base.slice(from, to + 1)) : movingAverage(values);
+      part.forEach((value, i) => { average[from + i] = value; });
+    }
+    return { points: trimmed, average };
   }
   if (period === "year") return { points, average: points };
   return { points, average: line.base ? movingRatio(line.values, line.base) : movingAverage(line.values) };
@@ -129,15 +173,16 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
       const x = yearly ? years.map((year) => `${year}-07-01`) : months.map((month) => `${month}-01`);
       // Wybrany szpital rysujemy na końcu, żeby był nad innymi seriami.
       const ordered = [...lines.filter((line) => line.tone !== "selected"), ...lines.filter((line) => line.tone === "selected")].map((line) => yearly ? yearlyLine(line, months) : line);
-      const emphasized = (line: ChartLine) => Boolean(line.tone || line.color) && !line.thin;
-      const color = (line: ChartLine) => line.tone === "selected" ? selectedColor : line.color ?? (line.tone === "primary" ? PRIMARY : BASE);
+      const reference = (line: ChartLine) => line.tone === "reference";
+      const emphasized = (line: ChartLine) => Boolean(line.tone || line.color) && !line.thin && !reference(line);
+      const color = (line: ChartLine) => line.tone === "selected" ? selectedColor : line.color ?? (line.tone === "primary" ? PRIMARY : reference(line) ? CHART_COLORS.textSecondary : BASE);
       const hasSelected = ordered.some((line) => line.tone === "selected");
       // Przy wybranym ośrodku pozostałe linie są tłem: mocniej przygaszone.
-      const opacity = (line: ChartLine) => emphasized(line) ? 1 : hasSelected ? 0.3 : 0.5;
+      const opacity = (line: ChartLine) => emphasized(line) || reference(line) ? 1 : hasSelected ? 0.3 : 0.5;
       const width = (line: ChartLine) => emphasized(line) ? 2.5 : 1.5;
       const markerSize = (line: ChartLine) => (emphasized(line) ? 7 : 5) + (yearly ? 2 : 0);
       const percent = ordered.some((line) => line.base);
-      const series = new Map(ordered.map((line) => [line.key, seriesOf(line, period)]));
+      const series = new Map(ordered.map((line) => [line.key, seriesOf(line, period, months)]));
       const shown = (value: number | null) => value === null ? "—" : percent ? `${value.toLocaleString("pl-PL", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%` : Math.round(value).toLocaleString("pl-PL");
       // Dwie serie na linię: kropki (wartości) i średnia 3M. Indeks serii = indeks śladu / 2.
       // Dymek rysuje `ChartTooltip`: Plotly tylko zgłasza najechanie („none”); linie tła pomija („skip”).
@@ -147,14 +192,14 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
           {
             type: "scattergl", mode: "markers", name: line.name, legendgroup: line.key, showlegend: legend,
             x, y: points,
-            marker: { color: color(line), size: markerSize(line), line: { color: "#FFFFFF", width: 1 } },
+            marker: { color: color(line), size: reference(line) ? 0 : markerSize(line), line: { color: "#FFFFFF", width: reference(line) ? 0 : 1 } },
             opacity: opacity(line),
             hoverinfo: "none",
           },
           {
             type: "scattergl", mode: "lines", name: yearly ? line.name : `${line.name} · średnia 3M`, legendgroup: line.key, showlegend: false,
             x, y: average, connectgaps: false,
-            line: { color: color(line), width: width(line) },
+            line: { color: color(line), width: width(line), ...(reference(line) ? { dash: "dot" } : {}) },
             opacity: opacity(line),
             hoverinfo: "none",
           },
@@ -223,7 +268,8 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
         // Oś lat to kategorie (bez siatki); oś miesięcy ma siatkę tylko na granicy roku (podziałka co rok, DESIGN.md 6.1).
         xaxis: yearly
           ? categoryAxis({ type: "date", tickformat: "%Y", dtick: "M12", tick0: "2000-01-01", ticklabelmode: "period", range: [`${years[0]}-01-01`, `${years.at(-1)}-12-31`] })
-          : measureAxis({ ...monthAxis(x.length), ...(x.length > 72 ? {} : { showgrid: false }) }),
+          // Stały zakres wszystkich miesięcy, także gdy linia ma dane tylko w części lat (przerwy, `activeYearsOnly`).
+          : measureAxis({ ...monthAxis(x.length), ...(x.length > 72 ? {} : { showgrid: false }), range: monthRange(months) }),
         // Margines pod zerem i całkowita podziałka także przy bardzo małych liczbach (np. pojedyncze zgony).
         yaxis: measureAxis(yAxis),
       }, modeBar ? PLOTLY_CONFIG : { ...PLOTLY_CONFIG, displayModeBar: false });

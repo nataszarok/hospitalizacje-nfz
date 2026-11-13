@@ -3,11 +3,13 @@
 import Link from "next/link";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { GroupLineChart, type ChartLine } from "@/components/jgp/GroupLineChart";
+import { CardYears } from "@/components/jgp/CardYears";
 import { RegionMap, regionTitle } from "@/components/jgp/RegionMap";
 import { ChartExpand } from "@/components/portal/ChartExpand";
 import { ChartTooltip, TooltipHead, TooltipLines } from "@/components/ChartTooltip";
 import { elementBox, type Box } from "@/lib/tooltipPosition";
 import { HelpLines, InfoTip } from "@/components/InfoTip";
+import { ShareBars, ShareLegend } from "@/components/ShareBars";
 import { FunnelLegend, SelectedLegendItem } from "@/components/jgp/FunnelLegend";
 import { FUNNEL_STATUS_COLORS, funnelLines, hasEnoughDeathsForFunnel, mortalityChartHelp } from "@/lib/mortalityFunnel";
 import { NO_CURVES, ProviderScatter, type ScatterCurve, type ScatterPoint } from "@/components/jgp/ProviderScatter";
@@ -136,14 +138,6 @@ export function JgpTabbedCard({ packed, map = null }: { packed: PackedJgpPageDat
   const linePool = useMemo(() => providerPool(all, { selectedKey: state.selectedKey, scope, regions: state.regions }), [all, state.selectedKey, scope, state.regions]);
   // Czy nagłówek karty zniknął pod nagłówkiem portalu (75 px): wtedy pasek pokazuje kod i nazwę grupy.
   const sentinel = useRef<HTMLDivElement>(null);
-  // Na telefonie rząd lat przewija się poziomo: wybrany rok przewijamy do widoku (tylko w rzędzie, bez przewijania strony).
-  const yearsRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const row = yearsRef.current;
-    const pressed = row?.querySelector<HTMLElement>('button[aria-pressed="true"]');
-    if (!row || !pressed || row.scrollWidth <= row.clientWidth) return;
-    row.scrollLeft = pressed.offsetLeft - row.offsetLeft - (row.clientWidth - pressed.offsetWidth) / 2;
-  }, [data.year]);
   const [stuck, setStuck] = useState(false);
   useEffect(() => {
     const node = sentinel.current;
@@ -188,15 +182,11 @@ export function JgpTabbedCard({ packed, map = null }: { packed: PackedJgpPageDat
           Ośrodki<small>{integer(pool.length)}</small>
         </button>
       </div>
-      <div ref={yearsRef} className={styles.years} role="group" aria-label="Rok karty">
-        <span>Rok</span>
-        {(all.admissionYears.length ? all.admissionYears : [all.year]).map((year) => <button
-          key={year}
-          type="button"
-          aria-pressed={year === data.year}
-          onClick={() => write({ year: year === defaultYear ? null : year })}
-        >{year}</button>)}
-      </div>
+      <CardYears
+        years={all.admissionYears.length ? all.admissionYears : [all.year]}
+        selected={data.year}
+        onSelect={(year) => write({ year: year === defaultYear ? null : year })}
+      />
     </div>
     {state.tab === "przeglad"
       ? <div role="tabpanel" id="panel-przeglad" aria-labelledby="tab-przeglad" className={styles.panel}>
@@ -277,7 +267,7 @@ function CardHeader({ data, regions, onClearRegion }: { data: JgpPageData; regio
 }
 
 /** Nagłówek sekcji: pytanie, kontekst i etykieta zakresu (`tag`) albo przełącznik w tym samym miejscu (`tools`). */
-function SectionHead({ id, question, context, tag, tools }: { id: string; question: string; context: string; tag?: string; tools?: ReactNode }) {
+export function SectionHead({ id, question, context, tag, tools }: { id: string; question: string; context: string; tag?: string; tools?: ReactNode }) {
   return <div className={styles.secHead}>
     <h2 id={id} className={styles.secTitle}><span className={styles.q}>{question}</span> <span className={styles.ctx}>{context}</span></h2>
     {tools ?? <span className={styles.tag}>{tag}</span>}
@@ -285,7 +275,7 @@ function SectionHead({ id, question, context, tag, tools }: { id: string; questi
 }
 
 /** Przełącznik okresu wykresu: w miejscu etykiety sekcji, więc nie zajmuje dodatkowego miejsca. */
-function PeriodToggle({ period, onPeriod }: { period: ChartPeriod; onPeriod: (period: ChartPeriod) => void }) {
+export function PeriodToggle({ period, onPeriod }: { period: ChartPeriod; onPeriod: (period: ChartPeriod) => void }) {
   return <div className={styles.periodToggle} role="group" aria-label="Okres na wykresie">
     <button type="button" aria-pressed={period === "month"} onClick={() => onPeriod("month")}>Miesiące</button>
     <button type="button" aria-pressed={period === "year"} onClick={() => onPeriod("year")}>Lata</button>
@@ -507,35 +497,20 @@ function CostSection({ data, onYear }: { data: JgpPageData; onYear: (year: strin
   </section>;
 }
 
+const ADMISSION_PARTS = [
+  { key: "urgent", label: "nagłe", className: base.segmentUrgent },
+  { key: "planned", label: "planowe", className: base.segmentPlanned },
+  { key: "other", label: "pozostałe", className: base.segmentOther },
+] as const;
+
 function ProfileSection({ data }: { data: JgpPageData }) {
-  const share = (part: number, total: number) => total ? (part / total) * 100 : 0;
   return <section className={styles.sec} aria-labelledby="s-profil">
     <SectionHead id="s-profil" question="Jak przyjmowani są pacjenci?" context="Tryb przyjęcia w kraju, wszystkie lata" tag="Lata" />
-    <ul className={base.legend} aria-label="Legenda">
-      <li><span className={`${base.swatch} ${base.segmentUrgent}`} aria-hidden />nagłe</li>
-      <li><span className={`${base.swatch} ${base.segmentPlanned}`} aria-hidden />planowe</li>
-      <li><span className={`${base.swatch} ${base.segmentOther}`} aria-hidden />pozostałe</li>
-    </ul>
-    {/* Same słupki 100%; wartości roku w podpowiedzi po najechaniu albo fokusie klawiatury (Tab). */}
-    <ul className={styles.admRows} aria-label="Tryb przyjęcia w latach">
-      {data.admissions.map((row) => {
-        const label = `${row.year}: nagłe ${pct(share(row.urgent, row.total))}, planowe ${pct(share(row.planned, row.total))}, pozostałe ${pct(share(row.other, row.total))}`;
-        return <li key={row.year} className={`${styles.admRow} ${row.year === data.year ? styles.admRowOn : ""}`} tabIndex={0} aria-label={label}>
-          <span className={styles.admYear} aria-hidden>{row.year}</span>
-          <span className={styles.admBar} aria-hidden>
-            {row.urgent ? <span className={`${base.segment} ${base.segmentUrgent}`} style={{ width: `${share(row.urgent, row.total)}%` }} /> : null}
-            {row.planned ? <span className={`${base.segment} ${base.segmentPlanned}`} style={{ width: `${share(row.planned, row.total)}%` }} /> : null}
-            {row.other ? <span className={`${base.segment} ${base.segmentOther}`} style={{ width: `${share(row.other, row.total)}%` }} /> : null}
-          </span>
-          <span className={styles.admTip} role="tooltip" aria-hidden>
-            <b>{row.year}</b>
-            <span><i className={base.segmentUrgent} />nagłe {pct(share(row.urgent, row.total))}</span>
-            <span><i className={base.segmentPlanned} />planowe {pct(share(row.planned, row.total))}</span>
-            <span><i className={base.segmentOther} />pozostałe {pct(share(row.other, row.total))}</span>
-          </span>
-        </li>;
-      })}
-    </ul>
+    <ShareLegend parts={[...ADMISSION_PARTS]} />
+    <ShareBars ariaLabel="Tryb przyjęcia w latach" rows={data.admissions.map((row) => ({
+      key: row.year, label: row.year, on: row.year === data.year,
+      parts: ADMISSION_PARTS.map((part) => ({ ...part, value: row[part.key] })),
+    }))} />
     <p className={base.note}>Najedź na rok, żeby zobaczyć udziały. Nagłe: tryb przyjęcia 2 i 3; planowe: tryb 6. Śmiertelność jest miarą w sekcji „Ile?”.</p>
   </section>;
 }
