@@ -364,3 +364,6 @@ a.code {
     min-width: 0;
   }
 }
+
+/* Link do artykułu wprowadzającego we wstępie katalogu. */
+.introArticle { font-weight: var(--fw-semibold); }

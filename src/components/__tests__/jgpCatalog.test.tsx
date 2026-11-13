@@ -137,6 +137,13 @@ describe("Katalog grup JGP", () => {
     expect(screen.getByText("Brak grup dla tych filtrów.")).toBeInTheDocument();
   });
 
+  it("wstęp: jedno zdanie o katalogu i link do artykułu „Czym są grupy JGP?”", () => {
+    render(<JgpCatalogPage catalog={catalog} />);
+    expect(screen.getByText(/Przeglądaj wszystkie grupy JGP/)).toBeInTheDocument();
+    expect(screen.queryByText(/system klasyfikacji hospitalizacji/)).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /^Czym są grupy JGP\? Wyjaśniamy od zera/ })).toHaveAttribute("href", "/artykuly/czym-sa-jgp");
+  });
+
   it("pokazuje zakładkę Rodziny jako planowaną", () => {
     render(<JgpCatalogPage catalog={catalog} />);
     expect(screen.getByRole("tab", { name: /Rodziny/ })).toHaveAttribute("aria-disabled", "true");

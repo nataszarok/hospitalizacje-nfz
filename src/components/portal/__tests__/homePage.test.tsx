@@ -148,7 +148,7 @@ describe("Strona główna", () => {
     expect(screen.queryByRole("region", { name: "Szpital na tle podobnych." })).not.toBeInTheDocument();
   });
 
-  it("pokazuje działy portalu; wyceny JGP i artykuły jako planowane, bez linków", () => {
+  it("pokazuje działy portalu; wyceny JGP jako planowane, bez linku", () => {
     renderHome();
     const sections = screen.getByRole("region", { name: "Wszystkie działy." });
     expect(within(sections).getByRole("link", { name: "Hospitalizacje w Polsce" })).toHaveAttribute("href", "/hospitalizacje");
@@ -156,7 +156,8 @@ describe("Strona główna", () => {
     expect(within(sections).getByRole("link", { name: "Otwórz eksplorator" })).toHaveAttribute("href", "/analizy");
     expect(within(sections).getByRole("link", { name: "Znajdź szpital" })).toHaveAttribute("href", "/szpitale");
     expect(within(sections).getByRole("link", { name: "Porównaj szpitale" })).toHaveAttribute("href", "/szpitale?hv=c");
-    for (const name of ["Wyceny JGP", "Artykuły"]) {
+    expect(within(sections).getByRole("link", { name: "Czytaj artykuły" })).toHaveAttribute("href", "/artykuly");
+    for (const name of ["Wyceny JGP"]) {
       const tile = within(sections).getByRole("article", { name: `${name} — planowane` });
       expect(tile).toHaveTextContent("Planowane");
       expect(within(tile).queryByRole("link")).not.toBeInTheDocument();

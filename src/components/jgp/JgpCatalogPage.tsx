@@ -1,7 +1,12 @@
+import Link from "next/link";
 import { JgpCatalogView } from "@/components/jgp/JgpCatalog";
+import { articleHref, findArticle } from "@/lib/articles";
 import { PageHeader, pageContainerClass } from "@/components/portal/PageHeader";
 import type { JgpCatalog } from "@/lib/jgpCatalog";
 import styles from "./JgpCatalog.module.css";
+
+/** Artykuł wprowadzający, linkowany we wstępie katalogu. */
+const intro = findArticle("czym-sa-jgp");
 
 const integer = (value: number) => Math.round(value).toLocaleString("pl-PL");
 const millions = (value: number) => `${(value / 1_000_000).toLocaleString("pl-PL", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} mln`;
@@ -14,10 +19,8 @@ export function JgpCatalogPage({ catalog }: { catalog: JgpCatalog }) {
       eyebrow={<>Hospitalizacje · grupy JGP · {range}</>}
       title="Grupy JGP"
       lead={<>
-        <p><b>J</b>ednorodne <b>G</b>rupy <b>P</b>acjentów (JGP) to system klasyfikacji hospitalizacji stosowany przez NFZ,
-        który grupuje przypadki o podobnym charakterze klinicznym i kosztach leczenia. Jest wykorzystywany do sprawozdawania
-        świadczeń szpitalnych oraz, w zależności od sposobu finansowania, ich rozliczania.</p>
         <p>Przeglądaj wszystkie grupy JGP. Kliknij kod lub nazwę grupy, aby zobaczyć trendy hospitalizacji, realizujące je szpitale, rozkład regionalny, tryby przyjęcia oraz wycenę świadczeń.</p>
+        <p><Link className={styles.introArticle} href={articleHref(intro.slug)}>{intro.title} Wyjaśniamy od zera, na historii czterech pacjentów →</Link></p>
       </>}
       kpis={[
         { label: `Grupy aktywne w ${catalog.latestYear} r.`, value: integer(catalog.totals.groups), note: `z ${integer(catalog.totals.all)} grup w latach ${range}` },
