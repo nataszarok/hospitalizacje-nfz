@@ -5,6 +5,9 @@ import type { FinancialRecordSummary, HospitalProfileSummary } from "@/lib/hospi
 import type { RegionsMap } from "@/lib/jgpCard";
 import type { JgpGroupFile, JgpPagesIndex, JgpPeerPair } from "@/lib/jgpPage";
 import type { JgpProfilesFile } from "@/lib/jgpDescription";
+import type { FacilityYearsIndex, FacilityYearsSection } from "@/lib/regions";
+import type { HospitalPaymentFile, HospitalRpwdlRecord } from "@/lib/hospitalPage";
+import type { HospitalContractsFile } from "@/lib/hospitalFinance";
 import { readJgpProse } from "@/lib/jgpProse";
 import { decodeValuations, type JgpValuation, type ValuationsFile } from "@/lib/valuations";
 import { decodeJgpGroupFile, decodeStaticDataset, decodeTrends, type JgpGroupFileColumns, type StaticDatasetFile, type TrendsFile } from "@/lib/hospitalizationCodec";
@@ -140,10 +143,70 @@ export async function readHospitalProfilesFromDisk(file = join(DATA_DIR, "rpwdl_
   return data.records.map(({ oz_nfz, nip, core, capabilities }) => ({ oz_nfz, nip, core: core ? { beds: core.beds } : null, capabilities: capabilities?.sor ? { sor: capabilities.sor } : null }));
 }
 
+/** Data stanu rejestru RPWDL w profilach (`rpwdl_snapshot_date`, „RRRR-MM-DD”) albo `null`. */
+export async function readRpwdlSnapshotDateFromDisk(file = join(DATA_DIR, "rpwdl_summary_profiles.json.gz")): Promise<string | null> {
+  const data = await readGzipJson<{ rpwdl_snapshot_date?: string }>(file);
+  return data.rpwdl_snapshot_date ?? null;
+}
+
+/** Nazwy urzędowe oddziałów według kodu resortowego (`scripts/build_ward_names.py`); pusty słownik bez pliku. */
+let wardNamesPromise: Promise<Record<string, string>> | null = null;
+export function readWardNamesFromDisk(file = join(BUILD_DATA_DIR, "hospitals", "ward-names.json")): Promise<Record<string, string>> {
+  wardNamesPromise ??= readFile(file, "utf8").then((text) => (JSON.parse(text) as { names: Record<string, string> }).names).catch(() => ({}));
+  return wardNamesPromise;
+}
+
+/** Pełny profil RPWDL jednego świadczeniodawcy („OW|NIP”, z oddziałami) albo `null`. */
+export async function readHospitalProfileRecordFromDisk(key: string, file = join(DATA_DIR, "rpwdl_summary_profiles.json.gz")): Promise<HospitalRpwdlRecord | null> {
+  const data = await readGzipJson<{ records: HospitalRpwdlRecord[] }>(file);
+  return data.records.find((record) => `${record.oz_nfz}|${record.nip}` === key) ?? null;
+}
+
+/** Rozliczenia JGP szpitala według zakresów umowy (`scripts/build_hospital_payment.py`) albo `null` bez pliku lub szpitala. */
+export async function readHospitalPaymentFromDisk(key: string, file = join(BUILD_DATA_DIR, "hospitals", "payment.json.gz")): Promise<HospitalPaymentFile | null> {
+  try {
+    await access(file);
+  } catch {
+    return null;
+  }
+  const data = await readGzipJson<{ hospitals: Record<string, HospitalPaymentFile> }>(file);
+  return data.hospitals[key] ?? null;
+}
+
+/** Umowy szpitala z NFZ (`scripts/build_nfz_contracts.py`) albo `null` bez pliku lub szpitala. Plik czytany raz na proces. */
+let contractsPromise: Promise<Record<string, HospitalContractsFile> | null> | null = null;
+export async function readHospitalContractsFromDisk(key: string, file = join(BUILD_DATA_DIR, "hospitals", "contracts.json.gz")): Promise<HospitalContractsFile | null> {
+  contractsPromise ??= access(file).then(
+    async () => (await readGzipJson<{ hospitals: Record<string, HospitalContractsFile> }>(file)).hospitals,
+    () => null,
+  );
+  return (await contractsPromise)?.[key] ?? null;
+}
+
+/** Umowy wszystkich szpitali z kartą („OW|NIP” → umowy); pusty słownik bez pliku. */
+export async function readAllHospitalContractsFromDisk(file = join(BUILD_DATA_DIR, "hospitals", "contracts.json.gz")): Promise<Record<string, HospitalContractsFile>> {
+  await readHospitalContractsFromDisk("", file);
+  return (await contractsPromise) ?? {};
+}
+
 /** NIP-y szpitali z sieci PSZ (`scripts/build_psz.py`). */
 export async function readPszNipsFromDisk(file = join(DATA_DIR, "psz.json.gz")): Promise<Set<string>> {
   const data = await readGzipJson<{ rows: [string, number][] }>(file);
   return new Set(data.rows.map(([nip]) => nip));
+}
+
+/** Poziomy sieci szpitali (PSZ): nazwy poziomów i NIP → indeks poziomu (`scripts/build_psz.py`). */
+export async function readPszLevelsFromDisk(file = join(DATA_DIR, "psz.json.gz")): Promise<{ levels: string[]; byNip: Map<string, number> }> {
+  const data = await readGzipJson<{ levels: string[]; rows: [string, number][] }>(file);
+  return { levels: data.levels, byNip: new Map(data.rows) };
+}
+
+/** Hospitalizacje placówek w latach (`scripts/build_facility_years.py`): indeks i wszystkie pliki sekcji. */
+export async function readFacilityYearsFromDisk(dir = join(DEFAULT_DIR, "facilities")): Promise<{ index: FacilityYearsIndex; sections: FacilityYearsSection[] }> {
+  const index = JSON.parse(await readFile(join(dir, "index.json"), "utf8")) as FacilityYearsIndex;
+  const names = (await readdir(dir)).filter((name) => name.endsWith(".json.gz")).sort();
+  const sections = await Promise.all(names.map((name) => readGzipJson<FacilityYearsSection>(join(dir, name))));
+  return { index, sections };
 }
 
 /** Wyniki finansowe podmiotów (NIP): przychód, wynik netto, marża. */

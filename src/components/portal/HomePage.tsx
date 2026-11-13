@@ -6,7 +6,7 @@ import { formatAtLeastCount, formatCompactCount, formatPln, formatYearRange } fr
 import type { DatasetHighlights } from "@/lib/staticData";
 import type { HomeStats } from "@/lib/homeStats";
 import type { HospitalHomeStats } from "@/lib/hospitalHomeStats";
-import { hospitalHref } from "@/lib/portalLinks";
+import { hospitalComparisonHref, hospitalHref } from "@/lib/portalLinks";
 import { ARTICLES_PATH } from "@/lib/articles";
 import { ContinuousHistogram, GroupBars, Histogram, PeerDistances, YearBars } from "@/components/portal/HomeCharts";
 import { DataCard, Legend } from "@/components/portal/DataCard";
@@ -27,9 +27,9 @@ type Topic = {
 const topics: readonly Topic[] = [
   { title: "Hospitalizacje w Polsce", description: "Podsumowanie wszystkich lat: liczba, tryb przyjęcia, województwa, obszary leczenia, zgony i świadczeniodawcy.", icon: "chart", href: DASHBOARD_HREFS.summary, label: "Hospitalizacje w Polsce" },
   { title: "Grupy JGP", description: "Karta każdej grupy: hospitalizacje w czasie, ośrodki, województwa, tryb przyjęcia i wycena.", icon: "bed", href: "/jgp", label: "Przeglądaj grupy JGP" },
-  { title: "Szpitale publiczne", description: "Profil szpitala: oddziały, łóżka, świadczenia i wyniki finansowe.", icon: "hospital", href: DASHBOARD_HREFS.hospital, label: "Znajdź szpital" },
+  { title: "Szpitale publiczne", description: "Katalog i mapa szpitali; karta szpitala: hospitalizacje, grupy JGP, oddziały i finanse.", icon: "hospital", href: DASHBOARD_HREFS.hospitals, label: "Znajdź szpital" },
   { title: "Porównanie szpitali", description: "Porównaj szpital z grupą podobnych placówek dobranych przez model.", icon: "compare", href: DASHBOARD_HREFS.comparison, label: "Porównaj szpitale" },
-  { title: "Eksplorator danych", description: "Narzędzie dla analityków: kilka grup naraz, obszary, filtry i tryb przyjęcia.", icon: "heart", href: DASHBOARD_HREFS.trend, label: "Otwórz eksplorator" },
+  { title: "Eksplorator JGP", description: "Narzędzie dla analityków: kilka grup naraz, obszary, filtry i tryb przyjęcia.", icon: "heart", href: DASHBOARD_HREFS.trend, label: "Otwórz eksplorator" },
   { title: "Wyceny JGP", description: "Jak wygląda system wycen JGP i jak zmieniają się wyceny.", icon: "chart", label: "Wyceny JGP" },
   { title: "Artykuły", description: "Teksty o tym, jak działa system. Na start: czym są grupy JGP.", icon: "book", href: ARTICLES_PATH, label: "Czytaj artykuły" },
 ];
@@ -53,11 +53,10 @@ const paths: readonly Path[] = [
   {
     kicker: "Pytam o szpital",
     title: "Jak wygląda konkretny szpital",
-    description: "Profil szpitala: oddziały, łóżka, świadczenia i finanse. Porównanie z grupą podobnych placówek.",
-    href: DASHBOARD_HREFS.hospital,
-    cta: "Znajdź szpital",
+    description: "Karta szpitala: hospitalizacje, grupy JGP, oddziały i finanse. Porównanie z grupą podobnych placówek.",
+    href: DASHBOARD_HREFS.hospitals,
+    cta: "Katalog szpitali",
     links: [
-      { label: "Profil szpitala", href: DASHBOARD_HREFS.hospital },
       { label: "Porównanie z podobnymi", href: DASHBOARD_HREFS.comparison },
       { label: "Kto leczy", href: DASHBOARD_HREFS.mortality },
     ],
@@ -85,7 +84,11 @@ export function HomePage({ highlights, stats, hospitals }: { highlights: Dataset
   const previous = stats.years.length > 1 ? stats.years[stats.years.length - 2] : null;
   const { finance, comparison } = hospitals;
   const example = comparison.example;
-  const exampleHref = example ? hospitalHref(...(example.key.split("|") as [string, string])) : DASHBOARD_HREFS.hospital;
+  // Przykładowa karta szpitala (finanse) i porównanie z podobnymi; szpital bez karty — katalog szpitali.
+  const exampleKey = example ? (example.key.split("|") as [string, string]) : null;
+  const exampleCard = exampleKey ? hospitalHref(...exampleKey) : null;
+  const exampleHref = exampleCard ? `${exampleCard}?widok=finanse` : DASHBOARD_HREFS.hospitals;
+  const exampleCompareHref = exampleKey ? hospitalComparisonHref(...exampleKey) : DASHBOARD_HREFS.comparison;
   const yearChange = latest && previous?.hospitalizations ? ((latest.hospitalizations - previous.hospitalizations) / previous.hospitalizations) * 100 : null;
   const range = formatYearRange(highlights.yearFrom, highlights.yearTo);
   return <>
@@ -178,7 +181,7 @@ export function HomePage({ highlights, stats, hospitals }: { highlights: Dataset
             kicker={`Łóżka · ${integer(hospitals.profiles)} świadczeniodawców`}
             title="Jakiej wielkości są szpitale?"
             lead={<>Mediana szpitali z łóżkami: <strong>{integer(hospitals.medianBeds)}</strong>. {integer(hospitals.profiles - hospitals.withBeds)} placówek nie ma łóżek w RPWDL: to głównie kliniki zabiegów jednego dnia (np. zaćmy). <strong>{integer(hospitals.sorUnits)}</strong> oddziałów ratunkowych (SOR) działa w {integer(hospitals.withSor)} podmiotach.</>}
-            href={DASHBOARD_HREFS.hospital}
+            href={DASHBOARD_HREFS.hospitals}
             cta="Znajdź szpital"
             source="Rejestr RPWDL"
             estimate={false}
@@ -192,7 +195,7 @@ export function HomePage({ highlights, stats, hospitals }: { highlights: Dataset
             title="Ile szpitali PSZ kończy rok ze stratą?"
             lead={<><strong>{integer(finance.loss)} z {integer(finance.reported)}</strong> szpitali z sieci PSZ ({Math.round((finance.loss / finance.reported) * 100)}%) miało stratę netto w {finance.year} r. Łączny wynik: <strong>{formatPln(finance.netResult)}</strong>. Oś: marża netto w % (przedziały po 2,5 p.p.).</>}
             href={exampleHref}
-            cta="Przykładowy profil"
+            cta={exampleCard ? "Przykładowa karta: finanse" : "Katalog szpitali"}
             source="Sprawozdania finansowe; wykaz PSZ (NFZ)"
             estimate={false}
           >
@@ -216,14 +219,14 @@ export function HomePage({ highlights, stats, hospitals }: { highlights: Dataset
             <div><dt>Pary klasy A</dt><dd>{integer(comparison.pairsA)}</dd></div>
             <div><dt>Szpitale z parą A</dt><dd>{integer(comparison.hospitalsWithPeers)}</dd></div>
           </dl>
-          <Link className={styles.pathCta} href={`${exampleHref}&hv=c`}>Porównaj przykładowy szpital <PortalIcon name="arrow" size={17} /></Link>
+          <Link className={styles.pathCta} href={exampleCompareHref}>Porównaj przykładowy szpital <PortalIcon name="arrow" size={17} /></Link>
         </div>
         <DataCard
           id="compare-example"
           kicker={`Przykład · ${example.city}`}
           title="Które szpitale są najbardziej podobne?"
           lead={<><strong>{example.name}</strong>: {integer(example.peerCount)} par klasy A. Poniżej {example.peers.length} najbliższych. Mniejszy dystans = bardziej podobny profil.</>}
-          href={`${exampleHref}&hv=c`}
+          href={exampleCompareHref}
           cta="Pełne porównanie"
           source="Model par A/B (RPWDL, dane NFZ)"
           estimate={false}
@@ -262,7 +265,7 @@ export function HomePage({ highlights, stats, hospitals }: { highlights: Dataset
         <div className={styles.lowerCard}>
           <span className={styles.lowerIcon}><PortalIcon name="shield" /></span>
           <div><h2>Porównuj z właściwym kontekstem</h2><p>Różnice we wskaźnikach nie oznaczają automatycznie różnic w jakości leczenia.</p></div>
-          <Link className={styles.textLink} href={DASHBOARD_HREFS.hospital}>Profile szpitali <PortalIcon name="arrow" size={17} /></Link>
+          <Link className={styles.textLink} href={DASHBOARD_HREFS.hospitals}>Szpitale <PortalIcon name="arrow" size={17} /></Link>
         </div>
       </section>
     </main>

@@ -1,5 +1,5 @@
 import { formatCityName } from "@/lib/formatters";
-import { hospitalHref, jgpHref } from "@/lib/portalLinks";
+import { hospitalComparisonHref, hospitalHref, jgpHref } from "@/lib/portalLinks";
 import type { StaticDataset } from "@/lib/staticData";
 
 /** Adres indeksu wyszukiwarki (plik budowany statycznie przez `src/app/szukaj.json/route.ts`). */
@@ -117,7 +117,8 @@ function perspectiveOf(token: string): Perspective | null {
 // --- Wyniki podczas wpisywania -------------------------------------------
 
 export interface GroupHit { code: string; name: string; hospitalizations: number; href: string; hasPage: boolean }
-export interface HospitalHit { key: string; name: string; city: string; region: string; hospitalizations: number; href: string }
+/** Szpital w wynikach: `href` — karta szpitala (`null` bez karty: lista wyników go nie pokazuje, porównanie działa dla każdego). */
+export interface HospitalHit { key: string; name: string; city: string; region: string; hospitalizations: number; href: string | null }
 
 function groupHref(code: string) {
   return jgpHref(code) ?? `/analizy?jgp=${encodeURIComponent(code)}`;
@@ -163,10 +164,12 @@ export function searchGroups(index: SearchIndex, query: string, limit = 6): Grou
 export function searchHospitals(index: SearchIndex, query: string, limit = 6): HospitalHit[] {
   const tokens = tokenize(query).filter((token) => !STOPWORDS.has(token));
   if (!tokens.length) return [];
+  // Lista wyników pokazuje tylko szpitale z kartą (szpital bez karty nie ma strony).
   return index.hospitals
     .filter(([, name, city]) => allMatch(tokens, [...tokenize(name), ...tokenize(city)]))
-    .slice(0, limit)
-    .map((row) => toHospitalHit(index, row));
+    .map((row) => toHospitalHit(index, row))
+    .filter((hit) => hit.href !== null)
+    .slice(0, limit);
 }
 
 // --- Parser zdań (bez AI) --------------------------------------------------
@@ -294,7 +297,7 @@ export function interpretQuery(parsed: ParsedQuery): Interpretation[] {
     return [{ href, parts: [group.code, PERSPECTIVE_LABEL[perspective]] }];
   }
   if (hospitals.length && perspective === "compare") {
-    return hospitals.map((hospital) => ({ href: `${hospital.href}&hv=c`, parts: [`${hospital.name} (${hospital.city})`, "porównanie z podobnymi szpitalami"] }));
+    return hospitals.map((hospital) => ({ href: hospitalComparisonHref(...(hospital.key.split("|") as [string, string])), parts: [`${hospital.name} (${hospital.city})`, "porównanie z podobnymi szpitalami"] }));
   }
   return [];
 }

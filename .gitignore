@@ -31,3 +31,4 @@ AGENTS.md
 
 # Lokalne notatki projektowe (zasady wyglądu), nie trafiają do repo
 /DESIGN.md
+__pycache__/

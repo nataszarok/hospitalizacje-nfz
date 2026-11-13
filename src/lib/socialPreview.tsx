@@ -7,7 +7,7 @@ import { SITE_NAME } from "@/lib/site";
 
 /**
  * Obraz podglądu linku (Open Graph / X `summary_large_image`), jeden generator dla wszystkich kart:
- * grupy JGP dziś, profile szpitali w przyszłości. Strona podaje tylko treść (`PreviewCard`), wygląd jest tutaj.
+ * grupy JGP i karty szpitali. Strona podaje tylko treść (`PreviewCard`), wygląd jest tutaj.
  * DESIGN.md 6.2a: podgląd nie ma legendy, więc dane rysujemy jednym błękitem w trzech stopniach jasności.
  * Płaskie kolory i paleta PNG (`sharp`): plik ok. 20–30 KB.
  */

@@ -50,14 +50,14 @@ describe("SearchBox", () => {
 
   it("Enter otwiera pierwszy wynik; strzałki zmieniają wybór", async () => {
     render(<SearchBox />);
-    type("nowa sol");
+    type("ozw");
     await screen.findAllByRole("option");
     expect(input()).toHaveAttribute("aria-expanded", "true");
     fireEvent.keyDown(input(), { key: "ArrowDown" });
     expect(screen.getAllByRole("option")[1]).toHaveAttribute("aria-selected", "true");
     fireEvent.keyDown(input(), { key: "ArrowUp" });
     fireEvent.submit(input().closest("form")!);
-    expect(push).toHaveBeenCalledWith("/szpitale?hospital=04%7C9251723350");
+    expect(push).toHaveBeenCalledWith("/jgp/E11");
   });
 
   it("zdanie z grupą i szpitalem prowadzi do karty grupy z wyróżnionym szpitalem", async () => {

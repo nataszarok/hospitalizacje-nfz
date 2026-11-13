@@ -157,10 +157,11 @@ describe("MortalityTab data table", () => {
     expect(screen.queryByText("P1")).not.toBeInTheDocument();
   });
 
-  it("links provider names to their hospital profile", () => {
+  it("provider without a hospital card: name without a link (no page to open)", () => {
     render(<MortalityTab {...commonProps} data={mortalityPayload([mortalityRow()])} />);
     const row = mortalityRow();
-    expect(screen.getByRole("link", { name: row.providerName })).toHaveAttribute("href", `/szpitale?hospital=${encodeURIComponent(`${row.owNfz}|${row.nip}`)}`);
+    expect(screen.getByText(row.providerName)).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: row.providerName })).not.toBeInTheDocument();
   });
 
   it("falls back to the internal product code when JGP metadata is missing", () => {

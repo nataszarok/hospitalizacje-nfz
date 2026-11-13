@@ -3,7 +3,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render } from "@testing-library/react";
 
-const prefetchForHref = vi.fn((href: string) => (href.startsWith("/analizy") ? "analizy" : href.startsWith("/szpitale") ? "szpitale" : null));
+const prefetchForHref = vi.fn((href: string) => (href.startsWith("/analizy") ? "analizy" : href.startsWith("/szpitale/eksplorator") ? "szpitale" : null));
 vi.mock("@/lib/dataPrefetch", () => ({ prefetchForHref: (href: string) => prefetchForHref(href) }));
 const { DataPrefetch } = await import("@/components/portal/DataPrefetch");
 
@@ -14,7 +14,9 @@ describe("DataPrefetch — pobieranie z wyprzedzeniem po najechaniu na link", ()
     const { container } = render(<div>
       <DataPrefetch />
       <a href="/analizy?t=k"><span>Eksplorator</span></a>
-      <a href="/szpitale">Szpitale</a>
+      {/* Zwykły <a>: DataPrefetch reaguje na każdy link z href, także spoza next/link. */}
+      {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+      <a href="/szpitale/eksplorator">Szpitale</a>
       <a href="https://example.com/jgp">Katalog</a>
     </div>);
     const [explorer, hospitals, catalog] = container.querySelectorAll("a");
@@ -22,6 +24,6 @@ describe("DataPrefetch — pobieranie z wyprzedzeniem po najechaniu na link", ()
     fireEvent.focusIn(explorer);
     fireEvent.touchStart(hospitals);
     fireEvent.pointerOver(catalog);
-    expect(prefetchForHref.mock.calls.map(([href]) => href)).toEqual(["/analizy?t=k", "/szpitale"]);
+    expect(prefetchForHref.mock.calls.map(([href]) => href)).toEqual(["/analizy?t=k", "/szpitale/eksplorator"]);
   });
 });

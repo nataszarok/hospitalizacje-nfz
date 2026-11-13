@@ -1,3 +1,4 @@
+import { HOSPITAL_EXPLORER_PATH } from "@/lib/dashboardNavigation";
 import { MAX_AREAS, type AnalysisArea } from "@/lib/area";
 import type { AxisMode, EstimationMethod, GeographyMode, ReferencePayload } from "@/lib/types";
 
@@ -160,7 +161,7 @@ export function dashboardUrlSearch(reference: ReferencePayload, state: Dashboard
 }
 
 /**
- * Dawne adresy zakładek, które opuściły /analizy: profil szpitala (`t=h`) jest pod /szpitale,
+ * Dawne adresy zakładek, które opuściły /analizy: profil szpitala (`t=h`) prowadzi do porównania szpitali,
  * metodologia (`t=m`) pod /o-danych. Zwraca nowy adres albo `null`.
  */
 export function legacyAnalysisRedirect(search: string): string | null {
@@ -177,5 +178,5 @@ export function legacyAnalysisRedirect(search: string): string | null {
   const peerDistance = params.get("pd");
   if (peerDistance) target.set("pd", peerDistance);
   const query = target.toString();
-  return `/szpitale${query ? `?${query}` : ""}`;
+  return `${HOSPITAL_EXPLORER_PATH}${query ? `?${query}` : ""}`;
 }

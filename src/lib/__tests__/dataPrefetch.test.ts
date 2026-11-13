@@ -38,13 +38,13 @@ describe("prefetchForHref — dane strony docelowej linku", () => {
     expect(loadTrends).not.toHaveBeenCalled();
   });
 
-  it("szpitale: najnowszy rok, finanse i profile RPWDL do pamięci modułów; porównanie także pary A/B i wyceny", () => {
-    expect(prefetchForHref("/szpitale?hospital=07%7C111")).toBe("szpitale");
+  it("porównanie szpitali (każdy adres strony): najnowszy rok, finanse, profile RPWDL, pary A/B i wyceny", () => {
+    expect(prefetchForHref("/szpitale/eksplorator?hospital=07%7C111")).toBe("porownanie");
     expect(loadStaticDataset).toHaveBeenCalledWith(undefined);
     expect(loadPlotly).toHaveBeenCalledTimes(1);
-    expect(loaded()).toEqual(["financialResultsResource", "rpwdlSummaryProfilesResource"]);
+    expect(loaded()).toEqual(["financialResultsResource", "rpwdlSummaryProfilesResource", "peerPairsResource", "jgpValuationsResource"]);
     vi.clearAllMocks();
-    expect(prefetchForHref("/szpitale?hv=c")).toBe("porownanie");
+    expect(prefetchForHref("/szpitale/eksplorator?hv=c")).toBe("porownanie");
     expect(loaded()).toEqual(["financialResultsResource", "rpwdlSummaryProfilesResource", "peerPairsResource", "jgpValuationsResource"]);
   });
 

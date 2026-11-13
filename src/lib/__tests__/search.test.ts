@@ -54,9 +54,10 @@ describe("searchGroups", () => {
 });
 
 describe("searchHospitals", () => {
-  it("szuka po nazwie i mieście, z odmianą, od największych", () => {
-    expect(searchHospitals(index, "nowa sol").map((hit) => hit.key)).toEqual(["04|9251723350", "04|9252028623"]);
-    expect(searchHospitals(index, "szpital w krakowie")[0]).toMatchObject({ key: "06|6751199442", city: "Kraków", region: "Małopolskie", href: "/szpitale?hospital=06%7C6751199442" });
+  it("szuka po nazwie i mieście, z odmianą, od największych; tylko szpitale z kartą (bez karty — bez strony)", () => {
+    // 04|9252028623 (Nowa Sól) nie ma karty, więc nie ma go w wynikach.
+    expect(searchHospitals(index, "nowa sol").map((hit) => hit.key)).toEqual(["04|9251723350"]);
+    expect(searchHospitals(index, "szpital w krakowie")[0]).toMatchObject({ key: "06|6751199442", city: "Kraków", region: "Małopolskie", href: "/szpitale/6751199442-06" });
   });
 
   it("rozróżnia wpisy jednego podmiotu w kilku oddziałach NFZ", () => {
@@ -93,7 +94,7 @@ describe("parseQuery i interpretQuery", () => {
   });
 
   it("szpital na tle innych → porównanie z podobnymi szpitalami", () => {
-    expect(interpretQuery(parseQuery(index, "Kraków na tle innych"))[0].href).toBe("/szpitale?hospital=06%7C6751199442&hv=c");
+    expect(interpretQuery(parseQuery(index, "Kraków na tle innych"))[0].href).toBe("/szpitale/eksplorator?hospital=06%7C6751199442&hv=c");
   });
 
   it("pojedynczy element nie tworzy interpretacji; nieznane słowa trafiają do unknown", () => {

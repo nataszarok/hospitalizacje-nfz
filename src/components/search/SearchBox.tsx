@@ -36,10 +36,10 @@ function buildOptions(index: SearchIndex, query: string): Option[] {
       id: `g-${hit.code}`, href: hit.href, section: "Grupy JGP", code: hit.code, primary: hit.name,
       secondary: `${integer(hit.hospitalizations)} hosp. · ${index.year}`,
     })),
-    ...hospitals.map((hit): Option => ({
+    ...hospitals.flatMap((hit): Option[] => hit.href ? [{
       id: `h-${hit.key}`, href: hit.href, section: "Szpitale", primary: hit.name,
       secondary: `${hit.city} · OW ${hit.region} · ${integer(hit.hospitalizations)} hosp. · ${index.year}`,
-    })),
+    }] : []),
   ];
 }
 

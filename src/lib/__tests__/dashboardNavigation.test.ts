@@ -12,15 +12,15 @@ describe("tabFromDashboardHref", () => {
 
   it("nie przechwytuje linków do innych stron", () => {
     expect(tabFromDashboardHref("/")).toBeNull();
-    expect(tabFromDashboardHref("/szpitale")).toBeNull();
+    expect(tabFromDashboardHref("/szpitale/eksplorator")).toBeNull();
     expect(tabFromDashboardHref("/o-danych")).toBeNull();
   });
 });
 
 describe("hospitalNavigationFromHref", () => {
   it("rozróżnia profil szpitala i porównanie", () => {
-    expect(hospitalNavigationFromHref("/szpitale")).toEqual({ view: "summary" });
-    expect(hospitalNavigationFromHref("/szpitale?hv=c")).toEqual({ view: "comparison" });
+    expect(hospitalNavigationFromHref("/szpitale/eksplorator")).toEqual({ view: "summary" });
+    expect(hospitalNavigationFromHref("/szpitale/eksplorator?hv=c")).toEqual({ view: "comparison" });
     expect(hospitalNavigationFromHref("/analizy?hv=c")).toBeNull();
   });
 });

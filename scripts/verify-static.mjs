@@ -162,6 +162,62 @@ console.log(`Hospitalization data OK: ${index.years.join(", ")}; ${((totalSize +
   console.log(`Group pages OK: ${pagesIndex.groups.length} groups, ${(totalSize / 1024 / 1024).toFixed(2)} MiB, largest ${largest[1]} ${(largest[0] / 1024).toFixed(0)} KiB.`);
 }
 
+// Ryczałt / za wykonanie kart szpitali (scripts/build_hospital_payment.py): każdy szpital z kartą. Hospitalizacje zakresów
+// w roku = hospitalizacje szpitala w plikach placówek (metoda min); kwoty zakresów = kwoty szpitala w plikach grup
+// (tolerancja 0,1% na zaokrąglenia i kody spoza katalogu grup).
+{
+  const keys = JSON.parse(await readFile("build-data/hospitals/index.json", "utf8")).pages.map(([key]) => key);
+  const { size, data: payment } = await readGzipJson("build-data/hospitals/payment.json.gz");
+  const pagesIndex = JSON.parse(await readFile("build-data/jgp/index.json", "utf8"));
+  const facilityIndex = JSON.parse(await readFile(path.join(DIR, "facilities", "index.json"), "utf8"));
+  const facilityTotals = new Map();
+  for (const name of (await readdir(path.join(DIR, "facilities"))).filter((file) => file.endsWith(".json.gz"))) {
+    const { data: section } = await readGzipJson(path.join(DIR, "facilities", name));
+    section.rows.facility.forEach((facility, i) => {
+      const [ow, nip] = facilityIndex.facilities[facility];
+      const id = `${ow}|${nip}|${facilityIndex.years[section.rows.year[i]]}`;
+      if (keys.some((key) => id.startsWith(`${key}|`))) facilityTotals.set(id, (facilityTotals.get(id) ?? 0) + section.rows.hMin[i]);
+    });
+  }
+  const groupTotals = new Map();
+  for (const code of pagesIndex.groups) {
+    const { data: group } = await readGzipJson(path.join("build-data/jgp", `${code}.json.gz`));
+    for (const [year, rows] of Object.entries(group.valuePln?.providers ?? {})) {
+      for (const [key, value] of rows) if (keys.includes(key)) groupTotals.set(`${key}|${year}`, (groupTotals.get(`${key}|${year}`) ?? 0) + value);
+    }
+  }
+  for (const key of keys) {
+    const hospital = payment.hospitals[key];
+    if (!hospital?.hosp?.length) throw new Error(`payment.json.gz: no hospitalizations for ${key} (run scripts/build_hospital_payment.py).`);
+    hospital.years.forEach((year, y) => {
+      const sum = hospital.value.filter(([yearIndex]) => yearIndex === y).reduce((total, row) => total + row[3], 0);
+      const expected = groupTotals.get(`${key}|${year}`) ?? 0;
+      if (Math.abs(sum - expected) > Math.max(1000, expected * 0.001)) throw new Error(`payment.json.gz: ${key} ${year} settlements sum to ${sum}, group files have ${expected}.`);
+      const hosp = hospital.hosp.filter(([yearIndex]) => yearIndex === y).reduce((total, row) => total + row[3], 0);
+      const facility = facilityTotals.get(`${key}|${year}`) ?? 0;
+      if (hosp !== facility) throw new Error(`payment.json.gz: ${key} ${year} has ${hosp} hospitalizations, facilities/ has ${facility}.`);
+    });
+  }
+  console.log(`Hospital payment OK: ${keys.length} hospitals, ${(size / 1024).toFixed(1)} KiB.`);
+}
+
+// Umowy NFZ kart szpitali (scripts/build_nfz_contracts.py, API NFZ „Umowy”): każdy szpital z kartą ma umowy przynajmniej
+// w jednym roku, a pozycje planu wskazują istniejące umowy i produkty.
+{
+  const keys = JSON.parse(await readFile("build-data/hospitals/index.json", "utf8")).pages.map(([key]) => key);
+  const { size, data: contracts } = await readGzipJson("build-data/hospitals/contracts.json.gz");
+  for (const key of keys) {
+    const hospital = contracts.hospitals[key];
+    if (!hospital) throw new Error(`contracts.json.gz: no contracts for ${key} (run scripts/build_nfz_contracts.py).`);
+    // Lata bez umów są możliwe (np. świadczeniodawca od 2020 r.); pusta lista lat już nie.
+    if (!hospital.years.length) throw new Error(`contracts.json.gz: ${key} has no agreements in any year.`);
+    for (const [agreement, product] of hospital.plans) {
+      if (!hospital.agreements[agreement] || !hospital.products[product]) throw new Error(`contracts.json.gz: ${key} plan points to a missing agreement or product.`);
+    }
+  }
+  console.log(`NFZ contracts OK: ${keys.length} hospitals, ${(size / 1024).toFixed(1)} KiB.`);
+}
+
 // Mapa województw (scripts/build_regions_map.py): 16 województw z kodami OW jak w danych.
 {
   const { size, data: map } = await readGzipJson("public/data/regions-map.json.gz");
