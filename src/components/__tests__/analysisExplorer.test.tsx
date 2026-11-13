@@ -139,7 +139,7 @@ describe("AnalysisExplorer", () => {
   it("ma tytuł i zwinięty wstęp, który rozwija „Jak korzystać?” i zapamiętuje", async () => {
     render(<AnalysisExplorer />);
     await screen.findByText("widok: w czasie/P1/min");
-    expect(screen.getByRole("heading", { level: 1, name: "Eksplorator danych" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: "Eksplorator JGP" })).toBeInTheDocument();
     expect(screen.getByText(/Hospitalizacje · grupy JGP · 2024–2025/)).toBeInTheDocument();
     const toggle = screen.getByRole("button", { name: /Jak korzystać\?/ });
     expect(toggle).toHaveAttribute("aria-expanded", "false");
@@ -157,7 +157,7 @@ describe("AnalysisExplorer", () => {
     window.localStorage.setItem("funduszdanych:explorer-focus", "1");
     render(<AnalysisExplorer />);
     await screen.findByText("widok: w czasie/P1/min");
-    expect(screen.getByRole("heading", { level: 1, name: "Eksplorator danych" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: "Eksplorator JGP" })).toBeInTheDocument();
     expect(document.documentElement).not.toHaveAttribute("data-explorer-focus");
     vi.stubGlobal("scrollTo", vi.fn());
     fireEvent.click(screen.getByRole("button", { name: "Tryb analizy" }));
@@ -172,7 +172,7 @@ describe("AnalysisExplorer", () => {
     render(<AnalysisExplorer />);
     expect(await screen.findByRole("button", { name: "Zakończ tryb analizy" })).toHaveAttribute("aria-pressed", "true");
     fireEvent.click(screen.getByRole("button", { name: "Zakończ tryb analizy" }));
-    expect(screen.getByRole("heading", { level: 1, name: "Eksplorator danych" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: "Eksplorator JGP" })).toBeInTheDocument();
     expect(document.documentElement).not.toHaveAttribute("data-explorer-focus");
     expect(window.location.search).not.toContain("pelny");
     window.localStorage.removeItem("funduszdanych:explorer-focus");

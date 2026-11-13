@@ -610,10 +610,12 @@ export function PeerDistanceSlider({ value, onChange }: { value:number; onChange
   </div>;
 }
 
-export function HospitalAnalysisTab({ method, products, hospitalKey, setHospitalKey, hospitalSubtab, setHospitalSubtab, peerThreshold, setPeerThreshold, peerDistance, setPeerDistance }: {
+export function HospitalAnalysisTab({ method, products, hospitalKey, setHospitalKey, hospitalSubtab, setHospitalSubtab, peerThreshold, setPeerThreshold, peerDistance, setPeerDistance, showViewSwitch = true }: {
   method: EstimationMethod; products: ProductOption[];
   hospitalKey:string; setHospitalKey:(value:string)=>void;
   hospitalSubtab:"summary"|"comparison"; setHospitalSubtab:(value:"summary"|"comparison")=>void;
+  /** Przełącznik Profil / Porównanie w panelu (strona porównania szpitali go nie pokazuje: ma tylko porównanie). */
+  showViewSwitch?: boolean;
   peerThreshold:number; setPeerThreshold:(value:number)=>void;
   peerDistance:number; setPeerDistance:(value:number)=>void;
 }) {
@@ -830,7 +832,7 @@ export function HospitalAnalysisTab({ method, products, hospitalKey, setHospital
         />
       </section>
 
-      <section className="filter-section">
+      {showViewSwitch ? <section className="filter-section">
         <div className="sidebar-kicker">Widok</div>
         <SegmentedControl
           fullWidth
@@ -842,7 +844,7 @@ export function HospitalAnalysisTab({ method, products, hospitalKey, setHospital
           ]}
           className="mantine-segmented"
         />
-      </section>
+      </section> : null}
 
       {hospitalSubtab==="comparison" ? <section className="filter-section">
         <div className="sidebar-kicker">Podobieństwo par</div>

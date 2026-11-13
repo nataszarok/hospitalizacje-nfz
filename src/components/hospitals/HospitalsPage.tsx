@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { HospitalAnalysisTab } from "@/components/HospitalAnalysisTab";
-import { HOSPITAL_VIEW_CHANGED_EVENT, HOSPITAL_VIEW_NAVIGATE_EVENT, type HospitalNavigation } from "@/lib/dashboardNavigation";
+import { HOSPITAL_VIEW_CHANGED_EVENT, type HospitalNavigation } from "@/lib/dashboardNavigation";
 import { hospitalUrlSearch, readHospitalUrlState, type HospitalView } from "@/lib/hospitalUrlState";
 import { PEER_DISTANCE_A_LIMIT } from "@/lib/peerDistance";
 import { LoadingStatus, Skeleton } from "@/components/portal/Skeleton";
@@ -15,12 +15,14 @@ const noop = () => {};
 const METHOD = "min";
 
 /**
- * Moduł „Szpitale publiczne”: profil i porównanie z podobnymi placówkami (/szpitale).
+ * Porównanie szpitala z podobnymi placówkami (`/szpitale/eksplorator`, w menu „Porównania”): panel z wyborem szpitala i podobieństwem par.
+ * Dawny widok „Profil” zastąpiła karta szpitala `/szpitale/<NIP>-<OW>`; strona zawsze pokazuje porównanie (stare adresy z profilem też).
  * Dane z najnowszego roku — finanse i model par są liczone dla niego.
  */
+const VIEW: HospitalView = "comparison";
 export function HospitalsPage() {
   // `useSearchParams` wymaga granicy Suspense: statyczny HTML ma szkielet, stronę rysuje przeglądarka.
-  return <Suspense fallback={<HospitalsSkeleton comparison={false} />}><HospitalsApp /></Suspense>;
+  return <Suspense fallback={<HospitalsSkeleton />}><HospitalsApp /></Suspense>;
 }
 
 function HospitalsApp() {
@@ -37,7 +39,6 @@ function HospitalsApp() {
   const [year, setYear] = useState(boot?.reference.analysisYear ?? "");
   const [products, setProducts] = useState<ProductOption[]>(boot?.reference.products ?? []);
   const [hospitalKey, setHospitalKey] = useState(boot?.state.hospitalKey ?? "");
-  const [view, setView] = useState<HospitalView>(boot?.state.view ?? "summary");
   const [peerDistance, setPeerDistance] = useState(boot?.state.peerDistance ?? PEER_DISTANCE_A_LIMIT);
   const [error, setError] = useState<string | null>(null);
 
@@ -50,29 +51,21 @@ function HospitalsApp() {
         setProducts(reference.products);
         setYear(reference.analysisYear);
         setHospitalKey(state.hospitalKey);
-        setView(state.view);
         setPeerDistance(state.peerDistance);
         setReady(true);
       })
       .catch((err: unknown) => setError(err instanceof Error ? err.message : "Błąd pobierania danych."));
   }, [boot]);
 
-  // Most z nagłówkiem portalu: „Szpitale” i „Porównania” przełączają widok bez przeładowania strony.
-  useEffect(() => {
-    const handle = (event: Event) => setView((event as CustomEvent<HospitalNavigation>).detail.view);
-    window.addEventListener(HOSPITAL_VIEW_NAVIGATE_EVENT, handle);
-    return () => window.removeEventListener(HOSPITAL_VIEW_NAVIGATE_EVENT, handle);
-  }, []);
-
   useEffect(() => {
     if (!ready) return;
-    window.history.replaceState(window.history.state, "", `${window.location.pathname}${hospitalUrlSearch({ hospitalKey, view, method: METHOD, peerDistance })}${window.location.hash}`);
-    window.dispatchEvent(new CustomEvent<HospitalNavigation>(HOSPITAL_VIEW_CHANGED_EVENT, { detail: { view } }));
-  }, [ready, hospitalKey, view, peerDistance]);
+    window.history.replaceState(window.history.state, "", `${window.location.pathname}${hospitalUrlSearch({ hospitalKey, view: VIEW, method: METHOD, peerDistance })}${window.location.hash}`);
+    window.dispatchEvent(new CustomEvent<HospitalNavigation>(HOSPITAL_VIEW_CHANGED_EVENT, { detail: { view: VIEW } }));
+  }, [ready, hospitalKey, peerDistance]);
 
   if (error) return <main className="center-state error">{error}</main>;
   // Szkielet strony zamiast komunikatu na środku: panel i nagłówek jak po załadowaniu, bez przeskoku.
-  if (!ready) return <HospitalsSkeleton comparison={view === "comparison"} />;
+  if (!ready) return <HospitalsSkeleton />;
 
   return <div className="app-shell">
     <aside className="sidebar">
@@ -83,7 +76,7 @@ function HospitalsApp() {
         </div>
       </div>
 
-      {/* HospitalAnalysisTab wstawia tu wybór szpitala i widoku. */}
+      {/* HospitalAnalysisTab wstawia tu wybór szpitala i podobieństwo par. */}
       <div id="hospital-sidebar-slot" />
 
       <div id="hospital-sidebar-bottom-slot" />
@@ -92,7 +85,7 @@ function HospitalsApp() {
 
     <main className="main">
       <header className="page-header">
-        <h1>{view === "comparison" ? "Porównanie szpitali" : "Profil szpitala"}</h1>
+        <h1>Porównanie szpitali</h1>
         <p>{HOSPITALS_LEAD} · dane NFZ {year}</p>
       </header>
       <HospitalAnalysisTab
@@ -100,8 +93,9 @@ function HospitalsApp() {
         products={products}
         hospitalKey={hospitalKey}
         setHospitalKey={setHospitalKey}
-        hospitalSubtab={view}
-        setHospitalSubtab={setView}
+        hospitalSubtab={VIEW}
+        setHospitalSubtab={noop}
+        showViewSwitch={false}
         peerThreshold={75}
         setPeerThreshold={noop}
         peerDistance={peerDistance}
@@ -111,10 +105,10 @@ function HospitalsApp() {
   </div>;
 }
 
-const HOSPITALS_LEAD = "Oddziały, łóżka, świadczenia i finanse szpitala oraz porównanie z podobnymi placówkami";
+const HOSPITALS_LEAD = "Szpital na tle grupy podobnych placówek dobranych przez model par";
 
-/** Szkielet strony na czas pierwszego pobrania danych: panel, nagłówek i miejsca na profil, jak po załadowaniu. */
-function HospitalsSkeleton({ comparison }: { comparison: boolean }) {
+/** Szkielet strony na czas pierwszego pobrania danych: panel, nagłówek i miejsca na porównanie, jak po załadowaniu. */
+function HospitalsSkeleton() {
   return <div className="app-shell" aria-busy="true">
     <aside className="sidebar">
       <div className="sidebar-brand">
@@ -128,10 +122,10 @@ function HospitalsSkeleton({ comparison }: { comparison: boolean }) {
     </aside>
     <main className="main">
       <header className="page-header">
-        <h1>{comparison ? "Porównanie szpitali" : "Profil szpitala"}</h1>
+        <h1>Porównanie szpitali</h1>
         <p>{HOSPITALS_LEAD}</p>
       </header>
-      <LoadingStatus>Ładowanie profili szpitali…</LoadingStatus>
+      <LoadingStatus>Ładowanie porównania szpitali…</LoadingStatus>
       <Skeleton height={96} />
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12, marginTop: 16 }}>
         {[0, 1, 2, 3].map((i) => <Skeleton key={i} height={92} />)}

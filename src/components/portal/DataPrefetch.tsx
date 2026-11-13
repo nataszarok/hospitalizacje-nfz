@@ -13,7 +13,7 @@ export function DataPrefetch() {
     const onIntent = (event: Event) => {
       const link = event.target instanceof Element ? event.target.closest("a[href]") : null;
       const href = link?.getAttribute("href");
-      // Eksplorator danych i eksplorator szpitali; katalog `/szpitale` i karty szpitali mają dane w HTML.
+      // Eksplorator JGP i porównanie szpitali; katalog `/szpitale` i karty szpitali mają dane w HTML.
       if (!href || !/^\/(analizy|szpitale\/eksplorator)(\?|$)/.test(href)) return;
       // Porównanie szpitali ma własne pliki (pary A/B): osobny klucz niż profil.
       const key = href.split("?")[0] + (/[?&]hv=c(&|$)/.test(href) ? "?hv=c" : "");

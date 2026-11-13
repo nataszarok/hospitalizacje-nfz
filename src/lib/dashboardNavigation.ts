@@ -9,7 +9,7 @@ export const HOSPITAL_VIEW_CHANGED_EVENT = "atlas:hospital-view-changed";
 export type DashboardNavigation = { tab: DashboardActiveTab };
 export type HospitalNavigation = { view: HospitalView };
 
-/** Eksplorator szpitali (dawne `/szpitale`): profil i porównanie z panelem wyboru szpitala. `/szpitale` to katalog szpitali. */
+/** Porównanie szpitali (dawny eksplorator szpitali; w menu „Porównania”): porównanie z podobnymi z panelem wyboru szpitala. `/szpitale` to katalog szpitali. */
 export const HOSPITAL_EXPLORER_PATH = "/szpitale/eksplorator";
 
 // Adresy modułów portalu używane przez stronę główną i nagłówek.
@@ -40,7 +40,7 @@ export function navigationFromDashboardHref(href: string): DashboardNavigation |
   return { tab: "trend" };
 }
 
-/** Widok eksploratora szpitali dla jego adresu; `null` dla innych stron (także katalogu `/szpitale`). */
+/** Widok strony porównania szpitali dla jej adresu; `null` dla innych stron (także katalogu `/szpitale`). */
 export function hospitalNavigationFromHref(href: string): HospitalNavigation | null {
   const url = new URL(href, "https://atlas.invalid");
   if (url.pathname !== HOSPITAL_EXPLORER_PATH) return null;

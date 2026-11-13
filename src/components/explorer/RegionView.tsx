@@ -10,7 +10,7 @@ import { CHART_COLORS, REGION_PICK_COLORS } from "@/lib/chartPalette";
 import { formatCityName } from "@/lib/formatters";
 import { cartogramCells, scaleColor, type CartogramCell, type RegionsMap } from "@/lib/jgpCard";
 import {
-  cityProviders, citySection, median, cityYearPoints, cityYearTotals, facilityDots, facilityYearDeaths, facilityYearTotals, MIN_FACILITY_HOSPITALIZATIONS, regionalBreakdown,
+  cityProviders, citySection, DOT_SCALE_FLOOR, DOT_VALUE_FLOOR, dotRadius, dotScaleMax, median, cityYearPoints, cityYearTotals, facilityDots, facilityYearDeaths, facilityYearTotals, MIN_FACILITY_HOSPITALIZATIONS, regionalBreakdown,
   type CitiesMap, type CityProviderRow, type CityYearPoint, type FacilityDot, type FacilityYearsIndex, type FacilityYearsSection, type RegionRow,
 } from "@/lib/regions";
 import {
@@ -26,25 +26,8 @@ const integer = (value: number) => Math.round(value).toLocaleString("pl-PL");
 const deathsWord = (n: number) => n === 1 ? "zgon" : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? "zgony" : "zgonów";
 const decimal = (value: number) => value.toLocaleString("pl-PL", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 const CITY_LIMIT = 15;
-/** Promień kropki placówki z największą liczbą hospitalizacji we wszystkich latach (jednostki mapy o szerokości 1000). */
-export const MAX_DOT = 30;
-/** Najmniejsza widoczna kropka placówki z hospitalizacjami. */
-const MIN_DOT = 2;
-/**
- * Najmniejszy koniec skali wielkości kropek (hospitalizacje placówki w roku). Bez progu największa kropka grupy
- * ze 100 hospitalizacjami byłaby tak duża jak kropka grupy z 8 000. Próg z danych 2017–2025: największa placówka
- * w roku ma poniżej 500 hospitalizacji w 65% kodów produktów (mediana 265, maksimum ok. 8 500), więc duże grupy
- * zachowują własną skalę, a małe mają mniejsze kropki.
- */
-export const DOT_SCALE_FLOOR = 500;
-/** Koniec skali wielkości kropek: największa wartość placówki w całym okresie, nie mniej niż `DOT_SCALE_FLOOR`. */
-export const dotScaleMax = (maxFacility: number) => Math.max(maxFacility, DOT_SCALE_FLOOR);
-/**
- * Najmniejsza wartość na skali wielkości kropek: placówka z mniejszą liczbą hospitalizacji ma kropkę jak placówka z 25.
- * Różnica 10 a 20 hospitalizacji nie jest ważna na mapie, a kropki w dużych grupach byłyby za małe do najechania.
- * Dymek zawsze pokazuje prawdziwą liczbę.
- */
-export const DOT_VALUE_FLOOR = 25;
+// Skala wielkości kropek jest wspólna z mapą katalogu szpitali (`src/lib/regions.ts`).
+export { DOT_SCALE_FLOOR, DOT_VALUE_FLOOR, MAX_DOT, dotRadius, dotScaleMax } from "@/lib/regions";
 /** Przezroczystość kropek spoza wybranych obszarów. */
 const DOT_OUTSIDE_OPACITY = 0.3;
 
@@ -60,15 +43,6 @@ export type RegionViewProps = {
   onAreasChange?: (areas: AnalysisArea[]) => void;
 };
 
-/**
- * Promień kropki: pole koła proporcjonalne do liczby hospitalizacji (promień ∝ √wartości),
- * skala wspólna dla wszystkich lat — `max` to koniec skali (`dotScaleMax`). Wartości poniżej `DOT_VALUE_FLOOR`
- * mają kropkę jak `DOT_VALUE_FLOOR`; kropka ma co najmniej `MIN_DOT`.
- */
-export function dotRadius(hospitalizations: number, max: number): number {
-  if (hospitalizations <= 0 || max <= 0) return 0;
-  return Math.max(MIN_DOT, MAX_DOT * Math.sqrt(Math.max(hospitalizations, DOT_VALUE_FLOOR) / max));
-}
 
 /**
  * Położenie na skali koloru (−1 = odniesienie / `span`, 0 = odniesienie, 1 = `span` × odniesienie).

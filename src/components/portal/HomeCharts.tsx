@@ -5,7 +5,8 @@ import type { HistogramBin, PeerExample } from "@/lib/hospitalHomeStats";
 import type { HomeGroup, HomeStats, HomeYear } from "@/lib/homeStats";
 import { scaleColor } from "@/lib/jgpCard";
 import { PEER_DISTANCE_A_LIMIT } from "@/lib/peerDistance";
-import { hospitalHref, jgpHref } from "@/lib/portalLinks";
+import { jgpHref } from "@/lib/portalLinks";
+import { HospitalLink } from "@/components/TableLinks";
 import styles from "./HomeCharts.module.css";
 
 // Lekkie wykresy SVG strony głównej (bez Plotly): rysowane podczas budowania, bez JavaScriptu w przeglądarce.
@@ -91,17 +92,17 @@ export function ContinuousHistogram({ bins, label, unit }: { bins: HistogramBin[
   </svg>;
 }
 
-/** Podobne szpitale: dystans od wybranego szpitala na skali 0–granica klasy A; wiersz prowadzi do profilu. */
+/** Podobne szpitale: dystans od wybranego szpitala na skali 0–granica klasy A; wiersz prowadzi do karty szpitala (bez karty — bez linku). */
 export function PeerDistances({ example }: { example: PeerExample }) {
   return <ol className={styles.peerList} aria-label={`Najbardziej podobne szpitale: ${example.name}`}>
     {example.peers.map((peer) => {
       const [ow, nip] = peer.key.split("|");
       return <li key={peer.key}>
-        <Link href={hospitalHref(ow, nip)} className={styles.peerRow} title={`${peer.name} (${peer.city}): dystans ${decimal(peer.distance)}`}>
+        <HospitalLink owNfz={ow} nip={nip} className={styles.peerRow} title={`${peer.name} (${peer.city}): dystans ${decimal(peer.distance)}`}>
           <span className={styles.peerName}><span>{peer.name}</span><small>{peer.city}</small></span>
           <span className={styles.peerTrack} aria-hidden="true"><span className={styles.peerDot} style={{ left: `${Math.min(peer.distance / PEER_DISTANCE_A_LIMIT, 1) * 100}%` }} /></span>
           <span className={styles.peerValue}>{decimal(peer.distance)}</span>
-        </Link>
+        </HospitalLink>
       </li>;
     })}
   </ol>;

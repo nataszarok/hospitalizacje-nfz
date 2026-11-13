@@ -1,0 +1,406 @@
+/* Zakładka „Finanse” karty szpitala: wykres słupków w latach, cztery drogi pieniędzy, tabele z rozwijanymi wierszami. */
+
+.chartWrap {
+  position: relative;
+}
+
+.chart {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.band { fill: var(--color-background-muted); }
+.grid { stroke: var(--color-border); stroke-width: 1; }
+.axis { stroke: var(--color-border-strong); stroke-width: 1.5; }
+
+.tickY {
+  fill: var(--color-text-tertiary);
+  font-size: var(--fs-sm);
+  text-anchor: end;
+}
+
+.tickX,
+.tickOn {
+  fill: var(--color-text-tertiary);
+  font-size: var(--fs-sm);
+  text-anchor: middle;
+}
+
+.tickOn {
+  fill: var(--color-primary);
+  font-weight: var(--fw-bold);
+}
+
+.total {
+  fill: var(--color-text);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  text-anchor: middle;
+}
+
+.segmentDark,
+.segmentLight {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  text-anchor: middle;
+  pointer-events: none;
+}
+
+.segmentDark { fill: #fff; }
+.segmentLight { fill: var(--color-data-strong); }
+
+.yearHit {
+  cursor: pointer;
+  outline: none;
+}
+
+.yearHit:focus-visible [data-bar] {
+  stroke: var(--color-primary);
+  stroke-width: 2;
+}
+
+/* Kreskowanie w legendzie: pozycje szpitalne bez grup JGP (sam plan umowy). */
+.hatch {
+  border: 1px solid var(--color-data-soft);
+  background: repeating-linear-gradient(135deg, var(--color-data-soft) 0 2px, #fff 2px 5px);
+}
+
+.faint {
+  border: 1px solid var(--color-data-soft);
+  background: var(--color-data-faint);
+}
+
+.markerKey {
+  height: 3px !important;
+  background: var(--color-signal);
+  align-self: center;
+}
+
+/* Liczby sekcji (umowy, przychody, wynik) w rzędzie kafli. */
+.facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 10px;
+  margin: 0 0 14px;
+}
+
+.facts > div {
+  padding: 10px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: #fff;
+}
+
+.facts dt {
+  color: var(--color-text-secondary);
+  font-size: var(--fs-sm);
+}
+
+.facts dd {
+  margin: 2px 0 0;
+  color: var(--color-heading);
+  font-size: var(--fs-2xl);
+  font-weight: var(--fw-semibold);
+  font-variant-numeric: tabular-nums;
+}
+
+.facts span {
+  color: var(--color-text-tertiary);
+  font-size: var(--fs-sm);
+}
+
+.positive { color: var(--color-positive) !important; }
+.negative { color: var(--color-deviation-up) !important; }
+
+/* Cztery drogi pieniędzy: karty z numerem w kolorze grupy. */
+.ways {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 10px;
+  margin: 0 0 14px;
+}
+
+.way {
+  padding: 12px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: #fff;
+  font-size: var(--fs-sm);
+  line-height: 1.45;
+}
+
+.wayHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.wayNumber {
+  display: grid;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--color-data-strong);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+}
+
+.wayNumber.dark { color: #fff; }
+
+.wayValue {
+  margin: 6px 0 0;
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-semibold);
+  font-variant-numeric: tabular-nums;
+}
+
+.wayValue small {
+  margin-left: 6px;
+  color: var(--color-text-tertiary);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-regular);
+}
+
+.way p {
+  margin: 6px 0 0;
+  color: var(--color-text-secondary);
+}
+
+.way p b {
+  color: var(--color-text);
+}
+
+.swatchStrong { background: var(--color-data-strong); }
+.swatchSoft { background: var(--color-data-soft); }
+
+/* Tabele z rozwijanymi wierszami: grupa (pogrubiona), pozycja (wcięta), szczegół (szary, wcięty). */
+.rowButton {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.rowButton:hover b {
+  text-decoration: underline;
+}
+
+.caret {
+  display: inline-block;
+  width: 10px;
+  color: var(--color-text-tertiary);
+}
+
+.groupRow td {
+  background: var(--color-background-soft);
+}
+
+.indent { padding-left: 22px !important; }
+.indent2 { padding-left: 40px !important; }
+
+.sub td {
+  color: var(--color-text-secondary);
+  font-size: var(--fs-sm);
+}
+
+.small {
+  display: block;
+  color: var(--color-text-tertiary);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-regular);
+}
+
+.na {
+  color: var(--color-text-tertiary);
+  font-size: var(--fs-sm);
+}
+
+.groupSwatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: var(--radius-badge);
+}
+
+/* Limit pozycji umowy: stała kwota, bez limitu (zielony), część bez limitu, w kwocie umowy. */
+.limit {
+  display: inline-block;
+  padding: 0 6px;
+  border-radius: var(--radius-badge);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  white-space: nowrap;
+}
+
+.limit-fix { background: var(--color-data-faint); color: var(--color-data-strong); }
+.limit-free { background: #E3F1E8; color: var(--color-positive); }
+.limit-part { border: 1px solid var(--color-positive); color: var(--color-positive); }
+.limit-contract { background: var(--color-background-muted); color: var(--color-text-secondary); }
+
+/* Podział ryczałt / za wykonanie: pasek dwóch części i oba udziały słowami. */
+.split {
+  display: inline-flex;
+  width: 64px;
+  height: 8px;
+  margin-right: 8px;
+  overflow: hidden;
+  border-radius: var(--radius-badge);
+  background: var(--color-background-muted);
+  vertical-align: middle;
+}
+
+.split i:first-child { background: var(--color-data-strong); }
+.split i:last-child { background: var(--color-data-soft); }
+
+.shareText {
+  color: var(--color-text-secondary);
+  font-size: var(--fs-sm);
+  white-space: nowrap;
+}
+
+/* Kody JGP w rozwinięciu wiersza: link do karty grupy z tym szpitalem; ramka = grupa w obu częściach oddziału. */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+
+.chip {
+  padding: 0 6px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-badge);
+  background: #fff;
+  color: var(--color-primary);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  text-decoration: none;
+}
+
+.chip:hover { border-color: var(--color-primary); }
+
+.chipBoth {
+  border-color: var(--color-data);
+  background: var(--color-data-faint);
+}
+
+/* Kwota za pobyt wobec średniej: skala logarytmiczna od ¼× do 4×, środek = średnia szpitala. */
+.idx {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.idxBar {
+  position: relative;
+  width: 70px;
+  height: 8px;
+  border-radius: var(--radius-badge);
+  background: var(--color-background-muted);
+}
+
+.idxBar i {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: var(--radius-badge);
+}
+
+.idxBar .mid {
+  left: 50%;
+  width: 1px;
+  background: var(--color-text-tertiary);
+}
+
+.inbar {
+  display: inline-block;
+  width: 50px;
+  height: 6px;
+  margin-right: 8px;
+  border-radius: var(--radius-badge);
+  background: var(--color-background-muted);
+  vertical-align: middle;
+}
+
+.inbar i {
+  display: block;
+  height: 100%;
+  border-radius: var(--radius-badge);
+  background: var(--color-data);
+}
+
+.explain {
+  padding: 12px 16px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: #fff;
+}
+
+.explain summary {
+  font-weight: var(--fw-semibold);
+  cursor: pointer;
+}
+
+.explain dl {
+  margin: 10px 0 0;
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+}
+
+.explain dt {
+  margin-top: 8px;
+  font-weight: var(--fw-semibold);
+}
+
+.explain dd {
+  margin: 2px 0 0;
+  color: var(--color-text-secondary);
+}
+
+.intro {
+  margin: 0 0 14px;
+  color: var(--color-text-secondary);
+  font-size: var(--fs-md);
+  line-height: 1.5;
+}
+
+.tabLink {
+  margin: 8px 12px 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-primary);
+  font: inherit;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-semibold);
+  cursor: pointer;
+}
+
+.tabLink:hover { text-decoration: underline; }
+
+/* Wartość na końcu linii indeksu: szpital pogrubiony, odniesienia drugorzędne. */
+.endLabel,
+.endLabelStrong {
+  fill: var(--color-text-secondary);
+  font-size: var(--fs-sm);
+}
+
+.endLabelStrong {
+  fill: var(--color-data);
+  font-weight: var(--fw-bold);
+}
+
+/* Klucz linii „średnia całej sieci”: przerywana, jaśniejsza niż średnia poziomu. */
+.keyDash {
+  border-top: 1.5px dashed var(--color-border-strong) !important;
+}

@@ -1,18 +1,23 @@
 import { describe, expect, it } from "vitest";
-import { hospitalCardHref, hospitalPageKey } from "@/lib/hospitalPages";
-import { explorerHref, hospitalExplorerHref, hospitalHref, jgpHref } from "@/lib/portalLinks";
+import { hospitalCardHref, hospitalPageKey, hospitalSlug } from "@/lib/hospitalPages";
+import { explorerHref, hospitalComparisonHref, hospitalHref, jgpHref } from "@/lib/portalLinks";
 
 describe("linki portalu", () => {
-  it("buduje adres profilu z kluczem OW|NIP w eksploratorze szpitali, gdy szpital nie ma karty", () => {
-    expect(hospitalHref("07", "1234567890")).toBe("/szpitale/eksplorator?hospital=07%7C1234567890");
-    expect(hospitalExplorerHref("16", "6691044410")).toBe("/szpitale/eksplorator?hospital=16%7C6691044410");
+  it("szpital bez karty nie ma adresu (nie ma strony, widoki pokazują nazwę bez linku)", () => {
+    expect(hospitalHref("07", "1234567890")).toBeNull();
   });
 
-  it("szpital z kartą prowadzi do /szpitale/[nip]; NIP z adresu daje klucz OW|NIP", () => {
-    expect(hospitalHref("16", "6691044410")).toBe("/szpitale/6691044410");
+  it("szpital z kartą prowadzi do /szpitale/<NIP>-<OW>; fragment adresu daje klucz OW|NIP tylko dla szpitali z kartą", () => {
+    expect(hospitalHref("16", "6691044410")).toBe("/szpitale/6691044410-16");
+    expect(hospitalSlug("16|6691044410")).toBe("6691044410-16");
     expect(hospitalCardHref("07", "6691044410")).toBeNull();
-    expect(hospitalPageKey("6691044410")).toBe("16|6691044410");
-    expect(hospitalPageKey("1234567890")).toBeNull();
+    expect(hospitalPageKey("6691044410-16")).toBe("16|6691044410");
+    expect(hospitalPageKey("6691044410")).toBeNull();
+    expect(hospitalPageKey("1234567890-07")).toBeNull();
+  });
+
+  it("porównanie z podobnymi: strona porównania szpitali, także dla szpitala z kartą", () => {
+    expect(hospitalComparisonHref("16", "6691044410")).toBe("/szpitale/eksplorator?hospital=16%7C6691044410&hv=c");
   });
 
   it("linkuje każdą grupę JGP do jej karty", () => {

@@ -8,7 +8,7 @@ import { loadHospitalizationIndex, loadStaticDataset, loadTrends } from "@/lib/s
  * pobierać dane strony docelowej. Loadery z `staticData.ts` trzymają obietnice w pamięci, więc strona po kliknięciu
  * dostaje gotowe albo już pobierane dane i krócej pokazuje szkielet.
  * `/analizy`: lista lat, plik roku (`y` z adresu albo najnowszy), trendy dla widoku „W czasie” (bez `t`).
- * Eksplorator szpitali (`/szpitale/eksplorator`): plik najnowszego roku, finanse i profile RPWDL; porównanie (`hv=c`) także pary A/B i wyceny JGP.
+ * Porównanie szpitali (`/szpitale/eksplorator`): plik najnowszego roku, finanse, profile RPWDL, pary A/B i wyceny JGP.
  * Pliki trafiają do pamięci modułów (`staticData.ts`, `hospitalData.ts`), więc strona po kliknięciu rysuje wyniki
  * w pierwszym renderze, bez szkieletu.
  * Obie strony: biblioteka Plotly (ok. 3,5 MB). Bez niej po kliknięciu miejsce wykresu jest puste, aż Plotly się pobierze i uruchomi.
@@ -33,8 +33,7 @@ export function prefetchForHref(href: string, origin = "http://localhost"): stri
     quiet(loadStaticDataset());
     quiet(financialResultsResource.load());
     quiet(rpwdlSummaryProfilesResource.load());
-    // Porównanie (`hv=c`): pary A/B (ok. 3,5 MB) i wyceny tylko dla linku do porównania.
-    if (url.searchParams.get("hv") !== "c") return "szpitale";
+    // Strona ma tylko porównanie: zawsze pary A/B (ok. 3,5 MB) i wyceny.
     quiet(peerPairsResource.load());
     quiet(jgpValuationsResource.load());
     return "porownanie";

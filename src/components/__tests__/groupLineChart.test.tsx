@@ -65,6 +65,20 @@ describe("GroupLineChart — okres", () => {
     expect(yearly.traces[0].y).toEqual([null, 12]);
   });
 
+  it("`activeYearsOnly`: rok bez hospitalizacji to przerwa (null), nie zero; oś miesięcy ma stały zakres wszystkich lat", async () => {
+    // Hospitalizacje tylko w 2023 r.; śmiertelność (udział) z mianownikiem hospitalizacji.
+    const hosp = months.map((_, i) => i < 3 ? 4 : 0);
+    const deaths = months.map((_, i) => i === 1 ? 2 : 0);
+    const { traces, layout } = await draw([{ key: "s", name: "Szpital", values: hosp, activeYearsOnly: true }]);
+    expect(traces[0].y).toEqual([4, 4, 4, ...Array(12).fill(null)]);
+    expect(traces[1].y).toEqual([4, 4, 4, ...Array(12).fill(null)]);
+    expect(layout.xaxis.range).toEqual(["2023-09-16", "2024-12-16"]);
+    cleanup();
+    react.mockClear();
+    const rate = await draw([{ key: "s", name: "Szpital", values: deaths, base: hosp, activeYearsOnly: true }], { period: "year" });
+    expect(rate.traces[0].y).toEqual([(2 / 12) * 100, null]);
+  });
+
   it("lata: suma roku w połowie roku, ta sama wysokość, rok niepełny z liczbą miesięcy w dymku", async () => {
     const { traces, layout } = await draw([{ key: "pl", name: "Polska", values }], { period: "year" });
     const [markers, line] = traces;

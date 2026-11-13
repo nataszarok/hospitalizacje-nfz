@@ -1,0 +1,93 @@
+/* Wykres koncentracji z suwakiem (ConcentrationChart). */
+.wrap {
+  display: grid;
+  gap: 10px;
+  padding: 4px 12px 8px;
+}
+
+.answer {
+  margin: 0;
+  font-size: var(--fs-base);
+}
+
+.slider {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 14px;
+  max-width: 760px;
+}
+
+.sliderLabel {
+  color: var(--color-text-tertiary);
+  font-size: var(--fs-sm);
+}
+
+.chart {
+  width: 100%;
+  max-width: 760px;
+  height: auto;
+}
+
+.tick {
+  fill: var(--color-text-tertiary);
+  font-size: var(--fs-sm);
+}
+
+.mark {
+  fill: var(--color-text-secondary);
+  font-size: var(--fs-sm);
+}
+
+/* Lista pod wykresem i jej niewidoczna kopia do pomiaru w tym samym miejscu. */
+.chipsBox {
+  position: relative;
+}
+
+.measure {
+  position: absolute;
+  inset: 0 0 auto;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chips li {
+  padding: 2px 10px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-pill);
+  font-size: var(--fs-sm);
+  white-space: nowrap;
+}
+
+.chips li small {
+  color: var(--color-text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+.chips a {
+  color: var(--color-primary-hover);
+  font-weight: var(--fw-bold);
+}
+
+.chips li.more {
+  border-color: var(--color-border);
+  background: var(--color-background-muted);
+  color: var(--color-text-secondary);
+  font-weight: var(--fw-semibold);
+}
+
+.empty {
+  margin: 0;
+  padding: 10px 12px;
+  color: var(--color-text-tertiary);
+  font-size: var(--fs-sm);
+}

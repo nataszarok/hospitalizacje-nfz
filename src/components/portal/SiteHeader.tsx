@@ -17,25 +17,25 @@ const links = [
   { label: "Start", href: "/", active: "start" },
   { label: "Przegląd", href: DASHBOARD_HREFS.summary, active: "summary" },
   { label: "Grupy JGP", href: "/jgp", active: "groups" },
-  { label: "Eksplorator danych", href: DASHBOARD_HREFS.trend, active: "analyses" },
+  { label: "Eksplorator JGP", href: DASHBOARD_HREFS.trend, active: "analyses" },
   { label: "Szpitale", href: DASHBOARD_HREFS.hospitals, active: "hospitals" },
-  { label: "Eksplorator szpitali", href: DASHBOARD_HREFS.hospital, active: "hospitalExplorer" },
   { label: "Porównania", href: DASHBOARD_HREFS.comparison, active: "compare" },
   { label: "O danych", href: DASHBOARD_HREFS.methodology, active: "about" },
 ] as const;
 
-function sectionForPath(pathname: string, search: string) {
+function sectionForPath(pathname: string) {
   if (pathname === "/") return "start";
   if (pathname.startsWith("/hospitalizacje")) return "summary";
   if (pathname.startsWith("/jgp")) return "groups";
   if (pathname.startsWith("/analizy")) return "analyses";
-  if (pathname.startsWith(HOSPITAL_EXPLORER_PATH)) return hospitalNavigationFromHref(`${HOSPITAL_EXPLORER_PATH}${search}`)?.view === "comparison" ? "compare" : "hospitalExplorer";
+  // Strona porównania szpitali (dawny eksplorator szpitali: został sam widok Porównanie).
+  if (pathname.startsWith(HOSPITAL_EXPLORER_PATH)) return "compare";
   if (pathname.startsWith("/szpitale")) return "hospitals";
   if (pathname.startsWith("/o-danych")) return "about";
   return "";
 }
 
-// Na tej samej stronie (/analizy, eksplorator szpitali) zmiana widoku idzie zdarzeniem, bez przeładowania — filtry zostają.
+// Na tej samej stronie (/analizy, porównanie szpitali) zmiana widoku idzie zdarzeniem, bez przeładowania — filtry zostają.
 // Eksplorator ma jedną pozycję w menu; widoki wybiera się w nim samym.
 function navigateInsidePage(event: React.MouseEvent<HTMLAnchorElement>, pathname: string, href: string) {
   if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
@@ -73,11 +73,11 @@ export function SiteHeader() {
     const syncNavigation = () => {
       setIsOpen(false);
       setSearchOpen(false);
-      setCurrentSection(sectionForPath(pathname, window.location.search));
+      setCurrentSection(sectionForPath(pathname));
     };
     syncNavigation();
     const onHospitalChange = (event: Event) => {
-      setCurrentSection((event as CustomEvent<HospitalNavigation>).detail.view === "comparison" ? "compare" : "hospitalExplorer");
+      if ((event as CustomEvent<HospitalNavigation>).detail.view === "comparison") setCurrentSection("compare");
     };
     window.addEventListener("popstate", syncNavigation);
     window.addEventListener("hashchange", syncNavigation);
@@ -89,7 +89,7 @@ export function SiteHeader() {
     };
   }, [pathname]);
 
-  const current = currentSection || sectionForPath(pathname, "");
+  const current = currentSection || sectionForPath(pathname);
   // Strona główna ma duże pole wyszukiwania w hero, więc nagłówek go nie powtarza.
   const showSearch = pathname !== "/";
 

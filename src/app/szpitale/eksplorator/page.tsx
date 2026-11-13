@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
 import { HospitalsPage } from "@/components/hospitals/HospitalsPage";
-import { SITE_NAME } from "@/lib/site";
+import { HOSPITAL_EXPLORER_PATH } from "@/lib/dashboardNavigation";
+import { pageMetadata } from "@/lib/pageMetadata";
 
-export const metadata: Metadata = {
-  title: `Eksplorator szpitali | ${SITE_NAME}`,
-  description: "Profil szpitala: oddziały, łóżka, świadczenia i wyniki finansowe oraz porównanie z grupą podobnych placówek.",
-};
+// Jedna strona dla wszystkich szpitali (`?hospital=`), więc jeden obraz podglądu: ogólny.
+export const metadata: Metadata = pageMetadata({
+  title: "Porównanie szpitali",
+  description: "Porównanie szpitala z grupą podobnych placówek dobranych przez model par: hospitalizacje, oddziały, łóżka i finanse.",
+  path: HOSPITAL_EXPLORER_PATH,
+});
 
 export default function HospitalsRoute() {
   return <HospitalsPage />;

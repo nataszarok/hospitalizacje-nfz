@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { GroupLineChart, type ChartLine } from "@/components/jgp/GroupLineChart";
+import { CardYears } from "@/components/jgp/CardYears";
 import { RegionMap, regionTitle } from "@/components/jgp/RegionMap";
 import { ChartExpand } from "@/components/portal/ChartExpand";
 import { ChartTooltip, TooltipHead, TooltipLines } from "@/components/ChartTooltip";
@@ -137,14 +138,6 @@ export function JgpTabbedCard({ packed, map = null }: { packed: PackedJgpPageDat
   const linePool = useMemo(() => providerPool(all, { selectedKey: state.selectedKey, scope, regions: state.regions }), [all, state.selectedKey, scope, state.regions]);
   // Czy nagłówek karty zniknął pod nagłówkiem portalu (75 px): wtedy pasek pokazuje kod i nazwę grupy.
   const sentinel = useRef<HTMLDivElement>(null);
-  // Na telefonie rząd lat przewija się poziomo: wybrany rok przewijamy do widoku (tylko w rzędzie, bez przewijania strony).
-  const yearsRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const row = yearsRef.current;
-    const pressed = row?.querySelector<HTMLElement>('button[aria-pressed="true"]');
-    if (!row || !pressed || row.scrollWidth <= row.clientWidth) return;
-    row.scrollLeft = pressed.offsetLeft - row.offsetLeft - (row.clientWidth - pressed.offsetWidth) / 2;
-  }, [data.year]);
   const [stuck, setStuck] = useState(false);
   useEffect(() => {
     const node = sentinel.current;
@@ -189,15 +182,11 @@ export function JgpTabbedCard({ packed, map = null }: { packed: PackedJgpPageDat
           Ośrodki<small>{integer(pool.length)}</small>
         </button>
       </div>
-      <div ref={yearsRef} className={styles.years} role="group" aria-label="Rok karty">
-        <span>Rok</span>
-        {(all.admissionYears.length ? all.admissionYears : [all.year]).map((year) => <button
-          key={year}
-          type="button"
-          aria-pressed={year === data.year}
-          onClick={() => write({ year: year === defaultYear ? null : year })}
-        >{year}</button>)}
-      </div>
+      <CardYears
+        years={all.admissionYears.length ? all.admissionYears : [all.year]}
+        selected={data.year}
+        onSelect={(year) => write({ year: year === defaultYear ? null : year })}
+      />
     </div>
     {state.tab === "przeglad"
       ? <div role="tabpanel" id="panel-przeglad" aria-labelledby="tab-przeglad" className={styles.panel}>

@@ -429,3 +429,33 @@ export function cityProviders(d: StaticDataset, productCodes: string[], method: 
     return { owNfz, nip, name: facilities.get(key) ?? nip, hospitalizations: total.h, deaths: total.d, mortalityPct: total.h ? (total.d / total.h) * 100 : 0, urgentPct: total.h ? (total.urgent / total.h) * 100 : 0 };
   }).sort((a, b) => b.hospitalizations - a.hospitalizations);
 }
+
+// Skala wielkości kropek na mapach (mapa „Gdzie” w eksploratorze, mapa katalogu szpitali).
+/** Promień kropki placówki z największą liczbą hospitalizacji we wszystkich latach (jednostki mapy o szerokości 1000). */
+export const MAX_DOT = 30;
+/** Najmniejsza widoczna kropka placówki z hospitalizacjami. */
+export const MIN_DOT = 2;
+/**
+ * Najmniejszy koniec skali wielkości kropek (hospitalizacje placówki w roku). Bez progu największa kropka grupy
+ * ze 100 hospitalizacjami byłaby tak duża jak kropka grupy z 8 000. Próg z danych 2017–2025: największa placówka
+ * w roku ma poniżej 500 hospitalizacji w 65% kodów produktów (mediana 265, maksimum ok. 8 500), więc duże grupy
+ * zachowują własną skalę, a małe mają mniejsze kropki.
+ */
+export const DOT_SCALE_FLOOR = 500;
+/** Koniec skali wielkości kropek: największa wartość placówki w całym okresie, nie mniej niż `DOT_SCALE_FLOOR`. */
+export const dotScaleMax = (maxFacility: number) => Math.max(maxFacility, DOT_SCALE_FLOOR);
+/**
+ * Najmniejsza wartość na skali wielkości kropek: placówka z mniejszą liczbą hospitalizacji ma kropkę jak placówka z 25.
+ * Różnica 10 a 20 hospitalizacji nie jest ważna na mapie, a kropki w dużych grupach byłyby za małe do najechania.
+ * Dymek zawsze pokazuje prawdziwą liczbę.
+ */
+export const DOT_VALUE_FLOOR = 25;
+/**
+ * Promień kropki: pole koła proporcjonalne do liczby hospitalizacji (promień ∝ √wartości),
+ * skala wspólna dla wszystkich lat — `max` to koniec skali (`dotScaleMax`). Wartości poniżej `DOT_VALUE_FLOOR`
+ * mają kropkę jak `DOT_VALUE_FLOOR`; kropka ma co najmniej `minRadius` (domyślnie `MIN_DOT`).
+ */
+export function dotRadius(hospitalizations: number, max: number, minRadius = MIN_DOT): number {
+  if (hospitalizations <= 0 || max <= 0) return 0;
+  return Math.max(minRadius, MAX_DOT * Math.sqrt(Math.max(hospitalizations, DOT_VALUE_FLOOR) / max));
+}

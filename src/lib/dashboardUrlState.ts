@@ -161,7 +161,7 @@ export function dashboardUrlSearch(reference: ReferencePayload, state: Dashboard
 }
 
 /**
- * Dawne adresy zakładek, które opuściły /analizy: profil szpitala (`t=h`) jest w eksploratorze szpitali,
+ * Dawne adresy zakładek, które opuściły /analizy: profil szpitala (`t=h`) prowadzi do porównania szpitali,
  * metodologia (`t=m`) pod /o-danych. Zwraca nowy adres albo `null`.
  */
 export function legacyAnalysisRedirect(search: string): string | null {
