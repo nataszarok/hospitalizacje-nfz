@@ -5,7 +5,7 @@ import type { FinancialRecordSummary, HospitalProfileSummary } from "@/lib/hospi
 import type { RegionsMap } from "@/lib/jgpCard";
 import type { JgpGroupFile, JgpPagesIndex, JgpPeerPair } from "@/lib/jgpPage";
 import type { JgpProfilesFile } from "@/lib/jgpDescription";
-import type { FacilityYearsIndex, FacilityYearsSection } from "@/lib/regions";
+import type { CitiesMap, FacilityYearsIndex, FacilityYearsSection } from "@/lib/regions";
 import type { HospitalPaymentFile, HospitalRpwdlRecord } from "@/lib/hospitalPage";
 import type { HospitalContractsFile } from "@/lib/hospitalFinance";
 import { readJgpProse } from "@/lib/jgpProse";
@@ -135,6 +135,11 @@ export async function readRegionsMapFromDisk(file = join(DATA_DIR, "regions-map.
     return null;
   }
   return readGzipJson<RegionsMap>(file);
+}
+
+/** Miasta siedzib świadczeniodawców w rzucie mapy województw (`scripts/build_cities_map.py`). */
+export async function readCitiesMapFromDisk(file = join(DATA_DIR, "cities-map.json.gz")): Promise<CitiesMap> {
+  return readGzipJson<CitiesMap>(file);
 }
 
 /** Profile szpitali z RPWDL (pola dla strony głównej: łóżka, SOR). */

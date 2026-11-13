@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { buildHospitalHomeStats, type FinancialRecordSummary, type HospitalProfileSummary } from "@/lib/hospitalHomeStats";
+import { buildHospitalHomeStats, buildHospitalMapStats, type FinancialRecordSummary, type HospitalProfileSummary } from "@/lib/hospitalHomeStats";
+import { CATALOG_DOT_RADIUS } from "@/lib/hospitalCatalog";
+import type { RegionsMap } from "@/lib/jgpCard";
+import type { CitiesMap, FacilityYearsIndex, FacilityYearsSection } from "@/lib/regions";
 import type { JgpPeerPair } from "@/lib/jgpPage";
 
 const profile = (ow: string, nip: string, beds: number | null, sor = 0): HospitalProfileSummary =>
@@ -63,5 +66,40 @@ describe("buildHospitalHomeStats", () => {
     const example = buildHospitalHomeStats(profiles, financial, pairs, facilities, psz, "99|0").comparison.example!;
     expect(example.key).toBe("04|1");
     expect(buildHospitalHomeStats(profiles, financial, [], facilities, psz).comparison.example).toBeNull();
+  });
+});
+
+describe("buildHospitalMapStats", () => {
+  const index: FacilityYearsIndex = {
+    version: 1,
+    years: ["2024", "2025"],
+    facilities: [["07", "1", "A", "WARSZAWA"], ["07", "2", "B", "WARSZAWA"], ["07", "3", "C", "RADOM"], ["07", "4", "D", "WIEŚ"], ["07", "5", "E", "RADOM"]],
+    active: [3, 3, 3, 2, 1],
+  };
+  // Dwie sekcje: hospitalizacje szpitala sumują się po sekcjach; rok 0 (2024) nie liczy się do mapy.
+  const section = (rows: [number, number, number][]): FacilityYearsSection => ({
+    version: 2,
+    products: ["X"],
+    rows: { product: rows.map(() => 0), facility: rows.map(([f]) => f), year: rows.map(([, y]) => y), hMin: rows.map(([, , h]) => h), hSim: rows.map(([, , h]) => h + 1), dMin: rows.map(() => 0), dSim: rows.map(() => 0) },
+  });
+  const sections = [section([[0, 1, 300], [1, 1, 100], [2, 1, 40], [3, 1, 20], [4, 0, 500]]), section([[0, 1, 100]])];
+  const cities: CitiesMap = { version: 1, source: "test", viewBox: [1000, 946], cities: [["WARSZAWA", "07", 600.04, 400.06, 1, "2021"], ["RADOM", "07", 620, 520, 1, "2021"]] };
+  const map: RegionsMap = { version: 1, source: "test", viewBox: [1000, 946], regions: [["07", "Mazowieckie", "M0 0h10v10z", [5, 5]]] };
+
+  it("kropka na szpital z hospitalizacjami w najnowszym roku (metoda min), jak na mapie katalogu", () => {
+    const stats = buildHospitalMapStats(index, sections, cities, map, new Set(["1", "3"]))!;
+    expect(stats).toMatchObject({ year: "2025", viewBox: [1000, 946], regions: ["M0 0h10v10z"], hospitals: 4, inPsz: 2, missing: 1 });
+    // Szpital E ma hospitalizacje tylko w 2024 r., szpital D ma siedzibę spoza słownika miast: bez kropki.
+    expect(stats.dots).toHaveLength(3);
+    // Poza siecią pod spodem, sieć PSZ na wierzchu.
+    expect(stats.dots.map((dot) => dot[3])).toEqual([0, 1, 1]);
+    // Największy szpital (A: 400) w punkcie miasta, z promieniem maksymalnym; współrzędne zaokrąglone do 0,1.
+    expect(stats.dots).toContainEqual([600, 400.1, CATALOG_DOT_RADIUS.max, 1]);
+    for (const dot of stats.dots) for (const value of dot.slice(0, 3)) expect(Math.round(value * 10) / 10).toBe(value);
+  });
+
+  it("bez mapy województw albo bez lat zwraca null", () => {
+    expect(buildHospitalMapStats(index, sections, cities, null, new Set())).toBeNull();
+    expect(buildHospitalMapStats({ ...index, years: [] }, sections, cities, map, new Set())).toBeNull();
   });
 });

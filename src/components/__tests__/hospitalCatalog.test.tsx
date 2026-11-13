@@ -106,6 +106,10 @@ describe("Katalog szpitali", () => {
     expect(Number(koszalin.getAttribute("r"))).toBeGreaterThan(Number(beta.getAttribute("r")));
     fireEvent.click(beta);
     expect(window.location.search).toBe("?widok=mapa&miasto=WARSZAWA");
+    // Filtr miasta jest w obrębie mapy (nakładka), nie nad nią: mapa nie spada w dół.
+    const chip = screen.getByRole("button", { name: "Usuń filtr miasta Warszawa" }).closest("p")!;
+    expect(chip.parentElement).toContainElement(map);
+    expect(chip.parentElement!.firstElementChild).toBe(chip);
     expect(screen.getByRole("complementary", { name: "Szpitale na mapie" })).toHaveTextContent("Szpital Beta");
     fireEvent.click(screen.getByRole("tab", { name: /Lista/ }));
     expect(window.location.search).toBe("?widok=lista&miasto=WARSZAWA");

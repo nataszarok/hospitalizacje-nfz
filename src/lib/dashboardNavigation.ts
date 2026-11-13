@@ -11,6 +11,8 @@ export type HospitalNavigation = { view: HospitalView };
 
 /** Porównanie szpitali (dawny eksplorator szpitali; w menu „Porównania”): porównanie z podobnymi z panelem wyboru szpitala. `/szpitale` to katalog szpitali. */
 export const HOSPITAL_EXPLORER_PATH = "/szpitale/eksplorator";
+/** Moduł „Artykuły” (planowany: strona bez tekstów ze stanem „Planowane”). */
+export const ARTICLES_PATH = "/artykuly";
 
 // Adresy modułów portalu używane przez stronę główną i nagłówek.
 export const DASHBOARD_HREFS = {
@@ -23,6 +25,7 @@ export const DASHBOARD_HREFS = {
   hospital: HOSPITAL_EXPLORER_PATH,
   comparison: `${HOSPITAL_EXPLORER_PATH}?hv=c`,
   methodology: "/o-danych",
+  articles: ARTICLES_PATH,
 } as const;
 
 export function tabFromDashboardHref(href: string): DashboardActiveTab | null {

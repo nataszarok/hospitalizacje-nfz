@@ -20,6 +20,7 @@ const links = [
   { label: "Eksplorator JGP", href: DASHBOARD_HREFS.trend, active: "analyses" },
   { label: "Szpitale", href: DASHBOARD_HREFS.hospitals, active: "hospitals" },
   { label: "Porównania", href: DASHBOARD_HREFS.comparison, active: "compare" },
+  { label: "Artykuły", href: DASHBOARD_HREFS.articles, active: "articles" },
   { label: "O danych", href: DASHBOARD_HREFS.methodology, active: "about" },
 ] as const;
 
@@ -31,6 +32,7 @@ function sectionForPath(pathname: string) {
   // Strona porównania szpitali (dawny eksplorator szpitali: został sam widok Porównanie).
   if (pathname.startsWith(HOSPITAL_EXPLORER_PATH)) return "compare";
   if (pathname.startsWith("/szpitale")) return "hospitals";
+  if (pathname.startsWith(DASHBOARD_HREFS.articles)) return "articles";
   if (pathname.startsWith("/o-danych")) return "about";
   return "";
 }

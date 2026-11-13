@@ -159,8 +159,8 @@ export function catalogCityPoints(rows: HospitalCatalogRow[], cities: readonly [
 }
 
 /** Kropka świadczeniodawcy na mapie katalogu (po upakowaniu wokół miasta i rozsunięciu kolizji). */
-export interface CatalogFacilityDot {
-  row: HospitalCatalogRow;
+export interface CatalogFacilityDot<R = HospitalCatalogRow> {
+  row: R;
   x: number;
   y: number;
   r: number;
@@ -171,16 +171,16 @@ export interface CatalogFacilityDot {
  * placówki jednego miasta ciasno wokół punktu miasta (`packCircles`, największa w środku), potem rozsunięcie kolizji
  * między sąsiednimi miastami (`separateDots`). Promień z `radius(hospitalizacje)`. Siedziba spoza słownika miast nie ma kropki.
  */
-export function catalogFacilityDots(rows: HospitalCatalogRow[], cities: readonly [string, string, number, number, ...unknown[]][], radius: (hospitalizations: number) => number): { dots: CatalogFacilityDot[]; missing: number } {
+export function catalogFacilityDots<R extends Pick<HospitalCatalogRow, "key" | "city" | "latest">>(rows: R[], cities: readonly [string, string, number, number, ...unknown[]][], radius: (hospitalizations: number) => number): { dots: CatalogFacilityDot<R>[]; missing: number } {
   const byName = new Map(cities.map((city) => [city[0], city]));
-  const byCity = new Map<string, HospitalCatalogRow[]>();
+  const byCity = new Map<string, R[]>();
   let missing = 0;
   for (const row of rows) {
     if (row.latest <= 0) continue;
     if (!byName.has(row.city)) { missing += 1; continue; }
     byCity.set(row.city, [...(byCity.get(row.city) ?? []), row]);
   }
-  const dots: CatalogFacilityDot[] = [];
+  const dots: CatalogFacilityDot<R>[] = [];
   for (const [name, list] of byCity) {
     const [, , cx, cy] = byName.get(name)!;
     // Od największej; przy równej wartości po kluczu (stały układ).

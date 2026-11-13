@@ -46,11 +46,25 @@ ol > li.changeItem {
   cursor: pointer;
 }
 
-/* Filtr miasta (kropka na mapie): pod filtrami, z przyciskiem usunięcia. */
+/* Filtr miasta (kropka na mapie): nad listą albo w rogu mapy, z przyciskiem usunięcia. */
 .cityFilter {
   margin: -4px 0 12px;
   color: var(--color-text-secondary);
   font-size: var(--fs-sm);
+}
+
+/* Na mapie: nakładka w rogu mapy (nad kropkami, bez zmiany położenia mapy). */
+.cityFilterOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  margin: 0;
+  padding: 4px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: #fff;
+  box-shadow: var(--shadow-soft);
 }
 
 .cityFilter button {

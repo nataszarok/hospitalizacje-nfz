@@ -43,8 +43,9 @@ export function DataCard({ id, kicker, title, lead, children, description, href,
 }
 
 /** Legenda wykresu: kolorowe kwadraty z etykietami. */
-export function Legend({ items }: { items: { label: string; color: string; border?: string }[] }) {
-  return <div className={styles.legend} aria-hidden="true">
+/** `align="start"`: legenda do lewej (przy tekście, nie pod wykresem). */
+export function Legend({ items, align = "center" }: { items: { label: string; color: string; border?: string }[]; align?: "center" | "start" }) {
+  return <div className={`${styles.legend} ${align === "start" ? styles.legendStart : ""}`} aria-hidden="true">
     {items.map((item) => <span key={item.label}><i style={{ background: item.color, border: item.border ? `1px solid ${item.border}` : undefined }} />{item.label}</span>)}
   </div>;
 }

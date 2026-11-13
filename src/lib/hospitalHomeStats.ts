@@ -1,5 +1,8 @@
 import { PEER_DISTANCE_A_LIMIT } from "@/lib/peerDistance";
+import { catalogDotRadius, catalogFacilityDots } from "@/lib/hospitalCatalog";
+import type { RegionsMap } from "@/lib/jgpCard";
 import type { JgpPeerPair } from "@/lib/jgpPage";
+import type { CitiesMap, FacilityYearsIndex, FacilityYearsSection } from "@/lib/regions";
 
 /** Profil szpitala z RPWDL: tylko pola czytane przez stronę główną (`rpwdl_summary_profiles.json.gz`). */
 export interface HospitalProfileSummary {
@@ -156,5 +159,61 @@ export function buildHospitalHomeStats(
     beds: bins,
     finance: financeStats(financial, pszNips),
     comparison: { pairsA: pairsA.length, hospitalsWithPeers: withPeers.size, example: peerExample(pairs, names, featuredKey) },
+  };
+}
+
+/**
+ * Mapa szpitali na stronie głównej: gotowe kształty do statycznego SVG (bez dymków i interakcji).
+ * `dots`: `[x, y, promień, 1 = szpital sieci PSZ / 0 = poza siecią]` w jednostkach mapy, zaokrąglone do 0,1.
+ */
+export interface HospitalMapStats {
+  year: string;
+  viewBox: [number, number];
+  /** Ścieżki SVG województw. */
+  regions: string[];
+  dots: [number, number, number, 0 | 1][];
+  /** Szpitale z hospitalizacjami w roku mapy (także bez kropki) i szpitale sieci PSZ wśród nich. */
+  hospitals: number;
+  inPsz: number;
+  /** Szpitale z siedzibą spoza słownika miast (głównie wsie): bez kropki. */
+  missing: number;
+}
+
+const round1 = (value: number) => Math.round(value * 10) / 10;
+
+/**
+ * Kropki szpitali jak na mapie katalogu `/szpitale` (`catalogFacilityDots`, `catalogDotRadius`): świadczeniodawca (OW + NIP)
+ * z hospitalizacjami w najnowszym roku (metoda min) w mieście siedziby. Liczone podczas budowania; `null` bez mapy województw.
+ */
+export function buildHospitalMapStats(
+  index: FacilityYearsIndex,
+  sections: FacilityYearsSection[],
+  cities: CitiesMap,
+  map: RegionsMap | null,
+  pszNips: ReadonlySet<string>,
+): HospitalMapStats | null {
+  const last = index.years.length - 1;
+  if (!map || last < 0) return null;
+  const latest = index.facilities.map(() => 0);
+  for (const section of sections) {
+    const { facility, year, hMin } = section.rows;
+    for (let i = 0; i < facility.length; i += 1) if (year[i] === last) latest[facility[i]] += hMin[i];
+  }
+  const rows = index.facilities.flatMap(([owNfz, nip, , city], i) => latest[i] > 0
+    ? [{ key: `${owNfz}|${nip}`, city, latest: latest[i], psz: pszNips.has(nip) }]
+    : []);
+  const max = Math.max(1, ...rows.map((row) => row.latest));
+  const { dots, missing } = catalogFacilityDots(rows, cities.cities, (value) => catalogDotRadius(value, max));
+  return {
+    year: index.years[last],
+    viewBox: map.viewBox,
+    regions: map.regions.map(([, , path]) => path),
+    // Szpitale sieci na wierzchu (kolor danych), poza siecią pod spodem.
+    dots: dots
+      .sort((a, b) => Number(a.row.psz) - Number(b.row.psz))
+      .map(({ row, x, y, r }) => [round1(x), round1(y), round1(r), row.psz ? 1 : 0]),
+    hospitals: rows.length,
+    inPsz: rows.filter((row) => row.psz).length,
+    missing,
   };
 }
