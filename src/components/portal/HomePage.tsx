@@ -2,12 +2,12 @@ import Link from "next/link";
 import { LegacyDashboardRedirect } from "@/components/portal/LegacyDashboardRedirect";
 import { DASHBOARD_HREFS } from "@/lib/dashboardNavigation";
 import { SITE_NAME } from "@/lib/site";
-import { formatAtLeastCount, formatCompactCount, formatPln, formatYearRange } from "@/lib/formatters";
+import { formatAtLeastCount, formatCompactCount, formatYearRange } from "@/lib/formatters";
 import type { DatasetHighlights } from "@/lib/staticData";
 import type { HomeStats } from "@/lib/homeStats";
 import type { HospitalHomeStats, HospitalMapStats } from "@/lib/hospitalHomeStats";
-import { hospitalComparisonHref, hospitalHref } from "@/lib/portalLinks";
-import { ContinuousHistogram, GroupBars, Histogram, HospitalMap, PeerDistances, YearBars } from "@/components/portal/HomeCharts";
+import { hospitalComparisonHref } from "@/lib/portalLinks";
+import { GroupBars, Histogram, HospitalMap, PeerDistances, YearBars } from "@/components/portal/HomeCharts";
 import { DataCard, Legend } from "@/components/portal/DataCard";
 import { PlannedBadge } from "@/components/portal/PlannedBadge";
 import { PortalIcon } from "@/components/portal/PortalIcon";
@@ -83,12 +83,10 @@ const signedPct = (value: number) => `${value > 0 ? "+" : value < 0 ? "−" : ""
 export function HomePage({ highlights, stats, hospitals, hospitalMap = null }: { highlights: DatasetHighlights; stats: HomeStats; hospitals: HospitalHomeStats; hospitalMap?: HospitalMapStats | null }) {
   const latest = stats.years.at(-1);
   const previous = stats.years.length > 1 ? stats.years[stats.years.length - 2] : null;
-  const { finance, comparison } = hospitals;
+  const { comparison } = hospitals;
   const example = comparison.example;
-  // Przykładowa karta szpitala (finanse) i porównanie z podobnymi; szpital bez karty — katalog szpitali.
+  // Porównanie przykładowego szpitala z podobnymi; bez przykładu — strona porównania.
   const exampleKey = example ? (example.key.split("|") as [string, string]) : null;
-  const exampleCard = exampleKey ? hospitalHref(...exampleKey) : null;
-  const exampleHref = exampleCard ? `${exampleCard}?widok=finanse` : DASHBOARD_HREFS.hospitals;
   const exampleCompareHref = exampleKey ? hospitalComparisonHref(...exampleKey) : DASHBOARD_HREFS.comparison;
   const yearChange = latest && previous?.hospitalizations ? ((latest.hospitalizations - previous.hospitalizations) / previous.hospitalizations) * 100 : null;
   const range = formatYearRange(highlights.yearFrom, highlights.yearTo);
@@ -97,21 +95,6 @@ export function HomePage({ highlights, stats, hospitals, hospitalMap = null }: {
     <h2 id="hospitals-title">Jak wyglądają szpitale.</h2>
     <p>Profil każdego szpitala: oddziały, łóżka, SOR, grupy JGP i wynik finansowy. Wpisz nazwę albo miasto w wyszukiwarce.</p>
   </>;
-  // Karta finansów: z mapą szpitali — szeroka, pod mapą; bez mapy — obok histogramu łóżek.
-  const financeCard = (wide: boolean) => finance ? <DataCard
-    id="hospitals-finance"
-    wide={wide}
-    kicker={`Finanse · ${finance.year} · szpitale PSZ`}
-    title="Ile szpitali PSZ kończy rok ze stratą?"
-    lead={<><strong>{integer(finance.loss)} z {integer(finance.reported)}</strong> szpitali z sieci PSZ ({Math.round((finance.loss / finance.reported) * 100)}%) miało stratę netto w {finance.year} r. Łączny wynik: <strong>{formatPln(finance.netResult)}</strong>. Oś: marża netto w % (przedziały po 2,5 p.p.).</>}
-    href={exampleHref}
-    cta={exampleCard ? "Przykładowa karta: finanse" : "Katalog szpitali"}
-    source="Sprawozdania finansowe; wykaz PSZ (NFZ)"
-    estimate={false}
-    >
-    <ContinuousHistogram bins={finance.margins} label="Podmioty według marży netto" unit="%" />
-    <Legend items={[{ label: "Strata", color: CHART_COLORS.signal }, { label: "Zysk", color: CHART_COLORS.data }]} />
-    </DataCard> : null;
   return <>
     <LegacyDashboardRedirect />
     <main id="main-content" className={styles.home}>
@@ -208,7 +191,6 @@ export function HomePage({ highlights, stats, hospitals, hospitalMap = null }: {
             </div>
             <HospitalMap map={hospitalMap} large />
           </div>
-          {finance ? <div className={styles.dataGrid}>{financeCard(true)}</div> : null}
         </> : <>
           <div className={styles.sectionIntro}>
             {hospitalsIntro}
@@ -227,7 +209,6 @@ export function HomePage({ highlights, stats, hospitals, hospitalMap = null }: {
               <Histogram bins={hospitals.beds} label="Placówki według liczby łóżek" unit="" />
             </DataCard>
 
-            {financeCard(false)}
           </div>
         </>}
       </section>
