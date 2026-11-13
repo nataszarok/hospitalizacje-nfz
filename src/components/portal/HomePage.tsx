@@ -2,14 +2,14 @@ import Link from "next/link";
 import { LegacyDashboardRedirect } from "@/components/portal/LegacyDashboardRedirect";
 import { DASHBOARD_HREFS } from "@/lib/dashboardNavigation";
 import { SITE_NAME } from "@/lib/site";
-import { formatAtLeastCount, formatCompactCount, formatPln, formatYearRange } from "@/lib/formatters";
+import { formatAtLeastCount, formatCompactCount, formatYearRange } from "@/lib/formatters";
 import type { DatasetHighlights } from "@/lib/staticData";
 import type { HomeStats } from "@/lib/homeStats";
-import type { HospitalHomeStats } from "@/lib/hospitalHomeStats";
-import { hospitalComparisonHref, hospitalHref } from "@/lib/portalLinks";
-import { ARTICLES_PATH } from "@/lib/articles";
-import { ContinuousHistogram, GroupBars, Histogram, PeerDistances, YearBars } from "@/components/portal/HomeCharts";
+import type { HospitalHomeStats, HospitalMapStats } from "@/lib/hospitalHomeStats";
+import { hospitalComparisonHref } from "@/lib/portalLinks";
+import { GroupBars, Histogram, HospitalMap, PeerDistances, YearBars } from "@/components/portal/HomeCharts";
 import { DataCard, Legend } from "@/components/portal/DataCard";
+import { PlannedBadge } from "@/components/portal/PlannedBadge";
 import { PortalIcon } from "@/components/portal/PortalIcon";
 import { SearchBox } from "@/components/search/SearchBox";
 import styles from "./HomePage.module.css";
@@ -31,7 +31,7 @@ const topics: readonly Topic[] = [
   { title: "Porównanie szpitali", description: "Porównaj szpital z grupą podobnych placówek dobranych przez model.", icon: "compare", href: DASHBOARD_HREFS.comparison, label: "Porównaj szpitale" },
   { title: "Eksplorator JGP", description: "Narzędzie dla analityków: kilka grup naraz, obszary, filtry i tryb przyjęcia.", icon: "heart", href: DASHBOARD_HREFS.trend, label: "Otwórz eksplorator" },
   { title: "Wyceny JGP", description: "Jak wygląda system wycen JGP i jak zmieniają się wyceny.", icon: "chart", label: "Wyceny JGP" },
-  { title: "Artykuły", description: "Teksty o tym, jak działa system. Na start: czym są grupy JGP.", icon: "book", href: ARTICLES_PATH, label: "Czytaj artykuły" },
+  { title: "Artykuły", description: "Teksty o tym, jak działa system. Na start: czym są grupy JGP.", icon: "book", href: DASHBOARD_HREFS.articles, label: "Czytaj artykuły" },
 ];
 
 // Ścieżki „Od czego zacząć”: punkt wyjścia według pytania, a nie według modułu.
@@ -79,18 +79,22 @@ const integer = (value: number) => Math.round(value).toLocaleString("pl-PL");
 const decimal = (value: number) => value.toLocaleString("pl-PL", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 const signedPct = (value: number) => `${value > 0 ? "+" : value < 0 ? "−" : ""}${decimal(Math.abs(value))}%`;
 
-export function HomePage({ highlights, stats, hospitals }: { highlights: DatasetHighlights; stats: HomeStats; hospitals: HospitalHomeStats }) {
+/** `hospitalMap`: mapa szpitali w sekcji szpitali; bez mapy (`null`, brak pliku mapy) karta pokazuje histogram łóżek. */
+export function HomePage({ highlights, stats, hospitals, hospitalMap = null }: { highlights: DatasetHighlights; stats: HomeStats; hospitals: HospitalHomeStats; hospitalMap?: HospitalMapStats | null }) {
   const latest = stats.years.at(-1);
   const previous = stats.years.length > 1 ? stats.years[stats.years.length - 2] : null;
-  const { finance, comparison } = hospitals;
+  const { comparison } = hospitals;
   const example = comparison.example;
-  // Przykładowa karta szpitala (finanse) i porównanie z podobnymi; szpital bez karty — katalog szpitali.
+  // Porównanie przykładowego szpitala z podobnymi; bez przykładu — strona porównania.
   const exampleKey = example ? (example.key.split("|") as [string, string]) : null;
-  const exampleCard = exampleKey ? hospitalHref(...exampleKey) : null;
-  const exampleHref = exampleCard ? `${exampleCard}?widok=finanse` : DASHBOARD_HREFS.hospitals;
   const exampleCompareHref = exampleKey ? hospitalComparisonHref(...exampleKey) : DASHBOARD_HREFS.comparison;
   const yearChange = latest && previous?.hospitalizations ? ((latest.hospitalizations - previous.hospitalizations) / previous.hospitalizations) * 100 : null;
   const range = formatYearRange(highlights.yearFrom, highlights.yearTo);
+  const hospitalsIntro = <>
+    <span className={styles.sectionEyebrow}>SZPITALE PUBLICZNE</span>
+    <h2 id="hospitals-title">Jak wyglądają szpitale.</h2>
+    <p>Profil każdego szpitala: oddziały, łóżka, SOR, grupy JGP i wynik finansowy. Wpisz nazwę albo miasto w wyszukiwarce.</p>
+  </>;
   return <>
     <LegacyDashboardRedirect />
     <main id="main-content" className={styles.home}>
@@ -170,39 +174,43 @@ export function HomePage({ highlights, stats, hospitals }: { highlights: Dataset
       </section>
 
       <section id="szpitale" className={`${styles.container} ${styles.data}`} aria-labelledby="hospitals-title">
-        <div className={styles.sectionIntro}>
-          <span className={styles.sectionEyebrow}>SZPITALE PUBLICZNE</span>
-          <h2 id="hospitals-title">Jak wyglądają szpitale.</h2>
-          <p>Profil każdego szpitala: oddziały, łóżka, SOR, grupy JGP i wynik finansowy. Wpisz nazwę albo miasto w wyszukiwarce.</p>
-        </div>
-        <div className={styles.dataGrid}>
-          <DataCard
-            id="hospitals-beds"
-            kicker={`Łóżka · ${integer(hospitals.profiles)} świadczeniodawców`}
-            title="Jakiej wielkości są szpitale?"
-            lead={<>Mediana szpitali z łóżkami: <strong>{integer(hospitals.medianBeds)}</strong>. {integer(hospitals.profiles - hospitals.withBeds)} placówek nie ma łóżek w RPWDL: to głównie kliniki zabiegów jednego dnia (np. zaćmy). <strong>{integer(hospitals.sorUnits)}</strong> oddziałów ratunkowych (SOR) działa w {integer(hospitals.withSor)} podmiotach.</>}
-            href={DASHBOARD_HREFS.hospitals}
-            cta="Znajdź szpital"
-            source="Rejestr RPWDL"
-            estimate={false}
-          >
-            <Histogram bins={hospitals.beds} label="Placówki według liczby łóżek" unit="" />
-          </DataCard>
+        {hospitalMap ? <>
+          {/* Tekst po lewej, mapa po prawej: mapa tak duża, jak pozwala wysokość okna (`.hospitalMapLarge`). */}
+          <div className={styles.hospitalsLead}>
+            <div className={styles.hospitalsText}>
+              {hospitalsIntro}
+              <p>Na mapie: każdy szpital z hospitalizacjami w {hospitalMap.year} r., w mieście siedziby. Większa kropka — więcej hospitalizacji.</p>
+              <dl className={styles.compareFacts}>
+                <div><dt>Szpitale</dt><dd>{integer(hospitalMap.hospitals)}</dd></div>
+                <div><dt>W sieci PSZ</dt><dd>{integer(hospitalMap.inPsz)}</dd></div>
+                <div><dt>Oddziały SOR</dt><dd>{integer(hospitals.sorUnits)}</dd></div>
+              </dl>
+              <Legend align="start" items={[{ label: "Szpital sieci (PSZ)", color: CHART_COLORS.data }, { label: "Poza siecią", color: CHART_COLORS.dataSoft }]} />
+              <Link className={styles.pathCta} href={DASHBOARD_HREFS.hospitals}>Mapa i katalog szpitali <PortalIcon name="arrow" size={17} /></Link>
+              <p className={styles.hospitalsSource}>Dane NFZ o hospitalizacjach; wykaz PSZ (NFZ); rejestr RPWDL</p>
+            </div>
+            <HospitalMap map={hospitalMap} large />
+          </div>
+        </> : <>
+          <div className={styles.sectionIntro}>
+            {hospitalsIntro}
+          </div>
+          <div className={styles.dataGrid}>
+            <DataCard
+              id="hospitals-beds"
+              kicker={`Łóżka · ${integer(hospitals.profiles)} świadczeniodawców`}
+              title="Jakiej wielkości są szpitale?"
+              lead={<>Mediana szpitali z łóżkami: <strong>{integer(hospitals.medianBeds)}</strong>. {integer(hospitals.profiles - hospitals.withBeds)} placówek nie ma łóżek w RPWDL: to głównie kliniki zabiegów jednego dnia (np. zaćmy). <strong>{integer(hospitals.sorUnits)}</strong> oddziałów ratunkowych (SOR) działa w {integer(hospitals.withSor)} podmiotach.</>}
+              href={DASHBOARD_HREFS.hospitals}
+              cta="Znajdź szpital"
+              source="Rejestr RPWDL"
+              estimate={false}
+            >
+              <Histogram bins={hospitals.beds} label="Placówki według liczby łóżek" unit="" />
+            </DataCard>
 
-          {finance ? <DataCard
-            id="hospitals-finance"
-            kicker={`Finanse · ${finance.year} · szpitale PSZ`}
-            title="Ile szpitali PSZ kończy rok ze stratą?"
-            lead={<><strong>{integer(finance.loss)} z {integer(finance.reported)}</strong> szpitali z sieci PSZ ({Math.round((finance.loss / finance.reported) * 100)}%) miało stratę netto w {finance.year} r. Łączny wynik: <strong>{formatPln(finance.netResult)}</strong>. Oś: marża netto w % (przedziały po 2,5 p.p.).</>}
-            href={exampleHref}
-            cta={exampleCard ? "Przykładowa karta: finanse" : "Katalog szpitali"}
-            source="Sprawozdania finansowe; wykaz PSZ (NFZ)"
-            estimate={false}
-          >
-            <ContinuousHistogram bins={finance.margins} label="Podmioty według marży netto" unit="%" />
-            <Legend items={[{ label: "Strata", color: CHART_COLORS.signal }, { label: "Zysk", color: CHART_COLORS.data }]} />
-          </DataCard> : null}
-        </div>
+          </div>
+        </>}
       </section>
 
       {example ? <section id="porownanie" className={`${styles.container} ${styles.compare}`} aria-labelledby="compare-title">
@@ -245,7 +253,7 @@ export function HomePage({ highlights, stats, hospitals }: { highlights: Dataset
             const content = <>
               <span className={styles.sectionIcon}><PortalIcon name={topic.icon} size={22} /></span>
               <span className={styles.sectionText}><strong>{topic.title}</strong><span>{topic.description}</span></span>
-              {topic.href ? <span className={styles.sectionArrow}><PortalIcon name="arrow" size={18} /></span> : <span className={styles.topicPlanned}>Planowane</span>}
+              {topic.href ? <span className={styles.sectionArrow}><PortalIcon name="arrow" size={18} /></span> : <PlannedBadge />}
             </>;
             return <li key={topic.title}>
               {topic.href

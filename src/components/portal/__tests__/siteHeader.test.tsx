@@ -27,19 +27,20 @@ beforeEach(() => openPage("/"));
 afterEach(cleanup);
 
 describe("SiteHeader", () => {
-  it("prowadzi Szpitale do katalogu, Porównania do porównania szpitali, a O danych do /o-danych; bez Eksploratora szpitali", () => {
+  it("prowadzi Szpitale do katalogu, a O danych do /o-danych; bez Eksploratora szpitali i (na razie) bez Porównań", () => {
     render(<SiteHeader />);
     expect(screen.getByRole("link", { name: "Szpitale" })).toHaveAttribute("href", "/szpitale");
     expect(screen.queryByRole("link", { name: "Eksplorator szpitali" })).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Porównania" })).toHaveAttribute("href", "/szpitale/eksplorator?hv=c");
+    expect(screen.queryByRole("link", { name: "Porównania" })).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: "O danych" })).toHaveAttribute("href", "/o-danych");
     expect(screen.getByRole("link", { name: "Start" })).toHaveAttribute("aria-current", "page");
   });
 
-  it("ma siedem pozycji w kolejności od podsumowania do szczegółów", () => {
+  it("ma siedem pozycji w kolejności od podsumowania do szczegółów; Artykuły prowadzą do /artykuly", () => {
     render(<SiteHeader />);
     const items = [...nav().querySelectorAll(":scope > a")].map((item) => item.textContent?.trim());
-    expect(items).toEqual(["Start", "Przegląd", "Grupy JGP", "Eksplorator JGP", "Szpitale", "Porównania", "O danych"]);
+    expect(items).toEqual(["Start", "Przegląd", "Grupy JGP", "Eksplorator JGP", "Szpitale", "Artykuły", "O danych"]);
+    expect(screen.getByRole("link", { name: "Artykuły" })).toHaveAttribute("href", "/artykuly");
     expect(screen.getByRole("link", { name: "Przegląd" })).toHaveAttribute("href", "/hospitalizacje");
   });
 
@@ -47,9 +48,11 @@ describe("SiteHeader", () => {
     ["/hospitalizacje", "", "Przegląd"],
     ["/szpitale", "", "Szpitale"],
     ["/szpitale/6691044410-16", "", "Szpitale"],
-    ["/szpitale/eksplorator", "", "Porównania"],
-    ["/szpitale/eksplorator", "?hv=c", "Porównania"],
+    // Porównanie szpitali nie ma pozycji w menu: aktywne są Szpitale.
+    ["/szpitale/eksplorator", "", "Szpitale"],
+    ["/szpitale/eksplorator", "?hv=c", "Szpitale"],
     ["/o-danych", "", "O danych"],
+    ["/artykuly", "", "Artykuły"],
   ])("na %s%s oznacza aktywną pozycję %s", (pathname, search, label) => {
     openPage(pathname, search);
     render(<SiteHeader />);
@@ -85,34 +88,24 @@ describe("SiteHeader", () => {
     expect(listener.mock.calls[0][0].detail).toEqual({ tab: "trend" });
   });
 
-  it("na stronie porównania szpitali link Porównania zostaje na stronie (zdarzenie, bez przeładowania)", () => {
+  it("na stronie porównania szpitali link Szpitale prowadzi do katalogu zwykłą nawigacją (bez zdarzenia widoku)", () => {
     openPage("/szpitale/eksplorator");
     const listener = vi.fn();
     window.addEventListener(HOSPITAL_VIEW_NAVIGATE_EVENT, listener);
     render(<SiteHeader />);
-    const link = screen.getByRole("link", { name: "Porównania" });
-    const event = click(link);
-    window.removeEventListener(HOSPITAL_VIEW_NAVIGATE_EVENT, listener);
-    expect(event.defaultPrevented).toBe(true);
-    expect(listener.mock.calls[0][0].detail).toEqual({ view: "comparison" });
+    const link = screen.getByRole("link", { name: "Szpitale" });
     expect(link).toHaveAttribute("aria-current", "page");
-  });
-
-  it("poza tą samą stroną zostawia zwykłą nawigację linkiem", () => {
-    const listener = vi.fn();
-    window.addEventListener(HOSPITAL_VIEW_NAVIGATE_EVENT, listener);
-    render(<SiteHeader />);
-    const event = click(screen.getByRole("link", { name: "Porównania" }));
+    const event = click(link);
     window.removeEventListener(HOSPITAL_VIEW_NAVIGATE_EVENT, listener);
     expect(listener).not.toHaveBeenCalled();
     expect(event.defaultPrevented).toBe(false);
   });
 
-  it("odświeża aktywny widok po zdarzeniach ze stron", () => {
+  it("po zdarzeniu widoku porównania oznacza Szpitale (Porównania bez pozycji w menu)", () => {
     openPage("/szpitale/eksplorator");
     render(<SiteHeader />);
     act(() => { window.dispatchEvent(new CustomEvent(HOSPITAL_VIEW_CHANGED_EVENT, { detail: { view: "comparison" } })); });
-    expect(screen.getByRole("link", { name: "Porównania" })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("link", { name: "Szpitale" })).toHaveAttribute("aria-current", "page");
   });
 
   it("przełącza menu mobilne", () => {

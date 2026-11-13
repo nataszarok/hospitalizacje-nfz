@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { DASHBOARD_HREFS } from "@/lib/dashboardNavigation";
 import { formatJgpName } from "@/lib/formatters";
-import type { HistogramBin, PeerExample } from "@/lib/hospitalHomeStats";
+import type { HistogramBin, HospitalMapStats, PeerExample } from "@/lib/hospitalHomeStats";
 import type { HomeGroup, HomeStats, HomeYear } from "@/lib/homeStats";
 import { scaleColor } from "@/lib/jgpCard";
 import { PEER_DISTANCE_A_LIMIT } from "@/lib/peerDistance";
@@ -61,34 +61,6 @@ export function Histogram({ bins, label, unit }: { bins: HistogramBin[]; label: 
         <text x={x + barWidth / 2} y={height - 6} className={styles.tick}>{bin.label}</text>
       </g>;
     })}
-  </svg>;
-}
-
-/** Histogram na osi liczbowej (np. marża netto w %): przylegające słupki równych przedziałów, podziałka co 5. */
-export function ContinuousHistogram({ bins, label, unit }: { bins: HistogramBin[]; label: string; unit: string }) {
-  const width = 520;
-  const height = 200;
-  const top = 22;
-  const bottom = 26;
-  const max = Math.max(...bins.map((bin) => bin.count), 1);
-  const step = width / Math.max(bins.length, 1);
-  const base = height - bottom;
-  return <svg className={styles.chart} viewBox={`0 0 ${width} ${height}`} role="img" aria-label={`${label}: ${bins.map((bin) => `${bin.label} ${unit} — ${bin.count}`).join(", ")}`}>
-    {bins.map((bin, i) => {
-      const barHeight = ((base - top) * bin.count) / max;
-      return <g key={bin.label}>
-        <title>{`${bin.label} ${unit}: ${integer(bin.count)}`}</title>
-        <rect x={i * step + 0.5} y={base - barHeight} width={step - 1} height={barHeight} className={bin.negative ? styles.barLoss : styles.barLatest} />
-        {bin.count ? <text x={i * step + step / 2} y={base - barHeight - 6} className={styles.valueSmall}>{integer(bin.count)}</text> : null}
-      </g>;
-    })}
-    <line x1="0" x2={width} y1={base} y2={base} className={styles.axis} />
-    {bins.map((bin, i) => bin.from !== undefined && bin.from % 5 === 0
-      ? <g key={`tick-${bin.label}`}>
-        <line x1={i * step} x2={i * step} y1={base} y2={base + 5} className={bin.from === 0 ? styles.axisZero : styles.axis} />
-        <text x={i * step} y={height - 6} className={styles.tick}>{bin.from.toLocaleString("pl-PL").replace("-", "−")}</text>
-      </g>
-      : null)}
   </svg>;
 }
 
@@ -198,4 +170,17 @@ export function MapLegend() {
     <span className={styles.mapScale} style={{ background: `linear-gradient(90deg, ${scaleColor(-1)}, ${scaleColor(0)}, ${scaleColor(1)})` }} />
     <span>+{MAP_LIMIT_PCT}%</span>
   </div>;
+}
+
+/**
+ * Mapa szpitali: kontury województw i kropka na szpital (jak mapa katalogu `/szpitale`). Obraz statyczny: bez dymków,
+ * kliknięć i fokusu; liczby są w `aria-label` i w tekście obok. Kolor: sieć PSZ — błękit danych, poza siecią — jasny błękit.
+ * `large`: mapa tak duża, jak pozwala szerokość kolumny i wysokość okna (cała mieści się na ekranie pod nagłówkiem).
+ */
+export function HospitalMap({ map, large = false }: { map: HospitalMapStats; large?: boolean }) {
+  const [width, height] = map.viewBox;
+  return <svg className={`${styles.hospitalMap} ${large ? styles.hospitalMapLarge : ""}`} viewBox={`0 0 ${width} ${height}`} role="img" aria-label={`Mapa szpitali z hospitalizacjami w ${map.year} r.: ${integer(map.hospitals)} szpitali, w tym ${integer(map.inPsz)} w sieci szpitali (PSZ)`}>
+    {map.regions.map((path, i) => <path key={i} d={path} className={styles.hospitalMapRegion} />)}
+    {map.dots.map(([x, y, r, psz], i) => <circle key={i} cx={x} cy={y} r={r} className={psz ? styles.hospitalDotPsz : styles.hospitalDot} />)}
+  </svg>;
 }

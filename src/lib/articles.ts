@@ -1,3 +1,5 @@
+import { ARTICLES_PATH } from "@/lib/dashboardNavigation";
+
 /** Artykuł portalu: adres, tytuł i krótki opis do listy `/artykuly` i metadanych. */
 export interface Article {
   slug: string;
@@ -7,7 +9,8 @@ export interface Article {
   kicker: string;
 }
 
-export const ARTICLES_PATH = "/artykuly";
+// Adres modułu jest jeden dla menu, strony głównej i listy: `ARTICLES_PATH` w `dashboardNavigation.ts`.
+export { ARTICLES_PATH };
 
 export const articleHref = (slug: string) => `${ARTICLES_PATH}/${slug}`;
 

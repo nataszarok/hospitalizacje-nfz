@@ -4,10 +4,8 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { ArticleIndexPage } from "@/components/articles/ArticleIndexPage";
 import { ArticleToc } from "@/components/articles/ArticleToc";
 import { JgpIntroArticle } from "@/components/articles/JgpIntroArticle";
-import { ARTICLES } from "@/lib/articles";
 import type { ExampleGroupFact, JgpIntroFacts } from "@/lib/jgpIntroArticle";
 
 afterEach(cleanup);
@@ -139,14 +137,5 @@ describe("Article.module.css — artykuł na telefonie (DESIGN.md 7.2)", () => {
     const phone = block("@media (max-width: 550px)");
     expect(phone).toMatch(/\.discharge dl > div \{ grid-template-columns: minmax\(0, 1fr\)/);
     expect(phone).toMatch(/\.glossary > div \{ grid-template-columns: minmax\(0, 1fr\)/);
-  });
-});
-
-describe("ArticleIndexPage", () => {
-  it("pokazuje każdy artykuł z linkiem", () => {
-    render(<ArticleIndexPage articles={ARTICLES} />);
-    expect(screen.getByRole("heading", { level: 1, name: "Artykuły" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /Czym są grupy JGP\?/ })).toHaveAttribute("href", "/artykuly/czym-sa-jgp");
-    expect(screen.getAllByRole("listitem")).toHaveLength(ARTICLES.length);
   });
 });

@@ -18,6 +18,13 @@ const integer = (value: number) => Math.round(value).toLocaleString("pl-PL");
 export const MAP_SIDE_ROWS = 10;
 const providersWord = (n: number) => n === 1 ? "szpital" : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14) ? "szpitale" : "szpitali";
 
+/** Filtr miasta (wybór kropką na mapie) z przyciskiem usunięcia. `overlay`: nakładka w lewym górnym rogu mapy. */
+export function CityFilter({ city, onClear, overlay = false }: { city: string; onClear: () => void; overlay?: boolean }) {
+  return <p className={`${styles.cityFilter} ${overlay ? styles.cityFilterOverlay : ""}`}>
+    Miasto: <b>{formatCityName(city)}</b> <button type="button" onClick={onClear} aria-label={`Usuń filtr miasta ${formatCityName(city)}`}>×</button>
+  </p>;
+}
+
 /**
  * Mapa katalogu: kropka = świadczeniodawca z hospitalizacjami w najnowszym roku, w mieście siedziby; wielkość z `catalogDotRadius`
  * (od 3 do 14 jednostek mapy). Placówki miasta są upakowane wokół jego punktu, a kropki sąsiednich miast rozsunięte,
@@ -68,6 +75,7 @@ export function HospitalCatalogMap({ rows, allRows, latestYear, regionName, regi
   return <section className={styles.mapCard} aria-label="Mapa szpitali">
     <div className={styles.mapGrid}>
       <div ref={wrapRef} className={styles.mapWrap} onMouseLeave={() => setHover(null)}>
+        {city ? <CityFilter city={city} onClear={() => onCity("")} overlay /> : null}
         {maps ? <svg className={styles.map} viewBox={`0 0 ${width} ${height}`} role="group" aria-label={`Mapa: hospitalizacje szpitali w ${latestYear} r.`}>
           {maps.regions.regions.map(([code, name, path]) => <path
             key={code}

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import { ArticleIndexPage } from "@/components/articles/ArticleIndexPage";
-import { ARTICLES, ARTICLES_PATH } from "@/lib/articles";
+import { ArticlesPage } from "@/components/articles/ArticlesPage";
+import { ARTICLES } from "@/lib/articles";
+import { ARTICLES_PATH } from "@/lib/dashboardNavigation";
 import { pageMetadata } from "@/lib/pageMetadata";
 
 export const metadata: Metadata = pageMetadata({
@@ -10,5 +11,5 @@ export const metadata: Metadata = pageMetadata({
 });
 
 export default function ArticlesRoute() {
-  return <ArticleIndexPage articles={ARTICLES} />;
+  return <ArticlesPage articles={ARTICLES} />;
 }
