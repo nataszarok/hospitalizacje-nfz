@@ -1,0 +1,16 @@
+/* Przycisk „Pokaż wszystkie” pod tabelą (`ExpandableTable`): wygląd linku, cel dotyku 44 px (DESIGN.md 7.0, 7.2). */
+.more {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-primary-hover);
+  font: inherit;
+  font-size: var(--fs-base);
+  font-weight: var(--fw-semibold);
+  cursor: pointer;
+}
+.more:hover { color: var(--color-primary-active); text-decoration: underline; }
+.more:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }

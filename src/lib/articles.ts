@@ -14,8 +14,14 @@ export { ARTICLES_PATH };
 
 export const articleHref = (slug: string) => `${ARTICLES_PATH}/${slug}`;
 
-/** Lista artykułów od najnowszego. Nowy artykuł: wpis tutaj + trasa `src/app/artykuly/<slug>/page.tsx`. */
+/** Lista artykułów od najnowszego. Nowy artykuł: wpis tutaj + trasa `src/app/artykuly/<slug>/page.tsx` z `articleMetadata(slug)` (podgląd linku). */
 export const ARTICLES: readonly Article[] = [
+  {
+    slug: "historia-h55",
+    title: "H55. Historia jednego kodu",
+    description: "Dziewięć lat rozliczeń termolezji kręgosłupa i 25 kontroli NFZ. Kontrolerzy sprawdzili co piąty miesiąc, w którym skontrolowane szpitale rozliczały H55.",
+    kicker: "Analiza",
+  },
   {
     slug: "czym-sa-jgp",
     title: "Czym są grupy JGP?",

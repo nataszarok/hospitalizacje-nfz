@@ -41,6 +41,18 @@ export type RegionViewProps = {
   /** Obszary analizy (do 5); kliknięcie województwa dodaje je albo usuwa. */
   areas?: AnalysisArea[];
   onAreasChange?: (areas: AnalysisArea[]) => void;
+  /** Mapa na start: województwa (eksplorator) albo placówki i miasta (np. artykuł). */
+  initialMode?: MapMode;
+  /** Sama mapa z legendą pod mapą i przełącznikiem województwa / miasta: bez tytułu karty i tabeli obok (np. artykuł z osią lat nad mapą). */
+  mapOnly?: boolean;
+  /**
+   * Skala koloru województw: „period” (eksplorator) — wobec średniej Polski z całego okresu, ½–2 ×, wspólna dla lat;
+   * „yearSd” — wobec średniej województw (i placówek na mapie miast) w roku mapy, granice ±2 odchylenia standardowe
+   * (różnice w danym roku).
+   */
+  regionScale?: "period" | "yearSd";
+  /** Legenda mapy (wielkość i kolor); bez niej opis skali musi być w podpisie mapy. */
+  legend?: boolean;
 };
 
 
@@ -60,11 +72,11 @@ const NO_AREAS: AnalysisArea[] = [];
  * Miasta: kropka na placówkę przy jej mieście (pole = hospitalizacje), obok tabela miast; kliknięcie pokazuje placówki miasta.
  * Skale są wspólne dla wszystkich lat. Wybrane obszary mają kolory wyróżnień (jak na wykresach Kto leczy, Tryb przyjęcia).
  */
-export function RegionView({ productCodes, year, method, areas = NO_AREAS, onAreasChange }: RegionViewProps) {
+export function RegionView({ productCodes, year, method, areas = NO_AREAS, onAreasChange, initialMode = "regions", mapOnly = false, regionScale = "period", legend = true }: RegionViewProps) {
   const [data, setData] = useState<{ trends: TrendsDataset; dataset: StaticDataset; regionsMap: RegionsMap; citiesMap: CitiesMap; facilityIndex: FacilityYearsIndex } | null>(null);
   const [sections, setSections] = useState<{ key: string; files: FacilityYearsSection[] } | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [mode, setMode] = useState<MapMode>("regions");
+  const [mode, setMode] = useState<MapMode>(initialMode);
   const [focus, setFocus] = useState<{ city: string; facility?: number } | null>(null);
 
   useEffect(() => {
@@ -130,6 +142,13 @@ export function RegionView({ productCodes, year, method, areas = NO_AREAS, onAre
     : null, [data, facilityTotals, yearIndex, scaleMax, facilityDeaths]);
   // Środek skali koloru kropek: mediana placówek na mapie w roku mapy (osobno dla każdego roku).
   const dotMedian = useMemo(() => median((dots ?? []).map((dot) => dot.hospitalizations)), [dots]);
+  // Skala „yearSd” dla kropek: średnia i odchylenie standardowe placówek na mapie w roku mapy.
+  const dotStats = useMemo(() => {
+    const values = (dots ?? []).map((dot) => dot.hospitalizations);
+    const mean = values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : 0;
+    const sd = values.length ? Math.sqrt(values.reduce((sum, value) => sum + (value - mean) ** 2, 0) / values.length) : 0;
+    return { mean, sd };
+  }, [dots]);
   const cityYear = useMemo(() => data && facilityTotals
     ? cityYearPoints(cityYearTotals(data.facilityIndex, facilityTotals), data.citiesMap, yearIndex)
     : null, [data, facilityTotals, yearIndex]);
@@ -150,15 +169,25 @@ export function RegionView({ productCodes, year, method, areas = NO_AREAS, onAre
   };
   const rows = regionYears[yearIndex] ?? [];
   const { cells: yearCells } = cartogramCells(rows);
-  const cells: CartogramCell[] = yearCells.map((cell) => ({ ...cell, position: scalePosition(cell.per100k, regionReference) }));
+  // Skala „yearSd”: średnia i odchylenie standardowe wskaźnika województw w roku mapy (bez ważenia ludnością).
+  const yearValues = yearCells.map((cell) => cell.per100k);
+  const yearMean = yearValues.length ? yearValues.reduce((sum, value) => sum + value, 0) / yearValues.length : 0;
+  const yearSd = yearValues.length ? Math.sqrt(yearValues.reduce((sum, value) => sum + (value - yearMean) ** 2, 0) / yearValues.length) : 0;
+  const sdPosition = (value: number) => yearSd > 0 ? Math.max(-1, Math.min(1, (value - yearMean) / (2 * yearSd))) : 0;
+  const cells: CartogramCell[] = yearCells.map((cell) => ({ ...cell, position: regionScale === "yearSd" ? sdPosition(cell.per100k) : scalePosition(cell.per100k, regionReference) }));
   const range = years.length > 1 ? `${years[0]}–${years.at(-1)}` : mapYear;
   const mapHelp = mode === "regions"
     ? `Hospitalizacje na 100 tys. mieszkańców województwa. Kolor względem średniej Polski z lat ${range} (${decimal(regionReference)}), wspólny dla wszystkich lat. Województwo to oddział NFZ, w którym świadczeniodawca rozlicza hospitalizacje, nie miejsce zamieszkania pacjenta. Kliknij województwo, aby dodać je do obszaru analizy (do ${MAX_AREAS} obszarów) albo usunąć.`
     : `Kropka = placówka z co najmniej ${MIN_FACILITY_HOSPITALIZATIONS} hospitalizacjami wybranych grup w roku; placówki jednego miasta są zebrane wokół jego punktu, a kropki sąsiednich miast są rozsunięte. Pole kropki = liczba hospitalizacji (kropka 4 × większa w polu = 4 × więcej hospitalizacji). Skala jest wspólna dla lat ${range}: kończy się na największej wartości placówki w tych latach, ale nie niżej niż ${integer(DOT_SCALE_FLOOR)}, więc w małej grupie kropki są małe. Kolor = hospitalizacje placówki wobec mediany placówek na mapie w roku ${mapYear} (${integer(dotMedian)}), od ¼ × do 4 ×; mediana jest liczona osobno dla każdego roku, więc kolor pokazuje pozycję placówki w danym roku. Wybrane obszary mają obwódkę w swoim kolorze. Placówki z siedzibą poza słownikiem miast (głównie wsie) nie mają kropki. Kliknij kropkę, aby zobaczyć placówki miasta.`;
 
   return <div className={styles.viewStack}>
-    <section className={styles.card} aria-labelledby="region-map">
-      <div className={styles.cardHeader}>
+    <section className={styles.card} {...(mapOnly ? { "aria-label": "Mapa placówek" } : { "aria-labelledby": "region-map" })}>
+      {mapOnly ? <div className={styles.mapOnlyBar}>
+        <div className={styles.modeToggle} role="group" aria-label="Mapa">
+          <button type="button" aria-pressed={mode === "regions"} onClick={() => setMode("regions")}>Województwa</button>
+          <button type="button" aria-pressed={mode === "cities"} onClick={() => setMode("cities")}>Miasta</button>
+        </div>
+      </div> : <div className={styles.cardHeader}>
         <h2 id="region-map" className={styles.cardTitle}>
           {mode === "regions" ? "Województwa na 100 tys. mieszkańców" : "Placówki i miasta"}
           <InfoTip label={mapHelp} ariaLabel="Jak czytać mapę" />
@@ -167,11 +196,11 @@ export function RegionView({ productCodes, year, method, areas = NO_AREAS, onAre
           <button type="button" aria-pressed={mode === "regions"} onClick={() => setMode("regions")}>Województwa</button>
           <button type="button" aria-pressed={mode === "cities"} onClick={() => setMode("cities")}>Miasta</button>
         </div>
-      </div>
-      <div className={styles.mapLayout}>
+      </div>}
+      <div className={mapOnly ? undefined : styles.mapLayout}>
         <div className={styles.mapColumn}>
           {/* Szerokość mapy z wysokości okna (`--map-aspect`): mapa z nagłówkiem karty mieści się na ekranie. */}
-          <div ref={mapRef} className={styles.mapFrame} style={{ "--map-aspect": data.regionsMap.viewBox[0] / data.regionsMap.viewBox[1] } as CSSProperties}>
+          <div ref={mapRef} className={`${styles.mapFrame} ${mapOnly ? styles.mapFrameLegendBelow : ""}`} style={{ "--map-aspect": data.regionsMap.viewBox[0] / data.regionsMap.viewBox[1] } as CSSProperties}>
             {mode === "regions"
               ? <RegionMap map={data.regionsMap} cells={cells} regions={regionAreas.map((area) => area.owNfz)} onToggle={toggleRegion} colors={regionAreas.map(areaColor)} />
               : dots
@@ -182,25 +211,28 @@ export function RegionView({ productCodes, year, method, areas = NO_AREAS, onAre
                   areas={areas}
                   areaColor={areaColor}
                   median={dotMedian}
+                  position={regionScale === "yearSd" ? (value) => dotStats.sd > 0 ? Math.max(-1, Math.min(1, (value - dotStats.mean) / (2 * dotStats.sd))) : 0 : undefined}
                   regionName={(ow) => reference.regions.find((region) => region.owNfz === ow)?.name ?? ow}
                   focus={focus}
-                  onSelect={(dot) => setFocus({ city: dot.city, facility: dot.facility })}
+                  onSelect={(dot) => { if (!mapOnly) setFocus({ city: dot.city, facility: dot.facility }); }}
                 />
                 : <div className="empty-chart">Ładowanie danych placówek…</div>}
-            {/* Legenda w pustym lewym dolnym rogu prostokąta mapy (na wąskim ekranie pod mapą). */}
-            <MapLegend
+            {/* Legenda w pustym lewym dolnym rogu prostokąta mapy (na wąskim ekranie pod mapą); `legend={false}` — bez legendy (opis w podpisie). */}
+            {legend ? <MapLegend
               mode={mode}
               range={range}
+              sdScale={regionScale === "yearSd" ? { year: mapYear, mean: yearMean, sd: yearSd } : undefined}
               max={maxFacility}
               scaleMax={scaleMax}
               dotMedian={dotMedian}
+              dotSdScale={regionScale === "yearSd" ? { year: mapYear, ...dotStats } : undefined}
               scale={mapWidth / data.regionsMap.viewBox[0]}
-            />
+            /> : null}
           </div>
           {/* Obszary pod mapą: lista do 5 pozycji nie mieści się w rogu mapy. */}
           <AreaLegend areas={mode === "regions" ? regionAreas : areas} areaColor={areaColor} reference={reference} />
         </div>
-        {mode === "regions"
+        {mapOnly ? null : mode === "regions"
           ? <RegionTable year={mapYear} rows={rows} areas={regionAreas} areaColor={areaColor} onToggle={onAreasChange ? toggleRegion : undefined} />
           : focus && cityYear
             ? <CityProviders
@@ -244,17 +276,31 @@ function niceValue(value: number): number {
  * Województwa: skala koloru. Placówki: wielkość i kolory — kropki w skali mapy
  * (`scale` = piksele na jednostkę mapy), więc kropka legendy ma rozmiar kropki na mapie.
  */
-function MapLegend({ mode, range, max, scaleMax, dotMedian, scale }: {
+function MapLegend({ mode, range, sdScale, dotSdScale, max, scaleMax, dotMedian, scale }: {
   mode: MapMode;
   range: string;
+  /** Skala ±2 odchylenia standardowe wokół średniej województw w roku mapy (zamiast ½–2 × średniej okresu). */
+  sdScale?: { year: string; mean: number; sd: number };
   /** Największa wartość placówki (wartości kropek legendy). */
   max: number;
   /** Koniec skali wielkości (`dotScaleMax`). */
   scaleMax: number;
   /** Mediana placówek w roku mapy (środek skali koloru kropek). */
   dotMedian: number;
+  /** Skala kropek ±2 odchylenia standardowe wokół średniej placówek w roku mapy (zamiast ¼–4 × mediany). */
+  dotSdScale?: { year: string; mean: number; sd: number };
   scale: number;
 }) {
+  if (mode === "regions" && sdScale) return <div className={styles.mapLegend}>
+    <div className={styles.legendGroup}>
+      <div className={styles.legendTitle}>Na 100 tys. mieszkańców wobec średniej województw {sdScale.year} ({decimal(sdScale.mean)})</div>
+      <div className={styles.legendScale}>
+        <span>−2 SD ({decimal(Math.max(0, sdScale.mean - 2 * sdScale.sd))})</span>
+        <i style={{ background: `linear-gradient(90deg, ${scaleColor(-1)}, ${scaleColor(0)}, ${scaleColor(1)})` }} aria-hidden />
+        <span>+2 SD ({decimal(sdScale.mean + 2 * sdScale.sd)})</span>
+      </div>
+    </div>
+  </div>;
   if (mode === "regions") return <div className={styles.mapLegend}>
     <div className={styles.legendGroup}>
       <div className={styles.legendTitle}>Na 100 tys. mieszkańców wobec średniej {range}</div>
@@ -282,12 +328,21 @@ function MapLegend({ mode, range, max, scaleMax, dotMedian, scale }: {
       </ul>
     </div>
     <div className={styles.legendGroup}>
-      <div className={styles.legendTitle}>Kolor: wobec mediany roku ({integer(dotMedian)})</div>
-      <div className={styles.legendScale}>
-        <span>¼ ×</span>
-        <i style={{ background: `linear-gradient(90deg, ${scaleColor(-1)}, ${scaleColor(0)}, ${scaleColor(1)})` }} aria-hidden />
-        <span>4 ×</span>
-      </div>
+      {dotSdScale ? <>
+        <div className={styles.legendTitle}>Kolor: wobec średniej placówek {dotSdScale.year} ({integer(dotSdScale.mean)})</div>
+        <div className={styles.legendScale}>
+          <span>−2 SD ({integer(Math.max(0, dotSdScale.mean - 2 * dotSdScale.sd))})</span>
+          <i style={{ background: `linear-gradient(90deg, ${scaleColor(-1)}, ${scaleColor(0)}, ${scaleColor(1)})` }} aria-hidden />
+          <span>+2 SD ({integer(dotSdScale.mean + 2 * dotSdScale.sd)})</span>
+        </div>
+      </> : <>
+        <div className={styles.legendTitle}>Kolor: wobec mediany roku ({integer(dotMedian)})</div>
+        <div className={styles.legendScale}>
+          <span>¼ ×</span>
+          <i style={{ background: `linear-gradient(90deg, ${scaleColor(-1)}, ${scaleColor(0)}, ${scaleColor(1)})` }} aria-hidden />
+          <span>4 ×</span>
+        </div>
+      </>}
     </div>
   </div>;
 }
@@ -307,7 +362,7 @@ const ratio = (value: number, reference: number) => reference > 0
  * dymek może wyjść poza mapę i kartę, ale nie poza okno (DESIGN.md 6.3).
  * Większe kropki pod spodem, mniejsze na wierzchu; przy zmianie roku kropki płynnie zmieniają wielkość i miejsce.
  */
-function FacilityMap({ map, dots, mapYear, areas, areaColor, median: yearMedian, regionName, focus, onSelect }: {
+function FacilityMap({ map, dots, mapYear, areas, areaColor, median: yearMedian, position, regionName, focus, onSelect }: {
   map: RegionsMap;
   dots: FacilityDot[];
   mapYear: string;
@@ -315,6 +370,8 @@ function FacilityMap({ map, dots, mapYear, areas, areaColor, median: yearMedian,
   areaColor: (area: AnalysisArea) => string;
   /** Mediana hospitalizacji placówek na mapie w roku mapy (środek skali koloru). */
   median: number;
+  /** Własna pozycja na skali koloru (−1…1) dla liczby hospitalizacji; domyślnie ¼–4 × mediany roku. */
+  position?: (hospitalizations: number) => number;
   regionName: (owNfz: string) => string;
   focus: { city: string; facility?: number } | null;
   onSelect: (dot: FacilityDot) => void;
@@ -339,7 +396,7 @@ function FacilityMap({ map, dots, mapYear, areas, areaColor, median: yearMedian,
           cx={dot.x}
           cy={dot.y}
           r={dot.r}
-          fill={scaleColor(scalePosition(dot.hospitalizations, yearMedian, DOT_SPAN))}
+          fill={scaleColor(position ? position(dot.hospitalizations) : scalePosition(dot.hospitalizations, yearMedian, DOT_SPAN))}
           style={area ? { "--area-color": areaColor(area) } as CSSProperties : undefined}
           opacity={outside ? DOT_OUTSIDE_OPACITY : undefined}
           className={`${styles.cityDot} ${area ? styles.facilityDotArea : ""} ${selected ? styles.facilityDotSelected : ""}`}

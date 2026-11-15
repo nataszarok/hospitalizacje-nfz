@@ -1,0 +1,9 @@
+/* Wybór placówki nad wykresem (`H55FacilityPicker`): pole na pełną szerokość kolumny tekstu, do 480 px. */
+.picker { display: grid; gap: 12px; min-width: 0; }
+.picker :global(.mantine-filter) { max-width: 480px; }
+
+/* Fakty o placówce nad wykresem: etykieta nad wartością, siatka do 3 kolumn (telefon: 2). */
+.facts { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px 16px; margin: 0; }
+.facts div { min-width: 0; }
+.facts dt { color: var(--color-text-tertiary); font-size: var(--fs-xs); }
+.facts dd { margin: 0; font-size: var(--fs-md); font-weight: var(--fw-semibold); font-variant-numeric: tabular-nums; }

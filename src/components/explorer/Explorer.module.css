@@ -84,7 +84,6 @@
 
 .introCard a,
 .method a {
-  color: var(--color-primary-hover);
   font-weight: var(--fw-semibold);
 }
 
@@ -1140,4 +1139,23 @@
     overflow-x: auto;
     scrollbar-width: none;
   }
+}
+
+/* Mapa bez tabeli (`RegionView` z `mapOnly`, np. artykuł): przełącznik nad mapą po prawej, legenda zawsze pod mapą, od lewej
+   (w węższej kolumnie artykułu legenda w rogu mapy nachodziła na kropki). */
+.mapOnlyBar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 8px;
+}
+
+.mapFrame.mapFrameLegendBelow .mapLegend {
+  position: static;
+  width: auto;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 12px 28px;
+  padding-top: 10px;
+  border-top: 1px solid var(--color-border);
 }

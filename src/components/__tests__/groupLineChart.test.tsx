@@ -3,7 +3,8 @@
 import "@testing-library/jest-dom/vitest";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { GroupLineChart, type ChartLine } from "@/components/jgp/GroupLineChart";
+import { CHART_COLORS } from "@/lib/chartPalette";
+import { GroupLineChart, type ChartBand, type ChartLine, type ChartMarker } from "@/components/jgp/GroupLineChart";
 
 // Po narysowaniu wykres podpina zdarzenia Plotly do elementu: zapamiętujemy obsługę zdarzeń.
 // Osie z `_fullLayout`: x = indeks miesiąca × 10 px (daty przez `d2l`), y = 200 − wartość; marginesy 0.
@@ -32,9 +33,9 @@ const months = ["2023-10", "2023-11", "2023-12", ...Array.from({ length: 12 }, (
 monthIndex = new Map(months.map((month, i) => [`${month}-01`, i]));
 const values = months.map((_, i) => i + 1);
 type Trace = { mode: string; x: string[]; y: (number | null)[]; hoverinfo?: string; opacity: number };
-type Layout = { height: number; xaxis: { ticklabelmode?: string; range?: string[] }; annotations: { text: string }[] };
+type Layout = { height: number; xaxis: { ticklabelmode?: string; range?: string[] }; annotations: { text: string; x?: string }[]; shapes: { type: string; x0?: string; x1?: string; fillcolor?: string; line?: { dash?: string } }[] };
 
-async function draw(lines: ChartLine[], props: { period?: "month" | "year"; selectedLabel?: string; onSelect?: (key: string) => void } = {}) {
+async function draw(lines: ChartLine[], props: { period?: "month" | "year"; selectedLabel?: string; onSelect?: (key: string) => void; bands?: ChartBand[]; markers?: ChartMarker[] } = {}) {
   render(<GroupLineChart months={months} lines={lines} valueLabel="hosp." ariaLabel="wykres" height={300} {...props} />);
   await waitFor(() => expect(react).toHaveBeenCalled());
   await waitFor(() => expect(screen.getByRole("img", { name: "wykres" }).onmousemove).toBeTruthy());
@@ -188,5 +189,26 @@ describe("GroupLineChart — wybrany ośrodek", () => {
   it("długą nazwę w podpisie łamie na linie, bez skracania", async () => {
     const { layout } = await draw(lines, { selectedLabel: name });
     expect(layout.annotations[0].text).toBe("SZPITAL WOJEWÓDZKI IM. MIKOŁAJA<br>KOPERNIKA W KOSZALINIE");
+  });
+});
+
+describe("GroupLineChart — pasma i znaczniki", () => {
+  it("pasmo okresu: prostokąt od połowy miesiąca przed `from` do połowy `to`, pod danymi, z podpisem", async () => {
+    const { layout } = await draw([{ key: "pl", name: "Polska", values }], { bands: [{ from: "2024-01", to: "2024-06", label: "okres objęty kontrolą" }] });
+    const band = layout.shapes.find((shape) => shape.type === "rect")!;
+    expect(band).toMatchObject({ x0: "2023-12-16", x1: "2024-06-16", fillcolor: CHART_COLORS.dataFaint });
+    expect(layout.annotations.map((item) => item.text)).toContain("okres objęty kontrolą");
+  });
+
+  it("znacznik zdarzenia: pionowa linia kropkowana w dniu zdarzenia, z podpisem", async () => {
+    const { layout } = await draw([{ key: "pl", name: "Polska", values }], { markers: [{ date: "2024-03-15", label: "koniec kontroli" }] });
+    const marker = layout.shapes.find((shape) => shape.type === "line" && shape.x0 === "2024-03-15")!;
+    expect(marker.line?.dash).toBe("dot");
+    expect(layout.annotations.find((item) => item.text === "koniec kontroli")?.x).toBe("2024-03-15");
+  });
+
+  it("pasma są też w widoku lat", async () => {
+    const { layout } = await draw([{ key: "pl", name: "Polska", values }], { period: "year", bands: [{ from: "2024-01", to: "2024-12" }] });
+    expect(layout.shapes.filter((shape) => shape.type === "rect")).toHaveLength(1);
   });
 });

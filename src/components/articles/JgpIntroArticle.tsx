@@ -17,7 +17,6 @@ const isExternal = (href: string) => href.startsWith("http");
 
 /** Spis treści: kotwice sekcji artykułu. */
 const SECTIONS = [
-  { id: "wstep", label: "O czym jest ten tekst" },
   { id: "anna", label: "Pani Anna idzie do szpitala" },
   { id: "kody", label: "Co szpital wysyła do NFZ" },
   { id: "gruper", label: "Jak powstaje grupa" },
@@ -89,8 +88,8 @@ export function JgpIntroArticle({ facts }: { facts: JgpIntroFacts }) {
       <ArticleToc items={SECTIONS} />
 
       <article className={styles.article}>
-        <section id="wstep" aria-labelledby="wstep-h">
-          <h2 id="wstep-h">O czym jest ten tekst</h2>
+        {/* Początek bez nagłówka: tekst zaczyna się od sceny, nagłówki mają dopiero kolejne części. */}
+        <section id="wstep" aria-label="Wstęp">
           <p className={styles.lede}>
             Kto leżał w szpitalu, ten na koniec dostał wypis. Dla pacjenta to koniec sprawy. Dla szpitala — początek rozliczenia z NFZ.
           </p>

@@ -18,6 +18,8 @@ export const previewImagePath = {
   jgp: (jgpCode: string) => `/og/jgp/${encodeURIComponent(jgpCode)}.png`,
   /** Karta szpitala: fragment adresu „<NIP>-<OW>” (`hospitalSlug`). */
   szpital: (slug: string) => `/og/szpital/${encodeURIComponent(slug)}.png`,
+  /** Artykuł: slug z `ARTICLES` (`articlePreview.ts`). */
+  artykul: (slug: string) => `/og/artykul/${encodeURIComponent(slug)}.png`,
 };
 
 export interface PageMetadataInput {
@@ -27,15 +29,17 @@ export interface PageMetadataInput {
   /** Ścieżka strony, np. `/jgp/E53G`. */
   path: string;
   image?: { url: string; alt: string };
+  /** Typ Open Graph: „article” dla artykułów, domyślnie „website”. */
+  type?: "website" | "article";
 }
 
-export function pageMetadata({ title, description, path, image }: PageMetadataInput): Metadata {
+export function pageMetadata({ title, description, path, image, type = "website" }: PageMetadataInput): Metadata {
   const fullTitle = title.includes(SITE_NAME) ? title : `${title} | ${SITE_NAME}`;
   const images = [{ url: image?.url ?? DEFAULT_PREVIEW_IMAGE, width: 1200, height: 630, alt: image?.alt ?? `${SITE_NAME}: publiczna ochrona zdrowia w liczbach` }];
   return {
     title: fullTitle,
     description,
-    openGraph: { type: "website", locale: "pl_PL", siteName: SITE_NAME, url: path, title, description, images },
+    openGraph: { type, locale: "pl_PL", siteName: SITE_NAME, url: path, title, description, images },
     twitter: { card: "summary_large_image", title, description, images },
   };
 }

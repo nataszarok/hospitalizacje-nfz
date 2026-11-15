@@ -162,6 +162,38 @@ console.log(`Hospitalization data OK: ${index.years.join(", ")}; ${((totalSize +
   console.log(`Group pages OK: ${pagesIndex.groups.length} groups, ${(totalSize / 1024 / 1024).toFixed(2)} MiB, largest ${largest[1]} ${(largest[0] / 1024).toFixed(0)} KiB.`);
 }
 
+// Artykuł „H55. Historia jednego kodu” (scripts/articles/build_h55_article.py): hospitalizacje H55 świadczeniodawca × miesiąc,
+// metoda „cal” (kalibracja „<5”, calibrate_below5.py): w latach API (2019–2024) suma = liczba hospitalizacji z API,
+// rok bez API = szacunek z punktów (`estimate`); lata przed kalibracją (2017–2018) nie mniej niż trend metodą min
+// (każde „<5” to co najmniej 1). Udział procedury 03.96 jest w każdym roku API (2017–2024).
+{
+  const file = "build-data/articles/h55.json.gz";
+  const { size, data: article } = await readGzipJson(file);
+  if (article.version !== 1 || JSON.stringify(article.years) !== JSON.stringify(index.years)) throw new Error(`${file} has a wrong header.`);
+  if (article.method !== "cal") throw new Error(`${file}: method ${article.method}, expected cal.`);
+  const rows = rowsFromColumns(article.rows, ["provider", "month", "hospitalizations"], file);
+  const actual = new Map();
+  for (const [provider, month, h] of rows) {
+    if (!article.providers[provider]) throw new Error(`${file}: row points to a missing provider ${provider}.`);
+    const year = index.years[Math.floor(month / 12)];
+    actual.set(year, (actual.get(year) ?? 0) + h);
+  }
+  const api = new Map(article.procedure.years.map(([year, hospitalizations]) => [String(year), hospitalizations]));
+  const minimum = new Map();
+  for (const [year, , product, , , hMin] of trends.monthly) {
+    if (trends.products[product][0] === article.product) minimum.set(year, (minimum.get(year) ?? 0) + hMin);
+  }
+  for (const year of index.years) {
+    const got = actual.get(year) ?? 0;
+    const want = Number(year) >= 2019 ? (api.get(year) ?? (article.estimate?.year === Number(year) ? article.estimate.hospitalizations : null)) : null;
+    if (want !== null && want !== undefined && Math.abs(got - want) > Math.max(5, want * 0.002)) throw new Error(`${file}: H55 in ${year} is ${got}, API or estimate ${want}.`);
+    if (got < (minimum.get(year) ?? 0)) throw new Error(`${file}: H55 in ${year} is ${got}, below the min method ${minimum.get(year)}.`);
+  }
+  const shareYears = article.procedure.years.map(([year]) => year);
+  if (shareYears.join(",") !== "2017,2018,2019,2020,2021,2022,2023,2024") throw new Error(`${file}: procedure shares for years ${shareYears.join(", ")}.`);
+  console.log(`H55 article OK: ${article.providers.length} providers, ${(size / 1024).toFixed(0)} KiB.`);
+}
+
 // Ryczałt / za wykonanie kart szpitali (scripts/build_hospital_payment.py): każdy szpital z kartą. Hospitalizacje zakresów
 // w roku = hospitalizacje szpitala w plikach placówek (metoda min); kwoty zakresów = kwoty szpitala w plikach grup
 // (tolerancja 0,1% na zaokrąglenia i kody spoza katalogu grup).
