@@ -28,6 +28,8 @@ export interface PreviewCard {
   title: string;
   /** Drugi wiersz tytułu, np. nazwa grupy. */
   subtitle?: string;
+  /** Najwięcej znaków podtytułu (dłuższy kończy się wielokropkiem); domyślnie 105. Artykuł: cały opis (do 4 wierszy). */
+  subtitleLimit?: number;
   /** Liczba kluczowa pod tytułem, np. { value: "2050", label: "hospitalizacji w 2025 r." }. */
   fact?: { value: string; label: string };
   series?: PreviewSeries;
@@ -132,7 +134,7 @@ export function previewElement(card: PreviewCard) {
         </div>
         {card.subtitle && (
           <div style={{ display: "flex", marginTop: 12, fontSize: 34, lineHeight: 1.2, color: CHART_COLORS.textSecondary }}>
-            {shortenName(card.subtitle, 105)}
+            {shortenName(card.subtitle, card.subtitleLimit ?? 105)}
           </div>
         )}
         {card.fact && (
