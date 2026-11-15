@@ -17,6 +17,12 @@ export const articleHref = (slug: string) => `${ARTICLES_PATH}/${slug}`;
 /** Lista artykułów od najnowszego. Nowy artykuł: wpis tutaj + trasa `src/app/artykuly/<slug>/page.tsx` z `articleMetadata(slug)` (podgląd linku). */
 export const ARTICLES: readonly Article[] = [
   {
+    slug: "pytania-zabiegi-kregoslup",
+    title: "Zabiegi na kręgosłupie: pytania do NFZ",
+    description: "Pytania o rozliczenia H52, H53 i H55 i o kontrole NFZ. Kontrole z lat 2024–2025 badały zwykle 2022 r. i objęły co piąty miesiąc rozliczeń skontrolowanych szpitali.",
+    kicker: "Pytania",
+  },
+  {
     slug: "historia-h55",
     title: "H55. Historia jednego kodu",
     description: "Dziewięć lat rozliczeń termolezji kręgosłupa i 25 kontroli NFZ. Kontrolerzy sprawdzili co piąty miesiąc, w którym skontrolowane szpitale rozliczały H55.",

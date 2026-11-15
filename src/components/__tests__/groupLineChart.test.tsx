@@ -4,7 +4,7 @@ import "@testing-library/jest-dom/vitest";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { CHART_COLORS } from "@/lib/chartPalette";
-import { GroupLineChart, type ChartBand, type ChartLine, type ChartMarker } from "@/components/jgp/GroupLineChart";
+import { GroupLineChart, bandFill, markerLabelOnLeft, type ChartBand, type ChartLine, type ChartMarker } from "@/components/jgp/GroupLineChart";
 
 // Po narysowaniu wykres podpina zdarzenia Plotly do elementu: zapamiętujemy obsługę zdarzeń.
 // Osie z `_fullLayout`: x = indeks miesiąca × 10 px (daty przez `d2l`), y = 200 − wartość; marginesy 0.
@@ -205,6 +205,23 @@ describe("GroupLineChart — pasma i znaczniki", () => {
     const marker = layout.shapes.find((shape) => shape.type === "line" && shape.x0 === "2024-03-15")!;
     expect(marker.line?.dash).toBe("dot");
     expect(layout.annotations.find((item) => item.text === "koniec kontroli")?.x).toBe("2024-03-15");
+  });
+
+  it("podpis znacznika przechodzi na lewą stronę linii, gdy na prawo się nie mieści", () => {
+    const range = ["2017-01-01", "2025-12-31"];
+    const marker = { date: "2024-02-06", label: "1. kontrola (H55)" };
+    // Szeroki wykres: na prawo od lutego 2024 r. jest ok. 135 px — podpis (ok. 125 px) się mieści.
+    expect(markerLabelOnLeft(marker, range, 600)).toBe(false);
+    // Telefon: ok. 60 px — podpis po lewej.
+    expect(markerLabelOnLeft(marker, range, 270)).toBe(true);
+    // Szerokość nieznana: reguła ostatnich 20% osi.
+    expect(markerLabelOnLeft(marker, range, 0)).toBe(false);
+    expect(markerLabelOnLeft({ ...marker, date: "2025-08-04" }, range, 0)).toBe(true);
+  });
+
+  it("pasmo z kolorem: wypełnienie przezroczyste, krycie domyślne albo własne", () => {
+    expect(bandFill("#F2C200")).toBe("rgba(242, 194, 0, 0.1)");
+    expect(bandFill("#F2C200", 0.35)).toBe("rgba(242, 194, 0, 0.35)");
   });
 
   it("pasma są też w widoku lat", async () => {
