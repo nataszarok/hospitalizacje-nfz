@@ -265,15 +265,26 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
       const noteLines = noteText ? noteText.split("<br>").length : 0;
       const allPoints = ordered.flatMap((line) => series.get(line.key)!.points);
       const yAxis = percent ? percentAxis(allPoints, { fit: fitAxis }) : countAxis(allPoints);
+      // Legenda nad wykresem w tylu wierszach, ilu wymaga szerokość (telefon: 2–3), z miejscem w górnym marginesie:
+      // nie nachodzi na dane ani na podpisy pasm i linii kontroli (szacunek szerokości wpisu: znacznik + tekst 12 px).
+      const legendNames = legend ? ordered.map((line) => line.name) : [];
+      const legendWidth = Math.max(160, (plot.clientWidth || 640) - 72);
+      let legendRows = legendNames.length ? 1 : 0;
+      let rowWidth = 0;
+      for (const name of legendNames) {
+        const item = 40 + name.length * 7;
+        if (rowWidth && rowWidth + item > legendWidth) { legendRows += 1; rowWidth = 0; }
+        rowWidth += item;
+      }
       await Plotly.react(plot, traces, {
         ...chartLayout(),
         // Najechanie liczy `nearestLine` (prawdziwa odległość od kropek i odcinków); hover Plotly wyłączony.
         hovermode: false,
         height,
         autosize: true,
-        margin: { l: 56, r: 16, t: legend ? 36 : 12, b: 44 + noteLines * 16 },
+        margin: { l: 56, r: 16, t: legend ? 14 + 22 * legendRows : 12, b: 44 + noteLines * 16 },
         showlegend: legend,
-        legend: { orientation: "h", x: 0, y: 1.1, font: { size: 12 } },
+        legend: { orientation: "h", x: 0, y: 1, yanchor: "bottom", font: { size: 12 } },
         // Tło wybranego roku: od 1 stycznia do końca grudnia (pół miesiąca zapasu po obu stronach kropek).
         // Podstawa (zero) pod danymi, gdy zero jest w zakresie osi.
         shapes: [
