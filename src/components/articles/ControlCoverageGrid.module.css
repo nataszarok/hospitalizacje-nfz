@@ -1,0 +1,38 @@
+/* Siatka miesięcy objętych kontrolą (`ControlCoverageGrid`): wiersz na placówkę w jednej linii, kratka na miesiąc. */
+.shell { position: relative; font-size: var(--fs-sm); color: var(--color-text); }
+
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 0 0 12px; padding: 0; list-style: none; color: var(--color-text-secondary); }
+.legend li { display: flex; align-items: center; gap: 6px; margin: 0; }
+.legend .scale { flex-basis: 100%; color: var(--color-text-tertiary); font-size: var(--fs-xs); }
+.ramp { display: inline-flex; gap: 2px; }
+.swatch { display: inline-block; width: 12px; height: 12px; border-radius: var(--radius-badge); }
+
+/* Wiersz: nazwa | pasek miesięcy | „12 z 108”. Ta sama siatka kolumn w wierszu osi, więc lata stoją nad paskami. */
+.row { display: grid; grid-template-columns: minmax(0, 9.5em) minmax(0, 1fr) 4.5em; align-items: center; gap: 8px; padding: 2px 0; }
+.label { min-width: 0; line-height: 1.2; overflow-wrap: anywhere; }
+.summary { color: var(--color-text-tertiary); font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+.strip { display: block; width: 100%; height: 14px; background: var(--color-background-soft); }
+
+/* Podpisy lat nad paskami: pozycja z indeksu miesiąca. */
+.axisRow { padding: 0 0 4px; }
+.axis { position: relative; height: 18px; border-bottom: 1px solid var(--color-border-strong); color: var(--color-text-tertiary); font-size: var(--fs-xs); font-variant-numeric: tabular-nums; }
+.axis span { position: absolute; top: 0; }
+
+.group + .group { margin-top: 12px; }
+.groupTitle { margin: 12px 0 4px; font-size: var(--fs-sm); font-weight: var(--fw-bold); text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-tertiary); }
+
+.yearLine { fill: var(--color-border); }
+/* Kolor = status miesiąca; odcień = liczba hospitalizacji (s0 najjaśniejszy … s3 pełny kolor). */
+.studied { fill: var(--color-data); background: var(--color-data); }
+.outside { fill: var(--color-signal); background: var(--color-signal); }
+.s0 { opacity: .28; }
+.s1 { opacity: .5; }
+.s2 { opacity: .75; }
+.s3 { opacity: 1; }
+.strip rect:not(.yearLine):hover { stroke: var(--color-text); stroke-width: 1px; vector-effect: non-scaling-stroke; }
+
+/* Telefon: węższa kolumna nazwy, co drugi rok na osi (podpisy nie nachodzą na siebie). */
+@media (max-width: 550px) {
+  .row { grid-template-columns: minmax(0, 6.5em) minmax(0, 1fr) 3.8em; gap: 6px; font-size: var(--fs-xs); }
+  .axis span:nth-child(even) { display: none; }
+}

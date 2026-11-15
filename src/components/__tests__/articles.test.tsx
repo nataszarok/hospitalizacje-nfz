@@ -44,7 +44,7 @@ describe("JgpIntroArticle", () => {
 
   it("wstęp: liczby z kontekstem i czterech bohaterów z piktogramami", () => {
     render(<JgpIntroArticle facts={facts} />);
-    const intro = screen.getByRole("heading", { level: 2, name: "O czym jest ten tekst" }).closest("section")!;
+    const intro = screen.getByRole("region", { name: "Wstęp" });
     expect(intro).toHaveTextContent("w 612 grupach");
     // Wycięcie pęcherzyka: G25E + G25F.
     expect(intro).toHaveTextContent("ponad 61 tys. operacji usunięcia pęcherzyka");

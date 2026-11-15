@@ -111,6 +111,49 @@ def source_path(data_dir: Path, year: str) -> Path:
     raise SystemExit(f"Brak danych źródłowych dla roku {year} w {data_dir}")
 
 
+# Dwie funkcje z brancha feature/below5-calibration (identyczna treść), potrzebne skryptowi calibrate_below5.py.
+def read_source_chunks(path: Path, year: str):
+    """Fragmenty pliku źródłowego z wierszami jednego roku (kolumny RAW_COLUMNS, wartości tekstowe)."""
+    multi = MULTI_YEAR_SOURCES.get(path.name)
+    options = {"header": None, "names": RAW_COLUMNS, "encoding": multi[1]} if multi else {}
+    for chunk in pd.read_csv(path, sep=";", dtype=str, chunksize=CHUNK_SIZE, keep_default_na=False, **options):
+        chunk = chunk[RAW_COLUMNS]
+        if multi:
+            chunk = chunk[chunk["ROK"].str.strip() == year]
+            if chunk.empty:
+                continue
+        years = set(chunk["ROK"].str.strip())
+        if years != {year}:
+            raise SystemExit(f"{path.name}: oczekiwano roku {year}, znaleziono {sorted(years)}")
+        yield chunk
+
+
+def load_provider_codes(data: Path, year: str | None = None) -> dict[str, str]:
+    """Kod świadczeniodawcy NFZ → NIP z pliku hospitalizacji, klucz „OW|kod” (np. „01|3401029”).
+
+    Podstawą jest data/nfz_swiadczeniodawcy_2025.csv. Lista ręczna data/kody_swiadczeniodawcow_uzupelnienie.csv
+    ma pierwszeństwo: kody spoza pliku 2025 (placówki zamknięte) i kody, dla których plik 2025 podaje NIP
+    inny niż plik hospitalizacji (połączenia placówek, zmiana NIP). Wiersz z kolumną LATA (np. „2019,2020”)
+    działa tylko w tych latach; bez roku (year=None) działają tylko wiersze bez LATA.
+    """
+    codes: dict[str, str] = {}
+    path = data / "nfz_swiadczeniodawcy_2025.csv"
+    if path.exists():
+        with path.open(encoding="utf-8-sig", newline="") as fh:
+            for row in csv.DictReader(fh):
+                codes[f"{row['oddzial_nfz'].strip().zfill(2)}|{row['kod'].strip()}"] = re.sub(r"\D", "", row["nip"])
+    path = data / "kody_swiadczeniodawcow_uzupelnienie.csv"
+    if not path.exists():
+        return codes
+    with path.open(encoding="utf-8", newline="") as fh:
+        for row in csv.DictReader(fh):
+            years = {y.strip() for y in (row.get("LATA") or "").split(",") if y.strip()}
+            if years and year not in years:
+                continue
+            codes[f"{row['OW_NFZ'].strip().zfill(2)}|{row['KOD_SWIADCZENIODAWCY'].strip()}"] = re.sub(r"\D", "", row["NIP"])
+    return codes
+
+
 def iter_frames(path: Path, year: str):
     """Kolejne fragmenty pliku źródłowego jako ramki z oszacowanymi wartościami „<5” (h_sim, h_min, d_sim, d_min).
 

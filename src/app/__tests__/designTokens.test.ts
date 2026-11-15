@@ -116,3 +116,21 @@ describe("wykresy Plotly", () => {
     expect(globals).toMatch(/\.js-plotly-plot \.plotly \.main-svg\.main-svg\s*\{\s*overflow:\s*visible;/);
   });
 });
+
+// Link (DESIGN.md 7.0): jedna reguła bazowa w globals.css, komponenty nie wpisują koloru linku w tekście sami.
+describe("link", () => {
+  it("globals.css: link w zieleni operacyjnej, hover ciemniejszy, ten sam kolor po odwiedzeniu", () => {
+    expect(globals).toMatch(/:where\(a\)\s*\{[^}]*color:\s*var\(--color-primary-hover\)/);
+    expect(globals).toMatch(/:where\(a:hover, a:active\)\s*\{[^}]*color:\s*var\(--color-primary-active\)/);
+    expect(globals).not.toMatch(/a:visited/);
+  });
+
+  it("żaden moduł nie barwi linku błękitem danych ani kolorem wpisanym na stałe", () => {
+    const linkColor = /(?:^|[\s,}])a(?::[a-z-]+)?\s*\{[^}]*?(?<![a-z-])color:\s*([^;}]+)/gm;
+    const offenders = files.filter(({ name }) => name !== join("app", "globals.css"))
+      .flatMap(({ name, css }) => [...css.matchAll(linkColor)]
+        .filter((match) => match[1].includes("--color-data") || /#[0-9a-f]{3,8}\b|\b(blue|purple)\b/i.test(match[1]))
+        .map((match) => `${name}: ${match[0].trim().slice(0, 60)}`));
+    expect(offenders).toEqual([]);
+  });
+});

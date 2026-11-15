@@ -44,6 +44,11 @@
 @media (prefers-reduced-motion: no-preference) { html { scroll-behavior:smooth; } }
 html, body { margin:0; min-height:100%; background:#fff; color:var(--color-text); font-family:var(--font-body), ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
 button, input, select { font:inherit; }
+/* Link (DESIGN.md 7.0): zieleń operacyjna, ten sam kolor po odwiedzeniu. `:where` = zerowa specyficzność,
+   więc linki nawigacji (menu, spis treści, chipy) nadpisują wygląd klasą komponentu. */
+:where(a) { color:var(--color-primary-hover); text-decoration-thickness:1px; text-underline-offset:2px; }
+:where(a:hover, a:active) { color:var(--color-primary-active); }
+:where(a:focus-visible) { outline:2px solid var(--color-primary); outline-offset:2px; }
 /* Tytuł strony (h1) ma jeden styl w całym portalu; moduły ustawiają tylko rozmiar i odstępy. */
 h1 { font-family:var(--font-display), var(--font-body), sans-serif; font-weight:var(--fw-regular); letter-spacing:-.035em; line-height:1.08; color:var(--color-heading); }
 button { cursor:pointer; }

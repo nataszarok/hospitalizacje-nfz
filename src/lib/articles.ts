@@ -17,6 +17,12 @@ export const articleHref = (slug: string) => `${ARTICLES_PATH}/${slug}`;
 /** Lista artykułów od najnowszego. Nowy artykuł: wpis tutaj + trasa `src/app/artykuly/<slug>/page.tsx`. */
 export const ARTICLES: readonly Article[] = [
   {
+    slug: "historia-h55",
+    title: "H55. Historia jednego kodu",
+    description: "Dziewięć lat rozliczeń termolezji kręgosłupa i 22 kontrole NFZ. Kontrole objęły co piąty miesiąc, w którym skontrolowane szpitale rozliczały H55.",
+    kicker: "Analiza",
+  },
+  {
     slug: "czym-sa-jgp",
     title: "Czym są grupy JGP?",
     description: "Wprowadzenie od zera na przykładzie czterech pacjentów z kamicą żółciową: od wypisu ze szpitala przez kody i grupę JGP do kwoty, którą płaci NFZ.",

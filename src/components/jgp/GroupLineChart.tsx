@@ -20,6 +20,34 @@ const YEAR_BAND = "rgba(31, 138, 112, 0.10)";
 const HIT_DISTANCE = 12;
 const integer = (value: number) => Math.round(value).toLocaleString("pl-PL");
 
+/** Zaznaczony okres na osi miesięcy (np. okres objęty kontrolą): pasmo pod danymi z podpisem u góry. */
+export interface ChartBand {
+  from: string;
+  to: string;
+  label?: string;
+  /** Kolor serii, której dotyczy pasmo (np. szpital na wykresie kilku szpitali): wypełnienie w tym kolorze, przezroczyste. */
+  color?: string;
+}
+
+/** Przezroczyste wypełnienie pasma w kolorze serii („#RRGGBB” → rgba). */
+const bandFill = (color: string) => {
+  const [r, g, b] = [1, 3, 5].map((i) => parseInt(color.slice(i, i + 2), 16));
+  return `rgba(${r}, ${g}, ${b}, 0.10)`;
+};
+/** Znacznik zdarzenia (np. koniec kontroli): pionowa linia kropkowana z podpisem (DESIGN.md 6.2). */
+export interface ChartMarker { date: string; label: string }
+
+/** Kraniec pasma: od połowy miesiąca przed `from` do połowy miesiąca `to` (jak tło wybranego roku). */
+function bandEdges(from: string, to: string): [string, string] {
+  const [year, month] = from.split("-").map(Number);
+  const before = month === 1 ? `${year - 1}-12` : `${year}-${String(month - 1).padStart(2, "0")}`;
+  return [`${before}-16`, `${to}-16`];
+}
+
+// Stałe puste listy: nowa pusta tablica przy każdym renderze przerysowywałaby wykres.
+const NO_BANDS: ChartBand[] = [];
+const NO_MARKERS: ChartMarker[] = [];
+
 export interface ChartLine {
   key: string;
   name: string;
@@ -120,7 +148,7 @@ const yearlyLine = (line: ChartLine, months: string[]): ChartLine => ({ ...line,
  * Wszystkie serie są typu `scattergl` (jak w eksploratorze): `restyle` serii SVG w trakcie najechania
  * przerysowuje dymek podpowiedzi, wywołuje kolejne najechanie i przepełnia stos.
  */
-export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = false, onSelect, onHover, height = 400, selectedColor = SELECTED, selectedLabel, highlightYear, note, fitAxis = false, period = "month", modeBar = true }: {
+export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = false, onSelect, onHover, height = 400, selectedColor = SELECTED, selectedLabel, highlightYear, note, fitAxis = false, period = "month", modeBar = true, bands = NO_BANDS, markers = NO_MARKERS }: {
   /** Miesiące jako „RRRR-MM”. */
   months: string[];
   /** „year”: suma każdego roku zamiast miesięcy (te same wymiary wykresu). */
@@ -147,6 +175,10 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
   note?: string;
   /** Pasek narzędzi Plotly; bez niego, gdy wykres ma przycisk powiększenia (`ChartExpand`) w tym samym rogu. */
   modeBar?: boolean;
+  /** Zaznaczone okresy (miesiące „RRRR-MM”, włącznie), np. okres objęty kontrolą. */
+  bands?: ChartBand[];
+  /** Znaczniki zdarzeń (data „RRRR-MM-DD”), np. koniec kontroli. */
+  markers?: ChartMarker[];
 }) {
   const chartRef = useRef<HTMLDivElement>(null);
   usePlotResize(chartRef);
@@ -250,6 +282,11 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
             x0: `${Number(highlightYear) - 1}-12-16`, x1: `${highlightYear}-12-16`, y0: 0, y1: 1,
             fillcolor: YEAR_BAND, line: { width: 0 },
           }] : []),
+          ...bands.map((band) => {
+            const [x0, x1] = bandEdges(band.from, band.to);
+            return { type: "rect", xref: "x", yref: "paper", layer: "below", x0, x1, y0: 0, y1: 1, fillcolor: band.color ? bandFill(band.color) : CHART_COLORS.dataFaint, line: { width: 0 } };
+          }),
+          ...markers.map((marker) => ({ type: "line", xref: "x", yref: "paper", x0: marker.date, x1: marker.date, y0: 0, y1: 1, line: { color: CHART_COLORS.textSecondary, width: 1, dash: "dot" } })),
           ...(yAxis.range[0] <= 0 ? [baselineShape("y")] : []),
         ],
         // Podpis wybranego ośrodka przy ostatnim punkcie jego średniej 3M (wyrównany do prawej, nie wychodzi poza wykres).
@@ -262,7 +299,16 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
           const last = lastAt >= 0 ? average[lastAt] : null;
           const label = line && last !== null && last !== undefined ? [{ x: x[lastAt], y: last, text: wrapChartLabel(selectedLabel!), xanchor: "right", yanchor: "bottom", align: "right", showarrow: false, font: { size: 12, color: selectedColor }, bgcolor: "rgba(255,255,255,0.85)" }] : [];
           const explain = noteText ? [{ xref: "paper", yref: "paper", x: 0, y: 0, yshift: -40, xanchor: "left", yanchor: "top", align: "left", showarrow: false, text: noteText, font: { size: 12, color: CHART_COLORS.textTertiary } }] : [];
-          return [...label, ...explain];
+          // Podpisy u góry wykresu: pasma przy lewej krawędzi w pierwszym wierszu, każdy znacznik obok linii w kolejnym wierszu
+          // (pasma i znaczniki blisko siebie nie zasłaniają swoich podpisów).
+          const bandLabels = bands.filter((band) => band.label).map((band) => ({ xref: "x", yref: "paper", x: bandEdges(band.from, band.to)[0], y: 1, xanchor: "left", yanchor: "top", showarrow: false, text: band.label, font: { size: 12, color: CHART_COLORS.textSecondary } }));
+          // Znacznik przy prawej krawędzi (ostatnie 20% osi): podpis po lewej stronie linii, żeby nie wychodził poza wykres.
+          const nearRight = (date: string) => {
+            const [from, to] = monthRange(months).map((value) => Date.parse(value));
+            return (Date.parse(date) - from) / (to - from) > 0.8;
+          };
+          const markerLabels = markers.map((marker, i) => ({ xref: "x", yref: "paper", x: marker.date, y: 1, xanchor: nearRight(marker.date) ? "right" : "left", yanchor: "top", xshift: nearRight(marker.date) ? -3 : 3, yshift: -18 * (i + (bands.some((band) => band.label) ? 1 : 0)), showarrow: false, text: marker.label, font: { size: 12, color: CHART_COLORS.textSecondary }, bgcolor: "rgba(255,255,255,0.85)" }));
+          return [...label, ...explain, ...bandLabels, ...markerLabels];
         })(),
         // Lata: podpis roku na środku roku (pod punktem), zakres od stycznia pierwszego do grudnia ostatniego roku.
         // Oś lat to kategorie (bez siatki); oś miesięcy ma siatkę tylko na granicy roku (podziałka co rok, DESIGN.md 6.1).
@@ -353,7 +399,7 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
     };
     void render();
     return () => { cancelled = true; };
-  }, [months, lines, valueLabel, legend, height, selectedColor, selectedLabel, highlightYear, note, fitAxis, period, modeBar]);
+  }, [months, lines, valueLabel, legend, height, selectedColor, selectedLabel, highlightYear, note, fitAxis, period, modeBar, bands, markers]);
 
   // Wysokość zarezerwowana od razu: wykres rysuje się asynchronicznie i nie przesuwa treści pod nim.
   return <div ref={shellRef} style={{ position: "relative" }}>

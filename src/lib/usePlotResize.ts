@@ -22,9 +22,10 @@ export function usePlotResize(ref: RefObject<HTMLElement | null>) {
       width = element.clientWidth;
       clearTimeout(timer);
       timer = setTimeout(() => {
-        // Tylko narysowany wykres (Plotly dopisuje `_fullLayout` po pierwszym `react`).
-        if (!("_fullLayout" in element)) return;
-        void loadPlotly().then((Plotly) => Plotly.Plots.resize(element));
+        // Tylko narysowany (Plotly dopisuje `_fullLayout` po pierwszym `react`) i widoczny wykres: `Plots.resize`
+        // odrzuca element bez `offsetParent` (ukryty albo odłączony) błędem „Resize must be passed a displayed plot div”.
+        if (!("_fullLayout" in element) || element.offsetParent === null) return;
+        void loadPlotly().then((Plotly) => Plotly.Plots.resize(element)).catch(() => undefined);
       }, RESIZE_DELAY_MS);
     });
     observer.observe(element);

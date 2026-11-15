@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { GroupLineChart, type ChartLine } from "@/components/jgp/GroupLineChart";
+import { PeriodToggle } from "@/components/jgp/PeriodToggle";
 import { CardYears } from "@/components/jgp/CardYears";
 import { RegionMap, regionTitle } from "@/components/jgp/RegionMap";
 import { ChartExpand } from "@/components/portal/ChartExpand";
@@ -274,13 +275,6 @@ export function SectionHead({ id, question, context, tag, tools }: { id: string;
   </div>;
 }
 
-/** Przełącznik okresu wykresu: w miejscu etykiety sekcji, więc nie zajmuje dodatkowego miejsca. */
-export function PeriodToggle({ period, onPeriod }: { period: ChartPeriod; onPeriod: (period: ChartPeriod) => void }) {
-  return <div className={styles.periodToggle} role="group" aria-label="Okres na wykresie">
-    <button type="button" aria-pressed={period === "month"} onClick={() => onPeriod("month")}>Miesiące</button>
-    <button type="button" aria-pressed={period === "year"} onClick={() => onPeriod("year")}>Lata</button>
-  </div>;
-}
 
 /** „ośrodek”, „ośrodki” albo „ośrodków” po liczbie. */
 
