@@ -414,7 +414,7 @@ export function H55HistoryArticle({ data }: { data: H55ArticleData }) {
       lead={<>
           <p>
             W {apiFirst} r. szpitale wykazały NFZ {integer(api(apiFirst))} hospitalizacji w grupie H55. W {apiLast} r. — już {integer(api(apiLast))}.<Ref ids={["api"]} />{" "}
-            Za niemal każdą stoi ten sam zabieg: termolezja, czyli wyłączenie nerwów kręgosłupa prądem przez igłę. Pacjent zwykle wraca do domu tego samego dnia.
+            Za niemal każdą stoi ten sam zabieg: termolezja. Pacjent zwykle wraca do domu tego samego dnia.
             {" "}W poradni NFZ zapłaciłby za taki zabieg kilka razy mniej niż w szpitalu.
           </p>
           <p>
