@@ -2,7 +2,7 @@
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
-import { SpineQuestionsArticle, questionsText } from "@/components/articles/SpineQuestionsArticle";
+import { SpineQuestionsArticle, growthText, questionsText } from "@/components/articles/SpineQuestionsArticle";
 import { SPINE_QUESTION_COUNT, SPINE_QUESTION_SECTIONS, SPINE_QUESTION_SOURCES } from "@/components/articles/spineQuestions";
 import { findArticle } from "@/lib/articles";
 import type { JgpGroupFile } from "@/lib/jgpPage";
@@ -66,13 +66,25 @@ describe("SpineQuestionsArticle", () => {
     expect(within(section).getByRole("figure")).toHaveTextContent("Ile hospitalizacji H52 i H53 rozliczył szpital w Koszalinie?");
   });
 
-  it("pytanie 1: kwoty H52, H53 i H55 w punktach, przypis przy ostatnim punkcie", () => {
+  it("pytanie 1: tabela grup z wartością świadczeń i wzrostem hospitalizacji", () => {
     render(<SpineQuestionsArticle koszalin={koszalin} />);
     const first = document.querySelector("#skala ol > li")!;
-    const points = first.querySelectorAll("ul > li");
-    expect([...points].map((point) => point.textContent!.slice(0, 3))).toEqual(["H52", "H53", "H55"]);
-    expect(points[2].querySelector("sup")).not.toBeNull();
-    expect(first.querySelector("p sup")).toBeNull();
+    const table = within(first as HTMLElement).getByRole("table");
+    expect(within(table).getAllByRole("columnheader").map((th) => th.textContent)).toEqual([
+      "Grupa", "Wartość świadczeń 2019", "Wartość świadczeń 2025", "Wartość świadczeń łącznie 2019–2025", "Wzrost liczby hospitalizacji (2025 vs 2017)",
+    ]);
+    const rows = within(table).getAllByRole("row").slice(1);
+    expect(rows.map((row) => row.querySelector("th b")!.textContent)).toEqual(["H52", "H53", "H55"]);
+    expect(rows[0]).toHaveTextContent("3,04 mld zł");
+    expect(rows[2]).toHaveTextContent("5,7 razy");
+    // Kolumny lat znikają na telefonie (DESIGN.md 7.1): priorytet 2.
+    expect(table.closest(".priority-table")).not.toBeNull();
+    expect(table.querySelectorAll("thead .col-p2")).toHaveLength(2);
+  });
+
+  it("wzrost: procent do dwukrotności, potem „razy”", () => {
+    expect(growthText(15_494, 24_000)).toBe("+55%");
+    expect(growthText(5395, 30_900)).toBe("5,7 razy");
   });
 
   it("odmienia liczbę pytań", () => {

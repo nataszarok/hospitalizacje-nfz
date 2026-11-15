@@ -7,6 +7,7 @@ import type { ProviderGroupsSeries } from "@/lib/spineQuestions";
 import { ArticleLineChart } from "./ArticleLineChart";
 import { ArticleToc } from "./ArticleToc";
 import {
+  type GrowthRow,
   SPINE_QUESTION_COUNT, SPINE_QUESTION_SECTIONS, SPINE_QUESTION_SOURCES, spineSourceNumber, type SpineQuestionSourceId,
 } from "./spineQuestions";
 import styles from "./Article.module.css";
@@ -75,6 +76,44 @@ function KoszalinChart({ series }: { series: ProviderGroupsSeries }) {
   />;
 }
 
+const mln = (value: number) => value.toLocaleString("pl-PL", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+const mld = (value: number) => (value / 1000).toLocaleString("pl-PL", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const count = (value: number) => value.toLocaleString("pl-PL");
+
+/** Zmiana liczby hospitalizacji: „+55%” albo „5,7 razy” (wzrost co najmniej dwukrotny). */
+export function growthText(from: number, to: number): string {
+  const ratio = to / from;
+  return ratio >= 2 ? `${ratio.toLocaleString("pl-PL", { maximumFractionDigits: 1 })} razy` : `+${Math.round((ratio - 1) * 100)}%`;
+}
+
+/**
+ * Tabela pytania 1 (DESIGN.md 7.1): grupa, wartość świadczeń 2019 i 2025 (priorytet 2 — znika na telefonie),
+ * wartość łącznie z kwotą w mld zł pod spodem, wzrost liczby hospitalizacji 2025 wobec 2017.
+ */
+function GrowthTable({ rows }: { rows: readonly GrowthRow[] }) {
+  return <div className="priority-table">
+    <table className={`${styles.table} ${styles.growthTable}`} lang="pl">
+      <caption>Wartość świadczeń (mln zł) i liczba hospitalizacji w Polsce</caption>
+      <thead><tr>
+        <th scope="col">Grupa</th>
+        <th scope="col" className={`${styles.num} col-p2`}>Wartość świadczeń 2019</th>
+        <th scope="col" className={`${styles.num} col-p2`}>Wartość świadczeń 2025</th>
+        <th scope="col" className={styles.num}>Wartość świadczeń łącznie 2019–2025</th>
+        <th scope="col" className={styles.num}>Wzrost liczby hospitalizacji (2025 vs 2017)</th>
+      </tr></thead>
+      <tbody>{rows.map((row) => <tr key={row.group}>
+        <th scope="row"><b>{row.group}</b><span className={styles.cellNote}>{row.name}</span></th>
+        <td className={`${styles.num} col-p2`}>{mln(row.pln2019)}</td>
+        <td className={`${styles.num} col-p2`}>{mln(row.pln2025)}<span className={styles.cellNote}>{(row.pln2025 / row.pln2019).toLocaleString("pl-PL", { maximumFractionDigits: 1 })} razy więcej</span></td>
+        <td className={styles.num}>{mln(row.plnTotal)}<span className={styles.cellNote}>{mld(row.plnTotal)} mld zł</span></td>
+        <td className={styles.num}>{growthText(row.hosp2017, row.hosp2025)}<span className={styles.cellNote}>{count(row.hosp2017)} → ok. {count(row.hosp2025)}</span></td>
+      </tr>)}</tbody>
+    </table>
+    <p className={styles.tableNote}>Wartość świadczeń: kwoty rozliczone przez NFZ (zestawienie świadczeń). Hospitalizacje 2017: API statystyk JGP NFZ;
+      2025: szacunek, bo API nie ma jeszcze danych za 2025 r.</p>
+  </div>;
+}
+
 /** Numer pierwszego pytania części (numeracja ciągła przez wszystkie części). */
 const firstNumber = (index: number) => 1 + SPINE_QUESTION_SECTIONS.slice(0, index).reduce((total, section) => total + section.questions.length, 0);
 
@@ -111,6 +150,7 @@ export function SpineQuestionsArticle({ koszalin }: { koszalin: ProviderGroupsSe
             {section.questions.map((item) => <li key={item.question}>
               <p className={styles.question}>{item.question}</p>
               <p className={styles.questionFacts}>{item.facts}{item.points ? null : <Ref ids={item.sources} />}</p>
+              {item.table ? <GrowthTable rows={item.table} /> : null}
               {item.points ? <ul className={styles.questionPoints}>
                 {item.points.map((point, i) => <li key={point}>{point}{i === item.points!.length - 1 ? <Ref ids={item.sources} /> : null}</li>)}
               </ul> : null}

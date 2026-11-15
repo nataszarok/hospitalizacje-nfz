@@ -62,12 +62,34 @@ export function spineSourceNumber(id: SpineQuestionSourceId): number {
   return SPINE_QUESTION_SOURCES.findIndex((source) => source.id === id) + 1;
 }
 
+/** Wiersz tabeli „wartość świadczeń i hospitalizacje” w pytaniu 1. Kwoty w mln zł (zestawienie świadczeń NFZ). */
+export interface GrowthRow {
+  group: string;
+  name: string;
+  pln2019: number;
+  pln2025: number;
+  /** Suma lat 2019–2025. */
+  plnTotal: number;
+  /** Hospitalizacje w Polsce w 2017 r. (API statystyk JGP). */
+  hosp2017: number;
+  /** Hospitalizacje w Polsce w 2025 r. — szacunek (API nie ma 2025 r.), zaokrąglony. */
+  hosp2025: number;
+}
+
+export const SPINE_GROWTH_ROWS: readonly GrowthRow[] = [
+  { group: "H52", name: "operacje kręgosłupa z implantami", pln2019: 243.0, pln2025: 673.8, plnTotal: 3043.7, hosp2017: 15_494, hosp2025: 24_000 },
+  { group: "H53", name: "operacje kręgosłupa bez implantów", pln2019: 66.2, pln2025: 175.7, plnTotal: 732.8, hosp2017: 7083, hosp2025: 9300 },
+  { group: "H55", name: "głównie termolezja", pln2019: 31.4, pln2025: 209.8, plnTotal: 743.7, hosp2017: 5395, hosp2025: 30_900 },
+];
+
 /** Pytanie: treść (pytanie), fakty, na których się opiera, i źródła faktów. */
 export interface SpineQuestion {
   question: string;
   facts: string;
-  /** Fakty w punktach pod zdaniem `facts` (np. zestawienie kilku grup). */
+  /** Fakty w punktach pod zdaniem `facts`. */
   points?: string[];
+  /** Tabela pod zdaniem `facts` (zestawienie grup). */
+  table?: readonly GrowthRow[];
   sources: SpineQuestionSourceId[];
 }
 
@@ -89,12 +111,8 @@ export const SPINE_QUESTION_SECTIONS: readonly SpineQuestionSection[] = [
     questions: [
       {
         question: "Czy NFZ ma analizę, ile wzrostu rozliczeń zabiegów na kręgosłupie wynika z potrzeb zdrowotnych, a ile ze sposobu rozliczania?",
-        facts: "W latach 2019–2025 NFZ zapłacił szpitalom za te trzy grupy razem 4520,2 mln zł, czyli 4,52 mld zł. Kwoty i liczba hospitalizacji w Polsce:",
-        points: [
-          "H52 (operacje kręgosłupa z implantami): 243,0 mln zł (0,24 mld zł) w 2019 r. i 673,8 mln zł (0,67 mld zł) w 2025 r. — 2,8 razy więcej; razem 3043,7 mln zł (3,04 mld zł). Hospitalizacje: 15 494 w 2017 r. i ok. 24 000 w 2025 r. (szacunek) — o ok. 55% więcej.",
-          "H53 (operacje kręgosłupa bez implantów): 66,2 mln zł (0,07 mld zł) w 2019 r. i 175,7 mln zł (0,18 mld zł) w 2025 r. — 2,7 razy więcej; razem 732,8 mln zł (0,73 mld zł). Hospitalizacje: 7083 w 2017 r. i ok. 9300 w 2025 r. (szacunek) — o ok. 31% więcej.",
-          "H55 (głównie termolezja): 31,4 mln zł (0,03 mld zł) w 2019 r. i 209,8 mln zł (0,21 mld zł) w 2025 r. — 6,7 razy więcej; razem 743,7 mln zł (0,74 mld zł). Hospitalizacje: 5395 w 2017 r. i ok. 30 900 w 2025 r. (szacunek) — 5,7 razy więcej.",
-        ],
+        facts: "W latach 2019–2025 NFZ zapłacił szpitalom za te trzy grupy razem 4520,2 mln zł, czyli 4,52 mld zł.",
+        table: SPINE_GROWTH_ROWS,
         sources: ["h55", "jgp", "api"],
       },
       {
