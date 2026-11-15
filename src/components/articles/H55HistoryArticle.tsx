@@ -215,6 +215,12 @@ function ControlsTable({ items, caption, initial = 2 }: { items: H55Facility[]; 
 const AOS_Z13 = { points: 1039, pln: 1787.08 };
 
 
+/** Województwa (OW NFZ) w opisie mapy: zachodniopomorskie w pierwszych latach; cztery województwa północno-zachodnie od 2021 r. */
+const WEST_POMERANIA = ["16"] as const;
+const NORTH_WEST = ["16", "11", "15", "02"] as const;
+const REGION_EARLY = ["2017", "2018", "2019"];
+const REGION_LATE = ["2021"];
+
 /** Wiersze porównania wycen: rodzaj pobytu, punkty H55 i HK14, zmiana. */
 const VALUATION_ROWS: { key: keyof ValuationPoints; label: string }[] = [
   { key: "hospitalizacja", label: "Hospitalizacja" },
@@ -390,6 +396,15 @@ export function H55HistoryArticle({ data }: { data: H55ArticleData }) {
       ],
     };
   });
+  // Udział placówek z wybranych województw (OW NFZ świadczeniodawcy) w hospitalizacjach H55 w roku (%).
+  const regionShare = (ows: readonly string[], year: string) => {
+    const i = data.years.indexOf(year);
+    const yearSum = (item: H55Facility) => item.values.slice(i * 12, i * 12 + 12).reduce((total, value) => total + value, 0);
+    const all = data.allFacilities.reduce((total, item) => total + yearSum(item), 0);
+    const part = data.allFacilities.filter((item) => ows.includes(item.key.split("|")[0])).reduce((total, item) => total + yearSum(item), 0);
+    return all ? (part / all) * 100 : 0;
+  };
+  const regionLate = data.years.filter((year) => year >= REGION_LATE[0]);
   const pickerInitial = growth[0]?.facility.key ?? pickerFacilities[0].key;
 
   return <main>
@@ -516,6 +531,12 @@ export function H55HistoryArticle({ data }: { data: H55ArticleData }) {
             years={data.years}
             method="min"
           />
+          <p>
+            Przez pierwsze lata co trzecia hospitalizacja H55 w Polsce pochodziła z jednego województwa. W latach {REGION_EARLY[0]}–{REGION_EARLY.at(-1)} placówki z zachodniopomorskiego rozliczały
+            {" "}od {percent(Math.min(...REGION_EARLY.map((y) => regionShare(WEST_POMERANIA, y))), 100)} do {percent(Math.max(...REGION_EARLY.map((y) => regionShare(WEST_POMERANIA, y))), 100)} wszystkich hospitalizacji H55 w Polsce.
+            {" "}Później zabiegi rozeszły się po kraju, ale nierówność została: od {REGION_LATE[0]} r. placówki z czterech województw — zachodniopomorskiego, pomorskiego,
+            {" "}wielkopolskiego i kujawsko-pomorskiego — to wciąż od {percent(Math.min(...regionLate.map((y) => regionShare(NORTH_WEST, y))), 100)} do {percent(Math.max(...regionLate.map((y) => regionShare(NORTH_WEST, y))), 100)} krajowych H55.<Ref ids={["dane"]} />
+          </p>
         </section>
 
         <section id="sygnaly" aria-labelledby="sygnaly-h">
