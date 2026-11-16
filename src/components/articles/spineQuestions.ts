@@ -117,7 +117,7 @@ export const SPINE_QUESTION_SECTIONS: readonly SpineQuestionSection[] = [
       },
       {
         question: "Dlaczego NFZ przez lata płacił za termolezję głównie jako za hospitalizację, a nie jako za zabieg w poradni?",
-        facts: "W poradni termolezja kosztuje ok. 1790 zł, w szpitalu jako H55 ok. 6780 zł (ok. 3,8 razy więcej). Od lipca 2021 r. NFZ płaci poradniom za wszystkie świadczenia, bez limitu.",
+        facts: "W poradni termolezja kosztuje ok. 1790 zł, w szpitalu jako H55 ok. 6780 zł (ok. 3,8 razy więcej).",
         sources: ["h55"],
       },
     ],
@@ -211,7 +211,7 @@ export const SPINE_QUESTION_SECTIONS: readonly SpineQuestionSection[] = [
     title: "Koszalin: H55 po pierwszej kontroli",
     questions: [
       {
-        question: "Jak to możliwe, że Koszalin w trakcie drugiej kontroli nadal rozliczał H55, choć pierwsza kontrola oceniła rozliczanie H55 negatywnie?",
+        question: "Jak to możliwe, że Koszalin w trakcie drugiej kontroli nadal rozliczał H55 w szpitalu, choć pierwsza kontrola oceniła rozliczanie H55 negatywnie?",
         facts: "Pierwsza kontrola (luty–kwiecień 2024 r.) zakończyła się oceną negatywną i skutkami 1,5 mln zł. NFZ zalecił przyjmować na oddział tylko pacjentów, których nie da się leczyć w poradni. Po kontroli zabiegów przybyło: rok 2025 był rekordowy, 1679 hospitalizacji H55 za 11,4 mln zł. Druga kontrola trwała od sierpnia 2025 do marca 2026 r. Do końca 2025 r. szpital rozliczył w tym czasie jeszcze 635 hospitalizacji H55.",
         sources: ["h55", "kontrole"],
       },
@@ -260,11 +260,11 @@ export const SPINE_QUESTION_SECTIONS: readonly SpineQuestionSection[] = [
       },
       {
         question: "Dlaczego NFZ nie wykrywa automatycznie nagłych wzrostów rozliczeń danego kodu JGP w placówce?",
-        facts: "NFZ dostaje rozliczenia co miesiąc. Wzrost z zera do kilkuset zabiegów w kilka miesięcy widać w danych od razu, nie po dwóch latach.",
+        facts: "Wzrost z zera do kilkuset zabiegów w kilka miesięcy widać w danych od razu, nie po dwóch latach.",
         sources: ["h55"],
       },
       {
-        question: "Czy NFZ ma dziś system, który pokazuje placówki z nagłym wzrostem rozliczeń? Jeśli tak, dlaczego nie zadziałał przy H55 i H52? Jeśli nie, kiedy NFZ go wdroży?",
+        question: "Czy NFZ ma dziś system, który pokazuje placówki z nagłym wzrostem rozliczeń? Jeśli tak, dlaczego nie zadziałał przy H55 i H52? Jeśli nie, czy NFZ planuje wdrożyć taki system?",
         facts: "Wzory opisane wyżej (krótkie okresy rozliczeń, kilkukrotny wzrost w ciągu roku) widać w otwartych danych NFZ, które każdy może pobrać.",
         sources: ["h55", "jgp"],
       },
