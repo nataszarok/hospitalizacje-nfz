@@ -2,7 +2,8 @@
 
 .tableBox { min-width: 0; margin: 8px 0 16px; }
 /* Druga linia komórki nazwy: wydział i daty kontroli albo miejscowość (DESIGN.md 7.1). */
-.cellNote { display: block; font-size: var(--fs-sm); font-weight: var(--fw-regular); color: var(--color-text-tertiary); line-height: 1.4; }
+/* Druga linia w komórce: wspólna reguła artykułów. */
+.cellNote { composes: cellNote from "./Article.module.css"; }
 
 /* Trzy liczby rzutu z lotu ptaka: etykieta nad liczbą (telefon) albo obok (szeroki ekran). */
 .facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 8px 0 16px; }
