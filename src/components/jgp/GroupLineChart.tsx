@@ -27,15 +27,35 @@ export interface ChartBand {
   label?: string;
   /** Kolor serii, której dotyczy pasmo (np. szpital na wykresie kilku szpitali): wypełnienie w tym kolorze, przezroczyste. */
   color?: string;
+  /** Krycie wypełnienia w kolorze `color` (domyślnie 0,10); wyższe dla pasma, które ma się wyróżniać (np. okres kontroli). */
+  opacity?: number;
 }
 
 /** Przezroczyste wypełnienie pasma w kolorze serii („#RRGGBB” → rgba). */
-const bandFill = (color: string) => {
+export const bandFill = (color: string, opacity = 0.10) => {
   const [r, g, b] = [1, 3, 5].map((i) => parseInt(color.slice(i, i + 2), 16));
-  return `rgba(${r}, ${g}, ${b}, 0.10)`;
+  return `rgba(${r}, ${g}, ${b}, ${opacity})`;
 };
 /** Znacznik zdarzenia (np. koniec kontroli): pionowa linia kropkowana z podpisem (DESIGN.md 6.2). */
 export interface ChartMarker { date: string; label: string }
+
+/** Marginesy wykresu w poziomie (px): oś wartości po lewej, odstęp po prawej. */
+const MARGIN_LEFT = 56;
+const MARGIN_RIGHT = 16;
+/** Przybliżona szerokość znaku podpisu (font 12 px) i odstęp podpisu od linii. */
+const LABEL_CHAR_PX = 7;
+const LABEL_GAP_PX = 6;
+
+/**
+ * Czy podpis znacznika ma stać po lewej stronie linii: na prawo od linii brakuje miejsca na cały podpis.
+ * `plotWidth` 0 (szerokość nieznana) — reguła zapasowa: znacznik w ostatnich 20% osi.
+ */
+export function markerLabelOnLeft(marker: ChartMarker, range: [string, string] | string[], plotWidth: number): boolean {
+  const [from, to] = range.map((value) => Date.parse(value));
+  const position = (Date.parse(marker.date) - from) / (to - from);
+  if (!plotWidth) return position > 0.8;
+  return (1 - position) * plotWidth < marker.label.length * LABEL_CHAR_PX + LABEL_GAP_PX;
+}
 
 /** Kraniec pasma: od połowy miesiąca przed `from` do połowy miesiąca `to` (jak tło wybranego roku). */
 function bandEdges(from: string, to: string): [string, string] {
@@ -282,7 +302,7 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
         hovermode: false,
         height,
         autosize: true,
-        margin: { l: 56, r: 16, t: legend ? 14 + 22 * legendRows : 12, b: 44 + noteLines * 16 },
+        margin: { l: MARGIN_LEFT, r: MARGIN_RIGHT, t: legend ? 14 + 22 * legendRows : 12, b: 44 + noteLines * 16 },
         showlegend: legend,
         legend: { orientation: "h", x: 0, y: 1, yanchor: "bottom", font: { size: 12 } },
         // Tło wybranego roku: od 1 stycznia do końca grudnia (pół miesiąca zapasu po obu stronach kropek).
@@ -295,7 +315,7 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
           }] : []),
           ...bands.map((band) => {
             const [x0, x1] = bandEdges(band.from, band.to);
-            return { type: "rect", xref: "x", yref: "paper", layer: "below", x0, x1, y0: 0, y1: 1, fillcolor: band.color ? bandFill(band.color) : CHART_COLORS.dataFaint, line: { width: 0 } };
+            return { type: "rect", xref: "x", yref: "paper", layer: "below", x0, x1, y0: 0, y1: 1, fillcolor: band.color ? bandFill(band.color, band.opacity) : CHART_COLORS.dataFaint, line: { width: 0 } };
           }),
           ...markers.map((marker) => ({ type: "line", xref: "x", yref: "paper", x0: marker.date, x1: marker.date, y0: 0, y1: 1, line: { color: CHART_COLORS.textSecondary, width: 1, dash: "dot" } })),
           ...(yAxis.range[0] <= 0 ? [baselineShape("y")] : []),
@@ -313,12 +333,11 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
           // Podpisy u góry wykresu: pasma przy lewej krawędzi w pierwszym wierszu, każdy znacznik obok linii w kolejnym wierszu
           // (pasma i znaczniki blisko siebie nie zasłaniają swoich podpisów).
           const bandLabels = bands.filter((band) => band.label).map((band) => ({ xref: "x", yref: "paper", x: bandEdges(band.from, band.to)[0], y: 1, xanchor: "left", yanchor: "top", showarrow: false, text: band.label, font: { size: 12, color: CHART_COLORS.textSecondary } }));
-          // Znacznik przy prawej krawędzi (ostatnie 20% osi): podpis po lewej stronie linii, żeby nie wychodził poza wykres.
-          const nearRight = (date: string) => {
-            const [from, to] = monthRange(months).map((value) => Date.parse(value));
-            return (Date.parse(date) - from) / (to - from) > 0.8;
-          };
-          const markerLabels = markers.map((marker, i) => ({ xref: "x", yref: "paper", x: marker.date, y: 1, xanchor: nearRight(marker.date) ? "right" : "left", yanchor: "top", xshift: nearRight(marker.date) ? -3 : 3, yshift: -18 * (i + (bands.some((band) => band.label) ? 1 : 0)), showarrow: false, text: marker.label, font: { size: 12, color: CHART_COLORS.textSecondary }, bgcolor: "rgba(255,255,255,0.85)" }));
+          // Podpis znacznika po lewej stronie linii, gdy na prawo od niej się nie mieści (wąski wykres na telefonie albo
+          // znacznik przy prawej krawędzi). Szerokość podpisu z liczby znaków; bez szerokości wykresu (np. w testach) — ostatnie 20% osi.
+          const plotWidth = Math.max(0, (plot.clientWidth || 0) - MARGIN_LEFT - MARGIN_RIGHT);
+          const labelOnLeft = (marker: ChartMarker) => markerLabelOnLeft(marker, monthRange(months), plotWidth);
+          const markerLabels = markers.map((marker, i) => ({ xref: "x", yref: "paper", x: marker.date, y: 1, xanchor: labelOnLeft(marker) ? "right" : "left", yanchor: "top", xshift: labelOnLeft(marker) ? -3 : 3, yshift: -18 * (i + (bands.some((band) => band.label) ? 1 : 0)), showarrow: false, text: marker.label, font: { size: 12, color: CHART_COLORS.textSecondary }, bgcolor: "rgba(255,255,255,0.85)" }));
           return [...label, ...explain, ...bandLabels, ...markerLabels];
         })(),
         // Lata: podpis roku na środku roku (pod punktem), zakres od stycznia pierwszego do grudnia ostatniego roku.

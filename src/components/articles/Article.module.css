@@ -48,6 +48,8 @@
 .table tbody th { font-weight: var(--fw-regular); }
 .table tbody th a { font-weight: var(--fw-bold); }
 .table .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* Nagłówek i druga linia komórki liczby mogą się łamać (długie nazwy kolumn na telefonie); sama liczba — nie. */
+.table thead th.num, .table .num .cellNote { white-space: normal; }
 .tableNote { margin-top: 6px; font-size: var(--fs-sm); color: var(--color-text-tertiary); line-height: 1.5; }
 
 .more, .links a { font-weight: var(--fw-semibold); }
@@ -158,3 +160,19 @@
 @media (prefers-reduced-motion: no-preference) {
   :global(html) { scroll-behavior: smooth; }
 }
+
+/* Lista pytań: pytanie pogrubione, pod nim fakty mniejszym tekstem. Numeracja ciągła przez części (`start`). */
+.article ol.questions { padding-left: 28px; }
+.questions > li + li { margin-top: 16px; }
+.questions > li::marker { font-weight: var(--fw-bold); color: var(--color-heading); }
+.article p.question { margin: 0 0 4px; font-weight: var(--fw-semibold); color: var(--color-heading); }
+.article ul.questionPoints { margin: 4px 0 0; padding-left: 20px; font-size: var(--fs-base); line-height: 1.55; color: var(--color-text-secondary); }
+.article .questionPoints li + li { margin-top: 2px; }
+.article p.questionFacts { margin: 0; font-size: var(--fs-base); line-height: 1.55; color: var(--color-text-secondary); }
+
+/* Druga linia w komórce tabeli (DESIGN.md 7.1): kontekst mniejszym tekstem. */
+.cellNote { display: block; font-size: var(--fs-sm); font-weight: var(--fw-regular); color: var(--color-text-tertiary); line-height: 1.4; }
+
+/* Tabela zestawienia grup (pytania): wąska kolumna nazwy, więcej miejsca na nagłówki liczb. */
+.growthTable tbody th { width: 26%; }
+.growthTable thead th { hyphens: auto; }
