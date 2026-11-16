@@ -76,7 +76,7 @@ function KoszalinChart({ series }: { series: ProviderGroupsSeries }) {
   />;
 }
 
-const mln = (value: number) => value.toLocaleString("pl-PL", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+const mln = (value: number) => value.toLocaleString("pl-PL", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 const mld = (value: number) => (value / 1000).toLocaleString("pl-PL", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const count = (value: number) => value.toLocaleString("pl-PL");
 
@@ -93,7 +93,7 @@ export function growthText(from: number, to: number): string {
 function GrowthTable({ rows }: { rows: readonly GrowthRow[] }) {
   return <div className="priority-table">
     <table className={`${styles.table} ${styles.growthTable}`} lang="pl">
-      <caption>Wartość świadczeń (mln zł) i liczba hospitalizacji w Polsce</caption>
+      <caption>Wartość świadczeń (w mln) i liczba hospitalizacji w Polsce</caption>
       <thead><tr>
         <th scope="col">Grupa</th>
         <th scope="col" className={`${styles.num} col-p2`}>Wartość świadczeń 2019</th>
@@ -103,14 +103,12 @@ function GrowthTable({ rows }: { rows: readonly GrowthRow[] }) {
       </tr></thead>
       <tbody>{rows.map((row) => <tr key={row.group}>
         <th scope="row"><b>{row.group}</b><span className={styles.cellNote}>{row.name}</span></th>
-        <td className={`${styles.num} col-p2`}>{mln(row.pln2019)}</td>
-        <td className={`${styles.num} col-p2`}>{mln(row.pln2025)}<span className={styles.cellNote}>{(row.pln2025 / row.pln2019).toLocaleString("pl-PL", { maximumFractionDigits: 1 })} razy więcej</span></td>
-        <td className={styles.num}>{mln(row.plnTotal)}<span className={styles.cellNote}>{mld(row.plnTotal)} mld zł</span></td>
+        <td className={`${styles.num} col-p2`}>{mln(row.pln2019)} mln zł</td>
+        <td className={`${styles.num} col-p2`}>{mln(row.pln2025)} mln zł<span className={styles.cellNote}>{(row.pln2025 / row.pln2019).toLocaleString("pl-PL", { maximumFractionDigits: 1 })} razy więcej</span></td>
+        <td className={styles.num}>{mld(row.plnTotal)} mld zł</td>
         <td className={styles.num}>{growthText(row.hosp2017, row.hosp2025)}<span className={styles.cellNote}>{count(row.hosp2017)} → ok. {count(row.hosp2025)}</span></td>
       </tr>)}</tbody>
     </table>
-    <p className={styles.tableNote}>Wartość świadczeń: kwoty rozliczone przez NFZ (zestawienie świadczeń). Hospitalizacje 2017: API statystyk JGP NFZ;
-      2025: szacunek, bo API nie ma jeszcze danych za 2025 r.</p>
   </div>;
 }
 

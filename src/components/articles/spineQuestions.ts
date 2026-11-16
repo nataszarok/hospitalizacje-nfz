@@ -111,7 +111,7 @@ export const SPINE_QUESTION_SECTIONS: readonly SpineQuestionSection[] = [
     questions: [
       {
         question: "Czy NFZ ma analizę, ile wzrostu rozliczeń zabiegów na kręgosłupie wynika z potrzeb zdrowotnych, a ile ze sposobu rozliczania?",
-        facts: "W latach 2019–2025 NFZ zapłacił szpitalom za te trzy grupy razem 4520,2 mln zł, czyli 4,52 mld zł.",
+        facts: "W latach 2019–2025 NFZ zapłacił szpitalom za te trzy grupy razem 4,52 mld zł.",
         table: SPINE_GROWTH_ROWS,
         sources: ["h55", "jgp", "api"],
       },
