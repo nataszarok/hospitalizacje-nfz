@@ -44,7 +44,13 @@ export const hospitalPageInput: HospitalPageInput = {
   pszLevel: "III stopnia",
   // Sieć PSZ: szpital karty i Gamma (16|333); Beta (07|222) poza siecią.
   networkNips: new Set(["111", "333"]),
-  profile: { oz_nfz: "16", nip: "111", core: { beds: 60, wards: [{ code: "4000", name: "Wewnętrzny", beds: 10, fields: ["Choroby wewnętrzne"] }, { code: "4100", name: "Kardiologia", beds: 50 }] } },
+  profile: {
+    oz_nfz: "16", nip: "111", core: { beds: 60, wards: [{ code: "4000", name: "Wewnętrzny", beds: 10, fields: ["Choroby wewnętrzne"] }, { code: "4100", name: "Kardiologia", beds: 50 }] },
+    outpatient: { cell_count: 12, field_count: 9, location_count: 2 },
+    registry: { location_count: 3, city_count: 2, total_beds: 85 },
+    capabilities: { operating: { count: 1 }, sor: { count: 1, beds: 13 }, dialysis: { count: 1, stations: 18 }, poz: { count: 1 } },
+  },
+  locations: [["Szpitalna 1, Katowice", 70, ["hospital", "sor", "outpatient"]], ["Leśna 2, Zabrze", 15, ["long_term"]], ["Polna 3, Katowice", 0, ["other:Punkt pobrań"]]],
   financial: { nip: "111", years: [{ year: 2025, revenue: 100, net_result: 5, net_margin: null }] },
   regionName: "zachodniopomorskie",
   payment: { years: ["2025"], scopes: [["03.4000.030.02", "Choroby wewnętrzne"], ["03.4100.030.02", "Kardiologia"], ["03.4100.130.02", "Kardiologia – finansowane odrębnie"]], hosp: [[0, 0, 0, 100], [0, 1, 0, 60], [0, 2, 1, 40]], value: [[0, 2, 1, 3_000_000]] },

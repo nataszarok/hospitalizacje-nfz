@@ -65,6 +65,64 @@ def _compact_address(address: dict[str, Any] | None) -> dict[str, str]:
     }
 
 
+# Przedrostki ulic pomijane przy porównaniu adresów: rejestr zapisuje ten sam adres różnie
+# (np. „Al. Zwycięstwa 30”, „Aleja Zwycięstwa 30”, „Zwycięstwa 30” — jedna lokalizacja).
+STREET_PREFIXES = {"al", "aleja", "aleje", "ul", "ulica", "pl", "plac", "os", "osiedle"}
+
+# Rodzaje lokalizacji w dymku karty szpitala (kolejność = kolejność na liście).
+LOCATION_KINDS = [
+    ("hospital", ("hospital_4xxx",)),
+    ("sor", ("emergency_department",)),
+    ("outpatient", ("outpatient_1xxx",)),
+    ("psychiatry", ("psychiatry_addiction",)),
+    ("rehab", ("rehabilitation",)),
+    ("long_term", ("long_term_care",)),
+    ("hospice", ("hospice_palliative", "palliative")),
+    ("dialysis", ("dialysis",)),
+    ("spa", ("spa_hospital_or_rehabilitation", "spa_sanatorium_or_rehabilitation")),
+]
+
+
+def _address_key(address: dict[str, Any] | None) -> str:
+    address = address or {}
+    words = _norm(address.get("street")).split()
+    street = " ".join(word for word in words if word not in STREET_PREFIXES)
+    return "|".join((_norm(address.get("city")), street, _norm(address.get("building"))))
+
+
+def _physical_locations(registry_facilities: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Lokalizacje rejestru złączone po adresie: kategorie komórek i łóżka sumowane."""
+    groups: dict[str, dict[str, Any]] = {}
+    for location in registry_facilities:
+        address = location.get("primary_address") or {}
+        group = groups.setdefault(_address_key(address), {
+            "address": _compact_address(address), "counts": Counter(), "beds": 0, "other": [],
+        })
+        # Pełniejszy zapis adresu (z ulicą) wygrywa.
+        if len(" ".join(_compact_address(address).values())) > len(" ".join(group["address"].values())):
+            group["address"] = _compact_address(address)
+        group["beds"] += _int((location.get("capacity") or {}).get(BED_COL))
+        for category, count in (location.get("category_counts") or {}).items():
+            group["counts"][str(category)] += _int(count)
+        for cell in location.get("cells", []) or []:
+            name = str(cell.get("name") or "").strip()
+            if cell.get("category") == "other" and name and name not in group["other"]:
+                group["other"].append(name)
+    return list(groups.values())
+
+
+def _location_row(group: dict[str, Any]) -> list[Any]:
+    """[adres, łóżka, rodzaje]; lokalizacja bez rodzaju z listy dostaje nazwy komórek (np. „Punkt pobrań”)."""
+    address = group["address"]
+    label = ", ".join(x for x in (
+        " ".join(x for x in (address.get("street"), address.get("building")) if x), address.get("city"),
+    ) if x)
+    kinds = [kind for kind, categories in LOCATION_KINDS if any(group["counts"][c] for c in categories)]
+    if not kinds:
+        kinds = [f"other:{name}" for name in group["other"][:2]]
+    return [label, group["beds"], kinds]
+
+
 def _registry_cells(record: dict[str, Any]) -> Iterable[tuple[dict[str, Any] | None, dict[str, Any]]]:
     for location in record.get("registry_facilities", []) or []:
         for cell in location.get("cells", []) or []:
@@ -244,9 +302,10 @@ def _build_record(record: dict[str, Any]) -> dict[str, Any]:
     spa_locations = 0
     locations_with_beds = 0
 
-    for location in registry_facilities:
-        counts = location.get("category_counts", {}) or {}
-        total_location_beds = _int((location.get("capacity") or {}).get(BED_COL))
+    physical = _physical_locations(registry_facilities)
+    for location in physical:
+        counts = location["counts"]
+        total_location_beds = location["beds"]
         if total_location_beds:
             locations_with_beds += 1
 
@@ -421,9 +480,12 @@ def _build_record(record: dict[str, Any]) -> dict[str, Any]:
             "location_count": outpatient_locations,
         },
         "registry": {
-            "location_count": _int(registry_aggregate.get("registry_facility_count"))
-            or len(registry_facilities),
-            "city_count": len(registry_aggregate.get("cities", []) or []),
+            # Lokalizacje fizyczne (adresy złączone), nie wpisy rejestru.
+            "location_count": len(physical),
+            "city_count": len({_norm(group["address"].get("city")) for group in physical if group["address"].get("city")})
+            or len(registry_aggregate.get("cities", []) or []),
+            # Lista lokalizacji idzie do osobnego pliku (`build_locations`), nie do przeglądarki.
+            "_locations": [_location_row(group) for group in sorted(physical, key=lambda g: -g["beds"])],
             "total_beds": _int(registry_capacity.get(BED_COL)),
             "location_types": location_types,
         },
@@ -431,13 +493,19 @@ def _build_record(record: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def build_payload(source: dict[str, Any]) -> dict[str, Any]:
+def build_payload(source: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Profil dla przeglądarki i lista lokalizacji kart szpitali (`"OW|NIP"` → [adres, łóżka, rodzaje]; czyta tylko build)."""
+    records = [_build_record(record) for record in source.get("records", [])]
+    locations = {
+        f"{record['oz_nfz']}|{record['nip']}": record["registry"].pop("_locations")
+        for record in records
+    }
     return {
         "version": 2,
         "source_version": source.get("version"),
         "rpwdl_snapshot_date": source.get("rpwdl_snapshot_date"),
-        "records": [_build_record(record) for record in source.get("records", [])],
-    }
+        "records": records,
+    }, {"version": 1, "locations": locations}
 
 
 def main() -> None:
@@ -452,13 +520,19 @@ def main() -> None:
         default="public/data/rpwdl_summary_profiles.json.gz",
         help="compact payload used by the Summary UI",
     )
+    parser.add_argument(
+        "--locations-output",
+        default="build-data/hospitals/rpwdl-locations.json.gz",
+        help="locations of each provider for hospital cards (build only, not served)",
+    )
     args = parser.parse_args()
 
     source_path = Path(args.input)
     output_path = Path(args.output)
     source = _open_json(source_path)
-    payload = build_payload(source)
+    payload, locations = build_payload(source)
     _write_json_gz(output_path, payload)
+    _write_json_gz(Path(args.locations_output), locations)
 
     input_bytes = source_path.stat().st_size
     output_bytes = output_path.stat().st_size

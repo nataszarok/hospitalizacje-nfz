@@ -6,7 +6,7 @@ import type { RegionsMap } from "@/lib/jgpCard";
 import type { JgpGroupFile, JgpPagesIndex, JgpPeerPair } from "@/lib/jgpPage";
 import type { JgpProfilesFile } from "@/lib/jgpDescription";
 import type { CitiesMap, FacilityYearsIndex, FacilityYearsSection } from "@/lib/regions";
-import type { HospitalPaymentFile, HospitalRpwdlRecord } from "@/lib/hospitalPage";
+import type { HospitalLocation, HospitalPaymentFile, HospitalRpwdlRecord } from "@/lib/hospitalPage";
 import type { HospitalContractsFile } from "@/lib/hospitalFinance";
 import { readJgpProse } from "@/lib/jgpProse";
 import { decodeValuations, type JgpValuation, type ValuationsFile } from "@/lib/valuations";
@@ -159,6 +159,12 @@ let wardNamesPromise: Promise<Record<string, string>> | null = null;
 export function readWardNamesFromDisk(file = join(BUILD_DATA_DIR, "hospitals", "ward-names.json")): Promise<Record<string, string>> {
   wardNamesPromise ??= readFile(file, "utf8").then((text) => (JSON.parse(text) as { names: Record<string, string> }).names).catch(() => ({}));
   return wardNamesPromise;
+}
+
+/** Lokalizacje świadczeniodawcy z rejestru RPWDL („OW|NIP” → [adres, łóżka, rodzaje]; `build_rpwdl_summary_profiles.py`). */
+export async function readRpwdlLocationsFromDisk(key: string, file = join(BUILD_DATA_DIR, "hospitals", "rpwdl-locations.json.gz")): Promise<HospitalLocation[]> {
+  const data = await readGzipJson<{ locations: Record<string, HospitalLocation[]> }>(file).catch(() => ({ locations: {} as Record<string, HospitalLocation[]> }));
+  return data.locations[key] ?? [];
 }
 
 /** Pełny profil RPWDL jednego świadczeniodawcy („OW|NIP”, z oddziałami) albo `null`. */

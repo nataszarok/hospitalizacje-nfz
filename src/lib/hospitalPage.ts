@@ -72,6 +72,8 @@ export interface HospitalPageData {
   wardPayment: Record<string, [number[], number[]]> | null;
   /** Rok stanu rejestru RPWDL (łóżka, oddziały) albo `null`. */
   rpwdlYear: string | null;
+  /** Zaplecze z rejestru RPWDL („Czym dysponuje?”): SOR, OIT, poradnie, lokalizacje; `null` bez profilu w rejestrze. */
+  resources: HospitalResources | null;
   /** Zakładka „Finanse” (umowy, rozliczenia, sprawozdanie) albo `null` (szpital spoza sieci PSZ albo bez umów). */
   finance: HospitalFinance | null;
 }
@@ -81,6 +83,64 @@ export interface HospitalRpwdlRecord {
   oz_nfz: string;
   nip: string;
   core?: { beds?: number | null; wards?: { code: string; name: string; beds: number | null; fields?: string[] }[] } | null;
+  outpatient?: { cell_count?: number; field_count?: number; location_count?: number } | null;
+  registry?: { location_count?: number; city_count?: number; total_beds?: number } | null;
+  capabilities?: Record<string, { count?: number; beds?: number; stations?: number; day_places?: number }> | null;
+}
+
+/**
+ * Lokalizacja z rejestru RPWDL (adresy zapisane różnie złączone): adres, łóżka, rodzaje działalności
+ * (`hospital`, `sor`, `outpatient`, `psychiatry`, `rehab`, `long_term`, `hospice`, `dialysis`, `spa`; bez nich `other:<nazwa komórki>`).
+ */
+export type HospitalLocation = [address: string, beds: number, kinds: string[]];
+
+/**
+ * Zaplecze szpitala z rejestru RPWDL: obecne komórki (nazwa, szczegół, np. „13 łóżek”), poradnie AOS i lokalizacje.
+ * Komórki w stałej kolejności `HOSPITAL_CAPABILITIES`; brak komórki = brak w rejestrze.
+ */
+export interface HospitalResources {
+  capabilities: [label: string, detail: string | null][];
+  /** Poradnie i gabinety AOS: komórki, lokalizacje, dziedziny medycyny. */
+  outpatient: { cells: number; locations: number; fields: number } | null;
+  /** Wszystkie lokalizacje podmiotu w rejestrze i łóżka łącznie (z ZOL, rehabilitacją itp.); `list` — do dymka. */
+  locations: { count: number; cities: number; beds: number; list: HospitalLocation[] } | null;
+}
+
+/** Komórki zaplecza w kolejności na karcie: pomoc doraźna, intensywna opieka, zabiegi, opieka długoterminowa, inne. */
+export const HOSPITAL_CAPABILITIES: [key: string, label: string, unit: "beds" | "stations" | "day_places" | "teams" | "cells" | null][] = [
+  ["sor", "SOR", "beds"], ["admission", "Izba przyjęć", "beds"], ["icu", "OIT", "beds"], ["stroke", "Oddział udarowy", "beds"],
+  ["ccu", "Intensywny nadzór kardiologiczny", "beds"], ["operating", "Blok operacyjny", null], ["delivery", "Sala porodowa", null],
+  ["dialysis", "Dializy", "stations"], ["day_treatment", "Leczenie jednego dnia", "day_places"], ["rehab", "Rehabilitacja stacjonarna", "beds"],
+  ["psychiatry", "Psychiatria / leczenie uzależnień", "beds"], ["long_term", "ZOL / ZPO", "beds"], ["palliative", "Opieka paliatywna", "beds"],
+  ["hospice", "Hospicjum", "beds"], ["spa", "Leczenie uzdrowiskowe", "beds"], ["zrm", "Zespoły ratownictwa (ZRM)", "teams"],
+  ["poz", "POZ", "cells"], ["npl", "Nocna i świąteczna opieka", "cells"],
+];
+
+const pl = (value: number) => value.toLocaleString("pl-PL");
+const UNIT_WORDS: Record<string, [string, string, string]> = {
+  beds: ["łóżko", "łóżka", "łóżek"], stations: ["stanowisko", "stanowiska", "stanowisk"], day_places: ["miejsce dzienne", "miejsca dzienne", "miejsc dziennych"],
+  teams: ["zespół", "zespoły", "zespołów"], cells: ["komórka", "komórki", "komórek"],
+};
+const unitWord = (n: number, [one, few, many]: [string, string, string]) => n === 1 ? one : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? few : many;
+
+/** Zaplecze z profilu RPWDL; `null` bez profilu. */
+export function hospitalResources(profile: HospitalRpwdlRecord | null, list: HospitalLocation[] = []): HospitalResources | null {
+  if (!profile) return null;
+  const present = profile.capabilities ?? {};
+  const capabilities = HOSPITAL_CAPABILITIES.flatMap(([key, label, unit]): [string, string | null][] => {
+    const cell = present[key];
+    if (!cell) return [];
+    const value = unit === "beds" ? cell.beds : unit === "stations" ? cell.stations ?? cell.beds : unit === "day_places" ? cell.day_places ?? cell.beds : unit ? cell.count : undefined;
+    const words = unit === "stations" && !cell.stations ? UNIT_WORDS.beds : unit === "day_places" && !cell.day_places ? UNIT_WORDS.beds : unit ? UNIT_WORDS[unit] : null;
+    return [[label, value && words ? `${pl(value)} ${unitWord(value, words)}` : null]];
+  });
+  const out = profile.outpatient;
+  const reg = profile.registry;
+  return {
+    capabilities,
+    outpatient: out?.cell_count ? { cells: out.cell_count, locations: out.location_count ?? 0, fields: out.field_count ?? 0 } : null,
+    locations: reg?.location_count ? { count: reg.location_count, cities: reg.city_count ?? 0, beds: reg.total_beds ?? 0, list } : null,
+  };
 }
 
 export interface HospitalPageInput {
@@ -104,6 +164,8 @@ export interface HospitalPageInput {
   rpwdlDate?: string | null;
   /** Kod resortowy oddziału → nazwa urzędowa (`build-data/hospitals/ward-names.json`). */
   wardNames?: Record<string, string>;
+  /** Lokalizacje z rejestru RPWDL (`build-data/hospitals/rpwdl-locations.json.gz`). */
+  locations?: HospitalLocation[];
 }
 
 const URGENT_MODE = 1;
@@ -219,6 +281,7 @@ export function buildHospitalPageData(input: HospitalPageInput, cards?: Hospital
     groups: own.groups, durations: { labels, values: own.durations }, wards, beds: profile?.core?.beds ?? null, net: latestNetResult(financial),
     wardPayment: payment ? wardPaymentByYear(payment, years) : null,
     rpwdlYear: rpwdlDate?.slice(0, 4) ?? null,
+    resources: hospitalResources(profile, input.locations),
     finance: pszLevel ? buildHospitalFinance(contracts, payment, financial, years, lumpIndex, wards) : null,
   };
 }
