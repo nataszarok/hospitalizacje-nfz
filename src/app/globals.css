@@ -91,6 +91,11 @@ th, td {
   line-height:1.25;
 }
 th { position:sticky; top:0; background:#fff; color:var(--color-text-secondary); }
+/* Przyklejony nagłówek tabeli na stronie (DESIGN.md 7.1): nazwy kolumn zostają pod nagłówkiem portalu przy przewijaniu strony.
+   Karta z paskiem zakładek ustawia `--sticky-head-top` (nagłówek + pasek). Tabela w pudełku z własnym przewijaniem
+   (`.table-wrap`, `.scrollTable`) ma nagłówek u góry pudełka (`top: 0`) i tej klasy nie potrzebuje.
+   Przodek tabeli nie może mieć `overflow: hidden/auto` (kontener przewijania) — do zaokrągleń `overflow: clip`. */
+.sticky-head thead th:nth-child(n) { position:sticky; top:var(--sticky-head-top, var(--atlas-header-height, 75px)); z-index:1; background:#fff; box-shadow:inset 0 -1px 0 var(--color-border); }
 th:nth-child(1) { width:24%; }
 th:nth-child(2) { width:11%; }
 th:nth-child(3) { width:8%; }

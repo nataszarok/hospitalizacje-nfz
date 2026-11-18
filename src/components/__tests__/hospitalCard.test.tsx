@@ -78,6 +78,8 @@ describe("Karta szpitala", () => {
     render(<HospitalPage data={many} />);
     const section = screen.getByRole("heading", { name: /Co leczy i za ile/ }).closest("section")!;
     expect(within(section).getAllByRole("row")).toHaveLength(11);
+    // Długa tabela: nazwy kolumn przyklejone pod paskiem zakładek (DESIGN.md 7.1, pkt 7).
+    expect(within(section).getByRole("table").className).toMatch(/sticky-head/);
     fireEvent.click(within(section).getByRole("button", { name: "Pokaż wszystkie (23)" }));
     expect(within(section).getAllByRole("row")).toHaveLength(24);
     fireEvent.click(within(section).getByRole("button", { name: /^NFZ/ }));
@@ -93,7 +95,7 @@ describe("Karta szpitala", () => {
 
   it("rok bez kwot NFZ: „Kwota NFZ” wyłączona, wykres koncentracji pokazuje hospitalizacje; łóżka ze stanem rejestru", () => {
     render(<HospitalPage data={rich} />);
-    expect(screen.getByText("Łóżka (stan 2026)")).toBeInTheDocument();
+    expect(screen.getByText("Łóżka na oddziałach (stan 2026)")).toBeInTheDocument();
     expect(screen.getByText("2 oddziały i pododdziały")).toBeInTheDocument();
     fireEvent.change(within(screen.getByRole("group", { name: "Rok karty" })).getByRole("combobox", { name: "Rok" }), { target: { value: "2024" } });
     const concentration = screen.getByRole("heading", { name: /Ile grup daje większość/ }).closest("section")!;
@@ -138,6 +140,19 @@ describe("Karta szpitala", () => {
     const series = months.map(() => 1);
     render(<HospitalPage data={{ ...data, years, months, monthly: { hospitalizations: series, deaths: series.map(() => 0), urgent: series }, network: null, durations: { labels: data.durations.labels, values: years.map(() => [1, 1, 1]) } }} />);
     expect(screen.getByRole("heading", { name: /Jak długo leżą/ })).toBeInTheDocument();
+  });
+
+  it("„Czym dysponuje?”: zaplecze z rejestru (poradnie, lokalizacje, SOR…) nad oddziałami; bez kodu oddziału pod nazwą", () => {
+    render(<HospitalPage data={data} />);
+    const section = within(screen.getByRole("heading", { name: /Czym dysponuje/ }).closest("section")!);
+    // Pasek faktów: oddziały z tymi samymi liczbami co nagłówek karty (2 oddziały, 60 łóżek), poradnie, lokalizacje z dymkiem.
+    expect(section.getByText("Oddziały").nextSibling).toHaveTextContent("2 oddziały i pododdziały · 60 łóżek");
+    expect(section.getByText("Poradnie (AOS)").nextSibling).toHaveTextContent("12 poradni i gabinetów · 9 dziedzin · w 2 lokalizacjach");
+    expect(section.getByText("Lokalizacje").nextSibling).toHaveTextContent("3 adresy w 2 miastach · 85 łóżek łącznie");
+    expect(section.getByRole("button", { name: "Lokalizacje szpitala" })).toBeInTheDocument();
+    expect(within(section.getByRole("list", { name: "Zaplecze w rejestrze RPWDL" })).getAllByRole("listitem").map((item) => item.textContent))
+      .toEqual(["SOR · 13 łóżek", "Blok operacyjny", "Dializy · 18 stanowisk", "POZ · 1 komórka"]);
+    expect(section.queryByText(/^kod \d+/)).not.toBeInTheDocument();
   });
 
   it("„Czym dysponuje?”: jasny komunikat bez profilu RPWDL i bez danych o sposobie zapłaty", () => {

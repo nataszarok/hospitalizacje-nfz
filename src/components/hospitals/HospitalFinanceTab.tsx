@@ -202,7 +202,7 @@ function PaySection({ data, finance, yearIndex }: SectionProps) {
       {way(3, "osobne pozycje umowy za poradnie, badania, dializy, psychiatrię, opiekę paliatywną i długoterminową, rehabilitację, nocną opiekę, transport.", "tylko plan.", "nie dotyczy hospitalizacji rozliczanych grupami JGP.")}
     </div>
     <div className={`priority-table ${card.tableWrap}`}>
-      <table className={base.table}>
+      <table className={`${base.table} sticky-head`}>
         <thead><tr>
           <th>Pozycja umowy</th>
           <th className={base.num}>Plan ({scale.unit})</th>
@@ -356,7 +356,7 @@ function WardPaySection({ data, finance, yearIndex }: SectionProps) {
         {example ? <> Przykład: <b>{lower(example.name)}</b> — {payShareText(paidShare(example))}: z {formatPln(example.lump + example.paid)} grup JGP {formatPln(example.paid)} NFZ zapłacił osobno ({codesOf(true)}), a {formatPln(example.lump)} to grupy w ryczałcie ({codesOf(false)}).</> : null}
       </p>
       <div className={`priority-table ${card.tableWrap}`}>
-        <table className={base.table}>
+        <table className={`${base.table} sticky-head`}>
           <thead><tr>
             <th>Oddział</th>
             <th className={`${base.num} col-p3`}>Łóżka</th>
@@ -442,7 +442,7 @@ function SectionsPaySection({ data, finance, yearIndex }: SectionProps) {
         {mostlyPaid.length ? <> Co najmniej 80% za wykonanie: <b>{mostlyPaid.join(", ")}</b>; w pozostałych sekcjach przeważa ryczałt.</> : null}
       </p>
       <div className={`priority-table ${card.tableWrap}`}>
-        <table className={base.table}>
+        <table className={`${base.table} sticky-head`}>
           <thead><tr>
             <th>Sekcja JGP</th>
             <th className={base.num}>Kwota NFZ ({scale.unit})</th>
