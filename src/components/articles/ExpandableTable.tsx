@@ -21,7 +21,7 @@ export function ExpandableTable({ caption, head, rows, initial = 2, className, t
   const [open, setOpen] = useState(false);
   const hidden = rows.length - initial;
   return <div className={className}>
-    <table className={tableClassName}>
+    <table className={`${tableClassName ?? ""} sticky-head`}>
       <caption>{caption}</caption>
       <thead>{head}</thead>
       {/* Wiersze z komponentu serwerowego: klucz każdego wiersza jawnie na liście (bez ostrzeżenia Reacta o kluczach). */}

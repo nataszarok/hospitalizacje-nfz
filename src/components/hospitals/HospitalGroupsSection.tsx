@@ -118,7 +118,7 @@ export function GroupsSection({ data, yearIndex }: { data: HospitalPageData; yea
       Najwięcej: <b>{top.code}</b> ({decimal((top.value / totalValue) * 100, 0)}%).
     </p> : <p className={base.lead}>W {year} r. szpital miał hospitalizacje w {integer(lines.length)} {lines.length === 1 ? "grupie" : "grupach"} JGP. Kwoty NFZ za grupy są od 2019 r.</p>}
     <div className={`priority-table ${styles.tableWrap}`}>
-      <table className={base.table}>
+      <table className={`${base.table} sticky-head`}>
         <thead><tr>
           {header("name", "Grupa JGP")}
           {header("hospitalizations", "Hosp.", base.num)}

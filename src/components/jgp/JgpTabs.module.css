@@ -342,6 +342,8 @@
 .panel {
   display: grid;
   gap: 16px;
+  /* Przyklejone nagłówki tabel (`sticky-head`) stają pod paskiem zakładek (75 px + 48 px). */
+  --sticky-head-top: 123px;
 }
 
 /* Skok do sekcji nie chowa tytułu pod paskiem zakładek. */
