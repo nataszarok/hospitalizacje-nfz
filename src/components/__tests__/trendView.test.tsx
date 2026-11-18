@@ -2,7 +2,7 @@
 
 import "@testing-library/jest-dom/vitest";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { TrendView } from "@/components/trends/TrendView";
 import type { ChartLine } from "@/components/jgp/GroupLineChart";
 import { regionalTrendsFixtures, trendsFixture } from "@/lib/__tests__/fixtures/trendsFixture";
@@ -68,11 +68,14 @@ describe("TrendView", () => {
     expect(rows).toEqual(["0", "5", "0"]);
   });
 
-  it("po zmianie województwa pobiera plik nowego OW", async () => {
-    const { rerender } = render(<TrendView productCodes={["P1"]} method="min" regions={["12"]} areaLabel="woj. śląskie" />);
+  it("po zmianie województwa pobiera plik nowego OW; do pobrania wykres zostaje przygaszony, bez komunikatu ładowania", async () => {
+    const { rerender, container } = render(<TrendView productCodes={["P1"]} method="min" regions={["12"]} areaLabel="woj. śląskie" />);
     await screen.findByText(/woj\. śląskie\./);
     rerender(<TrendView productCodes={["P1"]} method="min" regions={["07"]} areaLabel="woj. mazowieckie" />);
+    expect(screen.queryByText("Ładowanie trendów…")).not.toBeInTheDocument();
+    expect(container.querySelector("[aria-busy='true']")).not.toBeNull();
     await screen.findByText(/woj\. mazowieckie\./);
+    await waitFor(() => expect(container.querySelector("[aria-busy='true']")).toBeNull());
     expect(loadRegionalTrends.mock.calls.map(([ow]) => ow)).toEqual(["12", "07"]);
     const rows = screen.getAllByRole("row").slice(1).map((row) => row.firstChild?.nextSibling?.textContent);
     expect(rows).toEqual(["8", "3", "9"]);

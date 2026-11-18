@@ -645,6 +645,30 @@
     flex: 1 1 0;
     min-width: 40px;
   }
+
+  /* Mapa miast: dwie grupy (wielkość nad kolorem) w rogu. Wolny róg ma kształt litery L: wąski nad Kotliną Kłodzką,
+     szeroki pas pod granicą kraju. Wielkość — w wąskiej części (42% legendy), tytuł koloru — jedna linia w dolnym pasie,
+     skala koloru krótsza (60%), żeby nie wchodziła pod Śląsk. */
+  .mapFrame:not(.mapFrameLegendBelow) .mapLegendCities {
+    width: 46%;
+    gap: 4px;
+  }
+
+  .mapFrame:not(.mapFrameLegendBelow) .mapLegendCities .legendGroup {
+    gap: 4px;
+  }
+
+  .mapFrame:not(.mapFrameLegendBelow) .mapLegendCities .legendGroup:first-child {
+    width: 42%;
+  }
+
+  .mapFrame:not(.mapFrameLegendBelow) .mapLegendCities .legendGroup:last-child .legendTitle {
+    white-space: nowrap;
+  }
+
+  .mapFrame:not(.mapFrameLegendBelow) .mapLegendCities .legendScale {
+    max-width: 60%;
+  }
 }
 
 .legendNote {
@@ -882,11 +906,6 @@
   stroke: var(--color-text);
 }
 
-.cityDot.facilityDotArea {
-  stroke: var(--area-color);
-  stroke-width: 3;
-}
-
 .cityDot.facilityDotSelected {
   stroke: var(--color-signal);
   stroke-width: 3;
@@ -919,9 +938,9 @@
   font-size: var(--fs-md);
 }
 
-/* Globalne style tabel ustawiają stałe szerokości kolumn — tu kolumny dopasowują się do treści. */
+/* Globalne style tabel ustawiają stałe szerokości kolumn — tu kolumny dopasowują się do treści.
+   Nagłówek zostaje przyklejony u góry pudełka `.table-wrap` (globalne `th`, DESIGN.md 7.1). */
 .cityTable th:nth-child(n) {
-  position: static;
   width: auto;
 }
 

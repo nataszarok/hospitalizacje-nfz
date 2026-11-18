@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { DEVIATION_COLORS } from "@/lib/chartPalette";
-import { FUNNEL_LEGEND, funnelLines, funnelPointColor, hasEnoughDeathsForFunnel, mortalityChartHelp } from "@/lib/mortalityFunnel";
+import { explorerFunnelState, FUNNEL_LEGEND, funnelLines, funnelPointColor, funnelUnavailableReason, hasEnoughDeathsForFunnel, mortalityChartHelp } from "@/lib/mortalityFunnel";
 
 describe("mortalityChartHelp — krótki standard objaśnienia wykresu śmiertelności", () => {
   it("z lejkiem: punkt, średnia, lejek; kliknięcie tylko gdy wybiera ośrodek", () => {
@@ -40,5 +40,21 @@ describe("lejek — kolory, legenda, linie", () => {
     expect(hasEnoughDeathsForFunnel(29)).toBe(false);
     expect(hasEnoughDeathsForFunnel(30)).toBe(true);
     expect(funnelLines(11.5, 1000).map((line) => line.dash)).toEqual(["dot", "dot", "dash", "dash"]);
+  });
+});
+
+describe("explorerFunnelState i funnelUnavailableReason — granice niedostępne w układzie wykresu", () => {
+  it("osobne grupy albo oś na 100 tys.: „unavailable” także przy wyłączonym przełączniku", () => {
+    expect(explorerFunnelState({ enabled: false, deaths: 100, perCapita: false, separateGroups: true })).toBe("unavailable");
+    expect(explorerFunnelState({ enabled: false, deaths: 100, perCapita: true, separateGroups: false })).toBe("unavailable");
+    expect(explorerFunnelState({ enabled: false, deaths: 100, perCapita: false, separateGroups: false })).toBe("off");
+    expect(explorerFunnelState({ enabled: true, deaths: 100, perCapita: false, separateGroups: false })).toBe("funnel");
+  });
+
+  it("powód mówi, co blokuje granice i co wybrać", () => {
+    expect(funnelUnavailableReason({ perCapita: false, separateGroups: true })).toMatch(/„Per JGP”.*Wybierz „Zbiorczo”\.$/);
+    expect(funnelUnavailableReason({ perCapita: true, separateGroups: false })).toMatch(/na 100 tys\..*Wybierz oś X „Hosp\.”\.$/);
+    expect(funnelUnavailableReason({ perCapita: true, separateGroups: true })).toMatch(/Wybierz „Zbiorczo” i oś X „Hosp\.”\.$/);
+    expect(mortalityChartHelp({ state: "unavailable", showsMean: true, unavailableReason: "Powód." }).at(-1)).toBe("Powód.");
   });
 });

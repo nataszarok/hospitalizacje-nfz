@@ -8,6 +8,7 @@ import type { ReactNode } from "react";
 import { ChartScaleControl } from "@/components/ChartScaleControl";
 import { FunnelControl } from "@/components/FunnelControl";
 import { pointCaption } from "@/components/MortalityTab";
+import { ChartToolbar } from "@/components/ChartToolbar";
 
 afterEach(cleanup);
 
@@ -40,6 +41,14 @@ describe("Pasek nad wykresem „Kto leczy”", () => {
     expect(await screen.findByRole("tooltip")).toHaveTextContent(/granica 95%.*granica 99,8%/);
   });
 
+  it("niedostępne granice: dymek obudowy podaje powód (obudowa ma fokus, bo wyłączony input go nie przyjmuje)", async () => {
+    wrap(<FunnelControl value={false} onChange={() => {}} disabled disabledReason="Wybierz „Zbiorczo”." />);
+    const control = screen.getByRole("switch").closest("[class*='control']")!;
+    expect(control).toHaveAttribute("tabindex", "0");
+    fireEvent.mouseEnter(control);
+    expect(await screen.findByRole("tooltip")).toHaveTextContent("Wybierz „Zbiorczo”.");
+  });
+
   it("niedostępne granice: przełącznik wyszarzony i wyłączony, mimo zapisanego wyboru", () => {
     wrap(<FunnelControl value onChange={() => {}} disabled />);
     const toggle = screen.getByRole("switch", { name: "Granice odchyleń od średniej" });
@@ -53,6 +62,13 @@ describe("Pasek nad wykresem „Kto leczy”", () => {
     expect(screen.getByText("Hosp.")).toBeInTheDocument();
     expect(screen.getByText("Na 100 tys.")).toBeInTheDocument();
     expect(screen.queryByText("Liczba hospitalizacji")).not.toBeInTheDocument();
+  });
+
+  it("wspólny pasek nad wykresem („Kto leczy”, „Tryb przyjęcia”): opis po lewej, przełączniki w osobnej grupie", () => {
+    wrap(<ChartToolbar caption="3 punkty · każda grupa JGP osobno"><button type="button">Oś X</button></ChartToolbar>);
+    const caption = screen.getByText("3 punkty · każda grupa JGP osobno");
+    expect(caption.tagName).toBe("P");
+    expect(caption.nextElementSibling).toContainElement(screen.getByRole("button", { name: "Oś X" }));
   });
 
   it("opis punktów: liczba i znaczenie punktu, z odmianą", () => {

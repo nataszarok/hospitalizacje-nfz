@@ -64,9 +64,6 @@ export function areaHighlightTitle(areas: AnalysisArea[]): string {
   return "Obszary";
 }
 
-/** Górny margines wykresu „Tryb przyjęcia”: miejsce na przełączniki w prawym górnym rogu karty. */
-export const PLOT_TOOLBAR_MARGIN = 56;
-
 /*
  * Motyw wykresów Plotly (DESIGN.md, sekcja 6): jeden wygląd siatki, osi, legendy i dymka dla całego portalu.
  * Siatka tylko na osi, która jest miarą; zero rysuje podstawa pod danymi, nie `zeroline`.

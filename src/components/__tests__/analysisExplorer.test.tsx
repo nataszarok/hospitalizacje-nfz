@@ -62,8 +62,11 @@ vi.mock("@/components/explorer/ExplorerSidebar", () => ({
 }));
 vi.mock("@/components/InfoTip", () => ({ InfoTip: () => null, HelpLines: () => null }));
 vi.mock("@/components/MortalityTab", () => ({
-  MortalityTab: ({ data, highlightAreas }: { data: { rows: unknown[] }; highlightAreas: { kind: string; owNfz?: string; city?: string }[] }) =>
-    <div>widok: kto leczy · punkty {data.rows.length} · wyróżnienie {highlightAreas.map((area) => area.owNfz ?? area.city).join(",")}</div>,
+  MortalityTab: ({ data, highlightAreas, displayMode, setDisplayMode, funnelState, funnelUnavailableReason }: { data: { rows: unknown[] }; highlightAreas: { kind: string; owNfz?: string; city?: string }[]; displayMode: string; setDisplayMode: (v: string) => void; funnelState: string; funnelUnavailableReason?: string }) => <div>
+    <div>widok: kto leczy · punkty {data.rows.length} · wyróżnienie {highlightAreas.map((area) => area.owNfz ?? area.city).join(",")}</div>
+    <div>kto leczy zestawienie: {displayMode} · granice: {funnelState}{funnelState === "unavailable" ? ` · ${funnelUnavailableReason}` : ""}</div>
+    <button onClick={() => setDisplayMode("per_jgp")}>kto leczy per jgp</button>
+  </div>,
 }));
 vi.mock("@/components/AdmissionTab", () => ({ AdmissionTab: () => <div>widok: tryb przyjęcia</div> }));
 vi.mock("@/components/explorer/RegionView", () => ({ RegionView: ({ year }: { year: string }) => <div>widok: gdzie/{year}</div> }));
@@ -178,11 +181,17 @@ describe("AnalysisExplorer", () => {
     window.localStorage.removeItem("funduszdanych:explorer-focus");
   });
 
-  it("w „W czasie” przekazuje zestawienie JGP wspólne z „Kto leczy”", async () => {
+  it("zestawienie JGP: „W czasie” domyślnie „Per JGP”, „Kto leczy” domyślnie razem; wybór użytkownika wspólny", async () => {
+    window.history.replaceState(null, "", "/analizy?jgp=E10&jgp=F99");
     render(<AnalysisExplorer />);
-    expect(await screen.findByText("zestawienie: combined")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "per jgp" }));
-    expect(screen.getByText("zestawienie: per_jgp")).toBeInTheDocument();
+    expect(await screen.findByText("zestawienie: per_jgp")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Kto leczy" }));
+    expect(await screen.findByText("kto leczy zestawienie: combined · granice: off")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "kto leczy per jgp" }));
+    // Osobne grupy: granice wyszarzone z powodem także przy wyłączonym przełączniku.
+    expect(screen.getByText(/kto leczy zestawienie: per_jgp · granice: unavailable · .*Wybierz „Zbiorczo”/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "W czasie" }));
+    expect(await screen.findByText("zestawienie: per_jgp")).toBeInTheDocument();
   });
 
   it("w „Kto leczy” obszar wyróżnia punkty zamiast je odfiltrować, a karty liczb liczą obszar", async () => {

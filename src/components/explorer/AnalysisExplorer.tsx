@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { HelpLines, InfoTip } from "@/components/InfoTip";
-import { explorerFunnelState, mortalityChartHelp, mortalityTotals } from "@/lib/mortalityFunnel";
+import { explorerFunnelState, funnelUnavailableReason, mortalityChartHelp, mortalityTotals } from "@/lib/mortalityFunnel";
 import { showsMortalityReference } from "@/lib/jgpCard";
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode, type SetStateAction } from "react";
 import { AdmissionTab } from "@/components/AdmissionTab";
@@ -134,7 +134,9 @@ function ExplorerApp() {
   const [loading, setLoading] = useState(!boot);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<DashboardActiveTab>(boot?.urlState.activeTab ?? "trend");
-  const [jgpDisplayMode, setJgpDisplayMode] = useState<MortalityDisplayMode>("combined");
+  // Zestawienie JGP wspólne dla widoków. Bez wyboru użytkownika (`null`): „W czasie” pokazuje grupy osobno, pozostałe widoki razem.
+  const [jgpDisplayChoice, setJgpDisplayMode] = useState<MortalityDisplayMode | null>(null);
+  const jgpDisplayMode: MortalityDisplayMode = jgpDisplayChoice ?? "combined";
   const [urlStateReady, setUrlStateReady] = useState(Boolean(boot));
   const [years, setYears] = useState<string[]>(boot?.index.years ?? []);
   const [latestYear, setLatestYear] = useState(boot?.index.latestYear ?? "");
@@ -327,12 +329,11 @@ function ExplorerApp() {
   const activeView = EXPLORER_VIEWS.find((view) => view.tab === activeTab) ?? EXPLORER_VIEWS[0];
   // „Kto leczy”: objaśnienie wykresu śmiertelności według wspólnego standardu (`mortalityChartHelp`), zależne od lejka.
   const mortalityStats = mortalityTotals(data.rows);
-  const mortalityFunnel = explorerFunnelState({
-    enabled: funnel, deaths: mortalityStats.deaths, perCapita: axisMode === "per_100k",
-    separateGroups: selectedProducts.length >= 2 && jgpDisplayMode !== "combined",
-  });
+  const funnelLayout = { perCapita: axisMode === "per_100k", separateGroups: selectedProducts.length >= 2 && jgpDisplayMode !== "combined" };
+  const mortalityFunnel = explorerFunnelState({ enabled: funnel, deaths: mortalityStats.deaths, ...funnelLayout });
+  const funnelReason = funnelUnavailableReason(funnelLayout);
   const viewHelp = activeTab === "mortality" ? <HelpLines lines={[
-    ...mortalityChartHelp({ state: mortalityFunnel, showsMean: showsMortalityReference(mortalityStats.meanPct) }),
+    ...mortalityChartHelp({ state: mortalityFunnel, showsMean: showsMortalityReference(mortalityStats.meanPct), unavailableReason: funnelReason }),
     activeView.help ?? "",
   ]} /> : activeView.help;
   // Strona grupy JGP, gdy wybrano jedną grupę, która ma już stronę.
@@ -441,7 +442,7 @@ function ExplorerApp() {
 
         {selectedProducts.length ? <Collapsible open={!focus}><ExplorerKpis items={kpis} /></Collapsible> : null}
 
-        {activeTab === "trend" ? <TrendView productCodes={selectedProducts} method={method} regions={trendArea.regions} areaLabel={trendArea.label} areaNote={trendArea.note} durations={durations} displayMode={jgpDisplayMode} onDisplayModeChange={setJgpDisplayMode} />
+        {activeTab === "trend" ? <TrendView productCodes={selectedProducts} method={method} regions={trendArea.regions} areaLabel={trendArea.label} areaNote={trendArea.note} durations={durations} displayMode={jgpDisplayChoice ?? "per_jgp"} onDisplayModeChange={setJgpDisplayMode} />
           : activeTab === "regions" ? <RegionView productCodes={selectedProducts} year={reference.analysisYear} method={method} areas={areas} onAreasChange={setAreas} />
           : activeTab === "mortality" ? <MortalityTab
             reference={reference}
@@ -455,6 +456,7 @@ function ExplorerApp() {
             displayMode={jgpDisplayMode}
             setDisplayMode={setJgpDisplayMode}
             funnelState={mortalityFunnel}
+            funnelUnavailableReason={funnelReason}
             setFunnel={setFunnel}
           /> : <AdmissionTab
             reference={reference}
