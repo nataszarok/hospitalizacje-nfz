@@ -19,9 +19,27 @@ export interface HospitalStructureFile {
     addr: [street: string, city: string][];
     beds: [addr: number, site: number, category: string, code: string, name: string, beds: number, icu: number, fields: number[]][];
     clinics: [addr: number, code: string, fields: number[]][];
-    points: [address: string, kinds: string[], sites: number[]][];
+    other: StructureOther[];
+    /** Budynek (indeks adresu) → placówki (najwyżej 2, od najczęstszej), także budynków bez łóżek. */
+    sites: Record<string, number[]>;
   }>;
 }
+
+/** Rodzaje miejsc bez łóżek spoza poradni: POZ, nocna i świąteczna opieka, ratownictwo, dializy, leczenie jednego dnia, sala porodowa, inne. */
+export type OtherKind = "poz" | "npl" | "zrm" | "dialysis" | "day" | "delivery" | "misc";
+/** Miejsce bez łóżek: adres, rodzaj, nazwa w rejestrze, stanowiska dializ albo miejsca dzienne (inaczej 0). */
+export type StructureOther = [addr: number, kind: OtherKind, name: string, units: number];
+
+/** Nazwa rodzaju na liście „Inne miejsca” i w dymku; liczebnik jednostek (komórka rejestru = gabinet, punkt, zespół…). */
+export const OTHER_KINDS: Record<OtherKind, { label: string; unit: [string, string, string]; capacity?: [string, string, string] }> = {
+  poz: { label: "Podstawowa opieka zdrowotna (POZ)", unit: ["gabinet", "gabinety", "gabinetów"] },
+  npl: { label: "Nocna i świąteczna opieka", unit: ["punkt", "punkty", "punktów"] },
+  zrm: { label: "Zespoły ratownictwa medycznego", unit: ["zespół", "zespoły", "zespołów"] },
+  dialysis: { label: "Stacja dializ", unit: ["stacja", "stacje", "stacji"], capacity: ["stanowisko", "stanowiska", "stanowisk"] },
+  day: { label: "Leczenie jednego dnia", unit: ["miejsce", "miejsca", "miejsc"], capacity: ["miejsce dzienne", "miejsca dzienne", "miejsc dziennych"] },
+  delivery: { label: "Sala porodowa", unit: ["sala", "sale", "sal"] },
+  misc: { label: "Inne", unit: ["miejsce", "miejsca", "miejsc"] },
+};
 
 /** Miejsce z łóżkami na karcie: adres, placówka, kategoria, kod, nazwa w rejestrze, łóżka, łóżka OIT, dziedziny. */
 export type StructureBed = [addr: number, site: number, category: string, code: string, name: string, beds: number, icu: number, fields: number[]];
@@ -44,7 +62,9 @@ export interface HospitalStructure {
   names: Record<string, string>;
   beds: StructureBed[];
   clinics: StructureClinic[];
-  points: [address: string, kinds: string[], sites: number[]][];
+  other: StructureOther[];
+  /** Budynek (indeks adresu) → placówki (indeksy `sites`). */
+  buildingSites: Record<string, number[]>;
   /** Kod → sposób zapłaty w latach karty (`null` = brak umów w roku). */
   pay: Record<string, (ContractPay | null)[]>;
   /** Poradnie AOS z profilu RPWDL (dziedziny, lokalizacje). */
@@ -231,7 +251,7 @@ export function buildHospitalStructure(
   const sites = remap(file.sites), fields = remap(file.fields);
   const beds = raw.beds.map(([a, s, category, code, name, n, icu, f]): StructureBed => [a, sites.at(s), category, code, name, n, icu, f.map(fields.at)]);
   const clinics = raw.clinics.map(([a, code, f]): StructureClinic => [a, code, f.map(fields.at)]);
-  const points = raw.points.map(([address, kinds, s]): [string, string[], number[]] => [address, kinds, s.map(sites.at)]);
+  const buildingSites = Object.fromEntries(Object.entries(raw.sites ?? {}).map(([a, s]) => [a, s.map(sites.at)]));
   const codes = new Set([...beds.map((row) => row[3]), ...clinics.map((row) => row[1])]);
   const names = Object.fromEntries([...codes].filter((code) => file.names[code]).map((code) => [code, file.names[code]]));
   const clinicCodes = new Set(clinics.map((row) => row[1]));
@@ -246,7 +266,7 @@ export function buildHospitalStructure(
   }
   const out = profile?.outpatient, reg = profile?.registry;
   return {
-    addresses: raw.addr, sites: sites.list(), fields: fields.list(), names, beds, clinics, points, pay,
+    addresses: raw.addr, sites: sites.list(), fields: fields.list(), names, beds, clinics, other: raw.other ?? [], buildingSites, pay,
     outpatient: out?.cell_count ? { cells: out.cell_count, fields: out.field_count ?? 0, locations: out.location_count ?? 0 } : null,
     registry: reg?.location_count ? { locations: reg.location_count, cities: reg.city_count ?? 0 } : null,
   };
@@ -297,7 +317,7 @@ export interface PlanBuilding<B> { building: B; width: number; height: number }
 
 /**
  * Wiersze budynków: każdy wiersz na całą szerokość, budynki w wierszu tej samej wysokości, szerokość według łóżek;
- * mały budynek dołącza do wiersza, dopóki wiersz nie ma `minRow`. Ten sam układ na telefonie (nazwy krótkie, nie osobne
+ * mały budynek dołącza do wiersza, dopóki wiersz nie ma `minRow`; każdy wiersz (także resztka) na całą szerokość. Ten sam układ na telefonie (nazwy krótkie, nie osobne
  * wiersze: budynek sam w wierszu byłby cienkim paskiem). Pole łóżka maleje z szerokością kontenera. Wymiary z ramką 1 px.
  */
 export function layoutBuildings<B extends { beds: number }>(buildings: B[], width: number): PlanBuilding<B>[][] {
@@ -312,8 +332,13 @@ export function layoutBuildings<B extends { beds: number }>(buildings: B[], widt
   }
   if (current.length) rows.push(current);
   return rows.map((row) => {
+    // Każdy wiersz na całą szerokość. Resztka niższa niż `minLast` dostaje tę wysokość (cienki pasek byłby nieczytelny):
+    // wyjątek od wspólnej skali, pole jej budynków jest większe niż łóżka. Doklejona do wiersza wyżej dałaby na telefonie
+    // wąskie, wysokie kolumny.
     const h = Math.max(PLAN.minLast, rowHeight(row));
-    return row.map((building) => ({ building, height: h + 2 * PLAN.pad, width: building.beds * area / h + 2 * PLAN.pad + 2 }));
+    // Szerokość z udziału łóżek w wierszu: suma szerokości + odstępy = kontener także przy wysokości `minLast`.
+    const sum = row.reduce((total, b) => total + b.beds, 0);
+    return row.map((building) => ({ building, height: h + 2 * PLAN.pad, width: inner(row.length) * building.beds / sum + 2 * PLAN.pad + 2 }));
   });
 }
 
@@ -404,6 +429,25 @@ export function clinicEntries(structure: HospitalStructure): ClinicEntry[] {
   }
   return [...byCode.values()].map(({ fieldSet, ...entry }) => ({ ...entry, fields: [...fieldSet].sort((a, b) => a.localeCompare(b, "pl")) }))
     .sort((a, b) => a.name.localeCompare(b.name, "pl"));
+}
+
+export interface OtherEntry { kind: OtherKind; name: string; count: number; units: number; addresses: [string, number][] }
+
+/** Lista „Inne miejsca”: na rodzaj (rodzaj „misc” — na nazwę), liczba miejsc, suma stanowisk lub miejsc dziennych, adresy. */
+export function otherEntries(structure: Pick<HospitalStructure, "other" | "addresses">): OtherEntry[] {
+  const byKey = new Map<string, OtherEntry>();
+  for (const [a, kind, name, units] of structure.other) {
+    const key = kind === "misc" ? `misc|${name}` : kind;
+    let entry = byKey.get(key);
+    if (!entry) byKey.set(key, entry = { kind, name: kind === "misc" ? name : OTHER_KINDS[kind].label, count: 0, units: 0, addresses: [] });
+    entry.count += 1;
+    entry.units += units;
+    const address = structure.addresses[a].join(", ");
+    const known = entry.addresses.find(([x]) => x === address);
+    if (known) known[1] += 1; else entry.addresses.push([address, 1]);
+  }
+  const order = Object.keys(OTHER_KINDS);
+  return [...byKey.values()].sort((a, b) => order.indexOf(a.kind) - order.indexOf(b.kind) || a.name.localeCompare(b.name, "pl"));
 }
 
 /** Dziedziny do pokazania: trafienia wyszukiwarki na początku, najwyżej `limit`, reszta jako liczba. */

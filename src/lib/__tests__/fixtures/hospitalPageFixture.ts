@@ -32,7 +32,7 @@ const dataset = (year: string, facts: StaticDataset["facts"]): StaticDataset => 
 
 /**
  * Struktura szpitala (zakładka „Struktura”): Szpitalna 1 w Katowicach (interna 10, kardiologia 50, SOR 13 łóżek, 3 poradnie)
- * i ZOL w Zabrzu (12 łóżek); lokalizacja bez łóżek Polna 3. Łóżka razem 85 = `registry.total_beds` profilu.
+ * i ZOL w Zabrzu (12 łóżek); w Katowicach też POZ i nocna pomoc, budynek bez łóżek Polna 3 (punkt pobrań). Łóżka razem 85 = `registry.total_beds` profilu.
  */
 export const structureFixture: HospitalStructureFile = {
   version: 1,
@@ -42,11 +42,12 @@ export const structureFixture: HospitalStructureFile = {
   nfzCodes: { "5170": ["5160", ""], "4902": ["3300", ""] },
   hospitals: {
     [ME]: {
-      addr: [["Szpitalna 1", "Katowice"], ["Leśna 2", "Zabrze"]],
+      addr: [["Szpitalna 1", "Katowice"], ["Leśna 2", "Zabrze"], ["Polna 3", "Katowice"]],
       beds: [[0, 0, "hospital_4xxx", "4000", "Klinika Chorób Wewnętrznych", 10, 0, [0]], [0, 0, "hospital_4xxx", "4100", "Oddział Kardiologii", 50, 6, [1, 0]],
         [0, 0, "emergency_department", "4902", "SOR", 13, 0, []], [1, 1, "long_term_care", "5170", "ZOL", 12, 0, []]],
       clinics: [[0, "1100", [1]], [0, "1100", [1, 3]], [0, "1020", [2]]],
-      points: [["Polna 3, Katowice", ["other:Punkt pobrań"], [0]]],
+      other: [[0, "poz", "Gabinet lekarza POZ", 0], [0, "npl", "Nocna i świąteczna opieka zdrowotna", 0], [2, "misc", "Punkt pobrań", 0]],
+      sites: { "0": [0], "1": [1], "2": [0] },
     },
   },
 };

@@ -92,7 +92,7 @@
 /* Pasek zakładek zostaje pod nagłówkiem portalu (75 px) przy przewijaniu. */
 .tabbar {
   position: sticky;
-  top: 75px;
+  top: var(--atlas-header-height, 75px);
   z-index: 20;
   display: flex;
   /* Jedna linia i stała wysokość: pojawienie się nazwy grupy nie przesuwa treści. */
@@ -342,8 +342,9 @@
 .panel {
   display: grid;
   gap: 16px;
-  /* Przyklejone nagłówki tabel (`sticky-head`) stają pod paskiem zakładek (75 px + 48 px). */
-  --sticky-head-top: 123px;
+  /* Przyklejone nagłówki tabel (`sticky-head`) stają tuż pod paskiem zakładek: nagłówek portalu (75 px, na telefonie 67 px —
+     zmienna `--atlas-header-height`) + pasek 48 px. Stała 123 px zostawiała na telefonie szczelinę, w której przewijała się treść. */
+  --sticky-head-top: calc(var(--atlas-header-height, 75px) + 48px);
 }
 
 /* Skok do sekcji nie chowa tytułu pod paskiem zakładek. */

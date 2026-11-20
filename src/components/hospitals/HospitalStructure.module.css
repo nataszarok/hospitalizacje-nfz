@@ -163,8 +163,8 @@
   background: var(--color-background);
 }
 
+/* Nagłówek nie rozciąga się: rzut zaraz pod nim, kwadraty poradni pod rzutem (wysokość budynku zależy od ich liczby). */
 .building h3 {
-  flex: 1;
   margin: 0;
   padding: 8px 10px 0;
   color: var(--color-heading);
@@ -214,6 +214,56 @@
 .labelBeds {
   font-weight: var(--fw-regular);
   opacity: 0.8;
+}
+
+/* Poradnie i inne miejsca bez łóżek: kwadrat na miejsce (pole nie zależy od łóżek), pod rzutem oddziałów budynku. */
+.places {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  padding: 2px 6px 8px;
+}
+
+.square {
+  display: inline-block;
+  flex: none;
+  width: 11px;
+  height: 11px;
+  border-radius: var(--radius-badge);
+  vertical-align: -1px;
+}
+
+.legend .square {
+  margin-right: 6px;
+}
+
+.squareClinic {
+  border: 1.5px solid var(--color-data);
+  background: var(--color-background);
+}
+
+.squareOther {
+  border: 1.5px solid var(--color-text-tertiary);
+  background: var(--color-background-muted);
+}
+
+.places .square {
+  cursor: default;
+}
+
+.places .square:hover {
+  box-shadow: 0 0 0 2px var(--color-heading);
+}
+
+/* Budynki bez łóżek: małe ramki w jednym wierszu, razem na całą szerokość. */
+.placeRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.building.small {
+  flex: 1 1 150px;
 }
 
 .pointsTitle {
@@ -346,8 +396,20 @@
   font-size: var(--fs-sm);
 }
 
-.list .fieldsInline {
-  display: none;
+/* Telefon: nazwa w wierszu otwiera arkusz z dziedzinami i adresami (przycisk wygląda jak tekst z kropkowanym podkreśleniem). */
+.rowName {
+  padding: 0;
+  border: 0;
+  border-bottom: 1px dotted var(--color-border-strong);
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.sheetPara {
+  margin: 0 0 8px;
 }
 
 /* Liczby (łóżka, udział, liczba poradni) nie łamią się: wąska kolumna nie rozbija „80,0%” na znaki. */
@@ -416,7 +478,17 @@
   }
 
   .head h2 {
+    font-size: var(--fs-lg);
     white-space: nowrap;
+  }
+
+  /* Przełącznik widoku w tej samej linii co tytuł (węższe przyciski). */
+  .head {
+    column-gap: 8px;
+  }
+
+  .head [role="group"] button {
+    padding-inline: 9px;
   }
 
   .boxes {
@@ -484,8 +556,8 @@
     display: none;
   }
 
-  .list .fieldsInline {
-    display: block;
+  .list .addr {
+    display: none;
   }
 }
 

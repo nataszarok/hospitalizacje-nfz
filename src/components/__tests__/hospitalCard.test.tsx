@@ -157,13 +157,16 @@ describe("Karta szpitala", () => {
     expect(parts.getByText("Leczenie szpitalne").closest("div")).toHaveTextContent("73 łóżek · 86%2 oddziaływ tym SOR 13 (nie oddziały)");
     expect(parts.getByText("Opieka długoterminowa i paliatywna").closest("div")).toHaveTextContent("12 łóżek · 14%ZOL");
     expect(parts.getByText("Poradnie (AOS)").closest("div")).toHaveTextContent("12 poradni9 dziedzin · w 2 lokalizacjach");
-    expect(parts.getByText(/Poza oddziałami/).parentElement).toHaveTextContent("Dializy · 18 stanowiskPOZ · 1 gabinet");
-    expect(parts.getByText(/Poza oddziałami/).parentElement).not.toHaveTextContent("SOR");
+    // Miejsca bez łóżek są w sekcji budynków i na liście „Inne miejsca”, nie w częściach szpitala.
+    expect(parts.queryByText(/Poza oddziałami|Bez łóżek/)).not.toBeInTheDocument();
     // Nagłówek karty: te same łóżka i oddziały co boks „Leczenie szpitalne”.
     const kpis = within(document.querySelector<HTMLElement>('dl[aria-label="Liczby szpitala"]')!);
     expect(kpis.getByText("Łóżka szpitalne (stan 2026)").parentElement).toHaveTextContent("732 oddziały");
-    expect(screen.getByRole("heading", { name: /Rzut szpitala/ })).toBeInTheDocument();
-    expect(screen.getByText("Lokalizacje bez łóżek")).toBeInTheDocument();
+    const buildings = screen.getByRole("heading", { name: /Budynki i oddziały/ }).closest("section")!;
+    // Budynek bez łóżek Polna 3 (punkt pobrań): ramka z kwadratem. Budynki z łóżkami rysuje przeglądarka po pomiarze szerokości
+    // (jsdom ma szerokość 0) — ich układ sprawdza hospitalStructure.test.ts.
+    expect(within(buildings).getByLabelText("Poradnie i inne miejsca bez łóżek: 1")).toBeInTheDocument();
+    expect(within(buildings).getByText("Polna 3, Katowice")).toBeInTheDocument();
     for (const table of document.querySelectorAll("#panel-struktura table")) expect(table).toHaveClass("sticky-head");
   });
 
@@ -171,14 +174,17 @@ describe("Karta szpitala", () => {
     window.history.replaceState(null, "", "/szpitale/111?widok=struktura");
     render(<HospitalPage data={data} />);
     const details = document.querySelectorAll<HTMLDetailsElement>("#panel-struktura details");
-    expect([...details].map((item) => item.open)).toEqual([false, false]);
+    expect([...details].map((item) => item.open)).toEqual([false, false, false]);
     fireEvent.change(screen.getByRole("searchbox", { name: /Szukaj oddziału/ }), { target: { value: "kardiologiczna" } });
-    expect(screen.getByText(/pozycja na liście oddziałów/).closest("p")).toHaveTextContent("„kardiologiczna”: 1 pozycja na liście oddziałów i 2 poradnie.");
-    expect([...details].map((item) => item.open)).toEqual([true, true]);
+    expect(screen.getByText(/pozycja na liście oddziałów/).closest("p")).toHaveTextContent("„kardiologiczna”: 1 pozycja na liście oddziałów, 2 poradnie i 0 innych miejsc.");
+    expect([...details].map((item) => item.open)).toEqual([true, true, true]);
     // Trafienie podświetlone (<mark>), więc nazwa jest w kilku elementach: szukamy wiersza po tekście.
     const clinic = screen.getAllByRole("row").find((row) => row.textContent?.startsWith("Poradnia kardiologiczna"))!;
     expect(clinic.querySelector("mark")).toHaveTextContent("kardiolog");
     expect(clinic.lastElementChild).toHaveTextContent("2");
+    // Nocna i świąteczna opieka: na liście „Inne miejsca bez łóżek”.
+    fireEvent.change(screen.getByRole("searchbox", { name: /Szukaj oddziału/ }), { target: { value: "nocna" } });
+    expect(screen.getAllByRole("row").find((row) => row.textContent?.startsWith("Nocna i świąteczna opieka"))).toHaveTextContent("1 punkt");
     fireEvent.change(screen.getByRole("searchbox", { name: /Szukaj oddziału/ }), { target: { value: "okulistyka" } });
     expect(screen.getByText(/brak oddziału i poradni/)).toBeInTheDocument();
   });

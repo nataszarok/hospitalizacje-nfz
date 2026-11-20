@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildHospitalStructure, clinicEntries, contractItems, contractPay, fieldsShown, groupOf, highlightParts, isKidsWard, layoutBuildings,
-  matchesSearch, PLAN, placeName, roomLabel, searchWords, shortPlaceName, squarifyRatio, wardEntries,
+  matchesSearch, otherEntries, PLAN, placeName, roomLabel, searchWords, shortPlaceName, squarifyRatio, wardEntries,
 } from "@/lib/hospitalStructure";
 import { contractsFixture } from "./fixtures/hospitalFinanceFixture";
 import { structureFixture } from "./fixtures/hospitalPageFixture";
@@ -118,12 +118,24 @@ describe("rzut", () => {
     }
   });
 
-  it("telefon: ten sam układ wierszy — małe budynki dzielą wiersz zamiast cienkich pasków", () => {
+  it("telefon: każdy wiersz na całą szerokość, także resztka (wysokość co najmniej minLast)", () => {
     const lines = layoutBuildings([{ beds: 140 }, { beds: 60 }, { beds: 50 }], 343);
     expect(lines.map((line) => line.length)).toEqual([2, 1]);
-    expect(lines[0][0].height).toBeGreaterThanOrEqual(PLAN.minRow);
-    // Resztka niższa niż minLast: ta wysokość i węższy wiersz (zamiast paska na całą szerokość).
+    for (const line of lines) expect(Math.abs(line.reduce((sum, b) => sum + b.width, 0) + PLAN.buildingGap * (line.length - 1) - 342)).toBeLessThan(0.5);
     expect(lines[1][0].height).toBe(PLAN.minLast + 2 * PLAN.pad);
+  });
+
+  it("jedyny mały budynek: wysokość co najmniej minLast, nadal na całą szerokość", () => {
+    const [[only]] = layoutBuildings([{ beds: 10 }], 343);
+    expect(only.height).toBe(PLAN.minLast + 2 * PLAN.pad);
+    expect(Math.round(only.width)).toBe(342);
+  });
+
+  it("lista innych miejsc: na rodzaj, z jednostkami i adresami", () => {
+    const entries = otherEntries({ addresses: [["Szpitalna 1", "Katowice"], ["Polna 3", "Katowice"]], other: [[0, "poz", "Gabinet POZ", 0], [1, "poz", "Gabinet POZ", 0], [0, "dialysis", "Stacja dializ", 18], [1, "misc", "Punkt pobrań", 0]] });
+    expect(entries.map((entry) => [entry.name, entry.count, entry.units, entry.addresses.length])).toEqual([
+      ["Podstawowa opieka zdrowotna (POZ)", 2, 0, 2], ["Stacja dializ", 1, 18, 1], ["Punkt pobrań", 1, 0, 1],
+    ]);
   });
 
   it("oddziały szersze niż wyższe (proporcja podpisu), pole proporcjonalne do łóżek", () => {

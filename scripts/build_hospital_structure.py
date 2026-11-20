@@ -13,9 +13,13 @@ scripts/rpwdl_nfz_kody.csv maps register codes to NFZ contract codes where NFZ u
 the card joins a ward with a contract scope by this code (src/lib/hospitalStructure.ts).
 
 Output (gzip JSON, read only by the build, not served):
-  {"version": 1, "names": {code: name}, "fields": [...], "sites": [...], "nfzCodes": {code: [nfzCode, variant]},
+  {"version": 2, "names": {code: name}, "fields": [...], "sites": [...], "nfzCodes": {code: [nfzCode, variant]},
    "hospitals": {"OW|NIP": {"addr": [[street building, city]], "beds": [[addr, site, category, code, name, beds, icu, [field]]],
-                            "clinics": [[addr, code, [field]]], "points": [[address, [kind], [site]]]}}}
+                            "clinics": [[addr, code, [field]]], "other": [[addr, kind, name, units]],
+                            "sites": {addr: [site]}}}}
+  other: places without beds outside specialist clinics (kind: poz, npl, zrm, dialysis, day, delivery, misc — other cells
+  of a building with nothing else, e.g. a vaccination point; units: dialysis
+  stations or day places, otherwise 0). sites: facility names of every building (also without beds).
 
 Usage:
   python3 scripts/build_hospital_structure.py
@@ -32,7 +36,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from build_rpwdl_summary_profiles import BED_COL, LOCATION_KINDS, _address_key, _location_row, _physical_locations  # noqa: E402
+from build_rpwdl_summary_profiles import (  # noqa: E402
+    BED_COL, DAY_PLACES_COL, DIALYSIS_COL, _address_key, _cell_search_text, _location_row, _physical_locations,
+)
 
 SOURCE = ROOT / "data" / "rpwdl_facility_profiles_all.json.gz"
 CELLS = ROOT / "data" / "rpwdl" / "komorki.csv"
@@ -40,6 +46,26 @@ PAGES = ROOT / "build-data" / "hospitals" / "index.json"
 CODES = ROOT / "scripts" / "rpwdl_nfz_kody.csv"
 OUT = ROOT / "build-data" / "hospitals" / "structure.json.gz"
 ICU_COL = "Liczba łóżek intensywnej terapii"
+
+
+def other_kind(cell: dict) -> str | None:
+    """Miejsce bez łóżek spoza poradni AOS (te same reguły co „Zaplecze” w build_rpwdl_summary_profiles.py):
+    POZ, nocna i świąteczna opieka, zespół ratownictwa, dializy, leczenie jednego dnia, sala porodowa."""
+    category = str(cell.get("category") or "")
+    if category == "dialysis":
+        return "dialysis"
+    if category == "day_treatment":
+        return "day"
+    if category == "delivery_room":
+        return "delivery"
+    text = _cell_search_text(cell)
+    if "nocnej i swiatecznej opieki" in text or "nocna i swiateczna opieka" in text:
+        return "npl"
+    if "zespol ratownictwa medycznego" in text or (str(cell.get("viii") or "") == "3112" and "ratownictw" in text):
+        return "zrm"
+    if "podstawowej opieki zdrowotnej" in text or "podstawowa opieka zdrowotna" in text:
+        return "poz"
+    return None
 
 
 def site_name(cell: dict) -> str:
@@ -84,7 +110,7 @@ def main() -> None:
         groups = _physical_locations(facilities)
         group_of = {_address_key(g["address"]): i for i, g in enumerate(groups)}
         addr = [[street_label(g["address"]), g["address"].get("city", "")] for g in groups]
-        beds, clinics, point_sites = [], [], defaultdict(Counter)
+        beds, clinics, other, point_sites, unmatched = [], [], [], defaultdict(Counter), defaultdict(list)
         for location in facilities:
             a = group_of[_address_key(location.get("primary_address") or {})]
             for cell in location.get("cells") or []:
@@ -104,19 +130,23 @@ def main() -> None:
                     if cell.get("specialty"):
                         fallback.setdefault(code, str(cell["specialty"]))
                     clinics.append([a, code, [index(fields, f) for f in cell_fields]])
-        with_beds = {row[0] for row in beds}
-        points = []
-        for i, g in enumerate(groups):
-            if i in with_beds:
-                continue
-            label, _, kinds = _location_row(g)
-            points.append([label, kinds, [index(sites, n) for n, _ in point_sites[i].most_common(2)]])
+                elif kind := other_kind(cell):
+                    units = int(capacity.get(DIALYSIS_COL) or 0) if kind == "dialysis" else int(capacity.get(DAY_PLACES_COL) or 0) if kind == "day" else 0
+                    other.append([a, kind, str(cell.get("name") or "").strip(), units])
+                elif cell.get("name") and str(cell["name"]).strip() not in unmatched[a]:
+                    unmatched[a].append(str(cell["name"]).strip())
+        # Budynek bez łóżek, poradni i miejsc z listy rodzajów (np. punkt szczepień, punkt pobrań): najwyżej 2 nazwy komórek.
+        used = {row[0] for row in beds} | {row[0] for row in clinics} | {row[0] for row in other}
+        for a, names in unmatched.items():
+            if a not in used:
+                other.extend([a, "misc", name, 0] for name in names[:2])
+        building_sites = {str(i): [index(sites, n) for n, _ in point_sites[i].most_common(2)] for i in range(len(groups)) if point_sites[i]}
         if beds or clinics:
-            hospitals[key] = {"addr": addr, "beds": beds, "clinics": clinics, "points": points}
+            hospitals[key] = {"addr": addr, "beds": beds, "clinics": clinics, "other": other, "sites": building_sites}
     names = {**fallback, **code_names(codes)}
     nfz_codes = {r["KOD_RPWDL"]: [r["KOD_NFZ"], r["WARIANT_NFZ"]] for r in csv.DictReader(CODES.open(encoding="utf-8"))}
     payload = {
-        "version": 1, "names": names, "fields": list(fields), "sites": list(sites), "nfzCodes": nfz_codes,
+        "version": 2, "names": names, "fields": list(fields), "sites": list(sites), "nfzCodes": nfz_codes,
         "hospitals": hospitals,
     }
     OUT.parent.mkdir(parents=True, exist_ok=True)
