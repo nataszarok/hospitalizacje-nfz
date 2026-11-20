@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { BottomSheet } from "@/components/BottomSheet";
+import { useRef, useState } from "react";
+import { ChartTooltip, TooltipHead, TooltipLines } from "@/components/ChartTooltip";
+import { elementBox, type Box } from "@/lib/tooltipPosition";
 import { PHONE_QUERY, useMediaQuery } from "@/lib/useMediaQuery";
 import base from "@/components/jgp/JgpPage.module.css";
 import styles from "@/components/jgp/JgpTabs.module.css";
@@ -31,26 +32,36 @@ export function ShareLegend({ parts }: { parts: (Pick<SharePart, "key" | "label"
 }
 
 /**
- * Słupki 100% w wierszach (np. tryb przyjęcia albo długość pobytu w latach). Same słupki; udziały w podpowiedzi
- * po najechaniu albo fokusie klawiatury (Tab). Telefon: dotknięcie wiersza otwiera arkusz od dołu z udziałami
- * (DESIGN.md 6.3). Wybrany wiersz ma tło jak wybrany rok na wykresach.
+ * Słupki 100% w wierszach (np. tryb przyjęcia albo długość pobytu w latach). Udziały w dymku `ChartTooltip`
+ * (DESIGN.md 6.3): najechanie albo fokus (Tab) na szerokim ekranie, dotknięcie wiersza na telefonie (arkusz od dołu).
+ * Wybrany wiersz ma tło jak wybrany rok na wykresach.
  */
 export function ShareBars({ rows, ariaLabel, labels = false }: { rows: ShareRow[]; ariaLabel: string; labels?: boolean }) {
   const phone = useMediaQuery(PHONE_QUERY) === true;
-  const [sheet, setSheet] = useState<string | null>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const [tip, setTip] = useState<{ key: string; anchor: Box } | null>(null);
   const shares = (row: ShareRow) => {
     const total = row.parts.reduce((sum, part) => sum + part.value, 0);
     return (value: number) => total ? (value / total) * 100 : 0;
   };
-  const open = rows.find((row) => row.key === sheet);
-  return <>
+  const open = rows.find((row) => row.key === tip?.key);
+  // Kotwica dymka: sam słupek (bez etykiety roku), więc dymek stoi obok słupka.
+  const show = (key: string, target: Element) => setTip({ key, anchor: elementBox(target.querySelector("[data-bar]") ?? target) });
+  return <div ref={wrapRef} style={{ position: "relative" }}>
     <ul className={styles.admRows} aria-label={ariaLabel}>
       {rows.map((row) => {
         const share = shares(row);
         const label = `${row.label}: ${row.parts.map((part) => `${part.label} ${pct(share(part.value))}`).join(", ")}`;
-        return <li key={row.key} className={`${styles.admRow} ${row.on ? styles.admRowOn : ""}`} tabIndex={0} aria-label={label} onClick={phone ? () => setSheet(row.key) : undefined}>
+        return <li
+          key={row.key} className={`${styles.admRow} ${row.on ? styles.admRowOn : ""}`} tabIndex={0} aria-label={label}
+          onClick={phone ? (event) => show(row.key, event.currentTarget) : undefined}
+          onMouseEnter={phone ? undefined : (event) => show(row.key, event.currentTarget)}
+          onMouseLeave={phone ? undefined : () => setTip(null)}
+          onFocus={phone ? undefined : (event) => show(row.key, event.currentTarget)}
+          onBlur={phone ? undefined : () => setTip(null)}
+        >
           <span className={styles.admYear} aria-hidden>{row.label}</span>
-          <span className={`${styles.admBar} ${labels ? own.tall : ""}`} aria-hidden>
+          <span data-bar className={`${styles.admBar} ${labels ? own.tall : ""}`} aria-hidden>
             {row.parts.map((part) => {
               if (!part.value) return null;
               const value = share(part.value);
@@ -58,17 +69,14 @@ export function ShareBars({ rows, ariaLabel, labels = false }: { rows: ShareRow[
               return <span key={part.key} className={`${base.segment} ${part.className} ${labels ? own.label : ""} ${part.dark ? own.onDark : ""}`} style={{ width: `${value}%` }}>{text}</span>;
             })}
           </span>
-          <span className={styles.admTip} role="tooltip" aria-hidden>
-            <b>{row.label}</b>
-            {row.parts.map((part) => <span key={part.key}><i className={part.className} />{part.label} {pct(share(part.value))}</span>)}
-          </span>
         </li>;
       })}
     </ul>
-    {phone && open ? <BottomSheet title={open.label} onClose={() => setSheet(null)}>
-      <ul className={own.sheetList}>
-        {open.parts.map((part) => <li key={part.key}><i className={`${base.swatch} ${part.className}`} aria-hidden />{part.label}<b>{pct(shares(open)(part.value))}</b></li>)}
-      </ul>
-    </BottomSheet> : null}
-  </>;
+    {tip && open ? <ChartTooltip anchor={tip.anchor} container={wrapRef} kind="bar-horizontal" onClose={() => setTip(null)}>
+      <TooltipHead title={open.label} />
+      <TooltipLines lines={open.parts.map((part) => <span key={part.key} className={own.tipLine}>
+        <i className={`${base.swatch} ${part.className}`} aria-hidden />{part.label}<b>{pct(shares(open)(part.value))}</b>
+      </span>)} />
+    </ChartTooltip> : null}
+  </div>;
 }

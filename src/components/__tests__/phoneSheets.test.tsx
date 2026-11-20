@@ -52,11 +52,16 @@ describe("telefon: arkusz od dołu zamiast dymka (DESIGN.md 6.3)", () => {
     expect(screen.getByRole("dialog", { name: "N24: śmiertelność" }).textContent).toContain("Polska: 0,5%");
   });
 
-  it("ShareBars: na telefonie dotknięcie wiersza otwiera arkusz z udziałami", () => {
+  it("ShareBars: dymek `ChartTooltip` po najechaniu; na telefonie dotknięcie wiersza otwiera arkusz z udziałami", () => {
+    const rows = [{ key: "2025", label: "2025", parts: [{ key: "a", label: "0 dni", value: 1, className: "" }, { key: "b", label: "1–2 dni", value: 3, className: "" }] }];
+    render(<ShareBars ariaLabel="Długość pobytu" rows={rows} />);
+    fireEvent.mouseEnter(screen.getByRole("listitem", { name: /2025/ }));
+    expect(screen.getByRole("tooltip").textContent).toContain("1–2 dni75,0%");
+    cleanup();
     phone = true;
-    render(<ShareBars ariaLabel="Długość pobytu" rows={[{ key: "2025", label: "2025", parts: [{ key: "a", label: "0 dni", value: 1, className: "" }, { key: "b", label: "1–2 dni", value: 3, className: "" }] }]} />);
+    render(<ShareBars ariaLabel="Długość pobytu" rows={rows} />);
     fireEvent.click(screen.getByRole("listitem", { name: /2025/ }));
-    expect(screen.getByRole("dialog", { name: "2025" }).textContent).toContain("1–2 dni75,0%");
+    expect(screen.getByRole("dialog").textContent).toContain("1–2 dni75,0%");
   });
 
   it("ShareLegend: liczba pozycji w osobnym elemencie (znika na telefonie w CSS)", () => {
@@ -68,16 +73,16 @@ describe("telefon: arkusz od dołu zamiast dymka (DESIGN.md 6.3)", () => {
 
 describe("SectionHead (DESIGN.md 6.3, 7.1b.1)", () => {
   it("objaśnienie „?” przy tytule; bez objaśnienia na szerokim ekranie nie ma ikony", () => {
-    render(<SectionHead id="a" question="Ile?" context="Hospitalizacje rocznie" tag="Lata" help={["Rok bez hospitalizacji to przerwa."]} helpLabel="Jak czytać" />);
+    render(<SectionHead id="a" question="Ile?" context="Hospitalizacje rocznie" help={["Rok bez hospitalizacji to przerwa."]} helpLabel="Jak czytać" />);
     expect(screen.getByRole("heading", { name: /Ile\?/ }).contains(screen.getByRole("button", { name: "Jak czytać" }))).toBe(true);
     cleanup();
-    render(<SectionHead id="b" question="Co leczy?" context="Sekcje JGP" tag="Rok" />);
+    render(<SectionHead id="b" question="Co leczy?" context="Sekcje JGP" />);
     expect(screen.queryByRole("button")).toBeNull();
   });
 
   it("telefon: „?” także bez objaśnienia; pierwsza linia arkusza to dopisek tytułu", () => {
     phone = true;
-    render(<SectionHead id="b" question="Co leczy?" context="Sekcje JGP, 2025" tag="Rok" />);
+    render(<SectionHead id="b" question="Co leczy?" context="Sekcje JGP, 2025" />);
     fireEvent.click(screen.getByRole("button", { name: "Objaśnienie: Co leczy?" }));
     expect(screen.getByRole("dialog").textContent).toContain("Sekcje JGP, 2025.");
   });

@@ -187,7 +187,7 @@ function HowManySection({ data, year, period, onPeriod }: { data: HospitalPageDa
     return [{ key: "psz", name: "Sieć PSZ", detail: NETWORK_DETAIL, values: reference, base: data.network.hospitalizations, tone: "reference" }, own];
   }, [data, metric]);
   return <section className={tabs.sec} aria-labelledby="s-ile">
-    <SectionHead id="s-ile" question="Ile?" context={`${shown.title} ${periodWord(period)}, wszystkie lata`} tools={<PeriodToggle period={period} onPeriod={onPeriod} />}
+    <SectionHead id="s-ile" question="Ile?" context={`${shown.title} ${periodWord(period)}`} tools={<PeriodToggle period={period} onPeriod={onPeriod} />}
       helpLabel="Jak czytać wykres „Ile?”" help={[
         ["Hospitalizacje", "— pobyty w szpitalu rozliczone z NFZ, według miesiąca wypisu albo sumy roku (przełącznik Miesiące / Lata)."],
         ["Śmiertelność i % nagłych", "— udział zgonów i przyjęć w trybie nagłym w hospitalizacjach szpitala."],
@@ -215,17 +215,17 @@ function TreatsSection({ data, yearIndex }: { data: HospitalPageData; yearIndex:
   const firstIndex = data.groups.length ? Math.max(0, data.years.findIndex((_, y) => [...sections.values()].some((totals) => totals[y] > 0))) : 0;
   const shownYears = firstIndex === yearIndex ? [yearIndex] : [firstIndex, yearIndex];
   const total = (y: number) => [...sections.values()].reduce((sum, totals) => sum + totals[y], 0);
-  const leaders = data.groups.filter((row) => row[3][yearIndex] > 0 && row[3][yearIndex] <= 3).sort((a, b) => a[3][yearIndex] - b[3][yearIndex]).map((row) => row[0]);
+  const leaders = data.groups.filter((row) => row[3][yearIndex] > 0 && row[3][yearIndex] <= 3);
   const first = order[0];
   return <section className={tabs.sec} aria-labelledby="s-co">
-    <SectionHead id="s-co" question="Co leczy?" context={`Sekcje i grupy JGP, ${data.years[shownYears[0]]}${shownYears.length > 1 ? ` wobec ${year}` : ""}`} tag="Rok"
+    <SectionHead id="s-co" question="Co leczy?" context={`Sekcje JGP, ${data.years[shownYears[0]]}${shownYears.length > 1 ? ` i ${year}` : ""}`}
       helpLabel="Jak czytać sekcje JGP" help={[
         ["Słupek", `— udział sekcji JGP w hospitalizacjach szpitala w roku. Pięć największych sekcji z ${year} r. ma kolor, reszta jest razem.`],
         ["Pierwsza trójka w Polsce", "— miejsce szpitala wśród wszystkich ośrodków grupy JGP według liczby hospitalizacji."],
       ]} />
     {first && total(yearIndex) > 0 ? <p className={base.lead}>
       Największa sekcja w {year} r.: <b>{label(first)}</b> ({decimal((sections.get(first)![yearIndex] / (total(yearIndex) || 1)) * 100, 0)}% hospitalizacji).
-      {leaders.length ? <> Szpital jest w pierwszej trójce w Polsce w {leaders.length} {leaders.length === 1 ? "grupie" : "grupach"}: <b>{leaders.slice(0, 8).join(", ")}{leaders.length > 8 ? "…" : ""}</b>.</> : null}
+      {leaders.length ? <> Szpital jest w pierwszej trójce w Polsce w {leaders.length} {leaders.length === 1 ? "grupie" : "grupach"}.</> : null}
     </p> : null}
     {/* Legenda z liczbą hospitalizacji sekcji w roku karty; na słupkach litera sekcji i udział. */}
     <ShareLegend parts={[
@@ -252,22 +252,22 @@ function ConcentrationSection({ data, yearIndex }: { data: HospitalPageData; yea
   }));
   const year = data.years[yearIndex];
   return <section className={tabs.sec} aria-labelledby="s-koncentracja">
-    <SectionHead id="s-koncentracja" question="Ile grup daje większość?" context={`${shown === "pln" ? "Kwota NFZ" : "Hospitalizacje"} w grupach JGP od największej, ${year}`} tag="Rok"
+    <SectionHead id="s-koncentracja" question="Ile grup daje większość?" context={`${shown === "pln" ? "Kwota NFZ" : "Hospitalizacje"}, ${year}`}
       helpLabel="Jak czytać krzywą grup" help={[
         "Przesuń suwak, żeby wybrać liczbę grup.",
         ["Krzywa", "— suma udziałów grup od największej."],
         ["Kwota NFZ", "— rozliczenia grup JGP (zestawienie świadczeń, od 2019 r.), także grup w ryczałcie. To przychód, nie zysk."],
       ]} />
-    <div className={base.segmented} role="group" aria-label="Miara">
-      <button type="button" aria-pressed={shown === "pln"} disabled={!hasPln} title={hasPln ? undefined : "Kwoty NFZ za grupy JGP są od 2019 r."} onClick={() => setMeasure("pln")}>Kwota NFZ</button>
-      <button type="button" aria-pressed={shown === "hosp"} onClick={() => setMeasure("hosp")}>Hospitalizacje</button>
-    </div>
     <ConcentrationChart
       key={`${shown}-${year}`}
       items={items}
       measure={shown === "pln" ? "kwoty NFZ za grupy JGP" : "hospitalizacji"}
       format={shown === "pln" ? formatPln : (value) => `${integer(value)} hosp.`}
       words={["kod JGP", "kody JGP", "kodów JGP"]}
+      controls={<div className={base.segmented} role="group" aria-label="Miara">
+          <button type="button" aria-pressed={shown === "pln"} disabled={!hasPln} title={hasPln ? undefined : "Kwoty NFZ za grupy JGP są od 2019 r."} onClick={() => setMeasure("pln")}>Kwota NFZ</button>
+          <button type="button" aria-pressed={shown === "hosp"} onClick={() => setMeasure("hosp")}>Hospitalizacje</button>
+        </div>}
       ariaLabel={`Skumulowany udział grup JGP w ${shown === "pln" ? "kwocie NFZ" : "hospitalizacjach"} szpitala w ${year} r.`}
     />
     {hasPln ? null : <p className={base.note}>W {year} r. nie ma kwot NFZ za grupy JGP, wykres pokazuje hospitalizacje.</p>}
@@ -281,7 +281,7 @@ function StaySection({ data, yearIndex }: { data: HospitalPageData; yearIndex: n
   const zero = values[yearIndex]?.[0] ?? 0;
   const all = values[yearIndex]?.reduce((sum, value) => sum + value, 0) ?? 0;
   return <section className={tabs.sec} aria-labelledby="s-pobyt">
-    <SectionHead id="s-pobyt" question="Jak długo leżą?" context="Długość pobytu, wszystkie lata" tag="Lata"
+    <SectionHead id="s-pobyt" question="Jak długo leżą?" context="Długość pobytu"
       helpLabel="Jak czytać długość pobytu" help={[
         "Najedź na rok albo go dotknij, żeby zobaczyć udziały.",
         "Długość pobytu liczymy z dat przyjęcia i wypisu w danych NFZ.",

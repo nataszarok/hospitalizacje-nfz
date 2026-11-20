@@ -78,38 +78,6 @@
 }
 
 /* Liczby sekcji (umowy, przychody, wynik) w rzędzie kafli. */
-.facts {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-  gap: 10px;
-  margin: 0 0 14px;
-}
-
-.facts > div {
-  padding: 10px 14px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-card);
-  background: var(--color-background);
-}
-
-.facts dt {
-  color: var(--color-text-secondary);
-  font-size: var(--fs-sm);
-}
-
-.facts dd {
-  margin: 2px 0 0;
-  color: var(--color-heading);
-  font-size: var(--fs-2xl);
-  font-weight: var(--fw-semibold);
-  font-variant-numeric: tabular-nums;
-}
-
-.facts span {
-  color: var(--color-text-tertiary);
-  font-size: var(--fs-sm);
-}
-
 .positive { color: var(--color-positive) !important; }
 .negative { color: var(--color-deviation-up) !important; }
 

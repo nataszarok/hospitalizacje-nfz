@@ -370,15 +370,21 @@
   scroll-margin-top: 140px;
 }
 
+/* Nagłówek sekcji: tytuł po lewej łamie się obok narzędzi, narzędzia zostają w pierwszej linii po prawej. */
 .secHead {
   display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 6px 12px;
 }
 
+.secHead > :not(h2) {
+  flex: none;
+}
+
 .secTitle {
+  flex: 1 1 auto;
+  min-width: 0;
   margin: 0;
   font-size: var(--fs-xl);
   line-height: 1.35;
@@ -392,17 +398,6 @@
 .ctx {
   color: var(--color-text-tertiary);
   font-weight: var(--fw-medium);
-}
-
-.tag {
-  padding: 2px 8px;
-  border-radius: var(--radius-control);
-  background: var(--color-background-muted);
-  color: var(--color-text-secondary);
-  font-size: var(--fs-sm);
-  font-weight: var(--fw-bold);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
 }
 
 .geo {
@@ -647,39 +642,6 @@
   display: flex;
   gap: 2px;
   height: 14px;
-}
-
-.admTip {
-  position: absolute;
-  z-index: 5;
-  bottom: calc(100% + 4px);
-  left: 56px;
-  display: none;
-  gap: 4px 12px;
-  flex-wrap: wrap;
-  align-items: center;
-  padding: 6px 10px;
-  border-radius: var(--radius-control);
-  background: var(--color-text);
-  color: #fff;
-  font-size: var(--fs-sm);
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-  pointer-events: none;
-  box-shadow: var(--shadow-soft);
-}
-
-.admTip i {
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  margin-right: 5px;
-  border-radius: var(--radius-badge);
-}
-
-.admRow:hover .admTip,
-.admRow:focus-visible .admTip {
-  display: flex;
 }
 
 .costBars {
@@ -931,7 +893,7 @@
   box-shadow: inset 3px 0 0 var(--color-signal);
 }
 
-/* Przełącznik „Miesiące / Lata” w nagłówku sekcji „Ile?”: rozmiar etykiety `.tag`, więc nagłówek ma tę samą wysokość. */
+/* Przełącznik „Miesiące / Lata” w nagłówku sekcji „Ile?”: niski, w linii tytułu. */
 .periodToggle {
   display: inline-flex;
   flex: none;
@@ -1052,18 +1014,11 @@ ul.cornerLegend {
   }
 
   /* Nagłówek sekcji (DESIGN.md 7.1b.1): tytuł i „?” w jednej linii; dopisek i etykieta zakresu są w objaśnieniu „?”. */
-  .secHead .ctx,
-  .secHead .tag {
+  .secHead .ctx {
     display: none;
   }
 
   .secTitle {
     font-size: var(--fs-lg);
-  }
-
-  /* Słupki 100%: na telefonie udziały w arkuszu od dołu (`ShareBars`), nie w dymku przy wierszu. */
-  .admRow .admTip,
-  .admRow:hover .admTip {
-    display: none;
   }
 }

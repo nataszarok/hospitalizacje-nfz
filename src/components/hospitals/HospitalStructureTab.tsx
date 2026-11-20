@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from "react";
+import { useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
 import { BottomSheet } from "@/components/BottomSheet";
+import { BoxSet } from "@/components/BoxSet";
+import { useElementWidth } from "@/lib/useElementWidth";
 import { ChartTooltip, TooltipHead } from "@/components/ChartTooltip";
 import { HelpLines, InfoTip, INFO_TIP_PHONE_QUERY } from "@/components/InfoTip";
 import { CHART_COLORS } from "@/lib/chartPalette";
@@ -9,7 +11,7 @@ import { formatPln } from "@/lib/formatters";
 import { wardPaymentStatus, type HospitalPageData, type WardPaymentStatus } from "@/lib/hospitalPage";
 import {
   CONTRACT_BADGES, GROUP_ORDER, OTHER_KINDS, acuteSummary, PLAN, STRUCTURE_GROUPS, STRUCTURE_PARTS, clinicEntries, fieldsShown, groupOf, highlightParts, inset,
-  isCompactBoxSet, isKidsWard, isLightColor, layoutBuildings, matchesSearch, placeName, planName, roomLabel, searchWords, shortPlaceName, squarifyRatio,
+  isKidsWard, isLightColor, layoutBuildings, matchesSearch, placeName, planName, roomLabel, searchWords, shortPlaceName, squarifyRatio,
   otherEntries, placeOnlyNames, wardEntries, type ContractPay, type HospitalStructure, type StructureBed, type StructureGroup, type StructurePart,
 } from "@/lib/hospitalStructure";
 import type { Box } from "@/lib/tooltipPosition";
@@ -82,7 +84,6 @@ function Head({ id, title, context, help, helpLabel, tools }: { id: string; titl
 
 function PartsSection({ structure }: { structure: HospitalStructure }) {
   const { container, handlers, tip, phone, close } = useDataTip();
-  const { ref: boxesRef, width: boxesWidth } = useWidth();
   const total = structure.beds.reduce((sum, row) => sum + row[5], 0);
   const manyBuildings = new Set(structure.beds.map((row) => row[0])).size > 1;
   const parts = STRUCTURE_PARTS.map(({ key, label }) => {
@@ -112,9 +113,8 @@ function PartsSection({ structure }: { structure: HospitalStructure }) {
       </div>
       <DataTip tip={tip} phone={phone} container={container} onClose={close} />
     </div>
-    {/* Boksy w jednej linii, a gdy boks byłby węższy niż 150 px — zwarta lista (DESIGN.md 7.1a). */}
-    <div ref={boxesRef}><dl className={`${styles.boxes} ${isCompactBoxSet(boxesWidth, parts.length + (out ? 1 : 0)) ? styles.compact : ""}`} style={{ "--boxes": parts.length + (out ? 1 : 0) } as CSSProperties}>
-      {parts.map((part) => {
+    <BoxSet label="Części szpitala" items={[
+      ...parts.map((part) => {
         const wards = part.rows.filter((row) => groupOf(row[3], row[2]) !== "support");
         // Leczenie szpitalne: te same liczby co nagłówek karty (`acuteSummary`).
         const codes = part.key === "acute" ? acuteSummary(structure).wards : new Set(wards.map((row) => row[3])).size;
@@ -123,20 +123,24 @@ function PartsSection({ structure }: { structure: HospitalStructure }) {
           const name = planName(structure, row); acc[name] = (acc[name] ?? 0) + row[5]; return acc;
         }, {}));
         const addresses = [...new Set(part.rows.map((row) => structure.addresses[row[0]][0]))];
-        return <div key={part.key} className={styles.box}>
-          <dt><i style={{ background: PART_SWATCH[part.key] }} aria-hidden />{part.label}</dt>
-          <dd className={styles.val}><b>{integer(part.beds)}</b> łóżek · {percent(part.beds, total)}</dd>
-          <dd className={styles.what}>{part.key !== "acute" && names.length <= 2 ? names.join(", ") : `${codes} ${plural(codes, "oddział", "oddziały", "oddziałów")}`}</dd>
-          {support.length ? <dd className={styles.sub}>w tym {support.map(([name, beds]) => `${name} ${beds}`).join(", ")} (nie oddziały)</dd> : null}
-          {manyBuildings ? <dd className={styles.sub}>{addresses.join(" · ")}</dd> : null}
-        </div>;
-      })}
-      {out ? <div className={`${styles.box} ${styles.aos}`}>
-        <dt><i className={styles.ring} aria-hidden />Poradnie (AOS)</dt>
-        <dd className={styles.val}><b>{integer(out.cells)}</b> {plural(out.cells, "poradnia", "poradnie", "poradni")}</dd>
-        <dd className={styles.what}>{integer(out.fields)} {plural(out.fields, "dziedzina", "dziedziny", "dziedzin")} · w {integer(out.locations)} {plural(out.locations, "lokalizacji", "lokalizacjach", "lokalizacjach")}</dd>
-      </div> : null}
-    </dl></div>
+        return {
+          key: part.key,
+          label: <><i style={{ background: PART_SWATCH[part.key] }} aria-hidden />{part.label}</>,
+          value: <><b>{integer(part.beds)}</b> łóżek · {percent(part.beds, total)}</>,
+          what: part.key !== "acute" && names.length <= 2 ? names.join(", ") : `${codes} ${plural(codes, "oddział", "oddziały", "oddziałów")}`,
+          sub: [
+            ...(support.length ? [`w tym ${support.map(([name, beds]) => `${name} ${beds}`).join(", ")} (nie oddziały)`] : []),
+            ...(manyBuildings ? [addresses.join(" · ")] : []),
+          ],
+        };
+      }),
+      ...(out ? [{
+        key: "aos", className: styles.aos,
+        label: <><i className={styles.ring} aria-hidden />Poradnie (AOS)</>,
+        value: <><b>{integer(out.cells)}</b> {plural(out.cells, "poradnia", "poradnie", "poradni")}</>,
+        what: `${integer(out.fields)} ${plural(out.fields, "dziedzina", "dziedziny", "dziedzin")} · w ${integer(out.locations)} ${plural(out.locations, "lokalizacji", "lokalizacjach", "lokalizacjach")}`,
+      }] : []),
+    ]} />
   </section>;
 }
 
@@ -153,33 +157,11 @@ function useMeasure() {
   };
 }
 
-/** Szerokość kontenera (rzut liczony w prawdziwych pikselach); 0 przed pomiarem. */
-function useWidth() {
-  const [node, ref] = useState<HTMLDivElement | null>(null);
-  const [width, setWidth] = useState(0);
-  // Po załadowaniu fontów podpisy mierzymy jeszcze raz (szerokość tekstu zależy od kroju).
-  const [, setFonts] = useState(0);
-  useEffect(() => {
-    const element = node;
-    if (!element) return;
-    document.fonts?.ready.then(() => setFonts((value) => value + 1));
-    // ResizeObserver mierzy też od razu po `observe`; bez niego (testy) — jeden pomiar w następnej klatce.
-    if (typeof ResizeObserver === "undefined") {
-      const frame = requestAnimationFrame(() => setWidth(element.clientWidth));
-      return () => cancelAnimationFrame(frame);
-    }
-    const observer = new ResizeObserver(() => setWidth(element.clientWidth));
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, [node]);
-  return { ref, width };
-}
-
 function PlanSection({ data, structure }: { data: HospitalPageData; structure: HospitalStructure }) {
   const [mode, setMode] = useState<"group" | "kids">("group");
   const { container, handlers, tip, phone, close } = useDataTip();
   const measure = useMeasure();
-  const { ref, width } = useWidth();
+  const { ref, width } = useElementWidth();
   const buildings = useMemo(() => {
     const byAddr = new Map<number, StructureBed[]>();
     structure.beds.forEach((row) => byAddr.set(row[0], [...(byAddr.get(row[0]) ?? []), row]));

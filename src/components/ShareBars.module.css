@@ -20,32 +20,20 @@
   color: #fff;
 }
 
-/* Arkusz na telefonie: część, udział do prawej. */
-.sheetList {
-  display: grid;
-  gap: 6px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  font-variant-numeric: tabular-nums;
-}
-
-.sheetList li {
+/* Linia dymka: kolor części, nazwa, udział do prawej. */
+.tipLine {
   display: flex;
   align-items: center;
   gap: 8px;
+  font-variant-numeric: tabular-nums;
 }
 
-.sheetList b {
+.tipLine b {
   margin-left: auto;
+  padding-left: 12px;
 }
 
 @media (max-width: 639px) {
-  .legend {
-    gap: 4px 12px;
-    padding-inline: 0;
-  }
-
   .detail {
     display: none;
   }

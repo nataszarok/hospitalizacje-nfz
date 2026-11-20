@@ -112,7 +112,7 @@ export function GroupsSection({ data, yearIndex }: { data: HospitalPageData; yea
   const top = [...lines].sort((a, b) => b.value - a.value)[0];
 
   return <section className={tabs.sec} aria-labelledby="s-za-ile">
-    <SectionHead id="s-za-ile" question="Co leczy i za ile?" context={`Grupy JGP szpitala w ${year} r.`} tag="Rok + mini-trend"
+    <SectionHead id="s-za-ile" question="Co leczy i za ile?" context={`Grupy JGP, ${year}`}
       helpLabel="Jak czytać tabelę grup" help={[
         ["Hosp.", "— hospitalizacje metodą konserwatywną (<5 = 1)."],
         ["NFZ", `— kwota rozliczona za grupę w ${year} r. (zestawienie świadczeń, od 2019 r.). To przychód, nie zysk. Pod nazwą: udział szpitala w kwocie grupy w Polsce.`],
