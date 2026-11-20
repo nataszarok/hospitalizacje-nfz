@@ -1018,6 +1018,10 @@ ul.cornerLegend {
     display: none;
   }
 
+  .secHead .ctxKeep {
+    display: inline;
+  }
+
   .secTitle {
     font-size: var(--fs-lg);
   }

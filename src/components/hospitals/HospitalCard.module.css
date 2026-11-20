@@ -155,7 +155,7 @@ button.tabSoon[aria-disabled="true"] {
   color: var(--color-text);
 }
 
-/* „Co leczy i za ile?”: liczba ośrodków po miejscu w Polsce, kropka odchylenia śmiertelności (skala odchylenia, jak lejek). */
+/* „Za ile leczy?”: liczba ośrodków po miejscu w Polsce, kropka odchylenia śmiertelności (skala odchylenia, jak lejek). */
 .rankOf {
   color: var(--color-text-tertiary);
   font-size: var(--fs-sm);

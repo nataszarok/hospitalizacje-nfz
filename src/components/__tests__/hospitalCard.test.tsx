@@ -60,9 +60,9 @@ describe("Karta szpitala", () => {
     expect(screen.queryByRole("heading", { name: /Czym dysponuje/ })).not.toBeInTheDocument();
   });
 
-  it("„Co leczy i za ile?”: grupa z kwotą, miejscem i śmiertelnością wobec Polski; link do karty grupy; rok zmienia tabelę i adres", () => {
+  it("„Za ile leczy?”: grupa z kwotą, miejscem i śmiertelnością wobec Polski; link do karty grupy; rok zmienia tabelę i adres", () => {
     render(<HospitalPage data={data} />);
-    const table = () => within(screen.getByRole("heading", { name: /Co leczy i za ile/ }).closest("section")!);
+    const table = () => within(screen.getByRole("heading", { name: /Za ile leczy/ }).closest("section")!);
     const link = table().getByRole("link", { name: "A01" });
     expect(link).toHaveAttribute("href", "/jgp/A01?osrodek=16%7C111");
     const cells = within(link.closest("tr")!).getAllByRole("cell").map((cell) => cell.textContent);
@@ -78,10 +78,10 @@ describe("Karta szpitala", () => {
     expect(table().queryByRole("columnheader", { name: /NFZ/ })).not.toBeInTheDocument();
   });
 
-  it("„Co leczy i za ile?”: 10 grup i „Pokaż wszystkie”; sortowanie po kwocie NFZ", () => {
+  it("„Za ile leczy?”: 10 grup i „Pokaż wszystkie”; sortowanie po kwocie NFZ", () => {
     const many = { ...rich, groups: [...rich.groups, ...Array.from({ length: 12 }, (_, i) => [`B${String(i + 1).padStart(2, "0")}`, `INNA ${i + 1}`, [1, 1], [9, 9], [9, 9], [0, 100_000 * (i + 1)], [0, 0], [10, 10], [0, 0], [0, 1_000_000]] as (typeof data.groups)[number])] };
     render(<HospitalPage data={many} />);
-    const section = screen.getByRole("heading", { name: /Co leczy i za ile/ }).closest("section")!;
+    const section = screen.getByRole("heading", { name: /Za ile leczy/ }).closest("section")!;
     expect(within(section).getAllByRole("row")).toHaveLength(11);
     // Długa tabela: nazwy kolumn przyklejone pod paskiem zakładek (DESIGN.md 7.1, pkt 7).
     expect(within(section).getByRole("table").className).toMatch(/sticky-head/);

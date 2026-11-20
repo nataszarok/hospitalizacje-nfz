@@ -187,8 +187,10 @@ function HowManySection({ data, year, period, onPeriod }: { data: HospitalPageDa
     return [{ key: "psz", name: "Sieć PSZ", detail: NETWORK_DETAIL, values: reference, base: data.network.hospitalizations, tone: "reference" }, own];
   }, [data, metric]);
   return <section className={tabs.sec} aria-labelledby="s-ile">
-    <SectionHead id="s-ile" question="Ile?" context={`${shown.title} ${periodWord(period)}`} tools={<PeriodToggle period={period} onPeriod={onPeriod} />}
+    <SectionHead id="s-ile" question="Ile?" context={`${shown.title} ${periodWord(period)}`} keepContext tools={<PeriodToggle period={period} onPeriod={onPeriod} />}
       helpLabel="Jak czytać wykres „Ile?”" help={[
+        // Przypis wykresu (kropka, linia, data wypisu) w objaśnieniu, bez metody <5.
+        ["Wykres", `— ${shown.note[period].replace(/,? wartości <5 liczone jako 1/, "")}`],
         ["Hospitalizacje", "— pobyty w szpitalu rozliczone z NFZ, według miesiąca wypisu albo sumy roku (przełącznik Miesiące / Lata)."],
         ["Śmiertelność i % nagłych", "— udział zgonów i przyjęć w trybie nagłym w hospitalizacjach szpitala."],
         ...(data.network ? [["Linia przerywana", `— sieć PSZ: ${NETWORK_DETAIL}.`] as [string, string]] : []),
@@ -201,7 +203,7 @@ function HowManySection({ data, year, period, onPeriod }: { data: HospitalPageDa
       <li><span className={styles.keySolid} aria-hidden />ten szpital</li>
       <li><span className={styles.keyDot} aria-hidden />Sieć PSZ ({NETWORK_DETAIL})</li>
     </ul> : null}
-    <GroupLineChart months={data.months} lines={lines} valueLabel={shown.unit} height={380} highlightYear={year} fitAxis={metric === "urgent"} note={shown.note[period]} period={period} ariaLabel={`Wykres liniowy: ${shown.title.toLowerCase()} ${periodWord(period)} we wszystkich latach`} />
+    <GroupLineChart months={data.months} lines={lines} valueLabel={shown.unit} height={380} highlightYear={year} fitAxis={metric === "urgent"} period={period} ariaLabel={`Wykres liniowy: ${shown.title.toLowerCase()} ${periodWord(period)} we wszystkich latach`} />
   </section>;
 }
 
@@ -225,7 +227,7 @@ function TreatsSection({ data, yearIndex }: { data: HospitalPageData; yearIndex:
       ]} />
     {first && total(yearIndex) > 0 ? <p className={base.lead}>
       Największa sekcja w {year} r.: <b>{label(first)}</b> ({decimal((sections.get(first)![yearIndex] / (total(yearIndex) || 1)) * 100, 0)}% hospitalizacji).
-      {leaders.length ? <> Szpital jest w pierwszej trójce w Polsce w {leaders.length} {leaders.length === 1 ? "grupie" : "grupach"}.</> : null}
+      {leaders.length ? <> Szpital jest w pierwszej trójce w Polsce w {leaders.length} {leaders.length === 1 ? "grupie" : "grupach"} JGP.</> : null}
     </p> : null}
     {/* Legenda z liczbą hospitalizacji sekcji w roku karty; na słupkach litera sekcji i udział. */}
     <ShareLegend parts={[

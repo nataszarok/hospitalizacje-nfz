@@ -75,7 +75,7 @@ export function groupLines(groups: HospitalGroupRow[], yearIndex: number): Group
 }
 
 /**
- * „Co leczy i za ile?”: grupy JGP szpitala w roku karty — hospitalizacje, kwota NFZ, miejsce w Polsce, śmiertelność wobec Polski
+ * „Za ile leczy?”: grupy JGP szpitala w roku karty — hospitalizacje, kwota NFZ, miejsce w Polsce, śmiertelność wobec Polski
  * i trend wszystkich lat. Sortowanie kolumn; domyślnie od największej liczby hospitalizacji.
  * Kolumny (DESIGN.md 7.1): grupa, hospitalizacje i kwota zawsze; miejsce i śmiertelność od 640 px; zmiana kwoty i trend od 900 px.
  */
@@ -112,7 +112,7 @@ export function GroupsSection({ data, yearIndex }: { data: HospitalPageData; yea
   const top = [...lines].sort((a, b) => b.value - a.value)[0];
 
   return <section className={tabs.sec} aria-labelledby="s-za-ile">
-    <SectionHead id="s-za-ile" question="Co leczy i za ile?" context={`Grupy JGP, ${year}`}
+    <SectionHead id="s-za-ile" question="Za ile leczy?" context={`Grupy JGP, ${year}`}
       helpLabel="Jak czytać tabelę grup" help={[
         ["Hosp.", "— hospitalizacje metodą konserwatywną (<5 = 1)."],
         ["NFZ", `— kwota rozliczona za grupę w ${year} r. (zestawienie świadczeń, od 2019 r.). To przychód, nie zysk. Pod nazwą: udział szpitala w kwocie grupy w Polsce.`],

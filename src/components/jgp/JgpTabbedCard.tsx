@@ -279,14 +279,16 @@ export type HelpLine = string | [term: string, text: string];
  * Telefon (7.1b.1): tytuł i „?” w jednej linii — dopisek znika (CSS) i jest pierwszą linią objaśnienia;
  * „?” pojawia się też w sekcji bez objaśnienia. Bez etykiety zakresu („ROK”, „LATA”): zakres jest w dopisku.
  */
-export function SectionHead({ id, question, context, tools, help, helpLabel }: {
+export function SectionHead({ id, question, context, tools, help, helpLabel, keepContext = false }: {
   id: string; question: string; context: string; tools?: ReactNode; help?: HelpLine[]; helpLabel?: string;
+  /** Krótki dopisek, który zostaje też na telefonie (np. „Hospitalizacje rocznie” — nazwa miary wykresu). */
+  keepContext?: boolean;
 }) {
   const phone = useMediaQuery(PHONE_QUERY) === true;
-  const lines: HelpLine[] = phone ? [`${context}.`, ...(help ?? [])] : help ?? [];
+  const lines: HelpLine[] = phone && !keepContext ? [`${context}.`, ...(help ?? [])] : help ?? [];
   return <div className={styles.secHead}>
     <h2 id={id} className={styles.secTitle}>
-      <span className={styles.q}>{question}</span> <span className={styles.ctx}>{context}</span>
+      <span className={styles.q}>{question}</span> <span className={`${styles.ctx} ${keepContext ? styles.ctxKeep : ""}`}>{context}</span>
       {lines.length ? <>{" "}<InfoTip ariaLabel={helpLabel ?? `Objaśnienie: ${question}`} label={<HelpLines lines={lines} />} /></> : null}
     </h2>
     {tools}
