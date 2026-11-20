@@ -1,4 +1,4 @@
-import { access, readdir, readFile } from "node:fs/promises";
+import { access, readdir, readFile, stat } from "node:fs/promises";
 import { join } from "node:path";
 import { gunzipSync } from "node:zlib";
 import type { FinancialRecordSummary, HospitalProfileSummary } from "@/lib/hospitalHomeStats";
@@ -168,11 +168,17 @@ export async function readRpwdlLocationsFromDisk(key: string, file = join(BUILD_
   return data.locations[key] ?? [];
 }
 
-/** Struktura szpitali z kartą (`scripts/build_hospital_structure.py`; zakładka „Struktura”) albo `null` bez pliku. Czytana raz na proces. */
-let structurePromise: Promise<HospitalStructureFile | null> | null = null;
-export function readHospitalStructureFileFromDisk(file = join(BUILD_DATA_DIR, "hospitals", "structure.json.gz")): Promise<HospitalStructureFile | null> {
-  structurePromise ??= access(file).then(() => readGzipJson<HospitalStructureFile>(file), () => null);
-  return structurePromise;
+/**
+ * Struktura szpitali z kartą (`scripts/build_hospital_structure.py`; zakładka „Struktura”) albo `null` bez pliku.
+ * Czytana raz na wersję pliku: serwer deweloperski czyta plik ponownie po `npm run generate:data`.
+ */
+let structureCache: { mtime: number; promise: Promise<HospitalStructureFile | null> } | null = null;
+export async function readHospitalStructureFileFromDisk(file = join(BUILD_DATA_DIR, "hospitals", "structure.json.gz")): Promise<HospitalStructureFile | null> {
+  const mtime = await stat(file).then((info) => info.mtimeMs, () => -1);
+  if (structureCache?.mtime !== mtime) {
+    structureCache = { mtime, promise: mtime < 0 ? Promise.resolve(null) : readGzipJson<HospitalStructureFile>(file) };
+  }
+  return structureCache.promise;
 }
 
 /** Pełny profil RPWDL jednego świadczeniodawcy („OW|NIP”, z oddziałami) albo `null`. */

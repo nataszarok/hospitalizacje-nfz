@@ -170,23 +170,36 @@ describe("Karta szpitala", () => {
     for (const table of document.querySelectorAll("#panel-struktura table")) expect(table).toHaveClass("sticky-head");
   });
 
-  it("„Struktura”: wyszukiwarka otwiera listy i liczy trafienia; poradnie według kodu", () => {
+  it("„Struktura”: jedno „Pokaż” i zakładki list; wyszukiwarka otwiera listy i liczy trafienia w zakładkach", () => {
     window.history.replaceState(null, "", "/szpitale/111?widok=struktura");
     render(<HospitalPage data={data} />);
     const details = document.querySelectorAll<HTMLDetailsElement>("#panel-struktura details");
-    expect([...details].map((item) => item.open)).toEqual([false, false, false]);
-    fireEvent.change(screen.getByRole("searchbox", { name: /Szukaj oddziału/ }), { target: { value: "kardiologiczna" } });
-    expect(screen.getByText(/pozycja na liście oddziałów/).closest("p")).toHaveTextContent("„kardiologiczna”: 1 pozycja na liście oddziałów, 2 poradnie i 0 innych miejsc.");
-    expect([...details].map((item) => item.open)).toEqual([true, true, true]);
+    expect([...details].map((item) => item.open)).toEqual([false]);
+    const tabCounts = () => within(screen.getByRole("tablist", { name: "Listy" })).getAllByRole("tab").map((tab) => [tab.textContent, tab.getAttribute("aria-selected")]);
+    // Domyślnie oddziały.
+    expect(tabCounts()).toEqual([["Oddziały3", "true"], ["Poradnie3", "false"], ["Inne miejsca3", "false"]]);
+    const search = screen.getByRole("searchbox", { name: /Szukaj oddziału/ });
+    fireEvent.change(search, { target: { value: "kardiologiczna" } });
+    expect(details[0].open).toBe(true);
+    expect(tabCounts()).toEqual([["Oddziały1", "true"], ["Poradnie2", "false"], ["Inne miejsca0", "false"]]);
+    fireEvent.click(screen.getByRole("tab", { name: /Poradnie/ }));
     // Trafienie podświetlone (<mark>), więc nazwa jest w kilku elementach: szukamy wiersza po tekście.
     const clinic = screen.getAllByRole("row").find((row) => row.textContent?.startsWith("Poradnia kardiologiczna"))!;
     expect(clinic.querySelector("mark")).toHaveTextContent("kardiolog");
     expect(clinic.lastElementChild).toHaveTextContent("2");
-    // Nocna i świąteczna opieka: na liście „Inne miejsca bez łóżek”.
-    fireEvent.change(screen.getByRole("searchbox", { name: /Szukaj oddziału/ }), { target: { value: "nocna" } });
+    // Nowe zapytanie: pierwsza zakładka z wynikiem. „nocna pomoc” znajduje punkt nocnej i świątecznej opieki.
+    fireEvent.change(search, { target: { value: "nocna pomoc" } });
+    expect(screen.getByRole("tab", { name: /Inne/ })).toHaveAttribute("aria-selected", "true");
     expect(screen.getAllByRole("row").find((row) => row.textContent?.startsWith("Nocna i świąteczna opieka"))).toHaveTextContent("1 punkt");
-    fireEvent.change(screen.getByRole("searchbox", { name: /Szukaj oddziału/ }), { target: { value: "okulistyka" } });
-    expect(screen.getByText(/brak oddziału i poradni/)).toBeInTheDocument();
+    fireEvent.change(search, { target: { value: "okulistyka" } });
+    expect(screen.getByText(/brak oddziału, poradni i innego miejsca/)).toBeInTheDocument();
+  });
+
+  it("„Struktura”: szpital bez oddziałów otwiera zakładkę poradni", () => {
+    window.history.replaceState(null, "", "/szpitale/111?widok=struktura");
+    render(<HospitalPage data={{ ...data, structure: { ...data.structure!, beds: [] } }} />);
+    expect(screen.queryByRole("tab", { name: /Oddziały/ })).not.toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /Poradnie/ })).toHaveAttribute("aria-selected", "true");
   });
 
   it("„Struktura”: jasny komunikat bez danych rejestru", () => {

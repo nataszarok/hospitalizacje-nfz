@@ -61,7 +61,7 @@ export function HospitalStructureTab({ data, yearIndex }: { data: HospitalPageDa
     </p>
   </section>;
   return <>
-    <PartsSection data={data} structure={structure} />
+    <PartsSection structure={structure} />
     <PlanSection data={data} structure={structure} />
     <ListsSection data={data} structure={structure} yearIndex={yearIndex} />
   </>;
@@ -79,7 +79,7 @@ function Head({ id, title, context, help, helpLabel, tools }: { id: string; titl
 
 // ── Z czego składa się szpital? ──────────────────────────────────────────────────────────────────────────────────
 
-function PartsSection({ data, structure }: { data: HospitalPageData; structure: HospitalStructure }) {
+function PartsSection({ structure }: { structure: HospitalStructure }) {
   const { container, handlers, tip, phone, close } = useDataTip();
   const total = structure.beds.reduce((sum, row) => sum + row[5], 0);
   const manyBuildings = new Set(structure.beds.map((row) => row[0])).size > 1;
@@ -211,14 +211,23 @@ function PlanSection({ data, structure }: { data: HospitalPageData; structure: H
     const { clinics, other } = placesOf(addr);
     if (!clinics.length && !other.length) return null;
     const [street, city] = structure.addresses[addr];
+    // Kwadraty w grupach z podpisem: poradnie, potem rodzaje miejsc bez łóżek (POZ, nocna pomoc…) — każdy kwadrat ma nazwę grupy.
+    const kinds = [...new Set(other.map((row) => row[1]))];
     return <div className={styles.places} aria-label={`Poradnie i inne miejsca bez łóżek: ${clinics.length + other.length}`}>
-      {clinics.map(([, code, fields], i) => <span key={`c${i}`} className={`${styles.square} ${styles.squareClinic}`} {...handlers(structure.names[code] ?? "Poradnia", () => <>
-        {fields.length ? <>{fields.map((f) => structure.fields[f]).join(", ")}<br /></> : null}<span className={styles.muted}>Poradnia · {street}, {city}</span>
-      </>)} />)}
-      {other.map(([, kind, name, units], i) => <span key={`o${i}`} className={`${styles.square} ${styles.squareOther}`} {...handlers(kind === "misc" ? name : OTHER_KINDS[kind].label, () => <>
-        {kind !== "misc" && name ? <>{name}<br /></> : null}{units && OTHER_KINDS[kind].capacity ? <>{units} {plural(units, ...OTHER_KINDS[kind].capacity!)}<br /></> : null}
-        <span className={styles.muted}>Bez łóżek · {street}, {city}</span>
-      </>)} />)}
+      {clinics.length ? <span className={styles.placeGroup}><small>Poradnie {clinics.length}</small>
+        {clinics.map(([, code, fields], i) => <span key={`c${i}`} className={`${styles.square} ${styles.squareClinic}`} {...handlers(structure.names[code] ?? "Poradnia", () => <>
+          {fields.length ? <>{fields.map((f) => structure.fields[f]).join(", ")}<br /></> : null}<span className={styles.muted}>Poradnia · {street}, {city}</span>
+        </>)} />)}
+      </span> : null}
+      {kinds.map((kind) => {
+        const rows = other.filter((row) => row[1] === kind);
+        return <span key={kind} className={styles.placeGroup}><small>{OTHER_KINDS[kind].short} {rows.length}</small>
+          {rows.map(([, , name, units], i) => <span key={i} className={`${styles.square} ${styles.squareOther}`} {...handlers(kind === "misc" ? name : OTHER_KINDS[kind].label, () => <>
+            {kind !== "misc" && name ? <>{name}<br /></> : null}{units && OTHER_KINDS[kind].capacity ? <>{units} {plural(units, ...OTHER_KINDS[kind].capacity!)}<br /></> : null}
+            <span className={styles.muted}>Bez łóżek · {street}, {city}</span>
+          </>)} />)}
+        </span>;
+      })}
     </div>;
   };
   const header = (addr: number, names: string[], beds: number | null, w: number) => {
@@ -324,10 +333,14 @@ function Fields({ fields, words }: { fields: string[]; words: string[] }) {
   return <>{shown.map((field, i) => <span key={field}>{i ? ", " : ""}<Highlight text={field} words={words} /></span>)}{rest.length ? <> <span className={styles.rest} title={rest.join(", ")}>i {rest.length} {plural(rest.length, "inna", "inne", "innych")}</span></> : null}</>;
 }
 
+type ListTab = "wards" | "clinics" | "other";
+
 function ListsSection({ data, structure, yearIndex }: { data: HospitalPageData; structure: HospitalStructure; yearIndex: number }) {
   const phone = useMediaQuery(INFO_TIP_PHONE_QUERY) === true;
   const [query, setQuery] = useState("");
-  const [open, setOpen] = useState({ wards: false, clinics: false, other: false });
+  const [open, setOpen] = useState(false);
+  // Wybrana zakładka listy; `null` — domyślna (przy wyszukiwaniu: pierwsza z wynikami). Nowe zapytanie wraca do domyślnej.
+  const [chosen, setChosen] = useState<ListTab | null>(null);
   const [sheet, setSheet] = useState<{ title: string; body: ReactNode } | null>(null);
   const words = useMemo(() => searchWords(query), [query]);
   const year = data.years[yearIndex];
@@ -341,7 +354,7 @@ function ListsSection({ data, structure, yearIndex }: { data: HospitalPageData; 
   const wardHits = wards.filter((entry) => matchesSearch([entry.name, ...entry.fields], words));
   const clinicHits = clinics.filter((entry) => matchesSearch([entry.name, ...entry.fields], words));
   const clinicCount = clinicHits.reduce((sum, entry) => sum + entry.count, 0);
-  const otherHits = others.filter((entry) => matchesSearch([entry.name], words));
+  const otherHits = others.filter((entry) => matchesSearch([entry.name, OTHER_KINDS[entry.kind].label, ...(OTHER_KINDS[entry.kind].search ?? [])], words));
   const otherCount = otherHits.reduce((sum, entry) => sum + entry.count, 0);
   const wardCount = wards.filter((entry) => !entry.support).length;
 
@@ -366,6 +379,21 @@ function ListsSection({ data, structure, yearIndex }: { data: HospitalPageData; 
       {shown.share ? <small className={card.payShare}>{shown.share}</small> : null}
     </span>;
   };
+  const wardHitCount = wardHits.filter((entry) => !entry.support).length;
+  const tabList: { key: ListTab; label: string; short?: string; count: number; total: number }[] = [
+    { key: "wards" as const, label: "Oddziały", count: searching ? wardHitCount : wardCount, total: wards.length },
+    { key: "clinics" as const, label: "Poradnie", count: searching ? clinicCount : structure.clinics.length, total: clinics.length },
+    { key: "other" as const, label: "Inne miejsca", short: "Inne", count: searching ? otherCount : structure.other.length, total: others.length },
+  ].filter((entry) => entry.total > 0);
+  const hits: Record<ListTab, number> = { wards: wardHits.length, clinics: clinicHits.length, other: otherHits.length };
+  // Domyślnie oddziały; bez oddziałów — poradnie. Przy wyszukiwaniu pierwsza zakładka z wynikiem.
+  const fallback = (searching ? tabList.find((entry) => hits[entry.key] > 0) : tabList.find((entry) => entry.count > 0)) ?? tabList[0];
+  const tab: ListTab = chosen && tabList.some((entry) => entry.key === chosen) ? chosen : fallback?.key ?? "wards";
+  const summaryText = searching
+    ? `„${query.trim()}”: ${wardHitCount + clinicCount + otherCount} ${plural(wardHitCount + clinicCount + otherCount, "wynik", "wyniki", "wyników")}`
+    : [wardCount ? `${wardCount} ${plural(wardCount, "oddział", "oddziały", "oddziałów")} · ${integer(total)} łóżek` : "",
+      structure.clinics.length ? `${structure.clinics.length} ${plural(structure.clinics.length, "poradnia", "poradnie", "poradni")}` : "",
+      structure.other.length ? `${structure.other.length} ${plural(structure.other.length, "inne miejsce", "inne miejsca", "innych miejsc")}` : ""].filter(Boolean).join(" · ");
   const used = new Map<string, string>();
   for (const entry of wards) { const shown = badge(entry.code, entry.support); if (shown) used.set(shown.label, shown.tone); }
   const legend = [...used].sort((a, b) => TONE_ORDER.indexOf(a[1]) - TONE_ORDER.indexOf(b[1]));
@@ -380,102 +408,104 @@ function ListsSection({ data, structure, yearIndex }: { data: HospitalPageData; 
 
   return <section className={tabs.sec} aria-labelledby="s-listy">
     <Head id="s-listy" title="Oddziały i poradnie" helpLabel="Jak czytać listy" help={[
-      ["Oddziały", "są pogrupowane w części szpitala, jak na rzucie. Oddział z pododdziałami albo kilkoma klinikami tego samego rodzaju to jeden wiersz."],
+      ["Pokaż", "otwiera listy w trzech zakładkach: Oddziały, Poradnie, Inne miejsca. Liczba przy zakładce mówi, ile jest pozycji; przy wyszukiwaniu — ile pasuje."],
+      ["Oddziały", "są pogrupowane w części szpitala, jak w budynkach. Oddział z pododdziałami albo kilkoma klinikami tego samego rodzaju to jeden wiersz."],
       ["Poradnie", "to poradnie specjalistyczne i pracownie fizjoterapii, jeden wiersz na rodzaj; liczba mówi, ile ich jest."],
-      ["Inne miejsca bez łóżek", "— gabinety lekarza rodzinnego (POZ), punkty nocnej i świątecznej opieki, zespoły ratownictwa, dializy, leczenie jednego dnia."],
+      ["Inne miejsca", "— miejsca bez łóżek: gabinety lekarza rodzinnego (POZ), punkty nocnej i świątecznej opieki, zespoły ratownictwa, dializy, leczenie jednego dnia."],
       ["Dziedziny medycyny", "to specjalności, w których oddział lub poradnia leczy pacjentów — według rejestru RPWDL."],
       ["Wyszukiwarka", "nie rozróżnia wielkości liter ani polskich znaków. Przy kilku słowach wszystkie muszą pasować do jednej nazwy lub dziedziny."],
     ]} />
-    <input className={styles.search} type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Czy jest… np. kardiologia, poradnia diabetologiczna" aria-label="Szukaj oddziału, poradni albo dziedziny medycyny" autoComplete="off" />
-    {searching ? <p className={styles.found} aria-live="polite">
-      {wardHits.length || clinicCount || otherCount
-        ? <>„{query.trim()}”: <b>{wardHits.length}</b> {plural(wardHits.length, "pozycja", "pozycje", "pozycji")} na liście oddziałów, <b>{clinicCount}</b> {plural(clinicCount, "poradnia", "poradnie", "poradni")}{others.length ? <> i <b>{otherCount}</b> {plural(otherCount, "inne miejsce", "inne miejsca", "innych miejsc")}</> : null}.</>
-        : <>„{query.trim()}”: brak oddziału i poradni. Rejestr RPWDL nie ma takiego oddziału ani poradni w tym szpitalu (sprawdź też inną nazwę dziedziny).</>}
+    <input className={styles.search} type="search" value={query} onChange={(event) => { setQuery(event.target.value); setChosen(null); }} placeholder="Czy jest… np. kardiologia, poradnia diabetologiczna, nocna pomoc" aria-label="Szukaj oddziału, poradni, miejsca albo dziedziny medycyny" autoComplete="off" />
+    {searching && !wardHits.length && !clinicCount && !otherCount ? <p className={styles.found} aria-live="polite">
+      „{query.trim()}”: brak oddziału, poradni i innego miejsca. Rejestr RPWDL nie ma ich w tym szpitalu (sprawdź też inną nazwę dziedziny).
     </p> : null}
 
-    <details className={styles.listBox} open={searching || open.wards} onToggle={(event) => { if (!searching) setOpen((value) => ({ ...value, wards: (event.target as HTMLDetailsElement).open })); }}>
-      <summary><span className={styles.listTitle}>Oddziały</span><small>{searching ? `${wardHits.filter((entry) => !entry.support).length} z ${wardCount}` : `${wardCount} · ${integer(total)} łóżek`}</small><span className={styles.more} /></summary>
-      {legend.length ? <ul className={styles.payLegend} aria-label="Sposób zapłaty">
-        {legend.map(([label, tone]) => <li key={label}><span className={`${card.pay} ${TONE_CLASS[tone]}`}>{label}</span></li>)}
-        <li className={styles.payNote}>sposób zapłaty NFZ w {year} r. <InfoTip ariaLabel="Jak czytać sposób zapłaty" label={<HelpLines lines={[
-          ["Ryczałt sieci", "— stała roczna kwota sieci szpitali, niezależna od liczby pacjentów."],
-          ["Za każdy pobyt", "— NFZ płaci za każdą hospitalizację. Ryczałt + za pobyty — oba sposoby naraz; udziały są pod plakietką."],
-          ["Stawka dobowa", "— stała kwota za każdy dzień gotowości (SOR, izba przyjęć)."],
-          ["Osobna kwota", "— zakres poza ryczałtem, opłacany do kwoty z planu umowy (np. psychiatria, ZOL, hospicjum). W poradni: za porady, do limitu."],
-          ["Szara plakietka", "— sposób zapłaty niepotwierdzony: umowa z NFZ wymienia ten oddział lub poradnię bez kwoty albo w ogóle go nie wymienia."],
-          "Źródło: plany umów NFZ (API NFZ „Umowy”) i hospitalizacje według zakresów umów. Kwotę i nazwę umowy pokazuje plakietka po najechaniu lub dotknięciu.",
-        ]} />} /></li>
-      </ul> : null}
-      <div className={`priority-table ${styles.tableWrap}`}>
-        <table className={`${base.table} ${styles.list} sticky-head`}>
-          <thead><tr><th>Oddział</th><th className={styles.fieldsCol}>Dziedziny medycyny</th><th className={`${base.num} ${styles.nums}`}>Łóżka</th><th className={`${base.num} ${styles.nums}`}>Udział</th></tr></thead>
-          <tbody>
-            {STRUCTURE_PARTS.map(({ key, label }) => {
-              const all = wards.filter((entry) => entry.part === key);
-              const hits = wardHits.filter((entry) => entry.part === key);
-              if (!hits.length) return null;
-              const beds = all.reduce((sum, entry) => sum + entry.beds, 0);
-              return [<tr key={key} className={styles.partRow}>
-                <th scope="rowgroup"><i style={{ background: PART_SWATCH[key] }} aria-hidden />{label}</th><th className={styles.fieldsCol} /><th className={`${base.num} ${styles.nums}`}>{integer(beds)}</th><th className={`${base.num} ${styles.nums}`}>{percent(beds, total, 1)}</th>
-              </tr>, ...hits.map((entry) => <tr key={`${key}-${entry.code}-${entry.category}`}>
+    {/* Jedno „Pokaż” i zakładki list; wyszukiwanie otwiera listy, a zakładki pokazują liczbę wyników. */}
+    <details className={styles.listBox} open={searching || open} onToggle={(event) => { if (!searching) setOpen((event.target as HTMLDetailsElement).open); }}>
+      <summary><span className={styles.listTitle}>Lista</span><small>{summaryText}</small><span className={styles.more} /></summary>
+      <div className={styles.listTabs} role="tablist" aria-label="Listy">
+        {tabList.map(({ key, label, short, count }) => <button key={key} type="button" role="tab" id={`lista-${key}`} aria-selected={tab === key} aria-controls="lista-panel" onClick={() => setChosen(key)}>
+          {short ? <>{short}<span className={styles.long}>{label.slice(short.length)}</span></> : label}<small>{count}</small>
+        </button>)}
+      </div>
+      <div id="lista-panel" role="tabpanel" aria-labelledby={`lista-${tab}`}>
+        {tab === "wards" ? <>
+        {legend.length ? <ul className={styles.payLegend} aria-label="Sposób zapłaty">
+          {legend.map(([label, tone]) => <li key={label}><span className={`${card.pay} ${TONE_CLASS[tone]}`}>{label}</span></li>)}
+          <li className={styles.payNote}>sposób zapłaty NFZ w {year} r. <InfoTip ariaLabel="Jak czytać sposób zapłaty" label={<HelpLines lines={[
+            ["Ryczałt sieci", "— stała roczna kwota sieci szpitali, niezależna od liczby pacjentów."],
+            ["Za każdy pobyt", "— NFZ płaci za każdą hospitalizację. Ryczałt + za pobyty — oba sposoby naraz; udziały są pod plakietką."],
+            ["Stawka dobowa", "— stała kwota za każdy dzień gotowości (SOR, izba przyjęć)."],
+            ["Osobna kwota", "— zakres poza ryczałtem, opłacany do kwoty z planu umowy (np. psychiatria, ZOL, hospicjum). W poradni: za porady, do limitu."],
+            ["Szara plakietka", "— sposób zapłaty niepotwierdzony: umowa z NFZ wymienia ten oddział lub poradnię bez kwoty albo w ogóle go nie wymienia."],
+            "Źródło: plany umów NFZ (API NFZ „Umowy”) i hospitalizacje według zakresów umów. Kwotę i nazwę umowy pokazuje plakietka po najechaniu lub dotknięciu.",
+          ]} />} /></li>
+        </ul> : null}
+        <div className={`priority-table ${styles.tableWrap}`}>
+          <table className={`${base.table} ${styles.list} sticky-head`}>
+            <thead><tr><th>Oddział</th><th className={styles.fieldsCol}>Dziedziny medycyny</th><th className={`${base.num} ${styles.nums}`}>Łóżka</th><th className={`${base.num} ${styles.nums}`}>Udział</th></tr></thead>
+            <tbody>
+              {STRUCTURE_PARTS.map(({ key, label }) => {
+                const all = wards.filter((entry) => entry.part === key);
+                const hits = wardHits.filter((entry) => entry.part === key);
+                if (!hits.length) return null;
+                const beds = all.reduce((sum, entry) => sum + entry.beds, 0);
+                return [<tr key={key} className={styles.partRow}>
+                  <th scope="rowgroup"><i style={{ background: PART_SWATCH[key] }} aria-hidden />{label}</th><th className={styles.fieldsCol} /><th className={`${base.num} ${styles.nums}`}>{integer(beds)}</th><th className={`${base.num} ${styles.nums}`}>{percent(beds, total, 1)}</th>
+                </tr>, ...hits.map((entry) => <tr key={`${key}-${entry.code}-${entry.category}`}>
+                  <td>
+                    <Name name={entry.name} fields={entry.fields} addresses={entry.addresses} />{entry.support ? <span className={styles.notWard}>nie oddział</span> : null}<Badge code={entry.code} support={entry.support} />
+                    {manyBuildings ? <small className={styles.addr}>{where(entry.addresses)}</small> : null}
+                  </td>
+                  <td className={styles.fieldsCol}><Fields fields={entry.fields} words={words} /></td>
+                  <td className={`${base.num} ${styles.nums}`}>{integer(entry.beds)}</td>
+                  <td className={`${base.num} ${styles.nums}`}>{percent(entry.beds, total, 1)}</td>
+                </tr>)];
+              })}
+              {!wardHits.length ? <tr><td colSpan={4} className={styles.emptyRow}>Brak oddziału dla tego zapytania.</td></tr> : null}
+            </tbody>
+          </table>
+        </div>
+        </> : tab === "clinics" ? <>
+        <div className={`priority-table ${styles.tableWrap}`}>
+          <table className={`${base.table} ${styles.list} sticky-head`}>
+            <thead><tr><th>Poradnia</th><th className={styles.fieldsCol}>Dziedziny medycyny</th><th className={`${base.num} ${styles.nums}`}>Liczba</th></tr></thead>
+            <tbody>
+              {clinicHits.map((entry) => <tr key={entry.code}>
                 <td>
-                  <Name name={entry.name} fields={entry.fields} addresses={entry.addresses} />{entry.support ? <span className={styles.notWard}>nie oddział</span> : null}<Badge code={entry.code} support={entry.support} />
-                  {manyBuildings ? <small className={styles.addr}>{where(entry.addresses)}</small> : null}
+                  <Name name={entry.name} fields={entry.fields} addresses={entry.addresses} /><Badge code={entry.code} support={false} />
+                  {manyClinicAddresses ? <small className={styles.addr}>{where(entry.addresses)}</small> : null}
                 </td>
                 <td className={styles.fieldsCol}><Fields fields={entry.fields} words={words} /></td>
-                <td className={`${base.num} ${styles.nums}`}>{integer(entry.beds)}</td>
-                <td className={`${base.num} ${styles.nums}`}>{percent(entry.beds, total, 1)}</td>
-              </tr>)];
-            })}
-            {!wardHits.length ? <tr><td colSpan={4} className={styles.emptyRow}>Brak oddziału dla tego zapytania.</td></tr> : null}
-          </tbody>
-        </table>
+                <td className={`${base.num} ${styles.nums}`}>{entry.count}</td>
+              </tr>)}
+              {!clinicHits.length ? <tr><td colSpan={3} className={styles.emptyRow}>Brak poradni dla tego zapytania.</td></tr> : null}
+            </tbody>
+          </table>
+        </div>
+        </> : <>
+        <div className={`priority-table ${styles.tableWrap}`}>
+          <table className={`${base.table} ${styles.list} sticky-head`}>
+            <thead><tr><th>Miejsce</th><th className={`${base.num} ${styles.nums}`}>Liczba</th></tr></thead>
+            <tbody>
+              {otherHits.map((entry) => {
+                const kind = OTHER_KINDS[entry.kind];
+                return <tr key={`${entry.kind}-${entry.name}`}>
+                  <td>
+                    <Name name={entry.name} fields={[]} addresses={entry.addresses} />
+                    {entry.units && kind.capacity ? <small>{entry.units} {plural(entry.units, ...kind.capacity)}</small> : null}
+                    {new Set(structure.other.map((row) => row[0])).size > 1 ? <small className={styles.addr}>{where(entry.addresses)}</small> : null}
+                  </td>
+                  <td className={`${base.num} ${styles.nums}`}>{entry.count} {plural(entry.count, ...kind.unit)}</td>
+                </tr>;
+              })}
+              {!otherHits.length ? <tr><td colSpan={2} className={styles.emptyRow}>Brak takiego miejsca.</td></tr> : null}
+            </tbody>
+          </table>
+        </div>
+        </>}
       </div>
     </details>
-
-    {clinics.length ? <details className={styles.listBox} open={searching || open.clinics} onToggle={(event) => { if (!searching) setOpen((value) => ({ ...value, clinics: (event.target as HTMLDetailsElement).open })); }}>
-      <summary><span className={styles.listTitle}>Poradnie (AOS)</span><small>{searching ? `${clinicCount} z ${structure.clinics.length}` : `${structure.clinics.length} w ${clinics.length} ${plural(clinics.length, "rodzaju", "rodzajach", "rodzajach")}`}</small><span className={styles.more} /></summary>
-      <div className={`priority-table ${styles.tableWrap}`}>
-        <table className={`${base.table} ${styles.list} sticky-head`}>
-          <thead><tr><th>Poradnia</th><th className={styles.fieldsCol}>Dziedziny medycyny</th><th className={`${base.num} ${styles.nums}`}>Liczba</th></tr></thead>
-          <tbody>
-            {clinicHits.map((entry) => <tr key={entry.code}>
-              <td>
-                <Name name={entry.name} fields={entry.fields} addresses={entry.addresses} /><Badge code={entry.code} support={false} />
-                {manyClinicAddresses ? <small className={styles.addr}>{where(entry.addresses)}</small> : null}
-              </td>
-              <td className={styles.fieldsCol}><Fields fields={entry.fields} words={words} /></td>
-              <td className={`${base.num} ${styles.nums}`}>{entry.count}</td>
-            </tr>)}
-            {!clinicHits.length ? <tr><td colSpan={3} className={styles.emptyRow}>Brak poradni dla tego zapytania.</td></tr> : null}
-          </tbody>
-        </table>
-      </div>
-    </details> : null}
-
-    {/* Inne miejsca bez łóżek: POZ, nocna i świąteczna opieka, ratownictwo, dializy, leczenie jednego dnia, sala porodowa. */}
-    {others.length ? <details className={styles.listBox} open={searching || open.other} onToggle={(event) => { if (!searching) setOpen((value) => ({ ...value, other: (event.target as HTMLDetailsElement).open })); }}>
-      <summary><span className={styles.listTitle}>Inne miejsca bez łóżek</span><small>{searching ? `${otherCount} z ${structure.other.length}` : `${structure.other.length}`}</small><span className={styles.more} /></summary>
-      <div className={`priority-table ${styles.tableWrap}`}>
-        <table className={`${base.table} ${styles.list} sticky-head`}>
-          <thead><tr><th>Miejsce</th><th className={`${base.num} ${styles.nums}`}>Liczba</th></tr></thead>
-          <tbody>
-            {otherHits.map((entry) => {
-              const kind = OTHER_KINDS[entry.kind];
-              return <tr key={`${entry.kind}-${entry.name}`}>
-                <td>
-                  <Name name={entry.name} fields={[]} addresses={entry.addresses} />
-                  {entry.units && kind.capacity ? <small>{entry.units} {plural(entry.units, ...kind.capacity)}</small> : null}
-                  {new Set(structure.other.map((row) => row[0])).size > 1 ? <small className={styles.addr}>{where(entry.addresses)}</small> : null}
-                </td>
-                <td className={`${base.num} ${styles.nums}`}>{entry.count} {plural(entry.count, ...kind.unit)}</td>
-              </tr>;
-            })}
-            {!otherHits.length ? <tr><td colSpan={2} className={styles.emptyRow}>Brak takiego miejsca.</td></tr> : null}
-          </tbody>
-        </table>
-      </div>
-    </details> : null}
     <p className={base.note}>Rejestr RPWDL, stan {data.rpwdlYear ? `z ${data.rpwdlYear} r.` : "bieżący"}; sposób zapłaty — umowy z NFZ w {year} r.</p>
     {sheet ? <BottomSheet title={sheet.title} onClose={() => setSheet(null)}>{sheet.body}</BottomSheet> : null}
   </section>;

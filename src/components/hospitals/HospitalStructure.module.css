@@ -220,8 +220,25 @@
 .places {
   display: flex;
   flex-wrap: wrap;
-  gap: 3px;
+  align-items: center;
+  gap: 4px 12px;
   padding: 2px 6px 8px;
+}
+
+/* Grupa kwadratów z podpisem rodzaju: „Poradnie 12”, „POZ 4”. */
+.placeGroup {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
+}
+
+.placeGroup small {
+  margin-right: 3px;
+  color: var(--color-text-secondary);
+  font-size: var(--fs-xs);
+  white-space: nowrap;
 }
 
 .square {
@@ -565,4 +582,46 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
+}
+
+/* Zakładki list (DESIGN.md 7, „Zakładki”): aktywna — kolor i dolna linia 2 px; liczba (przy wyszukiwaniu — wyników) obok nazwy. */
+.listTabs {
+  display: flex;
+  gap: 4px;
+  margin: 0 0 10px;
+  border-bottom: 1px solid var(--color-border-subtle);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.listTabs button {
+  display: inline-flex;
+  flex: none;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: -1px;
+  padding: 8px 12px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--color-text-secondary);
+  font: inherit;
+  font-size: var(--fs-base);
+  font-weight: var(--fw-semibold);
+  cursor: pointer;
+}
+
+.listTabs button small {
+  color: var(--color-text-tertiary);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-medium);
+}
+
+.listTabs button[aria-selected="true"] {
+  border-bottom-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.listTabs button:hover {
+  color: var(--color-primary);
 }

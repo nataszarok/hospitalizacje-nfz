@@ -31,14 +31,15 @@ export type OtherKind = "poz" | "npl" | "zrm" | "dialysis" | "day" | "delivery" 
 export type StructureOther = [addr: number, kind: OtherKind, name: string, units: number];
 
 /** Nazwa rodzaju na liście „Inne miejsca” i w dymku; liczebnik jednostek (komórka rejestru = gabinet, punkt, zespół…). */
-export const OTHER_KINDS: Record<OtherKind, { label: string; unit: [string, string, string]; capacity?: [string, string, string] }> = {
-  poz: { label: "Podstawowa opieka zdrowotna (POZ)", unit: ["gabinet", "gabinety", "gabinetów"] },
-  npl: { label: "Nocna i świąteczna opieka", unit: ["punkt", "punkty", "punktów"] },
-  zrm: { label: "Zespoły ratownictwa medycznego", unit: ["zespół", "zespoły", "zespołów"] },
-  dialysis: { label: "Stacja dializ", unit: ["stacja", "stacje", "stacji"], capacity: ["stanowisko", "stanowiska", "stanowisk"] },
-  day: { label: "Leczenie jednego dnia", unit: ["miejsce", "miejsca", "miejsc"], capacity: ["miejsce dzienne", "miejsca dzienne", "miejsc dziennych"] },
-  delivery: { label: "Sala porodowa", unit: ["sala", "sale", "sal"] },
-  misc: { label: "Inne", unit: ["miejsce", "miejsca", "miejsc"] },
+/** Rodzaje miejsc bez łóżek; `short` — podpis kwadratów w budynku; `search` — inne nazwy dla wyszukiwarki („nocna pomoc”, „lekarz rodzinny”). */
+export const OTHER_KINDS: Record<OtherKind, { label: string; short: string; unit: [string, string, string]; capacity?: [string, string, string]; search?: string[] }> = {
+  poz: { label: "Podstawowa opieka zdrowotna (POZ)", short: "POZ", unit: ["gabinet", "gabinety", "gabinetów"], search: ["lekarz rodzinny", "przychodnia"] },
+  npl: { label: "Nocna i świąteczna opieka", short: "Nocna pomoc", unit: ["punkt", "punkty", "punktów"], search: ["nocna pomoc lekarska", "NPL"] },
+  zrm: { label: "Zespoły ratownictwa medycznego", short: "Ratownictwo", unit: ["zespół", "zespoły", "zespołów"], search: ["karetka", "ratownictwo", "ZRM"] },
+  dialysis: { label: "Stacja dializ", short: "Dializy", unit: ["stacja", "stacje", "stacji"], search: ["dializa", "hemodializa"], capacity: ["stanowisko", "stanowiska", "stanowisk"] },
+  day: { label: "Leczenie jednego dnia", short: "Leczenie 1 dnia", unit: ["miejsce", "miejsca", "miejsc"], capacity: ["miejsce dzienne", "miejsca dzienne", "miejsc dziennych"] },
+  delivery: { label: "Sala porodowa", short: "Sala porodowa", unit: ["sala", "sale", "sal"] },
+  misc: { label: "Inne", short: "Inne", unit: ["miejsce", "miejsca", "miejsc"] },
 };
 
 /** Miejsce z łóżkami na karcie: adres, placówka, kategoria, kod, nazwa w rejestrze, łóżka, łóżka OIT, dziedziny. */
