@@ -6,14 +6,14 @@ import { GroupLineChart, type ChartLine } from "@/components/jgp/GroupLineChart"
 import { CardYears } from "@/components/jgp/CardYears";
 import { SectionHead } from "@/components/jgp/JgpTabbedCard";
 import { PeriodToggle } from "@/components/jgp/PeriodToggle";
-import { HelpLines, InfoTip } from "@/components/InfoTip";
 import { ConcentrationChart } from "@/components/ConcentrationChart";
 import { ShareBars, ShareLegend } from "@/components/ShareBars";
 import { GroupsSection } from "./HospitalGroupsSection";
 import { HospitalFinanceTab } from "./HospitalFinanceTab";
+import { HospitalStructureTab } from "./HospitalStructureTab";
 import { formatCityName, formatPln } from "@/lib/formatters";
 import { JGP_SECTION_LABELS } from "@/lib/hospitalizationSummary";
-import { sectionTotals, wardPaymentStatus, yearlySums, type HospitalPageData, type WardPaymentStatus } from "@/lib/hospitalPage";
+import { sectionTotals, yearlySums, type HospitalPageData } from "@/lib/hospitalPage";
 import type { ChartPeriod } from "@/lib/jgpCard";
 import { plural } from "@/lib/jgpDescription";
 import { hospitalComparisonHref } from "@/lib/portalLinks";
@@ -30,17 +30,16 @@ const signedPp = (value: number) => `${value > 0 ? "+" : value < 0 ? "−" : ""}
 const YEAR_PARAM = "rok";
 const PERIOD_PARAM = "okres";
 const TAB_PARAM = "widok";
-type CardTab = "przeglad" | "finanse";
+type CardTab = "przeglad" | "struktura" | "finanse";
 type CardState = { year: string; period: ChartPeriod; tab: CardTab };
 const TOP_SECTIONS = 5;
-const WARDS_SHOWN = 12;
 const SECTION_CLASSES = [styles.part0, styles.part1, styles.part2, styles.part3, styles.part4];
 // Długość pobytu: od najkrótszego (najciemniejszy) do najdłuższego.
 const DURATION_CLASSES = [styles.part0, styles.part1, styles.part2, styles.part4];
 
 /**
  * Stan karty w adresie: `rok` (bez parametru = najnowszy rok), `okres=miesiace` (wykres „Ile?” domyślnie w latach)
- * i `widok=finanse` (zakładka; bez parametru = Przegląd; tylko gdy karta ma zakładkę Finanse).
+ * i `widok=struktura` / `widok=finanse` (zakładka; bez parametru = Działalność; Finanse tylko gdy karta je ma).
  */
 function useCardState(years: string[], hasFinance: boolean) {
   const latest = years.at(-1)!;
@@ -52,7 +51,7 @@ function useCardState(years: string[], hasFinance: boolean) {
       setState({
         year: year && years.includes(year) ? year : latest,
         period: params.get(PERIOD_PARAM) === "miesiace" ? "month" : "year",
-        tab: hasFinance && params.get(TAB_PARAM) === "finanse" ? "finanse" : "przeglad",
+        tab: params.get(TAB_PARAM) === "struktura" ? "struktura" : hasFinance && params.get(TAB_PARAM) === "finanse" ? "finanse" : "przeglad",
       });
     };
     read();
@@ -67,7 +66,7 @@ function useCardState(years: string[], hasFinance: boolean) {
     const url = new URL(window.location.href);
     if (next.year !== latest) url.searchParams.set(YEAR_PARAM, next.year); else url.searchParams.delete(YEAR_PARAM);
     if (next.period === "month") url.searchParams.set(PERIOD_PARAM, "miesiace"); else url.searchParams.delete(PERIOD_PARAM);
-    if (next.tab === "finanse") url.searchParams.set(TAB_PARAM, "finanse"); else url.searchParams.delete(TAB_PARAM);
+    if (next.tab !== "przeglad") url.searchParams.set(TAB_PARAM, next.tab); else url.searchParams.delete(TAB_PARAM);
     window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
     setState(next);
   }, [latest]);
@@ -75,8 +74,9 @@ function useCardState(years: string[], hasFinance: boolean) {
 }
 
 /**
- * Karta szpitala `/szpitale/[nip]` w układzie karty grupy JGP. Zakładki: „Przegląd” i „Finanse” (szpitale sieci PSZ z umowami NFZ);
- * „Porównanie” jest zapowiedziane. Tabela grup JGP („Co leczy i za ile?”) jest w Przeglądzie (bez osobnej zakładki).
+ * Karta szpitala `/szpitale/[nip]` w układzie karty grupy JGP. Zakładki: „Działalność” (hospitalizacje, grupy JGP),
+ * „Struktura” (oddziały, budynki, poradnie, sposób zapłaty — `HospitalStructureTab`) i „Finanse” (szpitale sieci PSZ z umowami NFZ);
+ * „Porównanie” jest zapowiedziane. Wewnętrzny klucz pierwszej zakładki zostaje „przeglad” (adres bez parametru).
  */
 export function HospitalCard({ data }: { data: HospitalPageData }) {
   // Rok karty tylko spośród lat z hospitalizacjami szpitala (np. świadczeniodawca, który przestał leczyć w 2022 r.);
@@ -93,7 +93,8 @@ export function HospitalCard({ data }: { data: HospitalPageData }) {
     <CardHeader data={data} yearIndex={yearIndex} />
     <div className={tabs.tabbar}>
       <div className={tabs.tabs} role="tablist" aria-label="Zakładki karty">
-        <button type="button" role="tab" id="tab-przeglad" aria-controls="panel-przeglad" aria-selected={state.tab === "przeglad"} onClick={() => write({ tab: "przeglad" })}>Przegląd</button>
+        <button type="button" role="tab" id="tab-przeglad" aria-controls="panel-przeglad" aria-selected={state.tab === "przeglad"} onClick={() => write({ tab: "przeglad" })}>Działalność</button>
+        <button type="button" role="tab" id="tab-struktura" aria-controls="panel-struktura" aria-selected={state.tab === "struktura"} onClick={() => write({ tab: "struktura" })}>Struktura</button>
         {data.finance ? <button type="button" role="tab" id="tab-finanse" aria-controls="panel-finanse" aria-selected={state.tab === "finanse"} onClick={() => write({ tab: "finanse" })}>Finanse</button> : null}
         {[...(data.finance ? [] : ["Finanse"]), "Porównanie"].map((label) => <button key={label} type="button" role="tab" aria-selected="false" aria-disabled="true" className={styles.tabSoon} title="Zakładka w przygotowaniu">
           {label}<small>wkrótce</small>
@@ -103,6 +104,8 @@ export function HospitalCard({ data }: { data: HospitalPageData }) {
     </div>
     {state.tab === "finanse" && data.finance ? <div role="tabpanel" id="panel-finanse" aria-labelledby="tab-finanse" className={tabs.panel}>
       <HospitalFinanceTab data={data} finance={data.finance} yearIndex={yearIndex} onYear={onYear} />
+    </div> : state.tab === "struktura" ? <div role="tabpanel" id="panel-struktura" aria-labelledby="tab-struktura" className={tabs.panel}>
+      <HospitalStructureTab data={data} yearIndex={yearIndex} />
     </div> : <div role="tabpanel" id="panel-przeglad" aria-labelledby="tab-przeglad" className={tabs.panel}>
       <HowManySection data={data} year={state.year} period={state.period} onPeriod={(period) => write({ period })} />
       <TreatsSection data={data} yearIndex={yearIndex} />
@@ -114,7 +117,6 @@ export function HospitalCard({ data }: { data: HospitalPageData }) {
         const stay = activeYears.length >= STAY_MIN_YEARS ? <StaySection data={data} yearIndex={yearIndex} /> : null;
         return concentration && stay ? <div className={tabs.pair}>{concentration}{stay}</div> : concentration ?? stay;
       })()}
-      <WardsSection data={data} yearIndex={yearIndex} onFinance={data.finance ? () => { write({ tab: "finanse" }); window.scrollTo({ top: 0 }); } : undefined} />
     </div>}
   </>;
 }
@@ -266,127 +268,5 @@ function StaySection({ data, yearIndex }: { data: HospitalPageData; yearIndex: n
       parts: parts.map((part, i) => ({ ...part, value: values[y]?.[i] ?? 0 })),
     }))} />
     <p className={base.note}>Najedź na rok, żeby zobaczyć udziały. Długość pobytu według dat przyjęcia i wypisu w danych NFZ.</p>
-  </section>;
-}
-
-/** „Czym dysponuje?”: oddziały i łóżka z rejestru RPWDL (stan bieżący). */
-const PAYMENT_BADGES: Record<WardPaymentStatus, { label: string; className: string }> = {
-  ryczalt: { label: "ryczałt", className: styles.payLump },
-  czesciowo: { label: "częściowo ryczałt", className: styles.payMixed },
-  poza: { label: "poza ryczałtem", className: styles.payOut },
-};
-
-/** Plakietka sposobu zapłaty oddziału; podpowiedź i czytnik dostają oba udziały hospitalizacji (nigdy sam udział „za wykonanie”). */
-function PaymentBadge({ status, paidPct, total }: { status: WardPaymentStatus; paidPct: number; total: number }) {
-  const paid = Math.round(paidPct);
-  const both = `${100 - paid}% w ryczałcie · ${paid}% za wykonanie`;
-  const badge = PAYMENT_BADGES[status];
-  return <span className={styles.payWrap}>
-    <span className={`${styles.pay} ${badge.className}`} title={`${integer(total)} hospitalizacji oddziału: ${both}`}>{badge.label}</span>
-    {status === "czesciowo" ? <small className={styles.payShare}>{both}</small> : null}
-  </span>;
-}
-
-/** Rodzaje działalności lokalizacji w dymku (`HospitalLocation`). */
-const LOCATION_KINDS: Record<string, string> = {
-  hospital: "szpital (oddziały)", sor: "SOR", outpatient: "poradnie", psychiatry: "psychiatria", rehab: "rehabilitacja",
-  long_term: "ZOL / ZPO", hospice: "hospicjum / opieka paliatywna", dialysis: "dializy", spa: "uzdrowisko",
-};
-const locationKinds = (kinds: string[]) => kinds.map((kind) => kind.startsWith("other:") ? kind.slice(6) : LOCATION_KINDS[kind] ?? kind).join(", ");
-
-/**
- * Zaplecze z rejestru RPWDL nad listą oddziałów: pasek faktów (oddziały — te same liczby co nagłówek karty, poradnie,
- * lokalizacje z listą w dymku) i komórki (SOR, OIT, blok operacyjny…).
- */
-function ResourcesSummary({ resources, wards, beds }: { resources: NonNullable<HospitalPageData["resources"]>; wards: number; beds: number | null }) {
-  const { outpatient, locations, capabilities } = resources;
-  return <div className={styles.resources}>
-    <dl className={styles.facts} aria-label="Zaplecze szpitala">
-      {wards ? <div>
-        <dt>Oddziały</dt>
-        <dd><b>{integer(wards)}</b> {plural(wards, "oddział lub pododdział", "oddziały i pododdziały", "oddziałów i pododdziałów")}{beds ? <> · {integer(beds)} łóżek</> : null}</dd>
-      </div> : null}
-      {outpatient ? <div>
-        <dt>Poradnie (AOS)</dt>
-        <dd><b>{integer(outpatient.cells)}</b> {plural(outpatient.cells, "poradnia lub gabinet", "poradnie i gabinety", "poradni i gabinetów")}{outpatient.fields ? <> · {integer(outpatient.fields)} {plural(outpatient.fields, "dziedzina", "dziedziny", "dziedzin")}</> : null}{outpatient.locations ? <> · w {integer(outpatient.locations)} {plural(outpatient.locations, "lokalizacji", "lokalizacjach", "lokalizacjach")}</> : null}</dd>
-      </div> : null}
-      {locations ? <div>
-        <dt>Lokalizacje</dt>
-        <dd>
-          <b>{integer(locations.count)}</b> {plural(locations.count, "adres", "adresy", "adresów")}{locations.cities > 1 ? <> w {integer(locations.cities)} {plural(locations.cities, "mieście", "miastach", "miastach")}</> : null}{locations.beds ? <> · {integer(locations.beds)} łóżek łącznie</> : null}
-          {" "}<InfoTip ariaLabel="Lokalizacje szpitala" label={<HelpLines lines={[
-            ...locations.list.map(([address, locationBeds, kinds]) => `${address}${locationBeds ? ` — ${integer(locationBeds)} łóżek` : ""}: ${locationKinds(kinds)}.`),
-            beds && locations.beds > beds
-              ? `Łóżka łącznie (${integer(locations.beds)}) to wszystkie łóżka w rejestrze. Oddziały (${integer(beds)}) to oddziały szpitalne z listy niżej — bez łóżek SOR, bloku operacyjnego, psychiatrii, rehabilitacji, ZOL i hospicjum.`
-              : "Łóżka łącznie: wszystkie łóżka podmiotu w rejestrze.",
-          ]} />} />
-        </dd>
-      </div> : null}
-    </dl>
-    {capabilities.length ? <div className={styles.capabilities}>
-      <span className={styles.capabilitiesTitle}>Zaplecze <InfoTip ariaLabel="Jak czytać zaplecze" label={<HelpLines lines={[
-        "Komórki zapisane w rejestrze RPWDL w całym podmiocie (wszystkie lokalizacje).",
-        "Łóżka przy komórce: łóżka zapisane w rejestrze w tej komórce. Na SOR to łóżka obserwacyjne (w tym intensywnej terapii) dla pacjentów przed przyjęciem na oddział albo przed wypisem, nie oddział.",
-        "Liczba przy POZ i nocnej opiece: komórki (gabinety, poradnie), nie lekarze.",
-      ]} />} /></span>
-      <ul aria-label="Zaplecze w rejestrze RPWDL">
-        {capabilities.map(([label, detail]) => <li key={label}><b>{label}</b>{detail ? ` · ${detail}` : ""}</li>)}
-      </ul>
-    </div> : null}
-  </div>;
-}
-
-function WardsSection({ data, yearIndex, onFinance }: { data: HospitalPageData; yearIndex: number; onFinance?: () => void }) {
-  const [all, setAll] = useState(false);
-  // Rok plakietek = rok karty: udział hospitalizacji oddziału w zakresach ryczałtowych i płatnych za wykonanie.
-  const paymentIndex = data.wardPayment && Object.values(data.wardPayment).some(([lump, paid]) => lump[yearIndex] + paid[yearIndex] > 0) ? yearIndex : -1;
-  const beds = data.wards.reduce((sum, [, , wardBeds]) => sum + wardBeds, 0) || 1;
-  const rows = all ? data.wards : data.wards.slice(0, WARDS_SHOWN);
-  if (!data.wards.length) return <section className={tabs.sec} aria-labelledby="s-zasoby">
-    <SectionHead id="s-zasoby" question="Czym dysponuje?" context="Oddziały i łóżka (RPWDL), sposób zapłaty NFZ" />
-    <p className={styles.empty} role="status">
-      <b>Brak danych o oddziałach i łóżkach.</b> Rejestr RPWDL nie ma profilu tego świadczeniodawcy (stan {data.rpwdlYear ? `z ${data.rpwdlYear} r.` : "bieżący"}),
-      np. gdy już nie działa. Bez listy oddziałów karta nie pokazuje też sposobu zapłaty NFZ (ryczałt, za wykonanie).
-    </p>
-  </section>;
-  return <section className={tabs.sec} aria-labelledby="s-zasoby">
-    <SectionHead id="s-zasoby" question="Czym dysponuje?" context={`Oddziały i łóżka (RPWDL), sposób zapłaty NFZ${paymentIndex >= 0 ? ` w ${data.years[paymentIndex]} r.` : ""}`} tag={data.rpwdlYear ? `Stan ${data.rpwdlYear}` : "Stan bieżący"} />
-    {data.resources ? <ResourcesSummary resources={data.resources} wards={data.wards.length} beds={data.beds} /> : null}
-    {paymentIndex >= 0 ? <ul className={base.legend} aria-label="Sposób zapłaty">
-      {(Object.keys(PAYMENT_BADGES) as WardPaymentStatus[]).map((status) => <li key={status}><span className={`${styles.pay} ${PAYMENT_BADGES[status].className}`}>{PAYMENT_BADGES[status].label}</span></li>)}
-      <li>
-        <InfoTip ariaLabel="Jak czytać sposób zapłaty" label={<HelpLines lines={[
-          "Ryczałt: hospitalizacje oddziału są w ryczałcie sieci szpitali (stała kwota, niezależna od liczby pobytów).",
-          "Poza ryczałtem: NFZ płaci za każdy pobyt (zakres z osobną kwotą w umowie, np. oddziały dziecięce, porody III poziomu).",
-          "Częściowo ryczałt: część zakresów oddziału w ryczałcie, część za wykonanie (np. onkologia, pacjenci poniżej 18 lat). Pod plakietką udziały hospitalizacji oddziału.",
-          "Źródło: plan umowy z NFZ (API NFZ „Umowy”): zakres z osobną kwotą w danym miesiącu = za wykonanie, bez kwoty = ryczałt. Hospitalizacje według zakresu umowy z plików NFZ. Oddział bez plakietki nie ma hospitalizacji rozliczanych grupami JGP (np. intensywna terapia).",
-        ]} />} />
-      </li>
-    </ul> : null}
-    {paymentIndex < 0 ? <p className={styles.empty} role="status">
-      <b>Brak danych o sposobie zapłaty NFZ w {data.years[yearIndex]} r.</b> Umowy z NFZ (API NFZ „Umowy”) nie dają hospitalizacji oddziałów według zakresów w tym roku, dlatego oddziały nie mają plakietek.
-    </p> : null}
-    {paymentIndex >= 0 && data.years[yearIndex] === "2017" ? <p className={base.note}>
-      Sieć szpitali działa od października 2017 r.: do września NFZ płacił za wykonanie, dlatego w 2017 r. większość oddziałów ma oba sposoby zapłaty.
-    </p> : null}
-    <div className={`priority-table ${styles.tableWrap}`}>
-        <table className={`${base.table} sticky-head`}>
-          <thead><tr><th>Oddział</th><th className={base.num}>Łóżka</th><th className={`${base.num} col-p2`}>Udział łóżek</th><th className="col-p3">Dziedziny medycyny</th></tr></thead>
-          <tbody>
-            {rows.map(([code, name, wardBeds, fields, registerName]) => <tr key={`${code}-${name}`}>
-              <td><span title={registerName !== name ? `W rejestrze: ${registerName}` : undefined}>{name}</span>{(() => {
-                const payment = paymentIndex >= 0 ? wardPaymentStatus(code, data.wardPayment, paymentIndex) : null;
-                return payment ? <PaymentBadge {...payment} /> : null;
-              })()}</td>
-              <td className={base.num}>{wardBeds ? integer(wardBeds) : "—"}</td>
-              <td className={`${base.num} col-p2`}>{wardBeds ? `${decimal((wardBeds / beds) * 100)}%` : "—"}</td>
-              <td className="col-p3">{fields.join(", ")}</td>
-            </tr>)}
-          </tbody>
-        </table>
-      </div>
-      {data.wards.length > WARDS_SHOWN ? <button type="button" className={styles.more} onClick={() => setAll((value) => !value)}>{all ? "Pokaż mniej" : `Pokaż wszystkie (${data.wards.length})`}</button> : null}
-      {onFinance ? <button type="button" className={styles.more} onClick={onFinance}>Jak NFZ płaci za każdy oddział: zakładka Finanse →</button> : null}
-      <p className={base.note}>Rejestr RPWDL, stan {data.rpwdlYear ? `z ${data.rpwdlYear} r.` : "bieżący"} (bez historii). Poradnie: aktywne komórki ambulatoryjnej opieki specjalistycznej. Lokalizacje: adresy podmiotu (ten sam adres zapisany w rejestrze różnie liczymy raz). Nazwa oddziału: nazwa urzędowa kodu resortowego (nazwy komórek szpitala w rejestrze — w dymku nazwy). Pododdział bez łóżek korzysta z łóżek oddziału. Oddział łączy się z zakresem umowy NFZ przez kod (03.<b>4450</b>.260.02 → 4450); bez własnego zakresu — przez trzy pierwsze cyfry kodu.</p>
   </section>;
 }

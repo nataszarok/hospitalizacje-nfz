@@ -83,13 +83,21 @@ button.tabSoon[aria-disabled="true"] {
   margin-top: 3px;
 }
 
+/* Plakietka sposobu zapłaty NFZ (karta, Finanse, Struktura); w zakładce „Struktura” na telefonie też przycisk (opis w arkuszu). */
 .pay {
   display: inline-block;
   padding: 0 6px;
+  border: 0;
   border-radius: var(--radius-badge);
+  font: inherit;
   font-size: var(--fs-xs);
   font-weight: var(--fw-bold);
+  line-height: 17px;
   white-space: nowrap;
+}
+
+.pay[title] {
+  cursor: help;
 }
 
 .payLump {
@@ -106,6 +114,23 @@ button.tabSoon[aria-disabled="true"] {
   border: 1px solid var(--color-data);
   background: var(--color-data-faint);
   color: var(--color-data-strong);
+  line-height: 15px;
+}
+
+/* Plakietki z pozycji umów (stawka dobowa, osobna kwota…) i niepotwierdzone (szare, przerywana ramka). */
+.payOther {
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-background-muted);
+  color: var(--color-heading);
+  line-height: 15px;
+}
+
+.payNone {
+  border: 1px dashed var(--color-border-strong);
+  background: var(--color-background);
+  color: var(--color-text-tertiary);
+  font-weight: var(--fw-semibold);
+  line-height: 15px;
 }
 
 .payShare {
@@ -155,90 +180,3 @@ button.tabSoon[aria-disabled="true"] {
   background: transparent;
 }
 
-/* „Czym dysponuje?”: zaplecze z rejestru RPWDL nad listą oddziałów (kafelki liczb i lista komórek). */
-.resources {
-  display: grid;
-  gap: 10px;
-  margin: 0 0 14px;
-}
-
-/* Pasek faktów: pozycje w jednym wierszu, oddzielone kreską; na wąskim ekranie jedna pod drugą. */
-.facts {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 0;
-  margin: 0;
-}
-
-.facts > div {
-  display: grid;
-  gap: 2px;
-  min-width: 0;
-  padding: 0 18px;
-  border-left: 1px solid var(--color-border-strong);
-}
-
-.facts > div:first-child {
-  padding-left: 0;
-  border-left: 0;
-}
-
-.facts dt {
-  color: var(--color-text-tertiary);
-  font-size: var(--fs-sm);
-}
-
-.facts dd {
-  margin: 0;
-  color: var(--color-text-secondary);
-  font-size: var(--fs-md);
-  font-variant-numeric: tabular-nums;
-}
-
-.facts dd b {
-  color: var(--color-text);
-  font-size: var(--fs-lg);
-}
-
-@media (max-width: 640px) {
-  .facts > div {
-    flex: 1 1 100%;
-    padding: 0;
-    border-left: 0;
-  }
-}
-
-.capabilities {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 6px 12px;
-  font-size: var(--fs-sm);
-}
-
-.capabilitiesTitle {
-  color: var(--color-text-tertiary);
-  font-weight: var(--fw-semibold);
-}
-
-.capabilities ul {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.capabilities li {
-  padding: 2px 8px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-badge);
-  color: var(--color-text-secondary);
-  background: #fff;
-}
-
-.capabilities b {
-  color: var(--color-text);
-  font-weight: var(--fw-semibold);
-}

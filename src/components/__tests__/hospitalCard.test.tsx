@@ -49,10 +49,13 @@ describe("Karta szpitala", () => {
     expect(screen.getByRole("link", { name: /^Porównanie z podobnymi szpitalami/ })).toHaveAttribute("href", "/szpitale/eksplorator?hospital=16%7C111&hv=c");
   });
 
-  it("jedna aktywna zakładka „Przegląd”; pozostałe zapowiedziane i wyłączone", () => {
+  it("zakładki „Działalność” (aktywna) i „Struktura”; pozostałe zapowiedziane i wyłączone", () => {
     render(<HospitalPage data={data} />);
-    expect(screen.getByRole("tab", { name: "Przegląd" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tab", { name: "Działalność" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tab", { name: "Struktura" })).not.toHaveAttribute("aria-disabled");
     for (const name of [/Finanse/, /Porównanie/]) expect(screen.getByRole("tab", { name })).toHaveAttribute("aria-disabled", "true");
+    // „Czym dysponuje?” przeniesione do zakładki „Struktura”.
+    expect(screen.queryByRole("heading", { name: /Czym dysponuje/ })).not.toBeInTheDocument();
   });
 
   it("„Co leczy i za ile?”: grupa z kwotą, miejscem i śmiertelnością wobec Polski; link do karty grupy; rok zmienia tabelę i adres", () => {
@@ -86,11 +89,15 @@ describe("Karta szpitala", () => {
     expect(within(section).getAllByRole("row")[1]).toHaveTextContent("B01");
   });
 
-  it("„Czym dysponuje?”: plakietka sposobu zapłaty z oboma udziałami dla oddziału częściowo w ryczałcie", () => {
+  it("„Struktura” (widok=struktura): plakietka sposobu zapłaty z oboma udziałami dla oddziału częściowo w ryczałcie", () => {
+    window.history.replaceState(null, "", "/szpitale/111?widok=struktura");
     render(<HospitalPage data={data} />);
-    const cardiology = screen.getByText("Kardiologia").closest("tr")!;
-    expect(within(cardiology).getByText("częściowo ryczałt")).toHaveAttribute("title", "100 hospitalizacji oddziału: 60% w ryczałcie · 40% za wykonanie");
-    expect(within(screen.getByText("Wewnętrzny").closest("tr")!).getByText("ryczałt")).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Struktura" })).toHaveAttribute("aria-selected", "true");
+    const cardiology = screen.getByText("Oddział kardiologiczny").closest("tr")!;
+    expect(within(cardiology).getByText("ryczałt + za pobyty")).toHaveAttribute("title", "100 hospitalizacji oddziału w 2025 r.: 60% w ryczałcie · 40% za pobyty");
+    expect(within(screen.getByText("Oddział chorób wewnętrznych").closest("tr")!).getByText("ryczałt sieci")).toBeInTheDocument();
+    // Nazwa urzędowa kodu, bez nazwy z rejestru („Klinika Chorób Wewnętrznych”).
+    expect(screen.queryByText("Klinika Chorób Wewnętrznych")).not.toBeInTheDocument();
   });
 
   it("rok bez kwot NFZ: „Kwota NFZ” wyłączona, wykres koncentracji pokazuje hospitalizacje; łóżka ze stanem rejestru", () => {
@@ -142,25 +149,41 @@ describe("Karta szpitala", () => {
     expect(screen.getByRole("heading", { name: /Jak długo leżą/ })).toBeInTheDocument();
   });
 
-  it("„Czym dysponuje?”: zaplecze z rejestru (poradnie, lokalizacje, SOR…) nad oddziałami; bez kodu oddziału pod nazwą", () => {
+  it("„Struktura”: części szpitala w boksach, poradnie, zasoby bez łóżek; tabele z przyklejonym nagłówkiem", () => {
+    window.history.replaceState(null, "", "/szpitale/111?widok=struktura");
     render(<HospitalPage data={data} />);
-    const section = within(screen.getByRole("heading", { name: /Czym dysponuje/ }).closest("section")!);
-    // Pasek faktów: oddziały z tymi samymi liczbami co nagłówek karty (2 oddziały, 60 łóżek), poradnie, lokalizacje z dymkiem.
-    expect(section.getByText("Oddziały").nextSibling).toHaveTextContent("2 oddziały i pododdziały · 60 łóżek");
-    expect(section.getByText("Poradnie (AOS)").nextSibling).toHaveTextContent("12 poradni i gabinetów · 9 dziedzin · w 2 lokalizacjach");
-    expect(section.getByText("Lokalizacje").nextSibling).toHaveTextContent("3 adresy w 2 miastach · 85 łóżek łącznie");
-    expect(section.getByRole("button", { name: "Lokalizacje szpitala" })).toBeInTheDocument();
-    expect(within(section.getByRole("list", { name: "Zaplecze w rejestrze RPWDL" })).getAllByRole("listitem").map((item) => item.textContent))
-      .toEqual(["SOR · 13 łóżek", "Blok operacyjny", "Dializy · 18 stanowisk", "POZ · 1 komórka"]);
-    expect(section.queryByText(/^kod \d+/)).not.toBeInTheDocument();
+    const parts = within(screen.getByRole("heading", { name: /Z czego składa się szpital/ }).closest("section")!);
+    // Leczenie szpitalne: interna, kardiologia i SOR (73 łóżka z 85); opieka długoterminowa: ZOL (12).
+    expect(parts.getByText("Leczenie szpitalne").closest("div")).toHaveTextContent("73 łóżek · 86%2 oddziaływ tym SOR 13 (nie oddziały)");
+    expect(parts.getByText("Opieka długoterminowa i paliatywna").closest("div")).toHaveTextContent("12 łóżek · 14%ZOL");
+    expect(parts.getByText("Poradnie (AOS)").closest("div")).toHaveTextContent("12 poradni9 dziedzin · w 2 lokalizacjach");
+    expect(parts.getByText(/Bez łóżek/).parentElement).toHaveTextContent("Dializy · 18 stanowisk");
+    expect(parts.getByText(/Bez łóżek/).parentElement).not.toHaveTextContent("SOR");
+    expect(screen.getByRole("heading", { name: /Rzut szpitala/ })).toBeInTheDocument();
+    expect(screen.getByText("Lokalizacje bez łóżek")).toBeInTheDocument();
+    for (const table of document.querySelectorAll("#panel-struktura table")) expect(table).toHaveClass("sticky-head");
   });
 
-  it("„Czym dysponuje?”: jasny komunikat bez profilu RPWDL i bez danych o sposobie zapłaty", () => {
-    const { unmount } = render(<HospitalPage data={{ ...data, wards: [], beds: null }} />);
+  it("„Struktura”: wyszukiwarka otwiera listy i liczy trafienia; poradnie według kodu", () => {
+    window.history.replaceState(null, "", "/szpitale/111?widok=struktura");
+    render(<HospitalPage data={data} />);
+    const details = document.querySelectorAll<HTMLDetailsElement>("#panel-struktura details");
+    expect([...details].map((item) => item.open)).toEqual([false, false]);
+    fireEvent.change(screen.getByRole("searchbox", { name: /Szukaj oddziału/ }), { target: { value: "kardiologiczna" } });
+    expect(screen.getByText(/pozycja na liście oddziałów/).closest("p")).toHaveTextContent("„kardiologiczna”: 1 pozycja na liście oddziałów i 2 poradnie.");
+    expect([...details].map((item) => item.open)).toEqual([true, true]);
+    // Trafienie podświetlone (<mark>), więc nazwa jest w kilku elementach: szukamy wiersza po tekście.
+    const clinic = screen.getAllByRole("row").find((row) => row.textContent?.startsWith("Poradnia kardiologiczna"))!;
+    expect(clinic.querySelector("mark")).toHaveTextContent("kardiolog");
+    expect(clinic.lastElementChild).toHaveTextContent("2");
+    fireEvent.change(screen.getByRole("searchbox", { name: /Szukaj oddziału/ }), { target: { value: "okulistyka" } });
+    expect(screen.getByText(/brak oddziału i poradni/)).toBeInTheDocument();
+  });
+
+  it("„Struktura”: jasny komunikat bez danych rejestru", () => {
+    window.history.replaceState(null, "", "/szpitale/111?widok=struktura");
+    render(<HospitalPage data={{ ...data, structure: null }} />);
     expect(screen.getByRole("status")).toHaveTextContent("Brak danych o oddziałach i łóżkach.");
-    unmount();
-    render(<HospitalPage data={{ ...data, wardPayment: null }} />);
-    expect(screen.getByRole("status")).toHaveTextContent("Brak danych o sposobie zapłaty NFZ w 2025 r.");
   });
 
   it("śmiertelność szpitala sieci: kropkowana linia odniesienia „Sieć PSZ”; KPI z udziałem sieci", async () => {
@@ -204,7 +227,7 @@ describe("Karta szpitala", () => {
       // Umowy 2025: 170 mln zł, +97,7% r/r; umowy to 85% przychodów.
       expect(screen.getByText("Umowy z NFZ 2025").nextSibling).toHaveTextContent("170 mln zł");
       expect(screen.getByText("Umowy z NFZ / przychody").nextSibling).toHaveTextContent("85%");
-      fireEvent.click(screen.getByRole("tab", { name: "Przegląd" }));
+      fireEvent.click(screen.getByRole("tab", { name: "Działalność" }));
       expect(window.location.search).toBe("");
     });
 

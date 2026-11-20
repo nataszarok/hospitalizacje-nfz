@@ -386,7 +386,7 @@ function WardPaySection({ data, finance, yearIndex }: SectionProps) {
                 </tr>
                 {isOpen ? row.scopes.map((scope) => <tr key={`${scope.code}-${scope.paid}`} className={styles.sub}>
                   <td className={styles.indent}>
-                    <span className={`${card.pay} ${scope.paid ? card.payOut : card.payLump}`}>{scope.paid ? "za wykonanie" : "ryczałt"}</span> {scopeLabel(scope.name)}
+                    <span className={`${card.pay} ${scope.paid ? card.payOut : card.payLump}`}>{scope.paid ? "za każdy pobyt" : "ryczałt sieci"}</span> {scopeLabel(scope.name)}
                     <span className={styles.small}>zakres {scope.code}</span>
                   </td>
                   <td className="col-p3" />

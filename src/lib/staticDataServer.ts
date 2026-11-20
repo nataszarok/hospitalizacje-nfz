@@ -7,6 +7,7 @@ import type { JgpGroupFile, JgpPagesIndex, JgpPeerPair } from "@/lib/jgpPage";
 import type { JgpProfilesFile } from "@/lib/jgpDescription";
 import type { CitiesMap, FacilityYearsIndex, FacilityYearsSection } from "@/lib/regions";
 import type { HospitalLocation, HospitalPaymentFile, HospitalRpwdlRecord } from "@/lib/hospitalPage";
+import type { HospitalStructureFile } from "@/lib/hospitalStructure";
 import type { HospitalContractsFile } from "@/lib/hospitalFinance";
 import { readJgpProse } from "@/lib/jgpProse";
 import { decodeValuations, type JgpValuation, type ValuationsFile } from "@/lib/valuations";
@@ -165,6 +166,13 @@ export function readWardNamesFromDisk(file = join(BUILD_DATA_DIR, "hospitals", "
 export async function readRpwdlLocationsFromDisk(key: string, file = join(BUILD_DATA_DIR, "hospitals", "rpwdl-locations.json.gz")): Promise<HospitalLocation[]> {
   const data = await readGzipJson<{ locations: Record<string, HospitalLocation[]> }>(file).catch(() => ({ locations: {} as Record<string, HospitalLocation[]> }));
   return data.locations[key] ?? [];
+}
+
+/** Struktura szpitali z kartą (`scripts/build_hospital_structure.py`; zakładka „Struktura”) albo `null` bez pliku. Czytana raz na proces. */
+let structurePromise: Promise<HospitalStructureFile | null> | null = null;
+export function readHospitalStructureFileFromDisk(file = join(BUILD_DATA_DIR, "hospitals", "structure.json.gz")): Promise<HospitalStructureFile | null> {
+  structurePromise ??= access(file).then(() => readGzipJson<HospitalStructureFile>(file), () => null);
+  return structurePromise;
 }
 
 /** Pełny profil RPWDL jednego świadczeniodawcy („OW|NIP”, z oddziałami) albo `null`. */

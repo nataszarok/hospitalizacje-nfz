@@ -38,3 +38,10 @@ export const REGION_PICK_COLORS = ["#7B3FA0", "#1A9850", "#D6338A", "#B88A00", "
 export const OTHER_POINT = "rgba(152, 162, 179, 0.5)";
 /** Ośrodki, gdy nic nie jest wyróżnione. */
 export const BASE_POINT = "rgba(40, 86, 163, 0.55)";
+
+/**
+ * Kolory części szpitala na rzucie i pasku zakładki „Struktura” (oprócz tokenów `CHART_COLORS`): pośredni błękit
+ * (onkologia), jasny błękit (intensywna terapia), szarość z zielenią (rehabilitacja), kreskowanie miejsc spoza oddziałów
+ * (SOR, izba, blok: tło `backgroundMuted`, kreski `borderStrong`). Do zatwierdzenia w DESIGN.md 2.2.
+ */
+export const STRUCTURE_COLORS = { onco: "#6F8FC9", icu: "#C4D3EC", rehab: "#A9BCB7", support: "hatch" } as const;

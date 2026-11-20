@@ -4,6 +4,7 @@ import type { JgpGroupFile } from "@/lib/jgpPage";
 import type { FacilityYearsIndex, FacilityYearsSection } from "@/lib/regions";
 import type { StaticDataset, TrendsDataset } from "@/lib/staticData";
 import { buildHospitalFinance, type HospitalContractsFile, type HospitalFinance, type LumpIndex } from "@/lib/hospitalFinance";
+import { buildHospitalStructure, type HospitalStructure, type HospitalStructureFile } from "@/lib/hospitalStructure";
 
 /**
  * Oddział z rejestru RPWDL: kod resortowy, nazwa urzędowa kodu (`build_ward_names.py`; bez niej nazwa z rejestru), łóżka,
@@ -72,8 +73,10 @@ export interface HospitalPageData {
   wardPayment: Record<string, [number[], number[]]> | null;
   /** Rok stanu rejestru RPWDL (łóżka, oddziały) albo `null`. */
   rpwdlYear: string | null;
-  /** Zaplecze z rejestru RPWDL („Czym dysponuje?”): SOR, OIT, poradnie, lokalizacje; `null` bez profilu w rejestrze. */
+  /** Zaplecze z rejestru RPWDL (zasoby bez łóżek w zakładce „Struktura”: dializy, leczenie jednego dnia…); `null` bez profilu. */
   resources: HospitalResources | null;
+  /** Zakładka „Struktura”: miejsca z łóżkami, poradnie, budynki, sposób zapłaty NFZ; `null` bez danych rejestru. */
+  structure: HospitalStructure | null;
   /** Zakładka „Finanse” (umowy, rozliczenia, sprawozdanie) albo `null` (szpital spoza sieci PSZ albo bez umów). */
   finance: HospitalFinance | null;
 }
@@ -156,8 +159,10 @@ export interface HospitalPageInput {
   financial: FinancialRecordSummary | undefined;
   regionName: string;
   payment?: HospitalPaymentFile | null;
-  /** Umowy z NFZ (zakładka „Finanse”, tylko szpitale sieci PSZ). */
+  /** Umowy z NFZ (zakładka „Finanse” — tylko szpitale sieci PSZ; sposób zapłaty w zakładce „Struktura”). */
   contracts?: HospitalContractsFile | null;
+  /** Struktura szpitali (`build-data/hospitals/structure.json.gz`). */
+  structureFile?: HospitalStructureFile | null;
   /** Ryczałt PSZ jako indeks wobec średnich sieci (zakładka „Finanse”). */
   lumpIndex?: LumpIndex | null;
   /** Data stanu rejestru RPWDL („RRRR-MM-DD”). */
@@ -282,6 +287,7 @@ export function buildHospitalPageData(input: HospitalPageInput, cards?: Hospital
     wardPayment: payment ? wardPaymentByYear(payment, years) : null,
     rpwdlYear: rpwdlDate?.slice(0, 4) ?? null,
     resources: hospitalResources(profile, input.locations),
+    structure: buildHospitalStructure(key, input.structureFile ?? null, contracts, years, profile),
     finance: pszLevel ? buildHospitalFinance(contracts, payment, financial, years, lumpIndex, wards) : null,
   };
 }

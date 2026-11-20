@@ -4,7 +4,7 @@ import { HOSPITAL_PAGE_KEYS, hospitalPageKey } from "@/lib/hospitalPages";
 import { hospitalPreviewCard, hospitalPreviewInput } from "@/lib/hospitalPreview";
 import type { PreviewCard } from "@/lib/socialPreview";
 import {
-  readAllStaticDatasetsFromDisk, readFacilityYearsFromDisk, readFinancialResultsFromDisk, readAllHospitalContractsFromDisk, readHospitalContractsFromDisk, readHospitalPaymentFromDisk, readHospitalProfileRecordFromDisk, readRpwdlSnapshotDateFromDisk, readJgpGroupFileFromDisk, readWardNamesFromDisk, readRpwdlLocationsFromDisk,
+  readAllStaticDatasetsFromDisk, readFacilityYearsFromDisk, readFinancialResultsFromDisk, readAllHospitalContractsFromDisk, readHospitalContractsFromDisk, readHospitalPaymentFromDisk, readHospitalProfileRecordFromDisk, readRpwdlSnapshotDateFromDisk, readJgpGroupFileFromDisk, readWardNamesFromDisk, readRpwdlLocationsFromDisk, readHospitalStructureFileFromDisk,
   readJgpPagesIndexFromDisk, readPszLevelsFromDisk, readRegionsMapFromDisk, readTrendsFromDisk,
 } from "@/lib/staticDataServer";
 
@@ -91,16 +91,17 @@ async function buildFromDisk(id: string) {
   const key = hospitalPageKey(id);
   if (!key) return null;
   const [owNfz, nip] = key.split("|");
-  const [cards, trends, facilities, psz, profile, financial, map, payment, rpwdlDate, wardNames, contracts, locations] = await Promise.all([
+  const [cards, trends, facilities, psz, profile, financial, map, payment, rpwdlDate, wardNames, contracts, locations, structureFile] = await Promise.all([
     allCards(), readTrendsFromDisk(), readFacilityYearsFromDisk(), readPszLevelsFromDisk(), readHospitalProfileRecordFromDisk(key), readFinancialResultsFromDisk(),
     readRegionsMapFromDisk(), readHospitalPaymentFromDisk(key), readRpwdlSnapshotDateFromDisk(), readWardNamesFromDisk(),
-    readHospitalContractsFromDisk(key), readRpwdlLocationsFromDisk(key),
+    readHospitalContractsFromDisk(key), readRpwdlLocationsFromDisk(key), readHospitalStructureFileFromDisk(),
   ]);
   const level = psz.byNip.get(nip);
   // Zakładka „Finanse”: szpitale sieci PSZ.
   const lumpIndex = level === undefined ? null : await hospitalLumpIndex(key);
   return buildHospitalPageData({
-    key, trends, groupFiles: [], datasets: [], facilities, profile, payment, contracts: level === undefined ? null : contracts, lumpIndex, rpwdlDate, wardNames, locations,
+    // Umowy: zakładka „Finanse” (tylko sieć PSZ) i sposób zapłaty w zakładce „Struktura” (każdy szpital z umowami).
+    key, trends, groupFiles: [], datasets: [], facilities, profile, payment, contracts, lumpIndex, rpwdlDate, wardNames, locations, structureFile,
     pszLevel: level === undefined ? null : psz.levels[level] ?? null,
     financial: financial.find((record) => record.nip === nip),
     regionName: map?.regions.find(([ow]) => ow === owNfz)?.[1] ?? "",

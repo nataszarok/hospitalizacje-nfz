@@ -6,6 +6,11 @@ import { cleanup, fireEvent, render, screen, within } from "@testing-library/rea
 import { ExplorerSidebar, type ExplorerSidebarProps } from "@/components/explorer/ExplorerSidebar";
 import type { ReferencePayload } from "@/lib/types";
 
+// Ikona „?” jak wcześniej: przycisk + treść objaśnienia w DOM (zachowanie InfoTip sprawdza infoTip.test.tsx).
+vi.mock("@/components/InfoTip", () => ({
+  InfoTip: ({ label, ariaLabel }: { label: React.ReactNode; ariaLabel?: string }) => <><button type="button" aria-label={ariaLabel}>?</button><span role="tooltip">{label}</span></>,
+  HelpLines: ({ lines }: { lines: string[] }) => <>{lines.join(" ")}</>,
+}));
 vi.mock("@mantine/core", () => {
   type Option = string | { value: string; label: string };
   type Group = { group: string; items: Option[] };
