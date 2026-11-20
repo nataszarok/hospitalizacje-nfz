@@ -229,10 +229,10 @@ function TreatsSection({ data, yearIndex }: { data: HospitalPageData; yearIndex:
       Największa sekcja w {year} r.: <b>{label(first)}</b> ({decimal((sections.get(first)![yearIndex] / (total(yearIndex) || 1)) * 100, 0)}% hospitalizacji).
       {leaders.length ? <> Szpital jest w pierwszej trójce w Polsce w {leaders.length} {leaders.length === 1 ? "grupie" : "grupach"} JGP.</> : null}
     </p> : null}
-    {/* Legenda z liczbą hospitalizacji sekcji w roku karty; na słupkach litera sekcji i udział. */}
+    {/* Legenda: nazwy sekcji; na słupkach litera sekcji, udziały w dymku. */}
     <ShareLegend parts={[
-      ...order.map((letter, i) => ({ key: letter, label: label(letter), detail: `: ${integer(sections.get(letter)![yearIndex])}`, className: SECTION_CLASSES[i] })),
-      { key: "other", label: "pozostałe sekcje", detail: `: ${integer(total(yearIndex) - order.reduce((sum, letter) => sum + sections.get(letter)![yearIndex], 0))}`, className: styles.partOther },
+      ...order.map((letter, i) => ({ key: letter, label: label(letter), className: SECTION_CLASSES[i] })),
+      { key: "other", label: "pozostałe sekcje", className: styles.partOther },
     ]} />
     <ShareBars labels ariaLabel="Sekcje JGP w hospitalizacjach szpitala" rows={shownYears.map((y) => ({
       key: data.years[y], label: data.years[y], on: y === yearIndex,

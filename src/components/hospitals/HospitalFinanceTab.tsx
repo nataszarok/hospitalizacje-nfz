@@ -43,11 +43,6 @@ const FULL_SHARE = 5;
  */
 export function HospitalFinanceTab({ data, finance, yearIndex, onYear }: { data: HospitalPageData; finance: HospitalFinance; yearIndex: number; onYear: (year: string) => void }) {
   return <>
-    <p className={styles.intro}>
-      Zakładka odpowiada na pytania od ogółu do szczegółu: jak rósł ryczałt sieci szpitali na tle podobnych szpitali, ile NFZ płaci w latach,
-      za co płaci w wybranym roku, ile grup JGP idzie przez ryczałt, jak płaci za każdy oddział i które sekcje JGP dają najwięcej pieniędzy.
-      Kwoty to przychód szpitala z NFZ, nie zysk.
-    </p>
     {finance.lumpIndex ? <LumpIndexSection data={data} finance={finance} yearIndex={yearIndex} onYear={onYear} /> : null}
     <MoneySection data={data} finance={finance} yearIndex={yearIndex} onYear={onYear} />
     <PaySection data={data} finance={finance} yearIndex={yearIndex} />
