@@ -48,8 +48,8 @@ describe("Karta w zakładkach — nagłówek i Przegląd", () => {
     const { container } = renderCard();
     const kpis = container.querySelector('dl[aria-label="Liczby grupy"]')!;
     expect(kpis.children).toHaveLength(4);
-    expect(kpis).toHaveTextContent("Hospitalizacje 202530+100,0% r/r");
-    expect(kpis).toHaveTextContent("Kwota świadczeń NFZ 20251,2 mln zł+33,3% r/r");
+    expect(kpis).toHaveTextContent("Hospitalizacje 202530 hospitalizacji+100,0% r/r");
+    expect(kpis).toHaveTextContent("Kwota świadczeń NFZ 20251,2 mln zł z NFZ+33,3% r/r");
     expect(screen.getByText("cała Polska · kliknij województwo na mapie")).toBeInTheDocument();
   });
 
@@ -208,7 +208,7 @@ describe("Karta w zakładkach — wybór roku, opis i rodzina", () => {
     const { container } = renderCard();
     fireEvent.change(within(screen.getByRole("group", { name: "Rok karty" })).getByRole("combobox", { name: "Rok" }), { target: { value: "2024" } });
     expect(window.location.search).toBe("?rok=2024");
-    expect(container.querySelector('dl[aria-label="Liczby grupy"]')).toHaveTextContent("Hospitalizacje 202415");
+    expect(container.querySelector('dl[aria-label="Liczby grupy"]')).toHaveTextContent("Hospitalizacje 202415 hospitalizacji");
     fireEvent.click(screen.getByRole("tab", { name: /Ośrodki/ }));
     const rows = within(screen.getByRole("region", { name: /^Lista ośrodków/ })).getAllByRole("row").slice(1);
     // Kolumny: ośrodek (miejsce w kraju w drugiej linii), hospitalizacje w roku karty, …

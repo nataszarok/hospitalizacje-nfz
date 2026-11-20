@@ -44,7 +44,9 @@ describe("Karta szpitala", () => {
     expect(screen.getByRole("link", { name: "Szpitale" })).toHaveAttribute("href", "/szpitale");
     expect(screen.getByText(/sieć szpitali \(PSZ\): III stopnia/)).toBeInTheDocument();
     const kpis = within(document.querySelector<HTMLElement>('dl[aria-label="Liczby szpitala"]')!);
-    expect(kpis.getByText("Hospitalizacje 2025").nextSibling).toHaveTextContent("30");
+    expect(kpis.getByText("Hospitalizacje 2025").nextSibling).toHaveTextContent("30 hospitalizacji");
+    // Telefon: pasek faktów — słowo po liczbie (ukryte na szerokim ekranie, CardKpis).
+    expect(kpis.getByText("Łóżka szpitalne (stan 2026)").nextSibling).toHaveTextContent(/łóż(ko|ka|ek)$/);
     expect(kpis.getByText("+100,0% r/r")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /^Porównanie z podobnymi szpitalami/ })).toHaveAttribute("href", "/szpitale/eksplorator?hospital=16%7C111&hv=c");
   });
@@ -161,7 +163,7 @@ describe("Karta szpitala", () => {
     expect(parts.queryByText(/Poza oddziałami|Bez łóżek/)).not.toBeInTheDocument();
     // Nagłówek karty: te same łóżka i oddziały co boks „Leczenie szpitalne”.
     const kpis = within(document.querySelector<HTMLElement>('dl[aria-label="Liczby szpitala"]')!);
-    expect(kpis.getByText("Łóżka szpitalne (stan 2026)").parentElement).toHaveTextContent("732 oddziały");
+    expect(kpis.getByText("Łóżka szpitalne (stan 2026)").parentElement).toHaveTextContent("73 łóżka2 oddziały");
     const buildings = screen.getByRole("heading", { name: /Budynki i oddziały/ }).closest("section")!;
     // Budynek bez łóżek Polna 3 (punkt pobrań): ramka z paskiem miejsc bez łóżek. Budynki z łóżkami rysuje przeglądarka po pomiarze
     // szerokości (jsdom ma szerokość 0) — ich układ sprawdza hospitalStructure.test.ts.

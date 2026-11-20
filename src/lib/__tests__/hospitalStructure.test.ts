@@ -118,17 +118,22 @@ describe("rzut", () => {
     }
   });
 
-  it("telefon: każdy wiersz na całą szerokość, także resztka (wysokość co najmniej minLast)", () => {
+  it("jedna skala łóżek: to samo pole łóżka w każdym budynku, także w krótszej resztce", () => {
     const lines = layoutBuildings([{ beds: 140 }, { beds: 60 }, { beds: 50 }], 343);
     expect(lines.map((line) => line.length)).toEqual([2, 1]);
-    for (const line of lines) expect(Math.abs(line.reduce((sum, b) => sum + b.width, 0) + PLAN.buildingGap * (line.length - 1) - 342)).toBeLessThan(0.5);
+    const bedArea = (b: { width: number; height: number; building: { beds: number } }) => (b.width - 2 * PLAN.pad - 2) * (b.height - 2 * PLAN.pad) / b.building.beds;
+    const areas = lines.flat().map(bedArea);
+    for (const area of areas) expect(area).toBeCloseTo(areas[0], 6);
+    // Pełny wiersz na całą szerokość; resztka ma wysokość minLast i jest węższa.
+    expect(Math.abs(lines[0].reduce((sum, b) => sum + b.width, 0) + PLAN.buildingGap - 342)).toBeLessThan(0.5);
     expect(lines[1][0].height).toBe(PLAN.minLast + 2 * PLAN.pad);
+    expect(lines[1][0].width).toBeLessThan(342);
   });
 
-  it("jedyny mały budynek: wysokość co najmniej minLast, nadal na całą szerokość", () => {
+  it("jedyny mały budynek: wysokość minLast, szerokość ze skali łóżek", () => {
     const [[only]] = layoutBuildings([{ beds: 10 }], 343);
     expect(only.height).toBe(PLAN.minLast + 2 * PLAN.pad);
-    expect(Math.round(only.width)).toBe(342);
+    expect(only.width).toBeCloseTo(10 * PLAN.bedArea * 0.343 / PLAN.minLast + 2 * PLAN.pad + 2, 6);
   });
 
   it("lista innych miejsc: na rodzaj, z jednostkami i adresami", () => {

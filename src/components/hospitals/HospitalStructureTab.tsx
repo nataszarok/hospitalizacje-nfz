@@ -200,7 +200,7 @@ function PlanSection({ data, structure }: { data: HospitalPageData; structure: H
       <span className={styles.muted}>{STRUCTURE_PARTS.find((part) => part.key === group.part)!.label} · {group.label.split(" (")[0]}{isKidsWard(row[3]) ? " · dla dzieci" : ""}</span>
     </>;
   };
-  // Miejsca bez łóżek w budynku (poradnie, POZ, nocna pomoc…): jeden pasek u dołu ramki, poza skalą łóżek.
+  // Miejsca bez łóżek w budynku (poradnie, POZ, nocna pomoc…): linia w nagłówku ramki, poza skalą łóżek.
   const placesOf = (addr: number) => ({
     clinics: structure.clinics.filter((row) => row[0] === addr),
     other: structure.other.filter((row) => row[0] === addr),
@@ -229,9 +229,7 @@ function PlanSection({ data, structure }: { data: HospitalPageData; structure: H
       <span className={styles.muted}>Bez łóżek · {street}, {city}</span>
     </>;
     const label = parts.join(" · ");
-    return <button type="button" className={styles.band} aria-label={`Bez łóżek: ${label}`} {...handlers("Poradnie i miejsca bez łóżek", body)}>
-      <span>{label}</span>
-    </button>;
+    return <button type="button" className={styles.placesLine} aria-label={`Bez łóżek: ${label}`} {...handlers("Poradnie i miejsca bez łóżek", body)}>{label}</button>;
   };
   const header = (addr: number, names: string[], beds: number | null, w: number) => {
     const [street, city] = structure.addresses[addr];
@@ -239,17 +237,27 @@ function PlanSection({ data, structure }: { data: HospitalPageData; structure: H
     return <h3>
       <span className={styles.place} title={phone && full !== nameOf(full) ? full : undefined}>{nameOf(full) || street}</span>
       {/* Telefon (DESIGN.md 7.1b): łóżka w drugiej linii, ulica tylko w szerokim budynku; pełny adres w `title`. */}
-      {phone ? <small title={`${street}, ${city}`}>{beds !== null ? `${integer(beds)} łóżek` : city}{beds !== null && w >= 200 ? ` · ${street}` : ""}</small>
-        : <>{beds !== null ? <> <span className={styles.beds}>· {integer(beds)} łóżek</span></> : null}<small>{street}, {city}</small></>}
+      {/* Miejsca bez łóżek: szeroki ekran — trzecia linia; telefon — w drugiej linii zamiast ulicy (najwyżej 2 linie). */}
+      {phone ? <small className={styles.phoneLine} title={`${street}, ${city}`}>
+        <span>{beds !== null ? `${integer(beds)} łóżek` : city}{beds !== null && w >= 200 && !hasPlaces(addr) ? ` · ${street}` : ""}</span>
+        {hasPlaces(addr) ? <><span aria-hidden> · </span><Places addr={addr} /></> : null}
+      </small>
+        : <>{beds !== null ? <> <span className={styles.beds}>· {integer(beds)} łóżek</span></> : null}<small>{street}, {city}</small><Places addr={addr} /></>}
     </h3>;
   };
-  const hasClinics = structure.clinics.length > 0, hasOther = structure.other.length > 0;
+  // Wolne miejsce w ostatnim wierszu (krótsza resztka w skali łóżek) zajmują budynki bez łóżek, gdy każdy dostaje 140 px.
+  const last = lines.at(-1) ?? [];
+  const free = width - 1 - last.reduce((sum, item) => sum + item.width + PLAN.buildingGap, 0);
+  const placeInLast = placeOnly.length > 0 && last.length > 0 && free >= placeOnly.length * (140 + PLAN.buildingGap);
+  const placeFrame = (addr: number) => <div key={`p${addr}`} className={`${styles.building} ${styles.small}`}>
+    {header(addr, (structure.buildingSites[addr] ?? []).map((site) => structure.sites[site]), null, 0)}
+  </div>;
   return <section className={tabs.sec} aria-labelledby="s-rzut">
     <Head id="s-rzut" title="Budynki i oddziały" context="· wielkość według łóżek" helpLabel="Jak czytać budynki" help={[
       ["Ramka", "to budynek pod jednym adresem. Prostokąt w ramce to oddział albo inne miejsce z łóżkami: SOR, izba przyjęć, ZOL, hospicjum."],
-      ["Wielkość prostokąta", "odpowiada liczbie łóżek. Skala jest wspólna dla wszystkich budynków i szpitali, więc widać też, który budynek jest większy."],
+      ["Wielkość prostokąta", "odpowiada liczbie łóżek. Skala jest wspólna dla wszystkich budynków: 50 łóżek ma to samo pole w każdej ramce. Dlatego ostatni wiersz może być krótszy."],
       ["Kolor", "pokazuje rodzaj oddziału; oddziały jednego rodzaju stoją obok siebie. Błękity to leczenie szpitalne, szarości z zielenią — psychiatria, rehabilitacja i opieka długoterminowa. Kreskowanie: SOR, izba przyjęć, blok (nie oddziały). Oddział z pododdziałem (np. udarowym) ma dwa prostokąty."],
-      ["Pasek u dołu ramki", "to miejsca bez łóżek w tym budynku: poradnie specjalistyczne, gabinety lekarza rodzinnego (POZ), nocna pomoc, ratownictwo, dializy. Liczy je, ale nie zależy od skali łóżek. Budynek bez łóżek ma tylko pasek."],
+      ["Linia pod adresem", "— miejsca bez łóżek w tym budynku: poradnie specjalistyczne, gabinety lekarza rodzinnego (POZ), nocna pomoc, ratownictwo, dializy. Nie zajmują miejsca na rzucie. Budynek bez łóżek ma tylko nagłówek."],
       ["Brak podpisu", "— oddział jest za mały na nazwę. Dotknij go albo najedź kursorem."],
     ]} tools={<div className={base.segmented} role="group" aria-label="Kolor oddziałów">
       <button type="button" aria-pressed={mode === "group"} onClick={() => setMode("group")}>Rodzaj<span className={styles.long}> oddziału</span></button>
@@ -265,21 +273,18 @@ function PlanSection({ data, structure }: { data: HospitalPageData; structure: H
           ? [<li key="h" className={styles.legendHead}>{label}:</li>, ...groups.map((group) => <li key={group}><i style={{ background: swatch(group) }} />{STRUCTURE_GROUPS[group].short}</li>)]
           : <li key={key}><i style={{ background: swatch(groups[0]) }} />{groups.map((group) => STRUCTURE_GROUPS[group].short).join(", ")}</li>;
       })}
-      {hasClinics || hasOther ? <li><span className={styles.bandSample} aria-hidden />{hasClinics ? "poradnie" : ""}{hasClinics && hasOther ? ", " : ""}{hasOther ? "POZ, nocna pomoc i inne" : ""} — bez łóżek</li> : null}
     </ul>
     <div ref={container} className={styles.relative}><div ref={ref} className={styles.site}>
-      {lines.map((line, l) => <div key={l} className={styles.row}>
+      {lines.map((line, l) => <div key={l} className={styles.row} style={{ gridTemplateColumns: [...line.map((item) => `${item.width}px`), ...(l === lines.length - 1 && placeInLast ? placeOnly.map(() => "minmax(140px, 1fr)") : [])].join(" ") }}>
         {line.map(({ building, width: w, height: h0 }) => {
-          // Pasek miejsc bez łóżek ma stałą wysokość. Budynek bez paska w tym samym wierszu dostaje to miejsce na oddziały,
-          // więc ramki w wierszu mają równą wysokość i są pełne.
-          const h = h0 + (line.some((item) => hasPlaces(item.building.addr)) && !hasPlaces(building.addr) ? PLAN.band : 0);
+          const h = h0;
           const inner = { w: w - 2 * PLAN.pad - 2, h: h - 2 * PLAN.pad };
           const wings = GROUP_ORDER.map((group) => ({ group, rows: building.rows.filter((row) => groupOf(row[3], row[2]) === group).sort((a, b) => b[5] - a[5]) })).filter((wing) => wing.rows.length);
           const wingRects = squarifyRatio(wings.map((wing) => ({ ...wing, value: wing.rows.reduce((sum, row) => sum + row[5], 0) })), 0, 0, inner.w, inner.h, PLAN.wingRatio);
           const [street, city] = structure.addresses[building.addr];
           const siteBeds = new Map<string, number>();
           building.rows.forEach((row) => { const site = structure.sites[row[1]]; if (site) siteBeds.set(site, (siteBeds.get(site) ?? 0) + row[5]); });
-          return <div key={building.addr} className={styles.building} style={{ width: w }}>
+          return <div key={building.addr} className={styles.building}>
             {header(building.addr, [...siteBeds].sort((a, b) => b[1] - a[1]).map(([site]) => site), building.beds, w)}
             <svg width={inner.w + 2 * PLAN.pad} height={h} viewBox={`0 0 ${inner.w + 2 * PLAN.pad} ${h}`} role="img" aria-label={`Budynek ${street}, ${city}: ${integer(building.beds)} łóżek`}>
               <defs><pattern id="hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="7" height="7" fill={CHART_COLORS.backgroundMuted} /><line x1="0" y1="0" x2="0" y2="7" stroke={CHART_COLORS.borderStrong} strokeWidth="2.5" /></pattern></defs>
@@ -300,17 +305,12 @@ function PlanSection({ data, structure }: { data: HospitalPageData; structure: H
                 });
               })}
             </svg>
-            <Places addr={building.addr} />
           </div>;
         })}
+        {l === lines.length - 1 && placeInLast ? placeOnly.map(placeFrame) : null}
       </div>)}
-      {/* Budynki bez łóżek (poradnie, POZ, punkty): małe ramki, które razem wypełniają wiersz. */}
-      {placeOnly.length ? <div className={styles.placeRow}>
-        {placeOnly.map((addr) => <div key={addr} className={`${styles.building} ${styles.small}`}>
-          {header(addr, (structure.buildingSites[addr] ?? []).map((site) => structure.sites[site]), null, 0)}
-          <Places addr={addr} />
-        </div>)}
-      </div> : null}
+      {/* Budynki bez łóżek (poradnie, POZ, punkty): w wolnym miejscu ostatniego wiersza, a bez miejsca — w osobnym wierszu. */}
+      {placeOnly.length && !placeInLast ? <div className={styles.placeRow}>{placeOnly.map(placeFrame)}</div> : null}
     </div><DataTip tip={tip} phone={phone} container={container} onClose={close} /></div>
   </section>;
 }

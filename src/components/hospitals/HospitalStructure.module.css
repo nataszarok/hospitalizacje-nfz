@@ -147,16 +147,21 @@
   min-width: 0;
 }
 
+/* Wiersz: kolumny w pikselach ze skali łóżek (styl w komponencie); nagłówki w jednym rzędzie siatki (subgrid), więc rzuty
+   w wierszu zaczynają się na tej samej wysokości i ramki są równe. */
 .row {
-  display: flex;
-  gap: 12px;
+  display: grid;
+  grid-template-rows: auto auto;
+  column-gap: 12px;
 }
 
 /* Budynek: ramka z nagłówkiem w środku (nazwa, łóżka, adres) i rzutem pod nim; rzuty w wierszu wyrównane do dołu. */
 .building {
-  display: flex;
-  flex: none;
-  flex-direction: column;
+  display: grid;
+  grid-row: span 2;
+  grid-template-rows: subgrid;
+  /* Kolumna nie rośnie od długiej linii nagłówka: tekst kończy się „…”. */
+  grid-template-columns: minmax(0, 1fr);
   min-width: 0;
   border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-control);
@@ -217,44 +222,49 @@
 }
 
 /* Poradnie i inne miejsca bez łóżek: kwadrat na miejsce (pole nie zależy od łóżek), pod rzutem oddziałów budynku. */
-/* Pasek miejsc bez łóżek u dołu ramki (poradnie, POZ, nocna pomoc): stała wysokość (PLAN.band = 22 px + 6 px odstępu),
-   poza skalą łóżek; wygląd poradni z legendy (biały, obrys koloru danych). */
-.band {
-  display: flex;
-  align-items: center;
-  height: 22px;
-  margin: 0 6px 6px;
-  padding: 0 8px;
-  border: 1px solid var(--color-data);
-  border-radius: var(--radius-badge);
-  background: var(--color-background);
-  color: var(--color-text);
+/* Miejsca bez łóżek w nagłówku budynku: jedna linia, pełna lista w dymku (telefon: w arkuszu). */
+.placesLine {
+  display: block;
+  max-width: 100%;
+  margin: 2px 0 0;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  background: none;
+  color: var(--color-text-secondary);
   font: inherit;
-  font-size: var(--fs-xs);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-regular);
   text-align: left;
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   cursor: default;
 }
 
-.band span {
-  overflow: hidden;
-  text-overflow: ellipsis;
+/* Telefon: łóżki i miejsca bez łóżek w jednej linii; za długi tekst miejsc kończy się „…”. */
+.building h3 .phoneLine {
+  display: flex;
+  min-width: 0;
   white-space: nowrap;
 }
 
-.band:hover,
-.band:focus-visible {
-  box-shadow: 0 0 0 1px var(--color-data);
+.phoneLine > span {
+  flex: none;
+  white-space: pre;
 }
 
-.bandSample {
-  display: inline-block;
-  width: 18px;
-  height: 9px;
-  margin-right: 6px;
-  border: 1px solid var(--color-data);
-  border-radius: var(--radius-badge);
-  background: var(--color-background);
-  vertical-align: -1px;
+.phoneLine .placesLine {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  font-size: inherit;
+}
+
+.placesLine:hover,
+.placesLine:focus-visible {
+  color: var(--color-text);
 }
 
 .tipPara {
@@ -273,7 +283,7 @@
 }
 
 .building.small h3 {
-  padding-bottom: 6px;
+  padding-bottom: 8px;
 }
 
 .pointsTitle {

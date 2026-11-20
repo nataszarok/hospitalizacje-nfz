@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { GroupLineChart, type ChartLine } from "@/components/jgp/GroupLineChart";
+import { CardKpis } from "@/components/jgp/CardKpis";
 import { CardYears } from "@/components/jgp/CardYears";
 import { SectionHead } from "@/components/jgp/JgpTabbedCard";
 import { PeriodToggle } from "@/components/jgp/PeriodToggle";
@@ -150,12 +151,14 @@ function CardHeader({ data, yearIndex }: { data: HospitalPageData; yearIndex: nu
         <span><Link href={hospitalComparisonHref(owNfz, nip)}>Porównanie z podobnymi szpitalami →</Link></span>
       </p>
     </div>
-    <dl className={tabs.kpis} aria-label="Liczby szpitala">
-      <div><dt>Hospitalizacje {year}</dt><dd>{integer(hosp[yearIndex])}</dd><span>{change === null ? "pierwszy rok" : `${signedPct(change)} r/r`}</span></div>
-      <div><dt>Śmiertelność {year}</dt><dd>{latestRate === null ? "—" : `${decimal(latestRate, 2)}%`}</dd><span>{[latestRate !== null && previousRate !== null ? `${signedPp(latestRate - previousRate)} r/r` : null, network !== null ? `sieć PSZ ${decimal(network, 2)}%` : null].filter(Boolean).join(" · ")}</span></div>
-      <div><dt>Łóżka szpitalne (stan {data.rpwdlYear ?? "bieżący"})</dt><dd>{acute?.beds ? integer(acute.beds) : "—"}</dd><span>{acute?.wards ? `${acute.wards} ${plural(acute.wards, "oddział", "oddziały", "oddziałów")}` : "brak profilu w rejestrze"}</span></div>
-      <div><dt>Grupy JGP {year}</dt><dd>{integer(groups.length)}</dd><span>{leaders ? `${leaders} w pierwszej trójce w Polsce` : "z hospitalizacjami w roku"}</span></div>
-    </dl>
+    <CardKpis label="Liczby szpitala" items={[
+      { label: `Hospitalizacje ${year}`, value: integer(hosp[yearIndex]), unit: plural(hosp[yearIndex], "hospitalizacja", "hospitalizacje", "hospitalizacji"), note: change === null ? "pierwszy rok" : `${signedPct(change)} r/r` },
+      { label: `Śmiertelność ${year}`, value: latestRate === null ? "—" : `${decimal(latestRate, 2)}%`, unit: latestRate === null ? undefined : "zgonów",
+        note: [latestRate !== null && previousRate !== null ? `${signedPp(latestRate - previousRate)} r/r` : null, network !== null ? `sieć PSZ ${decimal(network, 2)}%` : null].filter(Boolean).join(" · ") },
+      { label: `Łóżka szpitalne (stan ${data.rpwdlYear ?? "bieżący"})`, value: acute?.beds ? integer(acute.beds) : "—", unit: acute?.beds ? plural(acute.beds, "łóżko", "łóżka", "łóżek") : undefined,
+        note: acute?.wards ? `${acute.wards} ${plural(acute.wards, "oddział", "oddziały", "oddziałów")}` : "brak profilu w rejestrze" },
+      { label: `Grupy JGP ${year}`, value: integer(groups.length), unit: plural(groups.length, "grupa JGP", "grupy JGP", "grup JGP"), note: leaders ? `${leaders} w pierwszej trójce w Polsce` : "z hospitalizacjami w roku" },
+    ]} />
   </header>;
 }
 

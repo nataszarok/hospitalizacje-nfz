@@ -89,6 +89,15 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Słowo po liczbie: tylko w pasku faktów na telefonie (`CardKpis`). */
+.kpiUnit {
+  display: none;
+  color: var(--color-text-secondary);
+  font-style: normal;
+  font-weight: var(--fw-regular);
+}
+
+
 /* Pasek zakładek zostaje pod nagłówkiem portalu (75 px) przy przewijaniu. */
 .tabbar {
   position: sticky;
@@ -988,4 +997,54 @@ ul.cornerLegend {
   flex: none;
   stroke: var(--color-text-tertiary);
   stroke-width: 1.2;
+}
+
+/* Telefon: nagłówek karty zajmuje mało miejsca, a pierwszy ekran pokazuje zakładki i treść. Tytuł mniejszy, liczby
+   w jednym pasku faktów („6871 hospitalizacji · 4,08% zgonów · …”) bez etykiet i bez zmian r/r — te są w zakładkach. */
+@media (max-width: 639px) {
+  .head {
+    gap: 10px;
+    margin: 8px 0 12px;
+  }
+
+  .title {
+    font-size: var(--fs-2xl);
+  }
+
+  .kpis {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px 0;
+    font-size: var(--fs-base);
+  }
+
+  .kpis > div {
+    display: block;
+    padding: 0;
+    border: 0;
+    background: none;
+    white-space: nowrap;
+  }
+
+  /* Separator na końcu pozycji: przy zawinięciu linia nie zaczyna się od „·”. */
+  .kpis > div:not(:last-child)::after {
+    content: "·";
+    margin: 0 8px;
+    color: var(--color-text-tertiary);
+  }
+
+  .kpis dt,
+  .kpis > div > span {
+    display: none;
+  }
+
+  .kpis dd {
+    display: inline;
+    font-size: var(--fs-base);
+    font-weight: var(--fw-semibold);
+  }
+
+  .kpiUnit {
+    display: inline;
+  }
 }

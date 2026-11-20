@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { GroupLineChart, type ChartLine } from "@/components/jgp/GroupLineChart";
 import { PeriodToggle } from "@/components/jgp/PeriodToggle";
+import { CardKpis } from "@/components/jgp/CardKpis";
 import { CardYears } from "@/components/jgp/CardYears";
 import { RegionMap, regionTitle } from "@/components/jgp/RegionMap";
 import { ChartExpand } from "@/components/portal/ChartExpand";
@@ -23,6 +24,7 @@ import {
   outlierCap, showsMortalityReference, topProvidersOfPeriod,
 } from "@/lib/jgpCard";
 import type { JgpPageData, JgpProviderRow } from "@/lib/jgpPage";
+import { plural } from "@/lib/jgpDescription";
 import { explorerHref } from "@/lib/portalLinks";
 import { nextSortState, sortTableRows, type SortState } from "@/lib/tableSort";
 import base from "./JgpPage.module.css";
@@ -258,12 +260,12 @@ function CardHeader({ data, regions, onClearRegion }: { data: JgpPageData; regio
           : <span>cała Polska · kliknij województwo na mapie</span>}
       </p>
     </div>
-    <dl className={styles.kpis} aria-label="Liczby grupy">
-      <div><dt>Hospitalizacje {data.year}</dt><dd>{integer(data.hospitalizations)}</dd><span>{change === null ? "pierwszy rok" : `${signedPct(change)} r/r`}</span></div>
-      <div><dt>Kwota świadczeń NFZ {data.year}</dt><dd>{value ? formatPln(value.value) : "—"}</dd><span>{value && valuePrevious ? `${signedPct(((value.value - valuePrevious.value) / valuePrevious.value) * 100)} r/r` : "brak poprzedniego roku"}</span></div>
-      <div><dt>Śmiertelność</dt><dd>{latestRate === null ? "—" : pct(latestRate, latestRate < 1 ? 2 : 1)}</dd><span>{latestRate !== null && previousRate !== null ? `${signedPp(latestRate - previousRate, latestRate < 1 ? 2 : 1)} r/r` : "zgony w szpitalu"}</span></div>
-      <div><dt>Ośrodki</dt><dd>{integer(data.providerCount)}</dd><span>{previousProviders === null ? "w roku danych" : `${data.providerCount - previousProviders >= 0 ? "+" : ""}${data.providerCount - previousProviders} r/r`}</span></div>
-    </dl>
+    <CardKpis label="Liczby grupy" items={[
+      { label: `Hospitalizacje ${data.year}`, value: integer(data.hospitalizations), unit: plural(data.hospitalizations, "hospitalizacja", "hospitalizacje", "hospitalizacji"), note: change === null ? "pierwszy rok" : `${signedPct(change)} r/r` },
+      { label: `Kwota świadczeń NFZ ${data.year}`, value: value ? formatPln(value.value) : "—", unit: value ? "z NFZ" : undefined, note: value && valuePrevious ? `${signedPct(((value.value - valuePrevious.value) / valuePrevious.value) * 100)} r/r` : "brak poprzedniego roku" },
+      { label: "Śmiertelność", value: latestRate === null ? "—" : pct(latestRate, latestRate < 1 ? 2 : 1), unit: latestRate === null ? undefined : "zgonów", note: latestRate !== null && previousRate !== null ? `${signedPp(latestRate - previousRate, latestRate < 1 ? 2 : 1)} r/r` : "zgony w szpitalu" },
+      { label: "Ośrodki", value: integer(data.providerCount), unit: plural(data.providerCount, "ośrodek", "ośrodki", "ośrodków"), note: previousProviders === null ? "w roku danych" : `${data.providerCount - previousProviders >= 0 ? "+" : ""}${data.providerCount - previousProviders} r/r` },
+    ]} />
   </header>;
 }
 

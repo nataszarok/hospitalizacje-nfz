@@ -312,14 +312,14 @@ export const squarifyRatio = <T extends { value: number }>(items: T[], x: number
   squarify(items, 0, 0, w / ratio, h).map((r) => ({ ...r, x: x + r.x * ratio, y: y + r.y, w: r.w * ratio }));
 
 /** Stałe rzutu (px): pole łóżka przy szerokości ≥ 1000 px, odstępy, wysokości wierszy, proporcje skrzydeł i oddziałów. */
-export const PLAN = { bedArea: 520, pad: 6, wingGap: 5, roomGap: 1.5, buildingGap: 12, minRow: 110, minLast: 64, roomRatio: 2.6, wingRatio: 1.6, band: 28 } as const;
+export const PLAN = { bedArea: 520, pad: 6, wingGap: 5, roomGap: 1.5, buildingGap: 12, minRow: 110, minLast: 64, roomRatio: 2.6, wingRatio: 1.6 } as const;
 
 export interface PlanBuilding<B> { building: B; width: number; height: number }
 
 /**
- * Wiersze budynków: każdy wiersz na całą szerokość, budynki w wierszu tej samej wysokości, szerokość według łóżek;
- * mały budynek dołącza do wiersza, dopóki wiersz nie ma `minRow`; każdy wiersz (także resztka) na całą szerokość. Ten sam układ na telefonie (nazwy krótkie, nie osobne
- * wiersze: budynek sam w wierszu byłby cienkim paskiem). Pole łóżka maleje z szerokością kontenera. Wymiary z ramką 1 px.
+ * Wiersze budynków w jednej skali: pole łóżka jest takie samo w każdym budynku (maleje tylko z szerokością kontenera).
+ * Budynki w wierszu mają tę samą wysokość, szerokość według łóżek; mały budynek dołącza do wiersza, dopóki wiersz nie ma
+ * `minRow` — pełny wiersz zajmuje całą szerokość. Ten sam układ na telefonie (nazwy krótkie). Wymiary z ramką 1 px.
  */
 export function layoutBuildings<B extends { beds: number }>(buildings: B[], width: number): PlanBuilding<B>[][] {
   const area = PLAN.bedArea * Math.min(1, width / 1000);
@@ -333,13 +333,11 @@ export function layoutBuildings<B extends { beds: number }>(buildings: B[], widt
   }
   if (current.length) rows.push(current);
   return rows.map((row) => {
-    // Każdy wiersz na całą szerokość. Resztka niższa niż `minLast` dostaje tę wysokość (cienki pasek byłby nieczytelny):
-    // wyjątek od wspólnej skali, pole jej budynków jest większe niż łóżka. Doklejona do wiersza wyżej dałaby na telefonie
-    // wąskie, wysokie kolumny.
+    // Jedna skala w całym rzucie: szerokość budynku = łóżka × pole łóżka / wysokość wiersza. Pełny wiersz zajmuje całą
+    // szerokość. Resztka (za niska na `minLast`) dostaje wysokość `minLast` i węższe budynki, więc może być krótsza niż kontener:
+    // skala łóżek ma pierwszeństwo przed pełną szerokością.
     const h = Math.max(PLAN.minLast, rowHeight(row));
-    // Szerokość z udziału łóżek w wierszu: suma szerokości + odstępy = kontener także przy wysokości `minLast`.
-    const sum = row.reduce((total, b) => total + b.beds, 0);
-    return row.map((building) => ({ building, height: h + 2 * PLAN.pad, width: inner(row.length) * building.beds / sum + 2 * PLAN.pad + 2 }));
+    return row.map((building) => ({ building, height: h + 2 * PLAN.pad, width: building.beds * area / h + 2 * PLAN.pad + 2 }));
   });
 }
 
