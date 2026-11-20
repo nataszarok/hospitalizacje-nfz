@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from "react";
 import { BottomSheet } from "@/components/BottomSheet";
 import { ChartTooltip, TooltipHead } from "@/components/ChartTooltip";
 import { HelpLines, InfoTip, INFO_TIP_PHONE_QUERY } from "@/components/InfoTip";
@@ -9,7 +9,7 @@ import { formatPln } from "@/lib/formatters";
 import { wardPaymentStatus, type HospitalPageData, type WardPaymentStatus } from "@/lib/hospitalPage";
 import {
   CONTRACT_BADGES, GROUP_ORDER, OTHER_KINDS, acuteSummary, PLAN, STRUCTURE_GROUPS, STRUCTURE_PARTS, clinicEntries, fieldsShown, groupOf, highlightParts, inset,
-  isKidsWard, isLightColor, layoutBuildings, matchesSearch, placeName, planName, roomLabel, searchWords, shortPlaceName, squarifyRatio,
+  isCompactBoxSet, isKidsWard, isLightColor, layoutBuildings, matchesSearch, placeName, planName, roomLabel, searchWords, shortPlaceName, squarifyRatio,
   otherEntries, wardEntries, type ContractPay, type HospitalStructure, type StructureBed, type StructureGroup, type StructurePart,
 } from "@/lib/hospitalStructure";
 import type { Box } from "@/lib/tooltipPosition";
@@ -81,6 +81,7 @@ function Head({ id, title, context, help, helpLabel, tools }: { id: string; titl
 
 function PartsSection({ structure }: { structure: HospitalStructure }) {
   const { container, handlers, tip, phone, close } = useDataTip();
+  const { ref: boxesRef, width: boxesWidth } = useWidth();
   const total = structure.beds.reduce((sum, row) => sum + row[5], 0);
   const manyBuildings = new Set(structure.beds.map((row) => row[0])).size > 1;
   const parts = STRUCTURE_PARTS.map(({ key, label }) => {
@@ -110,7 +111,8 @@ function PartsSection({ structure }: { structure: HospitalStructure }) {
       </div>
       <DataTip tip={tip} phone={phone} container={container} onClose={close} />
     </div>
-    <dl className={styles.boxes}>
+    {/* Boksy w jednej linii, a gdy boks byłby węższy niż 150 px — zwarta lista (DESIGN.md 7.1a). */}
+    <div ref={boxesRef}><dl className={`${styles.boxes} ${isCompactBoxSet(boxesWidth, parts.length + (out ? 1 : 0)) ? styles.compact : ""}`} style={{ "--boxes": parts.length + (out ? 1 : 0) } as CSSProperties}>
       {parts.map((part) => {
         const wards = part.rows.filter((row) => groupOf(row[3], row[2]) !== "support");
         // Leczenie szpitalne: te same liczby co nagłówek karty (`acuteSummary`).
@@ -133,7 +135,7 @@ function PartsSection({ structure }: { structure: HospitalStructure }) {
         <dd className={styles.val}><b>{integer(out.cells)}</b> {plural(out.cells, "poradnia", "poradnie", "poradni")}</dd>
         <dd className={styles.what}>{integer(out.fields)} {plural(out.fields, "dziedzina", "dziedziny", "dziedzin")} · w {integer(out.locations)} {plural(out.locations, "lokalizacji", "lokalizacjach", "lokalizacjach")}</dd>
       </div> : null}
-    </dl>
+    </dl></div>
   </section>;
 }
 

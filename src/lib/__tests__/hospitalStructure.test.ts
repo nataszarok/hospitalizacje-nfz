@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  buildHospitalStructure, clinicEntries, contractItems, contractPay, fieldsShown, groupOf, highlightParts, isKidsWard, layoutBuildings,
+  buildHospitalStructure, clinicEntries, isCompactBoxSet, BOX_MIN, contractItems, contractPay, fieldsShown, groupOf, highlightParts, isKidsWard, layoutBuildings,
   matchesSearch, otherEntries, PLAN, placeName, roomLabel, searchWords, shortPlaceName, squarifyRatio, wardEntries,
 } from "@/lib/hospitalStructure";
 import { contractsFixture } from "./fixtures/hospitalFinanceFixture";
@@ -104,6 +104,21 @@ describe("dane zakładki z pliku buildu", () => {
     expect(clinicEntries(structure).map((entry) => [entry.name, entry.count, entry.fields])).toEqual([
       ["Poradnia diabetologiczna", 1, ["Diabetologia"]], ["Poradnia kardiologiczna", 2, ["Kardiologia", "Kardiologia dziecięca"]],
     ]);
+  });
+});
+
+describe("zestaw boksów (DESIGN.md 7.1a)", () => {
+  it("jedna linia, dopóki boks ma co najmniej 150 px; węższy — zwarta lista", () => {
+    expect(BOX_MIN).toBe(150);
+    // 5 boksów: 5 × 150 + 4 × 10 = 790 px.
+    expect(isCompactBoxSet(790, 5)).toBe(false);
+    expect(isCompactBoxSet(789, 5)).toBe(true);
+    // 3 boksy: 470 px.
+    expect(isCompactBoxSet(470, 3)).toBe(false);
+    expect(isCompactBoxSet(469, 3)).toBe(true);
+    // Przed pomiarem (0) i jeden boks — zawsze jedna linia.
+    expect(isCompactBoxSet(0, 5)).toBe(false);
+    expect(isCompactBoxSet(100, 1)).toBe(false);
   });
 });
 

@@ -999,18 +999,9 @@ ul.cornerLegend {
   stroke-width: 1.2;
 }
 
-/* Telefon: nagłówek karty zajmuje mało miejsca, a pierwszy ekran pokazuje zakładki i treść. Tytuł mniejszy, liczby
-   w jednym pasku faktów („6871 hospitalizacji · 4,08% zgonów · …”) bez etykiet i bez zmian r/r — te są w zakładkach. */
-@media (max-width: 639px) {
-  .head {
-    gap: 10px;
-    margin: 8px 0 12px;
-  }
-
-  .title {
-    font-size: var(--fs-2xl);
-  }
-
+/* Poniżej 900 px tytuł i liczby stoją jeden pod drugim (.head w jednej kolumnie): liczby w jednym pasku faktów
+   („6871 hospitalizacji · 4,08% zgonów · …”, DESIGN.md 7.1a punkt 3) bez etykiet i bez zmian r/r — te są w zakładkach. */
+@media (max-width: 900px) {
   .kpis {
     display: flex;
     flex-wrap: wrap;
@@ -1046,5 +1037,17 @@ ul.cornerLegend {
 
   .kpiUnit {
     display: inline;
+  }
+}
+
+/* Telefon: mniejszy tytuł i odstępy — pierwszy ekran pokazuje zakładki i treść. */
+@media (max-width: 639px) {
+  .head {
+    gap: 10px;
+    margin: 8px 0 12px;
+  }
+
+  .title {
+    font-size: var(--fs-2xl);
   }
 }

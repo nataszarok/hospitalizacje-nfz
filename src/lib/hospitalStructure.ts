@@ -312,6 +312,14 @@ export const squarifyRatio = <T extends { value: number }>(items: T[], x: number
   squarify(items, 0, 0, w / ratio, h).map((r) => ({ ...r, x: x + r.x * ratio, y: y + r.y, w: r.w * ratio }));
 
 /** Stałe rzutu (px): pole łóżka przy szerokości ≥ 1000 px, odstępy, wysokości wierszy, proporcje skrzydeł i oddziałów. */
+/**
+ * Zestaw boksów (DESIGN.md 7.1a): jedna linia, dopóki każdy boks ma co najmniej `BOX_MIN` px; węższy — zwarta lista.
+ * `width` — szerokość kontenera; 0 (przed pomiarem) = jedna linia.
+ */
+export const BOX_MIN = 150;
+export const BOX_GAP = 10;
+export const isCompactBoxSet = (width: number, count: number) => width > 0 && count > 1 && width < count * BOX_MIN + (count - 1) * BOX_GAP;
+
 export const PLAN = { bedArea: 520, pad: 6, wingGap: 5, roomGap: 1.5, buildingGap: 12, minRow: 110, minLast: 64, roomRatio: 2.6, wingRatio: 1.6 } as const;
 
 export interface PlanBuilding<B> { building: B; width: number; height: number }
