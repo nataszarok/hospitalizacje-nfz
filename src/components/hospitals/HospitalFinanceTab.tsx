@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Fragment, useMemo, useState } from "react";
 import { SectionHead } from "@/components/jgp/JgpTabbedCard";
 import { Sparkline } from "@/components/jgp/JgpCatalog";
-import { HelpLines, InfoTip } from "@/components/InfoTip";
+import { CellTip } from "@/components/CellTip";
 import { CHART_COLORS } from "@/lib/chartPalette";
 import { formatPln, plnScale } from "@/lib/formatters";
 import {
@@ -77,7 +77,13 @@ function MoneySection({ data, finance, yearIndex, onYear }: SectionProps & { onY
     values: data.years.map((_, y) => groupSums(finance.plan, y)[group]),
   }));
   return <section className={tabs.sec} aria-labelledby="s-umowy">
-    <SectionHead id="s-umowy" question="Ile NFZ płaci szpitalowi?" context="Umowy z NFZ, wszystkie lata" tag="Lata" />
+    <SectionHead id="s-umowy" question="Ile NFZ płaci szpitalowi?" context="Umowy z NFZ, wszystkie lata" tag="Lata"
+      helpLabel="Skąd są kwoty umów" help={[
+        ["Umowy z NFZ", "— plan umów z aneksami (API NFZ „Umowy”), w czterech grupach według sposobu zapłaty."],
+        "Sieć szpitali (PSZ) działa od października 2017 r., dlatego w 2017 r. ryczałt jest mały.",
+        ["Przychody", "— sprawozdanie finansowe szpitala, gdy jest w danych."],
+        "Kliknięcie słupka zmienia rok karty; szczegóły roku są w następnej sekcji.",
+      ]} />
     {first >= 0 ? <p className={base.lead}>
       {last > first
         ? <>Od {data.years[first]} r. umowy z NFZ {totals[last] >= totals[first] ? "wzrosły" : "spadły"} z <b>{formatPln(totals[first])}</b> do <b>{formatPln(totals[last])}</b> ({decimal(totals[last] / totals[first])}×).</>
@@ -102,10 +108,6 @@ function MoneySection({ data, finance, yearIndex, onYear }: SectionProps & { onY
       {FINANCE_GROUPS.map((label, group) => <li key={label}><span className={`${base.swatch} ${GROUP_SWATCH[group]}`} aria-hidden />{label}</li>)}
       {reported.length ? <li><span className={`${base.swatch} ${styles.markerKey}`} aria-hidden />przychody ze sprawozdania</li> : null}
     </ul>
-    <p className={base.note}>
-      Plan umów z NFZ z aneksami (API NFZ „Umowy”). Sieć szpitali (PSZ) działa od października 2017 r., dlatego w 2017 r. ryczałt jest mały.
-      Kliknięcie słupka zmienia rok karty; szczegóły roku są w następnej sekcji.
-    </p>
   </section>;
 }
 
@@ -146,7 +148,14 @@ function LumpIndexSection({ data, finance, yearIndex, onYear }: SectionProps & {
     return <>{line.label}: <b>{Math.round(value)}</b>{i === 0 && amounts[y] ? ` · ${formatPln(amounts[y])}` : ""}{changeText(changes[i][y])}</>;
   });
   return <section className={tabs.sec} aria-labelledby="s-ryczalt-indeks">
-    <SectionHead id="s-ryczalt-indeks" question="Jak rósł ryczałt?" context={`Ryczałt sieci szpitali, ${index.baseYear} = 100, wobec szpitali ${levelName}`} tag="Lata" />
+    <SectionHead id="s-ryczalt-indeks" question="Jak rósł ryczałt?" context={`Ryczałt sieci szpitali, ${index.baseYear} = 100, wobec szpitali ${levelName}`} tag="Lata"
+      helpLabel="Jak liczymy indeks ryczałtu" help={[
+        ["Ryczałt", "— plan umowy z NFZ (API NFZ „Umowy”), pozycja „Ryczałt PSZ”."],
+        ["Baza", `— ${index.baseYear} r., pierwszy pełny rok sieci (w 2017 r. sieć działała od października).`],
+        ["Średnia", `— średnia indeksów szpitali z ryczałtem w ${index.baseYear} r.; każdy szpital waży tyle samo. Poziom sieci według bieżącego wykazu PSZ.`],
+        "W dymku: kwota ryczałtu szpitala i zmiana r/r każdej linii.",
+        "Spadek w 2021 r.: oddziały dziecięce wyjęte z ryczałtu (NFZ płaci za nie za każdy pobyt).",
+      ]} />
     {own !== null && mean !== null && yearIndex > from ? <p className={base.lead}>
       W {year} r. ryczałt szpitala to <b>{formatPln(index.ownValues[yearIndex])}</b>, czyli <b>{Math.round(own)}</b> ({index.baseYear} = 100): {own >= 100 ? "wzrost" : "spadek"} o {Math.abs(Math.round(own - 100))}%.
       Średnia {index.levelCount[yearIndex]} {index.levelCount[yearIndex] === 1 ? "szpitala" : "szpitali"} {levelName}: <b>{Math.round(mean)}</b>, czyli ryczałt szpitala wzrósł {paceText(own, mean, levelName)}.
@@ -161,11 +170,6 @@ function LumpIndexSection({ data, finance, yearIndex, onYear }: SectionProps & {
       years={years} selected={yearIndex - from} onYear={onYear} context={`Ryczałt PSZ, ${index.baseYear} = 100`} lines={lines} tooltipLines={tooltip}
       ariaLabel={`Wykres liniowy: ryczałt szpitala w latach (${index.baseYear} = 100) wobec średniej szpitali ${levelName} i całej sieci; kliknięcie roku zmienia rok karty`}
     />
-    <p className={base.note}>
-      Ryczałt: plan umowy z NFZ (API NFZ „Umowy”), pozycja „Ryczałt PSZ”. Baza: {index.baseYear} r., pierwszy pełny rok sieci (w 2017 r. sieć działała od października).
-      Średnia: średnia indeksów szpitali z ryczałtem w {index.baseYear} r. (każdy szpital waży tyle samo); poziom sieci według bieżącego wykazu PSZ.
-      W dymku: kwota ryczałtu szpitala i zmiana r/r każdej linii. Spadek w 2021 r.: oddziały dziecięce wyjęte z ryczałtu (NFZ płaci za nie za każdy pobyt).
-    </p>
   </section>;
 }
 
@@ -194,7 +198,15 @@ function PaySection({ data, finance, yearIndex }: SectionProps) {
   const notSettled = `rozliczenia grup JGP są od ${settledFrom} r.`;
   const settledCell = (group: FinanceGroup, value: number) => group >= 2 ? <span className={styles.na}>tylko plan</span> : !hasSettled ? <span className={styles.na}>od {settledFrom} r.</span> : value ? <b>{scale.format(value)}</b> : "—";
   return <section className={tabs.sec} aria-labelledby="s-za-co">
-    <SectionHead id="s-za-co" question="Za co płaci NFZ?" context={`Pozycje umowy w ${year} r.: plan, rozliczenie i limit`} tag="Rok" />
+    <SectionHead id="s-za-co" question="Za co płaci NFZ?" context={`Pozycje umowy w ${year} r.: plan, rozliczenie i limit`} tag="Rok"
+      helpLabel="Jak czytać pozycje umowy" help={[
+        ["Plan", "— API NFZ „Umowy” (kwota pozycji z aneksami)."],
+        ["Rozliczenie", "— zestawienie świadczeń NFZ. Obejmuje tylko grupy JGP, dlatego leki, SOR, chemioterapia i świadczenia poza leczeniem szpitalnym mają sam plan."],
+        ["Limit", "— stan według komunikatów NFZ i MZ. Gwiazdka (*): nie znaleźliśmy informacji o zniesieniu limitu."],
+        "Kliknięcie grupy rozwija jej pozycje; kliknięcie pozycji pokazuje pozycje planu i grupy JGP.",
+        "Pozycję umowy przypisujemy do grupy po kodzie produktu: ryczałt PSZ (03.0000.030.17), dopłaty (kody 999x), zakresy hospitalizacji (03.4xxx), programy lekowe, chemioterapia, SOR, poradnie (02.*), nocna opieka (01.*), rehabilitacja (05.*), transport (17.*).",
+        "Rozliczone grupy JGP w zakresie bez osobnej kwoty w planie to wartość sprawozdana w ryczałcie, nie przelew.",
+      ]} />
     <div className={styles.ways}>
       {way(0, "stała kwota za oddziały sieci, z dopłatami do wynagrodzeń.", hasSettled ? `grupy JGP wykazane w tych oddziałach: ${formatPln(settled[0])} (miara pracy, nie przelew).` : `${notSettled}.`, "więcej pobytów w tym roku nie daje więcej pieniędzy w tym roku.")}
       {way(1, "za każdy pobyt w zakresach wyjętych z ryczałtu.", hasSettled && plan[1] ? `rozliczono ${formatPln(settled[1])}, czyli ${pct((settled[1] / plan[1]) * 100)} planu.` : `${notSettled}.`, "więcej pacjentów = więcej pieniędzy; zaćma, endoprotezy, dzieci i onkologia bez limitu.")}
@@ -265,14 +277,6 @@ function PaySection({ data, finance, yearIndex }: SectionProps) {
         </tbody>
       </table>
     </div>
-    <p className={base.note}>
-      Plan: API NFZ „Umowy” (kwota pozycji z aneksami). Rozliczenie: zestawienie świadczeń NFZ — obejmuje tylko grupy JGP, dlatego leki, SOR, chemioterapia
-      i świadczenia poza leczeniem szpitalnym mają sam plan. Limit: stan według komunikatów NFZ i MZ; gwiazdka (*) = nie znaleźliśmy informacji o zniesieniu limitu.
-      Kliknięcie grupy rozwija jej pozycje; kliknięcie pozycji pokazuje pozycje planu i grupy JGP. <InfoTip ariaLabel="Jak dzielimy pozycje umowy" label={<HelpLines lines={[
-        "Pozycję umowy przypisujemy do grupy po kodzie produktu: ryczałt PSZ (03.0000.030.17), dopłaty (kody 999x), zakresy hospitalizacji (03.4xxx), programy lekowe, chemioterapia, SOR, poradnie (02.*), nocna opieka (01.*), rehabilitacja (05.*), transport (17.*).",
-        "Rozliczone grupy JGP w zakresie bez osobnej kwoty w planie to wartość sprawozdana w ryczałcie, nie przelew.",
-      ]} />} />
-    </p>
   </section>;
 }
 
@@ -292,10 +296,11 @@ function GroupChips({ data, chips, count }: { data: HospitalPageData; chips: Fin
 /** Pasek dwóch części i oba udziały słowami. */
 function PayShare({ paid, total }: { paid: number; total: number }) {
   const share = total ? (paid / total) * 100 : 0;
-  return <span title={payShareText(share)}>
-    <span className={styles.split} aria-hidden><i style={{ width: `${100 - share}%` }} /><i style={{ width: `${share}%` }} /></span>
-    <span className={styles.shareText}>{payShareText(share)}</span>
-  </span>;
+  // Telefon: sam pasek (tekst znika w wąskiej tabeli, DESIGN.md 7.1); dotknięcie otwiera arkusz z udziałami i kwotami.
+  return <CellTip title="Ryczałt / za wykonanie" lines={[payShareText(share), `Ryczałt: ${formatPln(total - paid)}`, `Za wykonanie: ${formatPln(paid)}`]}>
+    <span className={styles.split} role="img" aria-label={payShareText(share)}><i style={{ width: `${100 - share}%` }} /><i style={{ width: `${share}%` }} /></span>
+    <span className={styles.shareText} aria-hidden>{payShareText(share)}</span>
+  </CellTip>;
 }
 
 /** Komunikat dla roku bez rozliczeń grup JGP (zestawienie świadczeń jest od 2019 r.). */
@@ -315,7 +320,11 @@ function LumpSection({ data, finance, yearIndex, onYear }: SectionProps & { onYe
   const parts: StackPart[] = PAY_PARTS.map((part) => ({ ...part, values: splits.map((split) => split[part.key]) }));
   const share = (split: { lump: number; paid: number }) => (split.paid / (split.lump + split.paid || 1)) * 100;
   return <section className={tabs.sec} aria-labelledby="s-ryczalt">
-    <SectionHead id="s-ryczalt" question="Ile grup JGP idzie przez ryczałt?" context={`Rozliczenia grup JGP, ${years[0]}–${years.at(-1)}`} tag="Lata" />
+    <SectionHead id="s-ryczalt" question="Ile grup JGP idzie przez ryczałt?" context={`Rozliczenia grup JGP, ${years[0]}–${years.at(-1)}`} tag="Lata"
+      helpLabel="Jak dzielimy grupy JGP" help={[
+        ["Podział", "— kod zakresu przy każdej grupie w zestawieniu świadczeń NFZ. Zakres z osobną kwotą w planie umowy = za wykonanie, pozostałe zakresy = ryczałt."],
+        "Kliknięcie słupka zmienia rok karty.",
+      ]} />
     {current ? <p className={base.lead}>
       W {data.years[yearIndex]} r. szpital wykazał grupy JGP za <b>{formatPln(current.lump + current.paid)}</b>. W zakresach ryczałtowych: <b>{formatPln(current.lump)}</b> ({pct(100 - share(current))}) —
       to miara pracy, ryczałt płaci swoją stałą kwotę. Za wykonanie: <b>{formatPln(current.paid)}</b> ({pct(share(current))}).
@@ -329,7 +338,6 @@ function LumpSection({ data, finance, yearIndex, onYear }: SectionProps & { onYe
       <li><span className={`${base.swatch} ${styles.swatchStrong}`} aria-hidden />w zakresach ryczałtowych (wartość sprawozdana)</li>
       <li><span className={`${base.swatch} ${styles.swatchSoft}`} aria-hidden />za wykonanie (finansowane odrębnie)</li>
     </ul>
-    <p className={base.note}>Podział: kod zakresu przy każdej grupie w zestawieniu świadczeń NFZ. Zakres z osobną kwotą w planie umowy = za wykonanie, pozostałe zakresy = ryczałt. Kliknięcie słupka zmienia rok karty.</p>
   </section>;
 }
 
@@ -348,7 +356,13 @@ function WardPaySection({ data, finance, yearIndex }: SectionProps) {
   const example = rows.find((row) => paidShare(row) > FULL_SHARE && paidShare(row) < 100 - FULL_SHARE);
   const codesOf = (paid: boolean) => [...new Set(example?.scopes.filter((scope) => scope.paid === paid).flatMap((scope) => scope.chips.slice(0, 3).map(([code]) => code)))].slice(0, 4).join(", ");
   return <section className={tabs.sec} aria-labelledby="s-oddzialy-nfz">
-    <SectionHead id="s-oddzialy-nfz" question="Jak NFZ płaci za oddziały?" context={`Oddziały, zakresy i grupy JGP, ${year}`} tag="Rok" />
+    <SectionHead id="s-oddzialy-nfz" question="Jak NFZ płaci za oddziały?" context={`Oddziały, zakresy i grupy JGP, ${year}`} tag="Rok"
+      helpLabel="Jak czytać tabelę oddziałów" help={[
+        ["Podział", "— pasek: ciemna część to ryczałt, jasna — za wykonanie. Na telefonie dotknij paska, żeby zobaczyć udziały."],
+        ["R / W / obie", "— liczba grup JGP tylko w ryczałcie, tylko za wykonanie i w obu częściach oddziału."],
+        "Oddział łączy się z zakresem NFZ przez kod resortowy (03.4450.260.02 → 4450); nazwa i łóżka z rejestru RPWDL.",
+        "Oddziały bez rozliczeń grupami JGP (np. intensywna terapia) nie mają wiersza.",
+      ]} />
     {!rows.length ? <NoSettlements year={year} from={first === undefined ? null : data.years[first]} /> : <>
       <p className={base.lead}>
         W {year} r. grupy JGP z oddziałów to <b>{formatPln(total)}</b>. Co najmniej 95% w ryczałcie: <b>{lumpOnly.length}</b> {plural(lumpOnly.length, "oddział", "oddziały", "oddziałów")},
@@ -406,10 +420,6 @@ function WardPaySection({ data, finance, yearIndex }: SectionProps) {
         <li><span className={`${styles.chip} ${styles.chipBoth}`}>M13</span>ta sama grupa JGP w obu częściach oddziału</li>
       </ul>
     </>}
-    <p className={base.note}>
-      „R / W / obie”: liczba grup JGP tylko w ryczałcie, tylko za wykonanie i w obu częściach oddziału. Oddział łączy się z zakresem NFZ przez kod resortowy
-      (03.<b>4450</b>.260.02 → 4450); nazwa i łóżka z rejestru RPWDL. Oddziały bez rozliczeń grupami JGP (np. intensywna terapia) nie mają wiersza.
-    </p>
   </section>;
 }
 
@@ -434,7 +444,12 @@ function SectionsPaySection({ data, finance, yearIndex }: SectionProps) {
   const byIndex = rows.filter((row) => row.hospitalizations >= INDEX_MIN_HOSP).sort((a, b) => b.index - a.index);
   const mostlyPaid = rows.filter((row) => row.paid / (row.value || 1) >= 0.8).map((row) => row.letter);
   return <section className={tabs.sec} aria-labelledby="s-sekcje-nfz">
-    <SectionHead id="s-sekcje-nfz" question="Gdzie są pieniądze?" context={`Rozliczenia NFZ za grupy JGP według sekcji, ${year}`} tag="Rok" />
+    <SectionHead id="s-sekcje-nfz" question="Gdzie są pieniądze?" context={`Rozliczenia NFZ za grupy JGP według sekcji, ${year}`} tag="Rok"
+      helpLabel="Jak czytać kwoty sekcji" help={[
+        ["Kwota", "— rozliczenia NFZ za grupy JGP sekcji. To przychód, nie zysk: kosztów leczenia nikt nie publikuje."],
+        ["Pobyt wobec średniej", "— ile NFZ płaci za jeden pobyt w sekcji w porównaniu ze średnim pobytem w tym szpitalu (1,0× = średnio). Wynika z wyceny grup, długości pobytu i zabiegów."],
+        ["Ryczałt / za wykonanie", "— pasek: ciemna część to ryczałt, jasna — za wykonanie. Na telefonie dotknij paska, żeby zobaczyć udziały."],
+      ]} />
     {!rows.length ? <NoSettlements year={year} from={first === undefined ? null : data.years[first]} /> : <>
       <p className={base.lead}>
         Najwięcej pieniędzy daje <b>{lower(label(rows[0].letter))}</b>: {formatPln(rows[0].value)}, czyli {pct(rows[0].valueShare)} kwoty przy {pct(rows[0].hospShare)} pobytów.
@@ -472,10 +487,6 @@ function SectionsPaySection({ data, finance, yearIndex }: SectionProps) {
         </table>
       </div>
     </>}
-    <p className={base.note}>
-      Kwota: rozliczenia NFZ za grupy JGP sekcji. „Pobyt wobec średniej”: ile NFZ płaci za jeden pobyt w sekcji w porównaniu ze średnim pobytem w tym szpitalu
-      (1,0× = średnio); wynika z wyceny grup, długości pobytu i zabiegów. To przychód, nie zysk: kosztów leczenia nikt nie publikuje.
-    </p>
   </section>;
 }
 

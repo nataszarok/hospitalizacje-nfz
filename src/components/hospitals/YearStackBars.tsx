@@ -2,6 +2,7 @@
 
 import { useId, useRef, useState } from "react";
 import { ChartTooltip, TooltipHead, TooltipLines } from "@/components/ChartTooltip";
+import { PHONE_QUERY, useMediaQuery } from "@/lib/useMediaQuery";
 import { CHART_COLORS } from "@/lib/chartPalette";
 import { plnScale } from "@/lib/formatters";
 import { elementBox, type Box } from "@/lib/tooltipPosition";
@@ -44,6 +45,8 @@ export function YearStackBars({ years, parts, selected, onYear, marker, percentL
   const id = useId().replace(/:/g, "");
   const wrapRef = useRef<HTMLDivElement>(null);
   const [hover, setHover] = useState<{ y: number; anchor: Box } | null>(null);
+  // Telefon: dotknięcie słupka wybiera rok i otwiera arkusz z liczbami roku (DESIGN.md 6.3).
+  const phone = useMediaQuery(PHONE_QUERY) === true;
   const totals = years.map((_, y) => parts.reduce((sum, part) => sum + (part.values[y] ?? 0), 0));
   const { max, step: tickStep } = niceAxis(Math.max(...totals, ...(marker?.values ?? []).map((value) => value ?? 0)));
   const scale = plnScale([max]);
@@ -85,7 +88,7 @@ export function YearStackBars({ years, parts, selected, onYear, marker, percentL
           tabIndex={0}
           aria-label={label}
           aria-pressed={y === selected}
-          onClick={() => { setHover(null); onYear(year); }}
+          onClick={(event) => { onYear(year); if (phone) show(event.currentTarget.querySelector("[data-bar]") ?? event.currentTarget); else setHover(null); }}
           onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onYear(year); } }}
           onMouseEnter={(event) => show(event.currentTarget.querySelector("[data-bar]") ?? event.currentTarget)}
           onFocus={(event) => show(event.currentTarget.querySelector("[data-bar]") ?? event.currentTarget)}
@@ -112,7 +115,7 @@ export function YearStackBars({ years, parts, selected, onYear, marker, percentL
         </g>;
       })}
     </svg>
-    {hover ? <ChartTooltip anchor={hover.anchor} container={wrapRef} kind="bar">
+    {hover ? <ChartTooltip anchor={hover.anchor} container={wrapRef} kind="bar" onClose={() => setHover(null)}>
       <TooltipHead title={years[hover.y]} context={context} />
       <TooltipLines lines={lines(hover.y)} />
     </ChartTooltip> : null}

@@ -12,7 +12,7 @@ button.tabSoon[aria-disabled="true"] {
 .part2 { background: var(--color-data-soft); }
 .part3 { background: var(--color-data-muted); }
 .part4 { background: var(--color-data-faint); }
-.partOther { background: var(--color-border); }
+.partOther { background: var(--color-data-neutral-faint); }
 
 /* Klucz linii wykresu „Ile?”: szpital (ciągła) i Polska (kropkowana, odniesienie). */
 .lineKey {

@@ -379,3 +379,16 @@
   fill: var(--color-text);
 }
 
+
+/* Telefon (DESIGN.md 7.1b): przełącznik w jednej linii — etykiety bez łamania, węższe przyciski i mniejszy tekst. */
+@media (max-width: 639px) {
+  .segmented {
+    max-width: 100%;
+  }
+
+  .segmented button {
+    padding: 6px 7px;
+    font-size: var(--fs-base);
+    white-space: nowrap;
+  }
+}

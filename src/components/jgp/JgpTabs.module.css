@@ -1050,4 +1050,20 @@ ul.cornerLegend {
   .title {
     font-size: var(--fs-2xl);
   }
+
+  /* Nagłówek sekcji (DESIGN.md 7.1b.1): tytuł i „?” w jednej linii; dopisek i etykieta zakresu są w objaśnieniu „?”. */
+  .secHead .ctx,
+  .secHead .tag {
+    display: none;
+  }
+
+  .secTitle {
+    font-size: var(--fs-lg);
+  }
+
+  /* Słupki 100%: na telefonie udziały w arkuszu od dołu (`ShareBars`), nie w dymku przy wierszu. */
+  .admRow .admTip,
+  .admRow:hover .admTip {
+    display: none;
+  }
 }

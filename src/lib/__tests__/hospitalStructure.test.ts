@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildHospitalStructure, clinicEntries, isCompactBoxSet, BOX_MIN, contractItems, contractPay, fieldsShown, groupOf, highlightParts, isKidsWard, layoutBuildings,
-  matchesSearch, otherEntries, PLAN, placeName, roomLabel, searchWords, shortPlaceName, squarifyRatio, wardEntries,
+  matchesSearch, mergeOtherNames, otherEntries, PLAN, placeName, placeOnlyNames, roomLabel, searchWords, shortPlaceName, squarifyRatio, wardEntries,
 } from "@/lib/hospitalStructure";
 import { contractsFixture } from "./fixtures/hospitalFinanceFixture";
 import { structureFixture } from "./fixtures/hospitalPageFixture";
@@ -190,5 +190,23 @@ describe("wyszukiwarka", () => {
   it("podświetlenie w oryginalnym tekście; dziedziny z trafieniem na początku", () => {
     expect(highlightParts("Poradnia kardiologiczna", searchWords("kardio"))).toEqual([["Poradnia ", false], ["kardio", true], ["logiczna", false]]);
     expect(fieldsShown(["Alergologia", "Kardiologia", "Neurologia"], searchWords("kardio"), 2)).toEqual({ shown: ["Kardiologia", "Alergologia"], rest: ["Neurologia"] });
+  });
+});
+
+describe("miejsca bez łóżek: nazwy", () => {
+  it("łączy nazwy „Inne” różniące się wielkością liter, zostawia zapis zdaniowy", () => {
+    const merged = mergeOtherNames([[3, "misc", "Punkt pobrań materiałów do badań", 0], [5, "misc", "Punkt Pobrań  Materiałów do Badań", 0], [1, "poz", "Gabinet POZ", 0]]);
+    expect(merged.map((row) => row[2])).toEqual(["Punkt pobrań materiałów do badań", "Punkt pobrań materiałów do badań", "Gabinet POZ"]);
+    const entries = otherEntries({ addresses: [["A 1", "Gdańsk"], ["B 2", "Gdańsk"], ["C 3", "Gdańsk"], ["D 4", "Gdańsk"], ["E 5", "Gdańsk"], ["F 6", "Gdynia"]], other: merged });
+    expect(entries.find((entry) => entry.kind === "misc")).toMatchObject({ name: "Punkt pobrań materiałów do badań", count: 2 });
+  });
+
+  it("budynek „Poradnie” bez poradni i POZ nazywa według zawartości", () => {
+    const structure = { sites: ["UCK – Poradnie", "Przychodnia Rejonowa"], buildingSites: { 0: [0], 1: [1], 2: [0] }, clinics: [[2, "1100", []]] as [number, string, number[]][],
+      other: [[0, "misc", "Punkt pobrań", 0], [1, "poz", "Gabinet POZ", 0], [2, "misc", "Punkt szczepień", 0]] as [number, "misc" | "poz", string, number][] };
+    expect(placeOnlyNames(structure, 0)).toEqual(["Punkt pobrań"]);
+    // POZ albo poradnia w budynku: nazwa placówki zostaje.
+    expect(placeOnlyNames(structure, 1)).toEqual(["Przychodnia Rejonowa"]);
+    expect(placeOnlyNames(structure, 2)).toEqual(["UCK – Poradnie"]);
   });
 });

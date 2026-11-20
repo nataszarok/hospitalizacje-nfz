@@ -2,12 +2,12 @@
 
 import { ActionIcon, Popover } from "@mantine/core";
 import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from "react";
-import { useMediaQuery } from "@/lib/useMediaQuery";
+import { PHONE_QUERY, useMediaQuery } from "@/lib/useMediaQuery";
 import { BottomSheet } from "./BottomSheet";
 import styles from "./InfoTip.module.css";
 
 /** Telefon: objaśnienie jako arkusz od dołu (DESIGN.md 6.3, „Dymek objaśnienia”). */
-export const INFO_TIP_PHONE_QUERY = "(max-width: 639px)";
+export const INFO_TIP_PHONE_QUERY = PHONE_QUERY;
 /** Opóźnienie otwarcia po najechaniu i zamknięcia po zjechaniu (ms): przejście kursora z ikony do dymka nie zamyka dymka. */
 const OPEN_DELAY = 150;
 const CLOSE_DELAY = 120;

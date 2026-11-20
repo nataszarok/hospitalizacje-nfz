@@ -172,6 +172,36 @@ export function placeName(names: string[], city: string): string {
   return list.join(" · ");
 }
 
+/**
+ * Jedna nazwa miejsca „Inne” w szpitalu: rejestr zapisuje to samo miejsce różnie („Punkt pobrań materiałów do badań”,
+ * „Punkt Pobrań Materiałów do Badań”). Nazwy równe bez wielkości liter i nadmiarowych spacji łączymy; zostaje zapis
+ * z najmniejszą liczbą wielkich liter (zwykle zapis zdaniowy).
+ */
+export function mergeOtherNames(other: StructureOther[]): StructureOther[] {
+  const key = (name: string) => name.replace(/\s+/g, " ").trim().toLowerCase();
+  const capitals = (name: string) => [...name].filter((ch) => ch !== ch.toLowerCase()).length;
+  const best = new Map<string, string>();
+  for (const [, kind, name] of other) {
+    if (kind !== "misc") continue;
+    const clean = name.replace(/\s+/g, " ").trim(), known = best.get(key(name));
+    if (known === undefined || capitals(clean) < capitals(known)) best.set(key(name), clean);
+  }
+  return other.map((row) => row[1] === "misc" ? [row[0], row[1], best.get(key(row[2]))!, row[3]] : row);
+}
+
+/**
+ * Nazwa budynku bez łóżek. Zwykle nazwa placówki z rejestru. Gdy placówka nazywa się przychodnią, poradnią albo
+ * ambulatorium, a w budynku nie ma poradni ani POZ (np. tylko punkt pobrań — UCK, Kilińskiego 4), nazwa placówki
+ * myli: budynek nazywamy według tego, co w nim jest (nazwy miejsc „Inne”, rodzaje miejsc), najwyżej 2 nazwy.
+ */
+export function placeOnlyNames(structure: Pick<HospitalStructure, "clinics" | "other" | "sites" | "buildingSites">, addr: number): string[] {
+  const sites = (structure.buildingSites[addr] ?? []).map((site) => structure.sites[site]);
+  const other = structure.other.filter((row) => row[0] === addr);
+  const outpatient = structure.clinics.some((row) => row[0] === addr) || other.some((row) => row[1] === "poz" || row[1] === "npl");
+  if (outpatient || !other.length || !sites.some((site) => /poradni|przychodni|ambulatori/i.test(site))) return sites;
+  return [...new Set(other.map((row) => row[1] === "misc" ? row[2] : OTHER_KINDS[row[1]].label))].slice(0, 2);
+}
+
 /** Słownik skrótów nazw placówek (telefon, DESIGN.md 7.1b). */
 export const PLACE_ABBREVIATIONS: [long: string, short: string][] = [
   ["Zakład Opiekuńczo-Leczniczy", "ZOL"], ["Zakład Pielęgnacyjno-Opiekuńczy", "ZPO"], ["Szpitalny Oddział Ratunkowy", "SOR"],
@@ -267,7 +297,7 @@ export function buildHospitalStructure(
   }
   const out = profile?.outpatient, reg = profile?.registry;
   return {
-    addresses: raw.addr, sites: sites.list(), fields: fields.list(), names, beds, clinics, other: raw.other ?? [], buildingSites, pay,
+    addresses: raw.addr, sites: sites.list(), fields: fields.list(), names, beds, clinics, other: mergeOtherNames(raw.other ?? []), buildingSites, pay,
     outpatient: out?.cell_count ? { cells: out.cell_count, fields: out.field_count ?? 0, locations: out.location_count ?? 0 } : null,
     registry: reg?.location_count ? { locations: reg.location_count, cities: reg.city_count ?? 0 } : null,
   };

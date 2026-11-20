@@ -2,6 +2,7 @@
 
 import { useRef, useState, type ReactNode } from "react";
 import { ChartTooltip, TooltipHead, TooltipLines } from "@/components/ChartTooltip";
+import { PHONE_QUERY, useMediaQuery } from "@/lib/useMediaQuery";
 import { CHART_COLORS } from "@/lib/chartPalette";
 import { elementBox, type Box } from "@/lib/tooltipPosition";
 import styles from "./HospitalFinance.module.css";
@@ -37,6 +38,8 @@ export function YearIndexChart({ years, lines, selected, onYear, ariaLabel, cont
 }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const [hover, setHover] = useState<{ y: number; anchor: Box } | null>(null);
+  // Telefon: dotknięcie roku wybiera rok i otwiera arkusz z liczbami roku (DESIGN.md 6.3).
+  const phone = useMediaQuery(PHONE_QUERY) === true;
   const { min, max } = indexAxis(lines.flatMap((line) => line.values.filter((value): value is number => value !== null)));
   const innerWidth = WIDTH - MARGIN.left - MARGIN.right;
   const innerHeight = height - MARGIN.top - MARGIN.bottom;
@@ -70,7 +73,7 @@ export function YearIndexChart({ years, lines, selected, onYear, ariaLabel, cont
         tabIndex={0}
         aria-label={`${year}: ${describe(y)}`}
         aria-pressed={y === selected}
-        onClick={() => { setHover(null); onYear(year); }}
+        onClick={(event) => { onYear(year); setHover(phone ? { y, anchor: elementBox(event.currentTarget.querySelector("[data-anchor]") ?? event.currentTarget) } : null); }}
         onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onYear(year); } }}
         onMouseEnter={(event) => setHover({ y, anchor: elementBox(event.currentTarget.querySelector("[data-anchor]") ?? event.currentTarget) })}
         onFocus={(event) => setHover({ y, anchor: elementBox(event.currentTarget.querySelector("[data-anchor]") ?? event.currentTarget) })}
@@ -81,7 +84,7 @@ export function YearIndexChart({ years, lines, selected, onYear, ariaLabel, cont
         <text x={xOf(y)} y={height - 8} className={y === selected ? styles.tickOn : styles.tickX}>{year}</text>
       </g>)}
     </svg>
-    {hover ? <ChartTooltip anchor={hover.anchor} container={wrapRef}>
+    {hover ? <ChartTooltip anchor={hover.anchor} container={wrapRef} onClose={() => setHover(null)}>
       <TooltipHead title={years[hover.y]} context={context} />
       <TooltipLines lines={tooltipLines?.(hover.y) ?? lines.map((line) => <>{line.label}: <b>{line.values[hover.y] === null ? "brak" : integer(line.values[hover.y]!)}</b></>)} />
     </ChartTooltip> : null}

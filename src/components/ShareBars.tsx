@@ -1,3 +1,8 @@
+"use client";
+
+import { useState } from "react";
+import { BottomSheet } from "@/components/BottomSheet";
+import { PHONE_QUERY, useMediaQuery } from "@/lib/useMediaQuery";
 import base from "@/components/jgp/JgpPage.module.css";
 import styles from "@/components/jgp/JgpTabs.module.css";
 import own from "./ShareBars.module.css";
@@ -15,38 +20,55 @@ export const MIN_LABEL_SHARE = 6;
 /** Wiersz: etykieta (np. rok), części i czy wiersz jest wybrany (rok karty). */
 export interface ShareRow { key: string; label: string; parts: SharePart[]; on?: boolean }
 
-/** Legenda części słupków (kolor + nazwa); klasy kolorów jak w słupkach. */
-export function ShareLegend({ parts }: { parts: Pick<SharePart, "key" | "label" | "className">[] }) {
-  return <ul className={base.legend} aria-label="Legenda">
-    {parts.map((part) => <li key={part.key}><span className={`${base.swatch} ${part.className}`} aria-hidden />{part.label}</li>)}
+/**
+ * Legenda części słupków (kolor + nazwa); klasy kolorów jak w słupkach. `detail` (np. „: 14 316”) znika na telefonie
+ * (DESIGN.md 7.1b): pozycje stoją obok siebie, liczby są w arkuszu słupka.
+ */
+export function ShareLegend({ parts }: { parts: (Pick<SharePart, "key" | "label" | "className"> & { detail?: string })[] }) {
+  return <ul className={`${base.legend} ${own.legend}`} aria-label="Legenda">
+    {parts.map((part) => <li key={part.key}><span className={`${base.swatch} ${part.className}`} aria-hidden />{part.label}{part.detail ? <span className={own.detail}>{part.detail}</span> : null}</li>)}
   </ul>;
 }
 
 /**
  * Słupki 100% w wierszach (np. tryb przyjęcia albo długość pobytu w latach). Same słupki; udziały w podpowiedzi
- * po najechaniu albo fokusie klawiatury (Tab). Wybrany wiersz ma tło jak wybrany rok na wykresach.
+ * po najechaniu albo fokusie klawiatury (Tab). Telefon: dotknięcie wiersza otwiera arkusz od dołu z udziałami
+ * (DESIGN.md 6.3). Wybrany wiersz ma tło jak wybrany rok na wykresach.
  */
 export function ShareBars({ rows, ariaLabel, labels = false }: { rows: ShareRow[]; ariaLabel: string; labels?: boolean }) {
-  return <ul className={styles.admRows} aria-label={ariaLabel}>
-    {rows.map((row) => {
-      const total = row.parts.reduce((sum, part) => sum + part.value, 0);
-      const share = (value: number) => total ? (value / total) * 100 : 0;
-      const label = `${row.label}: ${row.parts.map((part) => `${part.label} ${pct(share(part.value))}`).join(", ")}`;
-      return <li key={row.key} className={`${styles.admRow} ${row.on ? styles.admRowOn : ""}`} tabIndex={0} aria-label={label}>
-        <span className={styles.admYear} aria-hidden>{row.label}</span>
-        <span className={`${styles.admBar} ${labels ? own.tall : ""}`} aria-hidden>
-          {row.parts.map((part) => {
-            if (!part.value) return null;
-            const value = share(part.value);
-            const text = labels && value >= MIN_LABEL_SHARE ? part.short ?? null : null;
-            return <span key={part.key} className={`${base.segment} ${part.className} ${labels ? own.label : ""} ${part.dark ? own.onDark : ""}`} style={{ width: `${value}%` }}>{text}</span>;
-          })}
-        </span>
-        <span className={styles.admTip} role="tooltip" aria-hidden>
-          <b>{row.label}</b>
-          {row.parts.map((part) => <span key={part.key}><i className={part.className} />{part.label} {pct(share(part.value))}</span>)}
-        </span>
-      </li>;
-    })}
-  </ul>;
+  const phone = useMediaQuery(PHONE_QUERY) === true;
+  const [sheet, setSheet] = useState<string | null>(null);
+  const shares = (row: ShareRow) => {
+    const total = row.parts.reduce((sum, part) => sum + part.value, 0);
+    return (value: number) => total ? (value / total) * 100 : 0;
+  };
+  const open = rows.find((row) => row.key === sheet);
+  return <>
+    <ul className={styles.admRows} aria-label={ariaLabel}>
+      {rows.map((row) => {
+        const share = shares(row);
+        const label = `${row.label}: ${row.parts.map((part) => `${part.label} ${pct(share(part.value))}`).join(", ")}`;
+        return <li key={row.key} className={`${styles.admRow} ${row.on ? styles.admRowOn : ""}`} tabIndex={0} aria-label={label} onClick={phone ? () => setSheet(row.key) : undefined}>
+          <span className={styles.admYear} aria-hidden>{row.label}</span>
+          <span className={`${styles.admBar} ${labels ? own.tall : ""}`} aria-hidden>
+            {row.parts.map((part) => {
+              if (!part.value) return null;
+              const value = share(part.value);
+              const text = labels && value >= MIN_LABEL_SHARE ? part.short ?? null : null;
+              return <span key={part.key} className={`${base.segment} ${part.className} ${labels ? own.label : ""} ${part.dark ? own.onDark : ""}`} style={{ width: `${value}%` }}>{text}</span>;
+            })}
+          </span>
+          <span className={styles.admTip} role="tooltip" aria-hidden>
+            <b>{row.label}</b>
+            {row.parts.map((part) => <span key={part.key}><i className={part.className} />{part.label} {pct(share(part.value))}</span>)}
+          </span>
+        </li>;
+      })}
+    </ul>
+    {phone && open ? <BottomSheet title={open.label} onClose={() => setSheet(null)}>
+      <ul className={own.sheetList}>
+        {open.parts.map((part) => <li key={part.key}><i className={`${base.swatch} ${part.className}`} aria-hidden />{part.label}<b>{pct(shares(open)(part.value))}</b></li>)}
+      </ul>
+    </BottomSheet> : null}
+  </>;
 }

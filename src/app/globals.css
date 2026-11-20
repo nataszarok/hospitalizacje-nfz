@@ -114,6 +114,8 @@ td:nth-child(6), td:nth-child(7), td:nth-child(8) { white-space:nowrap; }
 @container (max-width: 639px) {
   .priority-table .col-p2 { display:none; }
   .priority-table table :is(th, td) { padding-inline:6px; overflow-wrap:anywhere; }
+  /* Nagłówek kolumny łamie się tylko na spacjach („Hosp.”, nie „Ho / sp.”): kolumna jest co najmniej tak szeroka jak najdłuższe słowo. */
+  .priority-table thead th { overflow-wrap:normal; }
 }
 /* Niższa niż ekran: strona w trakcie ładowania nie przewija się, więc po załadowaniu przeglądarka nie przesuwa jej w dół (scroll anchoring). */
 .center-state { min-height:60vh; display:grid; place-items:center; color:var(--color-text-tertiary); }

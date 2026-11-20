@@ -89,7 +89,7 @@
   padding: 10px 14px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-card);
-  background: #fff;
+  background: var(--color-background);
 }
 
 .facts dt {
@@ -125,7 +125,7 @@
   padding: 12px 14px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-card);
-  background: #fff;
+  background: var(--color-background);
   font-size: var(--fs-sm);
   line-height: 1.45;
 }
@@ -242,7 +242,7 @@
 }
 
 .limit-fix { background: var(--color-data-faint); color: var(--color-data-strong); }
-.limit-free { background: #E3F1E8; color: var(--color-positive); }
+.limit-free { background: var(--color-primary-soft); color: var(--color-positive); }
 .limit-part { border: 1px solid var(--color-positive); color: var(--color-positive); }
 .limit-contract { background: var(--color-background-muted); color: var(--color-text-secondary); }
 
@@ -279,7 +279,7 @@
   padding: 0 6px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-badge);
-  background: #fff;
+  background: var(--color-background);
   color: var(--color-primary);
   font-size: var(--fs-xs);
   font-weight: var(--fw-semibold);
@@ -343,7 +343,7 @@
   padding: 12px 16px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-card);
-  background: #fff;
+  background: var(--color-background);
 }
 
 .explain summary {
@@ -403,4 +403,23 @@
 /* Klucz linii „średnia całej sieci”: przerywana, jaśniejsza niż średnia poziomu. */
 .keyDash {
   border-top: 1.5px dashed var(--color-border-strong) !important;
+}
+
+/* Wąska tabela (DESIGN.md 7.1): w kolumnie podziału sam pasek (udziały w arkuszu `CellTip`), opis pozycji w 2 liniach. */
+@container (max-width: 639px) {
+  .shareText {
+    display: none;
+  }
+
+  .split {
+    width: 48px;
+    margin-right: 0;
+  }
+
+  .indent .small {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
 }

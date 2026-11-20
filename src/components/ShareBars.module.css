@@ -19,3 +19,34 @@
 .onDark {
   color: #fff;
 }
+
+/* Arkusz na telefonie: część, udział do prawej. */
+.sheetList {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.sheetList li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sheetList b {
+  margin-left: auto;
+}
+
+@media (max-width: 639px) {
+  .legend {
+    gap: 4px 12px;
+    padding-inline: 0;
+  }
+
+  .detail {
+    display: none;
+  }
+}

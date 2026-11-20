@@ -10,7 +10,7 @@ import { wardPaymentStatus, type HospitalPageData, type WardPaymentStatus } from
 import {
   CONTRACT_BADGES, GROUP_ORDER, OTHER_KINDS, acuteSummary, PLAN, STRUCTURE_GROUPS, STRUCTURE_PARTS, clinicEntries, fieldsShown, groupOf, highlightParts, inset,
   isCompactBoxSet, isKidsWard, isLightColor, layoutBuildings, matchesSearch, placeName, planName, roomLabel, searchWords, shortPlaceName, squarifyRatio,
-  otherEntries, wardEntries, type ContractPay, type HospitalStructure, type StructureBed, type StructureGroup, type StructurePart,
+  otherEntries, placeOnlyNames, wardEntries, type ContractPay, type HospitalStructure, type StructureBed, type StructureGroup, type StructurePart,
 } from "@/lib/hospitalStructure";
 import type { Box } from "@/lib/tooltipPosition";
 import { plural } from "@/lib/jgpDescription";
@@ -46,9 +46,10 @@ function useDataTip() {
 
 function DataTip({ tip, phone, container, onClose }: { tip: Tip | null; phone: boolean; container: RefObject<HTMLDivElement | null>; onClose: () => void }) {
   if (!tip) return null;
-  return phone
-    ? <BottomSheet title={tip.title} onClose={onClose}>{tip.body}</BottomSheet>
-    : <ChartTooltip anchor={tip.anchor} container={container} kind="area"><TooltipHead title={tip.title} /><div className={styles.tipBody}>{tip.body}</div></ChartTooltip>;
+  // Telefon: `ChartTooltip` pokazuje arkusz od dołu z tytułem w pasku (DESIGN.md 6.3).
+  return <ChartTooltip anchor={tip.anchor} container={container} kind="area" onClose={onClose} sheetTitle={tip.title}>
+    {phone ? tip.body : <><TooltipHead title={tip.title} /><div className={styles.tipBody}>{tip.body}</div></>}
+  </ChartTooltip>;
 }
 
 /** Zakładka „Struktura”: części szpitala, rzut budynków, oddziały i poradnie z wyszukiwarką. */
@@ -252,7 +253,7 @@ function PlanSection({ data, structure }: { data: HospitalPageData; structure: H
   const free = width - 1 - last.reduce((sum, item) => sum + item.width + PLAN.buildingGap, 0);
   const placeInLast = placeOnly.length > 0 && last.length > 0 && free >= placeOnly.length * (140 + PLAN.buildingGap);
   const placeFrame = (addr: number) => <div key={`p${addr}`} className={`${styles.building} ${styles.small}`}>
-    {header(addr, (structure.buildingSites[addr] ?? []).map((site) => structure.sites[site]), null, 0)}
+    {header(addr, placeOnlyNames(structure, addr), null, 0)}
   </div>;
   return <section className={tabs.sec} aria-labelledby="s-rzut">
     <Head id="s-rzut" title="Budynki i oddziały" context="· wielkość według łóżek" helpLabel="Jak czytać budynki" help={[

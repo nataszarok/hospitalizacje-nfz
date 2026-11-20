@@ -11,6 +11,7 @@ import { ChartExpand } from "@/components/portal/ChartExpand";
 import { ChartTooltip, TooltipHead, TooltipLines } from "@/components/ChartTooltip";
 import { elementBox, type Box } from "@/lib/tooltipPosition";
 import { HelpLines, InfoTip } from "@/components/InfoTip";
+import { PHONE_QUERY, useMediaQuery } from "@/lib/useMediaQuery";
 import { ShareBars, ShareLegend } from "@/components/ShareBars";
 import { FunnelLegend, SelectedLegendItem } from "@/components/jgp/FunnelLegend";
 import { FUNNEL_STATUS_COLORS, funnelLines, hasEnoughDeathsForFunnel, mortalityChartHelp } from "@/lib/mortalityFunnel";
@@ -270,13 +271,27 @@ function CardHeader({ data, regions, onClearRegion }: { data: JgpPageData; regio
 }
 
 /** Nagłówek sekcji: pytanie, kontekst i etykieta zakresu (`tag`) albo przełącznik w tym samym miejscu (`tools`). */
-export function SectionHead({ id, question, context, tag, tools }: { id: string; question: string; context: string; tag?: string; tools?: ReactNode }) {
+/** Linia objaśnienia „?”: akapit albo [pogrubiony termin, tekst]. */
+export type HelpLine = string | [term: string, text: string];
+
+/**
+ * Nagłówek sekcji karty (karta JGP, karta szpitala): pytanie, dopisek z zakresem, ikona „?” z objaśnieniem (DESIGN.md 6.3)
+ * i etykieta zakresu albo narzędzia. Telefon (7.1b.1): tytuł i „?” w jednej linii — dopisek i etykieta znikają (CSS),
+ * dopisek jest wtedy pierwszą linią objaśnienia; „?” pojawia się też w sekcji bez objaśnienia.
+ */
+export function SectionHead({ id, question, context, tag, tools, help, helpLabel }: {
+  id: string; question: string; context: string; tag?: string; tools?: ReactNode; help?: HelpLine[]; helpLabel?: string;
+}) {
+  const phone = useMediaQuery(PHONE_QUERY) === true;
+  const lines: HelpLine[] = phone ? [`${context}.`, ...(help ?? [])] : help ?? [];
   return <div className={styles.secHead}>
-    <h2 id={id} className={styles.secTitle}><span className={styles.q}>{question}</span> <span className={styles.ctx}>{context}</span></h2>
-    {tools ?? <span className={styles.tag}>{tag}</span>}
+    <h2 id={id} className={styles.secTitle}>
+      <span className={styles.q}>{question}</span> <span className={styles.ctx}>{context}</span>
+      {lines.length ? <>{" "}<InfoTip ariaLabel={helpLabel ?? `Objaśnienie: ${question}`} label={<HelpLines lines={lines} />} /></> : null}
+    </h2>
+    {tools ?? (tag ? <span className={styles.tag}>{tag}</span> : null)}
   </div>;
 }
-
 
 /** „ośrodek”, „ośrodki” albo „ośrodków” po liczbie. */
 
