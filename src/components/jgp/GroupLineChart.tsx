@@ -204,6 +204,8 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
   usePlotResize(chartRef);
   const shellRef = useRef<HTMLDivElement>(null);
   const [tip, setTip] = useState<{ anchor: Box; title: string; context: string; lines: string[] } | null>(null);
+  // Zamknięcie arkusza dymka na telefonie: zdejmuje też podświetlenie linii (funkcja z ostatniego rysunku).
+  const clearRef = useRef<() => void>(() => setTip(null));
   // Funkcje z rodzica trzymamy w refach: nowa funkcja po rerenderze nie przerysowuje wykresu.
   const selectRef = useRef(onSelect);
   const hoverRef = useRef(onHover);
@@ -281,7 +283,11 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
       );
       const plot = chartRef.current as PlotElement;
       // Objaśnienie pod osią: na wąskim ekranie w dwóch wierszach (adnotacje Plotly nie zawijają tekstu).
-      const noteText = note && plot.clientWidth < 640 ? note.replace(/\. /, ".<br>") : note;
+      // Przypis pod wykresem: zdania w osobnych liniach na wąskim wykresie, każda linia łamana na spacjach do szerokości
+      // wykresu (ok. 6,5 px na znak przy 12 px), żeby tekst nie wychodził poza ekran telefonu.
+      const noteText = note && plot.clientWidth < 640
+        ? note.split(/(?<=\.) /).map((sentence) => wrapChartLabel(sentence, Math.max(24, Math.floor((plot.clientWidth - 8) / 6.5)))).join("<br>")
+        : note;
       const noteLines = noteText ? noteText.split("<br>").length : 0;
       const allPoints = ordered.flatMap((line) => series.get(line.key)!.points);
       const yAxis = percent ? percentAxis(allPoints, { fit: fitAxis }) : countAxis(allPoints);
@@ -379,10 +385,10 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
         return hit ? { line: ordered[hit.series], index: hit.index } : null;
       };
       const clearHover = () => {
+        setTip(null);
         if (!hovered) return;
         hovered = null;
         hoverRef.current?.(null);
-        setTip(null);
         void Plotly.restyle(plot, { x: [[null], [null], [null]], y: [[null], [null], [null]] }, overlay);
       };
       const showHover = (line: ChartLine, index: number) => {
@@ -416,6 +422,7 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
         if (hit) showHover(hit.line, hit.index);
         else clearHover();
       };
+      clearRef.current = clearHover;
       plot.onmouseleave = () => { if (!cancelled) clearHover(); };
       // Kliknięcie wybiera linię pod kursorem (ta sama, którą podświetla najechanie). Podświetlenie i dymek znikają
       // od razu, więc po zmianie wyboru nie zostają dwie wyróżnione linie.
@@ -434,7 +441,7 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
   // Wysokość zarezerwowana od razu: wykres rysuje się asynchronicznie i nie przesuwa treści pod nim.
   return <div ref={shellRef} style={{ position: "relative" }}>
     <div ref={chartRef} role="img" aria-label={ariaLabel} style={{ minHeight: height }} />
-    {tip ? <ChartTooltip anchor={tip.anchor} container={shellRef}>
+    {tip ? <ChartTooltip anchor={tip.anchor} container={shellRef} onClose={() => clearRef.current()}>
       <TooltipHead title={tip.title} context={tip.context} />
       <TooltipLines lines={tip.lines} />
     </ChartTooltip> : null}

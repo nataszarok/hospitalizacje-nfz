@@ -89,10 +89,19 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Słowo po liczbie: tylko w pasku faktów na telefonie (`CardKpis`). */
+.kpiUnit {
+  display: none;
+  color: var(--color-text-secondary);
+  font-style: normal;
+  font-weight: var(--fw-regular);
+}
+
+
 /* Pasek zakładek zostaje pod nagłówkiem portalu (75 px) przy przewijaniu. */
 .tabbar {
   position: sticky;
-  top: 75px;
+  top: var(--atlas-header-height, 75px);
   z-index: 20;
   display: flex;
   /* Jedna linia i stała wysokość: pojawienie się nazwy grupy nie przesuwa treści. */
@@ -342,6 +351,9 @@
 .panel {
   display: grid;
   gap: 16px;
+  /* Przyklejone nagłówki tabel (`sticky-head`) stają tuż pod paskiem zakładek: nagłówek portalu (75 px, na telefonie 67 px —
+     zmienna `--atlas-header-height`) + pasek 48 px. Stała 123 px zostawiała na telefonie szczelinę, w której przewijała się treść. */
+  --sticky-head-top: calc(var(--atlas-header-height, 75px) + 48px);
 }
 
 /* Skok do sekcji nie chowa tytułu pod paskiem zakładek. */
@@ -358,15 +370,21 @@
   scroll-margin-top: 140px;
 }
 
+/* Nagłówek sekcji: tytuł po lewej łamie się obok narzędzi, narzędzia zostają w pierwszej linii po prawej. */
 .secHead {
   display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 6px 12px;
 }
 
+.secHead > :not(h2) {
+  flex: none;
+}
+
 .secTitle {
+  flex: 1 1 auto;
+  min-width: 0;
   margin: 0;
   font-size: var(--fs-xl);
   line-height: 1.35;
@@ -380,17 +398,6 @@
 .ctx {
   color: var(--color-text-tertiary);
   font-weight: var(--fw-medium);
-}
-
-.tag {
-  padding: 2px 8px;
-  border-radius: var(--radius-control);
-  background: var(--color-background-muted);
-  color: var(--color-text-secondary);
-  font-size: var(--fs-sm);
-  font-weight: var(--fw-bold);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
 }
 
 .geo {
@@ -635,39 +642,6 @@
   display: flex;
   gap: 2px;
   height: 14px;
-}
-
-.admTip {
-  position: absolute;
-  z-index: 5;
-  bottom: calc(100% + 4px);
-  left: 56px;
-  display: none;
-  gap: 4px 12px;
-  flex-wrap: wrap;
-  align-items: center;
-  padding: 6px 10px;
-  border-radius: var(--radius-control);
-  background: var(--color-text);
-  color: #fff;
-  font-size: var(--fs-sm);
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-  pointer-events: none;
-  box-shadow: var(--shadow-soft);
-}
-
-.admTip i {
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  margin-right: 5px;
-  border-radius: var(--radius-badge);
-}
-
-.admRow:hover .admTip,
-.admRow:focus-visible .admTip {
-  display: flex;
 }
 
 .costBars {
@@ -919,7 +893,7 @@
   box-shadow: inset 3px 0 0 var(--color-signal);
 }
 
-/* Przełącznik „Miesiące / Lata” w nagłówku sekcji „Ile?”: rozmiar etykiety `.tag`, więc nagłówek ma tę samą wysokość. */
+/* Przełącznik „Miesiące / Lata” w nagłówku sekcji „Ile?”: niski, w linii tytułu. */
 .periodToggle {
   display: inline-flex;
   flex: none;
@@ -985,4 +959,70 @@ ul.cornerLegend {
   flex: none;
   stroke: var(--color-text-tertiary);
   stroke-width: 1.2;
+}
+
+/* Poniżej 900 px tytuł i liczby stoją jeden pod drugim (.head w jednej kolumnie): liczby w jednym pasku faktów
+   („6871 hospitalizacji · 4,08% zgonów · …”, DESIGN.md 7.1a punkt 3) bez etykiet i bez zmian r/r — te są w zakładkach. */
+@media (max-width: 900px) {
+  .kpis {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px 0;
+    font-size: var(--fs-base);
+  }
+
+  .kpis > div {
+    display: block;
+    padding: 0;
+    border: 0;
+    background: none;
+    white-space: nowrap;
+  }
+
+  /* Separator na końcu pozycji: przy zawinięciu linia nie zaczyna się od „·”. */
+  .kpis > div:not(:last-child)::after {
+    content: "·";
+    margin: 0 8px;
+    color: var(--color-text-tertiary);
+  }
+
+  .kpis dt,
+  .kpis > div > span {
+    display: none;
+  }
+
+  .kpis dd {
+    display: inline;
+    font-size: var(--fs-base);
+    font-weight: var(--fw-semibold);
+  }
+
+  .kpiUnit {
+    display: inline;
+  }
+}
+
+/* Telefon: mniejszy tytuł i odstępy — pierwszy ekran pokazuje zakładki i treść. */
+@media (max-width: 639px) {
+  .head {
+    gap: 10px;
+    margin: 8px 0 12px;
+  }
+
+  .title {
+    font-size: var(--fs-2xl);
+  }
+
+  /* Nagłówek sekcji (DESIGN.md 7.1b.1): tytuł i „?” w jednej linii; dopisek i etykieta zakresu są w objaśnieniu „?”. */
+  .secHead .ctx {
+    display: none;
+  }
+
+  .secHead .ctxKeep {
+    display: inline;
+  }
+
+  .secTitle {
+    font-size: var(--fs-lg);
+  }
 }

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { SectionHead } from "@/components/jgp/JgpTabbedCard";
 import { Sparkline } from "@/components/jgp/JgpCatalog";
-import { HelpLines, InfoTip } from "@/components/InfoTip";
+import { CellTip } from "@/components/CellTip";
 import { SortableTableHeader } from "@/components/SortableTableHeader";
 import { plnScale } from "@/lib/formatters";
 import { plural } from "@/lib/jgpDescription";
@@ -75,7 +75,7 @@ export function groupLines(groups: HospitalGroupRow[], yearIndex: number): Group
 }
 
 /**
- * „Co leczy i za ile?”: grupy JGP szpitala w roku karty — hospitalizacje, kwota NFZ, miejsce w Polsce, śmiertelność wobec Polski
+ * „Za ile leczy?”: grupy JGP szpitala w roku karty — hospitalizacje, kwota NFZ, miejsce w Polsce, śmiertelność wobec Polski
  * i trend wszystkich lat. Sortowanie kolumn; domyślnie od największej liczby hospitalizacji.
  * Kolumny (DESIGN.md 7.1): grupa, hospitalizacje i kwota zawsze; miejsce i śmiertelność od 640 px; zmiana kwoty i trend od 900 px.
  */
@@ -112,13 +112,22 @@ export function GroupsSection({ data, yearIndex }: { data: HospitalPageData; yea
   const top = [...lines].sort((a, b) => b.value - a.value)[0];
 
   return <section className={tabs.sec} aria-labelledby="s-za-ile">
-    <SectionHead id="s-za-ile" question="Co leczy i za ile?" context={`Grupy JGP szpitala w ${year} r.`} tag="Rok + mini-trend" />
+    <SectionHead id="s-za-ile" question="Za ile leczy?" context={`Grupy JGP, ${year}`}
+      helpLabel="Jak czytać tabelę grup" help={[
+        ["Hosp.", "— hospitalizacje metodą konserwatywną (<5 = 1)."],
+        ["NFZ", `— kwota rozliczona za grupę w ${year} r. (zestawienie świadczeń, od 2019 r.). To przychód, nie zysk. Pod nazwą: udział szpitala w kwocie grupy w Polsce.`],
+        ["Miejsce w Polsce", "— pozycja wśród wszystkich ośrodków grupy według hospitalizacji."],
+        ["Kropka śmiertelności", "— odchylenie od Polski (granice 95% i 99,8%), bez korekty o wiek i stan pacjentów. Ciepły kolor: powyżej Polski poza granicą przypadku, niebieski: poniżej, szary: w granicach."],
+        `Kropka bez wypełnienia: za mało zgonów do oceny (mniej niż ${MIN_EXPECTED_DEATHS} zgon oczekiwany przy śmiertelności jak w Polsce).`,
+        ["Mini-wykres", "— hospitalizacje szpitala w grupie we wszystkich latach, skala wiersza (kształt, nie wielkość)."],
+        "Kod prowadzi do karty grupy z tym szpitalem.",
+      ]} />
     {hasPln && top ? <p className={base.lead}>
       W {year} r. NFZ rozliczył ze szpitalem <b>{scale.format(totalValue)} {scale.unit}</b> za {groupsWord(lines.filter((line) => line.value > 0).length)}.
       Najwięcej: <b>{top.code}</b> ({decimal((top.value / totalValue) * 100, 0)}%).
     </p> : <p className={base.lead}>W {year} r. szpital miał hospitalizacje w {integer(lines.length)} {lines.length === 1 ? "grupie" : "grupach"} JGP. Kwoty NFZ za grupy są od 2019 r.</p>}
     <div className={`priority-table ${styles.tableWrap}`}>
-      <table className={base.table}>
+      <table className={`${base.table} sticky-head`}>
         <thead><tr>
           {header("name", "Grupa JGP")}
           {header("hospitalizations", "Hosp.", base.num)}
@@ -143,8 +152,9 @@ export function GroupsSection({ data, yearIndex }: { data: HospitalPageData; yea
             {hasPln ? <td className={base.num}>{line.value ? <b>{scale.format(line.value)}</b> : "—"}</td> : null}
             <td className={`${base.num} col-p2`}>{line.rank ? <>{line.rank <= 3 ? <span className={styles.rankTop}>{line.rank}.</span> : `${line.rank}.`} <span className={styles.rankOf}>z {integer(line.providers)}</span></> : "—"}</td>
             <td className={`${base.num} col-p2`}>{line.hospitalizations ? <MortalityCell line={line} /> : "—"}</td>
-            {hasPln ? <td className={`${base.num} col-p3`} title={line.previousValue ? `${data.years[yearIndex - 1]}: ${scale.format(line.previousValue)} ${scale.unit}` : undefined}>
-              {line.change === null ? (line.value && yearIndex > 0 && data.years[yearIndex - 1] >= "2019" ? "nowa" : "—") : signedPct(line.change)}
+            {hasPln ? <td className={`${base.num} col-p3`}>
+              {line.change === null ? (line.value && yearIndex > 0 && data.years[yearIndex - 1] >= "2019" ? "nowa" : "—")
+                : <CellTip title={`${line.code}: zmiana kwoty r/r`} lines={line.previousValue ? [`${data.years[yearIndex - 1]}: ${scale.format(line.previousValue)} ${scale.unit}`, `${year}: ${scale.format(line.value)} ${scale.unit}`] : []}>{signedPct(line.change)}</CellTip>}
             </td> : null}
             <td className="col-p3"><Sparkline values={trend(line.row)} /></td>
           </tr>)}
@@ -152,26 +162,17 @@ export function GroupsSection({ data, yearIndex }: { data: HospitalPageData; yea
       </table>
     </div>
     {sorted.length > GROUPS_SHOWN ? <button type="button" className={styles.more} onClick={() => setAll((value) => !value)}>{all ? "Pokaż mniej" : `Pokaż wszystkie (${integer(sorted.length)})`}</button> : null}
-    <p className={base.note}>
-      Hospitalizacje metodą konserwatywną (&lt;5 = 1). NFZ: kwota rozliczona za grupę w {year} r. (zestawienie świadczeń, od 2019 r.) — przychód, nie zysk; pod nazwą udział szpitala w kwocie grupy w Polsce.
-      Miejsce: pozycja wśród wszystkich ośrodków grupy według hospitalizacji. Kropka śmiertelności: odchylenie od Polski (granice 95% i 99,8%), bez korekty o wiek i stan pacjentów.
-      Kod prowadzi do karty grupy z tym szpitalem. <InfoTip ariaLabel="Jak czytać tabelę grup" label={<HelpLines lines={[
-        "Kolor kropki: ciepły — śmiertelność powyżej Polski poza granicą przypadku, niebieski — poniżej, szary — w granicach.",
-        `Kropka bez wypełnienia: za mało zgonów do oceny (mniej niż ${MIN_EXPECTED_DEATHS} zgon oczekiwany przy śmiertelności jak w Polsce).`,
-        "Mini-wykres: hospitalizacje szpitala w grupie we wszystkich latach, skala wiersza (kształt, nie wielkość).",
-      ]} />} />
-    </p>
   </section>;
 }
 
 function MortalityCell({ line }: { line: GroupLine }) {
-  const title = [
+  const lines = [
     `Szpital: ${pct(line.mortality)} (${integer(line.deaths)} zgonów z ${integer(line.hospitalizations)} hosp.)`,
     line.nationalMortality === null ? null : `Polska: ${pct(line.nationalMortality)}; zgony oczekiwane: ${decimal(line.expected)}`,
     line.status ? `Odchylenie: ${line.status}` : "Za mało zgonów do oceny",
-  ].filter(Boolean).join("\n");
-  return <span className={styles.mortality} title={title}>
+  ].filter((text): text is string => !!text);
+  return <CellTip className={styles.mortality} title={`${line.code}: śmiertelność`} lines={lines}>
     <i className={line.status ? styles.devDot : `${styles.devDot} ${styles.devDotEmpty}`} style={line.status ? { background: FUNNEL_STATUS_COLORS[line.status] } : undefined} aria-label={line.status ? `odchylenie: ${line.status}` : "za mało zgonów do oceny"} role="img" />
     {pct(line.mortality)}
-  </span>;
+  </CellTip>;
 }

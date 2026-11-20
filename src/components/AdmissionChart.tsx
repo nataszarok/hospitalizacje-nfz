@@ -23,7 +23,6 @@ import {
   hoverTemplate,
   measureAxis,
   paddedRange,
-  PLOT_TOOLBAR_MARGIN,
   HIGHLIGHT_COLORS,
   makeDimensionLegendTraces,
   makeHoverTrace,
@@ -218,8 +217,8 @@ export function AdmissionChart({
       const meanPct = urgentMeanPct(rows);
 
       await Plotly.react(chartRef.current, traces, {
+        // Przełączniki są w wierszu nad wykresem (`ChartToolbar`), więc wykres ma zwykły górny margines.
         ...getCommonPlotLayout(showLegend),
-        margin: { ...getCommonPlotLayout(showLegend).margin, t: PLOT_TOOLBAR_MARGIN },
         // Ten sam margines na obu osiach (−6% / +10%); zero rysuje podstawa pod danymi.
         xaxis: measureAxis({
           title: axisTitle(axisMode === "per_100k" ? "Hospitalizacje na 100 tys. mieszkańców" : "Liczba hospitalizacji", 18),

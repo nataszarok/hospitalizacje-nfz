@@ -250,6 +250,23 @@ console.log(`Hospitalization data OK: ${index.years.join(", ")}; ${((totalSize +
   console.log(`NFZ contracts OK: ${keys.length} hospitals, ${(size / 1024).toFixed(1)} KiB.`);
 }
 
+// Struktura kart szpitali (scripts/build_hospital_structure.py, zakładka „Struktura”): łóżka miejsc = łóżka podmiotu
+// w profilu RPWDL, poradnie = liczba poradni AOS w profilu; każdy kod ma nazwę albo nazwę z rejestru.
+{
+  const { size, data: structure } = await readGzipJson("build-data/hospitals/structure.json.gz");
+  const { data: profiles } = await readGzipJson("public/data/rpwdl_summary_profiles.json.gz");
+  const byKey = new Map(profiles.records.map((record) => [`${record.oz_nfz}|${record.nip}`, record]));
+  for (const [key, hospital] of Object.entries(structure.hospitals)) {
+    const profile = byKey.get(key);
+    if (!profile) throw new Error(`structure.json.gz: ${key} has no RPWDL profile.`);
+    const beds = hospital.beds.reduce((sum, row) => sum + row[5], 0);
+    if (beds !== (profile.registry?.total_beds ?? 0)) throw new Error(`structure.json.gz: ${key} has ${beds} beds, profile has ${profile.registry?.total_beds}.`);
+    if (hospital.clinics.length !== (profile.outpatient?.cell_count ?? 0)) throw new Error(`structure.json.gz: ${key} has ${hospital.clinics.length} clinics, profile has ${profile.outpatient?.cell_count}.`);
+    for (const row of hospital.beds) if (!hospital.addr[row[0]] || row[1] >= structure.sites.length) throw new Error(`structure.json.gz: ${key} bed row points to a missing address or site.`);
+  }
+  console.log(`Hospital structure OK: ${Object.keys(structure.hospitals).length} hospitals, ${(size / 1024).toFixed(1)} KiB.`);
+}
+
 // Mapa województw (scripts/build_regions_map.py): 16 województw z kodami OW jak w danych.
 {
   const { size, data: map } = await readGzipJson("public/data/regions-map.json.gz");

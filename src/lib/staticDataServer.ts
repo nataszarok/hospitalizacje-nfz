@@ -1,4 +1,4 @@
-import { access, readdir, readFile } from "node:fs/promises";
+import { access, readdir, readFile, stat } from "node:fs/promises";
 import { join } from "node:path";
 import { gunzipSync } from "node:zlib";
 import type { FinancialRecordSummary, HospitalProfileSummary } from "@/lib/hospitalHomeStats";
@@ -6,7 +6,8 @@ import type { RegionsMap } from "@/lib/jgpCard";
 import type { JgpGroupFile, JgpPagesIndex, JgpPeerPair } from "@/lib/jgpPage";
 import type { JgpProfilesFile } from "@/lib/jgpDescription";
 import type { CitiesMap, FacilityYearsIndex, FacilityYearsSection } from "@/lib/regions";
-import type { HospitalPaymentFile, HospitalRpwdlRecord } from "@/lib/hospitalPage";
+import type { HospitalLocation, HospitalPaymentFile, HospitalRpwdlRecord } from "@/lib/hospitalPage";
+import type { HospitalStructureFile } from "@/lib/hospitalStructure";
 import type { HospitalContractsFile } from "@/lib/hospitalFinance";
 import { readJgpProse } from "@/lib/jgpProse";
 import { decodeValuations, type JgpValuation, type ValuationsFile } from "@/lib/valuations";
@@ -159,6 +160,25 @@ let wardNamesPromise: Promise<Record<string, string>> | null = null;
 export function readWardNamesFromDisk(file = join(BUILD_DATA_DIR, "hospitals", "ward-names.json")): Promise<Record<string, string>> {
   wardNamesPromise ??= readFile(file, "utf8").then((text) => (JSON.parse(text) as { names: Record<string, string> }).names).catch(() => ({}));
   return wardNamesPromise;
+}
+
+/** Lokalizacje świadczeniodawcy z rejestru RPWDL („OW|NIP” → [adres, łóżka, rodzaje]; `build_rpwdl_summary_profiles.py`). */
+export async function readRpwdlLocationsFromDisk(key: string, file = join(BUILD_DATA_DIR, "hospitals", "rpwdl-locations.json.gz")): Promise<HospitalLocation[]> {
+  const data = await readGzipJson<{ locations: Record<string, HospitalLocation[]> }>(file).catch(() => ({ locations: {} as Record<string, HospitalLocation[]> }));
+  return data.locations[key] ?? [];
+}
+
+/**
+ * Struktura szpitali z kartą (`scripts/build_hospital_structure.py`; zakładka „Struktura”) albo `null` bez pliku.
+ * Czytana raz na wersję pliku: serwer deweloperski czyta plik ponownie po `npm run generate:data`.
+ */
+let structureCache: { mtime: number; promise: Promise<HospitalStructureFile | null> } | null = null;
+export async function readHospitalStructureFileFromDisk(file = join(BUILD_DATA_DIR, "hospitals", "structure.json.gz")): Promise<HospitalStructureFile | null> {
+  const mtime = await stat(file).then((info) => info.mtimeMs, () => -1);
+  if (structureCache?.mtime !== mtime) {
+    structureCache = { mtime, promise: mtime < 0 ? Promise.resolve(null) : readGzipJson<HospitalStructureFile>(file) };
+  }
+  return structureCache.promise;
 }
 
 /** Pełny profil RPWDL jednego świadczeniodawcy („OW|NIP”, z oddziałami) albo `null`. */

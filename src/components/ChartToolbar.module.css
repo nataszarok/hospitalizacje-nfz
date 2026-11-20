@@ -1,0 +1,25 @@
+/* Pasek nad wykresem (jak nagłówek „W czasie”): opis po lewej, przełączniki po prawej.
+   Na wąskiej karcie zawija się do prawej. */
+.chartHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 16px;
+  margin: 0 0 6px;
+}
+
+.chartCaption {
+  margin: 0;
+  color: var(--color-text-tertiary);
+  font-size: var(--fs-sm);
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px 16px;
+  margin-left: auto;
+}

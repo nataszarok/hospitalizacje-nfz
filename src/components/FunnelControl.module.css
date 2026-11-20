@@ -11,3 +11,12 @@
   font-weight: var(--fw-semibold);
   white-space: nowrap;
 }
+
+/* Wyłączony input połyka zdarzenia myszy: bez tego dymek z powodem nie pojawia się nad suwakiem. */
+.disabled :disabled {
+  pointer-events: none;
+}
+
+.disabled {
+  cursor: not-allowed;
+}

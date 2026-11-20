@@ -77,8 +77,9 @@ export type FunnelState = "funnel" | "few-deaths" | "off" | "unavailable";
  * (na 100 tys. mieszkańców granice nie mają sensu, a osobne grupy mają różne średnie).
  */
 export function explorerFunnelState({ enabled, deaths, perCapita, separateGroups }: { enabled: boolean; deaths: number; perCapita: boolean; separateGroups: boolean }): FunnelState {
-  if (!enabled) return "off";
+  // Najpierw dostępność: przełącznik jest wyszarzony z powodem w dymku także wtedy, gdy granice są wyłączone.
   if (perCapita || separateGroups) return "unavailable";
+  if (!enabled) return "off";
   return hasEnoughDeathsForFunnel(deaths) ? "funnel" : "few-deaths";
 }
 
@@ -105,8 +106,18 @@ export const FUNNEL_HELP = "Linie wokół średniej pokazują, jak daleko śmier
 /** Powód, dla którego granic nie ma (stan „unavailable”): dymek przełącznika i objaśnienie „?”. */
 export const FUNNEL_UNAVAILABLE_REASON = "Granice odchyleń działają dla liczby hospitalizacji i grup JGP razem.";
 
-export function mortalityChartHelp({ state, showsMean, aboveCap, selectable = false }: {
+/** Powód w stanie „unavailable” dla bieżącego układu wykresu: co blokuje granice i co wybrać. */
+export function funnelUnavailableReason({ perCapita, separateGroups }: { perCapita: boolean; separateGroups: boolean }): string {
+  if (perCapita && separateGroups) return `${FUNNEL_UNAVAILABLE_REASON} Wybierz „Zbiorczo” i oś X „Hosp.”.`;
+  if (separateGroups) return "Granice odchyleń działają dla grup JGP razem: przy „Per JGP” każda grupa ma inną średnią. Wybierz „Zbiorczo”.";
+  if (perCapita) return "Granice odchyleń działają dla liczby hospitalizacji, nie dla hospitalizacji na 100 tys. mieszkańców. Wybierz oś X „Hosp.”.";
+  return FUNNEL_UNAVAILABLE_REASON;
+}
+
+export function mortalityChartHelp({ state, showsMean, aboveCap, selectable = false, unavailableReason = FUNNEL_UNAVAILABLE_REASON }: {
   state: FunnelState;
+  /** Powód stanu „unavailable” (`funnelUnavailableReason`). */
+  unavailableReason?: string;
   /** Czy wykres ma linię średniej (`showsMortalityReference`). */
   showsMean: boolean;
   /** Punkty ponad skalą osi Y (`outlierCap`). */
@@ -116,7 +127,7 @@ export function mortalityChartHelp({ state, showsMean, aboveCap, selectable = fa
   const lines = ["Punkt to ośrodek: liczba hospitalizacji i śmiertelność (zgony w szpitalu / hospitalizacje)."];
   if (showsMean) lines.push("Linia kropkowana: średnia wszystkich ośrodków.");
   if (state === "funnel") lines.push("Granice odchyleń: 95% (kropki) i 99,8% (kreski) wokół średniej. Kolor punktu to jego położenie wobec granic. Punkt poza granicą to sygnał do sprawdzenia, nie ocena jakości.");
-  if (state === "unavailable") lines.push(FUNNEL_UNAVAILABLE_REASON);
+  if (state === "unavailable") lines.push(unavailableReason);
   if (aboveCap?.count) {
     lines.push(`▲: ${aboveCap.count.toLocaleString("pl-PL")} ${centersWord(aboveCap.count)} poniżej ${OUTLIER_MIN_HOSPITALIZATIONS} hospitalizacji ze śmiertelnością ponad ${aboveCap.cap}%. Prawdziwa wartość jest w dymku.`);
   }

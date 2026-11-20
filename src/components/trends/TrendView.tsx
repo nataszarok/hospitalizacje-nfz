@@ -68,11 +68,14 @@ export function TrendView({ productCodes, method, regions = NO_REGIONS, areaLabe
     return () => { cancelled = true; };
   }, [regionKey]);
 
+  // Zmiana województw: do pobrania nowych plików wykres pokazuje poprzedni obszar przygaszony (`pending`),
+  // bez komunikatu „Ładowanie trendów…” i bez skoku wysokości strony.
   const trends = useMemo(() => {
     if (!national) return null;
-    if (!regionKey) return national;
-    return regional?.key === regionKey ? trendsForRegions(national, regional.files) : null;
+    if (!regionKey || !regional) return national;
+    return trendsForRegions(national, regional.files);
   }, [national, regional, regionKey]);
+  const pending = Boolean(regionKey) && regional?.key !== regionKey;
 
   // Filtr długości pobytu: pliki lat według długości pobytu, tylko sekcje katalogu JGP wybranych grup.
   const filtered = durations.length > 0;
@@ -134,7 +137,7 @@ export function TrendView({ productCodes, method, regions = NO_REGIONS, areaLabe
   const shownPeriod: ChartPeriod = filtered ? "year" : period;
   const periodWord = shownPeriod === "year" ? "rocznie" : "miesięcznie";
 
-  return <div className={styles.view}>
+  return <div className={pending ? `${styles.view} content loading` : styles.view} aria-busy={pending || undefined}>
     <section className={styles.chartCard}>
       <div className={styles.metricTabs} role="tablist" aria-label="Miara">
         {(Object.keys(TREND_METRICS) as TrendMetric[]).map((key) => <button

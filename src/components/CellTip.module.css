@@ -1,0 +1,20 @@
+/* Wartość w komórce jako przycisk (telefon): wygląd tekstu komórki, kropkowane podkreślenie = „dotknij, żeby zobaczyć więcej”. */
+.button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: inherit;
+  text-decoration: underline dotted var(--color-text-tertiary);
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.line {
+  margin: 0;
+}
+
+.line + .line {
+  margin-top: 6px;
+}

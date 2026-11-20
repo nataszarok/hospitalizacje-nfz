@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cartogramCells, cellColor, outlierCap, showsMortalityReference, darkLabel, scaleColor, monthYears, movingAverage, sumByYear, packPageData, unpackPageData, poolStats, providerPool, selectedIndex, sumSeries, yearChangePct } from "@/lib/jgpCard";
+import { areaScaleColor, cartogramCells, cellColor, outlierCap, showsMortalityReference, darkLabel, scaleColor, monthYears, movingAverage, sumByYear, packPageData, unpackPageData, poolStats, providerPool, selectedIndex, sumSeries, yearChangePct } from "@/lib/jgpCard";
 import { buildJgpPageData } from "@/lib/jgpPage";
 import type { RegionRow } from "@/lib/regions";
 import { extrasFixture } from "./fixtures/jgpCardFixture";
@@ -156,5 +156,14 @@ describe("outlierCap — skala osi bez skrajnych małych ośrodków", () => {
 
   it("skala ma co najmniej 5%", () => {
     expect(outlierCap([{ x: 1, y: 100 }, { x: 50, y: 0 }])).toBe(5);
+  });
+});
+
+describe("areaScaleColor — skala kropek w barwie wybranego obszaru", () => {
+  it("od jasnego odcienia przez sam kolor do ciemnego; poza zakresem jak skrajne wartości", () => {
+    expect(areaScaleColor(0, "#7B3FA0")).toBe("rgb(123, 63, 160)");
+    expect(areaScaleColor(-1, "#7B3FA0")).toBe("rgb(231, 220, 238)");
+    expect(areaScaleColor(1, "#7B3FA0")).toBe("rgb(55, 28, 72)");
+    expect(areaScaleColor(5, "#7B3FA0")).toBe(areaScaleColor(1, "#7B3FA0"));
   });
 });

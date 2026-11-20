@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Slider } from "@mantine/core";
-import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { CHART_COLORS } from "@/lib/chartPalette";
 import { concentration, itemsForShare } from "@/lib/concentration";
 import styles from "./ConcentrationChart.module.css";
@@ -33,7 +33,7 @@ const MAX_MEASURED = 60;
  * Suwak wybiera liczbę pozycji N; zdanie nad wykresem odpowiada „N największych daje X% sumy”, linie odniesienia —
  * ile pozycji daje 50% i 80%. Wybrany punkt w kolorze sygnału (jedno wyróżnienie), pozycje N pod wykresem.
  */
-export function ConcentrationChart({ items, measure, format, words, defaultCount = 10, ariaLabel }: {
+export function ConcentrationChart({ items, measure, format, words, defaultCount = 10, ariaLabel, controls }: {
   items: ConcentrationItem[];
   /** Miara w dopełniaczu, np. „kwoty NFZ”, „hospitalizacji”. */
   measure: string;
@@ -42,6 +42,8 @@ export function ConcentrationChart({ items, measure, format, words, defaultCount
   words: [string, string, string];
   defaultCount?: number;
   ariaLabel: string;
+  /** Przełącznik miary w linii suwaka (np. „Kwota NFZ / Hospitalizacje”); w wąskim kontenerze suwak schodzi pod niego. */
+  controls?: ReactNode;
 }) {
   const ordered = useMemo(() => [...items].filter((item) => item.value > 0).sort((a, b) => b.value - a.value), [items]);
   const { cumulativePct, total } = useMemo(() => concentration(ordered.map((item) => item.value)), [ordered]);
@@ -81,14 +83,17 @@ export function ConcentrationChart({ items, measure, format, words, defaultCount
   const marks = MARKS.map((value) => ({ value, items: itemsForShare(cumulativePct, value) }));
 
   return <div className={styles.wrap}>
+    <div className={styles.controls}>
+      {controls}
+      <div className={styles.slider}>
+        <span className={styles.sliderLabel} id="concentration-slider">Liczba {words[2]}</span>
+        <Slider min={1} max={n} step={1} value={count} onChange={setPicked} label={(value) => `${value} · ${pct(cumulativePct[value - 1])}`} aria-labelledby="concentration-slider" thumbLabel={`Liczba ${words[2]}`} />
+      </div>
+    </div>
     <p className={styles.answer} aria-live="polite">
       <b>{count}</b> {biggest(count)} {plural(count, words)} z {integer(n)} {count === 1 ? "daje" : "dają"}{" "}
       <b>{pct(share)}</b> {measure} ({format(sum)} z {format(total)}).
     </p>
-    <div className={styles.slider}>
-      <span className={styles.sliderLabel} id="concentration-slider">Liczba {words[2]}</span>
-      <Slider min={1} max={n} step={1} value={count} onChange={setPicked} label={(value) => `${value} · ${pct(cumulativePct[value - 1])}`} aria-labelledby="concentration-slider" thumbLabel={`Liczba ${words[2]}`} />
-    </div>
     <svg className={styles.chart} viewBox={`0 0 ${w} ${h}`} role="img" aria-label={ariaLabel}>
       {[0, 25, 50, 75, 100].map((tick) => <g key={tick}>
         <line x1={m.l} x2={w - m.r} y1={y(tick)} y2={y(tick)} stroke={tick ? CHART_COLORS.grid : CHART_COLORS.borderStrong} strokeWidth={tick ? 1 : 1.5} />

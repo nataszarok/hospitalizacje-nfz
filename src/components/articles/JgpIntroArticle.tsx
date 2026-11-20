@@ -242,7 +242,7 @@ export function JgpIntroArticle({ facts }: { facts: JgpIntroFacts }) {
           </div>
 
           <div className="priority-table">
-            <table className={styles.table}>
+            <table className={`${styles.table} sticky-head`}>
               <caption>Grupy z historii: wyceny w katalogu NFZ {year}</caption>
               <thead>
                 <tr>

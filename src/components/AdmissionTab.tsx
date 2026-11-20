@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { AdmissionChart } from "@/components/AdmissionChart";
 import { AreaStatsPopover } from "@/components/AreaStatsPopover";
 import { ChartScaleControl } from "@/components/ChartScaleControl";
+import { ChartToolbar, pointCaption } from "@/components/ChartToolbar";
 import { MortalityDisplayControl } from "@/components/MortalityDisplayControl";
 import { SortableTableHeader } from "@/components/SortableTableHeader";
 import { JgpCodeLinks, ProviderLink } from "@/components/TableLinks";
@@ -17,7 +18,6 @@ import { formatCityName } from "@/lib/formatters";
 import type { MortalityDisplayMode } from "@/lib/mortality";
 import { nextSortState, sortTableRows, type SortState } from "@/lib/tableSort";
 import type { AdmissionPayload, AxisMode, GeographyMode, ReferencePayload } from "@/lib/types";
-import styles from "./AdmissionTab.module.css";
 
 type AdmissionSortKey =
   | "providerName"
@@ -101,24 +101,22 @@ export function AdmissionTab({
     <div className={loading ? "content loading" : "content"}>
       <section className="chart-section">
         {data.rows.length > 0 ? (
-          <div className={`plot-column ${styles.plotColumn}`}>
-            <div className={`plot-toolbar ${styles.toolbar}`}>
+          <div className="plot-column">
+            {/* Ten sam pasek co w „Kto leczy” (`ChartToolbar`): opis punktów po lewej, przełączniki po prawej. */}
+            <ChartToolbar caption={pointCaption(tableRows.length, effectiveDisplayMode)}>
               {canGroupJgp ? (
                 <MortalityDisplayControl value={displayMode} onChange={setDisplayMode} />
               ) : null}
-
-              <div className={styles.presentationControls}>
-                <ChartScaleControl value={axisMode} onChange={setAxisMode} />
-                <AreaStatsPopover
-                  kind="admissions"
-                  geographyMode={geoMode}
-                  selectedKeys={selectedAreaKeys}
-                  rows={data.rows}
-                  products={reference.products}
-                  displayMode={effectiveDisplayMode}
-                />
-              </div>
-            </div>
+              <ChartScaleControl value={axisMode} onChange={setAxisMode} compact />
+              <AreaStatsPopover
+                kind="admissions"
+                geographyMode={geoMode}
+                selectedKeys={selectedAreaKeys}
+                rows={data.rows}
+                products={reference.products}
+                displayMode={effectiveDisplayMode}
+              />
+            </ChartToolbar>
 
             <AdmissionChart
               rows={data.rows}

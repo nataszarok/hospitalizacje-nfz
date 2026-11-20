@@ -2,15 +2,18 @@
 
 import { useId, useRef, useState } from "react";
 import { ChartTooltip, TooltipHead, TooltipLines } from "@/components/ChartTooltip";
+import { PHONE_QUERY, useMediaQuery } from "@/lib/useMediaQuery";
 import { CHART_COLORS } from "@/lib/chartPalette";
 import { plnScale } from "@/lib/formatters";
 import { elementBox, type Box } from "@/lib/tooltipPosition";
+import { useElementWidth } from "@/lib/useElementWidth";
+import { showYearLabel } from "./YearIndexChart";
 import styles from "./HospitalFinance.module.css";
 
 /** Część słupka: nazwa, wartości w latach, kolor; `hatch` = kreskowanie (pozycje bez danych o rozliczeniu), `dark` = biały podpis. */
 export interface StackPart { key: string; label: string; values: number[]; fill: string; hatch?: boolean; dark?: boolean }
 
-const WIDTH = 980;
+const DEFAULT_WIDTH = 980;
 const MARGIN = { left: 56, right: 16, top: 22, bottom: 30 };
 const decimal = (value: number) => value.toLocaleString("pl-PL", { maximumFractionDigits: 0 });
 
@@ -43,7 +46,12 @@ export function YearStackBars({ years, parts, selected, onYear, marker, percentL
 }) {
   const id = useId().replace(/:/g, "");
   const wrapRef = useRef<HTMLDivElement>(null);
+  // Rysunek w szerokości kontenera (1 jednostka = 1 px): napisy 12 px jak w wykresach Plotly, także na telefonie.
+  const { ref: measureRef, width } = useElementWidth();
+  const WIDTH = width || DEFAULT_WIDTH;
   const [hover, setHover] = useState<{ y: number; anchor: Box } | null>(null);
+  // Telefon: dotknięcie słupka wybiera rok i otwiera arkusz z liczbami roku (DESIGN.md 6.3).
+  const phone = useMediaQuery(PHONE_QUERY) === true;
   const totals = years.map((_, y) => parts.reduce((sum, part) => sum + (part.values[y] ?? 0), 0));
   const { max, step: tickStep } = niceAxis(Math.max(...totals, ...(marker?.values ?? []).map((value) => value ?? 0)));
   const scale = plnScale([max]);
@@ -51,6 +59,8 @@ export function YearStackBars({ years, parts, selected, onYear, marker, percentL
   const innerHeight = height - MARGIN.top - MARGIN.bottom;
   const step = innerWidth / Math.max(years.length, 1);
   const barWidth = Math.min(64, step * 0.6);
+  // Wąski wykres (telefon): udziały w słupku tylko, gdy słupek ma ≥ 26 px; suma nad słupkiem przy kroku ≥ 34 px
+  // albo nad wybranym rokiem. Wszystkie liczby roku są w dymku.
   const yOf = (value: number) => MARGIN.top + innerHeight - (value / max) * innerHeight;
   const ticks = Array.from({ length: Math.round(max / tickStep) + 1 }, (_, i) => i * tickStep);
   const share = (value: number, total: number) => total ? (value / total) * 100 : 0;
@@ -60,7 +70,7 @@ export function YearStackBars({ years, parts, selected, onYear, marker, percentL
     ...(marker && marker.values[y] !== null ? [<>{marker.label}: {scale.format(marker.values[y]!)} {scale.unit}</>] : []),
   ];
   return <div ref={wrapRef} className={styles.chartWrap} onMouseLeave={() => setHover(null)}>
-    <svg className={styles.chart} viewBox={`0 0 ${WIDTH} ${height}`} role="group" aria-label={ariaLabel}>
+    <div ref={measureRef}><svg className={styles.chart} viewBox={`0 0 ${WIDTH} ${height}`} role="group" aria-label={ariaLabel}>
       <defs>
         <pattern id={`hatch-${id}`} width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
           <rect width="6" height="6" fill="#fff" />
@@ -85,7 +95,7 @@ export function YearStackBars({ years, parts, selected, onYear, marker, percentL
           tabIndex={0}
           aria-label={label}
           aria-pressed={y === selected}
-          onClick={() => { setHover(null); onYear(year); }}
+          onClick={(event) => { onYear(year); if (phone) show(event.currentTarget.querySelector("[data-bar]") ?? event.currentTarget); else setHover(null); }}
           onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onYear(year); } }}
           onMouseEnter={(event) => show(event.currentTarget.querySelector("[data-bar]") ?? event.currentTarget)}
           onFocus={(event) => show(event.currentTarget.querySelector("[data-bar]") ?? event.currentTarget)}
@@ -103,16 +113,16 @@ export function YearStackBars({ years, parts, selected, onYear, marker, percentL
             const pct = share(value, totals[y]);
             return <g key={part.key}>
               <rect x={cx - barWidth / 2} y={top} width={barWidth} height={h} fill={part.hatch ? `url(#hatch-${id})` : part.fill} stroke={part.hatch ? CHART_COLORS.dataSoft : undefined} />
-              {percentLabels && h >= 14 ? <text x={cx} y={middle} className={part.dark ? styles.segmentDark : styles.segmentLight}>{decimal(pct)}%</text> : null}
+              {percentLabels && h >= 14 && barWidth >= 26 ? <text x={cx} y={middle} className={part.dark ? styles.segmentDark : styles.segmentLight}>{decimal(pct)}%</text> : null}
             </g>;
           })}
           {marker && marker.values[y] !== null ? <line x1={cx - barWidth / 2 - 5} x2={cx + barWidth / 2 + 5} y1={yOf(marker.values[y]!)} y2={yOf(marker.values[y]!)} stroke={CHART_COLORS.signal} strokeWidth="2.5" /> : null}
-          {!percentLabels && totals[y] > 0 ? <text x={cx} y={yOf(Math.max(totals[y], marker?.values[y] ?? 0)) - 6} className={styles.total}>{scale.format(totals[y])}</text> : null}
-          <text x={cx} y={height - 8} className={y === selected ? styles.tickOn : styles.tickX}>{year}</text>
+          {!percentLabels && totals[y] > 0 && (step >= 34 || y === selected) ? <text x={cx} y={yOf(Math.max(totals[y], marker?.values[y] ?? 0)) - 6} className={styles.total}>{scale.format(totals[y])}</text> : null}
+          {showYearLabel(y, years.length, selected, step) ? <text x={cx} y={height - 8} className={y === selected ? styles.tickOn : styles.tickX}>{year}</text> : null}
         </g>;
       })}
-    </svg>
-    {hover ? <ChartTooltip anchor={hover.anchor} container={wrapRef} kind="bar">
+    </svg></div>
+    {hover ? <ChartTooltip anchor={hover.anchor} container={wrapRef} kind="bar" onClose={() => setHover(null)}>
       <TooltipHead title={years[hover.y]} context={context} />
       <TooltipLines lines={lines(hover.y)} />
     </ChartTooltip> : null}
