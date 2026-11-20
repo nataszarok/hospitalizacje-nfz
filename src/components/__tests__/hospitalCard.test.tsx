@@ -102,8 +102,8 @@ describe("Karta szpitala", () => {
 
   it("rok bez kwot NFZ: „Kwota NFZ” wyłączona, wykres koncentracji pokazuje hospitalizacje; łóżka ze stanem rejestru", () => {
     render(<HospitalPage data={rich} />);
-    expect(screen.getByText("Łóżka na oddziałach (stan 2026)")).toBeInTheDocument();
-    expect(screen.getByText("2 oddziały i pododdziały")).toBeInTheDocument();
+    expect(screen.getByText("Łóżka szpitalne (stan 2026)")).toBeInTheDocument();
+    expect(screen.getByText("2 oddziały")).toBeInTheDocument();
     fireEvent.change(within(screen.getByRole("group", { name: "Rok karty" })).getByRole("combobox", { name: "Rok" }), { target: { value: "2024" } });
     const concentration = screen.getByRole("heading", { name: /Ile grup daje większość/ }).closest("section")!;
     expect(within(concentration).getByRole("button", { name: "Kwota NFZ" })).toBeDisabled();
@@ -157,8 +157,11 @@ describe("Karta szpitala", () => {
     expect(parts.getByText("Leczenie szpitalne").closest("div")).toHaveTextContent("73 łóżek · 86%2 oddziaływ tym SOR 13 (nie oddziały)");
     expect(parts.getByText("Opieka długoterminowa i paliatywna").closest("div")).toHaveTextContent("12 łóżek · 14%ZOL");
     expect(parts.getByText("Poradnie (AOS)").closest("div")).toHaveTextContent("12 poradni9 dziedzin · w 2 lokalizacjach");
-    expect(parts.getByText(/Bez łóżek/).parentElement).toHaveTextContent("Dializy · 18 stanowisk");
-    expect(parts.getByText(/Bez łóżek/).parentElement).not.toHaveTextContent("SOR");
+    expect(parts.getByText(/Poza oddziałami/).parentElement).toHaveTextContent("Dializy · 18 stanowiskPOZ · 1 gabinet");
+    expect(parts.getByText(/Poza oddziałami/).parentElement).not.toHaveTextContent("SOR");
+    // Nagłówek karty: te same łóżka i oddziały co boks „Leczenie szpitalne”.
+    const kpis = within(document.querySelector<HTMLElement>('dl[aria-label="Liczby szpitala"]')!);
+    expect(kpis.getByText("Łóżka szpitalne (stan 2026)").parentElement).toHaveTextContent("732 oddziały");
     expect(screen.getByRole("heading", { name: /Rzut szpitala/ })).toBeInTheDocument();
     expect(screen.getByText("Lokalizacje bez łóżek")).toBeInTheDocument();
     for (const table of document.querySelectorAll("#panel-struktura table")) expect(table).toHaveClass("sticky-head");

@@ -1,3 +1,10 @@
+/* Ikona „?” w linii tekstu (tytuł sekcji, etykieta): środek ikony na wysokości środka małych liter, nie na linii bazowej. */
+.trigger {
+  vertical-align: middle;
+  position: relative;
+  top: -1px;
+}
+
 /* Dymek objaśnienia (ikona „?”), DESIGN.md 6.3: jasny jak dymek danych, szerszy (do 460 px), tekst 13 px. */
 .dropdown {
   width: max-content;

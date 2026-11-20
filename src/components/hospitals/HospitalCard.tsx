@@ -11,6 +11,7 @@ import { ShareBars, ShareLegend } from "@/components/ShareBars";
 import { GroupsSection } from "./HospitalGroupsSection";
 import { HospitalFinanceTab } from "./HospitalFinanceTab";
 import { HospitalStructureTab } from "./HospitalStructureTab";
+import { acuteSummary } from "@/lib/hospitalStructure";
 import { formatCityName, formatPln } from "@/lib/formatters";
 import { JGP_SECTION_LABELS } from "@/lib/hospitalizationSummary";
 import { sectionTotals, yearlySums, type HospitalPageData } from "@/lib/hospitalPage";
@@ -135,6 +136,8 @@ function CardHeader({ data, yearIndex }: { data: HospitalPageData; yearIndex: nu
   const groups = data.groups.filter((row) => row[2][yearIndex] > 0);
   const leaders = groups.filter((row) => row[3][yearIndex] > 0 && row[3][yearIndex] <= 3).length;
   const [owNfz, nip] = data.key.split("|");
+  // Łóżka i oddziały leczenia szpitalnego: te same liczby co boks w zakładce „Struktura”.
+  const acute = data.structure ? acuteSummary(data.structure) : null;
   return <header className={tabs.head}>
     <div className={tabs.headText}>
       <nav className={base.breadcrumbs} aria-label="Ścieżka"><Link href="/szpitale">Szpitale</Link> <span aria-hidden>›</span> <span>{formatCityName(data.city)}</span></nav>
@@ -150,7 +153,7 @@ function CardHeader({ data, yearIndex }: { data: HospitalPageData; yearIndex: nu
     <dl className={tabs.kpis} aria-label="Liczby szpitala">
       <div><dt>Hospitalizacje {year}</dt><dd>{integer(hosp[yearIndex])}</dd><span>{change === null ? "pierwszy rok" : `${signedPct(change)} r/r`}</span></div>
       <div><dt>Śmiertelność {year}</dt><dd>{latestRate === null ? "—" : `${decimal(latestRate, 2)}%`}</dd><span>{[latestRate !== null && previousRate !== null ? `${signedPp(latestRate - previousRate)} r/r` : null, network !== null ? `sieć PSZ ${decimal(network, 2)}%` : null].filter(Boolean).join(" · ")}</span></div>
-      <div><dt>Łóżka na oddziałach (stan {data.rpwdlYear ?? "bieżący"})</dt><dd>{data.beds ? integer(data.beds) : "—"}</dd><span>{data.wards.length ? `${data.wards.length} ${plural(data.wards.length, "oddział lub pododdział", "oddziały i pododdziały", "oddziałów i pododdziałów")}` : "brak profilu w rejestrze"}</span></div>
+      <div><dt>Łóżka szpitalne (stan {data.rpwdlYear ?? "bieżący"})</dt><dd>{acute?.beds ? integer(acute.beds) : "—"}</dd><span>{acute?.wards ? `${acute.wards} ${plural(acute.wards, "oddział", "oddziały", "oddziałów")}` : "brak profilu w rejestrze"}</span></div>
       <div><dt>Grupy JGP {year}</dt><dd>{integer(groups.length)}</dd><span>{leaders ? `${leaders} w pierwszej trójce w Polsce` : "z hospitalizacjami w roku"}</span></div>
     </dl>
   </header>;

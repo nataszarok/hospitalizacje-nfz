@@ -56,6 +56,7 @@ export function InfoTip({ label, ariaLabel = "Informacja" }: { label: ReactNode;
     size={20}
     radius="xl"
     aria-label={ariaLabel}
+    className={styles.trigger}
     aria-expanded={open}
     aria-controls={open && phone ? id : undefined}
     onClick={() => {

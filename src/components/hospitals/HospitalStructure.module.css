@@ -350,6 +350,11 @@
   display: none;
 }
 
+/* Liczby (łóżka, udział, liczba poradni) nie łamią się: wąska kolumna nie rozbija „80,0%” na znaki. */
+.nums {
+  white-space: nowrap;
+}
+
 .partRow th {
   background: var(--color-background-soft);
   color: var(--color-heading);

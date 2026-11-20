@@ -8,7 +8,7 @@ import { CHART_COLORS } from "@/lib/chartPalette";
 import { formatPln } from "@/lib/formatters";
 import { wardPaymentStatus, type HospitalPageData, type WardPaymentStatus } from "@/lib/hospitalPage";
 import {
-  CONTRACT_BADGES, GROUP_ORDER, PLAN, STRUCTURE_GROUPS, STRUCTURE_PARTS, clinicEntries, fieldsShown, groupOf, highlightParts, inset,
+  CONTRACT_BADGES, GROUP_ORDER, acuteSummary, PLAN, STRUCTURE_GROUPS, STRUCTURE_PARTS, clinicEntries, fieldsShown, groupOf, highlightParts, inset,
   isKidsWard, isLightColor, layoutBuildings, matchesSearch, placeName, planName, roomLabel, searchWords, shortPlaceName, squarifyRatio,
   wardEntries, type ContractPay, type HospitalStructure, type StructureBed, type StructureGroup, type StructurePart,
 } from "@/lib/hospitalStructure";
@@ -101,6 +101,7 @@ function PartsSection({ data, structure }: { data: HospitalPageData; structure: 
       ["Pasek", "dzieli łóżka na części szpitala. W leczeniu szpitalnym odcienie to rodzaje oddziałów — te same co na rzucie."],
       ["SOR, izba przyjęć i blok", "mają łóżka, ale nie są oddziałami. Liczymy je w leczeniu szpitalnym (kreskowanie)."],
       ["Poradnie", "nie mają łóżek, więc są tylko w osobnym boksie, nie w pasku."],
+      ["Poza oddziałami", "— miejsca bez łóżek z rejestru RPWDL: gabinety lekarza rodzinnego (POZ), punkty nocnej i świątecznej opieki, dializy, sala porodowa, zespoły ratownictwa."],
     ]} />
     <div ref={container} className={styles.relative}>
       <div className={styles.bar} role="img" aria-label={`Łóżka według części szpitala: ${parts.map((part) => `${part.label} ${integer(part.beds)}`).join(", ")}`}>
@@ -119,7 +120,8 @@ function PartsSection({ data, structure }: { data: HospitalPageData; structure: 
     <dl className={styles.boxes}>
       {parts.map((part) => {
         const wards = part.rows.filter((row) => groupOf(row[3], row[2]) !== "support");
-        const codes = new Set(wards.map((row) => row[3])).size;
+        // Leczenie szpitalne: te same liczby co nagłówek karty (`acuteSummary`).
+        const codes = part.key === "acute" ? acuteSummary(structure).wards : new Set(wards.map((row) => row[3])).size;
         const names = [...new Set(wards.map((row) => planName(structure, row)))];
         const support = Object.entries(part.rows.filter((row) => groupOf(row[3], row[2]) === "support").reduce<Record<string, number>>((acc, row) => {
           const name = planName(structure, row); acc[name] = (acc[name] ?? 0) + row[5]; return acc;
@@ -139,7 +141,7 @@ function PartsSection({ data, structure }: { data: HospitalPageData; structure: 
         <dd className={styles.what}>{integer(out.fields)} {plural(out.fields, "dziedzina", "dziedziny", "dziedzin")} · w {integer(out.locations)} {plural(out.locations, "lokalizacji", "lokalizacjach", "lokalizacjach")}</dd>
       </div> : null}
     </dl>
-    {noBeds.length ? <p className={styles.extras}><span>Bez łóżek:</span> {noBeds.map(([label, detail]) => <span key={label} className={styles.chip}><b>{label}</b>{detail ? ` · ${detail}` : ""}</span>)}</p> : null}
+    {noBeds.length ? <p className={styles.extras}><span>Poza oddziałami:</span> {noBeds.map(([label, detail]) => <span key={label} className={styles.chip}><b>{label}</b>{detail ? ` · ${detail}` : ""}</span>)}</p> : null}
   </section>;
 }
 
@@ -188,7 +190,7 @@ function PlanSection({ data, structure }: { data: HospitalPageData; structure: H
     structure.beds.forEach((row) => byAddr.set(row[0], [...(byAddr.get(row[0]) ?? []), row]));
     return [...byAddr].map(([addr, rows]) => ({ addr, rows, beds: rows.reduce((sum, row) => sum + row[5], 0) }));
   }, [structure]);
-  const lines = width ? layoutBuildings(buildings, width, phone) : [];
+  const lines = width ? layoutBuildings(buildings, width) : [];
   const colorOf = (row: StructureBed) => {
     if (mode === "kids") return isKidsWard(row[3]) ? CHART_COLORS.data : CHART_COLORS.dataFaint;
     const color = STRUCTURE_GROUPS[groupOf(row[3], row[2])].color;
@@ -240,7 +242,9 @@ function PlanSection({ data, structure }: { data: HospitalPageData; structure: H
           return <div key={building.addr} className={styles.building} style={{ width: w }}>
             <h3>
               <span className={styles.place} title={phone && full !== nameOf(full) ? full : undefined}>{nameOf(full) || street}</span>
-              {phone ? <small>{integer(building.beds)} łóżek · {street}, {city}</small> : <> <span className={styles.beds}>· {integer(building.beds)} łóżek</span><small>{street}, {city}</small></>}
+              {/* Telefon (DESIGN.md 7.1b): łóżka w drugiej linii z ulicą; miasto w `title`. */}
+              {/* Wąski budynek: tylko łóżka (adres w `title`), żeby nagłówek miał najwyżej 2 linie. */}
+              {phone ? <small title={`${street}, ${city}`}>{integer(building.beds)} łóżek{w >= 200 ? ` · ${street}` : ""}</small> : <> <span className={styles.beds}>· {integer(building.beds)} łóżek</span><small>{street}, {city}</small></>}
             </h3>
             <svg width={inner.w + 2 * PLAN.pad} height={h} viewBox={`0 0 ${inner.w + 2 * PLAN.pad} ${h}`} role="img" aria-label={`Rzut budynku ${street}, ${city}: ${integer(building.beds)} łóżek`}>
               <defs><pattern id="hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="7" height="7" fill={CHART_COLORS.backgroundMuted} /><line x1="0" y1="0" x2="0" y2="7" stroke={CHART_COLORS.borderStrong} strokeWidth="2.5" /></pattern></defs>
@@ -376,7 +380,7 @@ function ListsSection({ data, structure, yearIndex }: { data: HospitalPageData; 
       </ul> : null}
       <div className={`priority-table ${styles.tableWrap}`}>
         <table className={`${base.table} ${styles.list} sticky-head`}>
-          <thead><tr><th>Oddział</th><th className={styles.fieldsCol}>Dziedziny medycyny</th><th className={base.num}>Łóżka</th><th className={base.num}>Udział</th></tr></thead>
+          <thead><tr><th>Oddział</th><th className={styles.fieldsCol}>Dziedziny medycyny</th><th className={`${base.num} ${styles.nums}`}>Łóżka</th><th className={`${base.num} ${styles.nums}`}>Udział</th></tr></thead>
           <tbody>
             {STRUCTURE_PARTS.map(({ key, label }) => {
               const all = wards.filter((entry) => entry.part === key);
@@ -384,7 +388,7 @@ function ListsSection({ data, structure, yearIndex }: { data: HospitalPageData; 
               if (!hits.length) return null;
               const beds = all.reduce((sum, entry) => sum + entry.beds, 0);
               return [<tr key={key} className={styles.partRow}>
-                <th scope="rowgroup"><i style={{ background: PART_SWATCH[key] }} aria-hidden />{label}</th><th className={styles.fieldsCol} /><th className={base.num}>{integer(beds)}</th><th className={base.num}>{percent(beds, total, 1)}</th>
+                <th scope="rowgroup"><i style={{ background: PART_SWATCH[key] }} aria-hidden />{label}</th><th className={styles.fieldsCol} /><th className={`${base.num} ${styles.nums}`}>{integer(beds)}</th><th className={`${base.num} ${styles.nums}`}>{percent(beds, total, 1)}</th>
               </tr>, ...hits.map((entry) => <tr key={`${key}-${entry.code}-${entry.category}`}>
                 <td>
                   <Highlight text={entry.name} words={words} />{entry.support ? <span className={styles.notWard}>nie oddział</span> : null}<Badge code={entry.code} support={entry.support} />
@@ -392,8 +396,8 @@ function ListsSection({ data, structure, yearIndex }: { data: HospitalPageData; 
                   {manyBuildings ? <small>{where(entry.addresses)}</small> : null}
                 </td>
                 <td className={styles.fieldsCol}><Fields fields={entry.fields} words={words} /></td>
-                <td className={base.num}>{integer(entry.beds)}</td>
-                <td className={base.num}>{percent(entry.beds, total, 1)}</td>
+                <td className={`${base.num} ${styles.nums}`}>{integer(entry.beds)}</td>
+                <td className={`${base.num} ${styles.nums}`}>{percent(entry.beds, total, 1)}</td>
               </tr>)];
             })}
             {!wardHits.length ? <tr><td colSpan={4} className={styles.emptyRow}>Brak oddziału dla tego zapytania.</td></tr> : null}
@@ -406,7 +410,7 @@ function ListsSection({ data, structure, yearIndex }: { data: HospitalPageData; 
       <summary><span className={styles.listTitle}>Poradnie (AOS)</span><small>{searching ? `${clinicCount} z ${structure.clinics.length}` : `${structure.clinics.length} w ${clinics.length} ${plural(clinics.length, "rodzaju", "rodzajach", "rodzajach")}`}</small><span className={styles.more} /></summary>
       <div className={`priority-table ${styles.tableWrap}`}>
         <table className={`${base.table} ${styles.list} sticky-head`}>
-          <thead><tr><th>Poradnia</th><th className={styles.fieldsCol}>Dziedziny medycyny</th><th className={base.num}>Liczba</th></tr></thead>
+          <thead><tr><th>Poradnia</th><th className={styles.fieldsCol}>Dziedziny medycyny</th><th className={`${base.num} ${styles.nums}`}>Liczba</th></tr></thead>
           <tbody>
             {clinicHits.map((entry) => <tr key={entry.code}>
               <td>
@@ -415,7 +419,7 @@ function ListsSection({ data, structure, yearIndex }: { data: HospitalPageData; 
                 {manyClinicAddresses ? <small>{where(entry.addresses)}</small> : null}
               </td>
               <td className={styles.fieldsCol}><Fields fields={entry.fields} words={words} /></td>
-              <td className={base.num}>{entry.count}</td>
+              <td className={`${base.num} ${styles.nums}`}>{entry.count}</td>
             </tr>)}
             {!clinicHits.length ? <tr><td colSpan={3} className={styles.emptyRow}>Brak poradni dla tego zapytania.</td></tr> : null}
           </tbody>

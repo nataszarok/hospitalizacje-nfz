@@ -117,6 +117,18 @@ export function planName(structure: Pick<HospitalStructure, "names">, row: Struc
   return name.charAt(0).toUpperCase() + name.slice(1);
 }
 
+/**
+ * Leczenie szpitalne: łóżka części (z SOR, izbą i blokiem) i liczba oddziałów (kody bez SOR, izby i bloku).
+ * Te same liczby w nagłówku karty (KPI) i w boksie zakładki „Struktura”.
+ */
+export function acuteSummary(structure: Pick<HospitalStructure, "beds">): { beds: number; wards: number } {
+  const rows = structure.beds.filter((row) => STRUCTURE_GROUPS[groupOf(row[3], row[2])].part === "acute");
+  return {
+    beds: rows.reduce((sum, row) => sum + row[5], 0),
+    wards: new Set(rows.filter((row) => groupOf(row[3], row[2]) !== "support").map((row) => row[3])).size,
+  };
+}
+
 // ── Nazwy placówek (budynków) ────────────────────────────────────────────────────────────────────────────────────
 
 /** Odmiana miasta: pierwsze 3 litery każdego słowa (Kłodzku/Kłodzko, Kudowie-Zdroju/Kudowa-Zdrój). */
@@ -279,16 +291,16 @@ export const squarifyRatio = <T extends { value: number }>(items: T[], x: number
   squarify(items, 0, 0, w / ratio, h).map((r) => ({ ...r, x: x + r.x * ratio, y: y + r.y, w: r.w * ratio }));
 
 /** Stałe rzutu (px): pole łóżka przy szerokości ≥ 1000 px, odstępy, wysokości wierszy, proporcje skrzydeł i oddziałów. */
-export const PLAN = { bedArea: 520, pad: 6, wingGap: 5, roomGap: 1.5, buildingGap: 12, minRow: 110, minLast: 64, minPhone: 30, roomRatio: 2.6, wingRatio: 1.6 } as const;
+export const PLAN = { bedArea: 520, pad: 6, wingGap: 5, roomGap: 1.5, buildingGap: 12, minRow: 110, minLast: 64, roomRatio: 2.6, wingRatio: 1.6 } as const;
 
 export interface PlanBuilding<B> { building: B; width: number; height: number }
 
 /**
  * Wiersze budynków: każdy wiersz na całą szerokość, budynki w wierszu tej samej wysokości, szerokość według łóżek;
- * mały budynek dołącza do wiersza, dopóki wiersz nie ma `minRow`. Telefon: budynek w osobnym wierszu.
- * Pole łóżka maleje z szerokością kontenera (rzut ma podobną wysokość na każdym ekranie). Wymiary z ramką 1 px.
+ * mały budynek dołącza do wiersza, dopóki wiersz nie ma `minRow`. Ten sam układ na telefonie (nazwy krótkie, nie osobne
+ * wiersze: budynek sam w wierszu byłby cienkim paskiem). Pole łóżka maleje z szerokością kontenera. Wymiary z ramką 1 px.
  */
-export function layoutBuildings<B extends { beds: number }>(buildings: B[], width: number, phone: boolean): PlanBuilding<B>[][] {
+export function layoutBuildings<B extends { beds: number }>(buildings: B[], width: number): PlanBuilding<B>[][] {
   const area = PLAN.bedArea * Math.min(1, width / 1000);
   const inner = (count: number) => width - 1 - PLAN.buildingGap * (count - 1) - (2 * PLAN.pad + 2) * count;
   const rowHeight = (row: B[]) => row.reduce((sum, b) => sum + b.beds, 0) * area / inner(row.length);
@@ -296,11 +308,11 @@ export function layoutBuildings<B extends { beds: number }>(buildings: B[], widt
   let current: B[] = [];
   for (const building of [...buildings].sort((a, b) => b.beds - a.beds)) {
     current.push(building);
-    if (phone || rowHeight(current) >= PLAN.minRow) { rows.push(current); current = []; }
+    if (rowHeight(current) >= PLAN.minRow) { rows.push(current); current = []; }
   }
   if (current.length) rows.push(current);
   return rows.map((row) => {
-    const h = Math.max(phone ? PLAN.minPhone : PLAN.minLast, rowHeight(row));
+    const h = Math.max(PLAN.minLast, rowHeight(row));
     return row.map((building) => ({ building, height: h + 2 * PLAN.pad, width: building.beds * area / h + 2 * PLAN.pad + 2 }));
   });
 }

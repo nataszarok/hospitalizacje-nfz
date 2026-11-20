@@ -110,19 +110,20 @@ export interface HospitalResources {
 }
 
 /** Komórki zaplecza w kolejności na karcie: pomoc doraźna, intensywna opieka, zabiegi, opieka długoterminowa, inne. */
-export const HOSPITAL_CAPABILITIES: [key: string, label: string, unit: "beds" | "stations" | "day_places" | "teams" | "cells" | null][] = [
+export const HOSPITAL_CAPABILITIES: [key: string, label: string, unit: "beds" | "stations" | "day_places" | "teams" | "cabinets" | "points" | null][] = [
   ["sor", "SOR", "beds"], ["admission", "Izba przyjęć", "beds"], ["icu", "OIT", "beds"], ["stroke", "Oddział udarowy", "beds"],
   ["ccu", "Intensywny nadzór kardiologiczny", "beds"], ["operating", "Blok operacyjny", null], ["delivery", "Sala porodowa", null],
   ["dialysis", "Dializy", "stations"], ["day_treatment", "Leczenie jednego dnia", "day_places"], ["rehab", "Rehabilitacja stacjonarna", "beds"],
   ["psychiatry", "Psychiatria / leczenie uzależnień", "beds"], ["long_term", "ZOL / ZPO", "beds"], ["palliative", "Opieka paliatywna", "beds"],
   ["hospice", "Hospicjum", "beds"], ["spa", "Leczenie uzdrowiskowe", "beds"], ["zrm", "Zespoły ratownictwa (ZRM)", "teams"],
-  ["poz", "POZ", "cells"], ["npl", "Nocna i świąteczna opieka", "cells"],
+  // Liczba komórek rejestru, nazwana słowem czytelnika: gabinety POZ (lekarz, pielęgniarka, położna), punkty nocnej opieki.
+  ["poz", "POZ", "cabinets"], ["npl", "Nocna i świąteczna opieka", "points"],
 ];
 
 const pl = (value: number) => value.toLocaleString("pl-PL");
 const UNIT_WORDS: Record<string, [string, string, string]> = {
   beds: ["łóżko", "łóżka", "łóżek"], stations: ["stanowisko", "stanowiska", "stanowisk"], day_places: ["miejsce dzienne", "miejsca dzienne", "miejsc dziennych"],
-  teams: ["zespół", "zespoły", "zespołów"], cells: ["komórka", "komórki", "komórek"],
+  teams: ["zespół", "zespoły", "zespołów"], cabinets: ["gabinet", "gabinety", "gabinetów"], points: ["punkt", "punkty", "punktów"],
 };
 const unitWord = (n: number, [one, few, many]: [string, string, string]) => n === 1 ? one : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? few : many;
 

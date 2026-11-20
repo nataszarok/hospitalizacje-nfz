@@ -109,7 +109,7 @@ describe("dane zakładki z pliku buildu", () => {
 
 describe("rzut", () => {
   it("wiersze budynków zajmują całą szerokość (szerokości + odstępy = kontener)", () => {
-    const lines = layoutBuildings([{ beds: 900 }, { beds: 135 }, { beds: 95 }], 1100, false);
+    const lines = layoutBuildings([{ beds: 900 }, { beds: 135 }, { beds: 95 }], 1100);
     expect(lines.map((line) => line.length)).toEqual([1, 2]);
     for (const line of lines) {
       const used = line.reduce((sum, b) => sum + b.width, 0) + PLAN.buildingGap * (line.length - 1);
@@ -118,10 +118,12 @@ describe("rzut", () => {
     }
   });
 
-  it("telefon: budynek w osobnym wierszu, na całą szerokość", () => {
-    const lines = layoutBuildings([{ beds: 300 }, { beds: 98 }], 343, true);
-    expect(lines.map((line) => line.length)).toEqual([1, 1]);
-    expect(Math.round(lines[1][0].width)).toBe(342);
+  it("telefon: ten sam układ wierszy — małe budynki dzielą wiersz zamiast cienkich pasków", () => {
+    const lines = layoutBuildings([{ beds: 140 }, { beds: 60 }, { beds: 50 }], 343);
+    expect(lines.map((line) => line.length)).toEqual([2, 1]);
+    expect(lines[0][0].height).toBeGreaterThanOrEqual(PLAN.minRow);
+    // Resztka niższa niż minLast: ta wysokość i węższy wiersz (zamiast paska na całą szerokość).
+    expect(lines[1][0].height).toBe(PLAN.minLast + 2 * PLAN.pad);
   });
 
   it("oddziały szersze niż wyższe (proporcja podpisu), pole proporcjonalne do łóżek", () => {

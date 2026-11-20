@@ -102,7 +102,7 @@ describe("sposób zapłaty oddziałów (udział hospitalizacji w ryczałcie i za
 describe("hospitalResources — zaplecze z rejestru RPWDL", () => {
   it("komórki w stałej kolejności (SOR przed blokiem operacyjnym) ze szczegółem; poradnie i lokalizacje", () => {
     expect(buildHospitalPageData(input)!.resources).toEqual({
-      capabilities: [["SOR", "13 łóżek"], ["Blok operacyjny", null], ["Dializy", "18 stanowisk"], ["POZ", "1 komórka"]],
+      capabilities: [["SOR", "13 łóżek"], ["Blok operacyjny", null], ["Dializy", "18 stanowisk"], ["POZ", "1 gabinet"]],
       outpatient: { cells: 12, locations: 2, fields: 9 },
       locations: { count: 3, cities: 2, beds: 85, list: input.locations },
     });
