@@ -513,7 +513,7 @@ function ProfileSection({ data }: { data: JgpPageData }) {
 function FamilySection({ data }: { data: JgpPageData }) {
   const family = data.family!;
   const years = data.catalogYears;
-  const palette = [CHART_COLORS.data, "#6F8FC9", "#A9BCE0", "#5B8C7A", "#A3C4B5", "#C9A86A", "#E2CFA3"];
+  const palette = [CHART_COLORS.data, CHART_COLORS.dataMid, "#A9BCE0", "#5B8C7A", "#A3C4B5", "#C9A86A", "#E2CFA3"];
   const color = new Map(family.variants.map((variant, i) => [variant.code, palette[i % palette.length]]));
   const totals = years.map((_, j) => family.variants.reduce((sum, variant) => sum + (variant.values[j] ?? 0), 0));
   const own = family.variants.find((variant) => variant.code === data.jgpCode);
@@ -627,7 +627,7 @@ function RankingSection({ data, pool, selectedRow, filtered, regionColor, onSele
   const visible = mounted ? sorted : sorted.slice(0, SERVER_ROWS);
   const total = pool.reduce((sum, row) => sum + row.hospitalizations, 0);
   const shares = structureShares(pool);
-  const colors = [CHART_COLORS.data, "#6F8FC9", "#A9BCE0"];
+  const colors = [CHART_COLORS.data, CHART_COLORS.dataMid, "#A9BCE0"];
   const yearAt = data.admissionYears.indexOf(data.year);
   const previousYear = yearAt > 0 ? data.admissionYears[yearAt - 1] : undefined;
   const scrollRef = useRef<HTMLDivElement>(null);

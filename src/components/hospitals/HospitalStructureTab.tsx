@@ -200,35 +200,38 @@ function PlanSection({ data, structure }: { data: HospitalPageData; structure: H
       <span className={styles.muted}>{STRUCTURE_PARTS.find((part) => part.key === group.part)!.label} · {group.label.split(" (")[0]}{isKidsWard(row[3]) ? " · dla dzieci" : ""}</span>
     </>;
   };
-  // Miejsca bez łóżek w budynku: kwadrat na poradnię i na inne miejsce (POZ, nocna pomoc, ratownictwo…).
+  // Miejsca bez łóżek w budynku (poradnie, POZ, nocna pomoc…): jeden pasek u dołu ramki, poza skalą łóżek.
   const placesOf = (addr: number) => ({
     clinics: structure.clinics.filter((row) => row[0] === addr),
     other: structure.other.filter((row) => row[0] === addr),
   });
+  const hasPlaces = (addr: number) => structure.clinics.some((row) => row[0] === addr) || structure.other.some((row) => row[0] === addr);
   const bedAddresses = new Set(buildings.map((building) => building.addr));
   const placeOnly = [...new Set([...structure.clinics.map((row) => row[0]), ...structure.other.map((row) => row[0])])].filter((addr) => !bedAddresses.has(addr)).sort((a, b) => a - b);
   const Places = ({ addr }: { addr: number }) => {
     const { clinics, other } = placesOf(addr);
     if (!clinics.length && !other.length) return null;
     const [street, city] = structure.addresses[addr];
-    // Kwadraty w grupach z podpisem: poradnie, potem rodzaje miejsc bez łóżek (POZ, nocna pomoc…) — każdy kwadrat ma nazwę grupy.
     const kinds = [...new Set(other.map((row) => row[1]))];
-    return <div className={styles.places} aria-label={`Poradnie i inne miejsca bez łóżek: ${clinics.length + other.length}`}>
-      {clinics.length ? <span className={styles.placeGroup}><small>Poradnie {clinics.length}</small>
-        {clinics.map(([, code, fields], i) => <span key={`c${i}`} className={`${styles.square} ${styles.squareClinic}`} {...handlers(structure.names[code] ?? "Poradnia", () => <>
-          {fields.length ? <>{fields.map((f) => structure.fields[f]).join(", ")}<br /></> : null}<span className={styles.muted}>Poradnia · {street}, {city}</span>
-        </>)} />)}
-      </span> : null}
+    const parts = [...(clinics.length ? [`Poradnie ${clinics.length}`] : []), ...kinds.map((kind) => `${OTHER_KINDS[kind].short} ${other.filter((row) => row[1] === kind).length}`)];
+    // Dymek: poradnie według nazwy (z liczbą, gdy kilka), potem rodzaje miejsc bez łóżek.
+    const clinicNames = new Map<string, number>();
+    // Bez powtarzanego słowa „Poradnia”: „diabetologiczna, kardiologiczna (2)…”.
+    clinics.forEach(([, code]) => { const name = (structure.names[code] ?? "Poradnia").replace(/^Poradnia (?=\S)/, ""); clinicNames.set(name, (clinicNames.get(name) ?? 0) + 1); });
+    const body = () => <>
+      {clinics.length ? <p className={styles.tipPara}><b>Poradnie ({clinics.length}):</b> {[...clinicNames].map(([name, n]) => n > 1 ? `${name} (${n})` : name).join(", ")}</p> : null}
       {kinds.map((kind) => {
         const rows = other.filter((row) => row[1] === kind);
-        return <span key={kind} className={styles.placeGroup}><small>{OTHER_KINDS[kind].short} {rows.length}</small>
-          {rows.map(([, , name, units], i) => <span key={i} className={`${styles.square} ${styles.squareOther}`} {...handlers(kind === "misc" ? name : OTHER_KINDS[kind].label, () => <>
-            {kind !== "misc" && name ? <>{name}<br /></> : null}{units && OTHER_KINDS[kind].capacity ? <>{units} {plural(units, ...OTHER_KINDS[kind].capacity!)}<br /></> : null}
-            <span className={styles.muted}>Bez łóżek · {street}, {city}</span>
-          </>)} />)}
-        </span>;
+        const label = kind === "misc" ? rows.map((row) => row[2]).join(", ") : OTHER_KINDS[kind].label;
+        const units = rows.reduce((sum, row) => sum + row[3], 0);
+        return <p key={kind} className={styles.tipPara}><b>{label}:</b> {rows.length} {plural(rows.length, ...OTHER_KINDS[kind].unit)}{units && OTHER_KINDS[kind].capacity ? `, ${units} ${plural(units, ...OTHER_KINDS[kind].capacity!)}` : ""}</p>;
       })}
-    </div>;
+      <span className={styles.muted}>Bez łóżek · {street}, {city}</span>
+    </>;
+    const label = parts.join(" · ");
+    return <button type="button" className={styles.band} aria-label={`Bez łóżek: ${label}`} {...handlers("Poradnie i miejsca bez łóżek", body)}>
+      <span>{label}</span>
+    </button>;
   };
   const header = (addr: number, names: string[], beds: number | null, w: number) => {
     const [street, city] = structure.addresses[addr];
@@ -245,8 +248,8 @@ function PlanSection({ data, structure }: { data: HospitalPageData; structure: H
     <Head id="s-rzut" title="Budynki i oddziały" context="· wielkość według łóżek" helpLabel="Jak czytać budynki" help={[
       ["Ramka", "to budynek pod jednym adresem. Prostokąt w ramce to oddział albo inne miejsce z łóżkami: SOR, izba przyjęć, ZOL, hospicjum."],
       ["Wielkość prostokąta", "odpowiada liczbie łóżek. Skala jest wspólna dla wszystkich budynków i szpitali, więc widać też, który budynek jest większy."],
-      ["Kolor", "pokazuje rodzaj oddziału; oddziały jednego rodzaju stoją obok siebie. Oddział z pododdziałem (np. udarowym) ma dwa prostokąty."],
-      ["Mały kwadrat", "to poradnia albo inne miejsce bez łóżek: gabinet lekarza rodzinnego (POZ), punkt nocnej pomocy, zespół ratownictwa, dializy. Budynek bez łóżek ma tylko kwadraty."],
+      ["Kolor", "pokazuje rodzaj oddziału; oddziały jednego rodzaju stoją obok siebie. Błękity to leczenie szpitalne, szarości z zielenią — psychiatria, rehabilitacja i opieka długoterminowa. Kreskowanie: SOR, izba przyjęć, blok (nie oddziały). Oddział z pododdziałem (np. udarowym) ma dwa prostokąty."],
+      ["Pasek u dołu ramki", "to miejsca bez łóżek w tym budynku: poradnie specjalistyczne, gabinety lekarza rodzinnego (POZ), nocna pomoc, ratownictwo, dializy. Liczy je, ale nie zależy od skali łóżek. Budynek bez łóżek ma tylko pasek."],
       ["Brak podpisu", "— oddział jest za mały na nazwę. Dotknij go albo najedź kursorem."],
     ]} tools={<div className={base.segmented} role="group" aria-label="Kolor oddziałów">
       <button type="button" aria-pressed={mode === "group"} onClick={() => setMode("group")}>Rodzaj<span className={styles.long}> oddziału</span></button>
@@ -262,12 +265,14 @@ function PlanSection({ data, structure }: { data: HospitalPageData; structure: H
           ? [<li key="h" className={styles.legendHead}>{label}:</li>, ...groups.map((group) => <li key={group}><i style={{ background: swatch(group) }} />{STRUCTURE_GROUPS[group].short}</li>)]
           : <li key={key}><i style={{ background: swatch(groups[0]) }} />{groups.map((group) => STRUCTURE_GROUPS[group].short).join(", ")}</li>;
       })}
-      {hasClinics ? <li><span className={`${styles.square} ${styles.squareClinic}`} aria-hidden />poradnia</li> : null}
-      {hasOther ? <li><span className={`${styles.square} ${styles.squareOther}`} aria-hidden />POZ, nocna pomoc, inne bez łóżek</li> : null}
+      {hasClinics || hasOther ? <li><span className={styles.bandSample} aria-hidden />{hasClinics ? "poradnie" : ""}{hasClinics && hasOther ? ", " : ""}{hasOther ? "POZ, nocna pomoc i inne" : ""} — bez łóżek</li> : null}
     </ul>
     <div ref={container} className={styles.relative}><div ref={ref} className={styles.site}>
       {lines.map((line, l) => <div key={l} className={styles.row}>
-        {line.map(({ building, width: w, height: h }) => {
+        {line.map(({ building, width: w, height: h0 }) => {
+          // Pasek miejsc bez łóżek ma stałą wysokość. Budynek bez paska w tym samym wierszu dostaje to miejsce na oddziały,
+          // więc ramki w wierszu mają równą wysokość i są pełne.
+          const h = h0 + (line.some((item) => hasPlaces(item.building.addr)) && !hasPlaces(building.addr) ? PLAN.band : 0);
           const inner = { w: w - 2 * PLAN.pad - 2, h: h - 2 * PLAN.pad };
           const wings = GROUP_ORDER.map((group) => ({ group, rows: building.rows.filter((row) => groupOf(row[3], row[2]) === group).sort((a, b) => b[5] - a[5]) })).filter((wing) => wing.rows.length);
           const wingRects = squarifyRatio(wings.map((wing) => ({ ...wing, value: wing.rows.reduce((sum, row) => sum + row[5], 0) })), 0, 0, inner.w, inner.h, PLAN.wingRatio);

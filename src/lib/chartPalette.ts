@@ -15,7 +15,11 @@ export const CHART_COLORS = {
   data: "#2856A3",
   dataSoft: "#9DB4DB",
   dataMuted: "#B5C7E6",
+  dataMid: "#6F8FC9",
   dataFaint: "#E4EAF4",
+  dataNeutralStrong: "#8FA6A1",
+  dataNeutral: "#A9BCB7",
+  dataNeutralFaint: "#CFDCD8",
   signal: "#C65D2E",
   positive: "#1D6B3A",
 } as const;
@@ -25,7 +29,7 @@ export const CHART_COLORS = {
  * (ośrodek bez sygnału nie przyciąga wzroku), poniżej 95% jasny błękit, poniżej 99,8% granat.
  * Wybrany ośrodek ma na tym wykresie tę samą gwiazdę w kolorze sygnału co na pozostałych.
  */
-export const DEVIATION_COLORS = { up95: "#E3A27F", up998: "#B4441B", down95: "#8FB0DD", down998: "#2856A3", within: "#A9BCB7" } as const;
+export const DEVIATION_COLORS = { up95: "#E3A27F", up998: "#B4441B", down95: "#8FB0DD", down998: "#2856A3", within: CHART_COLORS.dataNeutral } as const;
 
 /**
  * Wspólna paleta wykresów punktowych świadczeniodawców (karta grupy JGP i eksplorator).
@@ -39,9 +43,3 @@ export const OTHER_POINT = "rgba(152, 162, 179, 0.5)";
 /** Ośrodki, gdy nic nie jest wyróżnione. */
 export const BASE_POINT = "rgba(40, 86, 163, 0.55)";
 
-/**
- * Kolory części szpitala na rzucie i pasku zakładki „Struktura” (oprócz tokenów `CHART_COLORS`): pośredni błękit
- * (onkologia), jasny błękit (intensywna terapia), szarość z zielenią (rehabilitacja), kreskowanie miejsc spoza oddziałów
- * (SOR, izba, blok: tło `backgroundMuted`, kreski `borderStrong`). Do zatwierdzenia w DESIGN.md 2.2.
- */
-export const STRUCTURE_COLORS = { onco: "#6F8FC9", icu: "#C4D3EC", rehab: "#A9BCB7", support: "hatch" } as const;

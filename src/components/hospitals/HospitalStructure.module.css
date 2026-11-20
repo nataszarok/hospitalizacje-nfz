@@ -163,7 +163,7 @@
   background: var(--color-background);
 }
 
-/* Nagłówek nie rozciąga się: rzut zaraz pod nim, kwadraty poradni pod rzutem (wysokość budynku zależy od ich liczby). */
+/* Nagłówek nie rozciąga się: rzut zaraz pod nim, pasek miejsc bez łóżek pod rzutem. */
 .building h3 {
   margin: 0;
   padding: 8px 10px 0;
@@ -217,59 +217,48 @@
 }
 
 /* Poradnie i inne miejsca bez łóżek: kwadrat na miejsce (pole nie zależy od łóżek), pod rzutem oddziałów budynku. */
-.places {
+/* Pasek miejsc bez łóżek u dołu ramki (poradnie, POZ, nocna pomoc): stała wysokość (PLAN.band = 22 px + 6 px odstępu),
+   poza skalą łóżek; wygląd poradni z legendy (biały, obrys koloru danych). */
+.band {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: 4px 12px;
-  padding: 2px 6px 8px;
-}
-
-/* Grupa kwadratów z podpisem rodzaju: „Poradnie 12”, „POZ 4”. */
-.placeGroup {
-  display: inline-flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 3px;
-  min-width: 0;
-}
-
-.placeGroup small {
-  margin-right: 3px;
-  color: var(--color-text-secondary);
-  font-size: var(--fs-xs);
-  white-space: nowrap;
-}
-
-.square {
-  display: inline-block;
-  flex: none;
-  width: 11px;
-  height: 11px;
+  height: 22px;
+  margin: 0 6px 6px;
+  padding: 0 8px;
+  border: 1px solid var(--color-data);
   border-radius: var(--radius-badge);
-  vertical-align: -1px;
-}
-
-.legend .square {
-  margin-right: 6px;
-}
-
-.squareClinic {
-  border: 1.5px solid var(--color-data);
   background: var(--color-background);
-}
-
-.squareOther {
-  border: 1.5px solid var(--color-text-tertiary);
-  background: var(--color-background-muted);
-}
-
-.places .square {
+  color: var(--color-text);
+  font: inherit;
+  font-size: var(--fs-xs);
+  text-align: left;
   cursor: default;
 }
 
-.places .square:hover {
-  box-shadow: 0 0 0 2px var(--color-heading);
+.band span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.band:hover,
+.band:focus-visible {
+  box-shadow: 0 0 0 1px var(--color-data);
+}
+
+.bandSample {
+  display: inline-block;
+  width: 18px;
+  height: 9px;
+  margin-right: 6px;
+  border: 1px solid var(--color-data);
+  border-radius: var(--radius-badge);
+  background: var(--color-background);
+  vertical-align: -1px;
+}
+
+.tipPara {
+  margin: 0 0 4px;
 }
 
 /* Budynki bez łóżek: małe ramki w jednym wierszu, razem na całą szerokość. */
@@ -281,6 +270,10 @@
 
 .building.small {
   flex: 1 1 150px;
+}
+
+.building.small h3 {
+  padding-bottom: 6px;
 }
 
 .pointsTitle {

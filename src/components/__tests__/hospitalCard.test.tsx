@@ -163,9 +163,9 @@ describe("Karta szpitala", () => {
     const kpis = within(document.querySelector<HTMLElement>('dl[aria-label="Liczby szpitala"]')!);
     expect(kpis.getByText("Łóżka szpitalne (stan 2026)").parentElement).toHaveTextContent("732 oddziały");
     const buildings = screen.getByRole("heading", { name: /Budynki i oddziały/ }).closest("section")!;
-    // Budynek bez łóżek Polna 3 (punkt pobrań): ramka z kwadratem. Budynki z łóżkami rysuje przeglądarka po pomiarze szerokości
-    // (jsdom ma szerokość 0) — ich układ sprawdza hospitalStructure.test.ts.
-    expect(within(buildings).getByLabelText("Poradnie i inne miejsca bez łóżek: 1")).toBeInTheDocument();
+    // Budynek bez łóżek Polna 3 (punkt pobrań): ramka z paskiem miejsc bez łóżek. Budynki z łóżkami rysuje przeglądarka po pomiarze
+    // szerokości (jsdom ma szerokość 0) — ich układ sprawdza hospitalStructure.test.ts.
+    expect(within(buildings).getByRole("button", { name: "Bez łóżek: Inne 1" })).toHaveTextContent("Inne 1");
     expect(within(buildings).getByText("Polna 3, Katowice")).toBeInTheDocument();
     for (const table of document.querySelectorAll("#panel-struktura table")) expect(table).toHaveClass("sticky-head");
   });

@@ -3,7 +3,7 @@
  * i poradni, sposób zapłaty NFZ. Funkcje bez Reacta: dane liczy build (`buildHospitalStructure`), układ i wyszukiwanie —
  * przeglądarka (te same funkcje, testy w `__tests__/hospitalStructure.test.ts`).
  */
-import { CHART_COLORS, STRUCTURE_COLORS } from "@/lib/chartPalette";
+import { CHART_COLORS } from "@/lib/chartPalette";
 import { isLumpSumProduct, type HospitalContractsFile } from "@/lib/hospitalFinance";
 
 // ── Dane z buildu ────────────────────────────────────────────────────────────────────────────────────────────────
@@ -92,12 +92,12 @@ export const STRUCTURE_GROUPS: Record<StructureGroup, { label: string; short: st
   internal: { label: "Zachowawcze (interna, kardiologia, neurologia…)", short: "Zachowawcze", color: CHART_COLORS.dataStrong, part: "acute" },
   surgery: { label: "Zabiegowe (chirurgia, ortopedia, laryngologia…)", short: "Zabiegowe", color: CHART_COLORS.dataSoft, part: "acute" },
   mother: { label: "Pediatria, neonatologia, położnictwo", short: "Matka i dziecko", color: CHART_COLORS.data, part: "acute" },
-  icu: { label: "Intensywna terapia i nadzór", short: "Intensywna terapia", color: STRUCTURE_COLORS.icu, part: "acute" },
-  onco: { label: "Onkologia i hematologia", short: "Onkologia, hematologia", color: STRUCTURE_COLORS.onco, part: "acute" },
-  support: { label: "SOR, izba przyjęć, blok operacyjny (nie oddziały)", short: "SOR, izba, blok", color: STRUCTURE_COLORS.support, part: "acute" },
-  psych: { label: "Psychiatria i leczenie uzależnień", short: "Psychiatria", color: CHART_COLORS.dataFaint, part: "psych" },
-  rehab: { label: "Rehabilitacja i uzdrowisko", short: "Rehabilitacja", color: STRUCTURE_COLORS.rehab, part: "rehab" },
-  care: { label: "ZOL, hospicjum, opieka paliatywna", short: "ZOL, hospicjum", color: CHART_COLORS.border, part: "care" },
+  icu: { label: "Intensywna terapia i nadzór", short: "Intensywna terapia", color: CHART_COLORS.dataMuted, part: "acute" },
+  onco: { label: "Onkologia i hematologia", short: "Onkologia, hematologia", color: CHART_COLORS.dataMid, part: "acute" },
+  support: { label: "SOR, izba przyjęć, blok operacyjny (nie oddziały)", short: "SOR, izba, blok", color: "hatch", part: "acute" },
+  psych: { label: "Psychiatria i leczenie uzależnień", short: "Psychiatria", color: CHART_COLORS.dataNeutralStrong, part: "psych" },
+  rehab: { label: "Rehabilitacja i uzdrowisko", short: "Rehabilitacja", color: CHART_COLORS.dataNeutral, part: "rehab" },
+  care: { label: "ZOL, hospicjum, opieka paliatywna", short: "ZOL, hospicjum", color: CHART_COLORS.dataNeutralFaint, part: "care" },
 };
 export const GROUP_ORDER = Object.keys(STRUCTURE_GROUPS) as StructureGroup[];
 
@@ -312,7 +312,7 @@ export const squarifyRatio = <T extends { value: number }>(items: T[], x: number
   squarify(items, 0, 0, w / ratio, h).map((r) => ({ ...r, x: x + r.x * ratio, y: y + r.y, w: r.w * ratio }));
 
 /** Stałe rzutu (px): pole łóżka przy szerokości ≥ 1000 px, odstępy, wysokości wierszy, proporcje skrzydeł i oddziałów. */
-export const PLAN = { bedArea: 520, pad: 6, wingGap: 5, roomGap: 1.5, buildingGap: 12, minRow: 110, minLast: 64, roomRatio: 2.6, wingRatio: 1.6 } as const;
+export const PLAN = { bedArea: 520, pad: 6, wingGap: 5, roomGap: 1.5, buildingGap: 12, minRow: 110, minLast: 64, roomRatio: 2.6, wingRatio: 1.6, band: 28 } as const;
 
 export interface PlanBuilding<B> { building: B; width: number; height: number }
 
