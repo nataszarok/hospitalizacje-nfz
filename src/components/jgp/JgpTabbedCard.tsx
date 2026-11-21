@@ -4,12 +4,14 @@ import Link from "next/link";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { GroupLineChart, type ChartLine } from "@/components/jgp/GroupLineChart";
 import { PeriodToggle } from "@/components/jgp/PeriodToggle";
+import { CardKpis } from "@/components/jgp/CardKpis";
 import { CardYears } from "@/components/jgp/CardYears";
 import { RegionMap, regionTitle } from "@/components/jgp/RegionMap";
 import { ChartExpand } from "@/components/portal/ChartExpand";
 import { ChartTooltip, TooltipHead, TooltipLines } from "@/components/ChartTooltip";
 import { elementBox, type Box } from "@/lib/tooltipPosition";
 import { HelpLines, InfoTip } from "@/components/InfoTip";
+import { PHONE_QUERY, useMediaQuery } from "@/lib/useMediaQuery";
 import { ShareBars, ShareLegend } from "@/components/ShareBars";
 import { FunnelLegend, SelectedLegendItem } from "@/components/jgp/FunnelLegend";
 import { FUNNEL_STATUS_COLORS, funnelLines, hasEnoughDeathsForFunnel, mortalityChartHelp } from "@/lib/mortalityFunnel";
@@ -23,6 +25,7 @@ import {
   outlierCap, showsMortalityReference, topProvidersOfPeriod,
 } from "@/lib/jgpCard";
 import type { JgpPageData, JgpProviderRow } from "@/lib/jgpPage";
+import { plural } from "@/lib/jgpDescription";
 import { explorerHref } from "@/lib/portalLinks";
 import { nextSortState, sortTableRows, type SortState } from "@/lib/tableSort";
 import base from "./JgpPage.module.css";
@@ -258,23 +261,39 @@ function CardHeader({ data, regions, onClearRegion }: { data: JgpPageData; regio
           : <span>cała Polska · kliknij województwo na mapie</span>}
       </p>
     </div>
-    <dl className={styles.kpis} aria-label="Liczby grupy">
-      <div><dt>Hospitalizacje {data.year}</dt><dd>{integer(data.hospitalizations)}</dd><span>{change === null ? "pierwszy rok" : `${signedPct(change)} r/r`}</span></div>
-      <div><dt>Kwota świadczeń NFZ {data.year}</dt><dd>{value ? formatPln(value.value) : "—"}</dd><span>{value && valuePrevious ? `${signedPct(((value.value - valuePrevious.value) / valuePrevious.value) * 100)} r/r` : "brak poprzedniego roku"}</span></div>
-      <div><dt>Śmiertelność</dt><dd>{latestRate === null ? "—" : pct(latestRate, latestRate < 1 ? 2 : 1)}</dd><span>{latestRate !== null && previousRate !== null ? `${signedPp(latestRate - previousRate, latestRate < 1 ? 2 : 1)} r/r` : "zgony w szpitalu"}</span></div>
-      <div><dt>Ośrodki</dt><dd>{integer(data.providerCount)}</dd><span>{previousProviders === null ? "w roku danych" : `${data.providerCount - previousProviders >= 0 ? "+" : ""}${data.providerCount - previousProviders} r/r`}</span></div>
-    </dl>
+    <CardKpis label="Liczby grupy" items={[
+      { label: `Hospitalizacje ${data.year}`, value: integer(data.hospitalizations), unit: plural(data.hospitalizations, "hospitalizacja", "hospitalizacje", "hospitalizacji"), note: change === null ? "pierwszy rok" : `${signedPct(change)} r/r` },
+      { label: `Kwota świadczeń NFZ ${data.year}`, value: value ? formatPln(value.value) : "—", unit: value ? "z NFZ" : undefined, note: value && valuePrevious ? `${signedPct(((value.value - valuePrevious.value) / valuePrevious.value) * 100)} r/r` : "brak poprzedniego roku" },
+      { label: "Śmiertelność", value: latestRate === null ? "—" : pct(latestRate, latestRate < 1 ? 2 : 1), unit: latestRate === null ? undefined : "zgonów", note: latestRate !== null && previousRate !== null ? `${signedPp(latestRate - previousRate, latestRate < 1 ? 2 : 1)} r/r` : "zgony w szpitalu" },
+      { label: "Ośrodki", value: integer(data.providerCount), unit: plural(data.providerCount, "ośrodek", "ośrodki", "ośrodków"), note: previousProviders === null ? "w roku danych" : `${data.providerCount - previousProviders >= 0 ? "+" : ""}${data.providerCount - previousProviders} r/r` },
+    ]} />
   </header>;
 }
 
-/** Nagłówek sekcji: pytanie, kontekst i etykieta zakresu (`tag`) albo przełącznik w tym samym miejscu (`tools`). */
-export function SectionHead({ id, question, context, tag, tools }: { id: string; question: string; context: string; tag?: string; tools?: ReactNode }) {
+/** Linia objaśnienia „?”: akapit albo [pogrubiony termin, tekst]. */
+export type HelpLine = string | [term: string, text: string];
+
+/**
+ * Nagłówek sekcji karty (karta JGP, karta szpitala): pytanie, krótki dopisek, ikona „?” z objaśnieniem (DESIGN.md 6.3)
+ * i narzędzia po prawej (np. „Miesiące / Lata”). Narzędzia zostają w linii tytułu; tytuł łamie się obok nich.
+ * Telefon (7.1b.1): tytuł i „?” w jednej linii — dopisek znika (CSS) i jest pierwszą linią objaśnienia;
+ * „?” pojawia się też w sekcji bez objaśnienia. Bez etykiety zakresu („ROK”, „LATA”): zakres jest w dopisku.
+ */
+export function SectionHead({ id, question, context, tools, help, helpLabel, keepContext = false }: {
+  id: string; question: string; context: string; tools?: ReactNode; help?: HelpLine[]; helpLabel?: string;
+  /** Krótki dopisek, który zostaje też na telefonie (np. „Hospitalizacje rocznie” — nazwa miary wykresu). */
+  keepContext?: boolean;
+}) {
+  const phone = useMediaQuery(PHONE_QUERY) === true;
+  const lines: HelpLine[] = phone && !keepContext ? [`${context}.`, ...(help ?? [])] : help ?? [];
   return <div className={styles.secHead}>
-    <h2 id={id} className={styles.secTitle}><span className={styles.q}>{question}</span> <span className={styles.ctx}>{context}</span></h2>
-    {tools ?? <span className={styles.tag}>{tag}</span>}
+    <h2 id={id} className={styles.secTitle}>
+      <span className={styles.q}>{question}</span> <span className={`${styles.ctx} ${keepContext ? styles.ctxKeep : ""}`}>{context}</span>
+      {lines.length ? <>{" "}<InfoTip ariaLabel={helpLabel ?? `Objaśnienie: ${question}`} label={<HelpLines lines={lines} />} /></> : null}
+    </h2>
+    {tools}
   </div>;
 }
-
 
 /** „ośrodek”, „ośrodki” albo „ośrodków” po liczbie. */
 
@@ -371,7 +390,7 @@ function RegionsSection({ data, pool, map, regions, onToggle, onYear, onRegionYe
   const rows = [...data.regions].sort((a, b) => a.name.localeCompare(b.name, "pl"));
   const compact = heat.length >= HEAT_COMPACT_YEARS;
   return <section className={styles.sec} aria-labelledby="s-gdzie">
-    <SectionHead id="s-gdzie" question="Gdzie?" context={`Szpitale w województwie na 100 tys. mieszkańców: mapa ${data.year}, mapa ciepła lat`} tag="Mapa: rok · tabela: lata" />
+    <SectionHead id="s-gdzie" question="Gdzie?" context={`Szpitale w województwie na 100 tys. mieszkańców: mapa ${data.year}, mapa ciepła lat`} />
     {/* Przy wielu latach mapa ciepła jest ścieśniona (wąskie kolumny, rok jako „’17”), żeby mieściła się obok mapy. */}
     <div className={`${styles.geo} ${compact ? styles.geoCompact : ""}`}>
       <div className={styles.mapCol}>
@@ -443,7 +462,7 @@ function CostSection({ data, onYear }: { data: JgpPageData; onYear: (year: strin
   const shellRef = useRef<HTMLDivElement>(null);
   const [tip, setTip] = useState<{ year: string; amount: string; pick: boolean; anchor: Box } | null>(null);
   return <section className={styles.sec} aria-labelledby="s-koszt">
-    <SectionHead id="s-koszt" question="Za ile?" context="Wycena i kwota świadczeń NFZ, wszystkie lata" tag="Lata" />
+    <SectionHead id="s-koszt" question="Za ile?" context="Wycena i kwota świadczeń NFZ, wszystkie lata" />
     <dl className={styles.costFacts}>
       <div><dt>Wycena (katalog {data.valuation?.year ?? ""})</dt><dd>{data.valuation?.points ? `${integer(data.valuation.points)} pkt` : "—"}</dd><span>za hospitalizację</span></div>
       <div><dt>Kwota świadczeń {latest?.year ?? ""}</dt><dd>{latest ? formatPln(latest.value) : "—"}</dd><span>{change === null ? "brak poprzedniego roku" : `${signedPct(change)} r/r`}</span></div>
@@ -499,7 +518,7 @@ const ADMISSION_PARTS = [
 
 function ProfileSection({ data }: { data: JgpPageData }) {
   return <section className={styles.sec} aria-labelledby="s-profil">
-    <SectionHead id="s-profil" question="Jak przyjmowani są pacjenci?" context="Tryb przyjęcia w kraju, wszystkie lata" tag="Lata" />
+    <SectionHead id="s-profil" question="Jak przyjmowani są pacjenci?" context="Tryb przyjęcia w kraju, wszystkie lata" />
     <ShareLegend parts={[...ADMISSION_PARTS]} />
     <ShareBars ariaLabel="Tryb przyjęcia w latach" rows={data.admissions.map((row) => ({
       key: row.year, label: row.year, on: row.year === data.year,
@@ -513,7 +532,7 @@ function ProfileSection({ data }: { data: JgpPageData }) {
 function FamilySection({ data }: { data: JgpPageData }) {
   const family = data.family!;
   const years = data.catalogYears;
-  const palette = [CHART_COLORS.data, "#6F8FC9", "#A9BCE0", "#5B8C7A", "#A3C4B5", "#C9A86A", "#E2CFA3"];
+  const palette = [CHART_COLORS.data, CHART_COLORS.dataMid, "#A9BCE0", "#5B8C7A", "#A3C4B5", "#C9A86A", "#E2CFA3"];
   const color = new Map(family.variants.map((variant, i) => [variant.code, palette[i % palette.length]]));
   const totals = years.map((_, j) => family.variants.reduce((sum, variant) => sum + (variant.values[j] ?? 0), 0));
   const own = family.variants.find((variant) => variant.code === data.jgpCode);
@@ -521,7 +540,7 @@ function FamilySection({ data }: { data: JgpPageData }) {
   const first = own ? share(own.values[0], 0) : 0;
   const last = own ? share(own.values.at(-1) ?? null, years.length - 1) : 0;
   return <section className={styles.sec} aria-labelledby="s-rodzina">
-    <SectionHead id="s-rodzina" question="Jak wygląda rodzina?" context={`Udziały wariantów: ${family.name.toLocaleLowerCase("pl-PL")}, wszystkie lata`} tag="Lata" />
+    <SectionHead id="s-rodzina" question="Jak wygląda rodzina?" context={`Udziały wariantów: ${family.name.toLocaleLowerCase("pl-PL")}, wszystkie lata`} />
     {own ? <p className={styles.lead}>{data.jgpCode} to <b>{pct(last, 0)}</b> hospitalizacji rodziny w {years.at(-1)} r.{years.length > 1 ? ` (w ${years[0]} r.: ${pct(first, 0)})` : ""}.</p> : null}
     <ul className={base.legend} aria-label="Warianty rodziny">
       {family.variants.map((variant) => <li key={variant.code} title={variant.name}><span className={base.swatch} style={{ background: color.get(variant.code) }} aria-hidden /><b>{variant.code}</b>&nbsp;{variant.name.toLocaleLowerCase("pl-PL")}</li>)}
@@ -627,7 +646,7 @@ function RankingSection({ data, pool, selectedRow, filtered, regionColor, onSele
   const visible = mounted ? sorted : sorted.slice(0, SERVER_ROWS);
   const total = pool.reduce((sum, row) => sum + row.hospitalizations, 0);
   const shares = structureShares(pool);
-  const colors = [CHART_COLORS.data, "#6F8FC9", "#A9BCE0"];
+  const colors = [CHART_COLORS.data, CHART_COLORS.dataMid, "#A9BCE0"];
   const yearAt = data.admissionYears.indexOf(data.year);
   const previousYear = yearAt > 0 ? data.admissionYears[yearAt - 1] : undefined;
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -640,7 +659,7 @@ function RankingSection({ data, pool, selectedRow, filtered, regionColor, onSele
     box.scrollTop = Math.max(0, row.offsetTop - header - box.clientHeight / 2 + row.clientHeight / 2);
   }, [selectedRow, pool]);
   return <section className={styles.sec} aria-labelledby="s-kto">
-    <SectionHead id="s-kto" question="Kto leczy?" context={`Ośrodki w ${data.year} r.`} tag="Rok + mini-trend" />
+    <SectionHead id="s-kto" question="Kto leczy?" context={`Ośrodki w ${data.year} r.`} />
     <div className={styles.struct}>
       <div className={styles.structBar} role="img" aria-label={shares.map((item) => `${item.label}: ${pct(item.share)}`).join(", ")}>
         {shares.map((item, i) => <span key={item.label} style={{ flex: Math.max(item.share, 0.5), background: colors[i] }} title={`${item.label}: ${pct(item.share)}`}>{item.share > 12 ? `${item.label} · ${pct(item.share, 0)}` : ""}</span>)}
@@ -746,7 +765,7 @@ function HowSection({ data, rows, regions, selectedRow, onSelect }: { data: JgpP
     ? <FunnelLegend statuses={!highlight}>{selectedItem}{regionItems}</FunnelLegend>
     : selectedItem || highlight ? <ul className={base.legend} aria-label="Legenda">{selectedItem}{regionItems}</ul> : null;
   return <section className={styles.sec} aria-labelledby="s-jak">
-    <SectionHead id="s-jak" question="Jak leczą?" context={`Wszystkie ośrodki w ${data.year} r.${highlight ? "; wybrane województwa w kolorach" : ""}`} tag="Rok" />
+    <SectionHead id="s-jak" question="Jak leczą?" context={`Wszystkie ośrodki w ${data.year} r.${highlight ? "; wybrane województwa w kolorach" : ""}`} />
     {regionLegend}
     <div className={styles.two}>
       <div>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildHospitalCards, buildHospitalPageData, sectionTotals, wardPaymentByYear, wardPaymentStatus, yearlySums } from "@/lib/hospitalPage";
+import { buildHospitalCards, buildHospitalPageData, hospitalResources, sectionTotals, wardPaymentByYear, wardPaymentStatus, yearlySums } from "@/lib/hospitalPage";
 import { ME, hospitalPageInput as input } from "@/lib/__tests__/fixtures/hospitalPageFixture";
 import { contractsFixture, paymentFixture } from "@/lib/__tests__/fixtures/hospitalFinanceFixture";
 import { FINANCE_BUCKETS } from "@/lib/hospitalFinance";
@@ -96,5 +96,20 @@ describe("sposób zapłaty oddziałów (udział hospitalizacji w ryczałcie i za
     expect(wardPaymentStatus("4348", payment, 2)).toBeNull();
     expect(wardPaymentStatus("4260", payment, 2)).toBeNull();
     expect(wardPaymentStatus("4000", null, 2)).toBeNull();
+  });
+});
+
+describe("hospitalResources — zaplecze z rejestru RPWDL", () => {
+  it("komórki w stałej kolejności (SOR przed blokiem operacyjnym) ze szczegółem; poradnie i lokalizacje", () => {
+    expect(buildHospitalPageData(input)!.resources).toEqual({
+      capabilities: [["SOR", "13 łóżek"], ["Blok operacyjny", null], ["Dializy", "18 stanowisk"], ["POZ", "1 gabinet"]],
+      outpatient: { cells: 12, locations: 2, fields: 9 },
+      locations: { count: 3, cities: 2, beds: 85, list: input.locations },
+    });
+  });
+
+  it("bez profilu: null; bez poradni i lokalizacji: tylko komórki", () => {
+    expect(hospitalResources(null)).toBeNull();
+    expect(hospitalResources({ oz_nfz: "01", nip: "1", capabilities: { icu: { count: 1, beds: 2 } } })).toEqual({ capabilities: [["OIT", "2 łóżka"]], outpatient: null, locations: null });
   });
 });

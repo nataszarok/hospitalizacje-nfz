@@ -221,6 +221,20 @@ export function scaleColor(position: number): string {
   return `rgb(${r}, ${g}, ${b})`;
 }
 
+/**
+ * Skala jak `scaleColor`, ale w barwie wybranego obszaru (`#RRGGBB`): od jasnego odcienia (−1) przez sam kolor (0)
+ * do ciemnego (1). Kropki placówek w wybranym obszarze mają jego barwę, reszta mapy zostaje niebieska.
+ */
+export function areaScaleColor(position: number, color: string): string {
+  const base = [1, 3, 5].map((i) => parseInt(color.slice(i, i + 2), 16));
+  const light = base.map((value) => value + (255 - value) * 0.82);
+  const dark = base.map((value) => value * 0.45);
+  const t = Math.min(1, Math.max(-1, position));
+  const [from, to, k] = t <= 0 ? [light, base, t + 1] : [base, dark, t];
+  const [r, g, b] = from.map((value, i) => Math.round(value + (to[i] - value) * k));
+  return `rgb(${r}, ${g}, ${b})`;
+}
+
 /** Kolor komórki mapy. */
 export function cellColor(cell: Pick<CartogramCell, "position">): string {
   return scaleColor(cell.position);

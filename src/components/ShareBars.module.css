@@ -19,3 +19,22 @@
 .onDark {
   color: #fff;
 }
+
+/* Linia dymka: kolor części, nazwa, udział do prawej. */
+.tipLine {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-variant-numeric: tabular-nums;
+}
+
+.tipLine b {
+  margin-left: auto;
+  padding-left: 12px;
+}
+
+@media (max-width: 639px) {
+  .detail {
+    display: none;
+  }
+}

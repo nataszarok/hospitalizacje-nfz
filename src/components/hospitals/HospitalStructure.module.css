@@ -1,0 +1,544 @@
+/* Zakładka „Struktura” karty szpitala (docs/karta-szpitala-struktura.md). Plakietki zapłaty i komunikat o braku danych:
+   wspólne klasy z `HospitalCard.module.css`. */
+
+.head {
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.relative {
+  position: relative;
+}
+
+.muted {
+  color: var(--color-text-tertiary);
+}
+
+.tipBody {
+  font-size: var(--fs-md);
+  line-height: 1.5;
+}
+
+/* ── Z czego składa się szpital? ── */
+
+.bar {
+  display: flex;
+  gap: 3px;
+  height: 14px;
+}
+
+.barPart {
+  display: flex;
+  gap: 1px;
+  min-width: 4px;
+  overflow: clip;
+  border-radius: var(--radius-badge);
+}
+
+.barPart i {
+  display: block;
+  min-width: 1px;
+  cursor: default;
+}
+
+/* Swatch legendy i części: jak kolor w boksie (`BoxSet`). */
+.partRow i,
+.legend i {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-right: 6px;
+  border-radius: var(--radius-badge);
+  box-shadow: inset 0 0 0 1px rgba(28, 53, 52, 0.12);
+  vertical-align: -2px;
+}
+
+.aos dt i.ring {
+  background: var(--color-background);
+  box-shadow: inset 0 0 0 1.5px var(--color-border-strong);
+}
+
+.aos {
+  background: var(--color-background-soft);
+}
+
+.extras {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  color: var(--color-text-tertiary);
+  font-size: var(--fs-sm);
+}
+
+.chip {
+  padding: 2px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-badge);
+  color: var(--color-text-secondary);
+}
+
+.chip b {
+  color: var(--color-text);
+  font-weight: var(--fw-semibold);
+}
+
+/* ── Rzut szpitala ── */
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin: 0;
+  padding: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--fs-sm);
+  list-style: none;
+}
+
+.legendHead {
+  color: var(--color-heading);
+  font-weight: var(--fw-semibold);
+}
+
+.site {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+/* Wiersz: kolumny w pikselach ze skali łóżek (styl w komponencie); nagłówki w jednym rzędzie siatki (subgrid), więc rzuty
+   w wierszu zaczynają się na tej samej wysokości i ramki są równe. */
+.row {
+  display: grid;
+  grid-template-rows: auto auto;
+  column-gap: 12px;
+}
+
+/* Budynek: ramka z nagłówkiem w środku (nazwa, łóżka, adres) i rzutem pod nim; rzuty w wierszu wyrównane do dołu. */
+.building {
+  display: grid;
+  grid-row: span 2;
+  grid-template-rows: subgrid;
+  /* Kolumna nie rośnie od długiej linii nagłówka: tekst kończy się „…”. */
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-control);
+  background: var(--color-background);
+}
+
+/* Nagłówek nie rozciąga się: rzut zaraz pod nim, pasek miejsc bez łóżek pod rzutem. */
+.building h3 {
+  margin: 0;
+  padding: 8px 10px 0;
+  color: var(--color-heading);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-semibold);
+  overflow-wrap: anywhere;
+}
+
+.building h3 .beds {
+  color: var(--color-text-tertiary);
+  font-weight: var(--fw-regular);
+}
+
+.building h3 small {
+  display: block;
+  color: var(--color-text-secondary);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-regular);
+}
+
+.building svg {
+  display: block;
+}
+
+.room rect {
+  transition: opacity 0.15s;
+}
+
+.room:hover rect {
+  stroke: var(--color-heading);
+  stroke-width: 2;
+  paint-order: stroke;
+}
+
+.label,
+.labelDark {
+  fill: #fff;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  pointer-events: none;
+}
+
+.labelDark {
+  fill: var(--color-heading);
+}
+
+.labelBeds {
+  font-weight: var(--fw-regular);
+  opacity: 0.8;
+}
+
+/* Poradnie i inne miejsca bez łóżek: kwadrat na miejsce (pole nie zależy od łóżek), pod rzutem oddziałów budynku. */
+/* Miejsca bez łóżek w nagłówku budynku: jedna linia, pełna lista w dymku (telefon: w arkuszu). */
+.placesLine {
+  display: block;
+  max-width: 100%;
+  margin: 2px 0 0;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  background: none;
+  color: var(--color-text-secondary);
+  font: inherit;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-regular);
+  text-align: left;
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: default;
+}
+
+/* Telefon: łóżki i miejsca bez łóżek w jednej linii; za długi tekst miejsc kończy się „…”. */
+.building h3 .phoneLine {
+  display: flex;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.phoneLine > span {
+  flex: none;
+  white-space: pre;
+}
+
+.phoneLine .placesLine {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  font-size: inherit;
+}
+
+.placesLine:hover,
+.placesLine:focus-visible {
+  color: var(--color-text);
+}
+
+.tipPara {
+  margin: 0 0 4px;
+}
+
+/* Budynki bez łóżek: małe ramki w jednym wierszu, razem na całą szerokość. */
+.placeRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.building.small {
+  flex: 1 1 150px;
+}
+
+.building.small h3 {
+  padding-bottom: 8px;
+}
+
+.pointsTitle {
+  margin: 4px 0 0;
+  color: var(--color-text-tertiary);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+}
+
+.points {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.points li {
+  padding: 6px 10px;
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius-control);
+  color: var(--color-text-secondary);
+  font-size: var(--fs-sm);
+}
+
+.points b {
+  color: var(--color-text);
+  font-weight: var(--fw-semibold);
+}
+
+/* ── Oddziały i poradnie ── */
+
+.search {
+  width: 100%;
+  max-width: 520px;
+  padding: 9px 12px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-control);
+  background: var(--color-background);
+  color: var(--color-text);
+  font: inherit;
+  font-size: var(--fs-base);
+}
+
+.search:focus {
+  border-color: var(--color-primary);
+  outline: 2px solid var(--color-primary-soft);
+}
+
+.found {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--fs-md);
+}
+
+.listBox {
+  min-width: 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+.listBox summary {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-height: 44px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.listBox summary::-webkit-details-marker {
+  display: none;
+}
+
+.listTitle {
+  color: var(--color-heading);
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-semibold);
+}
+
+.listBox summary small {
+  color: var(--color-text-tertiary);
+  font-size: var(--fs-md);
+}
+
+.more {
+  margin-left: auto;
+  color: var(--color-primary);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-semibold);
+  white-space: nowrap;
+}
+
+.more::before {
+  content: "Pokaż ▾";
+}
+
+.listBox[open] .more::before {
+  content: "Schowaj ▴";
+}
+
+.payLegend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  margin: 0 0 8px;
+  padding: 0;
+  color: var(--color-text-tertiary);
+  font-size: var(--fs-sm);
+  list-style: none;
+}
+
+.tableWrap {
+  min-width: 0;
+  overflow: clip;
+}
+
+.list td small {
+  display: block;
+  color: var(--color-text-tertiary);
+  font-size: var(--fs-sm);
+  overflow-wrap: anywhere;
+}
+
+.list .fieldsCol {
+  width: 38%;
+  color: var(--color-text-secondary);
+  font-size: var(--fs-sm);
+}
+
+/* Telefon: nazwa w wierszu otwiera arkusz z dziedzinami i adresami (przycisk wygląda jak tekst z kropkowanym podkreśleniem). */
+.rowName {
+  padding: 0;
+  border: 0;
+  border-bottom: 1px dotted var(--color-border-strong);
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.sheetPara {
+  margin: 0 0 8px;
+}
+
+/* Liczby (łóżka, udział, liczba poradni) nie łamią się: wąska kolumna nie rozbija „80,0%” na znaki. */
+.nums {
+  white-space: nowrap;
+}
+
+.partRow th {
+  background: var(--color-background-soft);
+  color: var(--color-heading);
+  font-size: var(--fs-md);
+}
+
+.notWard {
+  margin-left: 6px;
+  padding: 0 6px;
+  border-radius: var(--radius-badge);
+  background: var(--color-background-muted);
+  color: var(--color-text-secondary);
+  font-size: var(--fs-xs);
+}
+
+.rest {
+  border-bottom: 1px dotted var(--color-border-strong);
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
+  cursor: help;
+}
+
+.mark {
+  padding: 0 1px;
+  border-radius: var(--radius-badge);
+  background: var(--color-signal-soft, #FBEEE7);
+  color: inherit;
+}
+
+.emptyRow {
+  color: var(--color-text-tertiary);
+}
+
+/* Plakietki: klasy `pay*` z `HospitalCard.module.css` (wspólne z kartą i Finansami); tu tylko miejsce przy nazwie. */
+.payWrap {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 8px;
+  margin-left: 6px;
+  vertical-align: 1px;
+}
+
+.empty {
+  margin: 0;
+  padding: 14px 16px;
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius-card);
+  background: var(--color-background-soft);
+  color: var(--color-text-secondary);
+  font-size: var(--fs-sm);
+}
+
+/* ── Telefon (DESIGN.md 7.1a, 7.1b): zwarta lista boksów, tytuł i „?” w jednej linii, dziedziny pod nazwą. ── */
+@media (max-width: 639px) {
+  .context,
+  .long {
+    display: none;
+  }
+
+  .head h2 {
+    font-size: var(--fs-lg);
+    white-space: nowrap;
+  }
+
+  /* Przełącznik widoku w tej samej linii co tytuł (węższe przyciski). */
+  .head {
+    column-gap: 8px;
+  }
+
+  .head [role="group"] button {
+    padding-inline: 9px;
+  }
+
+
+  .legend {
+    gap: 4px 10px;
+  }
+
+  .points {
+    gap: 4px;
+  }
+
+  .points li {
+    padding: 2px 0;
+    border: 0;
+  }
+
+  .list .fieldsCol {
+    display: none;
+  }
+
+  .list .addr {
+    display: none;
+  }
+}
+
+.payNote {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Zakładki list (DESIGN.md 7, „Zakładki”): aktywna — kolor i dolna linia 2 px; liczba (przy wyszukiwaniu — wyników) obok nazwy. */
+.listTabs {
+  display: flex;
+  gap: 4px;
+  margin: 0 0 10px;
+  border-bottom: 1px solid var(--color-border-subtle);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.listTabs button {
+  display: inline-flex;
+  flex: none;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: -1px;
+  padding: 8px 12px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--color-text-secondary);
+  font: inherit;
+  font-size: var(--fs-base);
+  font-weight: var(--fw-semibold);
+  cursor: pointer;
+}
+
+.listTabs button small {
+  color: var(--color-text-tertiary);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-medium);
+}
+
+.listTabs button[aria-selected="true"] {
+  border-bottom-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.listTabs button:hover {
+  color: var(--color-primary);
+}

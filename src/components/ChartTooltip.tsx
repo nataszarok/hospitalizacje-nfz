@@ -1,6 +1,8 @@
 "use client";
 
-import { useLayoutEffect, useRef, type ReactNode, type RefObject } from "react";
+import { useEffect, useLayoutEffect, useRef, type ReactNode, type RefObject } from "react";
+import { BottomSheet } from "@/components/BottomSheet";
+import { PHONE_QUERY, useMediaQuery } from "@/lib/useMediaQuery";
 import { placeTooltip, viewportBox, type AnchorKind, type Box } from "@/lib/tooltipPosition";
 import styles from "./ChartTooltip.module.css";
 
@@ -9,15 +11,46 @@ import styles from "./ChartTooltip.module.css";
  * (DESIGN.md, 6.3). Pozycję liczy `placeTooltip` z prostokąta obiektu, więc dymek nie zasłania punktu,
  * słupka ani kafla. Treść składamy z części: `TooltipHead`, `TooltipKeyValue`, `TooltipCompareTable`,
  * `TooltipSection`, `TooltipNote`.
+ *
+ * Telefon (< 640 px) z `onClose`: arkusz od dołu (`BottomSheet`) zamiast dymka; strona przewija się tak, że obiekt
+ * stoi nad arkuszem. Wykres bez `onClose` zostaje przy dymku (zamyka go tylko zjechanie kursora).
  */
-export function ChartTooltip({ anchor, container, kind = "point", children }: {
+export function ChartTooltip({ anchor, container, kind = "point", onClose, sheetTitle = "Szczegóły", children }: {
   /** Prostokąt opisywanego obiektu we współrzędnych okna. */
   anchor: Box;
   /** Element z `position: relative`, w którym stoi dymek (ref czytamy po renderze). */
   container: RefObject<HTMLElement | null>;
   kind?: AnchorKind;
+  /** Zamknięcie arkusza na telefonie („Zamknij”, dotknięcie tła, Esc). */
+  onClose?: () => void;
+  /** Tytuł paska arkusza; nazwa obiektu jest w treści (`TooltipHead`). */
+  sheetTitle?: string;
   children: ReactNode;
 }) {
+  const phone = useMediaQuery(PHONE_QUERY) === true && !!onClose;
+  if (phone) return <TooltipSheet anchor={anchor} title={sheetTitle} onClose={onClose!}>{children}</TooltipSheet>;
+  return <FloatingTooltip anchor={anchor} container={container} kind={kind}>{children}</FloatingTooltip>;
+}
+
+/** Arkusz dymka na telefonie: po otwarciu obiekt (`anchor`) przesuwa się nad górną krawędź arkusza. */
+function TooltipSheet({ anchor, title, onClose, children }: { anchor: Box; title: string; onClose: () => void; children: ReactNode }) {
+  const top = anchor.top, bottom = anchor.top + anchor.height;
+  useEffect(() => {
+    const sheet = document.querySelector<HTMLElement>("[data-tooltip-sheet]");
+    if (!sheet) return;
+    const limit = sheet.getBoundingClientRect().top - 12;
+    // Obiekt pod arkuszem: przewijamy w dół, ale nie wyżej niż górna krawędź obiektu (zostaje na ekranie).
+    if (bottom > limit) window.scrollBy({ top: Math.min(bottom - limit, Math.max(0, top - 64)), behavior: "smooth" });
+  }, [top, bottom]);
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => { if (event.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+  return <BottomSheet title={title} onClose={onClose} sheetData="tooltip">{children}</BottomSheet>;
+}
+
+function FloatingTooltip({ anchor, container, kind, children }: { anchor: Box; container: RefObject<HTMLElement | null>; kind: AnchorKind; children: ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
 
   // Pozycja po pomiarze dymka: wysokość zależy od treści. Ustawiamy styl wprost (bez drugiego renderu).

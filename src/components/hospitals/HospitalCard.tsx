@@ -3,17 +3,19 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { GroupLineChart, type ChartLine } from "@/components/jgp/GroupLineChart";
+import { CardKpis } from "@/components/jgp/CardKpis";
 import { CardYears } from "@/components/jgp/CardYears";
 import { SectionHead } from "@/components/jgp/JgpTabbedCard";
 import { PeriodToggle } from "@/components/jgp/PeriodToggle";
-import { HelpLines, InfoTip } from "@/components/InfoTip";
 import { ConcentrationChart } from "@/components/ConcentrationChart";
 import { ShareBars, ShareLegend } from "@/components/ShareBars";
 import { GroupsSection } from "./HospitalGroupsSection";
 import { HospitalFinanceTab } from "./HospitalFinanceTab";
+import { HospitalStructureTab } from "./HospitalStructureTab";
+import { acuteSummary } from "@/lib/hospitalStructure";
 import { formatCityName, formatPln } from "@/lib/formatters";
 import { JGP_SECTION_LABELS } from "@/lib/hospitalizationSummary";
-import { sectionTotals, wardPaymentStatus, yearlySums, type HospitalPageData, type WardPaymentStatus } from "@/lib/hospitalPage";
+import { sectionTotals, yearlySums, type HospitalPageData } from "@/lib/hospitalPage";
 import type { ChartPeriod } from "@/lib/jgpCard";
 import { plural } from "@/lib/jgpDescription";
 import { hospitalComparisonHref } from "@/lib/portalLinks";
@@ -30,17 +32,16 @@ const signedPp = (value: number) => `${value > 0 ? "+" : value < 0 ? "−" : ""}
 const YEAR_PARAM = "rok";
 const PERIOD_PARAM = "okres";
 const TAB_PARAM = "widok";
-type CardTab = "przeglad" | "finanse";
+type CardTab = "przeglad" | "struktura" | "finanse";
 type CardState = { year: string; period: ChartPeriod; tab: CardTab };
 const TOP_SECTIONS = 5;
-const WARDS_SHOWN = 12;
 const SECTION_CLASSES = [styles.part0, styles.part1, styles.part2, styles.part3, styles.part4];
 // Długość pobytu: od najkrótszego (najciemniejszy) do najdłuższego.
 const DURATION_CLASSES = [styles.part0, styles.part1, styles.part2, styles.part4];
 
 /**
  * Stan karty w adresie: `rok` (bez parametru = najnowszy rok), `okres=miesiace` (wykres „Ile?” domyślnie w latach)
- * i `widok=finanse` (zakładka; bez parametru = Przegląd; tylko gdy karta ma zakładkę Finanse).
+ * i `widok=struktura` / `widok=finanse` (zakładka; bez parametru = Działalność; Finanse tylko gdy karta je ma).
  */
 function useCardState(years: string[], hasFinance: boolean) {
   const latest = years.at(-1)!;
@@ -52,7 +53,7 @@ function useCardState(years: string[], hasFinance: boolean) {
       setState({
         year: year && years.includes(year) ? year : latest,
         period: params.get(PERIOD_PARAM) === "miesiace" ? "month" : "year",
-        tab: hasFinance && params.get(TAB_PARAM) === "finanse" ? "finanse" : "przeglad",
+        tab: params.get(TAB_PARAM) === "struktura" ? "struktura" : hasFinance && params.get(TAB_PARAM) === "finanse" ? "finanse" : "przeglad",
       });
     };
     read();
@@ -67,7 +68,7 @@ function useCardState(years: string[], hasFinance: boolean) {
     const url = new URL(window.location.href);
     if (next.year !== latest) url.searchParams.set(YEAR_PARAM, next.year); else url.searchParams.delete(YEAR_PARAM);
     if (next.period === "month") url.searchParams.set(PERIOD_PARAM, "miesiace"); else url.searchParams.delete(PERIOD_PARAM);
-    if (next.tab === "finanse") url.searchParams.set(TAB_PARAM, "finanse"); else url.searchParams.delete(TAB_PARAM);
+    if (next.tab !== "przeglad") url.searchParams.set(TAB_PARAM, next.tab); else url.searchParams.delete(TAB_PARAM);
     window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
     setState(next);
   }, [latest]);
@@ -75,8 +76,9 @@ function useCardState(years: string[], hasFinance: boolean) {
 }
 
 /**
- * Karta szpitala `/szpitale/[nip]` w układzie karty grupy JGP. Zakładki: „Przegląd” i „Finanse” (szpitale sieci PSZ z umowami NFZ);
- * „Porównanie” jest zapowiedziane. Tabela grup JGP („Co leczy i za ile?”) jest w Przeglądzie (bez osobnej zakładki).
+ * Karta szpitala `/szpitale/[nip]` w układzie karty grupy JGP. Zakładki: „Działalność” (hospitalizacje, grupy JGP),
+ * „Struktura” (oddziały, budynki, poradnie, sposób zapłaty — `HospitalStructureTab`) i „Finanse” (szpitale sieci PSZ z umowami NFZ);
+ * „Porównanie” jest zapowiedziane. Wewnętrzny klucz pierwszej zakładki zostaje „przeglad” (adres bez parametru).
  */
 export function HospitalCard({ data }: { data: HospitalPageData }) {
   // Rok karty tylko spośród lat z hospitalizacjami szpitala (np. świadczeniodawca, który przestał leczyć w 2022 r.);
@@ -93,7 +95,8 @@ export function HospitalCard({ data }: { data: HospitalPageData }) {
     <CardHeader data={data} yearIndex={yearIndex} />
     <div className={tabs.tabbar}>
       <div className={tabs.tabs} role="tablist" aria-label="Zakładki karty">
-        <button type="button" role="tab" id="tab-przeglad" aria-controls="panel-przeglad" aria-selected={state.tab === "przeglad"} onClick={() => write({ tab: "przeglad" })}>Przegląd</button>
+        <button type="button" role="tab" id="tab-przeglad" aria-controls="panel-przeglad" aria-selected={state.tab === "przeglad"} onClick={() => write({ tab: "przeglad" })}>Działalność</button>
+        <button type="button" role="tab" id="tab-struktura" aria-controls="panel-struktura" aria-selected={state.tab === "struktura"} onClick={() => write({ tab: "struktura" })}>Struktura</button>
         {data.finance ? <button type="button" role="tab" id="tab-finanse" aria-controls="panel-finanse" aria-selected={state.tab === "finanse"} onClick={() => write({ tab: "finanse" })}>Finanse</button> : null}
         {[...(data.finance ? [] : ["Finanse"]), "Porównanie"].map((label) => <button key={label} type="button" role="tab" aria-selected="false" aria-disabled="true" className={styles.tabSoon} title="Zakładka w przygotowaniu">
           {label}<small>wkrótce</small>
@@ -103,6 +106,8 @@ export function HospitalCard({ data }: { data: HospitalPageData }) {
     </div>
     {state.tab === "finanse" && data.finance ? <div role="tabpanel" id="panel-finanse" aria-labelledby="tab-finanse" className={tabs.panel}>
       <HospitalFinanceTab data={data} finance={data.finance} yearIndex={yearIndex} onYear={onYear} />
+    </div> : state.tab === "struktura" ? <div role="tabpanel" id="panel-struktura" aria-labelledby="tab-struktura" className={tabs.panel}>
+      <HospitalStructureTab data={data} yearIndex={yearIndex} />
     </div> : <div role="tabpanel" id="panel-przeglad" aria-labelledby="tab-przeglad" className={tabs.panel}>
       <HowManySection data={data} year={state.year} period={state.period} onPeriod={(period) => write({ period })} />
       <TreatsSection data={data} yearIndex={yearIndex} />
@@ -114,7 +119,6 @@ export function HospitalCard({ data }: { data: HospitalPageData }) {
         const stay = activeYears.length >= STAY_MIN_YEARS ? <StaySection data={data} yearIndex={yearIndex} /> : null;
         return concentration && stay ? <div className={tabs.pair}>{concentration}{stay}</div> : concentration ?? stay;
       })()}
-      <WardsSection data={data} yearIndex={yearIndex} onFinance={data.finance ? () => { write({ tab: "finanse" }); window.scrollTo({ top: 0 }); } : undefined} />
     </div>}
   </>;
 }
@@ -133,6 +137,8 @@ function CardHeader({ data, yearIndex }: { data: HospitalPageData; yearIndex: nu
   const groups = data.groups.filter((row) => row[2][yearIndex] > 0);
   const leaders = groups.filter((row) => row[3][yearIndex] > 0 && row[3][yearIndex] <= 3).length;
   const [owNfz, nip] = data.key.split("|");
+  // Łóżka i oddziały leczenia szpitalnego: te same liczby co boks w zakładce „Struktura”.
+  const acute = data.structure ? acuteSummary(data.structure) : null;
   return <header className={tabs.head}>
     <div className={tabs.headText}>
       <nav className={base.breadcrumbs} aria-label="Ścieżka"><Link href="/szpitale">Szpitale</Link> <span aria-hidden>›</span> <span>{formatCityName(data.city)}</span></nav>
@@ -145,12 +151,14 @@ function CardHeader({ data, yearIndex }: { data: HospitalPageData; yearIndex: nu
         <span><Link href={hospitalComparisonHref(owNfz, nip)}>Porównanie z podobnymi szpitalami →</Link></span>
       </p>
     </div>
-    <dl className={tabs.kpis} aria-label="Liczby szpitala">
-      <div><dt>Hospitalizacje {year}</dt><dd>{integer(hosp[yearIndex])}</dd><span>{change === null ? "pierwszy rok" : `${signedPct(change)} r/r`}</span></div>
-      <div><dt>Śmiertelność {year}</dt><dd>{latestRate === null ? "—" : `${decimal(latestRate, 2)}%`}</dd><span>{[latestRate !== null && previousRate !== null ? `${signedPp(latestRate - previousRate)} r/r` : null, network !== null ? `sieć PSZ ${decimal(network, 2)}%` : null].filter(Boolean).join(" · ")}</span></div>
-      <div><dt>Łóżka (stan {data.rpwdlYear ?? "bieżący"})</dt><dd>{data.beds ? integer(data.beds) : "—"}</dd><span>{data.wards.length ? `${data.wards.length} ${plural(data.wards.length, "oddział lub pododdział", "oddziały i pododdziały", "oddziałów i pododdziałów")}` : "brak profilu w rejestrze"}</span></div>
-      <div><dt>Grupy JGP {year}</dt><dd>{integer(groups.length)}</dd><span>{leaders ? `${leaders} w pierwszej trójce w Polsce` : "z hospitalizacjami w roku"}</span></div>
-    </dl>
+    <CardKpis label="Liczby szpitala" items={[
+      { label: `Hospitalizacje ${year}`, value: integer(hosp[yearIndex]), unit: plural(hosp[yearIndex], "hospitalizacja", "hospitalizacje", "hospitalizacji"), note: change === null ? "pierwszy rok" : `${signedPct(change)} r/r` },
+      { label: `Śmiertelność ${year}`, value: latestRate === null ? "—" : `${decimal(latestRate, 2)}%`, unit: latestRate === null ? undefined : "zgonów",
+        note: [latestRate !== null && previousRate !== null ? `${signedPp(latestRate - previousRate)} r/r` : null, network !== null ? `sieć PSZ ${decimal(network, 2)}%` : null].filter(Boolean).join(" · ") },
+      { label: `Łóżka szpitalne (stan ${data.rpwdlYear ?? "bieżący"})`, value: acute?.beds ? integer(acute.beds) : "—", unit: acute?.beds ? plural(acute.beds, "łóżko", "łóżka", "łóżek") : undefined,
+        note: acute?.wards ? `${acute.wards} ${plural(acute.wards, "oddział", "oddziały", "oddziałów")}` : "brak profilu w rejestrze" },
+      { label: `Grupy JGP ${year}`, value: integer(groups.length), unit: plural(groups.length, "grupa JGP", "grupy JGP", "grup JGP"), note: leaders ? `${leaders} w pierwszej trójce w Polsce` : "z hospitalizacjami w roku" },
+    ]} />
   </header>;
 }
 
@@ -179,7 +187,15 @@ function HowManySection({ data, year, period, onPeriod }: { data: HospitalPageDa
     return [{ key: "psz", name: "Sieć PSZ", detail: NETWORK_DETAIL, values: reference, base: data.network.hospitalizations, tone: "reference" }, own];
   }, [data, metric]);
   return <section className={tabs.sec} aria-labelledby="s-ile">
-    <SectionHead id="s-ile" question="Ile?" context={`${shown.title} ${periodWord(period)}, wszystkie lata`} tools={<PeriodToggle period={period} onPeriod={onPeriod} />} />
+    <SectionHead id="s-ile" question="Ile?" context={`${shown.title} ${periodWord(period)}`} keepContext tools={<PeriodToggle period={period} onPeriod={onPeriod} />}
+      helpLabel="Jak czytać wykres „Ile?”" help={[
+        // Przypis wykresu (kropka, linia, data wypisu) w objaśnieniu, bez metody <5.
+        ["Wykres", `— ${shown.note[period].replace(/,? wartości <5 liczone jako 1/, "")}`],
+        ["Hospitalizacje", "— pobyty w szpitalu rozliczone z NFZ, według miesiąca wypisu albo sumy roku (przełącznik Miesiące / Lata)."],
+        ["Śmiertelność i % nagłych", "— udział zgonów i przyjęć w trybie nagłym w hospitalizacjach szpitala."],
+        ...(data.network ? [["Linia przerywana", `— sieć PSZ: ${NETWORK_DETAIL}.`] as [string, string]] : []),
+        "Rok bez hospitalizacji to przerwa w linii, nie zero.",
+      ]} />
     <div className={base.segmented} role="group" aria-label="Miara">
       {(Object.keys(METRICS) as TrendMetric[]).map((key) => <button key={key} type="button" aria-pressed={metric === key} onClick={() => setMetric(key)}>{METRICS[key].button}</button>)}
     </div>
@@ -187,7 +203,7 @@ function HowManySection({ data, year, period, onPeriod }: { data: HospitalPageDa
       <li><span className={styles.keySolid} aria-hidden />ten szpital</li>
       <li><span className={styles.keyDot} aria-hidden />Sieć PSZ ({NETWORK_DETAIL})</li>
     </ul> : null}
-    <GroupLineChart months={data.months} lines={lines} valueLabel={shown.unit} height={380} highlightYear={year} fitAxis={metric === "urgent"} note={shown.note[period]} period={period} ariaLabel={`Wykres liniowy: ${shown.title.toLowerCase()} ${periodWord(period)} we wszystkich latach`} />
+    <GroupLineChart months={data.months} lines={lines} valueLabel={shown.unit} height={380} highlightYear={year} fitAxis={metric === "urgent"} period={period} ariaLabel={`Wykres liniowy: ${shown.title.toLowerCase()} ${periodWord(period)} we wszystkich latach`} />
   </section>;
 }
 
@@ -201,18 +217,22 @@ function TreatsSection({ data, yearIndex }: { data: HospitalPageData; yearIndex:
   const firstIndex = data.groups.length ? Math.max(0, data.years.findIndex((_, y) => [...sections.values()].some((totals) => totals[y] > 0))) : 0;
   const shownYears = firstIndex === yearIndex ? [yearIndex] : [firstIndex, yearIndex];
   const total = (y: number) => [...sections.values()].reduce((sum, totals) => sum + totals[y], 0);
-  const leaders = data.groups.filter((row) => row[3][yearIndex] > 0 && row[3][yearIndex] <= 3).sort((a, b) => a[3][yearIndex] - b[3][yearIndex]).map((row) => row[0]);
+  const leaders = data.groups.filter((row) => row[3][yearIndex] > 0 && row[3][yearIndex] <= 3);
   const first = order[0];
   return <section className={tabs.sec} aria-labelledby="s-co">
-    <SectionHead id="s-co" question="Co leczy?" context={`Sekcje i grupy JGP, ${data.years[shownYears[0]]}${shownYears.length > 1 ? ` wobec ${year}` : ""}`} tag="Rok" />
+    <SectionHead id="s-co" question="Co leczy?" context={`Sekcje JGP, ${data.years[shownYears[0]]}${shownYears.length > 1 ? ` i ${year}` : ""}`}
+      helpLabel="Jak czytać sekcje JGP" help={[
+        ["Słupek", `— udział sekcji JGP w hospitalizacjach szpitala w roku. Pięć największych sekcji z ${year} r. ma kolor, reszta jest razem.`],
+        ["Pierwsza trójka w Polsce", "— miejsce szpitala wśród wszystkich ośrodków grupy JGP według liczby hospitalizacji."],
+      ]} />
     {first && total(yearIndex) > 0 ? <p className={base.lead}>
       Największa sekcja w {year} r.: <b>{label(first)}</b> ({decimal((sections.get(first)![yearIndex] / (total(yearIndex) || 1)) * 100, 0)}% hospitalizacji).
-      {leaders.length ? <> Szpital jest w pierwszej trójce w Polsce w {leaders.length} {leaders.length === 1 ? "grupie" : "grupach"}: <b>{leaders.slice(0, 8).join(", ")}{leaders.length > 8 ? "…" : ""}</b>.</> : null}
+      {leaders.length ? <> Szpital jest w pierwszej trójce w Polsce w {leaders.length} {leaders.length === 1 ? "grupie" : "grupach"} JGP.</> : null}
     </p> : null}
-    {/* Legenda z liczbą hospitalizacji sekcji w roku karty; na słupkach litera sekcji i udział. */}
+    {/* Legenda: nazwy sekcji; na słupkach litera sekcji, udziały w dymku. */}
     <ShareLegend parts={[
-      ...order.map((letter, i) => ({ key: letter, label: `${label(letter)}: ${integer(sections.get(letter)![yearIndex])}`, className: SECTION_CLASSES[i] })),
-      { key: "other", label: `pozostałe sekcje: ${integer(total(yearIndex) - order.reduce((sum, letter) => sum + sections.get(letter)![yearIndex], 0))}`, className: styles.partOther },
+      ...order.map((letter, i) => ({ key: letter, label: label(letter), className: SECTION_CLASSES[i] })),
+      { key: "other", label: "pozostałe sekcje", className: styles.partOther },
     ]} />
     <ShareBars labels ariaLabel="Sekcje JGP w hospitalizacjach szpitala" rows={shownYears.map((y) => ({
       key: data.years[y], label: data.years[y], on: y === yearIndex,
@@ -234,20 +254,25 @@ function ConcentrationSection({ data, yearIndex }: { data: HospitalPageData; yea
   }));
   const year = data.years[yearIndex];
   return <section className={tabs.sec} aria-labelledby="s-koncentracja">
-    <SectionHead id="s-koncentracja" question="Ile grup daje większość?" context={`${shown === "pln" ? "Kwota NFZ" : "Hospitalizacje"} w grupach JGP od największej, ${year}`} tag="Rok" />
-    <div className={base.segmented} role="group" aria-label="Miara">
-      <button type="button" aria-pressed={shown === "pln"} disabled={!hasPln} title={hasPln ? undefined : "Kwoty NFZ za grupy JGP są od 2019 r."} onClick={() => setMeasure("pln")}>Kwota NFZ</button>
-      <button type="button" aria-pressed={shown === "hosp"} onClick={() => setMeasure("hosp")}>Hospitalizacje</button>
-    </div>
+    <SectionHead id="s-koncentracja" question="Ile grup daje większość?" context={`${shown === "pln" ? "Kwota NFZ" : "Hospitalizacje"}, ${year}`}
+      helpLabel="Jak czytać krzywą grup" help={[
+        "Przesuń suwak, żeby wybrać liczbę grup.",
+        ["Krzywa", "— suma udziałów grup od największej."],
+        ["Kwota NFZ", "— rozliczenia grup JGP (zestawienie świadczeń, od 2019 r.), także grup w ryczałcie. To przychód, nie zysk."],
+      ]} />
     <ConcentrationChart
       key={`${shown}-${year}`}
       items={items}
       measure={shown === "pln" ? "kwoty NFZ za grupy JGP" : "hospitalizacji"}
       format={shown === "pln" ? formatPln : (value) => `${integer(value)} hosp.`}
       words={["kod JGP", "kody JGP", "kodów JGP"]}
+      controls={<div className={base.segmented} role="group" aria-label="Miara">
+          <button type="button" aria-pressed={shown === "pln"} disabled={!hasPln} title={hasPln ? undefined : "Kwoty NFZ za grupy JGP są od 2019 r."} onClick={() => setMeasure("pln")}>Kwota NFZ</button>
+          <button type="button" aria-pressed={shown === "hosp"} onClick={() => setMeasure("hosp")}>Hospitalizacje</button>
+        </div>}
       ariaLabel={`Skumulowany udział grup JGP w ${shown === "pln" ? "kwocie NFZ" : "hospitalizacjach"} szpitala w ${year} r.`}
     />
-    <p className={base.note}>Przesuń suwak, żeby wybrać liczbę grup. Krzywa: suma udziałów grup od największej. Kwota NFZ to rozliczenia grup JGP (zestawienie świadczeń, od 2019 r.), także grup w ryczałcie — przychód, nie zysk.{hasPln ? "" : ` W ${year} r. nie ma kwot, wykres pokazuje hospitalizacje.`}</p>
+    {hasPln ? null : <p className={base.note}>W {year} r. nie ma kwot NFZ za grupy JGP, wykres pokazuje hospitalizacje.</p>}
   </section>;
 }
 
@@ -258,85 +283,16 @@ function StaySection({ data, yearIndex }: { data: HospitalPageData; yearIndex: n
   const zero = values[yearIndex]?.[0] ?? 0;
   const all = values[yearIndex]?.reduce((sum, value) => sum + value, 0) ?? 0;
   return <section className={tabs.sec} aria-labelledby="s-pobyt">
-    <SectionHead id="s-pobyt" question="Jak długo leżą?" context="Długość pobytu, wszystkie lata" tag="Lata" />
+    <SectionHead id="s-pobyt" question="Jak długo leżą?" context="Długość pobytu"
+      helpLabel="Jak czytać długość pobytu" help={[
+        "Najedź na rok albo go dotknij, żeby zobaczyć udziały.",
+        "Długość pobytu liczymy z dat przyjęcia i wypisu w danych NFZ.",
+      ]} />
     {all ? <p className={base.lead}>W {data.years[yearIndex]} r. <b>{decimal((zero / all) * 100, 0)}%</b> pobytów trwało krócej niż dobę (np. zabiegi jednego dnia).</p> : null}
     <ShareLegend parts={parts} />
     <ShareBars ariaLabel="Długość pobytu w latach" rows={data.years.map((year, y) => ({
       key: year, label: year, on: y === yearIndex,
       parts: parts.map((part, i) => ({ ...part, value: values[y]?.[i] ?? 0 })),
     }))} />
-    <p className={base.note}>Najedź na rok, żeby zobaczyć udziały. Długość pobytu według dat przyjęcia i wypisu w danych NFZ.</p>
-  </section>;
-}
-
-/** „Czym dysponuje?”: oddziały i łóżka z rejestru RPWDL (stan bieżący). */
-const PAYMENT_BADGES: Record<WardPaymentStatus, { label: string; className: string }> = {
-  ryczalt: { label: "ryczałt", className: styles.payLump },
-  czesciowo: { label: "częściowo ryczałt", className: styles.payMixed },
-  poza: { label: "poza ryczałtem", className: styles.payOut },
-};
-
-/** Plakietka sposobu zapłaty oddziału; podpowiedź i czytnik dostają oba udziały hospitalizacji (nigdy sam udział „za wykonanie”). */
-function PaymentBadge({ status, paidPct, total }: { status: WardPaymentStatus; paidPct: number; total: number }) {
-  const paid = Math.round(paidPct);
-  const both = `${100 - paid}% w ryczałcie · ${paid}% za wykonanie`;
-  const badge = PAYMENT_BADGES[status];
-  return <span className={styles.payWrap}>
-    <span className={`${styles.pay} ${badge.className}`} title={`${integer(total)} hospitalizacji oddziału: ${both}`}>{badge.label}</span>
-    {status === "czesciowo" ? <small className={styles.payShare}>{both}</small> : null}
-  </span>;
-}
-
-function WardsSection({ data, yearIndex, onFinance }: { data: HospitalPageData; yearIndex: number; onFinance?: () => void }) {
-  const [all, setAll] = useState(false);
-  // Rok plakietek = rok karty: udział hospitalizacji oddziału w zakresach ryczałtowych i płatnych za wykonanie.
-  const paymentIndex = data.wardPayment && Object.values(data.wardPayment).some(([lump, paid]) => lump[yearIndex] + paid[yearIndex] > 0) ? yearIndex : -1;
-  const beds = data.wards.reduce((sum, [, , wardBeds]) => sum + wardBeds, 0) || 1;
-  const rows = all ? data.wards : data.wards.slice(0, WARDS_SHOWN);
-  if (!data.wards.length) return <section className={tabs.sec} aria-labelledby="s-zasoby">
-    <SectionHead id="s-zasoby" question="Czym dysponuje?" context="Oddziały i łóżka (RPWDL), sposób zapłaty NFZ" />
-    <p className={styles.empty} role="status">
-      <b>Brak danych o oddziałach i łóżkach.</b> Rejestr RPWDL nie ma profilu tego świadczeniodawcy (stan {data.rpwdlYear ? `z ${data.rpwdlYear} r.` : "bieżący"}),
-      np. gdy już nie działa. Bez listy oddziałów karta nie pokazuje też sposobu zapłaty NFZ (ryczałt, za wykonanie).
-    </p>
-  </section>;
-  return <section className={tabs.sec} aria-labelledby="s-zasoby">
-    <SectionHead id="s-zasoby" question="Czym dysponuje?" context={`Oddziały i łóżka (RPWDL), sposób zapłaty NFZ${paymentIndex >= 0 ? ` w ${data.years[paymentIndex]} r.` : ""}`} tag={data.rpwdlYear ? `Stan ${data.rpwdlYear}` : "Stan bieżący"} />
-    {paymentIndex >= 0 ? <ul className={base.legend} aria-label="Sposób zapłaty">
-      {(Object.keys(PAYMENT_BADGES) as WardPaymentStatus[]).map((status) => <li key={status}><span className={`${styles.pay} ${PAYMENT_BADGES[status].className}`}>{PAYMENT_BADGES[status].label}</span></li>)}
-      <li>
-        <InfoTip ariaLabel="Jak czytać sposób zapłaty" label={<HelpLines lines={[
-          "Ryczałt: hospitalizacje oddziału są w ryczałcie sieci szpitali (stała kwota, niezależna od liczby pobytów).",
-          "Poza ryczałtem: NFZ płaci za każdy pobyt (zakres z osobną kwotą w umowie, np. oddziały dziecięce, porody III poziomu).",
-          "Częściowo ryczałt: część zakresów oddziału w ryczałcie, część za wykonanie (np. onkologia, pacjenci poniżej 18 lat). Pod plakietką udziały hospitalizacji oddziału.",
-          "Źródło: plan umowy z NFZ (API NFZ „Umowy”): zakres z osobną kwotą w danym miesiącu = za wykonanie, bez kwoty = ryczałt. Hospitalizacje według zakresu umowy z plików NFZ. Oddział bez plakietki nie ma hospitalizacji rozliczanych grupami JGP (np. intensywna terapia).",
-        ]} />} />
-      </li>
-    </ul> : null}
-    {paymentIndex < 0 ? <p className={styles.empty} role="status">
-      <b>Brak danych o sposobie zapłaty NFZ w {data.years[yearIndex]} r.</b> Umowy z NFZ (API NFZ „Umowy”) nie dają hospitalizacji oddziałów według zakresów w tym roku, dlatego oddziały nie mają plakietek.
-    </p> : null}
-    {paymentIndex >= 0 && data.years[yearIndex] === "2017" ? <p className={base.note}>
-      Sieć szpitali działa od października 2017 r.: do września NFZ płacił za wykonanie, dlatego w 2017 r. większość oddziałów ma oba sposoby zapłaty.
-    </p> : null}
-    <div className={`priority-table ${styles.tableWrap}`}>
-        <table className={base.table}>
-          <thead><tr><th>Oddział</th><th className={base.num}>Łóżka</th><th className={`${base.num} col-p2`}>Udział łóżek</th><th className="col-p3">Dziedziny medycyny</th></tr></thead>
-          <tbody>
-            {rows.map(([code, name, wardBeds, fields, registerName]) => <tr key={`${code}-${name}`}>
-              <td><span title={registerName !== name ? `W rejestrze: ${registerName}` : undefined}>{name}</span><span className={styles.groupName}>kod {code}</span>{(() => {
-                const payment = paymentIndex >= 0 ? wardPaymentStatus(code, data.wardPayment, paymentIndex) : null;
-                return payment ? <PaymentBadge {...payment} /> : null;
-              })()}</td>
-              <td className={base.num}>{wardBeds ? integer(wardBeds) : "—"}</td>
-              <td className={`${base.num} col-p2`}>{wardBeds ? `${decimal((wardBeds / beds) * 100)}%` : "—"}</td>
-              <td className="col-p3">{fields.join(", ")}</td>
-            </tr>)}
-          </tbody>
-        </table>
-      </div>
-      {data.wards.length > WARDS_SHOWN ? <button type="button" className={styles.more} onClick={() => setAll((value) => !value)}>{all ? "Pokaż mniej" : `Pokaż wszystkie (${data.wards.length})`}</button> : null}
-      {onFinance ? <button type="button" className={styles.more} onClick={onFinance}>Jak NFZ płaci za każdy oddział: zakładka Finanse →</button> : null}
-      <p className={base.note}>Rejestr RPWDL, stan {data.rpwdlYear ? `z ${data.rpwdlYear} r.` : "bieżący"} (bez historii). Nazwa oddziału: nazwa urzędowa kodu resortowego (nazwy komórek szpitala w rejestrze — w dymku nazwy). Pododdział bez łóżek korzysta z łóżek oddziału. Oddział łączy się z zakresem umowy NFZ przez kod (03.<b>4450</b>.260.02 → 4450); bez własnego zakresu — przez trzy pierwsze cyfry kodu.</p>
   </section>;
 }

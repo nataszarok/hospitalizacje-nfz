@@ -8,7 +8,7 @@ import { ProviderLink } from "@/components/TableLinks";
 import { areaLabel, areaToValue, inArea, MAX_AREAS, type AnalysisArea } from "@/lib/area";
 import { CHART_COLORS, REGION_PICK_COLORS } from "@/lib/chartPalette";
 import { formatCityName } from "@/lib/formatters";
-import { cartogramCells, scaleColor, type CartogramCell, type RegionsMap } from "@/lib/jgpCard";
+import { areaScaleColor, cartogramCells, scaleColor, type CartogramCell, type RegionsMap } from "@/lib/jgpCard";
 import {
   cityProviders, citySection, DOT_SCALE_FLOOR, DOT_VALUE_FLOOR, dotRadius, dotScaleMax, median, cityYearPoints, cityYearTotals, facilityDots, facilityYearDeaths, facilityYearTotals, MIN_FACILITY_HOSPITALIZATIONS, regionalBreakdown,
   type CitiesMap, type CityProviderRow, type CityYearPoint, type FacilityDot, type FacilityYearsIndex, type FacilityYearsSection, type RegionRow,
@@ -314,7 +314,7 @@ function MapLegend({ mode, range, sdScale, dotSdScale, max, scaleMax, dotMedian,
   // Wartości poniżej progu mają jedną wielkość: legenda kończy się pozycją „≤ 25”.
   const sizes = [...new Set([niceValue(max), niceValue(max / 4), niceValue(max / 16)])].filter((value) => value > DOT_VALUE_FLOOR);
   sizes.push(DOT_VALUE_FLOOR);
-  return <div className={styles.mapLegend}>
+  return <div className={`${styles.mapLegend} ${styles.mapLegendCities}`}>
     <div className={styles.legendGroup}>
       <div className={styles.legendTitle}>Wielkość: hospitalizacje</div>
       <ul className={styles.legendSizes}>
@@ -357,8 +357,8 @@ const ratio = (value: number, reference: number) => reference > 0
 
 /**
  * Mapa placówek: kontury województw i kropka na każdą placówkę z kropką w roku mapy (`facilityDots`).
- * Kolor = hospitalizacje placówki wobec mediany placówek w roku mapy; wybrane obszary mają obwódkę,
- * pozostałe placówki są przygaszone. Najechanie pokazuje dymek `ChartTooltip` obok kropki (bez zmiany tabeli obok);
+ * Kolor = hospitalizacje placówki wobec mediany placówek w roku mapy; w wybranym obszarze ta sama skala w barwie obszaru
+ * (`areaScaleColor`, od jasnej do ciemnej, bez obwódki), pozostałe placówki są przygaszone. Najechanie pokazuje dymek `ChartTooltip` obok kropki (bez zmiany tabeli obok);
  * dymek może wyjść poza mapę i kartę, ale nie poza okno (DESIGN.md 6.3).
  * Większe kropki pod spodem, mniejsze na wierzchu; przy zmianie roku kropki płynnie zmieniają wielkość i miejsce.
  */
@@ -391,15 +391,15 @@ function FacilityMap({ map, dots, mapYear, areas, areaColor, median: yearMedian,
         const selected = focus?.facility === dot.facility || (focus?.facility === undefined && focus?.city === dot.city);
         const area = areaOf(dot);
         const outside = areas.length > 0 && !area;
+        const dotPosition = position ? position(dot.hospitalizations) : scalePosition(dot.hospitalizations, yearMedian, DOT_SPAN);
         return <circle
           key={dot.facility}
           cx={dot.x}
           cy={dot.y}
           r={dot.r}
-          fill={scaleColor(position ? position(dot.hospitalizations) : scalePosition(dot.hospitalizations, yearMedian, DOT_SPAN))}
-          style={area ? { "--area-color": areaColor(area) } as CSSProperties : undefined}
+          fill={area ? areaScaleColor(dotPosition, areaColor(area)) : scaleColor(dotPosition)}
           opacity={outside ? DOT_OUTSIDE_OPACITY : undefined}
-          className={`${styles.cityDot} ${area ? styles.facilityDotArea : ""} ${selected ? styles.facilityDotSelected : ""}`}
+          className={`${styles.cityDot} ${selected ? styles.facilityDotSelected : ""}`}
           role="button"
           tabIndex={0}
           aria-label={dotTitle(dot, mapYear)}

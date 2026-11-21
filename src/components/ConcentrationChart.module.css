@@ -91,3 +91,15 @@
   color: var(--color-text-tertiary);
   font-size: var(--fs-sm);
 }
+
+/* Przełącznik miary i suwak w jednej linii; suwak schodzi niżej, gdy ma mniej niż 240 px. */
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 20px;
+}
+
+.controls > .slider {
+  flex: 1 1 240px;
+}

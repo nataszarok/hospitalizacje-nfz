@@ -92,7 +92,7 @@ export function growthText(from: number, to: number): string {
  */
 function GrowthTable({ rows }: { rows: readonly GrowthRow[] }) {
   return <div className="priority-table">
-    <table className={`${styles.table} ${styles.growthTable}`} lang="pl">
+    <table className={`${styles.table} ${styles.growthTable} sticky-head`} lang="pl">
       <caption>Wartość świadczeń (w mln) i liczba hospitalizacji w Polsce</caption>
       <thead><tr>
         <th scope="col">Grupa</th>

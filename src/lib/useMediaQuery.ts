@@ -2,6 +2,9 @@
 
 import { useSyncExternalStore } from "react";
 
+/** Telefon (DESIGN.md 6.3, 7.1b): arkusz od dołu zamiast dymka, nagłówki w jednej linii. */
+export const PHONE_QUERY = "(max-width: 639px)";
+
 /**
  * Czy okno spełnia zapytanie CSS (np. „(max-width: 700px)”); `null` przed hydracją (strona statyczna nie zna szerokości okna).
  * Układ zależny od szerokości rozstrzygaj w CSS, a hook stosuj do stanu, którego CSS nie wyrazi (np. `aria-selected`).

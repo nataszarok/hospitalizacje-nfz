@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { AreaStatsPopover } from "@/components/AreaStatsPopover";
 import { ChartScaleControl } from "@/components/ChartScaleControl";
+import { ChartToolbar, pointCaption } from "@/components/ChartToolbar";
 import { FunnelControl } from "@/components/FunnelControl";
 import { MortalityChart } from "@/components/MortalityChart";
 import { MortalityDisplayControl } from "@/components/MortalityDisplayControl";
@@ -10,7 +11,6 @@ import { SortableTableHeader } from "@/components/SortableTableHeader";
 import { JgpCodeLinks, ProviderLink } from "@/components/TableLinks";
 import type { AnalysisArea } from "@/lib/area";
 import { formatCityName } from "@/lib/formatters";
-import { plural } from "@/lib/jgpDescription";
 import {
   aggregateMortalityRowsByProvider,
   mortalityInsights,
@@ -47,6 +47,8 @@ type MortalityTabProps = {
   setDisplayMode: (value: MortalityDisplayMode) => void;
   /** Stan lejka (`explorerFunnelState`): przełącznik, dostępność i liczba zgonów. */
   funnelState: FunnelState;
+  /** Dymek przełącznika granic w stanie „unavailable” (`funnelUnavailableReason`). */
+  funnelUnavailableReason?: string;
   setFunnel: (value: boolean) => void;
 };
 
@@ -62,6 +64,7 @@ export function MortalityTab({
   displayMode,
   setDisplayMode,
   funnelState,
+  funnelUnavailableReason,
   setFunnel,
 }: MortalityTabProps) {
   // Panel statystyk obszarów ma jeden poziom: miasta, gdy wybrano tylko miasta; w pozostałych przypadkach województwa.
@@ -120,30 +123,23 @@ export function MortalityTab({
       <section className="chart-section">
         {data.rows.length > 0 ? (
           <div className="plot-column">
-            {/* Pasek nad wykresem, jak nagłówek w „W czasie”: opis po lewej, przełączniki po prawej.
-                Dane („Zestawienie JGP”) → wygląd (lejek) → oś X → statystyki obszarów. */}
-            <div className={styles.chartHeader}>
-              <p className={styles.chartCaption}>
-                {pointCaption(tableRows.length, effectiveDisplayMode)}
-              </p>
-              <div className={styles.controls}>
-                {canGroupJgp ? (
-                  <MortalityDisplayControl value={displayMode} onChange={setDisplayMode} />
-                ) : null}
-                <FunnelControl value={funnelState !== "off"} onChange={setFunnel} disabled={funnelState === "unavailable"} />
-                <ChartScaleControl value={axisMode} onChange={setAxisMode} compact />
-                <AreaStatsPopover
-                  kind="mortality"
-                  geographyMode={geoMode}
-                  selectedKeys={selectedAreaKeys}
-                  groups={geoMode === "regions" ? data.areaStats.regions : data.areaStats.cities}
-                  baselineGroups={geoMode === "regions" ? data.baselineAreaStats.regions : data.baselineAreaStats.cities}
-                  products={selectedProductDefinitions}
-                  hasComparison={data.hasComparison}
-                  displayMode={effectiveDisplayMode}
-                />
-              </div>
-            </div>
+            <ChartToolbar caption={pointCaption(tableRows.length, effectiveDisplayMode)}>
+              {canGroupJgp ? (
+                <MortalityDisplayControl value={displayMode} onChange={setDisplayMode} />
+              ) : null}
+              <FunnelControl value={funnelState !== "off"} onChange={setFunnel} disabled={funnelState === "unavailable"} disabledReason={funnelUnavailableReason} />
+              <ChartScaleControl value={axisMode} onChange={setAxisMode} compact />
+              <AreaStatsPopover
+                kind="mortality"
+                geographyMode={geoMode}
+                selectedKeys={selectedAreaKeys}
+                groups={geoMode === "regions" ? data.areaStats.regions : data.areaStats.cities}
+                baselineGroups={geoMode === "regions" ? data.baselineAreaStats.regions : data.baselineAreaStats.cities}
+                products={selectedProductDefinitions}
+                hasComparison={data.hasComparison}
+                displayMode={effectiveDisplayMode}
+              />
+            </ChartToolbar>
 
             <MortalityChart
               rows={data.rows}
@@ -232,10 +228,4 @@ export function MortalityInsightText({ insights }: { insights: MortalityInsights
   </div>;
 }
 
-/** Opis punktów nad wykresem: ile ich jest i co oznacza jeden punkt. */
-export function pointCaption(count: number, displayMode: MortalityDisplayMode): string {
-  const number = count.toLocaleString("pl-PL");
-  return displayMode === "combined"
-    ? `${number} ${plural(count, "świadczeniodawca", "świadczeniodawców", "świadczeniodawców")} · wszystkie wybrane grupy razem`
-    : `${number} ${plural(count, "punkt", "punkty", "punktów")} · każda grupa JGP osobno`;
-}
+export { pointCaption };

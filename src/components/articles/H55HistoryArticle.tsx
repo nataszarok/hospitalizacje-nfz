@@ -731,7 +731,7 @@ export function H55HistoryArticle({ data }: { data: H55ArticleData }) {
           <details className={h55.details}>
             <summary>Tabela: H55 przed kontrolą, w jej trakcie i po niej</summary>
           <div className={`priority-table ${h55.tableBox}`}>
-            <table className={styles.table}>
+            <table className={`${styles.table} sticky-head`}>
               <caption>H55 przed kontrolą, w jej trakcie i po niej (pierwsza kontrola w szpitalu)</caption>
               <thead><tr>
                 <th scope="col">Szpital, kontrola</th>
@@ -780,7 +780,7 @@ export function H55HistoryArticle({ data }: { data: H55ArticleData }) {
             {" "}Ten wzór ma <strong>{data.shortSeries.length} {facilitiesWord(data.shortSeries.length)}: razem {integer(totals.short.hospitalizations)} hospitalizacji w {totals.short.months} miesiącach</strong>. Żaden z tych miesięcy nie był objęty kontrolą.<Ref ids={["kontrole", "dane"]} />
           </p>
           <div className={`priority-table ${h55.tableBox}`}>
-            <table className={styles.table}>
+            <table className={`${styles.table} sticky-head`}>
               <caption>Placówki z krótkim okresem rozliczania H55, bez kontroli H55</caption>
               <thead><tr>
                 <th scope="col">Placówka</th>
@@ -892,7 +892,7 @@ export function H55HistoryArticle({ data }: { data: H55ArticleData }) {
             Pozostałe procedury dawnej H55 przeszły do innych grup, m.in. HK08.<Ref ids={["gruper"]} /> NFZ płaci za HK14 o ponad jedną trzecią mniej niż za H55.<Ref ids={["wyceny"]} />
           </p>
           {h55v ? <div className={`priority-table ${h55.tableBox}`}>
-            <table className={styles.table}>
+            <table className={`${styles.table} sticky-head`}>
               <caption>Wycena termolezji: H55 ({h55v.year} r.) i HK14 ({hk14.year} r.), punkty</caption>
               <thead><tr>
                 <th scope="col">Rodzaj pobytu</th>

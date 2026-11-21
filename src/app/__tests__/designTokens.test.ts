@@ -32,7 +32,7 @@ describe("tokeny kolorów", () => {
   it("globals.css definiuje rdzeń, dane, sygnał i plakietkę „szacunek”", () => {
     for (const token of [
       "--color-primary", "--color-text", "--color-text-secondary", "--color-text-tertiary", "--color-border", "--color-border-strong",
-      "--color-data", "--color-data-strong", "--color-data-soft", "--color-data-muted", "--color-data-faint",
+      "--color-data", "--color-data-strong", "--color-data-soft", "--color-data-muted", "--color-data-mid", "--color-data-faint", "--color-data-neutral-strong", "--color-data-neutral", "--color-data-neutral-faint",
       "--color-signal", "--color-estimate-bg", "--color-estimate-fg", "--color-positive",
     ]) {
       expect(rootTokens).toContain(token);
@@ -63,7 +63,7 @@ describe("tokeny kolorów", () => {
       ["text", "--color-text"], ["textSecondary", "--color-text-secondary"], ["textTertiary", "--color-text-tertiary"],
       ["border", "--color-border"], ["borderStrong", "--color-border-strong"], ["grid", "--color-chart-grid"], ["background", "--color-background"], ["backgroundMuted", "--color-background-muted"],
       ["dataStrong", "--color-data-strong"], ["data", "--color-data"], ["dataSoft", "--color-data-soft"], ["dataMuted", "--color-data-muted"],
-      ["dataFaint", "--color-data-faint"], ["signal", "--color-signal"], ["positive", "--color-positive"],
+      ["dataFaint", "--color-data-faint"], ["dataMid", "--color-data-mid"], ["dataNeutralStrong", "--color-data-neutral-strong"], ["dataNeutral", "--color-data-neutral"], ["dataNeutralFaint", "--color-data-neutral-faint"], ["signal", "--color-signal"], ["positive", "--color-positive"],
     ];
     for (const [key, token] of pairs) expect(CHART_COLORS[key], token).toBe(tokenValue(token));
   });

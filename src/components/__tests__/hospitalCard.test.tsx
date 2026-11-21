@@ -44,20 +44,25 @@ describe("Karta szpitala", () => {
     expect(screen.getByRole("link", { name: "Szpitale" })).toHaveAttribute("href", "/szpitale");
     expect(screen.getByText(/sieć szpitali \(PSZ\): III stopnia/)).toBeInTheDocument();
     const kpis = within(document.querySelector<HTMLElement>('dl[aria-label="Liczby szpitala"]')!);
-    expect(kpis.getByText("Hospitalizacje 2025").nextSibling).toHaveTextContent("30");
+    expect(kpis.getByText("Hospitalizacje 2025").nextSibling).toHaveTextContent("30 hospitalizacji");
+    // Telefon: pasek faktów — słowo po liczbie (ukryte na szerokim ekranie, CardKpis).
+    expect(kpis.getByText("Łóżka szpitalne (stan 2026)").nextSibling).toHaveTextContent(/łóż(ko|ka|ek)$/);
     expect(kpis.getByText("+100,0% r/r")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /^Porównanie z podobnymi szpitalami/ })).toHaveAttribute("href", "/szpitale/eksplorator?hospital=16%7C111&hv=c");
   });
 
-  it("jedna aktywna zakładka „Przegląd”; pozostałe zapowiedziane i wyłączone", () => {
+  it("zakładki „Działalność” (aktywna) i „Struktura”; pozostałe zapowiedziane i wyłączone", () => {
     render(<HospitalPage data={data} />);
-    expect(screen.getByRole("tab", { name: "Przegląd" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tab", { name: "Działalność" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tab", { name: "Struktura" })).not.toHaveAttribute("aria-disabled");
     for (const name of [/Finanse/, /Porównanie/]) expect(screen.getByRole("tab", { name })).toHaveAttribute("aria-disabled", "true");
+    // „Czym dysponuje?” przeniesione do zakładki „Struktura”.
+    expect(screen.queryByRole("heading", { name: /Czym dysponuje/ })).not.toBeInTheDocument();
   });
 
-  it("„Co leczy i za ile?”: grupa z kwotą, miejscem i śmiertelnością wobec Polski; link do karty grupy; rok zmienia tabelę i adres", () => {
+  it("„Za ile leczy?”: grupa z kwotą, miejscem i śmiertelnością wobec Polski; link do karty grupy; rok zmienia tabelę i adres", () => {
     render(<HospitalPage data={data} />);
-    const table = () => within(screen.getByRole("heading", { name: /Co leczy i za ile/ }).closest("section")!);
+    const table = () => within(screen.getByRole("heading", { name: /Za ile leczy/ }).closest("section")!);
     const link = table().getByRole("link", { name: "A01" });
     expect(link).toHaveAttribute("href", "/jgp/A01?osrodek=16%7C111");
     const cells = within(link.closest("tr")!).getAllByRole("cell").map((cell) => cell.textContent);
@@ -73,28 +78,34 @@ describe("Karta szpitala", () => {
     expect(table().queryByRole("columnheader", { name: /NFZ/ })).not.toBeInTheDocument();
   });
 
-  it("„Co leczy i za ile?”: 10 grup i „Pokaż wszystkie”; sortowanie po kwocie NFZ", () => {
+  it("„Za ile leczy?”: 10 grup i „Pokaż wszystkie”; sortowanie po kwocie NFZ", () => {
     const many = { ...rich, groups: [...rich.groups, ...Array.from({ length: 12 }, (_, i) => [`B${String(i + 1).padStart(2, "0")}`, `INNA ${i + 1}`, [1, 1], [9, 9], [9, 9], [0, 100_000 * (i + 1)], [0, 0], [10, 10], [0, 0], [0, 1_000_000]] as (typeof data.groups)[number])] };
     render(<HospitalPage data={many} />);
-    const section = screen.getByRole("heading", { name: /Co leczy i za ile/ }).closest("section")!;
+    const section = screen.getByRole("heading", { name: /Za ile leczy/ }).closest("section")!;
     expect(within(section).getAllByRole("row")).toHaveLength(11);
+    // Długa tabela: nazwy kolumn przyklejone pod paskiem zakładek (DESIGN.md 7.1, pkt 7).
+    expect(within(section).getByRole("table").className).toMatch(/sticky-head/);
     fireEvent.click(within(section).getByRole("button", { name: "Pokaż wszystkie (23)" }));
     expect(within(section).getAllByRole("row")).toHaveLength(24);
     fireEvent.click(within(section).getByRole("button", { name: /^NFZ/ }));
     expect(within(section).getAllByRole("row")[1]).toHaveTextContent("B01");
   });
 
-  it("„Czym dysponuje?”: plakietka sposobu zapłaty z oboma udziałami dla oddziału częściowo w ryczałcie", () => {
+  it("„Struktura” (widok=struktura): plakietka sposobu zapłaty z oboma udziałami dla oddziału częściowo w ryczałcie", () => {
+    window.history.replaceState(null, "", "/szpitale/111?widok=struktura");
     render(<HospitalPage data={data} />);
-    const cardiology = screen.getByText("Kardiologia").closest("tr")!;
-    expect(within(cardiology).getByText("częściowo ryczałt")).toHaveAttribute("title", "100 hospitalizacji oddziału: 60% w ryczałcie · 40% za wykonanie");
-    expect(within(screen.getByText("Wewnętrzny").closest("tr")!).getByText("ryczałt")).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Struktura" })).toHaveAttribute("aria-selected", "true");
+    const cardiology = screen.getByText("Oddział kardiologiczny").closest("tr")!;
+    expect(within(cardiology).getByText("ryczałt + za pobyty")).toHaveAttribute("title", "100 hospitalizacji oddziału w 2025 r.: 60% w ryczałcie · 40% za pobyty");
+    expect(within(screen.getByText("Oddział chorób wewnętrznych").closest("tr")!).getByText("ryczałt sieci")).toBeInTheDocument();
+    // Nazwa urzędowa kodu, bez nazwy z rejestru („Klinika Chorób Wewnętrznych”).
+    expect(screen.queryByText("Klinika Chorób Wewnętrznych")).not.toBeInTheDocument();
   });
 
   it("rok bez kwot NFZ: „Kwota NFZ” wyłączona, wykres koncentracji pokazuje hospitalizacje; łóżka ze stanem rejestru", () => {
     render(<HospitalPage data={rich} />);
-    expect(screen.getByText("Łóżka (stan 2026)")).toBeInTheDocument();
-    expect(screen.getByText("2 oddziały i pododdziały")).toBeInTheDocument();
+    expect(screen.getByText("Łóżka szpitalne (stan 2026)")).toBeInTheDocument();
+    expect(screen.getByText("2 oddziały")).toBeInTheDocument();
     fireEvent.change(within(screen.getByRole("group", { name: "Rok karty" })).getByRole("combobox", { name: "Rok" }), { target: { value: "2024" } });
     const concentration = screen.getByRole("heading", { name: /Ile grup daje większość/ }).closest("section")!;
     expect(within(concentration).getByRole("button", { name: "Kwota NFZ" })).toBeDisabled();
@@ -140,12 +151,63 @@ describe("Karta szpitala", () => {
     expect(screen.getByRole("heading", { name: /Jak długo leżą/ })).toBeInTheDocument();
   });
 
-  it("„Czym dysponuje?”: jasny komunikat bez profilu RPWDL i bez danych o sposobie zapłaty", () => {
-    const { unmount } = render(<HospitalPage data={{ ...data, wards: [], beds: null }} />);
+  it("„Struktura”: części szpitala w boksach, poradnie, zasoby bez łóżek; tabele z przyklejonym nagłówkiem", () => {
+    window.history.replaceState(null, "", "/szpitale/111?widok=struktura");
+    render(<HospitalPage data={data} />);
+    const parts = within(screen.getByRole("heading", { name: /Z czego składa się szpital/ }).closest("section")!);
+    // Leczenie szpitalne: interna, kardiologia i SOR (73 łóżka z 85); opieka długoterminowa: ZOL (12).
+    expect(parts.getByText("Leczenie szpitalne").closest("div")).toHaveTextContent("73 łóżek · 86%2 oddziaływ tym SOR 13 (nie oddziały)");
+    expect(parts.getByText("Opieka długoterminowa i paliatywna").closest("div")).toHaveTextContent("12 łóżek · 14%ZOL");
+    expect(parts.getByText("Poradnie (AOS)").closest("div")).toHaveTextContent("12 poradni9 dziedzin · w 2 lokalizacjach");
+    // Miejsca bez łóżek są w sekcji budynków i na liście „Inne miejsca”, nie w częściach szpitala.
+    expect(parts.queryByText(/Poza oddziałami|Bez łóżek/)).not.toBeInTheDocument();
+    // Nagłówek karty: te same łóżka i oddziały co boks „Leczenie szpitalne”.
+    const kpis = within(document.querySelector<HTMLElement>('dl[aria-label="Liczby szpitala"]')!);
+    expect(kpis.getByText("Łóżka szpitalne (stan 2026)").parentElement).toHaveTextContent("73 łóżka2 oddziały");
+    const buildings = screen.getByRole("heading", { name: /Budynki i oddziały/ }).closest("section")!;
+    // Budynek bez łóżek Polna 3 (punkt pobrań): ramka z paskiem miejsc bez łóżek. Budynki z łóżkami rysuje przeglądarka po pomiarze
+    // szerokości (jsdom ma szerokość 0) — ich układ sprawdza hospitalStructure.test.ts.
+    expect(within(buildings).getByRole("button", { name: "Bez łóżek: Inne 1" })).toHaveTextContent("Inne 1");
+    expect(within(buildings).getByText("Polna 3, Katowice")).toBeInTheDocument();
+    for (const table of document.querySelectorAll("#panel-struktura table")) expect(table).toHaveClass("sticky-head");
+  });
+
+  it("„Struktura”: jedno „Pokaż” i zakładki list; wyszukiwarka otwiera listy i liczy trafienia w zakładkach", () => {
+    window.history.replaceState(null, "", "/szpitale/111?widok=struktura");
+    render(<HospitalPage data={data} />);
+    const details = document.querySelectorAll<HTMLDetailsElement>("#panel-struktura details");
+    expect([...details].map((item) => item.open)).toEqual([false]);
+    const tabCounts = () => within(screen.getByRole("tablist", { name: "Listy" })).getAllByRole("tab").map((tab) => [tab.textContent, tab.getAttribute("aria-selected")]);
+    // Domyślnie oddziały.
+    expect(tabCounts()).toEqual([["Oddziały3", "true"], ["Poradnie3", "false"], ["Inne miejsca3", "false"]]);
+    const search = screen.getByRole("searchbox", { name: /Szukaj oddziału/ });
+    fireEvent.change(search, { target: { value: "kardiologiczna" } });
+    expect(details[0].open).toBe(true);
+    expect(tabCounts()).toEqual([["Oddziały1", "true"], ["Poradnie2", "false"], ["Inne miejsca0", "false"]]);
+    fireEvent.click(screen.getByRole("tab", { name: /Poradnie/ }));
+    // Trafienie podświetlone (<mark>), więc nazwa jest w kilku elementach: szukamy wiersza po tekście.
+    const clinic = screen.getAllByRole("row").find((row) => row.textContent?.startsWith("Poradnia kardiologiczna"))!;
+    expect(clinic.querySelector("mark")).toHaveTextContent("kardiolog");
+    expect(clinic.lastElementChild).toHaveTextContent("2");
+    // Nowe zapytanie: pierwsza zakładka z wynikiem. „nocna pomoc” znajduje punkt nocnej i świątecznej opieki.
+    fireEvent.change(search, { target: { value: "nocna pomoc" } });
+    expect(screen.getByRole("tab", { name: /Inne/ })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getAllByRole("row").find((row) => row.textContent?.startsWith("Nocna i świąteczna opieka"))).toHaveTextContent("1 punkt");
+    fireEvent.change(search, { target: { value: "okulistyka" } });
+    expect(screen.getByText(/brak oddziału, poradni i innego miejsca/)).toBeInTheDocument();
+  });
+
+  it("„Struktura”: szpital bez oddziałów otwiera zakładkę poradni", () => {
+    window.history.replaceState(null, "", "/szpitale/111?widok=struktura");
+    render(<HospitalPage data={{ ...data, structure: { ...data.structure!, beds: [] } }} />);
+    expect(screen.queryByRole("tab", { name: /Oddziały/ })).not.toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /Poradnie/ })).toHaveAttribute("aria-selected", "true");
+  });
+
+  it("„Struktura”: jasny komunikat bez danych rejestru", () => {
+    window.history.replaceState(null, "", "/szpitale/111?widok=struktura");
+    render(<HospitalPage data={{ ...data, structure: null }} />);
     expect(screen.getByRole("status")).toHaveTextContent("Brak danych o oddziałach i łóżkach.");
-    unmount();
-    render(<HospitalPage data={{ ...data, wardPayment: null }} />);
-    expect(screen.getByRole("status")).toHaveTextContent("Brak danych o sposobie zapłaty NFZ w 2025 r.");
   });
 
   it("śmiertelność szpitala sieci: kropkowana linia odniesienia „Sieć PSZ”; KPI z udziałem sieci", async () => {
@@ -189,7 +251,7 @@ describe("Karta szpitala", () => {
       // Umowy 2025: 170 mln zł, +97,7% r/r; umowy to 85% przychodów.
       expect(screen.getByText("Umowy z NFZ 2025").nextSibling).toHaveTextContent("170 mln zł");
       expect(screen.getByText("Umowy z NFZ / przychody").nextSibling).toHaveTextContent("85%");
-      fireEvent.click(screen.getByRole("tab", { name: "Przegląd" }));
+      fireEvent.click(screen.getByRole("tab", { name: "Działalność" }));
       expect(window.location.search).toBe("");
     });
 

@@ -226,8 +226,10 @@
   cursor: pointer;
 }
 
+/* Przełącznik ma szerokość przycisków także w kolumnie flex/grid sekcji (bez rozciągania do pustego pola). */
 .segmented {
   display: inline-flex;
+  width: fit-content;
   overflow: hidden;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-control);
@@ -379,3 +381,22 @@
   fill: var(--color-text);
 }
 
+
+/* Telefon (DESIGN.md 7.1b): przełącznik w jednej linii — etykiety bez łamania, węższe przyciski i mniejszy tekst. */
+@media (max-width: 639px) {
+  .segmented {
+    max-width: 100%;
+  }
+
+  /* Legenda: ten sam zwarty układ co legenda rzutu w zakładce „Struktura” (bez wcięcia, odstęp 4 / 10 px). */
+  .legend {
+    gap: 4px 10px;
+    padding: 0;
+  }
+
+  .segmented button {
+    padding: 6px 7px;
+    font-size: var(--fs-base);
+    white-space: nowrap;
+  }
+}

@@ -74,8 +74,8 @@
 
 .srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
-/* Telefon: arkusz od dołu ekranu. */
-@media (max-width: 700px) {
+/* Telefon (< 640 px, jak `PHONE_QUERY`): dymek wykresu bez `onClose` przyklejony do dołu ekranu; z `onClose` — `BottomSheet`. */
+@media (max-width: 639px) {
   .tooltip {
     position: fixed;
     left: 12px !important;

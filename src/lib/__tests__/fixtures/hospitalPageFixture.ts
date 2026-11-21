@@ -1,4 +1,5 @@
 import type { HospitalPageInput } from "@/lib/hospitalPage";
+import type { HospitalStructureFile } from "@/lib/hospitalStructure";
 import type { JgpGroupFile } from "@/lib/jgpPage";
 import type { StaticDataset, TrendsDataset } from "@/lib/staticData";
 
@@ -29,6 +30,28 @@ const groupA01: JgpGroupFile = {
 const groupH53: JgpGroupFile = { version: 3, jgp: "H53", years: ["2024", "2025"], providers: ["07|222"], rows: [[0, 0, 0, 9, 0]] };
 const dataset = (year: string, facts: StaticDataset["facts"]): StaticDataset => ({ version: 1, analysisYear: year, defaultProductCode: "P1", products: [], regions: [], facilities: [], populations: [], facts });
 
+/**
+ * Struktura szpitala (zakładka „Struktura”): Szpitalna 1 w Katowicach (interna 10, kardiologia 50, SOR 13 łóżek, 3 poradnie)
+ * i ZOL w Zabrzu (12 łóżek); w Katowicach też POZ i nocna pomoc, budynek bez łóżek Polna 3 (punkt pobrań). Łóżka razem 85 = `registry.total_beds` profilu.
+ */
+export const structureFixture: HospitalStructureFile = {
+  version: 1,
+  names: { "4000": "Oddział chorób wewnętrznych", "4100": "Oddział kardiologiczny", "4902": "Szpitalny oddział ratunkowy", "5170": "Zakład/Oddział opiekuńczo-leczniczy", "1100": "Poradnia kardiologiczna", "1020": "Poradnia diabetologiczna" },
+  fields: ["Choroby wewnętrzne", "Kardiologia", "Diabetologia", "Kardiologia dziecięca"],
+  sites: ["Szpital Alfa w Katowicach", "Zakład Opiekuńczo-Leczniczy w Zabrzu"],
+  nfzCodes: { "5170": ["5160", ""], "4902": ["3300", ""] },
+  hospitals: {
+    [ME]: {
+      addr: [["Szpitalna 1", "Katowice"], ["Leśna 2", "Zabrze"], ["Polna 3", "Katowice"]],
+      beds: [[0, 0, "hospital_4xxx", "4000", "Klinika Chorób Wewnętrznych", 10, 0, [0]], [0, 0, "hospital_4xxx", "4100", "Oddział Kardiologii", 50, 6, [1, 0]],
+        [0, 0, "emergency_department", "4902", "SOR", 13, 0, []], [1, 1, "long_term_care", "5170", "ZOL", 12, 0, []]],
+      clinics: [[0, "1100", [1]], [0, "1100", [1, 3]], [0, "1020", [2]]],
+      other: [[0, "poz", "Gabinet lekarza POZ", 0], [0, "npl", "Nocna i świąteczna opieka zdrowotna", 0], [2, "misc", "Punkt pobrań", 0]],
+      sites: { "0": [0], "1": [1], "2": [0] },
+    },
+  },
+};
+
 export const hospitalPageInput: HospitalPageInput = {
   key: ME,
   trends,
@@ -44,10 +67,17 @@ export const hospitalPageInput: HospitalPageInput = {
   pszLevel: "III stopnia",
   // Sieć PSZ: szpital karty i Gamma (16|333); Beta (07|222) poza siecią.
   networkNips: new Set(["111", "333"]),
-  profile: { oz_nfz: "16", nip: "111", core: { beds: 60, wards: [{ code: "4000", name: "Wewnętrzny", beds: 10, fields: ["Choroby wewnętrzne"] }, { code: "4100", name: "Kardiologia", beds: 50 }] } },
+  profile: {
+    oz_nfz: "16", nip: "111", core: { beds: 60, wards: [{ code: "4000", name: "Wewnętrzny", beds: 10, fields: ["Choroby wewnętrzne"] }, { code: "4100", name: "Kardiologia", beds: 50 }] },
+    outpatient: { cell_count: 12, field_count: 9, location_count: 2 },
+    registry: { location_count: 3, city_count: 2, total_beds: 85 },
+    capabilities: { operating: { count: 1 }, sor: { count: 1, beds: 13 }, dialysis: { count: 1, stations: 18 }, poz: { count: 1 } },
+  },
+  locations: [["Szpitalna 1, Katowice", 70, ["hospital", "sor", "outpatient"]], ["Leśna 2, Zabrze", 15, ["long_term"]], ["Polna 3, Katowice", 0, ["other:Punkt pobrań"]]],
   financial: { nip: "111", years: [{ year: 2025, revenue: 100, net_result: 5, net_margin: null }] },
   regionName: "zachodniopomorskie",
   payment: { years: ["2025"], scopes: [["03.4000.030.02", "Choroby wewnętrzne"], ["03.4100.030.02", "Kardiologia"], ["03.4100.130.02", "Kardiologia – finansowane odrębnie"]], hosp: [[0, 0, 0, 100], [0, 1, 0, 60], [0, 2, 1, 40]], value: [[0, 2, 1, 3_000_000]] },
   rpwdlDate: "2026-09-12",
+  structureFile: structureFixture,
 };
 

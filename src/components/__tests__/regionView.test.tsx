@@ -5,7 +5,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { DOT_SCALE_FLOOR, DOT_VALUE_FLOOR, dotRadius, dotScaleMax, MAX_DOT, RegionView } from "@/components/explorer/RegionView";
 import { latestDatasetFixture, trendsFixture } from "@/lib/__tests__/fixtures/trendsFixture";
-import { REGION_PICK_COLORS } from "@/lib/chartPalette";
 import type { RegionsMap } from "@/lib/jgpCard";
 import type { CitiesMap, FacilityYearsIndex, FacilityYearsSection } from "@/lib/regions";
 
@@ -139,6 +138,8 @@ describe("RegionView", () => {
     expect(screen.getByText("Wielkość: hospitalizacje")).toBeInTheDocument();
     expect(screen.getByText("Obszary")).toBeInTheDocument();
     expect(screen.getAllByText("Katowice").length).toBeGreaterThan(0);
+    // Mapa miast: legenda w rogu mapy, w układzie dla dwóch grup (wielkość nad kolorem).
+    expect(screen.getByText("Wielkość: hospitalizacje").closest("[class*='mapLegend']")!.className).toMatch(/mapLegendCities/);
   });
 
   it("kolor kropki: hospitalizacje placówki wobec mediany placówek w roku mapy", async () => {
@@ -154,7 +155,12 @@ describe("RegionView", () => {
   it("wybrane obszary mają obwódkę w kolorze wyróżnienia, pozostałe kropki są przygaszone; tabela miast tylko z obszarów", async () => {
     render(<RegionView productCodes={["P1"]} year="2025" method="min" areas={[{ kind: "region", owNfz: "07" }]} />);
     const map = await openCities();
-    expect(within(map).getByRole("button", { name: /^Szpital Alfa/ }).getAttribute("style")).toContain(`--area-color: ${REGION_PICK_COLORS[0]}`);
+    const alfa = within(map).getByRole("button", { name: /^Szpital Alfa/ });
+    // Kropka w wybranym obszarze: skala w barwie obszaru (fiolet), nie niebieska skala reszty mapy; bez osobnej obwódki.
+    expect(alfa.getAttribute("class")).not.toMatch(/facilityDotArea/);
+    const [r, g, b] = alfa.getAttribute("fill")!.match(/\d+/g)!.map(Number);
+    expect(r).toBeGreaterThan(g);
+    expect(b).toBeGreaterThan(g);
     expect(within(map).getByRole("button", { name: /^Szpital Beta/ })).toHaveAttribute("opacity", "0.3");
     expect(tableRows(/Miasta · 2025/).map((row) => cellText(row, 1))).toEqual(["Warszawa"]);
   });

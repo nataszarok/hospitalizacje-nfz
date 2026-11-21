@@ -12,7 +12,7 @@ button.tabSoon[aria-disabled="true"] {
 .part2 { background: var(--color-data-soft); }
 .part3 { background: var(--color-data-muted); }
 .part4 { background: var(--color-data-faint); }
-.partOther { background: var(--color-border); }
+.partOther { background: var(--color-data-neutral-faint); }
 
 /* Klucz linii wykresu „Ile?”: szpital (ciągła) i Polska (kropkowana, odniesienie). */
 .lineKey {
@@ -83,13 +83,21 @@ button.tabSoon[aria-disabled="true"] {
   margin-top: 3px;
 }
 
+/* Plakietka sposobu zapłaty NFZ (karta, Finanse, Struktura); w zakładce „Struktura” na telefonie też przycisk (opis w arkuszu). */
 .pay {
   display: inline-block;
   padding: 0 6px;
+  border: 0;
   border-radius: var(--radius-badge);
+  font: inherit;
   font-size: var(--fs-xs);
   font-weight: var(--fw-bold);
+  line-height: 17px;
   white-space: nowrap;
+}
+
+.pay[title] {
+  cursor: help;
 }
 
 .payLump {
@@ -106,6 +114,23 @@ button.tabSoon[aria-disabled="true"] {
   border: 1px solid var(--color-data);
   background: var(--color-data-faint);
   color: var(--color-data-strong);
+  line-height: 15px;
+}
+
+/* Plakietki z pozycji umów (stawka dobowa, osobna kwota…) i niepotwierdzone (szare, przerywana ramka). */
+.payOther {
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-background-muted);
+  color: var(--color-heading);
+  line-height: 15px;
+}
+
+.payNone {
+  border: 1px dashed var(--color-border-strong);
+  background: var(--color-background);
+  color: var(--color-text-tertiary);
+  font-weight: var(--fw-semibold);
+  line-height: 15px;
 }
 
 .payShare {
@@ -130,7 +155,7 @@ button.tabSoon[aria-disabled="true"] {
   color: var(--color-text);
 }
 
-/* „Co leczy i za ile?”: liczba ośrodków po miejscu w Polsce, kropka odchylenia śmiertelności (skala odchylenia, jak lejek). */
+/* „Za ile leczy?”: liczba ośrodków po miejscu w Polsce, kropka odchylenia śmiertelności (skala odchylenia, jak lejek). */
 .rankOf {
   color: var(--color-text-tertiary);
   font-size: var(--fs-sm);
@@ -154,3 +179,4 @@ button.tabSoon[aria-disabled="true"] {
   border: 1px solid var(--color-border-strong);
   background: transparent;
 }
+
