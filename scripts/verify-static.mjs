@@ -318,6 +318,47 @@ for (const [folder, script] of [["facilities", "build_facility_years.py"], ["dur
   if (bad) throw new Error(`cities-map.json.gz: invalid city ${JSON.stringify(bad)}.`);
   if (cities.cities.length < 300) throw new Error(`cities-map.json.gz: only ${cities.cities.length} cities.`);
   console.log(`Cities map OK: ${cities.cities.length} cities, ${(size / 1024).toFixed(1)} KiB.`);
+
+  // Dostępność (scripts/build_access_population.py, scripts/build_travel_times.py): skupiska ludności × miasta z cities-map.
+  const { size: popSize, data: population } = await readGzipJson("public/data/access/population.json.gz");
+  if (population.version !== 2 || population.viewBox.join() !== map.viewBox.join()) throw new Error("access/population.json.gz: wrong version or viewBox differs from regions-map.json.gz.");
+  if (population.groups?.length !== 8) throw new Error("access/population.json.gz: expected 8 sex × age groups.");
+  const powiaty = population.powiaty.length;
+  if (powiaty !== 380 || population.powiaty.some(([name, ow, people, path, unit, teryt]) => !name || !codes.has(ow) || !(people > 0) || !path || !(unit >= 0 && unit < powiaty) || !/^\d{4}$/.test(teryt))) {
+    throw new Error(`access/population.json.gz: expected 380 valid powiaty, got ${powiaty}.`);
+  }
+  const gminy = population.gminy.length;
+  if (gminy < 2470 || gminy > 2490) throw new Error(`access/population.json.gz: ${gminy} gminy (expected ok. 2477).`);
+  const powiatSum = new Array(powiaty).fill(0);
+  for (const [name, teryt, powiat, count, groups] of population.gminy) {
+    if (!name || !/^\d{7}$/.test(teryt) || population.powiaty[powiat]?.[5] !== teryt.slice(0, 4) || !(count > 0) || groups.length !== 8 || groups.reduce((a, b) => a + b, 0) !== count) {
+      throw new Error(`access/population.json.gz: invalid gmina ${JSON.stringify([name, teryt, powiat, count])}.`);
+    }
+    powiatSum[powiat] += count;
+  }
+  if (population.powiaty.some((row, i) => row[2] !== powiatSum[i])) throw new Error("access/population.json.gz: powiat population differs from the sum of its gminy.");
+  const gminaPeople = new Array(gminy).fill(0);
+  const people = population.cells.reduce((sum, [, , count, gmina]) => {
+    if (!(gmina >= 0 && gmina < gminy)) throw new Error("access/population.json.gz: cell with unknown gmina.");
+    gminaPeople[gmina] += count;
+    return sum + count;
+  }, 0);
+  if (people < 36e6 || people > 39e6) throw new Error(`access/population.json.gz: ${people} people (expected 36–39 mln).`);
+  // Skupiska gminy sumują się do jej ludności (zaokrąglenia: do 10 osób).
+  const off = population.gminy.findIndex(([, , , count], i) => Math.abs(gminaPeople[i] - count) > 10);
+  if (off >= 0) throw new Error(`access/population.json.gz: cells of gmina ${population.gminy[off][0]} sum to ${gminaPeople[off]}, not ${population.gminy[off][3]}.`);
+  const { size: gmSize, data: gminyMap } = await readGzipJson("public/data/access/gminy-map.json.gz");
+  if (gminyMap.version !== 1 || gminyMap.paths.length !== gminy || gminyMap.paths.some((path) => !path.startsWith("M"))) throw new Error("access/gminy-map.json.gz: paths do not match gminy in population.json.gz.");
+  const { size: ttSize, data: travel } = await readGzipJson("public/data/access/travel-times.json.gz");
+  if (travel.version !== 1 || travel.origins !== population.cells.length) throw new Error(`access/travel-times.json.gz: ${travel.origins} origins, population has ${population.cells.length} cells — run scripts/build_travel_times.py.`);
+  if (travel.cities.join("|") !== cities.cities.map(([name]) => name).join("|")) throw new Error("access/travel-times.json.gz: cities differ from cities-map.json.gz — run scripts/build_travel_times.py.");
+  if (travel.minutes.length !== travel.origins * travel.cities.length || travel.minutes.some((m) => !(m >= 0 && m <= 255))) throw new Error("access/travel-times.json.gz: wrong table size or values.");
+  // Punkt kontrolny: przeciętny mieszkaniec ma szpital (dowolny) w zasięgu ok. 10–20 min.
+  let weighted = 0;
+  population.cells.forEach(([, , count], i) => { weighted += count * Math.min(...travel.minutes.slice(i * travel.cities.length, (i + 1) * travel.cities.length)); });
+  const mean = weighted / people;
+  if (mean < 5 || mean > 25) throw new Error(`access/travel-times.json.gz: mean time to the nearest hospital city ${mean.toFixed(1)} min (expected 5–25).`);
+  console.log(`Access OK: ${powiaty} powiaty, ${gminy} gminy (map ${(gmSize / 1024).toFixed(0)} KiB), ${population.cells.length} cells (${(popSize / 1024).toFixed(0)} KiB), travel times ${travel.cities.length} cities, mean ${mean.toFixed(1)} min to the nearest (${(ttSize / 1024).toFixed(0)} KiB).`);
 }
 
 // Wyceny JGP (scripts/build_valuations.py): format krotek, unikalne kody grup.
