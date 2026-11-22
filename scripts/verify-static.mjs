@@ -358,7 +358,15 @@ for (const [folder, script] of [["facilities", "build_facility_years.py"], ["dur
   population.cells.forEach(([, , count], i) => { weighted += count * Math.min(...travel.minutes.slice(i * travel.cities.length, (i + 1) * travel.cities.length)); });
   const mean = weighted / people;
   if (mean < 5 || mean > 25) throw new Error(`access/travel-times.json.gz: mean time to the nearest hospital city ${mean.toFixed(1)} min (expected 5–25).`);
-  console.log(`Access OK: ${powiaty} powiaty, ${gminy} gminy (map ${(gmSize / 1024).toFixed(0)} KiB), ${population.cells.length} cells (${(popSize / 1024).toFixed(0)} KiB), travel times ${travel.cities.length} cities, mean ${mean.toFixed(1)} min to the nearest (${(ttSize / 1024).toFixed(0)} KiB).`);
+  const { size: kmSize, data: roadKm } = await readGzipJson("public/data/access/road-km.json.gz");
+  if (roadKm.version !== 1 || roadKm.origins !== travel.origins || roadKm.cities.join("|") !== travel.cities.join("|")) throw new Error("access/road-km.json.gz: does not match travel-times.json.gz — run scripts/build_travel_times.py.");
+  if (roadKm.km.length !== travel.minutes.length || roadKm.km.some((v) => !(v >= 0 && v <= 255))) throw new Error("access/road-km.json.gz: wrong table size or values.");
+  // Punkt kontrolny: najbliższe miasto ze szpitalem przeciętnie ok. 8–15 km drogą.
+  let weightedKm = 0;
+  population.cells.forEach(([, , count], i) => { weightedKm += count * Math.min(...roadKm.km.slice(i * travel.cities.length, (i + 1) * travel.cities.length)); });
+  const meanKm = weightedKm / people;
+  if (meanKm < 4 || meanKm > 25) throw new Error(`access/road-km.json.gz: mean road distance to the nearest hospital city ${meanKm.toFixed(1)} km (expected 4–25).`);
+  console.log(`Access OK: ${powiaty} powiaty, ${gminy} gminy (map ${(gmSize / 1024).toFixed(0)} KiB), ${population.cells.length} cells (${(popSize / 1024).toFixed(0)} KiB), travel times ${travel.cities.length} cities, mean ${mean.toFixed(1)} min / ${meanKm.toFixed(1)} km by road to the nearest (${(ttSize / 1024).toFixed(0)} + ${(kmSize / 1024).toFixed(0)} KiB).`);
 }
 
 // Wyceny JGP (scripts/build_valuations.py): format krotek, unikalne kody grup.

@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Build car travel times from population cells to provider seat cities: public/data/access/travel-times.json.gz.
+"""Build car travel times and road distances from population cells to provider seat cities.
+
+Outputs: public/data/access/travel-times.json.gz (minutes) and public/data/access/road-km.json.gz (kilometres by road;
+the browser loads it only in the "km" view).
 
 Router: OSRM (Open Source Routing Machine) in Docker, car profile, on the OpenStreetMap extract of Poland
 (ODbL; download.openstreetmap.fr mirror). Free-flow times: no traffic. Everything runs locally.
@@ -14,11 +17,13 @@ Steps (the slow ones are cached outside the repo in data/routing/):
 2. --route: starts osrm-routed in Docker, asks the /table service in chunks, stops the container.
    The raw table is cached in data/routing/osrm-table.json.gz together with the input coordinates; without
    --route the cache is reused when the inputs did not change.
-3. Writes minutes rounded to whole minutes, capped at 255 (255 = 255 min or more / no route).
+3. Writes minutes and kilometres rounded to whole numbers, capped at 255 (255 = 255 or more / no route).
+   Both come from the same /table query (annotations=duration,distance), so km is the length of the fastest route.
 
 Output:
-  {"version": 1, "source": ..., "router": ..., "cities": [NAZWA, ...], "origins": liczba skupisk,
-   "minutes": [skupisko 0 × miasta..., skupisko 1 × miasta..., ...]}   # płaska tablica, wiersz = skupisko
+  travel-times: {"version": 1, "source": ..., "router": ..., "cities": [NAZWA, ...], "origins": liczba skupisk,
+                 "minutes": [skupisko 0 × miasta..., skupisko 1 × miasta..., ...]}   # płaska tablica, wiersz = skupisko
+  road-km:      {"version": 1, ..., "km": [...]}                                     # ten sam układ
 
 The browser takes, for every cell, the first open city (filters, simulation) — so one table serves every ward.
 
@@ -77,7 +82,8 @@ def to_lonlat(regions: Path):
     return lambda x, y: ((x - x0) / scale / math.cos(LAT0), -((y - y0) / scale))
 
 
-def route(osrm_dir: Path, origins: list[tuple[float, float]], dests: list[tuple[float, float]]) -> list[list[float | None]]:
+def route(osrm_dir: Path, origins: list[tuple[float, float]], dests: list[tuple[float, float]]):
+    """Zwraca (czasy w s, odległości w m): wiersz = skupisko, kolumna = miasto."""
     docker("rm", "-f", CONTAINER, check=False)
     docker("run", "-d", "--rm", "--name", CONTAINER, "-p", f"{PORT}:5000", "-v", f"{osrm_dir}:/data", IMAGE,
            "osrm-routed", "--algorithm", "mld", "--max-table-size", "100000", "/data/poland.osrm")
@@ -90,22 +96,24 @@ def route(osrm_dir: Path, origins: list[tuple[float, float]], dests: list[tuple[
                 time.sleep(2)
         dest_part = ";".join(f"{lon:.5f},{lat:.5f}" for lon, lat in dests)
         table: list[list[float | None]] = []
+        lengths: list[list[float | None]] = []
         snap_max = 0.0
         for start in range(0, len(origins), CHUNK):
             chunk = origins[start:start + CHUNK]
             coords = ";".join(f"{lon:.5f},{lat:.5f}" for lon, lat in chunk) + ";" + dest_part
             sources = ";".join(str(i) for i in range(len(chunk)))
             destinations = ";".join(str(len(chunk) + j) for j in range(len(dests)))
-            url = f"http://127.0.0.1:{PORT}/table/v1/driving/{coords}?sources={sources}&destinations={destinations}&annotations=duration"
+            url = f"http://127.0.0.1:{PORT}/table/v1/driving/{coords}?sources={sources}&destinations={destinations}&annotations=duration,distance"
             with urllib.request.urlopen(url, timeout=600) as response:
                 result = json.load(response)
             if result.get("code") != "Ok":
                 raise SystemExit(f"OSRM: {result.get('code')} {result.get('message')}")
             table.extend(result["durations"])
+            lengths.extend(result["distances"])
             snap_max = max(snap_max, *(s["distance"] for s in result["sources"]))
             print(f"  skupiska {min(start + CHUNK, len(origins))}/{len(origins)}", flush=True)
         print(f"największe przyciągnięcie skupiska do drogi: {snap_max:.0f} m", flush=True)
-        return table
+        return table, lengths
     finally:
         docker("stop", CONTAINER, check=False)
 
@@ -118,6 +126,7 @@ def main() -> None:
     parser.add_argument("--cities", type=Path, default=ROOT / "public" / "data" / "cities-map.json.gz")
     parser.add_argument("--regions", type=Path, default=ROOT / "data" / "maps" / "wojewodztwa-min.geojson")
     parser.add_argument("--output", type=Path, default=ROOT / "public" / "data" / "access" / "travel-times.json.gz")
+    parser.add_argument("--km-output", type=Path, default=ROOT / "public" / "data" / "access" / "road-km.json.gz")
     parser.add_argument("--prepare", action="store_true", help="przygotuj graf OSRM (extract, partition, customize)")
     parser.add_argument("--fetch-map", action="store_true", help="pobierz mapę Polski z OpenStreetMap ponownie")
     parser.add_argument("--route", action="store_true", help="policz tabelę czasów ponownie (Docker)")
@@ -133,35 +142,43 @@ def main() -> None:
     key = hashlib.sha256(json.dumps([[round(v, 5) for v in p] for p in origins + dests]).encode()).hexdigest()
 
     cached = json.load(gzip.open(args.cache)) if args.cache.exists() else None
-    if args.route or not cached or cached.get("key") != key:
+    if args.route or not cached or cached.get("key") != key or "distances" not in cached:
         if not (args.osrm_dir / "poland.osrm.mldgr").exists():
             # Bez Dockera i grafu (np. w npm run generate:data na innym komputerze) zostaje plik z repo;
             # verify-static.mjs sprawdzi, czy pasuje do skupisk ludności i listy miast.
-            if not args.route and args.output.exists():
+            if not args.route and args.output.exists() and args.km_output.exists():
                 print("access/travel-times: brak grafu OSRM i tabeli w cache — zostaje istniejący plik "
                       "(nowe czasy: python3 scripts/build_travel_times.py --prepare)")
                 return
             raise SystemExit("brak grafu OSRM: uruchom z --prepare (wymaga Dockera)")
-        table = route(args.osrm_dir, origins, dests)
+        table, lengths = route(args.osrm_dir, origins, dests)
         args.cache.parent.mkdir(parents=True, exist_ok=True)
         with gzip.open(args.cache, "wt", encoding="utf-8") as fh:
-            json.dump({"key": key, "router": IMAGE, "durations": table}, fh)
+            json.dump({"key": key, "router": IMAGE, "durations": table, "distances": lengths}, fh)
     else:
-        table = cached["durations"]
+        table, lengths = cached["durations"], cached["distances"]
 
-    minutes: list[int] = []
-    unreachable = 0
-    for row in table:
-        for seconds in row:
-            if seconds is None:
-                unreachable += 1
-                minutes.append(CAP)
-            else:
-                minutes.append(min(CAP, round(seconds / 60)))
+    def flat(rows: list[list[float | None]], unit: float) -> tuple[list[int], int]:
+        values: list[int] = []
+        missing = 0
+        for row in rows:
+            for v in row:
+                if v is None:
+                    missing += 1
+                    values.append(CAP)
+                else:
+                    values.append(min(CAP, round(v / unit)))
+        return values, missing
+
+    minutes, unreachable = flat(table, 60)
+    km, _ = flat(lengths, 1000)
     payload = {"version": 1, "source": SOURCE_NOTE, "router": IMAGE, "cities": [c[0] for c in cities],
                "origins": len(origins), "minutes": minutes}
     size = write_json_gz(args.output, payload)
-    print(f"access/travel-times: {len(origins)} skupisk × {len(cities)} miast, bez trasy {unreachable}, {size / 1024:.0f} KiB")
+    km_size = write_json_gz(args.km_output, {"version": 1, "source": SOURCE_NOTE.replace("czas przejazdu bez korków", "długość najszybszej trasy"),
+                                            "router": IMAGE, "cities": payload["cities"], "origins": len(origins), "km": km})
+    print(f"access/travel-times: {len(origins)} skupisk × {len(cities)} miast, bez trasy {unreachable}, {size / 1024:.0f} KiB; "
+          f"road-km {km_size / 1024:.0f} KiB")
 
 
 if __name__ == "__main__":
