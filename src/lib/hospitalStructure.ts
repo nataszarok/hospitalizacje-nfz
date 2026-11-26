@@ -350,32 +350,53 @@ export const BOX_MIN = 150;
 export const BOX_GAP = 10;
 export const isCompactBoxSet = (width: number, count: number) => width > 0 && count > 1 && width < count * BOX_MIN + (count - 1) * BOX_GAP;
 
-export const PLAN = { bedArea: 520, pad: 6, wingGap: 5, roomGap: 1.5, buildingGap: 12, minRow: 110, minLast: 64, roomRatio: 2.6, wingRatio: 1.6 } as const;
+export const PLAN = { bedArea: 520, pad: 6, wingGap: 5, roomGap: 1.5, buildingGap: 12, minRow: 110, minLast: 64, minBuilding: 140, roomRatio: 2.6, wingRatio: 1.6 } as const;
 
-export interface PlanBuilding<B> { building: B; width: number; height: number }
+/** Budynek w wierszu: `width` — ramka (co najmniej `minBuilding`), `plan` — szerokość rzutu ze skali łóżek (z ramką 1 px). */
+export interface PlanBuilding<B> { building: B; width: number; plan: number; height: number }
 
 /**
  * Wiersze budynków w jednej skali: pole łóżka jest takie samo w każdym budynku (maleje tylko z szerokością kontenera).
  * Budynki w wierszu mają tę samą wysokość, szerokość według łóżek; mały budynek dołącza do wiersza, dopóki wiersz nie ma
  * `minRow` — pełny wiersz zajmuje całą szerokość. Ten sam układ na telefonie (nazwy krótkie). Wymiary z ramką 1 px.
+ * Ramka ma co najmniej `minBuilding` (miejsce na nagłówek; inaczej nazwa łamie się znak po znaku i podnosi nagłówki całego
+ * wiersza). Rzut w szerszej ramce zostaje w skali łóżek. Wiersz ma tyle budynków, ile ramek `minBuilding` się w nim mieści.
  */
 export function layoutBuildings<B extends { beds: number }>(buildings: B[], width: number): PlanBuilding<B>[][] {
   const area = PLAN.bedArea * Math.min(1, width / 1000);
-  const inner = (count: number) => width - 1 - PLAN.buildingGap * (count - 1) - (2 * PLAN.pad + 2) * count;
-  const rowHeight = (row: B[]) => row.reduce((sum, b) => sum + b.beds, 0) * area / inner(row.length);
-  const rows: B[][] = [];
+  const frame = 2 * PLAN.pad + 2;
+  const fits = (count: number) => count * PLAN.minBuilding + PLAN.buildingGap * (count - 1) <= width - 1;
+  const scaled = (beds: number, h: number) => beds * area / h + frame;
+  // Wysokość, przy której wiersz zajmuje całą szerokość: budynki węższe niż `minBuilding` mają ramkę `minBuilding`,
+  // resztę szerokości dzielą pozostałe według łóżek (powtarzamy, aż zbiór najmniejszych się nie zmienia).
+  const rowHeight = (row: B[]) => {
+    const small = new Set<B>();
+    for (;;) {
+      const rest = row.filter((b) => !small.has(b));
+      const free = width - 1 - PLAN.buildingGap * (row.length - 1) - small.size * PLAN.minBuilding - frame * rest.length;
+      const h = rest.reduce((sum, b) => sum + b.beds, 0) * area / free;
+      const narrow = rest.filter((b) => free <= 0 || scaled(b.beds, h) < PLAN.minBuilding);
+      if (!narrow.length || narrow.length === rest.length) return free > 0 ? h : Infinity;
+      narrow.forEach((b) => small.add(b));
+    }
+  };
+  const rows: { row: B[]; full: boolean }[] = [];
   let current: B[] = [];
   for (const building of [...buildings].sort((a, b) => b.beds - a.beds)) {
+    if (current.length && !fits(current.length + 1)) { rows.push({ row: current, full: false }); current = []; }
     current.push(building);
-    if (rowHeight(current) >= PLAN.minRow) { rows.push(current); current = []; }
+    if (rowHeight(current) >= PLAN.minRow) { rows.push({ row: current, full: true }); current = []; }
   }
-  if (current.length) rows.push(current);
-  return rows.map((row) => {
-    // Jedna skala w całym rzucie: szerokość budynku = łóżka × pole łóżka / wysokość wiersza. Pełny wiersz zajmuje całą
+  if (current.length) rows.push({ row: current, full: false });
+  return rows.map(({ row, full }) => {
+    // Jedna skala w całym rzucie: szerokość rzutu = łóżka × pole łóżka / wysokość wiersza. Pełny wiersz zajmuje całą
     // szerokość. Resztka (za niska na `minLast`) dostaje wysokość `minLast` i węższe budynki, więc może być krótsza niż kontener:
     // skala łóżek ma pierwszeństwo przed pełną szerokością.
-    const h = Math.max(PLAN.minLast, rowHeight(row));
-    return row.map((building) => ({ building, height: h + 2 * PLAN.pad, width: building.beds * area / h + 2 * PLAN.pad + 2 }));
+    const h = full ? rowHeight(row) : Math.max(PLAN.minLast, Math.min(rowHeight(row), PLAN.minRow));
+    return row.map((building) => {
+      const plan = scaled(building.beds, h);
+      return { building, height: h + 2 * PLAN.pad, plan, width: Math.max(PLAN.minBuilding, plan) };
+    });
   });
 }
 

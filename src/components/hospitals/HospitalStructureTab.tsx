@@ -261,9 +261,9 @@ function PlanSection({ data, structure }: { data: HospitalPageData; structure: H
     </ul>
     <div ref={container} className={styles.relative}><div ref={ref} className={styles.site}>
       {lines.map((line, l) => <div key={l} className={styles.row} style={{ gridTemplateColumns: [...line.map((item) => `${item.width}px`), ...(l === lines.length - 1 && placeInLast ? placeOnly.map(() => "minmax(140px, 1fr)") : [])].join(" ") }}>
-        {line.map(({ building, width: w, height: h0 }) => {
-          const h = h0;
-          const inner = { w: w - 2 * PLAN.pad - 2, h: h - 2 * PLAN.pad };
+        {line.map(({ building, width: w, plan, height: h }) => {
+          // Rzut w skali łóżek; ramka małego budynku jest szersza (`PLAN.minBuilding`) — miejsce na nagłówek.
+          const inner = { w: plan - 2 * PLAN.pad - 2, h: h - 2 * PLAN.pad };
           const wings = GROUP_ORDER.map((group) => ({ group, rows: building.rows.filter((row) => groupOf(row[3], row[2]) === group).sort((a, b) => b[5] - a[5]) })).filter((wing) => wing.rows.length);
           const wingRects = squarifyRatio(wings.map((wing) => ({ ...wing, value: wing.rows.reduce((sum, row) => sum + row[5], 0) })), 0, 0, inner.w, inner.h, PLAN.wingRatio);
           const [street, city] = structure.addresses[building.addr];

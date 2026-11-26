@@ -136,7 +136,7 @@ describe("rzut", () => {
   it("jedna skala łóżek: to samo pole łóżka w każdym budynku, także w krótszej resztce", () => {
     const lines = layoutBuildings([{ beds: 140 }, { beds: 60 }, { beds: 50 }], 343);
     expect(lines.map((line) => line.length)).toEqual([2, 1]);
-    const bedArea = (b: { width: number; height: number; building: { beds: number } }) => (b.width - 2 * PLAN.pad - 2) * (b.height - 2 * PLAN.pad) / b.building.beds;
+    const bedArea = (b: { plan: number; height: number; building: { beds: number } }) => (b.plan - 2 * PLAN.pad - 2) * (b.height - 2 * PLAN.pad) / b.building.beds;
     const areas = lines.flat().map(bedArea);
     for (const area of areas) expect(area).toBeCloseTo(areas[0], 6);
     // Pełny wiersz na całą szerokość; resztka ma wysokość minLast i jest węższa.
@@ -148,7 +148,27 @@ describe("rzut", () => {
   it("jedyny mały budynek: wysokość minLast, szerokość ze skali łóżek", () => {
     const [[only]] = layoutBuildings([{ beds: 10 }], 343);
     expect(only.height).toBe(PLAN.minLast + 2 * PLAN.pad);
-    expect(only.width).toBeCloseTo(10 * PLAN.bedArea * 0.343 / PLAN.minLast + 2 * PLAN.pad + 2, 6);
+    expect(only.plan).toBeCloseTo(10 * PLAN.bedArea * 0.343 / PLAN.minLast + 2 * PLAN.pad + 2, 6);
+    // Ramka ma miejsce na nagłówek, rzut zostaje w skali.
+    expect(only.width).toBe(PLAN.minBuilding);
+  });
+
+  it("mały budynek w pełnym wierszu: ramka minBuilding, rzut w skali, wiersz na całą szerokość (karta 1231194950-07)", () => {
+    const lines = layoutBuildings([{ beds: 183 }, { beds: 130 }, { beds: 108 }, { beds: 95 }, { beds: 2 }], 1180);
+    for (const b of lines.flat()) expect(b.width).toBeGreaterThanOrEqual(PLAN.minBuilding);
+    const tiny = lines.flat().find((b) => b.building.beds === 2)!;
+    expect(tiny.width).toBe(PLAN.minBuilding);
+    expect(tiny.plan).toBeLessThan(PLAN.minBuilding);
+    const bedArea = (b: { plan: number; height: number; building: { beds: number } }) => (b.plan - 2 * PLAN.pad - 2) * (b.height - 2 * PLAN.pad) / b.building.beds;
+    const areas = lines.flat().map(bedArea);
+    for (const area of areas) expect(area).toBeCloseTo(areas[0], 6);
+    for (const line of lines.slice(0, -1)) expect(Math.abs(line.reduce((sum, b) => sum + b.width, 0) + PLAN.buildingGap * (line.length - 1) - 1179)).toBeLessThan(0.5);
+  });
+
+  it("wiersz ma tyle budynków, ile ramek minBuilding się mieści (telefon)", () => {
+    const lines = layoutBuildings([{ beds: 68 }, { beds: 40 }, { beds: 40 }, { beds: 5 }], 343);
+    for (const line of lines) expect(line.reduce((sum, b) => sum + b.width, 0) + PLAN.buildingGap * (line.length - 1)).toBeLessThanOrEqual(342.5);
+    expect(lines.flat()).toHaveLength(4);
   });
 
   it("lista innych miejsc: na rodzaj, z jednostkami i adresami", () => {
