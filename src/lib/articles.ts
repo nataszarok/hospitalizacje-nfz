@@ -15,6 +15,8 @@ export interface Article {
 export interface ArticleVideoFile {
   src: string;
   poster: string;
+  /** Kadr obrazu podglądu linku, gdy ma być inny niż `poster` (JPG w `public/`). */
+  previewFrame?: string;
   width: number;
   height: number;
   /** Długość w sekundach (plakietka czasu na obrazie podglądu). */
@@ -33,7 +35,7 @@ export const ARTICLES: readonly Article[] = [
     title: "Koszalin: H52 i H53 miesiąc po miesiącu",
     description: "Film o rozliczeniach zabiegów kręgosłupa w Szpitalu Wojewódzkim w Koszalinie. Po pierwszej kontroli NFZ H52 spada ze 109 do 19 hospitalizacji w miesiącu, a H53 rośnie z 9 do 79.",
     kicker: "Film",
-    video: { src: "/video/koszalin-h52-h53.mp4", poster: "/video/koszalin-h52-h53.jpg", width: 1920, height: 1080, durationSeconds: 230 },
+    video: { src: "/video/koszalin-h52-h53.mp4", poster: "/video/koszalin-h52-h53.jpg", previewFrame: "/video/koszalin-h52-h53-podglad.jpg", width: 1920, height: 1080, durationSeconds: 230 },
   },
   {
     slug: "pytania-zabiegi-kregoslup",

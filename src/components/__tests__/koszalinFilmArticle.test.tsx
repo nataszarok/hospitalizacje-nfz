@@ -29,7 +29,7 @@ describe("KoszalinFilmArticle", () => {
     const element = document.querySelector("#film video")!;
     expect(element).toHaveAttribute("src", video!.src);
     expect(element).toHaveAttribute("poster", video!.poster);
-    for (const file of [video!.src, video!.poster]) expect(existsSync(join(process.cwd(), "public", file)), file).toBe(true);
+    for (const file of [video!.src, video!.poster, video!.previewFrame!]) expect(existsSync(join(process.cwd(), "public", file)), file).toBe(true);
     expect(document.querySelector("#film figure p")).toBeNull();
   });
 
