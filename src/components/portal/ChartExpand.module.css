@@ -52,3 +52,8 @@
   .dialog { width: 100vw; height: 100dvh; max-height: none; border-radius: 0; }
   .body { padding: 12px 16px; }
 }
+
+/* Telefon: bez przycisku powiększenia. Wykres ma już całą szerokość ekranu, a okno nie dodaje miejsca. */
+@media (max-width: 639px) {
+  .open { display: none; }
+}

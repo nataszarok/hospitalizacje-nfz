@@ -237,7 +237,7 @@ export interface Interpretation {
 }
 
 const PERSPECTIVE_LABEL: Record<Perspective, string> = {
-  compare: "na tle innych ośrodków",
+  compare: "na tle innych świadczeniodawców",
   trend: "w czasie",
   where: "w województwach",
   who: "kto leczy",

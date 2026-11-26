@@ -1,3 +1,4 @@
+import { plural } from "@/lib/jgpDescription";
 import Link from "next/link";
 import { JgpCatalogView } from "@/components/jgp/JgpCatalog";
 import { articleHref, findArticle } from "@/lib/articles";
@@ -23,10 +24,10 @@ export function JgpCatalogPage({ catalog }: { catalog: JgpCatalog }) {
         <p><Link className={styles.introArticle} href={articleHref(intro.slug)}>{intro.title} Wyjaśniamy od zera, na historii czterech pacjentów →</Link></p>
       </>}
       kpis={[
-        { label: `Grupy aktywne w ${catalog.latestYear} r.`, value: integer(catalog.totals.groups), note: `z ${integer(catalog.totals.all)} grup w latach ${range}` },
-        { label: `Hospitalizacje w ${catalog.latestYear} r.`, value: millions(catalog.totals.latest), note: catalog.previousYear ? `w ${catalog.previousYear} r.: ${millions(catalog.totals.previous)}` : null },
-        { label: `Nowe grupy w ${catalog.latestYear} r.`, value: integer(catalog.totals.added), note: catalog.previousYear ? `bez kodu w katalogu ${catalog.previousYear} r.` : null },
-        { label: "Grupy wycofane", value: integer(catalog.totals.discontinued), note: `bez kodu w katalogu ${catalog.latestYear} r.` },
+        { label: `Grupy aktywne ${catalog.latestYear}`, value: integer(catalog.totals.groups), unit: plural(catalog.totals.groups, "grupa aktywna", "grupy aktywne", "grup aktywnych"), note: `z ${integer(catalog.totals.all)} grup (${range})` },
+        { label: `Hospitalizacje ${catalog.latestYear}`, value: millions(catalog.totals.latest), unit: "hospitalizacji", note: catalog.previousYear ? `w ${catalog.previousYear} r.: ${millions(catalog.totals.previous)}` : null },
+        { label: `Nowe grupy ${catalog.latestYear}`, value: integer(catalog.totals.added), unit: plural(catalog.totals.added, "nowa grupa", "nowe grupy", "nowych grup"), note: catalog.previousYear ? `brak w katalogu ${catalog.previousYear}` : null },
+        { label: "Grupy wycofane", value: integer(catalog.totals.discontinued), unit: plural(catalog.totals.discontinued, "grupa wycofana", "grupy wycofane", "grup wycofanych"), note: `brak w katalogu ${catalog.latestYear}` },
       ]}
     />
     <div className={pageContainerClass}>

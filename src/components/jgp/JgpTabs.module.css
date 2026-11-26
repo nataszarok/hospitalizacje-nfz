@@ -20,8 +20,7 @@
   line-height: 1.15;
 }
 
-.meta,
-.area {
+.meta {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -33,12 +32,6 @@
 
 .meta b {
   color: var(--color-text);
-}
-
-.areaLabel {
-  color: var(--color-text-tertiary);
-  font-size: var(--fs-sm);
-  font-weight: var(--fw-semibold);
 }
 
 .chip {
@@ -283,11 +276,6 @@
   line-height: 1.5;
 }
 
-.desc small {
-  color: var(--color-text-tertiary);
-  font-size: var(--fs-sm);
-}
-
 .lead {
   margin: 0;
   font-size: var(--fs-base);
@@ -300,52 +288,6 @@
 
 .costBar.costBarPick {
   cursor: pointer;
-}
-
-.famRows {
-  display: grid;
-  gap: 6px;
-}
-
-.famRow {
-  display: grid;
-  grid-template-columns: 44px minmax(0, 1fr) 64px;
-  align-items: center;
-  gap: 10px;
-}
-
-.famYear,
-.famTotal {
-  color: var(--color-text-secondary);
-  font-size: var(--fs-md);
-  font-variant-numeric: tabular-nums;
-}
-
-.famTotal {
-  text-align: right;
-}
-
-.famBar {
-  display: flex;
-  gap: 2px;
-  height: 28px;
-  overflow: hidden;
-  border-radius: var(--radius-control);
-}
-
-.famBar span {
-  display: grid;
-  place-items: center;
-  overflow: hidden;
-  color: #fff;
-  font-size: var(--fs-sm);
-  font-weight: var(--fw-semibold);
-  white-space: nowrap;
-}
-
-/* Ta grupa: wyraźna ramka w środku segmentu. */
-.famOwn {
-  box-shadow: inset 0 0 0 2.5px var(--color-text);
 }
 
 .panel {
@@ -440,11 +382,12 @@
   font-size: var(--fs-md);
 }
 
-/* Nazwy województw dzielone według reguł języka (globalne overflow-wrap: anywhere łamało w dowolnym miejscu). */
+/* Nazwy województw łamią się tylko na łączniku („Warmińsko-/Mazurskie”), nie w środku słowa
+   (globalne overflow-wrap: anywhere i dzielenie wyrazów dawały „Ma-ło-pol-skie” na telefonie). */
 .heat th,
 .heat td {
   overflow-wrap: normal;
-  hyphens: auto;
+  hyphens: manual;
 }
 
 .heat th {
@@ -721,34 +664,6 @@
   font-weight: var(--fw-bold);
 }
 
-.costFacts {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-  margin: 0;
-}
-
-.costFacts > div {
-  display: grid;
-  gap: 2px;
-  padding: 8px 12px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-control);
-}
-
-.costFacts dt,
-.costFacts span {
-  color: var(--color-text-tertiary);
-  font-size: var(--fs-sm);
-}
-
-.costFacts dd {
-  margin: 0;
-  font-size: var(--fs-xl);
-  font-weight: var(--fw-bold);
-  font-variant-numeric: tabular-nums;
-}
-
 .dot {
   display: inline-block;
   width: 10px;
@@ -759,24 +674,6 @@
 .struct {
   display: grid;
   gap: 6px;
-}
-
-.structBar {
-  display: flex;
-  gap: 2px;
-  height: 26px;
-  overflow: hidden;
-  border-radius: var(--radius-control);
-}
-
-.structBar span {
-  display: grid;
-  place-items: center;
-  overflow: hidden;
-  color: #fff;
-  font-size: var(--fs-sm);
-  font-weight: var(--fw-semibold);
-  white-space: nowrap;
 }
 
 .structText {
@@ -932,6 +829,9 @@
 
 @container (max-width: 419px) {
   .heatYearMid { display: none; }
+
+  /* Zmiana od pierwszego roku dotyczy lat, których w wąskiej tabeli nie widać: kolumna znika, nazwy mają miejsce. */
+  .heat .heatChange { display: none; }
 }
 
 /* Legenda w pionie w prawym górnym rogu wykresu (skala lejka na karcie), pod przyciskiem powiększenia.
@@ -964,11 +864,15 @@ ul.cornerLegend {
 /* Poniżej 900 px tytuł i liczby stoją jeden pod drugim (.head w jednej kolumnie): liczby w jednym pasku faktów
    („6871 hospitalizacji · 4,08% zgonów · …”, DESIGN.md 7.1a punkt 3) bez etykiet i bez zmian r/r — te są w zakładkach. */
 @media (max-width: 900px) {
+  /* Zawsze jedna linia: pozycja, która się nie mieści, przechodzi do ukrytej drugiej linii (kolejność pól = ważność). */
   .kpis {
     display: flex;
     flex-wrap: wrap;
-    gap: 2px 0;
+    gap: 0;
+    max-height: 1.5em;
+    overflow: hidden;
     font-size: var(--fs-base);
+    line-height: 1.5;
   }
 
   .kpis > div {
@@ -979,8 +883,8 @@ ul.cornerLegend {
     white-space: nowrap;
   }
 
-  /* Separator na końcu pozycji: przy zawinięciu linia nie zaczyna się od „·”. */
-  .kpis > div:not(:last-child)::after {
+  /* Separator przed pozycją: ostatnia widoczna pozycja nie kończy się kropką. */
+  .kpis > div:not(:first-child)::before {
     content: "·";
     margin: 0 8px;
     color: var(--color-text-tertiary);
@@ -1003,7 +907,79 @@ ul.cornerLegend {
 }
 
 /* Telefon: mniejszy tytuł i odstępy — pierwszy ekran pokazuje zakładki i treść. */
+/* Pasek filtra województw w zakładce Świadczeniodawcy: jedna linia, przyklejony pod paskiem zakładek. */
+.filterBar {
+  position: sticky;
+  top: calc(var(--atlas-header-height, 75px) + 48px);
+  z-index: 15;
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 6px 12px;
+  border: 1px solid var(--color-primary-outline, var(--color-border-strong));
+  border-radius: var(--radius-control);
+  background: var(--color-primary-soft, var(--color-background-muted));
+  font-size: var(--fs-md);
+  white-space: nowrap;
+}
+
+/* Kilka województw: chipy przewijają się w poziomie zamiast łamać pasek. */
+.filterChips {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.filterCount {
+  flex: none;
+  color: var(--color-text-secondary);
+}
+
+.filterBar > button {
+  flex: none;
+}
+
+/* Tabela z przyklejonym nagłówkiem staje pod paskiem filtra. */
+.panel:has(> .filterBar) {
+  --sticky-head-top: calc(var(--atlas-header-height, 75px) + 48px + 44px);
+}
+
 @media (max-width: 639px) {
+  /* Ośrodki na telefonie: pasek filtra, tabela „Kto leczy?”, wykres linii, „Jak leczą?”. */
+  .filterBar {
+    order: -3;
+    gap: 8px;
+    padding: 4px 8px;
+  }
+
+  .filterWord {
+    display: none;
+  }
+
+  .secRanking {
+    order: -2;
+  }
+
+  .secLines {
+    order: -1;
+  }
+
+  /* „Gdzie?” na telefonie: sama mapa z osią lat; tabela lat (mapa ciepła) ukryta — rok i województwo wybiera się na mapie. */
+  .heatWrap {
+    display: none;
+  }
+
+  /* Wiersz faktów w jednej linii: rok katalogu wyceny jest w zakładce (sekcja „Za ile?”). */
+  .metaExtra {
+    display: none;
+  }
+
   .head {
     gap: 10px;
     margin: 8px 0 12px;
@@ -1024,5 +1000,22 @@ ul.cornerLegend {
 
   .secTitle {
     font-size: var(--fs-lg);
+  }
+
+  /* Druga linia nazwy w tabeli (DESIGN.md 7.1b.4): samo miasto; województwo w `title`. */
+  .nameRegion {
+    display: none;
+  }
+
+  /* Legenda lejka pod wykresem, nie na nim: w wąskim wykresie róg nie jest pusty i legenda zasłania punkty. */
+  ul.cornerLegend {
+    position: static;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+    margin-top: 6px;
+    padding: 0;
+    border: 0;
+    background: none;
   }
 }

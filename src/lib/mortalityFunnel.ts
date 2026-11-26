@@ -90,7 +90,7 @@ export function mortalityTotals(rows: readonly { hospitalizations: number; death
   return { hospitalizations, deaths, meanPct: hospitalizations ? (deaths / hospitalizations) * 100 : 0 };
 }
 
-const centersWord = (n: number) => n === 1 ? "ośrodek" : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? "ośrodki" : "ośrodków";
+const centersWord = (n: number) => n === 1 ? "świadczeniodawca" : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? "świadczeniodawcy" : "świadczeniodawców";
 
 /**
  * Objaśnienie wykresu śmiertelności (treść ikony „?” przy tytule), jeden krótki standard dla wszystkich wykresów.
@@ -101,7 +101,7 @@ const centersWord = (n: number) => n === 1 ? "ośrodek" : n % 10 >= 2 && n % 10 
 export const FUNNEL_NAME = "Granice odchyleń";
 
 /** Co oznaczają granice: dymek przełącznika. */
-export const FUNNEL_HELP = "Linie wokół średniej pokazują, jak daleko śmiertelność ośrodka może odejść od średniej przez sam przypadek przy jego liczbie hospitalizacji. Kropki: granica 95%, kreski: granica 99,8%. Punkt poza granicą to sygnał do sprawdzenia, nie ocena jakości.";
+export const FUNNEL_HELP = "Linie wokół średniej pokazują, jak daleko śmiertelność świadczeniodawcy może odejść od średniej przez sam przypadek przy jego liczbie hospitalizacji. Kropki: granica 95%, kreski: granica 99,8%. Punkt poza granicą to sygnał do sprawdzenia, nie ocena jakości.";
 
 /** Powód, dla którego granic nie ma (stan „unavailable”): dymek przełącznika i objaśnienie „?”. */
 export const FUNNEL_UNAVAILABLE_REASON = "Granice odchyleń działają dla liczby hospitalizacji i grup JGP razem.";
@@ -124,13 +124,13 @@ export function mortalityChartHelp({ state, showsMean, aboveCap, selectable = fa
   aboveCap?: { count: number; cap: number } | null;
   selectable?: boolean;
 }): string[] {
-  const lines = ["Punkt to ośrodek: liczba hospitalizacji i śmiertelność (zgony w szpitalu / hospitalizacje)."];
-  if (showsMean) lines.push("Linia kropkowana: średnia wszystkich ośrodków.");
+  const lines = ["Punkt to świadczeniodawca: liczba hospitalizacji i śmiertelność (zgony w szpitalu / hospitalizacje)."];
+  if (showsMean) lines.push("Linia kropkowana: średnia wszystkich świadczeniodawców.");
   if (state === "funnel") lines.push("Granice odchyleń: 95% (kropki) i 99,8% (kreski) wokół średniej. Kolor punktu to jego położenie wobec granic. Punkt poza granicą to sygnał do sprawdzenia, nie ocena jakości.");
   if (state === "unavailable") lines.push(unavailableReason);
   if (aboveCap?.count) {
     lines.push(`▲: ${aboveCap.count.toLocaleString("pl-PL")} ${centersWord(aboveCap.count)} poniżej ${OUTLIER_MIN_HOSPITALIZATIONS} hospitalizacji ze śmiertelnością ponad ${aboveCap.cap}%. Prawdziwa wartość jest w dymku.`);
   }
-  if (selectable) lines.push("Kliknięcie punktu wybiera ośrodek.");
+  if (selectable) lines.push("Kliknięcie punktu wybiera świadczeniodawcę.");
   return lines;
 }

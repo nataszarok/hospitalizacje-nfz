@@ -26,7 +26,7 @@ type Topic = {
 
 const topics: readonly Topic[] = [
   { title: "Hospitalizacje w Polsce", description: "Podsumowanie wszystkich lat: liczba, tryb przyjęcia, województwa, obszary leczenia, zgony i świadczeniodawcy.", icon: "chart", href: DASHBOARD_HREFS.summary, label: "Hospitalizacje w Polsce" },
-  { title: "Grupy JGP", description: "Karta każdej grupy: hospitalizacje w czasie, ośrodki, województwa, tryb przyjęcia i wycena.", icon: "bed", href: "/jgp", label: "Przeglądaj grupy JGP" },
+  { title: "Grupy JGP", description: "Karta każdej grupy: hospitalizacje w czasie, świadczeniodawcy, województwa, tryb przyjęcia i wycena.", icon: "bed", href: "/jgp", label: "Przeglądaj grupy JGP" },
   { title: "Szpitale publiczne", description: "Katalog i mapa szpitali; karta szpitala: hospitalizacje, grupy JGP, oddziały i finanse.", icon: "hospital", href: DASHBOARD_HREFS.hospitals, label: "Znajdź szpital" },
   { title: "Porównanie szpitali", description: "Porównaj szpital z grupą podobnych placówek dobranych przez model.", icon: "compare", href: DASHBOARD_HREFS.comparison, label: "Porównaj szpitale" },
   { title: "Eksplorator JGP", description: "Narzędzie dla analityków: kilka grup naraz, obszary, filtry i tryb przyjęcia.", icon: "heart", href: DASHBOARD_HREFS.trend, label: "Otwórz eksplorator" },
@@ -41,7 +41,7 @@ const paths: readonly Path[] = [
   {
     kicker: "Pytam o leczenie",
     title: "Co, gdzie i za ile leczą szpitale",
-    description: "Karta grupy JGP pokazuje hospitalizacje w czasie, województwa, ośrodki, tryb przyjęcia i kwoty NFZ.",
+    description: "Karta grupy JGP pokazuje hospitalizacje w czasie, województwa, świadczeniodawcy, tryb przyjęcia i kwoty NFZ.",
     href: "/jgp",
     cta: "Katalog grup JGP",
     links: [

@@ -164,6 +164,28 @@ describe("GroupLineChart — wybrany ośrodek", () => {
     expect(onSelect).not.toHaveBeenCalled();
   });
 
+  it("telefon: dotknięcie linii wybiera ją (Plotly przechwytuje dotyk, bez kliknięcia); kliknięcie zastępcze nie cofa wyboru", async () => {
+    const onSelect = vi.fn();
+    const { plot } = await draw(lines, { onSelect });
+    const touch = { pointerType: "touch", clientX: 50, clientY: 112 };
+    // Palec 18 px pod kropką (50, 94): poza zasięgiem kursora (12 px), w zasięgu dotyku (24 px).
+    fireEvent.pointerDown(plot, touch);
+    fireEvent.pointerUp(plot, touch);
+    expect(onSelect).toHaveBeenCalledTimes(1);
+    expect(onSelect).toHaveBeenLastCalledWith("a");
+    fireEvent.click(plot, { clientX: 50, clientY: 112 });
+    expect(onSelect).toHaveBeenCalledTimes(1);
+    // Kursor w tym samym miejscu nie trafia (po czasie kliknięcia zastępczego).
+    vi.spyOn(Date, "now").mockReturnValue(Date.now() + 5_000);
+    fireEvent.click(plot, { clientX: 50, clientY: 112 });
+    expect(onSelect).toHaveBeenCalledTimes(1);
+    vi.restoreAllMocks();
+    // Przesunięcie palca (przewijanie, powiększanie) nie wybiera.
+    fireEvent.pointerDown(plot, touch);
+    fireEvent.pointerUp(plot, { ...touch, clientX: 90 });
+    expect(onSelect).toHaveBeenCalledTimes(1);
+  });
+
   it("najechanie i kliknięcie: linia najbliżej kursora, także gdy kropki linii się nakładają; dymek znika po kliknięciu", async () => {
     const onSelect = vi.fn();
     // „c” ma kropki w tych samych miesiącach co „a”, 3 jednostki niżej (kropki się nakładają); „a” jest pierwsza na liście.
@@ -227,5 +249,20 @@ describe("GroupLineChart — pasma i znaczniki", () => {
   it("pasma są też w widoku lat", async () => {
     const { layout } = await draw([{ key: "pl", name: "Polska", values }], { period: "year", bands: [{ from: "2024-01", to: "2024-12" }] });
     expect(layout.shapes.filter((shape) => shape.type === "rect")).toHaveLength(1);
+  });
+});
+
+describe("GroupLineChart — telefon: nazwa wybranej linii nad wykresem", () => {
+  afterEach(() => { Reflect.deleteProperty(window, "matchMedia"); });
+
+  it("bez podpisu na wykresie; nazwa nad wykresem, „✕” zdejmuje wybór", async () => {
+    window.matchMedia = ((query: string) => ({ matches: query === "(max-width: 639px)", media: query, addEventListener: () => {}, removeEventListener: () => {} })) as unknown as typeof window.matchMedia;
+    const onSelect = vi.fn();
+    const chosen: ChartLine[] = [{ key: "a", name: "Inny", values }, { key: "b", name: "Szpital Beta", values, tone: "selected" }];
+    const { layout } = await draw(chosen, { selectedLabel: "Szpital Beta", onSelect });
+    expect(layout.annotations.map((item) => item.text)).not.toContain("Szpital Beta");
+    expect(screen.getByText("Szpital Beta")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Usuń wybór: Szpital Beta" }));
+    expect(onSelect).toHaveBeenCalledWith("b");
   });
 });

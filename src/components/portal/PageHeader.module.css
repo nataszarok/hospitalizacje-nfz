@@ -17,5 +17,18 @@
 .compact .title { font-size: var(--fs-title); margin: 6px 0 6px; }
 .compact .lead { font-size: var(--fs-base); line-height: 1.55; margin-bottom: 12px; }
 .header > .container > :last-child { margin-bottom: 0; }
-@media (max-width: 900px) { .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 550px) { .header { padding-top: 28px; } .kpis dd { font-size: var(--fs-2xl); } }
+/* Liczby w nagłówku: od 1000 px okna cztery boksy w jednej linii, każdy tekst w jednej linii (bez łamania; teksty pól są krótkie).
+   Poniżej 1000 px — pasek faktów jak w nagłówku karty (`CardKpis`): „693 grupy aktywne · 5,97 mln hospitalizacji · …”,
+   bez etykiet i dopisków. Pasek ma zawsze jedną linię: pozycja, która się nie mieści, przechodzi do ukrytej drugiej linii
+   (kolejność pól = ważność). Separator „·” stoi przed pozycją, więc ostatnia widoczna pozycja nie kończy się kropką. */
+.unit { display: none; font-style: normal; }
+.kpis dt, .kpis dd, .kpis span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 999px) {
+  .kpis { display: flex; flex-wrap: wrap; gap: 0; max-height: 1.5em; overflow: hidden; font-size: var(--fs-base); line-height: 1.5; }
+  .kpis div { display: block; padding: 0; border: 0; background: none; white-space: nowrap; }
+  .kpis div:not(:first-child)::before { content: "·"; margin: 0 8px; color: var(--color-text-tertiary); }
+  .kpis dt, .kpis span { display: none; }
+  .kpis dd { display: inline; overflow: visible; margin: 0; font-size: var(--fs-base); font-weight: var(--fw-semibold); letter-spacing: 0; color: var(--color-text); }
+  .unit { display: inline; color: var(--color-text-secondary); font-weight: var(--fw-regular); }
+}
+@media (max-width: 550px) { .header { padding-top: 28px; } }

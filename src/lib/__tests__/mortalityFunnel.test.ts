@@ -6,10 +6,10 @@ describe("mortalityChartHelp — krótki standard objaśnienia wykresu śmiertel
   it("z lejkiem: punkt, średnia, lejek; kliknięcie tylko gdy wybiera ośrodek", () => {
     const lines = mortalityChartHelp({ state: "funnel", showsMean: true, selectable: true });
     expect(lines).toEqual([
-      "Punkt to ośrodek: liczba hospitalizacji i śmiertelność (zgony w szpitalu / hospitalizacje).",
-      "Linia kropkowana: średnia wszystkich ośrodków.",
+      "Punkt to świadczeniodawca: liczba hospitalizacji i śmiertelność (zgony w szpitalu / hospitalizacje).",
+      "Linia kropkowana: średnia wszystkich świadczeniodawców.",
       expect.stringMatching(/^Granice odchyleń: 95% \(kropki\) i 99,8% \(kreski\) wokół średniej/),
-      "Kliknięcie punktu wybiera ośrodek.",
+      "Kliknięcie punktu wybiera świadczeniodawcę.",
     ]);
     expect(mortalityChartHelp({ state: "funnel", showsMean: true })).toHaveLength(3);
   });
@@ -24,7 +24,7 @@ describe("mortalityChartHelp — krótki standard objaśnienia wykresu śmiertel
   it("z lejkiem całość ma najwyżej ok. 60 słów", () => {
     const text = mortalityChartHelp({ state: "funnel", showsMean: true, aboveCap: { count: 3, cap: 50 }, selectable: true }).join(" ");
     expect(text.split(/\s+/).length).toBeLessThanOrEqual(65);
-    expect(text).toMatch(/▲: 3 ośrodki poniżej 10 hospitalizacji ze śmiertelnością ponad 50%/);
+    expect(text).toMatch(/▲: 3 świadczeniodawcy poniżej 10 hospitalizacji ze śmiertelnością ponad 50%/);
   });
 });
 

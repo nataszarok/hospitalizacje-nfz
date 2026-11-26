@@ -522,7 +522,7 @@ export function H55HistoryArticle({ data }: { data: H55ArticleData }) {
         <section id="mapa" aria-labelledby="mapa-h">
           <h2 id="mapa-h">Gdzie rozliczano H55</h2>
           <p>
-            Kropka to placówka, a jej wielkość — liczba hospitalizacji H55 w roku. Włącz odtwarzanie albo przesuń suwak, żeby zobaczyć, jak od {firstYear} r. przybywało ośrodków.<Ref ids={["dane"]} />
+            Kropka to placówka, a jej wielkość — liczba hospitalizacji H55 w roku. Włącz odtwarzanie albo przesuń suwak, żeby zobaczyć, jak od {firstYear} r. przybywało świadczeniodawców.<Ref ids={["dane"]} />
           </p>
           <ArticleTimelineMap
             title="Gdzie i ile hospitalizacji H55 rozliczono w każdym roku?"

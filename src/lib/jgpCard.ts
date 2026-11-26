@@ -408,11 +408,7 @@ export function dataForYear(data: JgpPageData, yearIndex: number): JgpPageData {
   const position = new Map(order.map((old, i) => [old, i]));
   const providers = order.map((old) => ({ ...rows[old], peers: rows[old].peers.flatMap((peer) => position.has(peer) ? [position.get(peer) as number] : []).sort((x, y) => x - y) }));
   if (latestYear) return { ...data, providers, topProviders: providers.slice(0, data.topProviders.length) };
-  const regionYear = data.regionYears.find((item) => item.year === year);
-  const people = new Map(data.regions.map((row) => [row.owNfz, row]));
-  const regions = regionYear ? regionYear.rows.map(([owNfz, per100k, hospitalizations]) => ({
-    owNfz, name: people.get(owNfz)?.name ?? owNfz, population: people.get(owNfz)?.population ?? 0, hospitalizations, per100k, deaths: 0, mortalityPct: 0, urgentPct: 0,
-  })).sort((a, b) => b.per100k - a.per100k || a.name.localeCompare(b.name, "pl")) : data.regions;
+  const regions = regionRowsForYear(data, year);
   const previous = yearIndex > 0 ? rows.reduce((sum, row) => sum + (row.previousHospitalizations ?? 0), 0) : null;
   return {
     ...data,
@@ -424,4 +420,17 @@ export function dataForYear(data: JgpPageData, yearIndex: number): JgpPageData {
     previousHospitalizations: previous,
     regions,
   };
+}
+
+/**
+ * Województwa grupy w danym roku (`regionYears`) z nazwami i ludnością z `regions`; rok bez danych — `regions`.
+ * Używa jej karta w wybranym roku i mapa „Gdzie?” przy odtwarzaniu lat.
+ */
+export function regionRowsForYear(data: Pick<JgpPageData, "regions" | "regionYears">, year: string): RegionRow[] {
+  const regionYear = data.regionYears.find((item) => item.year === year);
+  if (!regionYear) return data.regions;
+  const people = new Map(data.regions.map((row) => [row.owNfz, row]));
+  return regionYear.rows.map(([owNfz, per100k, hospitalizations]) => ({
+    owNfz, name: people.get(owNfz)?.name ?? owNfz, population: people.get(owNfz)?.population ?? 0, hospitalizations, per100k, deaths: 0, mortalityPct: 0, urgentPct: 0,
+  })).sort((a, b) => b.per100k - a.per100k || a.name.localeCompare(b.name, "pl"));
 }

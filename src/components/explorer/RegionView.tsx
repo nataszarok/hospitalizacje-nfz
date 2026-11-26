@@ -53,6 +53,13 @@ export type RegionViewProps = {
   regionScale?: "period" | "yearSd";
   /** Legenda mapy (wielkość i kolor); bez niej opis skali musi być w podpisie mapy. */
   legend?: boolean;
+  /**
+   * Tryb mapy sterowany z zewnątrz (np. karta JGP ma własny przełącznik „Województwa / Miasta” w nagłówku sekcji);
+   * wtedy widok nie rysuje swojego przełącznika.
+   */
+  mode?: MapMode;
+  /** Sama mapa bez ramki karty eksploratora (mapa osadzona w sekcji innej karty). */
+  embedded?: boolean;
 };
 
 
@@ -72,11 +79,12 @@ const NO_AREAS: AnalysisArea[] = [];
  * Miasta: kropka na placówkę przy jej mieście (pole = hospitalizacje), obok tabela miast; kliknięcie pokazuje placówki miasta.
  * Skale są wspólne dla wszystkich lat. Wybrane obszary mają kolory wyróżnień (jak na wykresach Kto leczy, Tryb przyjęcia).
  */
-export function RegionView({ productCodes, year, method, areas = NO_AREAS, onAreasChange, initialMode = "regions", mapOnly = false, regionScale = "period", legend = true }: RegionViewProps) {
+export function RegionView({ productCodes, year, method, areas = NO_AREAS, onAreasChange, initialMode = "regions", mapOnly = false, regionScale = "period", legend = true, mode: controlledMode, embedded = false }: RegionViewProps) {
   const [data, setData] = useState<{ trends: TrendsDataset; dataset: StaticDataset; regionsMap: RegionsMap; citiesMap: CitiesMap; facilityIndex: FacilityYearsIndex } | null>(null);
   const [sections, setSections] = useState<{ key: string; files: FacilityYearsSection[] } | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [mode, setMode] = useState<MapMode>(initialMode);
+  const [ownMode, setMode] = useState<MapMode>(initialMode);
+  const mode = controlledMode ?? ownMode;
   const [focus, setFocus] = useState<{ city: string; facility?: number } | null>(null);
 
   useEffect(() => {
@@ -180,9 +188,9 @@ export function RegionView({ productCodes, year, method, areas = NO_AREAS, onAre
     ? `Hospitalizacje na 100 tys. mieszkańców województwa. Kolor względem średniej Polski z lat ${range} (${decimal(regionReference)}), wspólny dla wszystkich lat. Województwo to oddział NFZ, w którym świadczeniodawca rozlicza hospitalizacje, nie miejsce zamieszkania pacjenta. Kliknij województwo, aby dodać je do obszaru analizy (do ${MAX_AREAS} obszarów) albo usunąć.`
     : `Kropka = placówka z co najmniej ${MIN_FACILITY_HOSPITALIZATIONS} hospitalizacjami wybranych grup w roku; placówki jednego miasta są zebrane wokół jego punktu, a kropki sąsiednich miast są rozsunięte. Pole kropki = liczba hospitalizacji (kropka 4 × większa w polu = 4 × więcej hospitalizacji). Skala jest wspólna dla lat ${range}: kończy się na największej wartości placówki w tych latach, ale nie niżej niż ${integer(DOT_SCALE_FLOOR)}, więc w małej grupie kropki są małe. Kolor = hospitalizacje placówki wobec mediany placówek na mapie w roku ${mapYear} (${integer(dotMedian)}), od ¼ × do 4 ×; mediana jest liczona osobno dla każdego roku, więc kolor pokazuje pozycję placówki w danym roku. Wybrane obszary mają obwódkę w swoim kolorze. Placówki z siedzibą poza słownikiem miast (głównie wsie) nie mają kropki. Kliknij kropkę, aby zobaczyć placówki miasta.`;
 
-  return <div className={styles.viewStack}>
-    <section className={styles.card} {...(mapOnly ? { "aria-label": "Mapa placówek" } : { "aria-labelledby": "region-map" })}>
-      {mapOnly ? <div className={styles.mapOnlyBar}>
+  return <div className={embedded ? undefined : styles.viewStack}>
+    <section className={embedded ? undefined : styles.card} {...(mapOnly ? { "aria-label": "Mapa placówek" } : { "aria-labelledby": "region-map" })}>
+      {mapOnly ? controlledMode ? null : <div className={styles.mapOnlyBar}>
         <div className={styles.modeToggle} role="group" aria-label="Mapa">
           <button type="button" aria-pressed={mode === "regions"} onClick={() => setMode("regions")}>Województwa</button>
           <button type="button" aria-pressed={mode === "cities"} onClick={() => setMode("cities")}>Miasta</button>

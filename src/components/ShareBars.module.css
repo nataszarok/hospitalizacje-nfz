@@ -20,6 +20,24 @@
   color: #fff;
 }
 
+/* Odcinek wyróżniony ramką (np. ta grupa JGP wśród wariantów rodziny). */
+.outlined {
+  box-shadow: inset 0 0 0 2px var(--color-text);
+}
+
+/* Wiersze z sumą po prawej: trzecia kolumna (liczba). */
+.withTotals > li {
+  grid-template-columns: 40px minmax(0, 1fr) auto;
+}
+
+.total {
+  min-width: 52px;
+  color: var(--color-text-secondary);
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
 /* Linia dymka: kolor części, nazwa, udział do prawej. */
 .tipLine {
   display: flex;

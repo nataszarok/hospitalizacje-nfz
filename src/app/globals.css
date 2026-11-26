@@ -401,3 +401,8 @@ td:nth-child(6), td:nth-child(7), td:nth-child(8) { white-space:nowrap; }
 /* Dymki wykresów Plotly mogą wychodzić poza wykres (DESIGN.md 6.3): warstwa dymków nie przycina tekstu.
    Dane w obszarze wykresu przycina clipPath Plotly, nie `overflow`. Podwójna klasa: pierwszeństwo przed stylem Plotly. */
 .js-plotly-plot .plotly .main-svg.main-svg { overflow: visible; }
+
+/* Telefon: bez paska narzędzi Plotly (zdjęcie, powiększanie, przesuwanie) — na dotyku stoi stale nad wykresem i zasłania dane. */
+@media (max-width: 639px) {
+  .js-plotly-plot .modebar-container { display: none !important; }
+}

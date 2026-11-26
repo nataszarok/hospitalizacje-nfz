@@ -7,7 +7,10 @@ import { PeriodToggle } from "@/components/jgp/PeriodToggle";
 import { CardKpis } from "@/components/jgp/CardKpis";
 import { CardYears } from "@/components/jgp/CardYears";
 import { RegionMap, regionTitle } from "@/components/jgp/RegionMap";
+import { RegionView } from "@/components/explorer/RegionView";
+import { YearPlayer } from "@/components/YearPlayer";
 import { ChartExpand } from "@/components/portal/ChartExpand";
+import { BoxSet } from "@/components/BoxSet";
 import { ChartTooltip, TooltipHead, TooltipLines } from "@/components/ChartTooltip";
 import { elementBox, type Box } from "@/lib/tooltipPosition";
 import { HelpLines, InfoTip } from "@/components/InfoTip";
@@ -22,9 +25,10 @@ import { formatCityName, formatPln, plnScale } from "@/lib/formatters";
 import {
   cartogramCells, dataForYear, defaultCardYear, funnelStatus, limitToCatalogYears, MAX_REGIONS, poolStats, providerPool, providerYearTotals, scaleColor, selectedIndex,
   structureShares, sumSeries, unpackPageData, yearChangePct, type ChartPeriod, type CompareScope, type PackedJgpPageData, type RegionsMap,
-  outlierCap, showsMortalityReference, topProvidersOfPeriod,
+  outlierCap, regionRowsForYear, showsMortalityReference, topProvidersOfPeriod,
 } from "@/lib/jgpCard";
 import type { JgpPageData, JgpProviderRow } from "@/lib/jgpPage";
+import { MIN_FACILITY_HOSPITALIZATIONS } from "@/lib/regions";
 import { plural } from "@/lib/jgpDescription";
 import { explorerHref } from "@/lib/portalLinks";
 import { nextSortState, sortTableRows, type SortState } from "@/lib/tableSort";
@@ -173,7 +177,7 @@ export function JgpTabbedCard({ packed, map = null }: { packed: PackedJgpPageDat
   }, [state.regions, write]);
 
   return <>
-    <CardHeader data={data} regions={state.regions} onClearRegion={(ow) => write({ regions: state.regions.filter((item) => item !== ow) })} />
+    <CardHeader data={data} />
     <div ref={sentinel} aria-hidden />
     <div className={`${styles.tabbar} ${stuck ? styles.tabbarStuck : ""}`}>
       {/* Po przewinięciu nagłówka karty kod i nazwa grupy zostają na pasku (jeden pasek pod nagłówkiem portalu). */}
@@ -183,7 +187,7 @@ export function JgpTabbedCard({ packed, map = null }: { packed: PackedJgpPageDat
           Przegląd
         </button>
         <button type="button" role="tab" id="tab-osrodki" aria-controls="panel-osrodki" aria-selected={state.tab === "osrodki"} onClick={() => write({ tab: "osrodki" })}>
-          Ośrodki<small>{integer(pool.length)}</small>
+          Świadczeniodawcy<small>{integer(pool.length)}</small>
         </button>
       </div>
       <CardYears
@@ -194,22 +198,22 @@ export function JgpTabbedCard({ packed, map = null }: { packed: PackedJgpPageDat
     </div>
     {state.tab === "przeglad"
       ? <div role="tabpanel" id="panel-przeglad" aria-labelledby="tab-przeglad" className={styles.panel}>
+        <RegionFilterBar data={data} regions={state.regions} pool={pool} onToggleRegion={toggleRegion} onClear={() => write({ regions: [] })} />
         <OverviewTab
           data={data}
-          pool={pool}
           linePool={linePool}
           map={map}
           regions={state.regions}
           onToggleRegion={toggleRegion}
           onYear={(year) => write({ year: year === all.year ? null : year })}
           onRegionYear={(ow, year) => write({ year: year === all.year ? null : year, regions: state.regions.includes(ow) || state.regions.length >= MAX_REGIONS ? state.regions : [...state.regions, ow] })}
-          onClearRegions={() => write({ regions: [] })}
           onShowProviders={showProviders}
           period={period}
           onPeriod={setPeriod}
         />
       </div>
       : <div role="tabpanel" id="panel-osrodki" aria-labelledby="tab-osrodki" className={styles.panel}>
+        <RegionFilterBar data={data} regions={state.regions} pool={pool} onToggleRegion={toggleRegion} onClear={() => write({ regions: [] })} />
         <ProvidersTab
           data={data}
           pool={pool}
@@ -227,7 +231,23 @@ export function JgpTabbedCard({ packed, map = null }: { packed: PackedJgpPageDat
   </>;
 }
 
-function CardHeader({ data, regions, onClearRegion }: { data: JgpPageData; regions: string[]; onClearRegion: (ow: string) => void }) {
+/**
+ * Pasek filtra województw (wybór z mapy „Gdzie?” albo z tabeli lat) w obu zakładkach: jedna linia, przyklejony pod paskiem
+ * zakładek (widać go przy przewijaniu), z powrotem do całej Polski. Na telefonie bez słów „Świadczeniodawcy z:” i „woj.”.
+ */
+function RegionFilterBar({ data, regions, pool, onToggleRegion, onClear }: {
+  data: JgpPageData; regions: string[]; pool: JgpProviderRow[]; onToggleRegion: (ow: string) => void; onClear: () => void;
+}) {
+  if (!regions.length) return null;
+  const regionName = (ow: string) => (data.regions.find((row) => row.owNfz === ow)?.name ?? ow).toLocaleLowerCase("pl-PL");
+  return <div className={styles.filterBar} role="status">
+    <span className={styles.filterChips}><span className={styles.filterWord}>Świadczeniodawcy z: </span>{regions.map((ow) => <button key={ow} type="button" className={styles.chip} aria-label={`Usuń województwo ${regionName(ow)}`} onClick={() => onToggleRegion(ow)}><span className={styles.filterWord}>woj. </span>{regionName(ow)} ✕</button>)}</span>
+    <span className={styles.filterCount}><b>{integer(pool.length)}</b> z {integer(data.providers.length)}<span className={styles.filterWord}> {plural(data.providers.length, "świadczeniodawca", "świadczeniodawcy", "świadczeniodawców")}</span></span>
+    <button type="button" className={base.linkButton} aria-label="Pokaż całą Polskę" onClick={onClear}>Cała Polska</button>
+  </div>;
+}
+
+function CardHeader({ data }: { data: JgpPageData }) {
   const years = data.admissions;
   const at = years.findIndex((row) => row.year === data.year);
   const latest = at >= 0 ? years[at] : undefined;
@@ -241,31 +261,26 @@ function CardHeader({ data, regions, onClearRegion }: { data: JgpPageData; regio
   const yearIndex = data.admissionYears.indexOf(data.year);
   const previousProviders = yearIndex > 0 ? data.providers.filter((row) => (providerYearTotals(row)[yearIndex - 1] ?? 0) > 0).length : null;
   const change = yearChangePct(data.hospitalizations, data.previousHospitalizations);
-  const regionName = (ow: string) => data.regions.find((row) => row.owNfz === ow)?.name ?? ow;
   const range = data.catalogYears.length > 1 ? `${data.catalogYears[0]}–${data.catalogYears.at(-1)}` : data.catalogYears[0] ?? data.year;
   return <header className={styles.head}>
     <div className={styles.headText}>
       <nav className={base.breadcrumbs} aria-label="Ścieżka"><Link href="/jgp">Grupy JGP</Link> <span aria-hidden>›</span> <span>{data.jgpCode}</span></nav>
       <div className={base.eyebrow}>Grupa JGP · {data.procedural ? "zabiegowa" : "zachowawcza"}</div>
       <h1 className={styles.title}><span className={base.code}>{data.jgpCode}</span> {data.name}</h1>
-      {data.description ? <p className={styles.desc}>{data.description.sentences.join(" ")} <small>{data.description.source}</small></p> : null}
+      {/* Źródło opisu w „?” (jak przypisy wykresów, DESIGN.md 6.3), nie w treści nagłówka. */}
+      {data.description ? <p className={styles.desc}>{data.description.sentences.join(" ")}{" "}
+        <InfoTip ariaLabel="Źródło opisu grupy" label={data.description.source} /></p> : null}
+      {/* Jeden wiersz faktów, jak na karcie szpitala. Wybrane województwa są w pasku filtra pod zakładkami (`RegionFilterBar`). */}
       <p className={styles.meta}>
-        {data.valuation?.points ? <span>Wycena <b>{integer(data.valuation.points)} pkt</b> (katalog {data.valuation.year})</span> : null}
-        <span>Produkt {data.productCodes.join(", ")}</span>
+        {data.valuation?.points ? <span>Wycena <b>{integer(data.valuation.points)} pkt</b><span className={styles.metaExtra}> (katalog {data.valuation.year})</span></span> : null}
         <span>Dane: <b>{range}</b></span>
-      </p>
-      <p className={styles.area}>
-        <span className={styles.areaLabel}>Obszar</span>
-        {regions.length
-          ? regions.map((ow) => <button key={ow} type="button" className={styles.chip} onClick={() => onClearRegion(ow)}>woj. {regionName(ow).toLocaleLowerCase("pl-PL")} ✕</button>)
-          : <span>cała Polska · kliknij województwo na mapie</span>}
       </p>
     </div>
     <CardKpis label="Liczby grupy" items={[
       { label: `Hospitalizacje ${data.year}`, value: integer(data.hospitalizations), unit: plural(data.hospitalizations, "hospitalizacja", "hospitalizacje", "hospitalizacji"), note: change === null ? "pierwszy rok" : `${signedPct(change)} r/r` },
       { label: `Kwota świadczeń NFZ ${data.year}`, value: value ? formatPln(value.value) : "—", unit: value ? "z NFZ" : undefined, note: value && valuePrevious ? `${signedPct(((value.value - valuePrevious.value) / valuePrevious.value) * 100)} r/r` : "brak poprzedniego roku" },
       { label: "Śmiertelność", value: latestRate === null ? "—" : pct(latestRate, latestRate < 1 ? 2 : 1), unit: latestRate === null ? undefined : "zgonów", note: latestRate !== null && previousRate !== null ? `${signedPp(latestRate - previousRate, latestRate < 1 ? 2 : 1)} r/r` : "zgony w szpitalu" },
-      { label: "Ośrodki", value: integer(data.providerCount), unit: plural(data.providerCount, "ośrodek", "ośrodki", "ośrodków"), note: previousProviders === null ? "w roku danych" : `${data.providerCount - previousProviders >= 0 ? "+" : ""}${data.providerCount - previousProviders} r/r` },
+      { label: "Świadczeniodawcy", value: integer(data.providerCount), unit: plural(data.providerCount, "świadczeniodawca", "świadczeniodawcy", "świadczeniodawców"), note: previousProviders === null ? "w roku danych" : `${data.providerCount - previousProviders >= 0 ? "+" : ""}${data.providerCount - previousProviders} r/r` },
     ]} />
   </header>;
 }
@@ -306,9 +321,9 @@ const periodWord = (period: ChartPeriod) => period === "year" ? "rocznie" : "mie
 type Metric = TrendMetric;
 const METRICS = TREND_METRICS;
 
-function OverviewTab({ data, pool, linePool, map, regions, onToggleRegion, onYear, onRegionYear, onClearRegions, onShowProviders, period, onPeriod }: {
-  data: JgpPageData; pool: JgpProviderRow[]; linePool: JgpProviderRow[]; map: RegionsMap | null; regions: string[]; onToggleRegion: (ow: string) => void; onYear: (year: string) => void;
-  onRegionYear: (ow: string, year: string) => void; onClearRegions: () => void; onShowProviders: () => void; period: ChartPeriod; onPeriod: (period: ChartPeriod) => void;
+function OverviewTab({ data, linePool, map, regions, onToggleRegion, onYear, onRegionYear, onShowProviders, period, onPeriod }: {
+  data: JgpPageData; linePool: JgpProviderRow[]; map: RegionsMap | null; regions: string[]; onToggleRegion: (ow: string) => void; onYear: (year: string) => void;
+  onRegionYear: (ow: string, year: string) => void; onShowProviders: () => void; period: ChartPeriod; onPeriod: (period: ChartPeriod) => void;
 }) {
   const [metric, setMetric] = useState<Metric>("hospitalizations");
   const lines = useMemo((): ChartLine[] => {
@@ -325,13 +340,21 @@ function OverviewTab({ data, pool, linePool, map, regions, onToggleRegion, onYea
   const shown = METRICS[regions.length ? "hospitalizations" : metric];
   return <>
     <section className={styles.sec} aria-labelledby="s-ile">
-      <SectionHead id="s-ile" question="Ile?" context={`${regions.length ? "Hospitalizacje w wybranych województwach" : shown.title} ${periodWord(period)}, wszystkie lata`} tools={<PeriodToggle period={period} onPeriod={onPeriod} />} />
+      {/* Jak „Ile?” na karcie szpitala: krótki dopisek (miara i okres) zostaje na telefonie, przypis wykresu jest w „?”. */}
+      <SectionHead id="s-ile" question="Ile?" context={`${shown.title} ${periodWord(period)}`} keepContext tools={<PeriodToggle period={period} onPeriod={onPeriod} />}
+        helpLabel="Jak czytać wykres „Ile?”" help={[
+          ["Wykres", `— ${shown.note[period]}`],
+          ["Hospitalizacje", "— pobyty w szpitalu rozliczone z NFZ w tej grupie, według miesiąca wypisu albo sumy roku (przełącznik Miesiące / Lata)."],
+          ["Śmiertelność i % nagłych", "— udział zgonów i przyjęć w trybie nagłym w hospitalizacjach grupy."],
+          ...(regions.length ? ["Linie: wybrane województwa, w kolorach z mapy. Przy wybranych województwach wykres pokazuje liczbę hospitalizacji."] : []),
+          `Wykres pokazuje wszystkie lata; tło oznacza rok karty (${data.year}).`,
+        ]} />
       {!regions.length ? <div className={base.segmented} role="group" aria-label="Miara">
         {(Object.keys(METRICS) as Metric[]).map((key) => <button key={key} type="button" aria-pressed={metric === key} onClick={() => setMetric(key)}>{METRICS[key].button}</button>)}
       </div> : null}
-      <GroupLineChart months={data.months} lines={lines} valueLabel={shown.unit} legend={regions.length > 0} height={420} highlightYear={data.year} fitAxis={!regions.length && metric === "urgent"} note={shown.note[period]} period={period} ariaLabel={`Wykres liniowy: ${shown.title.toLowerCase()} ${periodWord(period)} we wszystkich latach`} />
+      <GroupLineChart months={data.months} lines={lines} valueLabel={shown.unit} legend={regions.length > 0} height={420} highlightYear={data.year} fitAxis={!regions.length && metric === "urgent"} period={period} modeBar={false} ariaLabel={`Wykres liniowy: ${shown.title.toLowerCase()} ${periodWord(period)} we wszystkich latach`} />
     </section>
-    <RegionsSection data={data} pool={pool} map={map} regions={regions} onToggle={onToggleRegion} onYear={onYear} onRegionYear={onRegionYear} onClear={onClearRegions} onShowProviders={onShowProviders} />
+    <RegionsSection data={data} map={map} regions={regions} onToggle={onToggleRegion} onYear={onYear} onRegionYear={onRegionYear} onShowProviders={onShowProviders} />
     {/* „Za ile?” i „Jak przyjmowani są pacjenci?” w jednym wierszu (2 kolumny, na wąskim ekranie jedna pod drugą). */}
     <div className={styles.pair}>
       <CostSection data={data} onYear={onYear} />
@@ -341,15 +364,30 @@ function OverviewTab({ data, pool, linePool, map, regions, onToggleRegion, onYea
   </>;
 }
 
+/**
+ * Nazwa województwa w mapie ciepła: łamie się tylko na łączniku (CSS `hyphens: manual`). Jedyna złożona nazwa bez łącznika
+ * („Zachodniopomorskie”) dostaje miękki łącznik — w wąskiej tabeli nie wchodzi na komórki lat.
+ */
+export const heatRegionName = (name: string) => name.replace(/^(zachodnio)(pomorskie)$/i, "$1\u00AD$2");
+
 /** Od tylu lat mapa ciepła ma wąskie kolumny i krótkie lata. */
 const HEAT_COMPACT_YEARS = 5;
 
-function RegionsSection({ data, pool, map, regions, onToggle, onYear, onRegionYear, onClear, onShowProviders }: {
-  data: JgpPageData; pool: JgpProviderRow[]; map: RegionsMap | null; regions: string[]; onToggle: (ow: string) => void; onYear: (year: string) => void;
-  onRegionYear: (ow: string, year: string) => void; onClear: () => void; onShowProviders: () => void;
+function RegionsSection({ data, map, regions, onToggle, onYear, onRegionYear, onShowProviders }: {
+  data: JgpPageData; map: RegionsMap | null; regions: string[]; onToggle: (ow: string) => void; onYear: (year: string) => void;
+  onRegionYear: (ow: string, year: string) => void; onShowProviders: () => void;
 }) {
-  const { cells, scale } = cartogramCells(data.regions);
+  const { cells } = cartogramCells(data.regions);
   const names = new Map(data.regions.map((row) => [row.owNfz, row.name]));
+  // Mapa: województwa (kolor jak mapa ciepła) albo placówki i miasta (mapa eksploratora, `RegionView`), z osią lat
+  // (`YearPlayer`: suwak i odtwarzanie). Rok mapy jest rokiem karty, dopóki ktoś nie ruszy osi; zmiana roku karty go ustawia.
+  const [mode, setMode] = useState<"regions" | "cities">("regions");
+  const [mapPick, setMapPick] = useState<{ base: string; year: string } | null>(null);
+  const mapYear = mapPick && mapPick.base === data.year ? mapPick.year : data.year;
+  const { cells: mapCells, scale } = cartogramCells(regionRowsForYear(data, mapYear));
+  // Kliknięcie roku w tabeli ustawia rok karty i mapy (także gdy to już rok karty, a oś pokazuje inny).
+  const pickYear = (year: string) => { setMapPick(null); onYear(year); };
+  const pickRegionYear = (ow: string, year: string) => { setMapPick(null); onRegionYear(ow, year); };
   const titles = new Map(cells.map((cell) => [cell.owNfz, regionTitle(cell)]));
   // Mapa ciepła: wskaźnik województwa jako wielokrotność średniej Polski w danym roku (ta sama skala co mapa).
   const people = data.regions.reduce((sum, row) => sum + row.population, 0);
@@ -390,26 +428,41 @@ function RegionsSection({ data, pool, map, regions, onToggle, onYear, onRegionYe
   const rows = [...data.regions].sort((a, b) => a.name.localeCompare(b.name, "pl"));
   const compact = heat.length >= HEAT_COMPACT_YEARS;
   return <section className={styles.sec} aria-labelledby="s-gdzie">
-    <SectionHead id="s-gdzie" question="Gdzie?" context={`Szpitale w województwie na 100 tys. mieszkańców: mapa ${data.year}, mapa ciepła lat`} />
+    <SectionHead id="s-gdzie" question="Gdzie?" context={mode === "regions" ? `Hospitalizacje na 100 tys. mieszkańców: mapa ${mapYear}, mapa ciepła lat` : `Placówki i miasta ${mapYear}, mapa ciepła lat`}
+      tools={<div className={styles.periodToggle} role="group" aria-label="Mapa">
+        <button type="button" aria-pressed={mode === "regions"} onClick={() => setMode("regions")}>Województwa</button>
+        <button type="button" aria-pressed={mode === "cities"} onClick={() => setMode("cities")}>Miasta</button>
+      </div>}
+      helpLabel="Jak czytać mapę i mapę ciepła" help={[
+        ["Województwa", "— liczba to hospitalizacje na 100 tys. mieszkańców województwa."],
+        ["Kolor", `— ile razy więcej albo mniej niż średnia Polski w danym roku (średnia w ${mapYear} r.: ${integer(scale.national)}).`],
+        ["Miasta", `— kropka to placówka z co najmniej ${MIN_FACILITY_HOSPITALIZATIONS} hospitalizacjami grupy w roku, przy swoim mieście; pole kropki = liczba hospitalizacji, kolor = wobec mediany placówek w roku. Skala wielkości jest wspólna dla lat. Placówki spoza słownika miast (głównie wsie) nie mają kropki.`],
+        "Oś lat nad mapą zmienia tylko rok mapy; przycisk ▶ odtwarza kolejne lata.",
+        `Kliknięcie województwa na mapie albo w tabeli zawęża kartę (do ${MAX_REGIONS} naraz).`,
+        "Kliknięcie roku w tabeli zmienia rok mapy i całej karty; kliknięcie komórki dodatkowo wybiera województwo.",
+      ]} />
     {/* Przy wielu latach mapa ciepła jest ścieśniona (wąskie kolumny, rok jako „’17”), żeby mieściła się obok mapy. */}
     <div className={`${styles.geo} ${compact ? styles.geoCompact : ""}`}>
       <div className={styles.mapCol}>
-        {map ? <RegionMap map={map} cells={cells} regions={regions} onToggle={onToggle} colors={REGION_PICK_COLORS} /> : null}
-        <div className={base.scale}>
-          <span>½ × średniej</span>
-          <i className={base.scaleGradient} style={{ background: `linear-gradient(90deg, ${scaleColor(-1)}, ${scaleColor(0)}, ${scaleColor(1)})` }} aria-hidden />
-          <span>2 × średniej</span>
-        </div>
+        {heat.length > 1 ? <YearPlayer years={heat.map((year) => year.year)} index={Math.max(0, heat.findIndex((year) => year.year === mapYear))}
+          onIndex={(i) => setMapPick({ base: data.year, year: heat[i].year })} /> : null}
+        {mode === "regions" ? <>
+          {map ? <RegionMap map={map} cells={mapCells} regions={regions} onToggle={onToggle} colors={REGION_PICK_COLORS} /> : null}
+          <div className={base.scale}>
+            <span>½ × średniej</span>
+            <i className={base.scaleGradient} style={{ background: `linear-gradient(90deg, ${scaleColor(-1)}, ${scaleColor(0)}, ${scaleColor(1)})` }} aria-hidden />
+            <span>2 × średniej</span>
+          </div>
+        </> : <RegionView productCodes={data.productCodes} year={mapYear} method="min" mode="cities" mapOnly embedded
+          areas={regions.map((owNfz) => ({ kind: "region" as const, owNfz }))} />}
+        {/* Wskazówka „kliknij województwo” jest w „?”; pod mapą tylko wybór i jego akcje. */}
         <div className={styles.mapInfo} aria-live="polite">
+          {/* Wybór i „Cała Polska” są w pasku filtra nad kartą; pod mapą tylko przejście do listy świadczeniodawców. */}
           {regions.length
-            ? <>
-              <span>Wybrane: <b>{regions.map((ow) => (names.get(ow) ?? ow).toLocaleLowerCase("pl-PL")).join(", ")}</b> · {integer(pool.length)} ośrodków</span>
-              <span className={styles.mapActions}>
-                <button type="button" className={styles.primaryLink} onClick={onShowProviders}>Ośrodki w {regions.length > 1 ? "wybranych województwach" : `województwie ${(names.get(regions[0]) ?? "").toLocaleLowerCase("pl-PL")}`} →</button>
-                <button type="button" className={base.linkButton} onClick={onClear}>Wyczyść wybór ({regions.length})</button>
-              </span>
-            </>
-            : <span>Kliknij województwo na mapie albo w tabeli, żeby zawęzić kartę (do {MAX_REGIONS} naraz).</span>}
+            ? <span className={styles.mapActions}>
+              <button type="button" className={styles.primaryLink} onClick={onShowProviders}>Świadczeniodawcy w {regions.length > 1 ? "wybranych województwach" : `województwie ${(names.get(regions[0]) ?? "").toLocaleLowerCase("pl-PL")}`} →</button>
+            </span>
+            : null}
         </div>
       </div>
       <div className={styles.heatWrap} role="region" aria-label="Mapa ciepła: województwa w latach" tabIndex={0}>
@@ -419,7 +472,7 @@ function RegionsSection({ data, pool, map, regions, onToggle, onYear, onRegionYe
           <thead><tr>
             <th>Województwo</th>
             {heat.map((year, i) => <th key={year.year} className={`${base.num} ${styles.yearCell} ${heatYearPriority(i, heat.length)}`} data-year={year.year}>
-              <button type="button" className={`${styles.yearHead} ${year.year === data.year ? styles.heatOn : ""}`} aria-pressed={year.year === data.year} onClick={() => onYear(year.year)} title={`Pokaż mapę za ${year.year} r.`}>{compact ? `’${year.year.slice(2)}` : year.year}</button>
+              <button type="button" className={`${styles.yearHead} ${year.year === data.year ? styles.heatOn : ""}`} aria-pressed={year.year === data.year} onClick={() => pickYear(year.year)} title={`Pokaż mapę za ${year.year} r.`}>{compact ? `’${year.year.slice(2)}` : year.year}</button>
             </th>)}
             {heat.length > 1 ? <th className={`${base.num} ${styles.heatChange}`}>{first?.year.slice(2)}→{last?.year.slice(2)}</th> : null}
           </tr></thead>
@@ -429,12 +482,12 @@ function RegionsSection({ data, pool, map, regions, onToggle, onYear, onRegionYe
               const b = last?.values.get(row.owNfz) ?? 0;
               const change = a ? ((b - a) / a) * 100 : null;
               return <tr key={row.owNfz} className={regions.includes(row.owNfz) ? base.rowSelected : undefined}>
-                <td><button type="button" className={styles.linkCell} aria-pressed={regions.includes(row.owNfz)} onClick={() => onToggle(row.owNfz)} title={titles.get(row.owNfz)}>{names.get(row.owNfz)}</button></td>
+                <td><button type="button" className={styles.linkCell} aria-pressed={regions.includes(row.owNfz)} onClick={() => onToggle(row.owNfz)} title={titles.get(row.owNfz)}>{heatRegionName(names.get(row.owNfz) ?? row.owNfz)}</button></td>
                 {heat.map((year, i) => {
                   const value = year.values.get(row.owNfz) ?? 0;
                   const pos = position(value, year.national);
                   return <td key={year.year} data-year={year.year} className={`${styles.heatCell} ${heatYearPriority(i, heat.length)}`} style={{ background: scaleColor(pos), color: pos > 0.15 ? "#fff" : CHART_COLORS.text }}>
-                    <button type="button" className={styles.heatButton} onClick={() => onRegionYear(row.owNfz, year.year)} title={`${names.get(row.owNfz)} ${year.year}: ${integer(value)} na 100 tys. — kliknij, żeby pokazać ten rok i województwo`}>{integer(value)}</button>
+                    <button type="button" className={styles.heatButton} onClick={() => pickRegionYear(row.owNfz, year.year)} title={`${names.get(row.owNfz)} ${year.year}: ${integer(value)} na 100 tys. — kliknij, żeby pokazać ten rok i województwo`}>{integer(value)}</button>
                   </td>;
                 })}
                 {heat.length > 1 ? <td className={`${base.num} ${styles.heatChange}`}>{change === null ? "—" : signedPct(change)}</td> : null}
@@ -444,7 +497,6 @@ function RegionsSection({ data, pool, map, regions, onToggle, onYear, onRegionYe
         </table>
       </div>
     </div>
-    <p className={base.note}>Liczba: hospitalizacje na 100 tys. mieszkańców; kolor: ile razy więcej albo mniej niż średnia Polski w danym roku (średnia w {data.year} r.: {integer(scale.national)}). Kliknięcie roku w tabeli zmienia rok mapy i całej karty; kliknięcie komórki dodatkowo wybiera województwo.</p>
   </section>;
 }
 
@@ -462,11 +514,17 @@ function CostSection({ data, onYear }: { data: JgpPageData; onYear: (year: strin
   const shellRef = useRef<HTMLDivElement>(null);
   const [tip, setTip] = useState<{ year: string; amount: string; pick: boolean; anchor: Box } | null>(null);
   return <section className={styles.sec} aria-labelledby="s-koszt">
-    <SectionHead id="s-koszt" question="Za ile?" context="Wycena i kwota świadczeń NFZ, wszystkie lata" />
-    <dl className={styles.costFacts}>
-      <div><dt>Wycena (katalog {data.valuation?.year ?? ""})</dt><dd>{data.valuation?.points ? `${integer(data.valuation.points)} pkt` : "—"}</dd><span>za hospitalizację</span></div>
-      <div><dt>Kwota świadczeń {latest?.year ?? ""}</dt><dd>{latest ? formatPln(latest.value) : "—"}</dd><span>{change === null ? "brak poprzedniego roku" : `${signedPct(change)} r/r`}</span></div>
-    </dl>
+    <SectionHead id="s-koszt" question="Za ile?" context="Wycena i kwota świadczeń NFZ, wszystkie lata"
+      helpLabel="Jak czytać „Za ile?”" help={[
+        ["Wycena", "— punkty za hospitalizację w katalogu JGP NFZ."],
+        ["Słupki", `— kwota świadczeń rozliczonych przez NFZ w ${scale.unit} (zestawienie produktów JGP). Najechanie pokazuje kwotę z jednostką, kliknięcie słupka zmienia rok karty.`],
+        "Karta nie dzieli kwoty przez liczbę hospitalizacji: zestawienie NFZ liczy pacjentów, a pacjent może mieć kilka hospitalizacji.",
+      ]} />
+    {/* Zestaw boksów jak na karcie szpitala (DESIGN.md 7.1a): jedna linia albo zwarta lista. */}
+    <BoxSet label="Wycena i kwota" items={[
+      { key: "valuation", label: `Wycena (katalog ${data.valuation?.year ?? ""})`, value: <b>{data.valuation?.points ? `${integer(data.valuation.points)} pkt` : "—"}</b>, what: "za hospitalizację" },
+      { key: "value", label: `Kwota świadczeń ${latest?.year ?? ""}`, value: <b>{latest ? formatPln(latest.value) : "—"}</b>, what: change === null ? "brak poprzedniego roku" : `${signedPct(change)} r/r` },
+    ]} />
     {bars.length ? <div ref={shellRef} className={styles.costBars} role="group" aria-label={`Kwota świadczeń NFZ za ${data.jgpCode} w latach`} onMouseLeave={() => setTip(null)}>
       {bars.map((item) => {
         const pick = cardYears.has(item.year);
@@ -506,7 +564,6 @@ function CostSection({ data, onYear }: { data: JgpPageData; onYear: (year: strin
         <TooltipLines lines={[<b key="v">{tip.amount}</b>, ...(tip.pick && tip.year !== data.year ? ["Kliknij, żeby pokazać ten rok."] : [])]} />
       </ChartTooltip> : null}
     </div> : <p className={base.note}>Brak danych o rozliczeniach w złotych.</p>}
-    <p className={base.note}>Słupki: kwota świadczeń rozliczonych przez NFZ w {scale.unit} (zestawienie produktów JGP). Najechanie pokazuje kwotę z jednostką, kliknięcie słupka zmienia rok karty. Karta nie dzieli kwoty przez liczbę hospitalizacji: zestawienie NFZ liczy pacjentów, a pacjent może mieć kilka hospitalizacji.</p>
   </section>;
 }
 
@@ -518,13 +575,18 @@ const ADMISSION_PARTS = [
 
 function ProfileSection({ data }: { data: JgpPageData }) {
   return <section className={styles.sec} aria-labelledby="s-profil">
-    <SectionHead id="s-profil" question="Jak przyjmowani są pacjenci?" context="Tryb przyjęcia w kraju, wszystkie lata" />
+    <SectionHead id="s-profil" question="Jak przyjmowani są pacjenci?" context="Tryb przyjęcia w kraju, wszystkie lata"
+      helpLabel="Jak czytać tryb przyjęcia" help={[
+        "Najedź na rok albo go dotknij, żeby zobaczyć udziały.",
+        ["Nagłe", "— tryb przyjęcia 2 i 3."],
+        ["Planowe", "— tryb przyjęcia 6."],
+        "Śmiertelność jest miarą w sekcji „Ile?”.",
+      ]} />
     <ShareLegend parts={[...ADMISSION_PARTS]} />
     <ShareBars ariaLabel="Tryb przyjęcia w latach" rows={data.admissions.map((row) => ({
       key: row.year, label: row.year, on: row.year === data.year,
       parts: ADMISSION_PARTS.map((part) => ({ ...part, value: row[part.key] })),
     }))} />
-    <p className={base.note}>Najedź na rok, żeby zobaczyć udziały. Nagłe: tryb przyjęcia 2 i 3; planowe: tryb 6. Śmiertelność jest miarą w sekcji „Ile?”.</p>
   </section>;
 }
 
@@ -532,37 +594,36 @@ function ProfileSection({ data }: { data: JgpPageData }) {
 function FamilySection({ data }: { data: JgpPageData }) {
   const family = data.family!;
   const years = data.catalogYears;
+  // Kolory wariantów: dwa pierwsze z palety danych (ciemne, biały podpis), dalej jaśniejsze odcienie.
   const palette = [CHART_COLORS.data, CHART_COLORS.dataMid, "#A9BCE0", "#5B8C7A", "#A3C4B5", "#C9A86A", "#E2CFA3"];
-  const color = new Map(family.variants.map((variant, i) => [variant.code, palette[i % palette.length]]));
+  const dark = new Set([0, 1, 3]);
   const totals = years.map((_, j) => family.variants.reduce((sum, variant) => sum + (variant.values[j] ?? 0), 0));
   const own = family.variants.find((variant) => variant.code === data.jgpCode);
   const share = (value: number | null, j: number) => totals[j] ? ((value ?? 0) / totals[j]) * 100 : 0;
   const first = own ? share(own.values[0], 0) : 0;
   const last = own ? share(own.values.at(-1) ?? null, years.length - 1) : 0;
+  const name = (variant: { name: string }) => variant.name.toLocaleLowerCase("pl-PL");
   return <section className={styles.sec} aria-labelledby="s-rodzina">
-    <SectionHead id="s-rodzina" question="Jak wygląda rodzina?" context={`Udziały wariantów: ${family.name.toLocaleLowerCase("pl-PL")}, wszystkie lata`} />
-    {own ? <p className={styles.lead}>{data.jgpCode} to <b>{pct(last, 0)}</b> hospitalizacji rodziny w {years.at(-1)} r.{years.length > 1 ? ` (w ${years[0]} r.: ${pct(first, 0)})` : ""}.</p> : null}
-    <ul className={base.legend} aria-label="Warianty rodziny">
-      {family.variants.map((variant) => <li key={variant.code} title={variant.name}><span className={base.swatch} style={{ background: color.get(variant.code) }} aria-hidden /><b>{variant.code}</b>&nbsp;{variant.name.toLocaleLowerCase("pl-PL")}</li>)}
-    </ul>
-    <div className={styles.famRows}>
-      {years.map((year, j) => <div key={year} className={styles.famRow}>
-        <span className={styles.famYear}>{year}</span>
-        <div className={styles.famBar} role="img" aria-label={`${year}: ${family.variants.map((variant) => `${variant.code} ${pct(share(variant.values[j], j))}`).join(", ")}`}>
-          {family.variants.map((variant) => {
-            const value = share(variant.values[j], j);
-            return value > 0 ? <span
-              key={variant.code}
-              className={variant.code === data.jgpCode ? styles.famOwn : undefined}
-              style={{ flex: value, background: color.get(variant.code) }}
-              title={`${variant.code} ${variant.name}: ${pct(value)} (${integer(variant.values[j] ?? 0)} hosp.)`}
-            >{value >= 9 ? `${variant.code} ${pct(value, 0)}` : ""}</span> : null;
-          })}
-        </div>
-        <span className={styles.famTotal}>{integer(totals[j])}</span>
-      </div>)}
-    </div>
-    <p className={base.note}>Ramka: ta grupa ({data.jgpCode}). Liczba po prawej: hospitalizacje całej rodziny. {family.note ?? ""} Przesunięcie udziałów może wynikać z praktyki leczenia, zmiany katalogu albo sposobu kodowania. Rodziny to lista redakcyjna (na razie dla E10, H52 i H55).</p>
+    <SectionHead id="s-rodzina" question="Jak wygląda rodzina?" context={`Udziały wariantów: ${family.name.toLocaleLowerCase("pl-PL")}, wszystkie lata`}
+      helpLabel="Jak czytać rodzinę wariantów" help={[
+        ["Ramka", `— ta grupa (${data.jgpCode}).`],
+        ["Liczba po prawej", "— hospitalizacje całej rodziny."],
+        "Dotknięcie albo najechanie wiersza pokazuje udziały wszystkich wariantów.",
+        ...family.variants.map((variant): HelpLine => [variant.code, `— ${name(variant)}.`]),
+        ...(family.note ? [family.note] : []),
+        "Przesunięcie udziałów może wynikać z praktyki leczenia, zmiany katalogu albo sposobu kodowania.",
+        "Rodziny to lista redakcyjna (na razie dla E10, H52 i H55).",
+      ]} />
+    {own ? <p className={styles.lead}>{data.jgpCode}: <b>{pct(last, 0)}</b> hospitalizacji rodziny w {years.at(-1)} r.{years.length > 1 ? ` (w ${years[0]} r.: ${pct(first, 0)})` : ""}.</p> : null}
+    {/* Legenda: kod i nazwa; na telefonie sam kod (nazwy w „?” i w dymku wiersza). */}
+    <ShareLegend parts={family.variants.map((variant, i) => ({ key: variant.code, label: variant.code, detail: ` ${name(variant)}`, className: "", color: palette[i % palette.length] }))} />
+    <ShareBars labels totalUnit="hospitalizacji rodziny" ariaLabel={`Warianty rodziny ${family.name.toLocaleLowerCase("pl-PL")} w latach`} rows={years.map((year, j) => ({
+      key: year, label: year, on: year === data.year, total: integer(totals[j]),
+      parts: family.variants.map((variant, i) => ({
+        key: variant.code, label: `${variant.code} ${name(variant)}`, short: variant.code, value: share(variant.values[j], j),
+        className: "", color: palette[i % palette.length], dark: dark.has(i % palette.length), outlined: variant.code === data.jgpCode,
+      })),
+    }))} />
   </section>;
 }
 
@@ -594,8 +655,14 @@ function ProvidersTab({ data, pool, linePool, comparison, regions, selectedRow, 
     }));
   }, [top, selectedLine, rankOf]);
   return <>
-    <section className={styles.sec} aria-labelledby="s-czas">
-      <SectionHead id="s-czas" question="Ile?" context={`Hospitalizacje ${periodWord(period)}: Największe ośrodki`} tools={<PeriodToggle period={period} onPeriod={onPeriod} />} />
+    {/* Telefon: najpierw tabela „Kto leczy?” (łatwo dotknąć wiersza), potem wykres z wybranym ośrodkiem, potem „Jak leczą?” (CSS `order`). */}
+    <section className={`${styles.sec} ${styles.secLines}`} aria-labelledby="s-czas">
+      <SectionHead id="s-czas" question="Ile?" context={`Hospitalizacje ${periodWord(period)}`} keepContext tools={<PeriodToggle period={period} onPeriod={onPeriod} />}
+        helpLabel="Jak czytać wykres świadczeniodawców" help={[
+          ["Linie", `— najwięksi świadczeniodawcy każdego roku (do ${TOP_LINES_PER_YEAR} z roku), w okresie, w którym leczyli w tej grupie.`],
+          "Numer przy nazwie to miejsce w kraju w roku karty.",
+          "Kliknięcie albo dotknięcie linii wybiera świadczeniodawcę.",
+        ]} />
       <GroupLineChart
         months={data.months}
         lines={lines}
@@ -607,7 +674,9 @@ function ProvidersTab({ data, pool, linePool, comparison, regions, selectedRow, 
         highlightYear={data.year}
         period={period}
         selectedLabel={selectedLine?.name}
-        ariaLabel={`Wykres liniowy: hospitalizacje ${periodWord(period)} w ${lines.length} ośrodkach`}
+        // Karta JGP bez paska narzędzi Plotly (zdjęcie, powiększanie): wykres ma własne przełączniki.
+        modeBar={false}
+        ariaLabel={`Wykres liniowy: hospitalizacje ${periodWord(period)} u ${lines.length} ${plural(lines.length, "świadczeniodawcy", "świadczeniodawców", "świadczeniodawców")}`}
       />
     </section>
     <RankingSection data={data} pool={pool} selectedRow={selectedRow} filtered={filtered} regionColor={regionColor} onSelect={onSelect} />
@@ -658,19 +727,27 @@ function RankingSection({ data, pool, selectedRow, filtered, regionColor, onSele
     const header = box.querySelector("thead")?.getBoundingClientRect().height ?? 0;
     box.scrollTop = Math.max(0, row.offsetTop - header - box.clientHeight / 2 + row.clientHeight / 2);
   }, [selectedRow, pool]);
-  return <section className={styles.sec} aria-labelledby="s-kto">
-    <SectionHead id="s-kto" question="Kto leczy?" context={`Ośrodki w ${data.year} r.`} />
+  return <section className={`${styles.sec} ${styles.secRanking}`} aria-labelledby="s-kto">
+    <SectionHead id="s-kto" question="Kto leczy?" context={`Świadczeniodawcy w ${data.year} r.`}
+      helpLabel="Jak czytać listę świadczeniodawców" help={[
+        `Wszyscy świadczeniodawcy z hospitalizacjami w ${data.year} r.; przewijanie w tabeli.`,
+        ["nr", "— miejsce w kraju; liczba z poprzedniego roku w dymku przy r/r."],
+        ["NFZ", `— kwota rozliczeń za grupę w ${data.year} r. (od 2019 r.; „—” = brak kwoty).`],
+        "Kliknięcie wiersza wybiera świadczeniodawcę; nazwa prowadzi do profilu szpitala.",
+      ]} />
+    {/* Udział największych w hospitalizacjach: wspólne słupki 100% (`ShareBars`); udziały w dymku (najechanie, dotknięcie). */}
     <div className={styles.struct}>
-      <div className={styles.structBar} role="img" aria-label={shares.map((item) => `${item.label}: ${pct(item.share)}`).join(", ")}>
-        {shares.map((item, i) => <span key={item.label} style={{ flex: Math.max(item.share, 0.5), background: colors[i] }} title={`${item.label}: ${pct(item.share)}`}>{item.share > 12 ? `${item.label} · ${pct(item.share, 0)}` : ""}</span>)}
-      </div>
-      <p className={styles.structText}><span><b>{integer(pool.length)}</b> ośrodków{filtered ? " po filtrach karty" : ""}</span>{shares.map((item) => <span key={item.label}>{item.label}: <b>{pct(item.share)}</b></span>)}</p>
+      <ShareBars labels ariaLabel={`Udział największych w hospitalizacjach ${data.year}`} rows={[{
+        key: data.year, label: data.year,
+        parts: shares.map((item, i) => ({ key: item.label, label: item.label, short: `${item.label} · ${pct(item.share, 0)}`, value: item.share, className: "", color: colors[i], dark: i < 2 })),
+      }]} />
+      <p className={styles.structText}><span><b>{integer(pool.length)}</b> {plural(pool.length, "świadczeniodawca", "świadczeniodawcy", "świadczeniodawców")}{filtered ? " po filtrach karty" : ""}</span></p>
     </div>
-    <div ref={scrollRef} className={`${base.scrollTable} priority-table`} tabIndex={0} role="region" aria-label={`Lista ośrodków: ${pool.length}`}>
+    <div ref={scrollRef} className={`${base.scrollTable} priority-table`} tabIndex={0} role="region" aria-label={`Lista świadczeniodawców: ${pool.length}`}>
       <table className={base.table}>
         <thead><tr>
           {/* 7 kolumn (DESIGN.md 7.1): miejsce w kraju w drugiej linii nazwy, poprzedni rok w dymku r/r. */}
-          {header("name", "Ośrodek")}
+          {header("name", "Świadczeniodawca")}
           {header("hospitalizations", data.year, base.num)}{header("change", "r/r", `${base.num} col-p2`)}<th className={`${base.num} col-p3`}>Udział</th>{header("value", `NFZ (${valueScale.unit})`, `${base.num} col-p3`)}
           {header("urgent", "Nagłe", `${base.num} col-p2`)}{header("mortality", "Śmiertelność", base.num)}
         </tr></thead>
@@ -689,8 +766,8 @@ function RankingSection({ data, pool, selectedRow, filtered, regionColor, onSele
             >
               <td className={styles.nameCell}>
                 {/* Znak jak na wykresach punktowych: gwiazda = wybrany ośrodek, kropka = kolor województwa. */}
-                {isSelected ? <i className={styles.selectedStar} role="img" aria-label="wybrany ośrodek" /> : regionColor.has(row.owNfz) ? <i className={styles.dot} style={{ background: regionColor.get(row.owNfz) }} aria-hidden /> : null}
-                <ProviderLink owNfz={row.owNfz} nip={row.nip} name={row.name} /><small>nr {data.providers.indexOf(row) + 1} · {formatCityName(row.city)} · {row.voivodeship}</small>
+                {isSelected ? <i className={styles.selectedStar} role="img" aria-label="wybrany świadczeniodawca" /> : regionColor.has(row.owNfz) ? <i className={styles.dot} style={{ background: regionColor.get(row.owNfz) }} aria-hidden /> : null}
+                <ProviderLink owNfz={row.owNfz} nip={row.nip} name={row.name} /><small title={`${formatCityName(row.city)}, ${row.voivodeship}`}>nr {data.providers.indexOf(row) + 1} · {formatCityName(row.city)}<span className={styles.nameRegion}> · {row.voivodeship}</span></small>
               </td>
               <td className={base.num}>{integer(row.hospitalizations)}</td>
               <td className={`${base.num} col-p2`} title={previousYear && row.previousHospitalizations !== null ? `${previousYear}: ${integer(row.previousHospitalizations)}` : undefined}>{row.previousHospitalizations === 0 ? "nowy" : change === null ? "—" : signedPct(change)}</td>
@@ -703,7 +780,6 @@ function RankingSection({ data, pool, selectedRow, filtered, regionColor, onSele
         </tbody>
       </table>
     </div>
-    <p className={base.note}>Wszystkie ośrodki z hospitalizacjami w {data.year} r.; przewijanie w tabeli. „nr” = miejsce w kraju; liczba z poprzedniego roku w dymku przy r/r. Kliknięcie wiersza wybiera ośrodek (nazwa prowadzi do profilu szpitala). NFZ: kwota rozliczeń za grupę w {data.year} r. (od 2019 r.; „—” = brak kwoty).</p>
   </section>;
 }
 
@@ -747,9 +823,9 @@ function HowSection({ data, rows, regions, selectedRow, onSelect }: { data: JgpP
     aboveCap: mortalityCap === null ? null : { count: aboveCap, cap: mortalityCap }, selectable: true,
   });
   const urgentHelp = [
-    "Punkt to ośrodek: liczba hospitalizacji i udział przyjęć nagłych (kody 2 i 3).",
-    "Linia kropkowana: średnia wszystkich ośrodków.",
-    "Kliknięcie punktu wybiera ośrodek.",
+    "Punkt to świadczeniodawca: liczba hospitalizacji i udział przyjęć nagłych (kody 2 i 3).",
+    "Linia kropkowana: średnia wszystkich świadczeniodawców.",
+    "Kliknięcie punktu wybiera świadczeniodawcę.",
   ];
   const names = new Map(data.regions.map((row) => [row.owNfz, row.name]));
   // Legendy „Jak leczą?”. Na karcie: województwa nad wykresami, skala lejka w pionie w prawym górnym rogu wykresu.
@@ -758,26 +834,26 @@ function HowSection({ data, rows, regions, selectedRow, onSelect }: { data: JgpP
   const selectedItem = selectedRow ? <SelectedLegendItem name={selectedRow.name} /> : null;
   const regionItems = highlight ? <>
     {regions.map((ow) => <li key={ow}><span className={base.swatch} style={{ background: regionColor.get(ow) }} aria-hidden />{(names.get(ow) ?? ow).toLocaleLowerCase("pl-PL")}</li>)}
-    <li><span className={base.swatch} style={{ background: OTHER_POINT }} aria-hidden />pozostałe ośrodki</li>
+    <li><span className={base.swatch} style={{ background: OTHER_POINT }} aria-hidden />pozostali świadczeniodawcy</li>
   </> : null;
   const regionLegend = highlight ? <ul className={base.legend} aria-label="Legenda województw">{regionItems}</ul> : null;
   const expandedLegend = (funnel: boolean) => funnel
     ? <FunnelLegend statuses={!highlight}>{selectedItem}{regionItems}</FunnelLegend>
     : selectedItem || highlight ? <ul className={base.legend} aria-label="Legenda">{selectedItem}{regionItems}</ul> : null;
   return <section className={styles.sec} aria-labelledby="s-jak">
-    <SectionHead id="s-jak" question="Jak leczą?" context={`Wszystkie ośrodki w ${data.year} r.${highlight ? "; wybrane województwa w kolorach" : ""}`} />
+    <SectionHead id="s-jak" question="Jak leczą?" context={`Wszyscy świadczeniodawcy w ${data.year} r.${highlight ? "; wybrane województwa w kolorach" : ""}`} />
     {regionLegend}
     <div className={styles.two}>
       <div>
         <h3 className={base.chartTitle}>Udział przyjęć nagłych <InfoTip label={<HelpLines lines={urgentHelp} />} ariaLabel="Jak czytać wykres przyjęć nagłych" /></h3>
-        <ChartExpand title={`${data.jgpCode}: udział przyjęć nagłych w ośrodkach, ${data.year}`} explorer={{ href: explorerHref(data.jgpCode, "admissions", { year: data.year, regions }), label: "Tryb przyjęcia" }}>
-          {(expanded) => <><ProviderScatter points={urgency} xTitle="Hospitalizacje" yTitle="Nagłe" ySuffix="%" reference={referenceUrgent} onSelect={onSelect} height={expanded ? 600 : 300} modeBar={false} ariaLabel={`Wykres punktowy: ${rows.length} ośrodków, liczba hospitalizacji i udział przyjęć nagłych`} />{expanded ? expandedLegend(false) : null}</>}
+        <ChartExpand title={`${data.jgpCode}: udział przyjęć nagłych u świadczeniodawców, ${data.year}`} explorer={{ href: explorerHref(data.jgpCode, "admissions", { year: data.year, regions }), label: "Tryb przyjęcia" }}>
+          {(expanded) => <><ProviderScatter points={urgency} xTitle="Hospitalizacje" yTitle="Nagłe" ySuffix="%" reference={referenceUrgent} onSelect={onSelect} height={expanded ? 600 : 300} modeBar={false} ariaLabel={`Wykres punktowy: ${rows.length} ${plural(rows.length, "świadczeniodawca", "świadczeniodawcy", "świadczeniodawców")}, liczba hospitalizacji i udział przyjęć nagłych`} />{expanded ? expandedLegend(false) : null}</>}
         </ChartExpand>
       </div>
       <div>
         <h3 className={base.chartTitle}>{showFunnel ? "Śmiertelność i granice odchyleń" : "Śmiertelność"} <InfoTip label={<HelpLines lines={mortalityHelp} />} ariaLabel="Jak czytać wykres śmiertelności" /></h3>
         <ChartExpand title={`${data.jgpCode}: ${showFunnel ? "śmiertelność i granice odchyleń" : "śmiertelność"}, ${data.year}`} explorer={{ href: explorerHref(data.jgpCode, "mortality", { year: data.year, regions }), label: "Kto leczy" }}>
-          {(expanded) => <div className={styles.cornerLegendFrame}><ProviderScatter points={mortality.points} curves={mortality.curves} xTitle="Hospitalizacje" yTitle="Śmiertelność" ySuffix="%" reference={referenceMortality} onSelect={onSelect} height={expanded ? 600 : 300} yCap={mortalityCap} modeBar={false} ariaLabel={`${showFunnel ? "Wykres punktowy z granicami odchyleń" : "Wykres punktowy"}: ${rows.length} ośrodków, śmiertelność względem liczby hospitalizacji`} />{expanded ? expandedLegend(showFunnel) : showFunnel ? <FunnelLegend corner statuses={!highlight} /> : null}</div>}
+          {(expanded) => <div className={styles.cornerLegendFrame}><ProviderScatter points={mortality.points} curves={mortality.curves} xTitle="Hospitalizacje" yTitle="Śmiertelność" ySuffix="%" reference={referenceMortality} onSelect={onSelect} height={expanded ? 600 : 300} yCap={mortalityCap} modeBar={false} ariaLabel={`${showFunnel ? "Wykres punktowy z granicami odchyleń" : "Wykres punktowy"}: ${rows.length} ${plural(rows.length, "świadczeniodawca", "świadczeniodawcy", "świadczeniodawców")}, śmiertelność względem liczby hospitalizacji`} />{expanded ? expandedLegend(showFunnel) : showFunnel ? <FunnelLegend corner statuses={!highlight} /> : null}</div>}
         </ChartExpand>
       </div>
     </div>

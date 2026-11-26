@@ -223,7 +223,7 @@ function TreatsSection({ data, yearIndex }: { data: HospitalPageData; yearIndex:
     <SectionHead id="s-co" question="Co leczy?" context={`Sekcje JGP, ${data.years[shownYears[0]]}${shownYears.length > 1 ? ` i ${year}` : ""}`}
       helpLabel="Jak czytać sekcje JGP" help={[
         ["Słupek", `— udział sekcji JGP w hospitalizacjach szpitala w roku. Pięć największych sekcji z ${year} r. ma kolor, reszta jest razem.`],
-        ["Pierwsza trójka w Polsce", "— miejsce szpitala wśród wszystkich ośrodków grupy JGP według liczby hospitalizacji."],
+        ["Pierwsza trójka w Polsce", "— miejsce szpitala wśród wszystkich świadczeniodawców grupy JGP według liczby hospitalizacji."],
       ]} />
     {first && total(yearIndex) > 0 ? <p className={base.lead}>
       Największa sekcja w {year} r.: <b>{label(first)}</b> ({decimal((sections.get(first)![yearIndex] / (total(yearIndex) || 1)) * 100, 0)}% hospitalizacji).
