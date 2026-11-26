@@ -218,12 +218,12 @@ export function MortalityInsightText({ insights }: { insights: MortalityInsights
     <p>
       Średnia śmiertelność: <strong>{pct(mortalityPct)}</strong> ({integer(deaths)} zgonów na {integer(hospitalizations)} hospitalizacji
       {" "}u {integer(providers)} świadczeniodawców).
-      {providers > topCount ? <> {topCount} największych ośrodków ma <strong>{pct(topSharePct)}</strong> hospitalizacji.</> : null}
+      {providers > topCount ? <> {topCount} największych świadczeniodawców ma <strong>{pct(topSharePct)}</strong> hospitalizacji.</> : null}
     </p>
     {smallMortalityPct !== null && largeMortalityPct !== null ? <p>
       Mediana: {integer(medianHospitalizations)} hospitalizacji na świadczeniodawcę.
-      {" "}Śmiertelność w ośrodkach poniżej mediany: {pct(smallMortalityPct)}; od mediany w górę: {pct(largeMortalityPct)}.
-      {" "}Różnica może wynikać ze stanu pacjentów i profilu ośrodka — to nie jest ocena jakości leczenia.
+      {" "}Śmiertelność u świadczeniodawców poniżej mediany: {pct(smallMortalityPct)}; od mediany w górę: {pct(largeMortalityPct)}.
+      {" "}Różnica może wynikać ze stanu pacjentów i profilu świadczeniodawcy — to nie jest ocena jakości leczenia.
     </p> : null}
   </div>;
 }

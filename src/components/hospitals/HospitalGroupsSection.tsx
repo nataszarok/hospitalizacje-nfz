@@ -116,7 +116,7 @@ export function GroupsSection({ data, yearIndex }: { data: HospitalPageData; yea
       helpLabel="Jak czytać tabelę grup" help={[
         ["Hosp.", "— hospitalizacje metodą konserwatywną (<5 = 1)."],
         ["NFZ", `— kwota rozliczona za grupę w ${year} r. (zestawienie świadczeń, od 2019 r.). To przychód, nie zysk. Pod nazwą: udział szpitala w kwocie grupy w Polsce.`],
-        ["Miejsce w Polsce", "— pozycja wśród wszystkich ośrodków grupy według hospitalizacji."],
+        ["Miejsce w Polsce", "— pozycja wśród wszystkich świadczeniodawców grupy według hospitalizacji."],
         ["Kropka śmiertelności", "— odchylenie od Polski (granice 95% i 99,8%), bez korekty o wiek i stan pacjentów. Ciepły kolor: powyżej Polski poza granicą przypadku, niebieski: poniżej, szary: w granicach."],
         `Kropka bez wypełnienia: za mało zgonów do oceny (mniej niż ${MIN_EXPECTED_DEATHS} zgon oczekiwany przy śmiertelności jak w Polsce).`,
         ["Mini-wykres", "— hospitalizacje szpitala w grupie we wszystkich latach, skala wiersza (kształt, nie wielkość)."],

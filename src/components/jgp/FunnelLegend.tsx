@@ -22,5 +22,5 @@ export function FunnelLegend({ corner = false, statuses = true, children }: { co
 
 /** Pozycja legendy z wybranym ośrodkiem: ten sam znak (gwiazda) co na wykresie i w tabeli. */
 export function SelectedLegendItem({ name }: { name: string }) {
-  return <li><i className={styles.selectedStar} aria-hidden />wybrany ośrodek: {name}</li>;
+  return <li><i className={styles.selectedStar} aria-hidden />wybrany świadczeniodawca: {name}</li>;
 }

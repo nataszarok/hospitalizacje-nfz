@@ -9,6 +9,8 @@ import { loadPlotly } from "@/lib/plotlyLoader";
 import { nearestLine, type PixelSeries } from "@/lib/lineHitTest";
 import { plotlyDataBox, plotlyDataPixel, type Box } from "@/lib/tooltipPosition";
 import { CHART_COLORS } from "@/lib/chartPalette";
+import { PHONE_QUERY, useMediaQuery } from "@/lib/useMediaQuery";
+import base from "./JgpPage.module.css";
 
 const MONTHS = ["sty", "lut", "mar", "kwi", "maj", "cze", "lip", "sie", "wrz", "paź", "lis", "gru"];
 const BASE = CHART_COLORS.borderStrong;
@@ -18,6 +20,12 @@ const SELECTED = CHART_COLORS.signal;
 const YEAR_BAND = "rgba(31, 138, 112, 0.10)";
 /** Promień trafienia w linię (px): najechanie i kliknięcie wybierają najbliższą linię w tym promieniu. */
 const HIT_DISTANCE = 12;
+/** Dotknięcie: trafienie z odległości `HIT_DISTANCE` × tyle (palec jest mniej dokładny niż kursor). */
+const TOUCH_HIT_FACTOR = 2;
+/** Dotknięcie, nie przesunięcie: palec przesunął się najwyżej o tyle pikseli. */
+const TAP_SLOP = 10;
+/** Kliknięcie tyle ms po dotknięciu to kliknięcie zastępcze przeglądarki (pomijamy je). */
+const TOUCH_CLICK_MS = 600;
 const integer = (value: number) => Math.round(value).toLocaleString("pl-PL");
 
 /** Zaznaczony okres na osi miesięcy (np. okres objęty kontrolą): pasmo pod danymi z podpisem u góry. */
@@ -210,6 +218,9 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
   const selectRef = useRef(onSelect);
   const hoverRef = useRef(onHover);
   useEffect(() => { selectRef.current = onSelect; hoverRef.current = onHover; });
+  // Telefon: nazwa wybranej linii nad wykresem (podpis na wąskim wykresie zasłaniał linie), z przyciskiem zdjęcia wyboru.
+  const phone = useMediaQuery(PHONE_QUERY) === true;
+  const selectedLine = selectedLabel ? lines.find((line) => line.tone === "selected") : undefined;
 
   useEffect(() => {
     let cancelled = false;
@@ -328,7 +339,7 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
         ],
         // Podpis wybranego ośrodka przy ostatnim punkcie jego średniej 3M (wyrównany do prawej, nie wychodzi poza wykres).
         annotations: (() => {
-          const line = selectedLabel ? ordered.find((item) => item.tone === "selected") : undefined;
+          const line = selectedLabel && !phone ? ordered.find((item) => item.tone === "selected") : undefined;
           // Ostatni punkt linii (linia ośrodka może kończyć się przed ostatnim miesiącem: `activeOnly`).
           const average = line ? series.get(line.key)!.average : [];
           let lastAt = average.length - 1;
@@ -365,6 +376,7 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
       // Linia pod kursorem (podświetlona, z dymkiem); kliknięcie wybiera linię pod kursorem.
       // Trafienie liczymy sami (`nearestLine`): kropki i odcinki średniej w pikselach, bez hover Plotly.
       let hovered: { line: ChartLine; index: number } | null = null;
+      let lastTouch = 0;
       // Piksele serii: liczone po narysowaniu i ponownie po zmianie rozmiaru wykresu.
       let pixels: { size: string; series: PixelSeries[] } | null = null;
       const seriesPixels = () => {
@@ -378,10 +390,10 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
         }
         return pixels.series;
       };
-      const hitAt = (event: MouseEvent) => {
+      const hitAt = (event: MouseEvent, distance = HIT_DISTANCE) => {
         const rect = plot.getBoundingClientRect();
         const current = hovered ? ordered.indexOf(hovered.line) : null;
-        const hit = nearestLine(seriesPixels(), { x: event.clientX - rect.left, y: event.clientY - rect.top }, HIT_DISTANCE, current);
+        const hit = nearestLine(seriesPixels(), { x: event.clientX - rect.left, y: event.clientY - rect.top }, distance, current);
         return hit ? { line: ordered[hit.series], index: hit.index } : null;
       };
       const clearHover = () => {
@@ -428,7 +440,24 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
       // od razu, więc po zmianie wyboru nie zostają dwie wyróżnione linie.
       plot.onclick = (event: MouseEvent) => {
         if (cancelled || !selectRef.current) return;
+        // Po dotknięciu wybór już zrobił `onpointerup` (drugi wybór tej samej linii by go cofnął).
+        if (Date.now() - lastTouch < TOUCH_CLICK_MS) return;
         const hit = hitAt(event);
+        if (!hit) return;
+        clearHover();
+        selectRef.current(hit.line.key);
+      };
+      // Telefon: Plotly przechwytuje dotyk (przesuwanie i powiększanie), więc przeglądarka nie wysyła kliknięcia ani ruchu myszy.
+      // Dotknięcie bez przesunięcia wybiera najbliższą linię; trafienie z większej odległości (palec zamiast kursora).
+      let down: { x: number; y: number } | null = null;
+      plot.onpointerdown = (event: PointerEvent) => { down = event.pointerType === "mouse" ? null : { x: event.clientX, y: event.clientY }; };
+      plot.onpointerup = (event: PointerEvent) => {
+        const start = down;
+        down = null;
+        if (cancelled || !start || !selectRef.current) return;
+        if (Math.hypot(event.clientX - start.x, event.clientY - start.y) > TAP_SLOP) return;
+        lastTouch = Date.now();
+        const hit = hitAt(event, HIT_DISTANCE * TOUCH_HIT_FACTOR);
         if (!hit) return;
         clearHover();
         selectRef.current(hit.line.key);
@@ -436,10 +465,15 @@ export function GroupLineChart({ months, lines, valueLabel, ariaLabel, legend = 
     };
     void render();
     return () => { cancelled = true; };
-  }, [months, lines, valueLabel, legend, height, selectedColor, selectedLabel, highlightYear, note, fitAxis, period, modeBar, bands, markers]);
+  }, [months, lines, valueLabel, legend, height, selectedColor, selectedLabel, highlightYear, note, fitAxis, period, modeBar, bands, markers, phone]);
 
   // Wysokość zarezerwowana od razu: wykres rysuje się asynchronicznie i nie przesuwa treści pod nim.
   return <div ref={shellRef} style={{ position: "relative" }}>
+    {phone && selectedLine ? <div className={base.chartSelected}>
+      <i className={base.swatch} style={{ background: selectedColor }} aria-hidden />
+      <span>{selectedLabel}</span>
+      {onSelect ? <button type="button" aria-label={`Usuń wybór: ${selectedLabel}`} onClick={() => onSelect(selectedLine.key)}>✕</button> : null}
+    </div> : null}
     <div ref={chartRef} role="img" aria-label={ariaLabel} style={{ minHeight: height }} />
     {tip ? <ChartTooltip anchor={tip.anchor} container={shellRef} onClose={() => clearRef.current()}>
       <TooltipHead title={tip.title} context={tip.context} />

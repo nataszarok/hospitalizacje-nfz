@@ -32,7 +32,7 @@ describe("Strona grupy JGP", () => {
   it("każda sekcja katalogu ma kartę w zakładkach (A01 spoza dawnych sekcji E i H)", () => {
     render(<JgpPage data={buildJgpPageData(trendsFixture, latestDatasetFixture, "A01", "min", 15, extrasFixture)!} />);
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("A01 Stały produkt");
-    expect(screen.getAllByRole("tab").map((tab) => tab.textContent)).toEqual(["Przegląd", "Ośrodki2"]);
+    expect(screen.getAllByRole("tab").map((tab) => tab.textContent)).toEqual(["Przegląd", "Świadczeniodawcy2"]);
     // Elementy dawnej karty usunięte razem z nią.
     expect(screen.queryByText("Pokaż w eksploratorze →")).not.toBeInTheDocument();
     expect(screen.queryByText(/Najważniejsze/)).not.toBeInTheDocument();

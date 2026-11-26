@@ -14,7 +14,7 @@ describe("MortalityInsightText", () => {
     render(<MortalityInsightText insights={base} />);
     const box = screen.getByLabelText("Interpretacja wykresu");
     expect(box).toHaveTextContent(/Średnia śmiertelność: 4,9% \(412 zgonów na 8\s?326 hospitalizacji u 25 świadczeniodawców\)\./);
-    expect(box).toHaveTextContent("10 największych ośrodków ma 41,2% hospitalizacji.");
+    expect(box).toHaveTextContent("10 największych świadczeniodawców ma 41,2% hospitalizacji.");
     expect(box).toHaveTextContent("Mediana: 48 hospitalizacji na świadczeniodawcę.");
     expect(box).toHaveTextContent("poniżej mediany: 6,1%; od mediany w górę: 4,7%.");
     expect(box).toHaveTextContent("to nie jest ocena jakości leczenia");
@@ -23,7 +23,7 @@ describe("MortalityInsightText", () => {
   it("pomija koncentrację i podział, gdy świadczeniodawców jest mało", () => {
     render(<MortalityInsightText insights={{ ...base, providers: 1, topCount: 1, topSharePct: 100, smallMortalityPct: null, largeMortalityPct: null }} />);
     const box = screen.getByLabelText("Interpretacja wykresu");
-    expect(box).not.toHaveTextContent("największych ośrodków");
+    expect(box).not.toHaveTextContent("największych świadczeniodawców");
     expect(box).not.toHaveTextContent("Mediana");
   });
 });

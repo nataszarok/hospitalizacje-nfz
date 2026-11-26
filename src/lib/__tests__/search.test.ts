@@ -73,7 +73,7 @@ describe("parseQuery i interpretQuery", () => {
     expect(parsed.hospitals.map((hit) => hit.key)).toEqual(["04|9251723350", "04|9252028623"]);
     const [first] = interpretQuery(parsed);
     expect(first.href).toBe("/jgp/E10?osrodek=04%7C9251723350");
-    expect(first.parts).toEqual(["E10", "WIELOSPECJALISTYCZNY SZPITAL W NOWEJ SOLI (Nowa Sól)", "na tle innych ośrodków"]);
+    expect(first.parts).toEqual(["E10", "WIELOSPECJALISTYCZNY SZPITAL W NOWEJ SOLI (Nowa Sól)", "na tle innych świadczeniodawców"]);
   });
 
   it("grupa i szpital prowadzą do karty grupy z wyróżnionym szpitalem", () => {

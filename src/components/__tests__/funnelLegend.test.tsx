@@ -15,7 +15,7 @@ describe("FunnelLegend", () => {
     expect(legend).toHaveTextContent(/granica 95%granica 99,8%$/);
     rerender(<FunnelLegend><SelectedLegendItem name="Szpital Alfa" /></FunnelLegend>);
     expect(legend.querySelectorAll("li")).toHaveLength(8);
-    expect(legend.querySelector("li")).toHaveTextContent("wybrany ośrodek: Szpital Alfa");
+    expect(legend.querySelector("li")).toHaveTextContent("wybrany świadczeniodawca: Szpital Alfa");
   });
 
   it("bez statusów (punkty w kolorach obszarów) zostają tylko linie granic", () => {

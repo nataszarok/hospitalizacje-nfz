@@ -191,7 +191,7 @@ export function HospitalizationSummaryPage({ summary }: { summary: Hospitalizati
             lead={latestMetrics ? <><strong>{integer(latestMetrics.providers)}</strong> w {latestYear} r. 10% największych rozlicza <strong>{Math.round(latestMetrics.top10Pct)}%</strong> hospitalizacji.</> : null}
             description={<>
               <p>Świadczeniodawca to podmiot z umową z NFZ (para: oddział wojewódzki NFZ i NIP). To szpitale, ale też kliniki zabiegów jednego dnia, np. okulistyczne.</p>
-              <p>Udział 10% największych pokazuje koncentrację: im wyższy, tym więcej leczenia w dużych ośrodkach.</p>
+              <p>Udział 10% największych pokazuje koncentrację: im wyższy, tym więcej leczenia u dużych świadczeniodawców.</p>
             </>}
             source="Dane NFZ o hospitalizacjach"
           >

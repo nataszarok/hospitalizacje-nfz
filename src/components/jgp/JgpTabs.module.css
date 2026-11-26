@@ -676,24 +676,6 @@
   gap: 6px;
 }
 
-.structBar {
-  display: flex;
-  gap: 2px;
-  height: 26px;
-  overflow: hidden;
-  border-radius: var(--radius-control);
-}
-
-.structBar span {
-  display: grid;
-  place-items: center;
-  overflow: hidden;
-  color: #fff;
-  font-size: var(--fs-sm);
-  font-weight: var(--fw-semibold);
-  white-space: nowrap;
-}
-
 .structText {
   display: flex;
   flex-wrap: wrap;
@@ -925,7 +907,74 @@ ul.cornerLegend {
 }
 
 /* Telefon: mniejszy tytuł i odstępy — pierwszy ekran pokazuje zakładki i treść. */
+/* Pasek filtra województw w zakładce Świadczeniodawcy: jedna linia, przyklejony pod paskiem zakładek. */
+.filterBar {
+  position: sticky;
+  top: calc(var(--atlas-header-height, 75px) + 48px);
+  z-index: 15;
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 6px 12px;
+  border: 1px solid var(--color-primary-outline, var(--color-border-strong));
+  border-radius: var(--radius-control);
+  background: var(--color-primary-soft, var(--color-background-muted));
+  font-size: var(--fs-md);
+  white-space: nowrap;
+}
+
+/* Kilka województw: chipy przewijają się w poziomie zamiast łamać pasek. */
+.filterChips {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.filterCount {
+  flex: none;
+  color: var(--color-text-secondary);
+}
+
+.filterBar > button {
+  flex: none;
+}
+
+/* Tabela z przyklejonym nagłówkiem staje pod paskiem filtra. */
+.panel:has(> .filterBar) {
+  --sticky-head-top: calc(var(--atlas-header-height, 75px) + 48px + 44px);
+}
+
 @media (max-width: 639px) {
+  /* Ośrodki na telefonie: pasek filtra, tabela „Kto leczy?”, wykres linii, „Jak leczą?”. */
+  .filterBar {
+    order: -3;
+    gap: 8px;
+    padding: 4px 8px;
+  }
+
+  .filterWord {
+    display: none;
+  }
+
+  .secRanking {
+    order: -2;
+  }
+
+  .secLines {
+    order: -1;
+  }
+
+  /* „Gdzie?” na telefonie: sama mapa z osią lat; tabela lat (mapa ciepła) ukryta — rok i województwo wybiera się na mapie. */
+  .heatWrap {
+    display: none;
+  }
+
   /* Wiersz faktów w jednej linii: rok katalogu wyceny jest w zakładce (sekcja „Za ile?”). */
   .metaExtra {
     display: none;
