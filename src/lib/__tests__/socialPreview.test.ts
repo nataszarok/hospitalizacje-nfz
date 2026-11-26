@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { jgpPreviewAlt, jgpPreviewCard } from "@/lib/jgpPreview";
 import type { JgpPageData } from "@/lib/jgpPage";
 import { DEFAULT_PREVIEW_IMAGE, pageMetadata, previewImagePath } from "@/lib/pageMetadata";
-import { PREVIEW_SIZE, previewBars, renderPreviewPng } from "@/lib/socialPreview";
+import { PREVIEW_SIZE, VIDEO_FRAME_VISIBLE_HEIGHT, formatDuration, previewBars, renderPreviewPng, videoFrameCrop } from "@/lib/socialPreview";
 import { CHART_COLORS } from "@/lib/chartPalette";
 
 const monthsOf = (years: string[]) => years.flatMap((year) => Array.from({ length: 12 }, (_, i) => `${year}-${String(i + 1).padStart(2, "0")}`));
@@ -76,4 +76,23 @@ describe("renderPreviewPng", () => {
     expect([png.readUInt32BE(16), png.readUInt32BE(20)]).toEqual([PREVIEW_SIZE.width, PREVIEW_SIZE.height]);
     expect(png.length).toBeLessThan(60 * 1024);
   }, 30_000);
+});
+
+describe("podgląd filmu", () => {
+  it("formatDuration: minuty i sekundy jak w odtwarzaczu", () => {
+    expect(formatDuration(230)).toBe("3:50");
+    expect(formatDuration(65.4)).toBe("1:05");
+    expect(formatDuration(3725)).toBe("1:02:05");
+  });
+
+  it("videoFrameCrop: kadr pokrywa cały obraz, a dół z napisami wypada poza obraz", () => {
+    for (const [w, h] of [[1280, 720], [1920, 1080]]) {
+      const crop = videoFrameCrop(w, h);
+      expect(crop.left + crop.width).toBeGreaterThanOrEqual(PREVIEW_SIZE.width - 1);
+      expect(crop.left).toBeLessThanOrEqual(0);
+      expect(crop.top).toBe(0);
+      expect(Math.round(crop.height * VIDEO_FRAME_VISIBLE_HEIGHT)).toBeGreaterThanOrEqual(PREVIEW_SIZE.height - 1);
+      expect(crop.height * VIDEO_FRAME_VISIBLE_HEIGHT).toBeLessThanOrEqual(PREVIEW_SIZE.height + 1);
+    }
+  });
 });

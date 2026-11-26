@@ -1,6 +1,6 @@
-import { articlePreviewCard } from "@/lib/articlePreview";
+import { articlePreviewCard, articleVideoPreviewCard } from "@/lib/articlePreview";
 import { ARTICLES } from "@/lib/articles";
-import { PREVIEW_CONTENT_TYPE, renderPreviewPng } from "@/lib/socialPreview";
+import { PREVIEW_CONTENT_TYPE, renderPreviewPng, renderVideoPreviewPng } from "@/lib/socialPreview";
 
 // Obraz podglądu linku artykułu: plik `/og/artykul/<slug>.png`, budowany raz podczas statycznego eksportu.
 // Rozszerzenie jest w parametrze, bo Cloudflare Pages wybiera typ pliku po rozszerzeniu.
@@ -15,6 +15,8 @@ export async function GET(_request: Request, { params }: { params: Promise<{ pli
   const slug = (await params).plik.replace(/\.png$/, "");
   const article = ARTICLES.find((item) => item.slug === slug);
   if (!article) return new Response(null, { status: 404 });
-  const png = await renderPreviewPng(articlePreviewCard(article));
+  // Artykuł z filmem: kadr z przyciskiem odtwarzania (jak miniatura wideo); pozostałe: karta z tytułem i opisem.
+  const videoCard = articleVideoPreviewCard(article);
+  const png = videoCard ? await renderVideoPreviewPng(videoCard) : await renderPreviewPng(articlePreviewCard(article));
   return new Response(new Uint8Array(png), { headers: { "Content-Type": PREVIEW_CONTENT_TYPE } });
 }
