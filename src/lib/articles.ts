@@ -7,6 +7,18 @@ export interface Article {
   description: string;
   /** Etykieta nad tytułem, np. „Podstawy”. */
   kicker: string;
+  /** Artykuł z filmem: plik, kadr podglądu i wymiary. Podgląd linku pokazuje kadr z przyciskiem odtwarzania i `og:video`. */
+  video?: ArticleVideoFile;
+}
+
+/** Film w `public/`: plik MP4 i kadr JPG (poster odtwarzacza i tło obrazu podglądu linku). */
+export interface ArticleVideoFile {
+  src: string;
+  poster: string;
+  width: number;
+  height: number;
+  /** Długość w sekundach (plakietka czasu na obrazie podglądu). */
+  durationSeconds: number;
 }
 
 // Adres modułu jest jeden dla menu, strony głównej i listy: `ARTICLES_PATH` w `dashboardNavigation.ts`.
@@ -16,6 +28,13 @@ export const articleHref = (slug: string) => `${ARTICLES_PATH}/${slug}`;
 
 /** Lista artykułów od najnowszego. Nowy artykuł: wpis tutaj + trasa `src/app/artykuly/<slug>/page.tsx` z `articleMetadata(slug)` (podgląd linku). */
 export const ARTICLES: readonly Article[] = [
+  {
+    slug: "film-koszalin-h52-h53",
+    title: "Koszalin: H52 i H53 miesiąc po miesiącu",
+    description: "Film o rozliczeniach zabiegów kręgosłupa w Szpitalu Wojewódzkim w Koszalinie. Po pierwszej kontroli NFZ H52 spada ze 109 do 19 hospitalizacji w miesiącu, a H53 rośnie z 9 do 79.",
+    kicker: "Film",
+    video: { src: "/video/koszalin-h52-h53.mp4", poster: "/video/koszalin-h52-h53.jpg", width: 1920, height: 1080, durationSeconds: 230 },
+  },
   {
     slug: "pytania-zabiegi-kregoslup",
     title: "Zabiegi na kręgosłupie: pytania do NFZ",

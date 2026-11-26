@@ -137,8 +137,12 @@
 .listTitle { display: block; margin: 4px 0 6px; font-family: var(--font-display); font-size: var(--fs-section); line-height: 1.08; letter-spacing: -.035em; color: var(--color-heading); }
 .listDescription { color: var(--color-text-secondary); font-size: var(--fs-lg); line-height: 1.6; }
 
+/* Krótki artykuł bez spisu treści: tekst w tej samej kolumnie co w artykułach ze spisem. */
+.noToc > .article { grid-column: 2; }
+
 @media (max-width: 1100px) {
   .layout { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+  .noToc > .article { grid-column: auto; }
   .toc { position: static; border-top: 1px solid var(--color-border); border-bottom: 1px solid var(--color-border); }
   .tocWide { display: none; }
   .tocNarrow { display: block; }

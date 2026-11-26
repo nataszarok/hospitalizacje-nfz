@@ -31,15 +31,17 @@ export interface PageMetadataInput {
   image?: { url: string; alt: string };
   /** Typ Open Graph: „article” dla artykułów, domyślnie „website”. */
   type?: "website" | "article";
+  /** Film strony (`og:video`): serwisy, które odtwarzają film w podglądzie (np. Discord, Telegram), biorą plik stąd. */
+  video?: { url: string; type: string; width: number; height: number };
 }
 
-export function pageMetadata({ title, description, path, image, type = "website" }: PageMetadataInput): Metadata {
+export function pageMetadata({ title, description, path, image, type = "website", video }: PageMetadataInput): Metadata {
   const fullTitle = title.includes(SITE_NAME) ? title : `${title} | ${SITE_NAME}`;
   const images = [{ url: image?.url ?? DEFAULT_PREVIEW_IMAGE, width: 1200, height: 630, alt: image?.alt ?? `${SITE_NAME}: publiczna ochrona zdrowia w liczbach` }];
   return {
     title: fullTitle,
     description,
-    openGraph: { type, locale: "pl_PL", siteName: SITE_NAME, url: path, title, description, images },
+    openGraph: { type, locale: "pl_PL", siteName: SITE_NAME, url: path, title, description, images, ...(video ? { videos: [video] } : {}) },
     twitter: { card: "summary_large_image", title, description, images },
   };
 }

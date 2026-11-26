@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import type { ReactElement } from "react";
 import { ImageResponse } from "next/og";
 import { CHART_COLORS } from "@/lib/chartPalette";
 import { shortenName } from "@/lib/formatters";
@@ -7,7 +8,7 @@ import { SITE_NAME } from "@/lib/site";
 
 /**
  * Obraz podglądu linku (Open Graph / X `summary_large_image`), jeden generator dla wszystkich kart:
- * grupy JGP i karty szpitali. Strona podaje tylko treść (`PreviewCard`), wygląd jest tutaj.
+ * grupy JGP, karty szpitali i artykuły (artykuł z filmem: `videoPreviewElement`). Strona podaje tylko treść (`PreviewCard`), wygląd jest tutaj.
  * DESIGN.md 6.2a: podgląd nie ma legendy, więc dane rysujemy jednym błękitem w trzech stopniach jasności.
  * Płaskie kolory i paleta PNG (`sharp`): plik ok. 20–30 KB.
  */
@@ -153,19 +154,80 @@ export function previewElement(card: PreviewCard) {
   );
 }
 
-/**
- * PNG 1200×630 z paletą 64 kolorów (płaskie kolory nie tracą jakości, plik jest kilka razy mniejszy).
- * Bez `sharp` (pakiet opcjonalny Next) zostaje PNG z Satori/Resvg.
- */
-export async function renderPreviewPng(card: PreviewCard): Promise<Buffer> {
-  const response = new ImageResponse(previewElement(card), { ...PREVIEW_SIZE, fonts: previewFonts() });
+/** Podgląd linku filmu (jak miniatura wideo): kadr filmu na całym obrazie, przycisk odtwarzania i plakietka czasu. */
+export interface VideoPreviewCard {
+  /** Kadr JPG/PNG jako data URL (Satori nie czyta plików). */
+  frame: string;
+  frameWidth: number;
+  frameHeight: number;
+  durationSeconds: number;
+  /** Etykieta w plakietce z logo, np. „Film”. */
+  label: string;
+}
+
+/** Czas filmu jak w odtwarzaczach: „3:50”, „1:02:05”. */
+export function formatDuration(seconds: number): string {
+  const total = Math.round(seconds);
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = String(total % 60).padStart(2, "0");
+  return h ? `${h}:${String(m).padStart(2, "0")}:${s}` : `${m}:${s}`;
+}
+
+/** Część wysokości kadru widoczna na obrazie: dolne 17% (napisy filmu) wypada poza obraz. */
+export const VIDEO_FRAME_VISIBLE_HEIGHT = 0.83;
+
+/** Kadr przycięty do 1200×630: górne 83% wysokości kadru, wyśrodkowany w poziomie. */
+export function videoFrameCrop(frameWidth: number, frameHeight: number) {
+  const scale = Math.max(PREVIEW_SIZE.height / (frameHeight * VIDEO_FRAME_VISIBLE_HEIGHT), PREVIEW_SIZE.width / frameWidth);
+  const width = Math.round(frameWidth * scale);
+  const height = Math.round(frameHeight * scale);
+  return { width, height, left: -Math.round((width - PREVIEW_SIZE.width) / 2), top: 0 };
+}
+
+export function videoPreviewElement(card: VideoPreviewCard) {
+  const crop = videoFrameCrop(card.frameWidth, card.frameHeight);
+  return (
+    <div style={{ display: "flex", position: "relative", width: "100%", height: "100%", fontFamily: "Inter", backgroundColor: "#000", overflow: "hidden" }}>
+      {/* eslint-disable-next-line @next/next/no-img-element -- Satori rysuje tylko <img>, nie next/image */}
+      <img src={card.frame} width={crop.width} height={crop.height} alt="" style={{ position: "absolute", left: crop.left, top: crop.top }} />
+      <div style={{ display: "flex", alignItems: "center", gap: 18, position: "absolute", left: 28, top: 28, padding: "10px 22px 10px 12px", borderRadius: 16, background: "rgba(255,255,255,0.94)" }}>
+        <Logo />
+        <div style={{ display: "flex", width: 2, height: 30, background: CHART_COLORS.borderStrong }} />
+        <span style={{ fontSize: 22, fontWeight: 700, letterSpacing: "0.11em", textTransform: "uppercase", color: UI.primaryHover }}>{card.label}</span>
+      </div>
+      <div style={{ display: "flex", position: "absolute", left: 600 - 70, top: 470 - 48, width: 140, height: 96, borderRadius: 26, background: UI.primary, alignItems: "center", justifyContent: "center", boxShadow: "0 8px 28px rgba(0,0,0,0.35)" }}>
+        <svg width="46" height="52" viewBox="0 0 46 52"><path d="M4 3 L43 26 L4 49 Z" fill="#fff" stroke="#fff" strokeWidth="6" strokeLinejoin="round" /></svg>
+      </div>
+      <div style={{ display: "flex", position: "absolute", right: 28, bottom: 28, padding: "6px 14px", borderRadius: 10, background: "rgba(0,0,0,0.82)", color: "#fff", fontSize: 30, fontWeight: 700 }}>
+        {formatDuration(card.durationSeconds)}
+      </div>
+    </div>
+  );
+}
+
+/** PNG 1200×630 podglądu filmu: kadr ma przejścia tonalne, więc paleta 256 kolorów zamiast 64. */
+export async function renderVideoPreviewPng(card: VideoPreviewCard): Promise<Buffer> {
+  return renderPng(videoPreviewElement(card), 256);
+}
+
+async function renderPng(element: ReactElement, colours: number): Promise<Buffer> {
+  const response = new ImageResponse(element, { ...PREVIEW_SIZE, fonts: previewFonts() });
   const png = Buffer.from(await response.arrayBuffer());
   try {
     const sharp = (await import("sharp")).default;
     // Build renderuje strony w wielu procesach naraz: jeden wątek libvips na proces, inaczej procesy walczą o rdzenie.
     sharp.concurrency(1);
-    return await sharp(png).png({ palette: true, colours: 64, compressionLevel: 9, effort: 10 }).toBuffer();
+    return await sharp(png).png({ palette: true, colours, compressionLevel: 9, effort: 10 }).toBuffer();
   } catch {
     return png;
   }
+}
+
+/**
+ * PNG 1200×630 z paletą 64 kolorów (płaskie kolory nie tracą jakości, plik jest kilka razy mniejszy).
+ * Bez `sharp` (pakiet opcjonalny Next) zostaje PNG z Satori/Resvg.
+ */
+export async function renderPreviewPng(card: PreviewCard): Promise<Buffer> {
+  return renderPng(previewElement(card), 64);
 }
