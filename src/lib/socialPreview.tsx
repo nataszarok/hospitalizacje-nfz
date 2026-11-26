@@ -176,7 +176,7 @@ export function formatDuration(seconds: number): string {
 
 /**
  * Kadr dopasowany do szerokości 1200 px, od góry; dół (przy 16:9 ok. 6% wysokości) wypada poza obraz.
- * Kadr podglądu nie może mieć napisów filmu (`previewFrame` w `ARTICLES`: napisy zamalowane kolorem tła).
+ * Kadr podglądu (poster z `ARTICLES`) nie może mieć napisów filmu: napisy zamalowane kolorem tła.
  */
 export function videoFrameCrop(frameWidth: number, frameHeight: number) {
   const scale = Math.max(PREVIEW_SIZE.width / frameWidth, PREVIEW_SIZE.height / frameHeight);

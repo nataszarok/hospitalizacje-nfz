@@ -15,15 +15,14 @@ export function articlePreviewCard(article: Article): PreviewCard {
 }
 
 /**
- * Podgląd artykułu z filmem: kadr filmu (`previewFrame` albo poster z `public/`) z przyciskiem odtwarzania i czasem, jak miniatura wideo.
+ * Podgląd artykułu z filmem: kadr filmu (poster z `public/`) z przyciskiem odtwarzania i czasem, jak miniatura wideo.
  * Tytuł i opis pokazuje serwis pod obrazem (z metadanych), więc obraz ich nie powtarza.
  */
 export function articleVideoPreviewCard(article: Article): VideoPreviewCard | null {
   const video = article.video;
   if (!video) return null;
-  const framePath = video.previewFrame ?? video.poster;
-  const frame = readFileSync(join(process.cwd(), "public", framePath));
-  const mime = framePath.endsWith(".png") ? "image/png" : "image/jpeg";
+  const frame = readFileSync(join(process.cwd(), "public", video.poster));
+  const mime = video.poster.endsWith(".png") ? "image/png" : "image/jpeg";
   const posterSize = jpegSize(frame) ?? { width: video.width, height: video.height };
   return { frame: `data:${mime};base64,${frame.toString("base64")}`, frameWidth: posterSize.width, frameHeight: posterSize.height, durationSeconds: video.durationSeconds, label: article.kicker };
 }
