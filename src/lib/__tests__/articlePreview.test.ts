@@ -31,7 +31,9 @@ describe("podgląd linku artykułów", () => {
     const metadata = articleMetadata(slug);
     expect(metadata.openGraph).toMatchObject({ videos: [{ url: `https://funduszdanych.pl${article.video!.src}`, type: "video/mp4", width: article.video!.width, height: article.video!.height }] });
     const card = articleVideoPreviewCard(article)!;
-    expect(card.frame.startsWith("data:image/jpeg;base64,")).toBe(true);
+    // Kadr podglądu = poster odtwarzacza.
+    const frameFile = readFileSync(join(process.cwd(), "public", article.video!.poster));
+    expect(card.frame).toBe(`data:image/jpeg;base64,${frameFile.toString("base64")}`);
     expect(card.frameWidth / card.frameHeight).toBeCloseTo(article.video!.width / article.video!.height, 2);
     expect(card.label).toBe(article.kicker);
   });

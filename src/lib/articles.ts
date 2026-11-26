@@ -11,7 +11,7 @@ export interface Article {
   video?: ArticleVideoFile;
 }
 
-/** Film w `public/`: plik MP4 i kadr JPG (poster odtwarzacza i tło obrazu podglądu linku). */
+/** Film w `public/`: plik MP4 i kadr JPG (poster odtwarzacza i tło obrazu podglądu linku; bez napisów filmu, bo podgląd go nie przycina). */
 export interface ArticleVideoFile {
   src: string;
   poster: string;

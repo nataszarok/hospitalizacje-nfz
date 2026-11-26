@@ -154,7 +154,7 @@ export function previewElement(card: PreviewCard) {
   );
 }
 
-/** Podgląd linku filmu (jak miniatura wideo): kadr filmu na całym obrazie, przycisk odtwarzania i plakietka czasu. */
+/** Podgląd linku filmu (jak miniatura wideo): kadr filmu na całym obrazie, przycisk odtwarzania, plakietka czasu, logo u dołu (góra kadru zwykle ma tytuł wykresu). */
 export interface VideoPreviewCard {
   /** Kadr JPG/PNG jako data URL (Satori nie czyta plików). */
   frame: string;
@@ -174,15 +174,15 @@ export function formatDuration(seconds: number): string {
   return h ? `${h}:${String(m).padStart(2, "0")}:${s}` : `${m}:${s}`;
 }
 
-/** Część wysokości kadru widoczna na obrazie: dolne 17% (napisy filmu) wypada poza obraz. */
-export const VIDEO_FRAME_VISIBLE_HEIGHT = 0.83;
-
-/** Kadr przycięty do 1200×630: górne 83% wysokości kadru, wyśrodkowany w poziomie. */
+/**
+ * Kadr dopasowany do szerokości 1200 px, od góry; dół (przy 16:9 ok. 6% wysokości) wypada poza obraz.
+ * Kadr podglądu (poster z `ARTICLES`) nie może mieć napisów filmu: napisy zamalowane kolorem tła.
+ */
 export function videoFrameCrop(frameWidth: number, frameHeight: number) {
-  const scale = Math.max(PREVIEW_SIZE.height / (frameHeight * VIDEO_FRAME_VISIBLE_HEIGHT), PREVIEW_SIZE.width / frameWidth);
+  const scale = Math.max(PREVIEW_SIZE.width / frameWidth, PREVIEW_SIZE.height / frameHeight);
   const width = Math.round(frameWidth * scale);
   const height = Math.round(frameHeight * scale);
-  return { width, height, left: -Math.round((width - PREVIEW_SIZE.width) / 2), top: 0 };
+  return { width, height, left: Math.round((PREVIEW_SIZE.width - width) / 2), top: 0 };
 }
 
 export function videoPreviewElement(card: VideoPreviewCard) {
@@ -191,7 +191,7 @@ export function videoPreviewElement(card: VideoPreviewCard) {
     <div style={{ display: "flex", position: "relative", width: "100%", height: "100%", fontFamily: "Inter", backgroundColor: "#000", overflow: "hidden" }}>
       {/* eslint-disable-next-line @next/next/no-img-element -- Satori rysuje tylko <img>, nie next/image */}
       <img src={card.frame} width={crop.width} height={crop.height} alt="" style={{ position: "absolute", left: crop.left, top: crop.top }} />
-      <div style={{ display: "flex", alignItems: "center", gap: 18, position: "absolute", left: 28, top: 28, padding: "10px 22px 10px 12px", borderRadius: 16, background: "rgba(255,255,255,0.94)" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 18, position: "absolute", left: 28, bottom: 22, padding: "10px 22px 10px 12px", borderRadius: 16, background: "rgba(255,255,255,0.94)", boxShadow: "0 2px 12px rgba(0,0,0,0.14)" }}>
         <Logo />
         <div style={{ display: "flex", width: 2, height: 30, background: CHART_COLORS.borderStrong }} />
         <span style={{ fontSize: 22, fontWeight: 700, letterSpacing: "0.11em", textTransform: "uppercase", color: UI.primaryHover }}>{card.label}</span>
@@ -199,7 +199,7 @@ export function videoPreviewElement(card: VideoPreviewCard) {
       <div style={{ display: "flex", position: "absolute", left: 600 - 70, top: 470 - 48, width: 140, height: 96, borderRadius: 26, background: UI.primary, alignItems: "center", justifyContent: "center", boxShadow: "0 8px 28px rgba(0,0,0,0.35)" }}>
         <svg width="46" height="52" viewBox="0 0 46 52"><path d="M4 3 L43 26 L4 49 Z" fill="#fff" stroke="#fff" strokeWidth="6" strokeLinejoin="round" /></svg>
       </div>
-      <div style={{ display: "flex", position: "absolute", right: 28, bottom: 28, padding: "6px 14px", borderRadius: 10, background: "rgba(0,0,0,0.82)", color: "#fff", fontSize: 30, fontWeight: 700 }}>
+      <div style={{ display: "flex", position: "absolute", right: 28, bottom: 30, padding: "6px 14px", borderRadius: 10, background: "rgba(0,0,0,0.82)", color: "#fff", fontSize: 30, fontWeight: 700 }}>
         {formatDuration(card.durationSeconds)}
       </div>
     </div>

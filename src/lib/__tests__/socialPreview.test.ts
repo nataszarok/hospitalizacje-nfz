@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { jgpPreviewAlt, jgpPreviewCard } from "@/lib/jgpPreview";
 import type { JgpPageData } from "@/lib/jgpPage";
 import { DEFAULT_PREVIEW_IMAGE, pageMetadata, previewImagePath } from "@/lib/pageMetadata";
-import { PREVIEW_SIZE, VIDEO_FRAME_VISIBLE_HEIGHT, formatDuration, previewBars, renderPreviewPng, videoFrameCrop } from "@/lib/socialPreview";
+import { PREVIEW_SIZE, formatDuration, previewBars, renderPreviewPng, videoFrameCrop } from "@/lib/socialPreview";
 import { CHART_COLORS } from "@/lib/chartPalette";
 
 const monthsOf = (years: string[]) => years.flatMap((year) => Array.from({ length: 12 }, (_, i) => `${year}-${String(i + 1).padStart(2, "0")}`));
@@ -85,14 +85,15 @@ describe("podgląd filmu", () => {
     expect(formatDuration(3725)).toBe("1:02:05");
   });
 
-  it("videoFrameCrop: kadr pokrywa cały obraz, a dół z napisami wypada poza obraz", () => {
+  it("videoFrameCrop: kadr 16:9 na całą szerokość, od góry, obraz bez pustych pasów", () => {
     for (const [w, h] of [[1280, 720], [1920, 1080]]) {
       const crop = videoFrameCrop(w, h);
-      expect(crop.left + crop.width).toBeGreaterThanOrEqual(PREVIEW_SIZE.width - 1);
-      expect(crop.left).toBeLessThanOrEqual(0);
-      expect(crop.top).toBe(0);
-      expect(Math.round(crop.height * VIDEO_FRAME_VISIBLE_HEIGHT)).toBeGreaterThanOrEqual(PREVIEW_SIZE.height - 1);
-      expect(crop.height * VIDEO_FRAME_VISIBLE_HEIGHT).toBeLessThanOrEqual(PREVIEW_SIZE.height + 1);
+      expect(crop).toEqual({ width: 1200, height: 675, left: 0, top: 0 });
     }
+    // Kadr wyższy niż 1200:630 wypełnia szerokość (dół przycięty); szerszy wypełnia wysokość (boki przycięte równo).
+    const narrow = videoFrameCrop(1000, 1000);
+    expect(narrow.height).toBe(1200);
+    expect(narrow.left).toBe(0);
+    expect(videoFrameCrop(2000, 600)).toMatchObject({ height: PREVIEW_SIZE.height, left: -Math.round((2100 - 1200) / 2) });
   });
 });
