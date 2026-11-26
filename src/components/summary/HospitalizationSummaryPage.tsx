@@ -1,3 +1,4 @@
+import { plural } from "@/lib/jgpDescription";
 import Link from "next/link";
 import { DataCard, Legend } from "@/components/portal/DataCard";
 import { AdmissionBars, GroupBars, YearBars } from "@/components/portal/HomeCharts";
@@ -78,10 +79,10 @@ export function HospitalizationSummaryPage({ summary }: { summary: Hospitalizati
       title="Hospitalizacje w Polsce"
       lead={<p>Podsumowanie wszystkich hospitalizacji rozliczonych przez NFZ w grupach JGP. Każda część odpowiada na jedno pytanie i opisuje, jak czytać wykres. Szczegóły grup są w katalogu JGP.</p>}
       kpis={latest && latestMetrics ? [
-        { label: `Hospitalizacje JGP ${latestYear}`, value: millions(latest.hospitalizations), note: yearChange !== null ? `${signedPct(yearChange)} r/r` : null },
-        { label: "Przyjęcia nagłe", value: pct(latest.urgentPct), note: `${pct(first.urgentPct)} w ${first.year} r.` },
-        { label: "Zgony w szpitalu", value: pct(latestMetrics.mortalityPct), note: `hospitalizacji w ${latestYear} r.` },
-        { label: "Świadczeniodawcy", value: integer(latestMetrics.providers), note: "rozliczających hospitalizacje" },
+        { label: `Hospitalizacje JGP ${latestYear}`, value: millions(latest.hospitalizations), unit: "hospitalizacji", note: yearChange !== null ? `${signedPct(yearChange)} r/r` : null },
+        { label: "Przyjęcia nagłe", value: pct(latest.urgentPct), unit: "przyjęć nagłych", note: `${pct(first.urgentPct)} w ${first.year} r.` },
+        { label: "Zgony w szpitalu", value: pct(latestMetrics.mortalityPct), unit: "zgonów", note: `hospitalizacji w ${latestYear} r.` },
+        { label: "Świadczeniodawcy", value: integer(latestMetrics.providers), unit: plural(latestMetrics.providers, "świadczeniodawca", "świadczeniodawcy", "świadczeniodawców"), note: "z hospitalizacjami JGP" },
       ] : undefined}
     >
       <nav className={styles.toc} aria-label="Części karty">

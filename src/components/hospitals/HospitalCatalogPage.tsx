@@ -1,3 +1,4 @@
+import { plural } from "@/lib/jgpDescription";
 import Link from "next/link";
 import { HospitalCatalogView } from "@/components/hospitals/HospitalCatalog";
 import { PageHeader, pageContainerClass } from "@/components/portal/PageHeader";
@@ -21,10 +22,10 @@ export function HospitalCatalogPage({ catalog }: { catalog: HospitalCatalog }) {
         <p>Kliknij nazwę, aby otworzyć kartę szpitala (szpitale sieci PSZ i wybrane placówki; pozostałe są bez linku). Porównanie z podobnymi placówkami: <Link href={DASHBOARD_HREFS.comparison}>Porównania</Link>.</p>
       </>}
       kpis={[
-        { label: `Świadczeniodawcy w ${catalog.latestYear} r.`, value: integer(totals.providers), note: "z hospitalizacjami w umowie z NFZ" },
-        { label: "W sieci szpitali (PSZ)", value: integer(totals.inPsz), note: totals.latest ? `${Math.round((totals.inPszLatest / totals.latest) * 100)}% hospitalizacji` : null },
-        { label: `Hospitalizacje w ${catalog.latestYear} r.`, value: millions(totals.latest), note: catalog.previousYear ? `w ${catalog.previousYear} r.: ${millions(totals.previous)}` : null },
-        { label: "Łóżka (RPWDL)", value: integer(totals.beds), note: "stan rejestru" },
+        { label: `Świadczeniodawcy ${catalog.latestYear}`, value: integer(totals.providers), unit: plural(totals.providers, "świadczeniodawca", "świadczeniodawcy", "świadczeniodawców"), note: "z umową NFZ na leczenie" },
+        { label: "Sieć szpitali (PSZ)", value: integer(totals.inPsz), unit: "w sieci PSZ", note: totals.latest ? `${Math.round((totals.inPszLatest / totals.latest) * 100)}% hospitalizacji` : null },
+        { label: `Hospitalizacje ${catalog.latestYear}`, value: millions(totals.latest), unit: "hospitalizacji", note: catalog.previousYear ? `w ${catalog.previousYear} r.: ${millions(totals.previous)}` : null },
+        { label: "Łóżka (RPWDL)", value: integer(totals.beds), unit: plural(totals.beds, "łóżko", "łóżka", "łóżek"), note: "stan rejestru" },
       ]}
     />
     <div className={pageContainerClass}>

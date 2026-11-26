@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { JgpPage } from "@/components/jgp/JgpPage";
+import { heatRegionName } from "@/components/jgp/JgpTabbedCard";
 import { buildJgpPageData } from "@/lib/jgpPage";
 import { extrasFixture } from "@/lib/__tests__/fixtures/jgpCardFixture";
 import { latestDatasetFixture, trendsFixture } from "@/lib/__tests__/fixtures/trendsFixture";
@@ -44,13 +45,16 @@ describe("Karta w zakładkach — nagłówek i Przegląd", () => {
     expect(title).toHaveAttribute("aria-hidden", "true");
   });
 
-  it("nagłówek ma cztery liczby 2×2 i obszar", () => {
+  it("nagłówek ma cztery liczby 2×2 i jeden wiersz faktów (bez kodu produktu i bez napisu „cała Polska”)", () => {
     const { container } = renderCard();
     const kpis = container.querySelector('dl[aria-label="Liczby grupy"]')!;
     expect(kpis.children).toHaveLength(4);
     expect(kpis).toHaveTextContent("Hospitalizacje 202530 hospitalizacji+100,0% r/r");
     expect(kpis).toHaveTextContent("Kwota świadczeń NFZ 20251,2 mln zł z NFZ+33,3% r/r");
-    expect(screen.getByText("cała Polska · kliknij województwo na mapie")).toBeInTheDocument();
+    const meta = container.querySelector("header p:not([class*=desc])")!;
+    expect(meta).toHaveTextContent(/Dane: 20\d\d/);
+    expect(meta).not.toHaveTextContent("Produkt");
+    expect(container.querySelector("header")).not.toHaveTextContent(/cała Polska|Obszar/);
   });
 
   it("Przegląd ma sekcje-pytania w kolejności Ile? → Gdzie? → Za ile? → Jak przyjmowani?", () => {
@@ -108,7 +112,7 @@ describe("Karta w zakładkach — nagłówek i Przegląd", () => {
     const heat = screen.getByRole("region", { name: "Mapa ciepła: województwa w latach" });
     fireEvent.click(within(heat).getByRole("button", { name: "Mazowieckie" }));
     expect(window.location.search).toBe("?ow=07");
-    expect(screen.getByRole("button", { name: "woj. mazowieckie ✕" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Usuń województwo mazowieckie" })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: /Ośrodki/ })).toHaveTextContent("Ośrodki1");
   });
 });
@@ -235,10 +239,16 @@ describe("Karta w zakładkach — wybór roku, opis i rodzina", () => {
       { code: "A02", name: "INNY WARIANT", values: [2, 8, 1] },
     ] } };
     render(<JgpPage data={withFamily} />);
-    expect(screen.getByText(/Opis grupy testowej\./)).toHaveTextContent("Źródło: NFZ, statystyki JGP 2024.");
+    // Źródło opisu w „?”, nie w treści nagłówka.
+    expect(screen.getByRole("note", { name: "Źródło opisu grupy" })).toHaveTextContent("Źródło: NFZ, statystyki JGP 2024.");
     const section = screen.getByRole("region", { name: /Jak wygląda rodzina\?/ });
-    expect(section).toHaveTextContent("A01 to 90% hospitalizacji rodziny w 2025 r. (w 2023 r.: 80%)");
-    expect(within(section).getByRole("img", { name: "2024: A01 50,0%, A02 50,0%" })).toBeInTheDocument();
+    expect(section).toHaveTextContent("A01: 90% hospitalizacji rodziny w 2025 r. (w 2023 r.: 80%)");
+    // Wspólne słupki 100% (`ShareBars`): wiersz z udziałami w dymku, suma rodziny po prawej, ta grupa w ramce.
+    const row = within(section).getByRole("listitem", { name: "2024: A01 stały produkt 50,0%, A02 inny wariant 50,0%" });
+    expect(row).toHaveTextContent("16");
+    expect(row.querySelector("[class*=outlined]")).toHaveStyle({ width: "50%" });
+    // Nazwy wariantów: w legendzie (na telefonie znikają) i w „?”.
+    expect(within(section).getByRole("note", { name: "Jak czytać rodzinę wariantów" })).toHaveTextContent("A02 — inny wariant.");
   });
 });
 
@@ -326,15 +336,17 @@ describe("Karta w zakładkach — miary w „Ile?”", () => {
     renderCard();
     const heading = () => screen.getByRole("heading", { level: 2, name: /^Ile\?/ });
     const chart = () => screen.getByRole("list", { name: "Linie wykresu" });
-    expect(heading()).toHaveTextContent("Ile? Hospitalizacje miesięcznie, wszystkie lata");
+    expect(heading()).toHaveTextContent("Ile? Hospitalizacje miesięcznie");
     expect(chart().querySelector("li")).toHaveAttribute("data-base", "");
     const group = screen.getByRole("group", { name: "Miara" });
     fireEvent.click(within(group).getByRole("button", { name: "Śmiertelność" }));
-    expect(heading()).toHaveTextContent("Ile? Śmiertelność miesięcznie, wszystkie lata");
+    expect(heading()).toHaveTextContent("Ile? Śmiertelność miesięcznie");
     expect(chart().querySelector("li")).toHaveAttribute("data-base", "tak");
-    expect(chart()).toHaveAttribute("data-note", expect.stringContaining("Zgony w szpitalu / hospitalizacje"));
+    // Przypis wykresu jest w objaśnieniu „?” przy tytule (jak na karcie szpitala), nie pod osią.
+    expect(chart()).toHaveAttribute("data-note", "");
+    expect(screen.getByRole("note", { name: "Jak czytać wykres „Ile?”" })).toHaveTextContent("Zgony w szpitalu / hospitalizacje");
     fireEvent.click(within(group).getByRole("button", { name: "% nagłych" }));
-    expect(heading()).toHaveTextContent("Ile? Udział przyjęć nagłych miesięcznie, wszystkie lata");
+    expect(heading()).toHaveTextContent("Ile? Udział przyjęć nagłych miesięcznie");
     expect(screen.getByRole("button", { name: "% nagłych" })).toHaveAttribute("aria-pressed", "true");
   });
 });
@@ -352,11 +364,10 @@ describe("Karta w zakładkach — okres w „Ile?” (miesiące albo lata)", () 
     fireEvent.click(within(toggle()).getByRole("button", { name: "Lata" }));
     expect(chart()).toHaveAttribute("data-period", "year");
     expect(window.location.search).toBe("?okres=lata");
-    expect(heading()).toHaveTextContent("Ile? Hospitalizacje rocznie, wszystkie lata");
-    expect(chart()).toHaveAttribute("data-note", expect.stringContaining("Kropka = suma roku"));
+    expect(heading()).toHaveTextContent("Ile? Hospitalizacje rocznie");
     fireEvent.click(screen.getByRole("tab", { name: /Ośrodki/ }));
     expect(chart()).toHaveAttribute("data-period", "year");
-    expect(heading()).toHaveTextContent(/^Ile\? Hospitalizacje rocznie: Największe ośrodki/);
+    expect(heading()).toHaveTextContent(/^Ile\? Hospitalizacje rocznie/);
     fireEvent.click(within(toggle()).getByRole("button", { name: "Miesiące" }));
     expect(chart()).toHaveAttribute("data-period", "month");
     expect(window.location.search).toBe("?widok=osrodki");
@@ -403,5 +414,42 @@ describe("Karta w zakładkach — powiększenie wykresów", () => {
     fireEvent.keyDown(document, { key: "Escape" });
     fireEvent.click(buttons[1]);
     expect(within(screen.getByRole("dialog")).getByRole("link", { name: /Kto leczy w eksploratorze/ })).toHaveAttribute("href", `/analizy?t=k&jgp=A01&y=${data.year}`);
+  });
+});
+
+describe("Karta w zakładkach — reguły telefonu jak na karcie szpitala (DESIGN.md 7.1a, 7.1b)", () => {
+  it("przypisy sekcji są w objaśnieniu „?” przy tytule, nie w akapicie pod wykresem", () => {
+    const { container } = renderCard();
+    for (const id of ["s-ile", "s-gdzie", "s-koszt", "s-profil"]) {
+      const section = container.querySelector(`#${id}`)!.closest("section")!;
+      expect(within(section).getAllByRole("note", { name: /^Jak czytać/ }).length).toBeGreaterThan(0);
+      expect(section.querySelector("p[class*='note']")).toBeNull();
+    }
+    fireEvent.click(screen.getByRole("tab", { name: /Ośrodki/ }));
+    for (const id of ["s-czas", "s-kto"]) {
+      const section = container.querySelector(`#${id}`)!.closest("section")!;
+      expect(within(section).getAllByRole("note", { name: /^Jak czytać/ }).length).toBeGreaterThan(0);
+      expect(section.querySelector("p[class*='note']")).toBeNull();
+    }
+  });
+
+  it("„Za ile?”: wycena i kwota w zestawie boksów (`BoxSet`)", () => {
+    const { container } = renderCard();
+    const section = container.querySelector("#s-koszt")!.closest("section")!;
+    expect(within(section).getByLabelText("Wycena i kwota").tagName).toBe("DL");
+  });
+
+  it("druga linia nazwy ośrodka: województwo w osobnym elemencie (znika na telefonie) i w `title`", () => {
+    open("?widok=osrodki");
+    const { container } = renderCard();
+    const small = container.querySelector("td small")!;
+    expect(small.querySelector("span")).not.toBeNull();
+    expect(small.getAttribute("title")).toMatch(/, /);
+  });
+
+  it("nazwa województwa w mapie ciepła łamie się tylko na łączniku: „Zachodniopomorskie” ma miękki łącznik", () => {
+    expect(heatRegionName("Zachodniopomorskie")).toBe("Zachodnio­pomorskie");
+    expect(heatRegionName("Kujawsko-Pomorskie")).toBe("Kujawsko-Pomorskie");
+    expect(heatRegionName("Mazowieckie")).toBe("Mazowieckie");
   });
 });

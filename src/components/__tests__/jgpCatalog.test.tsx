@@ -69,8 +69,10 @@ describe("Katalog grup JGP", () => {
     expect(cells("F99")[3]).toHaveAttribute("title", "2024: —");
     expect(cells("F04")[2]).toHaveTextContent("—");
     expect(cells("F04")[3]).toHaveAttribute("title", "2024: 4");
-    expect(screen.getByText("Nowe grupy w 2025 r.").nextElementSibling).toHaveTextContent("1");
+    expect(screen.getByText("Nowe grupy 2025").nextElementSibling).toHaveTextContent("1");
     expect(screen.getByText("Grupy wycofane").nextElementSibling).toHaveTextContent("1");
+    // Telefon i okno < 1000 px: pasek faktów ze słowem po liczbie (`unit`).
+    expect(screen.getByText("Grupy wycofane").nextElementSibling).toHaveTextContent("1 grupa wycofana");
   });
 
   it("zapisuje filtry i sortowanie w adresie i odczytuje je po wejściu", () => {

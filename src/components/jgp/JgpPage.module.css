@@ -151,12 +151,13 @@
   border-radius: var(--radius-badge);
 }
 
+/* Tryb przyjęcia (DESIGN.md 2.2): nagłe — błękit danych, planowe — jaśniejszy błękit. Sygnał jest tylko dla wyróżnienia. */
 .segmentPlanned {
-  background: var(--color-data);
+  background: var(--color-data-muted);
 }
 
 .segmentUrgent {
-  background: var(--color-signal);
+  background: var(--color-data);
 }
 
 .segmentOther {
